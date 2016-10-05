@@ -12,7 +12,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 			throw "This browser does not support web workers!"
 		}
 
-		this.worker = new Worker( basedir + "/js/apps/tools/loaders/WWOBJLoader.js" );
+		this.worker = new Worker( basedir + "/js/loaders/WWOBJLoader.js" );
 
 		var scope = this;
 		var scopeFunction = function ( e ) {
@@ -154,7 +154,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		var kickRun = function () {
 			scope.worker.postMessage({
-				cmd: 'run',
+				cmd: 'run'
 			});
 		};
 

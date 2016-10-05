@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>WWOBJLoader Testbed</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px 0px 0px 0px;
+				padding: 0px 0px 0px 0px;
+				border: none;
+				overflow: hidden;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a, .button {
+				color: #f00;
+				font-weight: bold;
+				text-decoration: underline;
+				cursor: pointer
+			}
+			#glFullscreen {
+				width: 100%;
+				height: 100vh;
+				min-width: 1024px;
+				min-height: 576px;
+				position: relative;
+			}
+			#example {
+				width: 100%;
+				height: 100%;
+				top: 0px;
+				left: 0px;
+				background-color: #000000;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+		</div>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+
+		<script src="../build/three.js"></script>
+
+		<script src="js/Detector.js"></script>
+
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/loaders/MTLLoader.js"></script>
+		<script src="js/loaders/OBJLoader.js"></script>
+
+		<script src="js/apps/ThreeJsApp.js"></script>
+		<script src="js/apps/AppRunner.js"></script>
+		<script src="js/loaders/WWCommons.js"></script>
+		<script src="js/loaders/WWOBJLoaderFrontEnd.js"></script>
+
+		<script>
+
+			if (THREE.examples.loaders === undefined) {
+				THREE.examples.loaders = {};
+			}
+
+			THREE.examples.loaders.WWOBJLoaderChecker = (function () {
+
+				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
+					constructor: {
+						configurable: true,
+						enumerable: true,
+						value: WWOBJLoaderChecker,
+						writable: true
+					}
+				});
+
+				function WWOBJLoaderChecker( elementToBindTo ) {
+					THREE.examples.apps.ThreeJsApp.call(this);
+
+					// app configuration: see THREE.examples.apps.ThreeJsApp.DefaultDefinition (js/apps/ThreeJsApp.js)
+					this.configure({
+						user : this,
+						name : 'WWOBJLoaderChecker',
+						htmlCanvas : elementToBindTo,
+						useScenePerspective : true
+					});
+
+					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
+					this.wwObjFrontEnd.setDebug( true );
+
+					this.lights = null;
+					this.controls = null;
+					this.files = null;
+				}
+
+				WWOBJLoaderChecker.prototype.setFiles = function ( pathBase, fileObj, fileMtl, pathTexture ) {
+					this.files = {
+						pathBase: pathBase,
+						fileObj: fileObj,
+						fileMtl: fileMtl,
+						pathTexture: pathTexture
+					};
+				};
+
+				WWOBJLoaderChecker.prototype.initAsyncContent = function () {
+					// default ThreeJsApp implementation override; it is not required just for explanation
+					this.asyncDone = true;
+				};
+
+				WWOBJLoaderChecker.prototype.initPreGL = function () {
+					// default ThreeJsApp implementation override; it is not required just for explanation
+				};
+
+
+				WWOBJLoaderChecker.prototype.initGL = function () {
+					this.renderer.setClearColor(0x303030);
+
+					var cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 0.0, 250.0 ),
+					};
+					this.scenePerspective.setCameraDefaults( cameraDefaults );
+
+					this.lights = {
+						ambientLight: new THREE.AmbientLight(0x202020),
+						directionalLight1: new THREE.DirectionalLight(0xC0C090),
+						directionalLight2: new THREE.DirectionalLight(0xC0C090),
+						directionalLight3: new THREE.DirectionalLight(0xC0C090),
+						lightArray: new THREE.Object3D()
+					};
+
+					this.lights.directionalLight1.position.set( -100, 0, 100 );
+					this.lights.directionalLight2.position.set( 100, 0, 100 );
+					this.lights.directionalLight3.position.set( 0, 0, -100 );
+
+					this.lights.lightArray.add( this.lights.directionalLight1 );
+					this.lights.lightArray.add( this.lights.directionalLight2 );
+					this.lights.lightArray.add( this.lights.directionalLight3 );
+					this.scenePerspective.scene.add( this.lights.lightArray );
+
+					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+
+					var geometry = new THREE.BoxGeometry(10, 10, 10);
+					var material = new THREE.MeshNormalMaterial();
+					this.mesh = new THREE.Mesh(geometry, material);
+
+					this.scenePerspective.scene.add(this.mesh);
+					this.wwObjFrontEnd.setObjGroup( this.scenePerspective.scene );
+				};
+
+				WWOBJLoaderChecker.prototype.addEventHandlers = function () {
+					// default ThreeJsApp implementation override; it is not required just for explanation
+				};
+
+				WWOBJLoaderChecker.prototype.initPostGL = function () {
+					this.wwObjFrontEnd.initWithFiles( this.files.pathBase, this.files.fileObj, this.files.fileMtl, this.files.pathTexture );
+					this.wwObjFrontEnd.run();
+
+					return true;
+				};
+
+				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
+					this.controls.handleResize();
+				};
+
+				WWOBJLoaderChecker.prototype.renderPre = function () {
+					this.controls.update();
+
+					this.mesh.rotation.x += 0.05;
+					this.mesh.rotation.y += 0.05;
+				};
+
+				WWOBJLoaderChecker.prototype.renderPost = function () {
+					// default ThreeJsApp implementation override; it is not required just for explanation
+				};
+
+				WWOBJLoaderChecker.prototype.dispose = function () {
+					// default ThreeJsApp implementation override; it is not required just for explanation
+				};
+
+				return WWOBJLoaderChecker;
+
+			})();
+
+
+			var app = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
+			app.setFiles( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/' );
+			var appRunner = new THREE.examples.apps.AppRunner( app );
+			appRunner.run( true );
+
+		</script>
+
+	</body>
+</html>
