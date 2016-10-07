@@ -12,7 +12,6 @@
 				margin: 0px 0px 0px 0px;
 				padding: 0px 0px 0px 0px;
 				border: none;
-				overflow: hidden;
 			}
 			#info {
 				color: #fff;
@@ -32,9 +31,10 @@
 			#glFullscreen {
 				width: 100%;
 				height: 100vh;
-				min-width: 1024px;
-				min-height: 576px;
+				min-width: 640px;
+				min-height: 360px;
 				position: relative;
+				overflow: hidden;
 			}
 			#example {
 				width: 100%;
@@ -85,42 +85,28 @@
 				});
 
 				function WWOBJLoaderChecker( elementToBindTo ) {
-					THREE.examples.apps.ThreeJsApp.call(this);
+					THREE.examples.apps.ThreeJsApp.call( this );
 
 					// app configuration: see THREE.examples.apps.ThreeJsApp.DefaultDefinition (js/apps/ThreeJsApp.js)
-					this.configure({
+					this.configure( {
 						user : this,
 						name : 'WWOBJLoaderChecker',
 						htmlCanvas : elementToBindTo,
 						useScenePerspective : true
-					});
+					} );
 
 					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
 					this.wwObjFrontEnd.setDebug( true );
 
 					this.lights = null;
 					this.controls = null;
-					this.files = null;
+					this.pivotModel1 = null;
+					this.pivotModel2 = null;
 				}
 
-				WWOBJLoaderChecker.prototype.setFiles = function ( pathBase, fileObj, fileMtl, pathTexture ) {
-					this.files = {
-						pathBase: pathBase,
-						fileObj: fileObj,
-						fileMtl: fileMtl,
-						pathTexture: pathTexture
-					};
-				};
+				// ThreeJsApp.initAsyncContent() not required, default is used
 
-				WWOBJLoaderChecker.prototype.initAsyncContent = function () {
-					// default ThreeJsApp implementation override; it is not required just for explanation
-					this.asyncDone = true;
-				};
-
-				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					// default ThreeJsApp implementation override; it is not required just for explanation
-				};
-
+				// ThreeJsApp.initPreGL()  not required, default is used
 
 				WWOBJLoaderChecker.prototype.initGL = function () {
 					this.renderer.setClearColor(0x303030);
@@ -129,12 +115,13 @@
 						posCamera: new THREE.Vector3( 0.0, 0.0, 250.0 ),
 					};
 					this.scenePerspective.setCameraDefaults( cameraDefaults );
+					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
 
 					this.lights = {
-						ambientLight: new THREE.AmbientLight(0x202020),
-						directionalLight1: new THREE.DirectionalLight(0xC0C090),
-						directionalLight2: new THREE.DirectionalLight(0xC0C090),
-						directionalLight3: new THREE.DirectionalLight(0xC0C090),
+						ambientLight: new THREE.AmbientLight( 0x202020 ),
+						directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
 						lightArray: new THREE.Object3D()
 					};
 
@@ -147,23 +134,47 @@
 					this.lights.lightArray.add( this.lights.directionalLight3 );
 					this.scenePerspective.scene.add( this.lights.lightArray );
 
-					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
 
-					var geometry = new THREE.BoxGeometry(10, 10, 10);
+					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 					var material = new THREE.MeshNormalMaterial();
-					this.mesh = new THREE.Mesh(geometry, material);
+					this.mesh = new THREE.Mesh( geometry, material );
+					this.scenePerspective.scene.add( this.mesh );
 
-					this.scenePerspective.scene.add(this.mesh);
-					this.wwObjFrontEnd.setObjGroup( this.scenePerspective.scene );
+					this.pivotModel1 = new THREE.Object3D();
+					this.pivotModel2 = new THREE.Object3D();
+					this.pivotModel1.position.set( 0, 0, -75 );
+					this.pivotModel2.position.set( 0, 0, 75 );
+					this.scenePerspective.scene.add( this.pivotModel1 );
+					this.scenePerspective.scene.add( this.pivotModel2 );
 				};
 
-				WWOBJLoaderChecker.prototype.addEventHandlers = function () {
-					// default ThreeJsApp implementation override; it is not required just for explanation
-				};
+				// ThreeJsApp.addEventHandlers()  not required, default is used
+
+				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
-					this.wwObjFrontEnd.initWithFiles( this.files.pathBase, this.files.fileObj, this.files.fileMtl, this.files.pathTexture );
-					this.wwObjFrontEnd.run();
+					var scope = this;
+					var second = false;
+					var secondFile = function () {
+						if ( ! second ) {
+
+							second = true;
+							scope.wwObjFrontEnd.setObjGroup( scope.pivotModel2 );
+							scope.wwObjFrontEnd.initWithFiles( '../../obj/', 'zomax-net_haze-sink-scene.obj', null, null );
+							scope.wwObjFrontEnd.run();
+
+						} else {
+
+							scope.wwObjFrontEnd.terminateWorker();
+
+						}
+					};
+					scope.wwObjFrontEnd.registerHookCompletedLoading( secondFile );
+
+					//scope.wwObjFrontEnd.setFiles( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/' );
+					scope.wwObjFrontEnd.setObjGroup( scope.pivotModel1 );
+					scope.wwObjFrontEnd.initWithFiles( '../../obj/', 'zomax-net_haze-oven-scene.obj', null, null );
+					scope.wwObjFrontEnd.run();
 
 					return true;
 				};
@@ -179,13 +190,9 @@
 					this.mesh.rotation.y += 0.05;
 				};
 
-				WWOBJLoaderChecker.prototype.renderPost = function () {
-					// default ThreeJsApp implementation override; it is not required just for explanation
-				};
+				// ThreeJsApp.renderPost()  not required, default is used
 
-				WWOBJLoaderChecker.prototype.dispose = function () {
-					// default ThreeJsApp implementation override; it is not required just for explanation
-				};
+				// ThreeJsApp.dispose()  not required, default is used
 
 				return WWOBJLoaderChecker;
 
@@ -193,10 +200,10 @@
 
 
 			var app = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
-			app.setFiles( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/' );
+
+			// AppRunner handles ThreeJsApp init, window resize event and render loop
 			var appRunner = new THREE.examples.apps.AppRunner( app );
 			appRunner.run( true );
-
 		</script>
 
 	</body>

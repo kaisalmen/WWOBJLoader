@@ -284,7 +284,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				var bufferGeometry = new THREE.BufferGeometry();
 
 				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
-				if ( payload.normals !== undefined ) {
+				if ( payload.normals !== null ) {
 
 					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.normals ), 3 ) );
 
@@ -293,7 +293,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					bufferGeometry.computeVertexNormals();
 
 				}
-				if ( payload.uvs !== undefined ) {
+				if ( payload.uvs !== null ) {
 
 					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
 
@@ -360,13 +360,11 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				console.timeEnd( 'WWOBJLoaderFrontEnd' );
 				this.announceProgress();
 
-				if ( this.callbackCompletedLoading !== null ) {
+ 				if ( this.callbackCompletedLoading !== null ) {
 
 					this.callbackCompletedLoading();
 
 				}
-
-				this.worker.terminate();
 
 				break;
 
@@ -376,6 +374,10 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				break;
 
 		}
+	};
+
+	WWOBJLoaderFrontEnd.prototype.terminateWorker = function () {
+		this.worker.terminate();
 	};
 
 	return WWOBJLoaderFrontEnd;

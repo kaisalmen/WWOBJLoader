@@ -92,7 +92,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 			vertices: verticesOut,
 			normals: normalsOut,
 			uvs: uvsOut,
-		}, [ verticesOut.buffer ], [ normalsOut.buffer ], [ uvsOut.buffer ] );
+		}, [ verticesOut.buffer ], normalsOut !== null ? [ normalsOut.buffer ] : null, uvsOut !== null ? [ uvsOut.buffer ] : null );
 
 		return null;
 	};
