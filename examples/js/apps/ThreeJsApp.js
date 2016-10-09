@@ -4,110 +4,89 @@
 
 "use strict";
 
-if (THREE.examples === undefined) {
+if ( THREE.examples === undefined ) {
     THREE.examples = {};
 }
-
-if (THREE.examples.apps === undefined) {
+if ( THREE.examples.apps === undefined ) {
     THREE.examples.apps = {};
 }
+
+THREE.examples.apps.ThreeJsAppDefaultDefinition = {
+    name: 'None',
+    htmlCanvas : undefined,
+    antialias: true,
+    useScenePerspective: true,
+    useSceneOrtho: false,
+    useCube: false,
+    verbose: false
+};
 
 THREE.examples.apps.ThreeJsApp = (function () {
 
     function ThreeJsApp() {
         this.renderingEnabled = false;
-
         this.frameNumber = 0;
-        this.initOk = true;
 
+        this.initOk = true;
         this.asyncDone = false;
+
+        this.definition = THREE.examples.apps.ThreeJsAppDefaultDefinition;
+        this.scenePerspective = null;
+        this.sceneOrtho = null;
     }
 
-    ThreeJsApp.prototype.configure = function (userDefinition) {
-        this.definition = userDefinition;
-        fillDefinition(THREE.examples.apps.ThreeJsApp.DefaultDefinition, this.definition);
+    ThreeJsApp.prototype.configure = function ( userDefinition ) {
+        this.definition = checkUserDefinition( this.definition, userDefinition );
 
-        this.canvas = new THREE.examples.apps.Canvas(this.definition.htmlCanvas);
+        this.canvas = new THREE.examples.apps.Canvas( this.definition.htmlCanvas );
+        this.canvas.verbose = this.definition.verbose;
 
-        if (this.definition.useScenePerspective) {
-            this.scenePerspective = new THREE.examples.apps.ThreeJsApp.ScenePerspective(this.canvas);
+        if ( this.definition.useScenePerspective ) {
+
+            this.scenePerspective = new THREE.examples.apps.ThreeJsApp.ScenePerspective( this.canvas );
+            this.scenePerspective.useCube = this.definition.useCube;
+            this.scenePerspective.verbose = this.definition.verbose;
+
+        }
+        if ( this.definition.useSceneOrtho ) {
+
+            this.sceneOrtho = new THREE.examples.apps.ThreeJsApp.SceneOrtho( this.canvas );
+            this.sceneOrtho.verbose = this.definition.verbose;
         }
 
-        if (this.definition.useSceneOrtho) {
-            this.sceneOrtho = new THREE.examples.apps.ThreeJsApp.SceneOrtho(this.canvas);
-        }
-
-        if (this.definition.useScenePerspective && this.definition.useCube) {
-            this.scenePerspective.useCube = true;
-        }
-
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.definition.renderers.regular.canvas,
-            antialias: this.definition.renderers.regular.antialias
-        });
+        this.renderer = new THREE.WebGLRenderer( {
+            canvas: this.definition.htmlCanvas,
+            antialias: this.definition.antialias
+        } );
 
         // auto-clear must not be used when both perspective and ortho scenes are active
         // otherwise: renderer clears 3d content
         if ( this.definition.useScenePerspective && this.definition.useSceneOrtho ) {
+
             this.renderer.autoClear = false;
+
         }
-
-        if ( this.definition.verbose ) {
-            this.canvas.verbose = this.definition.verbose;
-            if ( this.definition.useScenePerspective ) {
-                this.scenePerspective.verbose = this.definition.verbose;
-            }
-
-            if ( this.definition.useSceneOrtho ) {
-                this.sceneOrtho.verbose = this.definition.verbose;
-            }
-        };
     };
 
-    var fillDefinition = function (paramsPredefined, paramsUser) {
+    var checkUserDefinition = function ( defPredefined, defUser ) {
 
-        for (var predefined in paramsPredefined) {
-            // early exit
-            if (!paramsPredefined.hasOwnProperty(predefined)) {
-                continue;
-            }
+        for ( var predefined in defPredefined ) {
 
-            // renderer definitions: special treatment as object fields need to be copied (no-refs)
-            if (predefined === 'renderers') {
+            if ( defPredefined.hasOwnProperty( predefined ) && ! defUser.hasOwnProperty( predefined ) ) {
 
-                if (!paramsUser.hasOwnProperty(predefined)) {
-                    paramsUser[predefined] = {};
-                }
-                var userRenderers = paramsUser[predefined];
-
-                if (paramsPredefined.hasOwnProperty(predefined)) {
-                    var predefinedRenderers = paramsPredefined[predefined];
-
-                    for (var predefinedRendererName in predefinedRenderers) {
-                        // early exit
-                        if (!predefinedRenderers.hasOwnProperty(predefinedRendererName)) {
-                            continue;
-                        }
-
-                        if (!userRenderers.hasOwnProperty(predefinedRendererName)) {
-                            userRenderers[predefinedRendererName] = {};
-                        }
-
-                        var predefinedRenderer = predefinedRenderers[predefinedRendererName];
-                        var userRenderer = userRenderers[predefinedRendererName];
-                        fillDefinition(predefinedRenderer, userRenderer);
-                    }
-                }
-                if (userRenderers['regular'].canvas === undefined) {
-                    userRenderers['regular'].canvas = paramsUser['htmlCanvas'];
-                }
-            }
-            else {
-                if (!paramsUser.hasOwnProperty(predefined)) {
-                    paramsUser[predefined] = paramsPredefined[predefined];
-                }
+                defUser[predefined] = defPredefined[predefined];
             }
         }
+
+        for ( var user in defUser ) {
+
+            if ( ! defPredefined.hasOwnProperty( user ) ) {
+
+                delete defUser[user];
+            }
+        }
+
+        return defUser;
     };
 
     ThreeJsApp.prototype.init = function () {
@@ -372,6 +351,8 @@ THREE.examples.apps.ThreeJsApp.ScenePerspective = (function () {
         this.useCube = false;
         this.cameraCube = null;
 
+        this.scene = null;
+
         this.defaults = {
             posCamera: new THREE.Vector3(100, 100, 100),
             upVector: new THREE.Vector3(0, 1, 0),
@@ -460,6 +441,8 @@ THREE.examples.apps.ThreeJsApp.SceneOrtho = (function () {
         this.verbose = verbose === undefined ? false : verbose;
         this.canvas.verbose = this.verbose;
 
+        this.scene = null;
+
         this.defaults = {
             posCamera: new THREE.Vector3( 0, 0, 1 ),
             near: 10,
@@ -521,18 +504,3 @@ THREE.examples.apps.ThreeJsApp.SceneOrtho = (function () {
 })();
 
 
-THREE.examples.apps.ThreeJsApp.DefaultDefinition = {
-    user: undefined,
-    name: 'None',
-    htmlCanvas : undefined,
-    renderers: {
-        regular: {
-            canvas: undefined,
-            antialias: true
-        }
-    },
-    useScenePerspective: true,
-    useSceneOrtho: false,
-    useCube: false,
-    verbose: false
-};

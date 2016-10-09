@@ -58,12 +58,15 @@
 
 		<script src="js/Detector.js"></script>
 
+		<script src="js/libs/jszip.min.js"></script>
+
 		<script src="js/controls/TrackballControls.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
 		<script src="js/loaders/OBJLoader.js"></script>
 
 		<script src="js/apps/ThreeJsApp.js"></script>
 		<script src="js/apps/AppRunner.js"></script>
+		<script src="js/apps/ZipTools.js"></script>
 		<script src="js/loaders/WWCommons.js"></script>
 		<script src="js/loaders/WWOBJLoaderFrontEnd.js"></script>
 
@@ -73,6 +76,11 @@
 				THREE.examples.loaders = {};
 			}
 
+			/**
+			 * ThreeJsApp serves as base class that defines an application life-cycle and
+			 * handles some things you always need to do when writing an example
+			 * This example class extends ThreejsApp and overwrites only functions needed here
+			 */
 			THREE.examples.loaders.WWOBJLoaderChecker = (function () {
 
 				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
@@ -87,12 +95,11 @@
 				function WWOBJLoaderChecker( elementToBindTo ) {
 					THREE.examples.apps.ThreeJsApp.call( this );
 
-					// app configuration: see THREE.examples.apps.ThreeJsApp.DefaultDefinition (js/apps/ThreeJsApp.js)
+					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
+					// Only define what is required (name and htmlCanvas). scene with perspective camera is available per default
 					this.configure( {
-						user : this,
-						name : 'WWOBJLoaderChecker',
-						htmlCanvas : elementToBindTo,
-						useScenePerspective : true
+						name: 'WWOBJLoaderChecker',
+						htmlCanvas: elementToBindTo
 					} );
 
 					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
@@ -100,8 +107,18 @@
 
 					this.lights = null;
 					this.controls = null;
-					this.pivotModel1 = null;
-					this.pivotModel2 = null;
+
+					this.loadCounter = 0;
+					this.objs2Load = [];
+				}
+
+				function LoadDef( pathBase, fileObj, fileMtl, pathTexture, fileZip, pivot ) {
+					this.pathBase = pathBase;
+					this.fileObj = fileObj;
+					this.fileMtl = fileMtl;
+					this.pathTexture = pathTexture;
+					this.fileZip = fileZip;
+					this.pivot = pivot;
 				}
 
 				// ThreeJsApp.initAsyncContent() not required, default is used
@@ -112,7 +129,7 @@
 					this.renderer.setClearColor(0x303030);
 
 					var cameraDefaults = {
-						posCamera: new THREE.Vector3( 0.0, 0.0, 250.0 ),
+						posCamera: new THREE.Vector3( 0.0, 0.0, 250.0 )
 					};
 					this.scenePerspective.setCameraDefaults( cameraDefaults );
 					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
@@ -140,12 +157,21 @@
 					this.mesh = new THREE.Mesh( geometry, material );
 					this.scenePerspective.scene.add( this.mesh );
 
-					this.pivotModel1 = new THREE.Object3D();
-					this.pivotModel2 = new THREE.Object3D();
-					this.pivotModel1.position.set( 0, 0, -75 );
-					this.pivotModel2.position.set( 0, 0, 75 );
-					this.scenePerspective.scene.add( this.pivotModel1 );
-					this.scenePerspective.scene.add( this.pivotModel2 );
+					var pivot = new THREE.Object3D();
+					pivot.position.set( 0, 0, -75 );
+					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+					//this.objs2Load.push( new LoadDef( '../../obj/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
+					//this.objs2Load.push( new LoadDef( './obj/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
+					this.objs2Load.push( new LoadDef( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, pivot ) );
+					this.scenePerspective.scene.add( pivot );
+
+					pivot = new THREE.Object3D();
+					pivot.position.set( 0, 0, 75 );
+					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+					//this.objs2Load.push( new LoadDef( '../../obj/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
+					//this.objs2Load.push( new LoadDef( './obj/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
+					this.objs2Load.push( new LoadDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
+					this.scenePerspective.scene.add( pivot );
 				};
 
 				// ThreeJsApp.addEventHandlers()  not required, default is used
@@ -154,27 +180,63 @@
 
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
 					var scope = this;
-					var second = false;
-					var secondFile = function () {
-						if ( ! second ) {
+					var zipTools = null;
 
-							second = true;
-							scope.wwObjFrontEnd.setObjGroup( scope.pivotModel2 );
-							scope.wwObjFrontEnd.initWithFiles( '../../obj/', 'zomax-net_haze-sink-scene.obj', null, null );
-							scope.wwObjFrontEnd.run();
+					var loader = function () {
+						if ( scope.loadCounter < scope.objs2Load.length ) {
 
+							var obj2Load = scope.objs2Load[scope.loadCounter];
+							scope.loadCounter++;
+
+							scope.wwObjFrontEnd.setObjGroup( obj2Load.pivot );
+							if ( obj2Load.fileZip !== null ) {
+
+								zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
+								var mtlAsString = null;
+
+								var setObjAsArrayBuffer = function( data ) {
+									scope.wwObjFrontEnd.initWithData( data, mtlAsString, obj2Load.pathTexture );
+									scope.wwObjFrontEnd.run();
+								};
+
+								var setMtlAsString = function( data ) {
+									mtlAsString = data;
+									zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
+								};
+
+								var doneUnzipping = function() {
+									if ( obj2Load.fileMtl !== null ) {
+
+										zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
+
+									} else {
+
+										setMtlAsString( null );
+
+									}
+								};
+
+								var reportProgress = function( text ) {
+									console.log( text );
+								};
+
+								zipTools.load( obj2Load.fileZip, doneUnzipping, reportProgress  );
+
+							} else {
+
+								scope.wwObjFrontEnd.initWithFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+								scope.wwObjFrontEnd.run();
+
+							}
 						} else {
 
 							scope.wwObjFrontEnd.terminateWorker();
 
 						}
 					};
-					scope.wwObjFrontEnd.registerHookCompletedLoading( secondFile );
 
-					//scope.wwObjFrontEnd.setFiles( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/' );
-					scope.wwObjFrontEnd.setObjGroup( scope.pivotModel1 );
-					scope.wwObjFrontEnd.initWithFiles( '../../obj/', 'zomax-net_haze-oven-scene.obj', null, null );
-					scope.wwObjFrontEnd.run();
+					scope.wwObjFrontEnd.registerHookCompletedLoading( loader );
+					loader();
 
 					return true;
 				};
