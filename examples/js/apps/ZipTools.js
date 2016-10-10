@@ -19,7 +19,6 @@ THREE.examples.apps.ZipTools = (function () {
 		this.xhrLoader = new THREE.XHRLoader();
 		this.xhrLoader.setPath( path );
 		this.xhrLoader.setResponseType( 'arraybuffer' );
-		this.xhrLoader.setCrossOrigin( 'true' );
 
 		this.zipContent = null;
 	}

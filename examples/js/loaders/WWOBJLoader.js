@@ -25,13 +25,9 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.cmdState = 'created';
 		this.debug = false;
 
-		this.basePath = '';
 		this.objFile = '';
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
-
-		this.setLoadAsArrayBuffer( true );
-		this.setWorkInline( true );
 
 		this.counter = 0;
 	}
@@ -103,29 +99,15 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 		this.debug = payload.debug;
 		this.dataAvailable = payload.dataAvailable;
-		this.basePath = payload.basePath === null ? '' : payload.basePath;
 		this.objFile = payload.objFile === null ? '' : payload.objFile;
+		this.objAsArrayBuffer = this.dataAvailable ? payload.objAsArrayBuffer : null;
 
 		// configure OBJLoader
-		if ( payload.loadAsArrayBuffer !== undefined ) {
-
-			this.setLoadAsArrayBuffer( payload.loadAsArrayBuffer );
-
-		}
-		if ( payload.workInline !== undefined ) {
-
-			this.setWorkInline( payload.workInline );
-
-		}
-		this.setPath( this.basePath );
-
-		if ( this.dataAvailable ) {
-
-			// this must be the case, otherwise loading will fail
-			this.setLoadAsArrayBuffer( true );
-			this.objAsArrayBuffer = payload.objAsArrayBuffer;
-
-		}
+		this.reInit(
+			payload.loadAsArrayBuffer === undefined ? false : this.dataAvailable || payload.loadAsArrayBuffer,
+			payload.workInline === undefined ? true : payload.workInline,
+			payload.basePath === null ? undefined : payload.basePath
+		);
 	};
 
 	WWOBJLoader.prototype.initMaterials = function ( payload ) {

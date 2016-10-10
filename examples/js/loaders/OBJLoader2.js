@@ -8,57 +8,64 @@ THREE.OBJLoader = function ( manager ) {
 
 	this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-	this.materials = null;
-
 	this.regexp = {
 		// v float float float
-		vertex_pattern           : /^v\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+		vertex_pattern: /^v\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
 		// vn float float float
-		normal_pattern           : /^vn\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+		normal_pattern: /^vn\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
 		// vt float float
-		uv_pattern               : /^vt\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
+		uv_pattern: /^vt\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
 		// f vertex vertex vertex
-		face_vertex              : /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
+		face_vertex: /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
 		// f vertex/uv vertex/uv vertex/uv
-		face_vertex_uv           : /^f\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+))?/,
+		face_vertex_uv: /^f\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+))?/,
 		// f vertex/uv/normal vertex/uv/normal vertex/uv/normal
-		face_vertex_uv_normal    : /^f\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+)\/(-?\d+))?/,
+		face_vertex_uv_normal: /^f\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+)\/(-?\d+))?/,
 		// f vertex//normal vertex//normal vertex//normal
-		face_vertex_normal       : /^f\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)(?:\s+(-?\d+)\/\/(-?\d+))?/,
+		face_vertex_normal: /^f\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)(?:\s+(-?\d+)\/\/(-?\d+))?/,
 		// o object_name | g group_name
-		object_pattern           : /^[og]\s*(.+)?/,
+		object_pattern: /^[og]\s*(.+)?/,
 		// s boolean
-		smoothing_pattern        : /^s\s+(\d+|on|off)/,
+		smoothing_pattern: /^s\s+(\d+|on|off)/,
 		// mtllib file_reference
-		material_library_pattern : /^mtllib /,
+		material_library_pattern: /^mtllib /,
 		// usemtl material_name
-		material_use_pattern     : /^usemtl /
+		material_use_pattern: /^usemtl /
 	};
 
-	this.loadAsArrayBuffer = false;
-
-	// in-line processing needs to know container on instance level
-	this.workInline = false;
-	this.container = new THREE.Group();
-
-	// Define trim function to use once
-	// Faster to just trim left side of the line. Use if available.
-	var trimLeft = function ( line ) {
-
-		return line.trimLeft();
-
-	};
-	var trimNormal = function ( line ) {
-
-		return line.trim();
-
-	};
-	this.trimFunction = typeof ''.trimLeft === 'function' ?  trimLeft : trimNormal;
+	this.reInit( false, false );
 };
 
 THREE.OBJLoader.prototype = {
 
 	constructor: THREE.OBJLoader,
+
+	reInit: function ( loadAsArrayBuffer, workInline, path ) {
+		this.materials = null;
+		this.container = new THREE.Group();
+
+		this.loadAsArrayBuffer = loadAsArrayBuffer;
+
+		// in-line processing needs to know container on instance level
+		this.workInline = workInline;
+
+
+		// Define trim function to use once
+		// Faster to just trim left side of the line. Use if available.
+		var trimLeft = function ( line ) {
+
+			return line.trimLeft();
+
+		};
+		var trimNormal = function ( line ) {
+
+			return line.trim();
+
+		};
+		this.trimFunction = typeof ''.trimLeft === 'function' ?  trimLeft : trimNormal;
+
+		this.setPath( path );
+	},
 
 	load: function ( url, onLoad, onProgress, onError ) {
 
@@ -885,6 +892,9 @@ THREE.OBJLoader.prototype = {
 	dispose: function () {
 		this.materials = null;
 		this.container = null;
+		this.path = undefined;
+		this.workInline = false;
+		this.loadAsArrayBuffer = false;
 	}
 
 };
