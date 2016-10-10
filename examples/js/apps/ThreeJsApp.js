@@ -21,6 +21,17 @@ THREE.examples.apps.ThreeJsAppDefaultDefinition = {
     verbose: false
 };
 
+/**
+ * Application shall extend this class
+ * Lifecycle is:
+ * - configure (e.g. call in constructor of extension)
+ * - init (called by AppRunner):
+ *   - initPreGL
+ *   - initGL
+ *   - resizeDisplayGLBase/resizeDisplayGL
+ *   - initPostGL
+ * - render (called by AppRunner)
+ */
 THREE.examples.apps.ThreeJsApp = (function () {
 
     function ThreeJsApp() {
@@ -92,38 +103,37 @@ THREE.examples.apps.ThreeJsApp = (function () {
     ThreeJsApp.prototype.init = function () {
         var scope = this;
 
-        scope.initAsyncContent();
+        console.log("ThreeJsApp (" + scope.definition.name + "): initPreGL");
+        scope.initPreGL();
 
         var initSync = function () {
-            console.log("ThreeJsApp (" + scope.definition.name + "): initPreGL");
-            scope.initPreGL();
 
-            if ( !scope.initOk ) { return; }
-            console.log("ThreeJsApp (" + scope.definition.name + "): initGL");
-            if (scope.definition.useScenePerspective) {
+            console.log( "ThreeJsApp (" + scope.definition.name + "): initGL" );
+            if ( scope.definition.useScenePerspective ) {
+
                 scope.scenePerspective.initGL();
-                if ( !scope.initOk ) { return; }
+                if ( ! scope.initOk ) { return; }
+
             }
-            if (scope.definition.useSceneOrtho) {
+            if ( scope.definition.useSceneOrtho ) {
+
                 scope.sceneOrtho.initGL();
-                if ( !scope.initOk ) { return; }
+                if ( ! scope.initOk ) { return; }
+
             }
 
             scope.initGL();
-            if ( !scope.initOk ) { return; }
+            if ( ! scope.initOk ) { return; }
 
-            console.log("ThreeJsApp (" + scope.definition.name + "): resizeDisplayGLBase");
+            console.log( "ThreeJsApp (" + scope.definition.name + "): resizeDisplayGLBase" );
             scope.resizeDisplayGLBase();
 
-            console.log("ThreeJsApp (" + scope.definition.name + "): addEventHandlers");
-            scope.addEventHandlers();
-
-            console.log("ThreeJsApp (" + scope.definition.name + "): initPostGL");
+            console.log( "ThreeJsApp (" + scope.definition.name + "): initPostGL" );
             scope.renderingEnabled = scope.initPostGL();
-            if ( !scope.initOk ) { return; }
+            if ( ! scope.initOk ) { return; }
 
             if ( scope.renderingEnabled ) {
-                console.log("ThreeJsApp (" + scope.definition.name + "): Ready to start render loop!");
+                console.log( "ThreeJsApp (" + scope.definition.name + "): Ready to start render loop!" );
             }
         };
 
@@ -134,136 +144,150 @@ THREE.examples.apps.ThreeJsApp = (function () {
 
         function checkAsyncStatusTimer() {
             if ( scope.asyncDone ) {
+
                 clearInterval(checkAsyncStatus);
                 console.log( 'Async loading took approx. ' + interval * count  + 'ms.' );
-                initSync();
+                if ( scope.initOk ) {
+
+                    initSync();
+
+                }
             }
             else {
                 if ( count % divider === 0 ) {
-                    console.log( 'Waiting for async content to be loaded (' + interval * count  + 'ms)' );
+
+                    console.log( 'Waiting for initPreGL to complete (' + interval * count  + 'ms)' );
+
                 }
                 count++;
+
             }
-        }
-    };
-
-    ThreeJsApp.prototype.resizeDisplayGLBase = function () {
-        this.canvas.recalcAspectRatio();
-
-        this.resizeDisplayGL();
-
-        this.renderer.setSize(this.canvas.getWidth(), this.canvas.getHeight(), false);
-
-        if (this.definition.useScenePerspective) {
-            this.scenePerspective.updateCamera();
-        }
-
-        if (this.definition.useSceneOrtho) {
-            this.sceneOrtho.updateCamera();
-        }
-    };
-
-    ThreeJsApp.prototype.render = function () {
-        if (this.renderingEnabled) {
-            this.frameNumber++;
-            if ( !this.renderer.autoClear ) {
-                this.renderer.clear();
-            }
-
-            this.renderPre();
-
-            if (this.definition.useScenePerspective) {
-                if (this.scenePerspective.useCube) {
-                    this.scenePerspective.cameraCube.rotation.copy( this.scenePerspective.camera.rotation );
-                    this.renderer.render(this.scenePerspective.sceneCube, this.scenePerspective.cameraCube);
-                }
-
-                this.renderer.render(this.scenePerspective.scene, this.scenePerspective.camera);
-            }
-
-            if (this.definition.useSceneOrtho) {
-                this.renderer.render(this.sceneOrtho.scene, this.sceneOrtho.camera);
-            }
-
-            this.renderPost();
         }
     };
 
     ThreeJsApp.prototype.resetCamera = function () {
-        if (this.definition.useScenePerspective) {
+        if ( this.definition.useScenePerspective ) {
             this.scenePerspective.resetCamera();
         }
 
-        if (this.definition.useSceneOrtho) {
+        if ( this.definition.useSceneOrtho ) {
             this.sceneOrtho.resetCamera();
         }
     };
 
     /**
-     * Default implementation
+     * Handle any init not related to WebGL (e.g. file loading) incl. async content that need to be completed
+     * before the rest of the initialisation takes part. Once complete asyncDone needs to be set to true.
+     * Override if needed.
      */
-    ThreeJsApp.prototype.initAsyncContent = function () {
+    ThreeJsApp.prototype.initPreGL = function () {
         this.asyncDone = true;
     };
 
     /**
-     * default implementation
-     */
-    ThreeJsApp.prototype.initPreGL = function () {
-
-    };
-
-    /**
-     * default implementation
+     * Handle any init related to WebGL.
+     * Override if needed.
      */
     ThreeJsApp.prototype.initGL = function () {
 
     };
 
     /**
-     * default implementation
-     */
-    ThreeJsApp.prototype.addEventHandlers = function () {
-
-    };
-
-    /**
-     * default implementation
+     * Perform any operations after WebGL init has been performed (e.g event handler init)
+     * Override if needed.
      */
     ThreeJsApp.prototype.initPostGL = function () {
         return true;
     };
 
     /**
-     * default implementation
+     * Perform internal operations when window is resized. User implementation is called within.
+     * Do not override! Override "resizeDisplayGL" if needed!
+     */
+    ThreeJsApp.prototype.resizeDisplayGLBase = function () {
+        this.canvas.recalcAspectRatio();
+
+        this.resizeDisplayGL();
+
+        this.renderer.setSize( this.canvas.getWidth(), this.canvas.getHeight(), false );
+
+        if ( this.definition.useScenePerspective ) {
+            this.scenePerspective.updateCamera();
+        }
+
+        if ( this.definition.useSceneOrtho ) {
+            this.sceneOrtho.updateCamera();
+        }
+    };
+
+    /**
+     * Perform any operations when window is resized.
+     * Override if needed.
      */
     ThreeJsApp.prototype.resizeDisplayGL = function () {
 
     };
 
     /**
-     * default implementation
+     * Perform any operation required before scene is rendered
+     * Override if needed.
      */
     ThreeJsApp.prototype.renderPre = function () {
         if ( this.definition.verbose ) {
-            console.log("ThreeJsApp DEFAULT (" + this.definition.name + "): renderPre");
+
+            console.log( 'ThreeJsApp DEFAULT (' + this.definition.name + '): renderPre' );
+
         }
     };
 
     /**
-     * default implementation
+     * Performs rendering according to overall application configuration.
+     * Do not override! Perform operations in "renderPre" or "renderPost"
+     */
+    ThreeJsApp.prototype.render = function () {
+        if ( this.renderingEnabled ) {
+
+            this.frameNumber ++;
+            if ( ! this.renderer.autoClear ) {
+
+                this.renderer.clear();
+
+            }
+
+            this.renderPre();
+
+            if ( this.definition.useScenePerspective ) {
+
+                if ( this.scenePerspective.useCube ) {
+
+                    this.scenePerspective.cameraCube.rotation.copy( this.scenePerspective.camera.rotation );
+                    this.renderer.render( this.scenePerspective.sceneCube, this.scenePerspective.cameraCube );
+
+                }
+                this.renderer.render( this.scenePerspective.scene, this.scenePerspective.camera );
+
+            }
+
+            if ( this.definition.useSceneOrtho ) {
+
+                this.renderer.render( this.sceneOrtho.scene, this.sceneOrtho.camera );
+
+            }
+            this.renderPost();
+
+        }
+    };
+
+    /**
+     * Perform any operation after scene is rendered
+     * Override if needed.
      */
     ThreeJsApp.prototype.renderPost = function () {
         if ( this.definition.verbose ) {
-            console.log("ThreeJsApp DEFAULT (" + this.definition.name + "): renderPost");
+
+            console.log( 'ThreeJsApp DEFAULT (' + this.definition.name + '): renderPost' );
+
         }
-    };
-
-    /**
-     * Default implementation
-     */
-    ThreeJsApp.prototype.dispose = function () {
-
     };
 
     return ThreeJsApp;
@@ -502,5 +526,3 @@ THREE.examples.apps.ThreeJsApp.SceneOrtho = (function () {
     return SceneOrtho;
 
 })();
-
-

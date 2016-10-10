@@ -78,8 +78,14 @@
 
 			/**
 			 * ThreeJsApp serves as base class that defines an application life-cycle and
-			 * handles some things you always need to do when writing an example
-			 * This example class extends ThreejsApp and overwrites only functions needed here
+			 * handles some things you always need to do when writing an example:
+			 * - Renderer init
+			 * - Perspective scene with camera (enabled by default)
+			 *   - CubeMap scene (disabled by default)
+			 * - Orthographic scene with camera (disabled by default)
+			 * - Canvas/renderer size changes
+			 *
+			 * This example extends ThreeJsApp and overwrites only functions needed.
 			 */
 			THREE.examples.loaders.WWOBJLoaderChecker = (function () {
 
@@ -96,7 +102,7 @@
 					THREE.examples.apps.ThreeJsApp.call( this );
 
 					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
-					// Only define what is required (name and htmlCanvas). scene with perspective camera is available per default
+					// Only define what is required (name and htmlCanvas).
 					this.configure( {
 						name: 'WWOBJLoaderChecker',
 						htmlCanvas: elementToBindTo
@@ -120,8 +126,6 @@
 					this.fileZip = fileZip;
 					this.pivot = pivot;
 				}
-
-				// ThreeJsApp.initAsyncContent() not required, default is used
 
 				// ThreeJsApp.initPreGL()  not required, default is used
 
@@ -173,8 +177,6 @@
 					this.objs2Load.push( new LoadDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
 					this.scenePerspective.scene.add( pivot );
 				};
-
-				// ThreeJsApp.addEventHandlers()  not required, default is used
 
 				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
@@ -245,6 +247,7 @@
 					this.controls.handleResize();
 				};
 
+
 				WWOBJLoaderChecker.prototype.renderPre = function () {
 					this.controls.update();
 
@@ -253,8 +256,6 @@
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
-
-				// ThreeJsApp.dispose()  not required, default is used
 
 				return WWOBJLoaderChecker;
 
