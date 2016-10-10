@@ -43,18 +43,22 @@
 				left: 0px;
 				background-color: #000000;
 			}
+			#feedback {
+				color: orange;
+			}
 		</style>
 	</head>
 
 	<body>
 		<div id="info">
 		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<div id="feedback"></div>
 		</div>
 		<div id="glFullscreen">
 			<canvas id="example"></canvas>
 		</div>
 
-		<script src="../build/three.js"></script>
+		<script src="../build/three.min.js"></script>
 
 		<script src="js/Detector.js"></script>
 
@@ -164,16 +168,16 @@
 					var pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, -75 );
 					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-					//this.objs2Load.push( new LoadDef( '../../obj/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
-					//this.objs2Load.push( new LoadDef( './obj/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
+					//this.objs2Load.push( new LoadDef( '../../obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
+					//this.objs2Load.push( new LoadDef( './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
 					this.objs2Load.push( new LoadDef( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, pivot ) );
 					this.scenePerspective.scene.add( pivot );
 
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, 75 );
 					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-					//this.objs2Load.push( new LoadDef( '../../obj/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
-					//this.objs2Load.push( new LoadDef( './obj/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
+					//this.objs2Load.push( new LoadDef( '../../obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
+					//this.objs2Load.push( new LoadDef( './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
 					this.objs2Load.push( new LoadDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
 					this.scenePerspective.scene.add( pivot );
 				};
@@ -183,6 +187,11 @@
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
 					var scope = this;
 					var zipTools = null;
+					var feedback = document.getElementById( 'feedback' );
+
+					var reportProgress = function( text ) {
+						feedback.innerHTML = text;
+					};
 
 					var loader = function () {
 						if ( scope.loadCounter < scope.objs2Load.length ) {
@@ -197,12 +206,14 @@
 								var mtlAsString = null;
 
 								var setObjAsArrayBuffer = function( data ) {
+									reportProgress( '' );
 									scope.wwObjFrontEnd.initWithData( data, mtlAsString, obj2Load.pathTexture );
 									scope.wwObjFrontEnd.run();
 								};
 
 								var setMtlAsString = function( data ) {
 									mtlAsString = data;
+									reportProgress( 'Unzipping: ' + obj2Load.fileObj );
 									zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
 								};
 
@@ -216,10 +227,6 @@
 										setMtlAsString( null );
 
 									}
-								};
-
-								var reportProgress = function( text ) {
-									console.log( text );
 								};
 
 								zipTools.load( obj2Load.fileZip, doneUnzipping, reportProgress  );
@@ -238,6 +245,7 @@
 					};
 
 					scope.wwObjFrontEnd.registerHookCompletedLoading( loader );
+					scope.wwObjFrontEnd.registerProgressCallback( reportProgress );
 					loader();
 
 					return true;

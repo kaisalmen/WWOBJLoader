@@ -25,22 +25,35 @@ THREE.examples.apps.ZipTools = (function () {
 
 	ZipTools.prototype.load = function ( filename, callbackFinish, callbackProgress ) {
 		var scope = this;
+		var refPercentComplete = 0;
+		var percentComplete = 0;
 
 		var onSuccess = function ( zipDataFromXHR ) {
 			scope.zip.loadAsync( zipDataFromXHR )
 			.then( function ( zip ) {
+
 				scope.zipContent = zip;
 				callbackFinish();
+
 			} );
 		};
 
 		var onProgress = function ( event ) {
 			if ( event.lengthComputable ) {
-				var percentComplete = event.loaded / event.total * 100;
-				var output = 'Download of "' + filename + '": ' + Math.round( percentComplete, 2 ) + '%';
-				console.log( output );
-				if ( callbackProgress !== null && callbackProgress !== undefined ) {
-					callbackProgress( output );
+
+				percentComplete = Math.round( event.loaded / event.total * 100 );
+
+				if ( percentComplete > refPercentComplete ) {
+
+					refPercentComplete = percentComplete;
+					var output = 'Download of "' + filename + '": ' + percentComplete + '%';
+					console.log( output );
+					if ( callbackProgress !== null && callbackProgress !== undefined ) {
+
+						callbackProgress( output );
+
+					}
+
 				}
 			}
 		};
@@ -56,23 +69,32 @@ THREE.examples.apps.ZipTools = (function () {
 	ZipTools.prototype.unpackAsUint8Array = function ( filename, callback ) {
 
 		if ( JSZip.support.uint8array ) {
+
 			this.zipContent.file( filename ).async( 'uint8array' )
 			.then( function ( dataAsUint8Array ) {
+
 				callback( dataAsUint8Array );
+
 			} );
-		}
-		else {
+
+		} else {
+
 			this.zipContent.file( filename ).async( 'base64' )
 			.then( function ( data64 ) {
+
 				callback( new TextEncoder( 'utf-8' ).encode( data64 ) );
+
 			} );
+
 		}
 	};
 
 	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
 		this.zipContent.file( filename ).async( 'string' )
 		.then( function ( dataAsString ) {
+
 			callback( dataAsString );
+
 		} );
 	};
 
