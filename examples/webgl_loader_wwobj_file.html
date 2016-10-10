@@ -46,6 +46,20 @@
 			#feedback {
 				color: orange;
 			}
+			#menu {
+				margin: 4px 4px 4px 4px;
+				padding: 4px 12px 4px 12px;
+				border-style: solid;
+				border-radius: 8px;
+				position: absolute;
+				left: 0px;
+				top: 0px;
+			}
+			p {
+				margin: 4px 0px 4px 0px;
+				font-size: 18pt;
+				cursor: pointer;
+			}
 		</style>
 	</head>
 
@@ -55,6 +69,11 @@
 			<div id="feedback"></div>
 		</div>
 		<div id="glFullscreen">
+			<div id="menu">
+				<h2>OBJ Choices:</h2>
+				<p onclick="reloadMaleFemale()">Male + Female</p>
+				<p onclick="">Kitchen</p>
+			</div>
 			<canvas id="example"></canvas>
 		</div>
 
@@ -122,15 +141,6 @@
 					this.objs2Load = [];
 				}
 
-				function LoadDef( pathBase, fileObj, fileMtl, pathTexture, fileZip, pivot ) {
-					this.pathBase = pathBase;
-					this.fileObj = fileObj;
-					this.fileMtl = fileMtl;
-					this.pathTexture = pathTexture;
-					this.fileZip = fileZip;
-					this.pivot = pivot;
-				}
-
 				// ThreeJsApp.initPreGL()  not required, default is used
 
 				WWOBJLoaderChecker.prototype.initGL = function () {
@@ -164,29 +174,53 @@
 					var material = new THREE.MeshNormalMaterial();
 					this.mesh = new THREE.Mesh( geometry, material );
 					this.scenePerspective.scene.add( this.mesh );
-
-					var pivot = new THREE.Object3D();
-					pivot.position.set( 0, 0, -75 );
-					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-					//this.objs2Load.push( new LoadDef( '../../obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
-					//this.objs2Load.push( new LoadDef( './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
-					this.objs2Load.push( new LoadDef( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, pivot ) );
-					this.scenePerspective.scene.add( pivot );
-
-					pivot = new THREE.Object3D();
-					pivot.position.set( 0, 0, 75 );
-					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-					//this.objs2Load.push( new LoadDef( '../../obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
-					//this.objs2Load.push( new LoadDef( './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
-					this.objs2Load.push( new LoadDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
-					this.scenePerspective.scene.add( pivot );
 				};
 
 				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
+					this.reloadAssets();
+
+					return true;
+				};
+
+				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
+
+				};
+
+				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
+					this.controls.handleResize();
+				};
+
+
+				WWOBJLoaderChecker.prototype.renderPre = function () {
+					this.controls.update();
+
+					this.mesh.rotation.x += 0.05;
+					this.mesh.rotation.y += 0.05;
+				};
+
+				WWOBJLoaderChecker.prototype.clearAssets = function ( objs ) {
+					for ( var i = 0; i < this.objs2Load.length; i++ ) {
+						this.scenePerspective.scene.remove( this.objs2Load[i].pivot );
+					}
+				};
+
+				WWOBJLoaderChecker.prototype.updateAssets = function ( objs ) {
+					this.objs2Load = [];
+					if ( objs !== undefined && objs !== null ) {
+
+						for ( var i = 0; i < objs.length; i ++ ) {
+							this.objs2Load.push( objs[i] );
+						}
+
+					}
+				};
+
+				WWOBJLoaderChecker.prototype.reloadAssets = function () {
 					var scope = this;
-					var zipTools = null;
+					scope.loadCounter = 0;
+
 					var feedback = document.getElementById( 'feedback' );
 
 					var reportProgress = function( text ) {
@@ -199,10 +233,11 @@
 							var obj2Load = scope.objs2Load[scope.loadCounter];
 							scope.loadCounter++;
 
+							scope.scenePerspective.scene.add( obj2Load.pivot );
 							scope.wwObjFrontEnd.setObjGroup( obj2Load.pivot );
 							if ( obj2Load.fileZip !== null ) {
 
-								zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
+								var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
 								var mtlAsString = null;
 
 								var setObjAsArrayBuffer = function( data ) {
@@ -247,20 +282,6 @@
 					scope.wwObjFrontEnd.registerHookCompletedLoading( loader );
 					scope.wwObjFrontEnd.registerProgressCallback( reportProgress );
 					loader();
-
-					return true;
-				};
-
-				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
-					this.controls.handleResize();
-				};
-
-
-				WWOBJLoaderChecker.prototype.renderPre = function () {
-					this.controls.update();
-
-					this.mesh.rotation.x += 0.05;
-					this.mesh.rotation.y += 0.05;
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
@@ -269,12 +290,57 @@
 
 			})();
 
+			THREE.examples.loaders.WWOBJLoaderDef = (function () {
+
+				function WWOBJLoaderDef( pathBase, fileObj, fileMtl, pathTexture, fileZip, pivot ) {
+					this.pathBase = pathBase;
+					this.fileObj = fileObj;
+					this.fileMtl = fileMtl;
+					this.pathTexture = pathTexture;
+					this.fileZip = fileZip;
+					this.pivot = pivot;
+				}
+
+				return WWOBJLoaderDef;
+
+			})();
+
+
+			var objsFemaleMale = [];
+			var pivot = new THREE.Object3D();
+			pivot.position.set( 0, 0, -75 );
+			objsFemaleMale.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, pivot ) );
+			pivot = new THREE.Object3D();
+			pivot.position.set( 0, 0, 75 );
+			objsFemaleMale.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
+
+
+			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+			var objsZomaxPlain = [];
+			objsZomaxPlain.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
+			objsZomaxPlain.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
+
+
+			var objsZomaxZip = [];
+			objsZomaxZip.push( new THREE.examples.loaders.WWOBJLoaderDef( './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
+			objsZomaxZip.push( new THREE.examples.loaders.WWOBJLoaderDef( './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
+
+			var reloadMaleFemale = function () {
+				app.clearAssets();
+				app.updateAssets( objsFemaleMale );
+				app.reloadAssets();
+			};
+
 
 			var app = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
+			// default assets
+			app.updateAssets( objsFemaleMale );
 
 			// AppRunner handles ThreeJsApp init, window resize event and render loop
 			var appRunner = new THREE.examples.apps.AppRunner( app );
 			appRunner.run( true );
+
 		</script>
 
 	</body>
