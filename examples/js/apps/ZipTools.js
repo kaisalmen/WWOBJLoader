@@ -23,7 +23,7 @@ THREE.examples.apps.ZipTools = (function () {
 		this.zipContent = null;
 	}
 
-	ZipTools.prototype.load = function ( filename, callbackFinish, callbackProgress ) {
+	ZipTools.prototype.load = function ( filename, callbacks ) {
 		var scope = this;
 		var refPercentComplete = 0;
 		var percentComplete = 0;
@@ -33,7 +33,7 @@ THREE.examples.apps.ZipTools = (function () {
 			.then( function ( zip ) {
 
 				scope.zipContent = zip;
-				callbackFinish();
+				callbacks.success();
 
 			} );
 		};
@@ -48,9 +48,9 @@ THREE.examples.apps.ZipTools = (function () {
 					refPercentComplete = percentComplete;
 					var output = 'Download of "' + filename + '": ' + percentComplete + '%';
 					console.log( output );
-					if ( callbackProgress !== null && callbackProgress !== undefined ) {
+					if ( callbacks.progress !== null && callbacks.progress !== undefined ) {
 
-						callbackProgress( output );
+						callbacks.progress( output );
 
 					}
 
@@ -59,7 +59,9 @@ THREE.examples.apps.ZipTools = (function () {
 		};
 
 		var onError = function ( event ) {
-			console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
+			var output = 'Error of type "' + event.type + '" occurred when trying to load: ' + filename;
+			console.error( output );
+			callbacks.error( output );
 		};
 
 		console.log( 'Starting download: ' + filename );

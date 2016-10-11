@@ -44,16 +44,23 @@
 				background-color: #000000;
 			}
 			#feedback {
-				color: orange;
+				color: darkorange;
 			}
 			#menu {
 				margin: 4px 4px 4px 4px;
 				padding: 4px 12px 4px 12px;
 				border-style: solid;
 				border-radius: 8px;
+				border-color: darkorange;
 				position: absolute;
 				left: 0px;
 				top: 0px;
+			}
+			#clear {
+				color: red;
+			}
+			h2 {
+				color: darkorange;
 			}
 			p {
 				margin: 4px 0px 4px 0px;
@@ -70,9 +77,12 @@
 		</div>
 		<div id="glFullscreen">
 			<div id="menu">
-				<h2>OBJ Choices:</h2>
-				<p onclick="reloadMaleFemale()">Male + Female</p>
-				<p onclick="">Kitchen</p>
+				<h2>Select OBJ files:</h2>
+				<p onclick="loadAssets( objsFemaleMale )">Male + Female</p>
+				<p onclick="loadAssets( objsZomaxZip )">Sink + Oven</p>
+				<p onclick="loadAssets( objsPtv1Zip )">PTV1</p>
+				<br>
+				<p id="clear" onclick="clearAllAssests()">Clear all</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
@@ -131,17 +141,30 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
-					this.wwObjFrontEnd.setDebug( true );
-
+					this.wwObjFrontEnd = null;
 					this.lights = null;
 					this.controls = null;
 
 					this.loadCounter = 0;
 					this.objs2Load = [];
+					this.allAssets = [];
+
+					this.processing = false;
 				}
 
-				// ThreeJsApp.initPreGL()  not required, default is used
+				WWOBJLoaderChecker.prototype.initPreGL = function () {
+					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
+					this.wwObjFrontEnd.setDebug( true );
+
+					var scope = this;
+					var reloadAssetsProxy = function () {
+						scope.reloadAssets();
+					};
+					this.wwObjFrontEnd.registerHookCompletedLoading( reloadAssetsProxy );
+
+					this.wwObjFrontEnd.registerProgressCallback( this.reportProgress );
+					this.asyncDone = true;
+				};
 
 				WWOBJLoaderChecker.prototype.initGL = function () {
 					this.renderer.setClearColor(0x303030);
@@ -185,13 +208,8 @@
 				};
 
 				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
-
-				};
-
-				WWOBJLoaderChecker.prototype.resizeDisplayGL = function () {
 					this.controls.handleResize();
 				};
-
 
 				WWOBJLoaderChecker.prototype.renderPre = function () {
 					this.controls.update();
@@ -200,88 +218,113 @@
 					this.mesh.rotation.y += 0.05;
 				};
 
-				WWOBJLoaderChecker.prototype.clearAssets = function ( objs ) {
-					for ( var i = 0; i < this.objs2Load.length; i++ ) {
-						this.scenePerspective.scene.remove( this.objs2Load[i].pivot );
+				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
+					for ( var asset in this.allAssets ) {
+						this.scenePerspective.scene.remove( this.allAssets[asset].pivot );
 					}
+					this.loadCounter = 0;
+					this.allAssets = [];
 				};
 
 				WWOBJLoaderChecker.prototype.updateAssets = function ( objs ) {
 					this.objs2Load = [];
+					this.loadCounter = 0;
+					this.processing = true;
+
 					if ( objs !== undefined && objs !== null ) {
 
+						var obj2Load;
+						var pivot;
+						var errors = '';
+
 						for ( var i = 0; i < objs.length; i ++ ) {
-							this.objs2Load.push( objs[i] );
+
+							obj2Load = objs[i];
+							if ( ! this.allAssets.hasOwnProperty( obj2Load.name ) ) {
+
+								pivot = new THREE.Object3D();
+								pivot.position.set( obj2Load.pos.x, obj2Load.pos.y, obj2Load.pos.z );
+								obj2Load.pivot = pivot;
+								this.objs2Load.push( obj2Load );
+								this.allAssets[obj2Load.name] = obj2Load;
+
+							} else {
+
+								errors += obj2Load.name + ' ';
+
+							}
+
+							if ( errors !== '' ) {
+								this.reportProgress( 'Will not reload: ' + errors );
+							}
+
 						}
 
 					}
 				};
 
+				WWOBJLoaderChecker.prototype.reportProgress = function( text ) {
+					document.getElementById( 'feedback' ).innerHTML = text;
+				};
+
 				WWOBJLoaderChecker.prototype.reloadAssets = function () {
 					var scope = this;
-					scope.loadCounter = 0;
 
-					var feedback = document.getElementById( 'feedback' );
+					if ( scope.loadCounter < scope.objs2Load.length ) {
 
-					var reportProgress = function( text ) {
-						feedback.innerHTML = text;
-					};
+						var obj2Load = scope.objs2Load[ scope.loadCounter ];
+						scope.loadCounter ++;
 
-					var loader = function () {
-						if ( scope.loadCounter < scope.objs2Load.length ) {
+						scope.scenePerspective.scene.add( obj2Load.pivot );
+						scope.wwObjFrontEnd.setObjGroup( obj2Load.pivot );
 
-							var obj2Load = scope.objs2Load[scope.loadCounter];
-							scope.loadCounter++;
+						if ( obj2Load.fileZip !== null ) {
 
-							scope.scenePerspective.scene.add( obj2Load.pivot );
-							scope.wwObjFrontEnd.setObjGroup( obj2Load.pivot );
-							if ( obj2Load.fileZip !== null ) {
 
-								var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
-								var mtlAsString = null;
+							var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
+							var mtlAsString = null;
 
-								var setObjAsArrayBuffer = function( data ) {
-									reportProgress( '' );
-									scope.wwObjFrontEnd.initWithData( data, mtlAsString, obj2Load.pathTexture );
-									scope.wwObjFrontEnd.run();
-								};
-
-								var setMtlAsString = function( data ) {
-									mtlAsString = data;
-									reportProgress( 'Unzipping: ' + obj2Load.fileObj );
-									zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
-								};
-
-								var doneUnzipping = function() {
-									if ( obj2Load.fileMtl !== null ) {
-
-										zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
-
-									} else {
-
-										setMtlAsString( null );
-
-									}
-								};
-
-								zipTools.load( obj2Load.fileZip, doneUnzipping, reportProgress  );
-
-							} else {
-
-								scope.wwObjFrontEnd.initWithFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+							var setObjAsArrayBuffer = function ( data ) {
+								scope.reportProgress( '' );
+								scope.wwObjFrontEnd.initWithData( data, mtlAsString, obj2Load.pathTexture );
 								scope.wwObjFrontEnd.run();
+							};
 
-							}
+							var setMtlAsString = function ( data ) {
+								mtlAsString = data;
+								scope.reportProgress( 'Unzipping: ' + obj2Load.fileObj );
+								zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
+							};
+
+							var doneUnzipping = function () {
+								if ( obj2Load.fileMtl !== null ) {
+
+									zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
+
+								} else {
+
+									setMtlAsString( null );
+
+								}
+							};
+
+							var errorCase = function ( text ) {
+								scope.reportProgress( text );
+								scope.processing = false;
+							};
+							zipTools.load( obj2Load.fileZip, { success: doneUnzipping, progress: scope.reportProgress, error: errorCase } );
+
 						} else {
 
-							scope.wwObjFrontEnd.terminateWorker();
+							scope.wwObjFrontEnd.initWithFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+							scope.wwObjFrontEnd.run();
 
 						}
-					};
+					} else {
 
-					scope.wwObjFrontEnd.registerHookCompletedLoading( loader );
-					scope.wwObjFrontEnd.registerProgressCallback( reportProgress );
-					loader();
+						scope.processing = false;
+
+					}
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
@@ -290,48 +333,42 @@
 
 			})();
 
-			THREE.examples.loaders.WWOBJLoaderDef = (function () {
-
-				function WWOBJLoaderDef( pathBase, fileObj, fileMtl, pathTexture, fileZip, pivot ) {
-					this.pathBase = pathBase;
-					this.fileObj = fileObj;
-					this.fileMtl = fileMtl;
-					this.pathTexture = pathTexture;
-					this.fileZip = fileZip;
-					this.pivot = pivot;
-				}
-
-				return WWOBJLoaderDef;
-
-			})();
+			var WWOBJLoaderDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos ) {
+				this.name = name;
+				this.pathBase = pathBase;
+				this.fileObj = fileObj;
+				this.fileMtl = fileMtl;
+				this.pathTexture = pathTexture;
+				this.fileZip = fileZip;
+				this.pos = pos;
+				this.pivot = null;
+			};
 
 
 			var objsFemaleMale = [];
-			var pivot = new THREE.Object3D();
-			pivot.position.set( 0, 0, -75 );
-			objsFemaleMale.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, pivot ) );
-			pivot = new THREE.Object3D();
-			pivot.position.set( 0, 0, 75 );
-			objsFemaleMale.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, pivot ) );
-
+			objsFemaleMale.push( new WWOBJLoaderDef( 'male02', '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
+			objsFemaleMale.push( new WWOBJLoaderDef( 'female02', '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
 
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-			var objsZomaxPlain = [];
-			objsZomaxPlain.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, null, pivot ) );
-			objsZomaxPlain.push( new THREE.examples.loaders.WWOBJLoaderDef( '../../obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, null, pivot ) );
-
-
 			var objsZomaxZip = [];
-			objsZomaxZip.push( new THREE.examples.loaders.WWOBJLoaderDef( './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', pivot ) );
-			objsZomaxZip.push( new THREE.examples.loaders.WWOBJLoaderDef( './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', pivot ) );
+			objsZomaxZip.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+			objsZomaxZip.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
 
-			var reloadMaleFemale = function () {
-				app.clearAssets();
-				app.updateAssets( objsFemaleMale );
-				app.reloadAssets();
+			var objsPtv1Zip = [];
+			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -150, y: 0, z: -175 } ) );
+
+			var loadAssets = function ( assets ) {
+				if ( ! app.processing ) {
+					app.updateAssets( assets );
+					app.reloadAssets();
+				}
+
 			};
 
+			var clearAllAssests = function () {
+				app.clearAllAssests();
+			};
 
 			var app = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
 			// default assets
