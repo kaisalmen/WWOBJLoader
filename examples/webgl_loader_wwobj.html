@@ -87,7 +87,7 @@
 			<canvas id="example"></canvas>
 		</div>
 
-		<script src="../build/three.min.js"></script>
+		<script src="../build/three.js"></script>
 
 		<script src="js/Detector.js"></script>
 
@@ -160,10 +160,13 @@
 					var reloadAssetsProxy = function () {
 						scope.reloadAssets();
 					};
+					// reloadAsset will be recalled after one load is done
+					// It will check status of this.objs2Load internally
 					this.wwObjFrontEnd.registerHookCompletedLoading( reloadAssetsProxy );
-
 					this.wwObjFrontEnd.registerProgressCallback( this.reportProgress );
-					this.asyncDone = true;
+
+					// tell ThreeJsApp async loading is done (none needed here)
+					this.preloadDone = true;
 				};
 
 				WWOBJLoaderChecker.prototype.initGL = function () {
@@ -219,8 +222,40 @@
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
+					var ref;
+					var scope = this;
+
 					for ( var asset in this.allAssets ) {
-						this.scenePerspective.scene.remove( this.allAssets[asset].pivot );
+						ref = this.allAssets[asset];
+
+						var remover = function ( object3d ) {
+
+							if ( object3d === ref.pivot ) {
+								return;
+							}
+							console.log( 'Removing ' + object3d.name );
+							scope.scenePerspective.scene.remove( object3d );
+
+							if ( object3d.hasOwnProperty( 'geometry' ) ) {
+								object3d.geometry.dispose();
+							}
+							if ( object3d.hasOwnProperty( 'material' ) ) {
+
+								var mat = object3d.material;
+								if ( mat.hasOwnProperty( 'materials' ) ) {
+
+									for ( var mmat in mat.materials ) {
+										mat.materials[mmat].dispose();
+									}
+								}
+							}
+							if ( object3d.hasOwnProperty( 'texture' ) ) {
+								object3d.texture.dispose();
+							}
+						};
+						scope.scenePerspective.scene.remove( ref.pivot );
+						ref.pivot.traverse( remover );
+						ref.pivot = null;
 					}
 					this.loadCounter = 0;
 					this.allAssets = [];
@@ -323,6 +358,7 @@
 					} else {
 
 						scope.processing = false;
+//						scope.wwObjFrontEnd.terminateWorker();
 
 					}
 				};
@@ -359,23 +395,53 @@
 			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -150, y: 0, z: -175 } ) );
 
 			var loadAssets = function ( assets ) {
-				if ( ! app.processing ) {
-					app.updateAssets( assets );
-					app.reloadAssets();
+				if ( ! APP.processing ) {
+					APP.updateAssets( assets );
+					APP.reloadAssets();
 				}
 
 			};
 
 			var clearAllAssests = function () {
-				app.clearAllAssests();
+				APP.clearAllAssests();
 			};
+/*
+			var i = 0;
+			var clearAllAssests = function () {
 
-			var app = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
-			// default assets
-			app.updateAssets( objsFemaleMale );
+				var runClearAndReload = function () {
+					console.log( 'Run: ' + i );
+					APP.clearAllAssests();
+					loadAssets( objsFemaleMale );
+					if ( i < 50 ) {
+						clearAllAssests();
+					}
+					i++;
+				};
+
+				var interval = 100;
+				var checkStatus = setInterval( checkStatusTimer, interval );
+
+				function checkStatusTimer() {
+					if ( ! APP.processing ) {
+
+						clearInterval( checkStatus );
+						runClearAndReload();
+
+					} else {
+
+						console.log( i + ': Waiting...' );
+
+					}
+				}
+			};
+*/
+			var APP = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
+			// set default asset in objs2Load (array of WWOBJLoaderDef that should be loaded)
+			APP.updateAssets( objsFemaleMale );
 
 			// AppRunner handles ThreeJsApp init, window resize event and render loop
-			var appRunner = new THREE.examples.apps.AppRunner( app );
+			var appRunner = new THREE.examples.apps.AppRunner( APP );
 			appRunner.run( true );
 
 		</script>

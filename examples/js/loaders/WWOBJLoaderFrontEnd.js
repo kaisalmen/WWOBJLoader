@@ -12,15 +12,9 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 			throw "This browser does not support web workers!"
 		}
 
-		this.worker = new Worker( basedir + "/js/loaders/WWOBJLoader.js" );
-
-		var scope = this;
-		var scopeFunction = function ( e ) {
-			scope.processData( e );
-		};
-		this.worker.addEventListener( 'message', scopeFunction, false );
-
-		this.mtlLoader = new THREE.MTLLoader();
+		this.basedir = basedir;
+		this.worker = null;
+		this.mtlLoader = null;
 		this.mtlFile = null;
 		this.texturePath = null;
 		this.dataAvailable = false;
@@ -109,7 +103,30 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		}
 	};
 
+	WWOBJLoaderFrontEnd.prototype.initWorker = function () {
+		if ( this.worker === null ) {
+
+			this.worker = new Worker( this.basedir + "/js/loaders/WWOBJLoader.js" );
+
+			var scope = this;
+			var scopeFunction = function ( e ) {
+				scope.processData( e );
+			};
+			this.worker.addEventListener( 'message', scopeFunction, false );
+
+		}
+
+		if ( this.mtlLoader === null ) {
+
+			this.mtlLoader = new THREE.MTLLoader();
+
+		}
+		this.counter = 0;
+	};
+
 	WWOBJLoaderFrontEnd.prototype.initWithFiles = function ( basePath, objFile, mtlFile, texturePath ) {
+
+		this.initWorker();
 
 		console.time( 'WWOBJLoaderFrontEnd' );
 		this.dataAvailable = false;
@@ -131,6 +148,8 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.initWithData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
+
+		this.initWorker();
 
 		console.time( 'WWOBJLoaderFrontEnd' );
 		this.dataAvailable = true;
@@ -377,7 +396,15 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.terminateWorker = function () {
-		this.worker.terminate();
+		if ( this.worker !== null ) {
+
+			this.worker.terminate();
+
+		}
+		this.worker = null;
+		this.mtlLoader = null;
+		this.materials = [];
+		this.counter = 0;
 	};
 
 	return WWOBJLoaderFrontEnd;

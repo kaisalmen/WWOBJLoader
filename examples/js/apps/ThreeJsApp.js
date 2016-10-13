@@ -39,7 +39,7 @@ THREE.examples.apps.ThreeJsApp = (function () {
         this.frameNumber = 0;
 
         this.initOk = true;
-        this.asyncDone = false;
+        this.preloadDone = false;
 
         this.definition = THREE.examples.apps.ThreeJsAppDefaultDefinition;
         this.scenePerspective = null;
@@ -91,7 +91,7 @@ THREE.examples.apps.ThreeJsApp = (function () {
 
         for ( var user in defUser ) {
 
-            if ( ! defPredefined.hasOwnProperty( user ) ) {
+            if ( defUser.hasOwnProperty( user ) && ! defPredefined.hasOwnProperty( user ) ) {
 
                 delete defUser[user];
             }
@@ -140,13 +140,13 @@ THREE.examples.apps.ThreeJsApp = (function () {
         var interval = 10;
         var count = 0;
         var divider = 50;
-        var checkAsyncStatus = setInterval( checkAsyncStatusTimer, interval );
+        var checkPreloadDone = setInterval( checkPreloadDoneTimer, interval );
 
-        function checkAsyncStatusTimer() {
-            if ( scope.asyncDone ) {
+        function checkPreloadDoneTimer() {
+            if ( scope.preloadDone ) {
 
-                clearInterval(checkAsyncStatus);
-                console.log( 'Async loading took approx. ' + interval * count  + 'ms.' );
+                clearInterval( checkPreloadDone );
+                console.log( 'Pre-loading took approx. ' + interval * count  + 'ms.' );
                 if ( scope.initOk ) {
 
                     initSync();
@@ -156,7 +156,7 @@ THREE.examples.apps.ThreeJsApp = (function () {
             else {
                 if ( count % divider === 0 ) {
 
-                    console.log( 'Waiting for initPreGL to complete (' + interval * count  + 'ms)' );
+                    console.log( 'Waiting for pre-loading (initPreGL) to complete (' + interval * count  + 'ms)' );
 
                 }
                 count++;
@@ -181,7 +181,7 @@ THREE.examples.apps.ThreeJsApp = (function () {
      * Override if needed.
      */
     ThreeJsApp.prototype.initPreGL = function () {
-        this.asyncDone = true;
+        this.preloadDone = true;
     };
 
     /**
