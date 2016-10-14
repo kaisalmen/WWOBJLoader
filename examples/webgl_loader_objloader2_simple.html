@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>WWOBJLoader Testbed</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px 0px 0px 0px;
+				padding: 0px 0px 0px 0px;
+				border: none;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a, .button {
+				color: #f00;
+				font-weight: bold;
+				text-decoration: underline;
+				cursor: pointer
+			}
+			#glFullscreen {
+				width: 100%;
+				height: 100vh;
+				min-width: 640px;
+				min-height: 360px;
+				position: relative;
+				overflow: hidden;
+			}
+			#example {
+				width: 100%;
+				height: 100%;
+				top: 0px;
+				left: 0px;
+				background-color: #000000;
+			}
+			#feedback {
+				color: darkorange;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<div id="feedback">Force flat shading!</div>
+		</div>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+
+		<script src="../build/three.js"></script>
+		<script src="js/Detector.js"></script>
+
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/loaders/MTLLoader.js"></script>
+		<script src="js/loaders/OBJLoader2.js"></script>
+
+		<script src="js/apps/ThreeJsApp.js"></script>
+		<script src="js/apps/AppRunner.js"></script>
+
+		<script>
+
+			if (THREE.examples.loaders === undefined) {
+				THREE.examples.loaders = {};
+			}
+
+			/**
+			 * ThreeJsApp serves as base class that defines an application life-cycle and
+			 * handles some things you always need to do when writing an example:
+			 * - Renderer init
+			 * - Perspective scene with camera (enabled by default)
+			 *   - CubeMap scene (disabled by default)
+			 * - Orthographic scene with camera (disabled by default)
+			 * - Canvas/renderer size changes
+			 *
+			 * This example extends ThreeJsApp and overwrites only functions needed.
+			 */
+			THREE.examples.loaders.OBJLoader2SimpleCheck = (function () {
+
+				OBJLoader2SimpleCheck.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
+					constructor: {
+						configurable: true,
+						enumerable: true,
+						value: OBJLoader2SimpleCheck,
+						writable: true
+					}
+				});
+
+				function OBJLoader2SimpleCheck( elementToBindTo ) {
+					THREE.examples.apps.ThreeJsApp.call( this );
+
+					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
+					// Only define what is required (name and htmlCanvas).
+					this.configure( {
+						name: 'OBJLoader2SimpleCheck',
+						htmlCanvas: elementToBindTo
+					} );
+
+					this.lights = null;
+					this.controls = null;
+				}
+
+				// ThreeJsApp.initPreGL()  not required, default is used
+
+				OBJLoader2SimpleCheck.prototype.initGL = function () {
+					this.renderer.setClearColor(0x303030);
+
+					var cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 0.0, 250.0 )
+					};
+					this.scenePerspective.setCameraDefaults( cameraDefaults );
+					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+
+					this.lights = {
+						ambientLight: new THREE.AmbientLight( 0x202020 ),
+						directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
+						lightArray: new THREE.Object3D()
+					};
+
+					this.lights.directionalLight1.position.set( -100, 0, 100 );
+					this.lights.directionalLight2.position.set( 100, 0, 100 );
+					this.lights.directionalLight3.position.set( 0, 0, -100 );
+
+					this.lights.lightArray.add( this.lights.directionalLight1 );
+					this.lights.lightArray.add( this.lights.directionalLight2 );
+					this.lights.lightArray.add( this.lights.directionalLight3 );
+					this.scenePerspective.scene.add( this.lights.lightArray );
+
+
+					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+					var material = new THREE.MeshNormalMaterial();
+					this.mesh = new THREE.Mesh( geometry, material );
+					this.scenePerspective.scene.add( this.mesh );
+				};
+
+				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
+
+				OBJLoader2SimpleCheck.prototype.initPostGL = function () {
+					var scope = this;
+
+					var path = './obj/female02/';
+					var fileMtl = 'female02.mtl';
+					var fileObj = 'female02.obj';
+					var mtlLoader = new THREE.MTLLoader();
+					mtlLoader.setPath( path );
+					mtlLoader.load( fileMtl, function( materials ) {
+
+						materials.preload();
+
+						var objLoader = new THREE.OBJLoader();
+						objLoader.setMaterials( materials );
+						objLoader.setLoadAsArrayBuffer( true );
+						objLoader.setWorkInline( true );
+						objLoader.setForceFlat( true );
+						objLoader.setPath( path );
+
+						var onSuccess = function ( object ) {
+							var mesh;
+							for ( var childName in object.children ) {
+								mesh = object.children[childName];
+								console.log( mesh.material );
+								if ( mesh.material instanceof THREE.MultiMaterial ) {
+
+									var mat;
+									for ( var matName in mesh.material.materials ) {
+										mat = mesh.material.materials[matName];
+										mat.side = THREE.DoubleSide;
+									}
+								}
+							}
+
+							scope.scenePerspective.scene.add( object );
+						};
+
+						var onProgress = function ( event ) {
+							if ( event.lengthComputable ) {
+
+								var percentComplete = event.loaded / event.total * 100;
+								var output = 'Download of "' + fileObj + '": ' + Math.round( percentComplete ) + '%';
+								console.log(output);
+
+							}
+						};
+
+						var onError = function ( event ) {
+							console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
+						};
+
+						objLoader.load( fileObj, onSuccess, onProgress, onError );
+
+					});
+
+					return true;
+				};
+
+				OBJLoader2SimpleCheck.prototype.resizeDisplayGL = function () {
+					this.controls.handleResize();
+				};
+
+				OBJLoader2SimpleCheck.prototype.renderPre = function () {
+					this.controls.update();
+
+					this.mesh.rotation.x += 0.05;
+					this.mesh.rotation.y += 0.05;
+				};
+
+				// ThreeJsApp.renderPost()  not required, default is used
+
+				return OBJLoader2SimpleCheck;
+
+			})();
+
+			var APP = new THREE.examples.loaders.OBJLoader2SimpleCheck( document.getElementById( 'example' ) );
+
+			// AppRunner handles ThreeJsApp init, window resize event and render loop
+			var appRunner = new THREE.examples.apps.AppRunner( APP );
+			appRunner.run( true );
+
+		</script>
+
+	</body>
+</html>

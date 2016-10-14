@@ -116,7 +116,17 @@ THREE.OBJLoader.prototype = {
 
 	},
 
-	_createParserState : function ( workInline, workInlineCallback ) {
+	/**
+	 * Enforce flat shading for all objects
+	 * @param forceFlat
+	 */
+	setForceFlat: function ( forceFlat ) {
+
+		this.forceFlat = forceFlat;
+
+	},
+
+	_createParserState : function ( workInline, forceFlat, workInlineCallback ) {
 
 		var state = {
 			objects  : [],
@@ -127,6 +137,8 @@ THREE.OBJLoader.prototype = {
 			uvs      : [],
 
 			materialLibraries : [],
+
+			forceFlat: forceFlat,
 
 			startObject: function ( name, fromDeclaration ) {
 
@@ -158,7 +170,7 @@ THREE.OBJLoader.prototype = {
 						uvs      : []
 					},
 					materials : [],
-					smooth : true,
+					smooth : ! forceFlat,
 
 					startMaterial : function( name, libraries ) {
 
@@ -569,11 +581,11 @@ THREE.OBJLoader.prototype = {
 				}
 			};
 
-			return this._createParserState( this.workInline, workInlineCallback );
+			return this._createParserState( this.workInline, this.forceFlat, workInlineCallback );
 
 		} else {
 
-			return this._createParserState( false, null );
+			return this._createParserState( false, this.forceFlat, null );
 
 		}
 	},
@@ -743,14 +755,25 @@ THREE.OBJLoader.prototype = {
 			// Example asset: examples/models/obj/cerberus/Cerberus.obj
 
 			var value = result[ 1 ].trim().toLowerCase();
-			state.object.smooth = ( value !== '0' || value === 'on' );
 
-			var material = state.object.currentMaterial();
-			if ( material ) {
+			// http://paulbourke.net/dataformats/obj/
+			// Vertex normals affect the smooth-shading and rendering of geometry.
+			// For polygons, vertex normals are used in place of the actual facet
+			// normals.  For surfaces, vertex normals are interpolated over the
+			// entire surface and replace the actual analytic surface normal.
 
-				material.smooth = state.object.smooth;
+			// When vertex normals are present, they supersede smoothing groups.
+			//if ( ! this.forceFlat && ! state.object.hasVN ) {
+			if ( ! this.forceFlat  ) {
+				state.object.smooth = value !== '0' && value !== 'off';
 
+				var material = state.object.currentMaterial();
+				if ( material ) {
+
+					material.smooth = state.object.smooth;
+				}
 			}
+
 
 		} else {
 
