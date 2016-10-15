@@ -116,17 +116,7 @@ THREE.OBJLoader.prototype = {
 
 	},
 
-	/**
-	 * Enforce flat shading for all objects
-	 * @param forceFlat
-	 */
-	setForceFlat: function ( forceFlat ) {
-
-		this.forceFlat = forceFlat;
-
-	},
-
-	_createParserState : function ( workInline, forceFlat, workInlineCallback ) {
+	_createParserState : function ( workInline, workInlineCallback ) {
 
 		var state = {
 			objects  : [],
@@ -137,8 +127,6 @@ THREE.OBJLoader.prototype = {
 			uvs      : [],
 
 			materialLibraries : [],
-
-			forceFlat: forceFlat,
 
 			startObject: function ( name, fromDeclaration ) {
 
@@ -170,7 +158,7 @@ THREE.OBJLoader.prototype = {
 						uvs      : []
 					},
 					materials : [],
-					smooth : ! forceFlat,
+					smooth : true,
 
 					startMaterial : function( name, libraries ) {
 
@@ -581,11 +569,11 @@ THREE.OBJLoader.prototype = {
 				}
 			};
 
-			return this._createParserState( this.workInline, this.forceFlat, workInlineCallback );
+			return this._createParserState( this.workInline, workInlineCallback );
 
 		} else {
 
-			return this._createParserState( false, this.forceFlat, null );
+			return this._createParserState( false, null );
 
 		}
 	},
@@ -763,17 +751,22 @@ THREE.OBJLoader.prototype = {
 			// entire surface and replace the actual analytic surface normal.
 
 			// When vertex normals are present, they supersede smoothing groups.
-			//if ( ! this.forceFlat && ! state.object.hasVN ) {
-			if ( ! this.forceFlat  ) {
+
+			if ( state.object.normals && state.object.normals.length > 0 ) {
+
+				state.object.smooth = true;
+
+			} else {
+
 				state.object.smooth = value !== '0' && value !== 'off';
 
-				var material = state.object.currentMaterial();
-				if ( material ) {
-
-					material.smooth = state.object.smooth;
-				}
 			}
 
+			var material = state.object.currentMaterial();
+			if ( material ) {
+
+				material.smooth = state.object.smooth;
+			}
 
 		} else {
 
