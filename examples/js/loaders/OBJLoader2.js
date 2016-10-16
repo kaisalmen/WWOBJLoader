@@ -508,9 +508,12 @@ THREE.OBJLoader.prototype = {
 				this._processLine( state, line );
 				line = '';
 
-			// only attach characters if not CR
-			} else if ( code !== 13 ) {
+				if ( view[ currentPos + 1 ] === 13 ) {
+					currentPos++;
+				}
 
+			// only attach characters if not CR
+			} else {
 
 				line += String.fromCharCode( code );
 
