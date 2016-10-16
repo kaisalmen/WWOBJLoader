@@ -79,6 +79,8 @@
 			<div id="menu">
 				<h2>Select OBJ files:</h2>
 				<p onclick="loadAssets( objsFemaleMale )">Male + Female</p>
+				<p onclick="loadAssets( objsCapsule )">Capsule</p>
+				<p onclick="loadAssets( objsCerberus )">Cerberus</p>
 				<p onclick="loadAssets( objsZomaxZip )">Sink + Oven</p>
 				<p onclick="loadAssets( objsPtv1Zip )">PTV1</p>
 				<br>
@@ -95,7 +97,6 @@
 
 		<script src="js/controls/TrackballControls.js"></script>
 		<script src="js/loaders/MTLLoader.js"></script>
-		<script src="js/loaders/OBJLoader.js"></script>
 
 		<script src="js/apps/ThreeJsApp.js"></script>
 		<script src="js/apps/AppRunner.js"></script>
@@ -144,6 +145,8 @@
 					this.wwObjFrontEnd = null;
 					this.lights = null;
 					this.controls = null;
+
+					this.cube = null;
 
 					this.loadCounter = 0;
 					this.objs2Load = [];
@@ -198,8 +201,9 @@
 
 					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 					var material = new THREE.MeshNormalMaterial();
-					this.mesh = new THREE.Mesh( geometry, material );
-					this.scenePerspective.scene.add( this.mesh );
+					this.cube = new THREE.Mesh( geometry, material );
+					this.cube.position.set( 0, -20, 0 );
+					this.scenePerspective.scene.add( this.cube );
 				};
 
 				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
@@ -217,8 +221,8 @@
 				WWOBJLoaderChecker.prototype.renderPre = function () {
 					this.controls.update();
 
-					this.mesh.rotation.x += 0.05;
-					this.mesh.rotation.y += 0.05;
+					this.cube.rotation.x += 0.05;
+					this.cube.rotation.y += 0.05;
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
@@ -393,6 +397,12 @@
 
 			var objsPtv1Zip = [];
 			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -150, y: 0, z: -175 } ) );
+
+			var objsCerberus = [];
+			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: 20, z: 0 } ) );
+
+			var objsCapsule = [];
+			objsCapsule.push( new WWOBJLoaderDef( 'capsule', '../../obj/capsule/', 'capsule.obj', 'capsule.mtl', './obj/capsule/', null, { x: 0, y: 0, z: 0 } ) );
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {

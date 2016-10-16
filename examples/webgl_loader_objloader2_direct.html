@@ -49,17 +49,15 @@
 			#menu {
 				margin: 4px 4px 4px 4px;
 				padding: 4px 12px 4px 12px;
-				border-style: solid;
+				border: solid darkorange;
 				border-radius: 8px;
-				border-color: darkorange;
 				position: absolute;
 				left: 0px;
 				top: 0px;
 			}
 			#shading, #side {
-				border-style: solid;
-				border-radius: 8px;
-				border: 4px 0px 4px 0px;
+				border: solid 4px;
+				border-radius: 4px;
 				font-size: 18pt;
 				cursor: pointer;
 				width: 200px;
@@ -146,10 +144,10 @@
 					this.pivot = null;
 
 					this.fileDef = {
-						path: './obj/female02/',
-						fileObj: 'female02.obj',
-						texturePath: './obj/female02/',
-						fileMtl: 'female02.mtl'
+                        path: './obj/female02/',
+                        fileObj: 'female02.obj',
+                        texturePath: './obj/female02/',
+                        fileMtl: 'female02.mtl'
 					}
 				}
 
@@ -185,6 +183,7 @@
 					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 					var material = new THREE.MeshNormalMaterial();
 					this.cube = new THREE.Mesh( geometry, material );
+                    this.cube.position.set( 0, -20, 0 );
 					this.scenePerspective.scene.add( this.cube );
 
 					this.pivot = new THREE.Object3D();
