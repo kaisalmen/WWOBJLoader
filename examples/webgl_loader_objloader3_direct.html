@@ -203,6 +203,7 @@
 
 						var objLoader = new THREE.OBJLoader();
 						objLoader.setMaterials( materials );
+						objLoader.setLoadAsArrayBuffer( true );
 						objLoader.setPath( scope.fileDef.path );
 
 						var onSuccess = function ( object3d ) {

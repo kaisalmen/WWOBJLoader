@@ -34,6 +34,13 @@ THREE.OBJLoader = (function () {
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
+		this.materials = null;
+		this.group = null;
+		this.lineCount = 0;
+		this.loadAsArrayBuffer = true;
+		this.trimFunction = null;
+		this.path = null;
+
 		this.reInit( true );
 	}
 
@@ -57,7 +64,7 @@ THREE.OBJLoader = (function () {
 	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path ) {
 		this.materials = null;
 		this.container = new THREE.Group();
-
+		this.lineCount = 0;
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 
 		// Define trim function to use once
@@ -83,52 +90,81 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
+		console.time( 'Parse' );
 		if ( this.loadAsArrayBuffer ) {
 
-			return this.parseArrayBuffer( loadedContent );
+			this.parseArrayBuffer( loadedContent );
 
 		} else {
 
-			return this.parseText( loadedContent );
+			this.parseText( loadedContent );
 
 		}
+		console.log( 'Line Count: ' + this.lineCount );
+		console.timeEnd( 'Parse' );
+
+		return this.container;
 	};
 
 	OBJLoader.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 
 		var view = new Uint8Array( arrayBuffer );
 
-		var line = '';
-		var lines = 0;
+		for ( var charCode, codeArray = [], cLength = 0, length = view.byteLength, i = 0; i < length; i++ ) {
 
-		console.time( 'Parse' );
-		console.log( 'Bytes: ' + view.byteLength );
-
-		// for is quicker than while
-		for ( var code, i = 0, length = view.byteLength; i < length; i++ ) {
-
-			code = view[ i ];
+			charCode = view[ i ];
 			// process line on occurrence of LF
-			if ( code === 10  ) {
+			if ( charCode === 10 ) {
 
-				lines++;
-				line = '';
-
-				if ( view[ i + 1 ] === 13 ) {
-					i++;
+				// skip CR if it exists
+				cLength = codeArray.length;
+				if ( codeArray[ cLength - 1 ] === 13 ) {
+					cLength = cLength - 1;
 				}
 
-			// only attach characters if not CR
+				this.parseSingleLine( String.fromCharCode.apply( null, codeArray ) );
+				codeArray = [];
+
 			} else {
 
-				line += String.fromCharCode( code );
+				codeArray.push( charCode );
 
 			}
 
 		}
-		console.log( 'Lines: ' + lines );
-		console.timeEnd( 'Parse' );
+	};
 
+	OBJLoader.prototype.parseText = function ( text ) {
+
+		for ( var char, code, line = '', cLength = 0, length = text.length, i = 0; i < length; i++ ) {
+
+			char = text[ i ];
+			code = char.charCodeAt( 0 );
+			// process line on occurrence of LF
+			if ( code === 10 ) {
+
+				// skip CR if it exists
+				cLength = line.length;
+				if ( line[ cLength - 1 ] === 13 ) {
+					cLength = cLength - 1;
+				}
+				line = line.slice( 0, cLength );
+
+				this.parseSingleLine( line );
+				line = '';
+
+			} else {
+
+				line += char;
+
+			}
+
+		}
+	};
+
+	OBJLoader.prototype.parseSingleLine = function ( line ) {
+//		if ( this.lineCount < 10 ) { console.log( line ); }
+		this.lineCount++;
 	};
 
 	return OBJLoader;

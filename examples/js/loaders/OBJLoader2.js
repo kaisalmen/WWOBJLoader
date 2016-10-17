@@ -497,25 +497,24 @@ THREE.OBJLoader.prototype = {
 		var state = this._prepareParsing();
 
 		var view = new Uint8Array( arrayBuffer );
-		var line = '';
+		for ( var charCode, codeArray = [], cLength = 0, length = view.byteLength, i = 0; i < length; i++ ) {
 
-		for ( var code, currentPos = 0, length = view.length; currentPos < length; currentPos++ ) {
-
-			code = view[currentPos];
+			charCode = view[ i ];
 			// process line on occurrence of LF
-			if ( code === 10  ) {
+			if ( charCode === 10  ) {
 
-				this._processLine( state, line );
-				line = '';
-
-				if ( view[ currentPos + 1 ] === 13 ) {
-					currentPos++;
+				// skip CR if it exists
+				cLength = codeArray.length;
+				if ( codeArray[ cLength - 1 ] === 13 ) {
+					cLength = cLength - 1;
 				}
 
-			// only attach characters if not CR
+				this._processLine( state, String.fromCharCode.apply( null, codeArray) );
+				codeArray = [];
+
 			} else {
 
-				line += String.fromCharCode( code );
+				codeArray.push( charCode );
 
 			}
 		}
