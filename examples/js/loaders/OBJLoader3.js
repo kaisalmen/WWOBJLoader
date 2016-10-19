@@ -110,24 +110,23 @@ THREE.OBJLoader = (function () {
 
 		var view = new Uint8Array( arrayBuffer );
 
-		for ( var charCode, codeArray = [], cLength = 0, length = view.byteLength, i = 0; i < length; i++ ) {
+		for ( var charCode, line = '', length = view.byteLength, i = 0; i < length; i++ ) {
 
 			charCode = view[ i ];
-			// process line on occurrence of LF
-			if ( charCode === 10 ) {
+			// process line on occurrence of CR or LF
+			if ( charCode === 10 || charCode === 13 ) {
 
-				// skip CR if it exists
-				cLength = codeArray.length;
-				if ( codeArray[ cLength - 1 ] === 13 ) {
-					cLength = cLength - 1;
+				// jump over LF if CR exists
+				if ( charCode === 13 ) {
+					i++;
 				}
 
-				this.parseSingleLine( String.fromCharCode.apply( null, codeArray ) );
-				codeArray = [];
+				this.parseSingleLine( line );
+				line = '';
 
 			} else {
 
-				codeArray.push( charCode );
+				line += String.fromCharCode( charCode );
 
 			}
 
@@ -136,19 +135,17 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parseText = function ( text ) {
 
-		for ( var char, code, line = '', cLength = 0, length = text.length, i = 0; i < length; i++ ) {
+		for ( var char, charCode, line = '', length = text.length, i = 0; i < length; i++ ) {
 
 			char = text[ i ];
-			code = char.charCodeAt( 0 );
-			// process line on occurrence of LF
-			if ( code === 10 ) {
+			charCode = char.charCodeAt( 0 );
+			// process line on occurrence of CR or LF
+			if ( charCode === 10 || charCode === 13 ) {
 
-				// skip CR if it exists
-				cLength = line.length;
-				if ( line[ cLength - 1 ] === 13 ) {
-					cLength = cLength - 1;
+				// jump over LF if CR exists
+				if ( charCode === 13 ) {
+					i++;
 				}
-				line = line.slice( 0, cLength );
 
 				this.parseSingleLine( line );
 				line = '';
