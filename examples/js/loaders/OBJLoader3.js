@@ -90,77 +90,71 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-		console.time( 'Parse' );
+
 		if ( this.loadAsArrayBuffer ) {
 
-			this.parseArrayBuffer( loadedContent );
+			console.time( 'ParseAB' );
+			var view = new Uint8Array( loadedContent );
+			for ( var code, line = '', length = view.byteLength, i = 0; i < length; i++ ) {
+
+				code = view[ i ];
+				line = this.checkLine( String.fromCharCode( code ), code, line );
+
+			}
+			console.timeEnd( 'ParseAB' );
 
 		} else {
 
-			this.parseText( loadedContent );
+			console.time( 'ParseText' );
+			for ( var char, line = '', length = loadedContent.length, i = 0; i < length; i++ ) {
+
+				char = text[ i ];
+				line = this.checkLine( char, char.charCodeAt( 0 ), line );
+
+			}
+			console.timeEnd( 'ParseText' );
 
 		}
 		console.log( 'Line Count: ' + this.lineCount );
-		console.timeEnd( 'Parse' );
 
 		return this.container;
 	};
 
-	OBJLoader.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 
-		var view = new Uint8Array( arrayBuffer );
+	OBJLoader.prototype.checkLine = function ( char, code, line ) {
+		// process line on occurrence of CR or LF
+		if ( code === 10 || code === 13 ) {
 
-		for ( var charCode, line = '', length = view.byteLength, i = 0; i < length; i++ ) {
+			// if CR exists line will be length 0 afterwards
+			// LF with CR will then do nothing
+			// LF without CR will have line.length > 0
+			if ( line.length > 0) {
 
-			charCode = view[ i ];
-			// process line on occurrence of CR or LF
-			if ( charCode === 10 || charCode === 13 ) {
-
-				// jump over LF if CR exists
-				if ( charCode === 13 ) {
-					i++;
-				}
-
-				this.parseSingleLine( line );
+				this.processLine( line );
 				line = '';
-
-			} else {
-
-				line += String.fromCharCode( charCode );
 
 			}
 
-		}
-	};
+		} else {
 
-	OBJLoader.prototype.parseText = function ( text ) {
-
-		for ( var char, charCode, line = '', length = text.length, i = 0; i < length; i++ ) {
-
-			char = text[ i ];
-			charCode = char.charCodeAt( 0 );
-			// process line on occurrence of CR or LF
-			if ( charCode === 10 || charCode === 13 ) {
-
-				// jump over LF if CR exists
-				if ( charCode === 13 ) {
-					i++;
-				}
-
-				this.parseSingleLine( line );
-				line = '';
-
-			} else {
-
-				line += char;
-
-			}
+			line += char;
 
 		}
+		return line;
 	};
 
-	OBJLoader.prototype.parseSingleLine = function ( line ) {
-//		if ( this.lineCount < 10 ) { console.log( line ); }
+
+	OBJLoader.prototype.processLine = function ( line ) {
+/*
+		if ( this.lineCount < 10 ) { console.log( line ); }
+
+		var sizeA = line.length;
+		line = this.trimFunction( line );
+		var sizeB = line.length;
+		if ( sizeA !== sizeB ) {
+			console.log( sizeA - sizeB );
+		}
+*/
 		this.lineCount++;
 	};
 
