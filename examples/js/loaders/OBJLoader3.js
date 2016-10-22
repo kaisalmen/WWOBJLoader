@@ -6,40 +6,17 @@
 
 THREE.OBJLoader = (function () {
 
-	var REGEX = {
-		// v float float float
-		vertex_pattern: /^v\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
-		// vn float float float
-		normal_pattern: /^vn\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
-		// vt float float
-		uv_pattern: /^vt\s+([\d|\.|\+|\-|e|E]+)\s+([\d|\.|\+|\-|e|E]+)/,
-		// f vertex vertex vertex
-		face_vertex: /^f\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)(?:\s+(-?\d+))?/,
-		// f vertex/uv vertex/uv vertex/uv
-		face_vertex_uv: /^f\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+))?/,
-		// f vertex/uv/normal vertex/uv/normal vertex/uv/normal
-		face_vertex_uv_normal: /^f\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)\s+(-?\d+)\/(-?\d+)\/(-?\d+)(?:\s+(-?\d+)\/(-?\d+)\/(-?\d+))?/,
-		// f vertex//normal vertex//normal vertex//normal
-		face_vertex_normal: /^f\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)\s+(-?\d+)\/\/(-?\d+)(?:\s+(-?\d+)\/\/(-?\d+))?/,
-		// o object_name | g group_name
-		object_pattern: /^[og]\s*(.+)?/,
-		// s boolean
-		smoothing_pattern: /^s\s+(\d+|on|off)/,
-		// mtllib file_reference
-		material_library_pattern: /^mtllib /,
-		// usemtl material_name
-		material_use_pattern: /^usemtl /
-	};
-
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 		this.materials = null;
 		this.group = null;
-		this.lineCount = 0;
 		this.loadAsArrayBuffer = true;
 		this.trimFunction = null;
 		this.path = null;
+
+		this.input = null;
+		this.debug = false;
 
 		this.reInit( true );
 	}
@@ -64,7 +41,6 @@ THREE.OBJLoader = (function () {
 	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path ) {
 		this.materials = null;
 		this.container = new THREE.Group();
-		this.lineCount = 0;
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 
 		// Define trim function to use once
@@ -91,14 +67,28 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 
+		var objectStore = new InputObjectStore( this.debug, 0 );
+		var count = 0;
+
+		var objectStoreChangeCallback = function ( nextObjectObjectStore ) {
+			objectStore = nextObjectObjectStore;
+			if ( this.debug ) {
+
+				console.log(count);
+				count++;
+
+			}
+		};
+		objectStore.registerObjectStoreChangeCallback( objectStoreChangeCallback );
+
 		if ( this.loadAsArrayBuffer ) {
 
 			console.time( 'ParseAB' );
 			var view = new Uint8Array( loadedContent );
-			for ( var code, line = '', length = view.byteLength, i = 0; i < length; i++ ) {
 
-				code = view[ i ];
-				line = this.checkLine( String.fromCharCode( code ), code, line );
+			for ( var i = 0, length = view.byteLength; i < length; i++ ) {
+
+				objectStore.processByte( view [ i ] );
 
 			}
 			console.timeEnd( 'ParseAB' );
@@ -106,57 +96,351 @@ THREE.OBJLoader = (function () {
 		} else {
 
 			console.time( 'ParseText' );
-			for ( var char, line = '', length = loadedContent.length, i = 0; i < length; i++ ) {
+			for ( var i = 0, length = loadedContent.length; i < length; i++ ) {
 
-				char = text[ i ];
-				line = this.checkLine( char, char.charCodeAt( 0 ), line );
+				objectStore.processByte( loadedContent[ i ].charCodeAt( 0 ) );
 
 			}
 			console.timeEnd( 'ParseText' );
 
 		}
-		console.log( 'Line Count: ' + this.lineCount );
+		console.log( 'Line Count: ' + objectStore.lineCount );
 
 		return this.container;
 	};
 
+	var InputObjectStore = (function () {
 
-	OBJLoader.prototype.checkLine = function ( char, code, line ) {
-		// process line on occurrence of CR or LF
-		if ( code === 10 || code === 13 ) {
+		function InputObjectStore( debug, lineCount ) {
 
-			// if CR exists line will be length 0 afterwards
-			// LF with CR will then do nothing
-			// LF without CR will have line.length > 0
-			if ( line.length > 0) {
+			this.currentInput = null;
+			this.comments = new CommentStore();
+			this.vertices = new VertexStore( 'v' );
+			this.normals = new VertexStore( 'vn' );
+			this.uvs = new VertexStore( 'vt' );
+			this.faces = new FaceInput();
+			this.groups = new BaseStore();
+			this.smoothingGroups = new BaseStore();
+			this.useMtls = new BaseStore();
 
-				this.processLine( line );
-				line = '';
+			this.afterVertex = false;
+			this.lineCount = lineCount;
+			this.haveV = false;
+
+			if ( debug ) {
+				this.comments.debug = debug;
+				this.vertices.debug = debug;
+				this.normals.debug = debug;
+				this.uvs.debug = debug;
+				this.faces.debug = debug;
+				this.groups.debug = debug;
+				this.smoothingGroups.debug = debug;
+				this.useMtls.debug = debug;
+			}
+ 		}
+		InputObjectStore.prototype.registerObjectStoreChangeCallback = function ( objectStoreChangeCallback ) {
+			this.objectStoreChangeCallback = objectStoreChangeCallback;
+		};
+
+		InputObjectStore.prototype.processByte = function ( code ) {
+
+			// detect end of line
+			if ( code === 10 || code === 13 ) {
+
+				// if CR exists this.currentInput will be null afterwards
+				// LF with CR will then do nothing
+				// LF without CR will have this.currentInput != null or null beacause of empty line
+				if ( this.currentInput !== null ) {
+
+					this.currentInput.detectedLF();
+					this.currentInput = null;
+
+				}
+
+				if ( code === 10 ) {
+					this.lineCount ++;
+				}
+
+			} else if ( this.currentInput !== null ) {
+
+				this.currentInput.parseObjInput( code );
+
+			// It can be of type 'v', 'vn' and 'vt' in the end
+			} else  if ( this.haveV ) {
+
+				if ( code === 110 ) {
+
+					this.afterVertex = true;
+					this.currentInput = this.normals;
+
+				} else if ( code === 116 ) {
+
+					this.currentInput = this.uvs;
+
+				} else if ( code === 32 ) {
+
+					// when afterVertex is true a new vertex is added, then this storage has to re-init
+					// and provide its data
+					if ( this.afterVertex ) {
+
+						var objectStore = new InputObjectStore( false, this.lineCount );
+						objectStore.registerObjectStoreChangeCallback( this.objectStoreChangeCallback );
+						this.objectStoreChangeCallback( objectStore );
+
+					} else {
+
+						this.currentInput = this.vertices;
+
+					}
+
+				} else {
+
+					console.error( 'No space after v: ' + code + ' line: ' + this.lineCount );
+				}
+
+				if ( this.currentInput !== null ) {
+
+					this.currentInput.resetLine();
+
+				}
+				this.haveV = false;
+
+			} else {
+
+				switch ( code ) {
+
+					// #
+					case 35:
+						this.currentInput = this.comments;
+						break;
+
+					// v
+					case 118:
+						// Identify with next character
+						this.haveV = true;
+						break;
+
+					// f
+					case 102:
+						this.currentInput = this.faces;
+						break;
+
+					// g
+					case 103:
+						this.currentInput = this.groups;
+						break;
+					// s
+					case 115:
+						this.currentInput = this.smoothingGroups;
+						break;
+					// u
+					case 117:
+						this.currentInput = this.useMtls;
+						break;
+
+					// SPACE at start of line : mark as not usable so far
+					case 32:
+					default:
+						break;
+				}
+
+				if ( ! this.haveV && this.currentInput !== null ) {
+
+					this.currentInput.resetLine();
+
+				}
+			}
+		};
+
+		return InputObjectStore;
+	})();
+
+
+	var BaseStore = (function () {
+
+		function BaseStore() {
+			this.input = '';
+
+			this.buffer = [];
+			this.bufferIndex = -1;
+
+			this.debug = false;
+		}
+
+		BaseStore.prototype.parseObjInput = function ( code ) {
+			this.input += String.fromCharCode( code );
+		};
+
+		BaseStore.prototype.verify = function () {
+			if ( this.input.length > 0 ) {
+
+				this.buffer.push( this.input );
+				this.bufferIndex++;
+
+			}
+		};
+
+		BaseStore.prototype.detectedLF = function () {
+			this.verify();
+
+			if ( this.debug ) {
+				console.log( this.buffer[ this.bufferIndex - 1 ] );
+			}
+		};
+
+		BaseStore.prototype.resetLine = function () {
+			this.input = '';
+		};
+
+		return BaseStore;
+	})();
+
+	var CommentStore = (function () {
+
+		CommentStore.prototype = Object.create( BaseStore.prototype, {
+			constructor: {
+				value: CommentStore
+			}
+		});
+
+		function CommentStore() {
+			BaseStore.call( this );
+		}
+
+		CommentStore.prototype.resetLine = function () {
+			this.input = '#';
+		};
+
+		return CommentStore;
+	})();
+
+
+	var VertexStore = (function () {
+
+		VertexStore.prototype = Object.create( BaseStore.prototype, {
+			constructor: {
+				value: VertexStore
+			}
+		});
+
+		function VertexStore( type ) {
+			BaseStore.call( this );
+			this.type = type;
+		}
+
+		VertexStore.prototype.parseObjInput = function ( code ) {
+			// "v   1.0 2.0 3.0" or
+			// "vn  1.0 2.0 3.0" or
+			// "vt  1.0 2.0 3.0"
+
+			if ( code !== 32) {
+
+				this.input += String.fromCharCode( code );
+
+			} else {
+
+				this.verify();
+
+			}
+		};
+
+		VertexStore.prototype.detectedLF = function () {
+			this.verify();
+
+			if ( this.debug ) {
+				var sub = 2;
+				if ( this.type === 'vt' ) {
+					sub = 1;
+				}
+				console.log( this.type + ': ' + this.buffer.slice( this.bufferIndex - sub, this.bufferIndex ) );
+			}
+		};
+
+		return VertexStore;
+	})();
+
+	var FaceInput = (function () {
+
+		FaceInput.prototype = Object.create( BaseStore.prototype, {
+			constructor: {
+				value: FaceInput
+			}
+		});
+
+		function FaceInput() {
+			BaseStore.call( this );
+
+			// possible types
+			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
+			// 1: "f vertex/uv			vertex/uv			vertex/uv"
+			// 2: "f vertex//normal		vertex//normal		vertex//normal"
+			// 3: "f vertex				vertex				vertex"
+			this.typesPerLine = [];
+			this.slashes = [];
+			this.slashIndex = 0;
+		}
+
+		FaceInput.prototype.parseObjInput = function ( code ) {
+
+			if ( code !== 32 && code !== 47 ) {
+
+				this.input += String.fromCharCode( code );
+
+			} else {
+
+				if ( code === 47 ) {
+
+					this.slashes.push( this.slashIndex );
+
+				}
+				this.verify();
+
+			}
+			this.slashIndex++;
+		};
+
+		FaceInput.prototype.detectedLF = function () {
+			this.verify();
+
+			// identify type
+			var slashesLength = this.slashes.length;
+			var type;
+			if ( slashesLength === 0 ) {
+
+				type = 3;
+
+			} else if ( slashesLength === 3 ) {
+
+				type = 1;
+
+			} else if ( slashesLength === 6 ) {
+
+				type = this.slashes[ 1 ] - this.slashes[ 0 ] === 1 ? 2 : 0;
 
 			}
 
-		} else {
+			this.typesPerLine.push( type );
 
-			line += char;
+			if ( this.debug ) {
+				var sub = 2;
+				if ( type === 1 || type === 2 ) {
+					sub = 6;
+				} else if ( type === 0 ) {
+					sub = 9;
+				}
+				console.log( type + ': ' + this.buffer.slice( this.bufferIndex - sub, this.bufferIndex ) );
+			}
 
-		}
-		return line;
-	};
+		};
 
+		FaceInput.prototype.resetLine = function () {
+			this.slashes = [];
+			this.slashIndex = 0;
+			this.input = '';
+		};
 
-	OBJLoader.prototype.processLine = function ( line ) {
-/*
-		if ( this.lineCount < 10 ) { console.log( line ); }
-
-		var sizeA = line.length;
-		line = this.trimFunction( line );
-		var sizeB = line.length;
-		if ( sizeA !== sizeB ) {
-			console.log( sizeA - sizeB );
-		}
-*/
-		this.lineCount++;
-	};
+		return FaceInput;
+	})();
 
 	return OBJLoader;
 })();
