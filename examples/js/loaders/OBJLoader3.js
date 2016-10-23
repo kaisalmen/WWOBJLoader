@@ -69,10 +69,11 @@ THREE.OBJLoader = (function () {
 
 		var objectStore = new InputObjectStore( this.debug, 0 );
 		var count = 0;
+		var scope = this;
 
 		var objectStoreChangeCallback = function ( nextObjectObjectStore ) {
 			objectStore = nextObjectObjectStore;
-			if ( this.debug ) {
+			if ( scope.debug ) {
 
 				console.log(count);
 				count++;
@@ -114,14 +115,14 @@ THREE.OBJLoader = (function () {
 		function InputObjectStore( debug, lineCount ) {
 
 			this.currentInput = null;
-			this.comments = new CommentStore();
+			this.comments = new CommentStore( '#' );
 			this.vertices = new VertexStore( 'v' );
 			this.normals = new VertexStore( 'vn' );
 			this.uvs = new VertexStore( 'vt' );
 			this.faces = new FaceInput();
-			this.groups = new BaseStore();
-			this.smoothingGroups = new BaseStore();
-			this.useMtls = new BaseStore();
+			this.groups = new BaseStore( 'g' );
+			this.smoothingGroups = new BaseStore( 's' );
+			this.useMtls = new BaseStore( 'u' );
 
 			this.afterVertex = false;
 			this.lineCount = lineCount;
@@ -258,8 +259,9 @@ THREE.OBJLoader = (function () {
 
 	var BaseStore = (function () {
 
-		function BaseStore() {
-			this.input = '';
+		function BaseStore( defaultChar ) {
+			this.defaultChar = defaultChar;
+			this.input = this.defaultChar ? this.defaultChar : '';
 
 			this.buffer = [];
 			this.bufferIndex = -1;
@@ -276,6 +278,7 @@ THREE.OBJLoader = (function () {
 
 				this.buffer.push( this.input );
 				this.bufferIndex++;
+				this.input = '';
 
 			}
 		};
@@ -284,12 +287,12 @@ THREE.OBJLoader = (function () {
 			this.verify();
 
 			if ( this.debug ) {
-				console.log( this.buffer[ this.bufferIndex - 1 ] );
+				console.log( this.buffer[ this.bufferIndex ] );
 			}
 		};
 
 		BaseStore.prototype.resetLine = function () {
-			this.input = '';
+			this.input = this.defaultChar ? this.defaultChar : '';
 		};
 
 		return BaseStore;
@@ -304,12 +307,8 @@ THREE.OBJLoader = (function () {
 		});
 
 		function CommentStore() {
-			BaseStore.call( this );
+			BaseStore.call( this, '#' );
 		}
-
-		CommentStore.prototype.resetLine = function () {
-			this.input = '#';
-		};
 
 		return CommentStore;
 	})();
@@ -424,9 +423,9 @@ THREE.OBJLoader = (function () {
 			if ( this.debug ) {
 				var sub = 2;
 				if ( type === 1 || type === 2 ) {
-					sub = 6;
+					sub = 5;
 				} else if ( type === 0 ) {
-					sub = 9;
+					sub = 8;
 				}
 				console.log( type + ': ' + this.buffer.slice( this.bufferIndex - sub, this.bufferIndex ) );
 			}
