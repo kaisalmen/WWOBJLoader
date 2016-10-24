@@ -67,7 +67,7 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 
-		var objectStore = new InputObjectStore( false, 0 );
+		var objectStore = new InputObjectStore( 0, false );
 		var count = 0;
 		var scope = this;
 
@@ -78,10 +78,10 @@ THREE.OBJLoader = (function () {
 
 			if ( scope.debug ) {
 
-				if ( count < 3 ) {
+				if ( count < 0 ) {
 
 					singleResultSet = objectStore.createReport( count );
-					parseResults.push( singleResultSet );
+					parseResults[ parseResults.length ] = singleResultSet;
 
 				}
 				count ++;
@@ -138,7 +138,7 @@ THREE.OBJLoader = (function () {
 
 	var InputObjectStore = (function () {
 
-		function InputObjectStore( lineCount ) {
+		function InputObjectStore( lineCount, debug ) {
 
 			this.currentInput = null;
 			this.comments = new CommentStore( '#' );
@@ -155,7 +155,6 @@ THREE.OBJLoader = (function () {
 			this.lineCount = lineCount;
 			this.haveV = false;
 
-			var debug = false;
 			this.comments.debug = debug;
 			this.mtllib.debug = debug;
 			this.vertices.debug = debug;
@@ -293,12 +292,11 @@ THREE.OBJLoader = (function () {
 				type = this.faces.typesPerLine[ i ];
 				overallFaceTypesCount[ type ] = overallFaceTypesCount[ type ] + 1;
 			}
-			var overallFacesAttr = [
-				overallFaceTypesCount[ 0 ] * 9,
-				overallFaceTypesCount[ 1 ] * 6,
-				overallFaceTypesCount[ 2 ] * 6,
-				overallFaceTypesCount[ 3 ] * 3
-			];
+			var typeLookup = this.faces.getTypeArrayLengthLookup();
+			var overallFacesAttr = new Array( 4 );
+			for ( var i = 0, length = typeLookup.length; i < length; i ++ ) {
+				overallFacesAttr[ i ] = overallFaceTypesCount[ i ] * typeLookup[ i ];
+			}
 
 			var singleResultSet = {
 				index: count,
@@ -324,14 +322,17 @@ THREE.OBJLoader = (function () {
 
 	var BaseStore = (function () {
 
-		function BaseStore( description ) {
+		function BaseStore( description, inputBufferLength ) {
 			this.buffer = [];
-			this.bufferIndex = 0;
 			this.debug = false;
 			this.description = description ? description : 'noname: ';
 
+			// Always re-use input array
+			this.inputBuffer = new Array( inputBufferLength );
+
 			// variables re-init per input line (called by InputObjectStore)
 			this.input = '';
+			this.inputIndex = 0;
 		}
 
 		BaseStore.prototype.parseObjInput = function ( code ) {
@@ -341,23 +342,32 @@ THREE.OBJLoader = (function () {
 		BaseStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.buffer.push( this.input );
-				this.bufferIndex++;
+				this.inputBuffer[ this.inputIndex ] = this.input;
+				this.inputIndex++;
 				this.input = '';
 
 			}
 		};
 
+		BaseStore.prototype.attachInputBuffer = function () {
+			// Both Chrome and Firefox perform equally
+			for ( var i = 0; i < this.inputIndex; i++ ) {
+				this.buffer[ this.buffer.length ] = this.inputBuffer[ i ];
+			}
+		};
+
 		BaseStore.prototype.detectedLF = function () {
 			this.verify();
+			this.attachInputBuffer();
 
 			if ( this.debug ) {
-				console.log( this.description + ': ' + this.buffer[ this.bufferIndex - 1 ] );
+				console.log( this.description + ': ' + this.inputBuffer.slice( 0, this.inputIndex ) );
 			}
 		};
 
 		BaseStore.prototype.resetLine = function () {
 			this.input = '';
+			this.inputIndex = 0;
 		};
 
 		return BaseStore;
@@ -369,15 +379,15 @@ THREE.OBJLoader = (function () {
 		CommentStore.prototype.constructor = BaseStore;
 
 		function CommentStore( description ) {
-			BaseStore.call( this, description );
+			BaseStore.call( this, description, 1 );
 		}
 
 		/**
 		 * all comments are taken even empty ones "# "
 		 */
 		CommentStore.prototype.verify = function () {
-			this.buffer.push( this.input );
-			this.bufferIndex++;
+			this.inputBuffer[ this.inputIndex ] = this.input;
+			this.inputIndex++;
 			this.input = '';
 		};
 
@@ -390,7 +400,7 @@ THREE.OBJLoader = (function () {
 		VertexStore.prototype.constructor = VertexStore;
 
 		function VertexStore( type ) {
-			BaseStore.call( this, type );
+			BaseStore.call( this, type, 3 );
 		}
 
 		VertexStore.prototype.parseObjInput = function ( code ) {
@@ -408,16 +418,6 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		VertexStore.prototype.detectedLF = function () {
-			this.verify();
-
-			if ( this.debug ) {
-				var sub = this.bufferIndex - this.description === 'vt' ? 2 : 3;
-				console.log( this.description + ': ' + this.buffer.slice( sub, this.bufferIndex ) );
-			}
-
-		};
-
 		return VertexStore;
 	})();
 
@@ -427,7 +427,7 @@ THREE.OBJLoader = (function () {
 		UvsStore.prototype.constructor = UvsStore;
 
 		function UvsStore( type ) {
-			VertexStore.call( this, type );
+			VertexStore.call( this, type, 2 );
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.retrievedFloatCount = 0;
@@ -454,15 +454,19 @@ THREE.OBJLoader = (function () {
 		UvsStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.buffer.push( this.input );
-				this.bufferIndex++;
+				this.inputBuffer[ this.inputIndex ] = this.input;
+				this.inputIndex++;
 				this.input = '';
+
 				this.retrievedFloatCount++;
+
 			}
 		};
 
 		UvsStore.prototype.resetLine = function () {
 			this.input = '';
+			this.inputIndex = 0;
+
 			this.retrievedFloatCount = 0;
 		};
 
@@ -472,13 +476,15 @@ THREE.OBJLoader = (function () {
 	var FaceStore = (function () {
 
 		var DEFAULT_SHORTEST_SLASH_DISTANCE = 100;
+		var TYPE_ARRAY_LENGTH_LOOKUP = [ 9, 6, 6, 3 ];
 
 		FaceStore.prototype = Object.create( BaseStore.prototype );
 		FaceStore.prototype.constructor = FaceStore;
 
 		function FaceStore() {
-			BaseStore.call( this );
-			this.description = 'Face';
+			// Important: According to spec there are more than 3 value groups allowed per face desc.
+			// This is currently ignored
+			BaseStore.call( this, 'Face', 9 );
 
 			// possible types
 			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
@@ -492,9 +498,6 @@ THREE.OBJLoader = (function () {
 			this.slashCount = 0;
 			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
 			this.slashLast = 0;
-
-			// according to spec there are more than 3 value groups allowed per face desc.
-			this.bufferPosStart = 0;
 		}
 
 		FaceStore.prototype.parseObjInput = function ( code ) {
@@ -528,26 +531,30 @@ THREE.OBJLoader = (function () {
 
 		FaceStore.prototype.detectedLF = function () {
 			this.verify();
+			this.attachInputBuffer();
 
 			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
-			this.typesPerLine.push( type );
+			this.typesPerLine[ this.typesPerLine.length ] = type;
 
 			if ( this.debug ) {
 
-				console.log( 'Faces type: ' + type + ': ' + this.buffer.slice( this.bufferPosStart, this.bufferIndex ) );
+				console.log( 'Faces type: ' + type + ': ' + this.inputBuffer.slice( 0, TYPE_ARRAY_LENGTH_LOOKUP[ type ] ) );
 
 			}
 		};
 
 		FaceStore.prototype.resetLine = function () {
 			this.input = '';
+			this.inputIndex = 0;
 
 			this.lineIndex = 0;
 			this.slashCount = 0;
 			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
 			this.slashLast = 0;
+		};
 
-			this.bufferPosStart = this.bufferIndex;
+		FaceStore.prototype.getTypeArrayLengthLookup = function () {
+			return TYPE_ARRAY_LENGTH_LOOKUP;
 		};
 
 		return FaceStore;
@@ -559,7 +566,7 @@ THREE.OBJLoader = (function () {
 		NameStore.prototype.constructor = NameStore;
 
 		function NameStore( description ) {
-			BaseStore.call( this, description );
+			BaseStore.call( this, description, 1 );
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.foundFirstSpace = false;
@@ -577,18 +584,10 @@ THREE.OBJLoader = (function () {
 
 		};
 
-		NameStore.prototype.verify = function () {
-			if ( this.input.length > 0 ) {
-
-				this.buffer.push( [ this.input ] );
-				this.bufferIndex++;
-				this.input = '';
-
-			}
-		};
-
 		NameStore.prototype.resetLine = function () {
 			this.input = '';
+			this.inputIndex = 0;
+
 			this.foundFirstSpace = false;
 		};
 
