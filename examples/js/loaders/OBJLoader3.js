@@ -6,6 +6,8 @@
 
 THREE.OBJLoader = (function () {
 
+	var DEFAULT_ARRAY_SIZE = 30000;
+
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
@@ -67,36 +69,27 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 
-		var objectStore = new InputObjectStore( 0, false );
-		var count = 0;
-		var scope = this;
+		var objectStore = new InputObjectStore( false );
+
+		var callbackObjectStoreComplete = function ( objectStore ) {
+
+		};
 
 		var parseResults = [];
-		var singleResultSet;
-
-		var objectStoreChangeCallback = function ( nextObjectObjectStore ) {
-
-			if ( scope.debug ) {
-
-				if ( count < 0 ) {
-
-					singleResultSet = objectStore.createReport( count );
-					parseResults[ parseResults.length ] = singleResultSet;
-
-				}
-				count ++;
-
-			}
-
-			objectStore = nextObjectObjectStore;
+		var callbackReportStatistics = function ( singleResultSet ) {
+			parseResults[ parseResults.length ] = singleResultSet;
 		};
-		objectStore.registerObjectStoreChangeCallback( objectStoreChangeCallback );
+
+		objectStore.registerCallbackObjectComplete( callbackObjectStoreComplete );
+//		objectStore.registerCallbackReportStatistics( callbackReportStatistics );
+
 
 		console.time( 'Parse' );
+		var i;
 		if ( this.loadAsArrayBuffer ) {
 
 			var view = new Uint8Array( loadedContent );
-			for ( var i = 0, length = view.byteLength; i < length; i++ ) {
+			for ( i = 0, length = view.byteLength; i < length; i++ ) {
 
 				objectStore.processByte( view [ i ] );
 
@@ -104,7 +97,7 @@ THREE.OBJLoader = (function () {
 
 		} else {
 
-			for ( var i = 0, length = loadedContent.length; i < length; i++ ) {
+			for ( i = 0, length = loadedContent.length; i < length; i++ ) {
 
 				objectStore.processByte( loadedContent[ i ].charCodeAt( 0 ) );
 
@@ -113,8 +106,10 @@ THREE.OBJLoader = (function () {
 		}
 		console.timeEnd( 'Parse' );
 
-		if ( scope.debug ) {
 
+		if ( this.debug ) {
+
+			var singleResultSet;
 			for ( var i = 0, length = parseResults.length; i < length; i ++ ) {
 
 				singleResultSet = parseResults[ i ];
@@ -138,8 +133,15 @@ THREE.OBJLoader = (function () {
 
 	var InputObjectStore = (function () {
 
-		function InputObjectStore( lineCount, debug ) {
+		function InputObjectStore( debug ) {
 
+			// will not be reset after object is complete
+			this.overallObjectCount = 0;
+			this.lineCount = 0;
+			this.callbackObjectComplete = null;
+			this.callbackReportStatistics = null;
+
+			// will be reset after object is complete
 			this.currentInput = null;
 			this.comments = new CommentStore( '#' );
 			this.mtllib = new NameStore( 'mtllib' );
@@ -152,7 +154,24 @@ THREE.OBJLoader = (function () {
 			this.usemtls = new NameStore( 'usemtl' );
 
 			this.afterVertex = false;
-			this.lineCount = lineCount;
+			this.haveV = false;
+
+			this.reset( debug );
+ 		}
+
+		InputObjectStore.prototype.reset = function ( debug ) {
+			this.currentInput = null;
+			this.comments.reset();
+			this.mtllib.reset();
+			this.vertices.reset();
+			this.normals.reset();
+			this.uvs.reset();
+			this.faces.reset();
+			this.groups.reset();
+			this.smoothingGroups.reset();
+			this.usemtls.reset();
+
+			this.afterVertex = false;
 			this.haveV = false;
 
 			this.comments.debug = debug;
@@ -164,10 +183,14 @@ THREE.OBJLoader = (function () {
 			this.groups.debug = debug;
 			this.smoothingGroups.debug = debug;
 			this.usemtls.debug = debug;
- 		}
+		};
 
-		InputObjectStore.prototype.registerObjectStoreChangeCallback = function ( objectStoreChangeCallback ) {
-			this.objectStoreChangeCallback = objectStoreChangeCallback;
+		InputObjectStore.prototype.registerCallbackReportStatistics = function ( callbackReportStatistics ) {
+			this.callbackReportStatistics = callbackReportStatistics;
+		};
+
+		InputObjectStore.prototype.registerCallbackObjectComplete = function ( callbackObjectComplete ) {
+			this.callbackObjectComplete = callbackObjectComplete;
 		};
 
 		InputObjectStore.prototype.processByte = function ( code ) {
@@ -211,9 +234,16 @@ THREE.OBJLoader = (function () {
 					// and provide its data
 					if ( this.afterVertex ) {
 
-						var objectStore = new InputObjectStore( this.lineCount );
-						objectStore.registerObjectStoreChangeCallback( this.objectStoreChangeCallback );
-						this.objectStoreChangeCallback( objectStore );
+						if ( this.callbackObjectComplete !== null ) {
+							this.callbackObjectComplete( this );
+						}
+
+						if ( this.callbackReportStatistics !== null ) {
+							this.callbackReportStatistics( this.createReport() );
+						}
+
+						this.reset( false );
+						this.overallObjectCount++;
 
 					} else {
 
@@ -228,7 +258,7 @@ THREE.OBJLoader = (function () {
 
 				if ( this.currentInput !== null ) {
 
-					this.currentInput.resetLine();
+					this.currentInput.newLine();
 
 				}
 				this.haveV = false;
@@ -280,40 +310,41 @@ THREE.OBJLoader = (function () {
 
 				if ( ! this.haveV && this.currentInput !== null ) {
 
-					this.currentInput.resetLine();
+					this.currentInput.newLine();
 
 				}
 			}
 		};
 
-		InputObjectStore.prototype.createReport = function ( count ) {
+		InputObjectStore.prototype.createReport = function () {
 			var overallFaceTypesCount = [ 0, 0, 0, 0 ];
-			for ( var i = 0, type, typesLength = this.faces.typesPerLine.length; i < typesLength; i ++ ) {
+			var type;
+
+			for ( var i = 0, typesLength = this.faces.typesPerLineIndex; i < typesLength; i++ ) {
 				type = this.faces.typesPerLine[ i ];
 				overallFaceTypesCount[ type ] = overallFaceTypesCount[ type ] + 1;
 			}
 			var typeLookup = this.faces.getTypeArrayLengthLookup();
-			var overallFacesAttr = new Array( 4 );
-			for ( var i = 0, length = typeLookup.length; i < length; i ++ ) {
-				overallFacesAttr[ i ] = overallFaceTypesCount[ i ] * typeLookup[ i ];
+			var length = typeLookup.length;
+			var overallFacesAttr = [];
+			for ( type = 0; type < length; type++ ) {
+				overallFacesAttr[ type ] = overallFaceTypesCount[ type ] * typeLookup[ type ];
 			}
 
-			var singleResultSet = {
-				index: count,
-				name: this.groups.buffer.length === 1 ? this.groups.buffer[ 0 ] : 'noname',
-				mtllib: this.mtllib.buffer.length === 1 ? this.mtllib.buffer[ 0 ] : this.mtllib.buffer.length,
-				vertexCount: this.vertices.buffer.length / 3,
-				normalCount: this.normals.buffer.length / 3,
-				uvCount: this.uvs.buffer.length / 2,
+			return {
+				index: this.overallObjectCount,
+				name: this.groups.bufferIndex === 1 ? this.groups.buffer[ 0 ] : 'noname',
+				mtllib: this.mtllib.bufferIndex === 1 ? this.mtllib.buffer[ 0 ] : this.mtllib.bufferIndex,
+				vertexCount: this.vertices.bufferIndex / 3,
+				normalCount: this.normals.bufferIndex / 3,
+				uvCount: this.uvs.bufferIndex / 2,
 				overallFaceTypesCount: overallFaceTypesCount,
 				overallFacesAttr: overallFacesAttr,
-				groupCount: this.groups.buffer.length,
-				smoothingGroupCount: this.smoothingGroups.buffer.length,
-				usemtl: this.usemtls.buffer.length === 1 ? this.usemtls.buffer[ 0 ] : this.usemtls.buffer.length,
-				commentCount: this.comments.buffer.length
+				groupCount: this.groups.bufferIndex,
+				smoothingGroupCount: this.smoothingGroups.bufferIndex,
+				usemtl: this.usemtls.bufferIndex === 1 ? this.usemtls.buffer[ 0 ] : this.usemtls.bufferIndex,
+				commentCount: this.comments.bufferIndex
 			};
-
-			return singleResultSet;
 		};
 
 		return InputObjectStore;
@@ -323,16 +354,19 @@ THREE.OBJLoader = (function () {
 	var BaseStore = (function () {
 
 		function BaseStore( description, inputBufferLength ) {
-			this.buffer = [];
+			this.buffer = new Array( DEFAULT_ARRAY_SIZE );
+//			this.buffer = [];
+			this.bufferIndex = 0;
 			this.debug = false;
 			this.description = description ? description : 'noname: ';
 
 			// Always re-use input array
 			this.inputBuffer = new Array( inputBufferLength );
+//			this.inputBuffer = [];
+			this.inputBufferIndex = 0;
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.input = '';
-			this.inputIndex = 0;
 		}
 
 		BaseStore.prototype.parseObjInput = function ( code ) {
@@ -342,8 +376,8 @@ THREE.OBJLoader = (function () {
 		BaseStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.inputBuffer[ this.inputIndex ] = this.input;
-				this.inputIndex++;
+				this.inputBuffer[ this.inputBufferIndex ] = this.input;
+				this.inputBufferIndex++;
 				this.input = '';
 
 			}
@@ -351,8 +385,9 @@ THREE.OBJLoader = (function () {
 
 		BaseStore.prototype.attachInputBuffer = function () {
 			// Both Chrome and Firefox perform equally
-			for ( var i = 0; i < this.inputIndex; i++ ) {
-				this.buffer[ this.buffer.length ] = this.inputBuffer[ i ];
+			for ( var i = 0; i < this.inputBufferIndex; i++ ) {
+				this.buffer[ this.bufferIndex ] = this.inputBuffer[ i ];
+				this.bufferIndex++;
 			}
 		};
 
@@ -361,13 +396,19 @@ THREE.OBJLoader = (function () {
 			this.attachInputBuffer();
 
 			if ( this.debug ) {
-				console.log( this.description + ': ' + this.inputBuffer.slice( 0, this.inputIndex ) );
+				console.log( this.description + ': ' + this.inputBuffer.slice( 0, this.inputBufferIndex ) );
 			}
 		};
 
-		BaseStore.prototype.resetLine = function () {
+		BaseStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputIndex = 0;
+			this.inputBufferIndex = 0;
+		};
+
+		BaseStore.prototype.reset = function () {
+			// this.buffer is not shrinked on reset for now
+			this.bufferIndex = 0;
+			this.newLine();
 		};
 
 		return BaseStore;
@@ -386,8 +427,8 @@ THREE.OBJLoader = (function () {
 		 * all comments are taken even empty ones "# "
 		 */
 		CommentStore.prototype.verify = function () {
-			this.inputBuffer[ this.inputIndex ] = this.input;
-			this.inputIndex++;
+			this.inputBuffer[ this.inputBufferIndex ] = this.input;
+			this.inputBufferIndex++;
 			this.input = '';
 		};
 
@@ -454,8 +495,8 @@ THREE.OBJLoader = (function () {
 		UvsStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.inputBuffer[ this.inputIndex ] = this.input;
-				this.inputIndex++;
+				this.inputBuffer[ this.inputBufferIndex ] = this.input;
+				this.inputBufferIndex++;
 				this.input = '';
 
 				this.retrievedFloatCount++;
@@ -463,9 +504,9 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		UvsStore.prototype.resetLine = function () {
+		UvsStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputIndex = 0;
+			this.inputBufferIndex = 0;
 
 			this.retrievedFloatCount = 0;
 		};
@@ -491,7 +532,9 @@ THREE.OBJLoader = (function () {
 			// 1: "f vertex/uv			vertex/uv			vertex/uv"
 			// 2: "f vertex//normal		vertex//normal		vertex//normal"
 			// 3: "f vertex				vertex				vertex"
-			this.typesPerLine = [];
+			this.typesPerLine = new Array( DEFAULT_ARRAY_SIZE );
+//			this.typesPerLine = [];
+			this.typesPerLineIndex = 0;
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.lineIndex = 0;
@@ -534,7 +577,8 @@ THREE.OBJLoader = (function () {
 			this.attachInputBuffer();
 
 			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
-			this.typesPerLine[ this.typesPerLine.length ] = type;
+			this.typesPerLine[ this.typesPerLineIndex ] = type;
+			this.typesPerLineIndex++;
 
 			if ( this.debug ) {
 
@@ -543,14 +587,23 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		FaceStore.prototype.resetLine = function () {
+		FaceStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputIndex = 0;
+			this.inputBufferIndex = 0;
 
 			this.lineIndex = 0;
 			this.slashCount = 0;
 			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
 			this.slashLast = 0;
+		};
+
+		FaceStore.prototype.reset = function () {
+			// this.buffer is not shrinked on reset for now
+			this.bufferIndex = 0;
+			// this.typesPerLine is not shrinked on reset for now
+			this.typesPerLineIndex = 0;
+
+			this.newLine();
 		};
 
 		FaceStore.prototype.getTypeArrayLengthLookup = function () {
@@ -584,9 +637,9 @@ THREE.OBJLoader = (function () {
 
 		};
 
-		NameStore.prototype.resetLine = function () {
+		NameStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputIndex = 0;
+			this.inputBufferIndex = 0;
 
 			this.foundFirstSpace = false;
 		};
