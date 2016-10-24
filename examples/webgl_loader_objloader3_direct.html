@@ -113,24 +113,18 @@
 			 *
 			 * This example extends ThreeJsApp and overwrites only functions needed.
 			 */
-			THREE.examples.loaders.OBJLoader2SimpleCheck = (function () {
+			THREE.examples.loaders.OBJLoader3SimpleCheck = (function () {
 
-				OBJLoader2SimpleCheck.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
-					constructor: {
-						configurable: true,
-						enumerable: true,
-						value: OBJLoader2SimpleCheck,
-						writable: true
-					}
-				});
+				OBJLoader3Verification.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+				OBJLoader3Verification.prototype.constructor = OBJLoader3Verification;
 
-				function OBJLoader2SimpleCheck( elementToBindTo ) {
+				function OBJLoader3Verification( elementToBindTo ) {
 					THREE.examples.apps.ThreeJsApp.call( this );
 
 					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
 					// Only define what is required (name and htmlCanvas).
 					this.configure( {
-						name: 'OBJLoader2SimpleCheck',
+						name: 'OBJLoader3Verification',
 						htmlCanvas: elementToBindTo
 					} );
 
@@ -153,7 +147,7 @@
 
 				// ThreeJsApp.initPreGL()  not required, default is used
 
-				OBJLoader2SimpleCheck.prototype.initGL = function () {
+				OBJLoader3Verification.prototype.initGL = function () {
 					this.renderer.setClearColor(0x303030);
 
 					var cameraDefaults = {
@@ -192,7 +186,7 @@
 
 				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
-				OBJLoader2SimpleCheck.prototype.initPostGL = function () {
+				OBJLoader3Verification.prototype.initPostGL = function () {
 					var scope = this;
 
 					var mtlLoader = new THREE.MTLLoader();
@@ -235,11 +229,11 @@
 					return true;
 				};
 
-				OBJLoader2SimpleCheck.prototype.resizeDisplayGL = function () {
+				OBJLoader3Verification.prototype.resizeDisplayGL = function () {
 					this.controls.handleResize();
 				};
 
-				OBJLoader2SimpleCheck.prototype.renderPre = function () {
+				OBJLoader3Verification.prototype.renderPre = function () {
 					this.controls.update();
 
 					this.cube.rotation.x += 0.05;
@@ -247,7 +241,7 @@
 				};
 
 
-				OBJLoader2SimpleCheck.prototype.alterSmoothShading = function () {
+				OBJLoader3Verification.prototype.alterSmoothShading = function () {
 
 					var scope = this;
 					scope.smoothShading = ! scope.smoothShading;
@@ -268,7 +262,7 @@
 					scope.pivot.traverse( scopeTraverse );
 				};
 
-				OBJLoader2SimpleCheck.prototype.alterDouble = function () {
+				OBJLoader3Verification.prototype.alterDouble = function () {
 
 					var scope = this;
 					scope.doubleSide = ! scope.doubleSide;
@@ -289,7 +283,7 @@
 					scope.pivot.traverse( scopeTraverse );
 				};
 
-				OBJLoader2SimpleCheck.prototype.traverseScene = function ( object3d ) {
+				OBJLoader3Verification.prototype.traverseScene = function ( object3d ) {
 
 					if ( object3d.material instanceof THREE.MultiMaterial ) {
 
@@ -307,14 +301,13 @@
 
 				};
 
-
 				// ThreeJsApp.renderPost()  not required, default is used
 
-				return OBJLoader2SimpleCheck;
+				return OBJLoader3Verification;
 
 			})();
 
-			var APP = new THREE.examples.loaders.OBJLoader2SimpleCheck( document.getElementById( 'example' ) );
+			var APP = new THREE.examples.loaders.OBJLoader3SimpleCheck( document.getElementById( 'example' ) );
 
 			// AppRunner handles ThreeJsApp init, window resize event and render loop
 			var appRunner = new THREE.examples.apps.AppRunner( APP );
