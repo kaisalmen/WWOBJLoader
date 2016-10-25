@@ -6,19 +6,21 @@
 
 THREE.OBJLoader = (function () {
 
-	var DEFAULT_ARRAY_SIZE = 30000;
-
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
 		this.materials = null;
 		this.group = null;
+
 		this.loadAsArrayBuffer = true;
-		this.trimFunction = null;
 		this.path = null;
 
-		this.input = null;
 		this.debug = true;
+
+		this.objectStore = null;
+		this.overallObjectCount = 0;
+		this.lineCount = 0;
+		this.objectStoreResults = null;
 
 		this.reInit( true );
 	}
@@ -40,16 +42,15 @@ THREE.OBJLoader = (function () {
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 	};
 
-	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path ) {
-		this.materials = null;
+	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, materials ) {
+		this.materials = materials;
 		this.container = new THREE.Group();
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 
-		// Define trim function to use once
-		// Faster to just trim left side of the line. Use if available.
-		var trimLeft = function ( line ) { return line.trimLeft(); };
-		var trimNormal = function ( line ) { return line.trim(); };
-		this.trimFunction = typeof ''.trimLeft === 'function' ?  trimLeft : trimNormal;
+		this.objectStore = new InputObjectStore( false, true );
+		this.overallObjectCount = 0;
+		this.lineCount = 0;
+		this.objectStoreResults = [];
 
 		this.setPath( path );
 	};
@@ -68,30 +69,15 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-
-		var objectStore = new InputObjectStore( false );
-
-		var callbackObjectStoreComplete = function ( objectStore ) {
-
-		};
-
-		var parseResults = [];
-		var callbackReportStatistics = function ( singleResultSet ) {
-			parseResults[ parseResults.length ] = singleResultSet;
-		};
-
-		objectStore.registerCallbackObjectComplete( callbackObjectStoreComplete );
-//		objectStore.registerCallbackReportStatistics( callbackReportStatistics );
-
-
 		console.time( 'Parse' );
 		var i;
+		var length;
 		if ( this.loadAsArrayBuffer ) {
 
 			var view = new Uint8Array( loadedContent );
 			for ( i = 0, length = view.byteLength; i < length; i++ ) {
 
-				objectStore.processByte( view [ i ] );
+				this.processCode( view [ i ] );
 
 			}
 
@@ -99,20 +85,19 @@ THREE.OBJLoader = (function () {
 
 			for ( i = 0, length = loadedContent.length; i < length; i++ ) {
 
-				objectStore.processByte( loadedContent[ i ].charCodeAt( 0 ) );
+				this.processCode( loadedContent[ i ].charCodeAt( 0 ) );
 
 			}
 
 		}
 		console.timeEnd( 'Parse' );
 
-
 		if ( this.debug ) {
 
 			var singleResultSet;
-			for ( var i = 0, length = parseResults.length; i < length; i ++ ) {
+			for ( i = 0, length = this.objectStoreResults.length; i < length; i ++ ) {
 
-				singleResultSet = parseResults[ i ];
+				singleResultSet = this.objectStoreResults[ i ];
 				console.log( 'Object number: ' + singleResultSet.index + ' Object name: ' + singleResultSet.name );
 				console.log( 'Mtllib: ' + singleResultSet.mtllib );
 				console.log( 'Vertex count: ' + singleResultSet.vertexCount );
@@ -131,16 +116,79 @@ THREE.OBJLoader = (function () {
 		return this.container;
 	};
 
+	OBJLoader.prototype.processCode = function ( code ) {
+		// detect end of line
+		if ( code === 10 || code === 13 ) {
+
+			this.objectStore.detectCRLF();
+			if ( code === 10 ) this.lineCount ++;
+
+		// parsing will return false if currentInput is null
+		} else if ( ! this.objectStore.parseCode( code ) ) {
+
+			switch ( code ) {
+				case 118: // v
+					this.objectStore.detectV();
+					break;
+
+				case 110: // n
+					this.objectStore.newVn();
+					break;
+
+				case 116: // t
+					this.objectStore.newVt();
+					break;
+
+				case 102: // f
+					this.objectStore.newF();
+					break;
+
+				case 115: // s
+					this.objectStore.newS();
+					break;
+
+				case 103: // g
+					this.objectStore.newG();
+					break;
+
+				case 117: // u
+					this.objectStore.newU();
+					break;
+
+				case 109: // m
+					this.objectStore.newM();
+					break;
+
+				case 32: // SPACE at start of line: not needed, but after 'v' will start new vertex parsing
+					if ( this.objectStore.detectSpace() ) this.processObject();
+					break;
+
+				case 35: // #
+					this.objectStore.newSharp();
+					break;
+
+				default:
+					console.error( 'Detected unexpected ' + code + '[' + String.fromCharCode( code ) + '] at line: ' + this.lineCount );
+					break;
+			}
+		}
+	};
+
+
+	OBJLoader.prototype.processObject = function () {
+		if ( this.overallObjectCount < 10 ) {
+
+			this.objectStoreResults[ this.objectStoreResults.length ] = this.objectStore.createReport( this.overallObjectCount );
+
+		}
+		this.overallObjectCount++;
+
+		this.objectStore = new InputObjectStore( false, true );
+	};
+
 	var InputObjectStore = (function () {
 
-		function InputObjectStore( debug ) {
-
-			// will not be reset after object is complete
-			this.overallObjectCount = 0;
-			this.lineCount = 0;
-			this.callbackObjectComplete = null;
-			this.callbackReportStatistics = null;
-
+		function InputObjectStore( debug, restart ) {
 			// will be reset after object is complete
 			this.currentInput = null;
 			this.comments = new CommentStore( '#' );
@@ -153,26 +201,8 @@ THREE.OBJLoader = (function () {
 			this.smoothingGroups = new NameStore( 's' );
 			this.usemtls = new NameStore( 'usemtl' );
 
-			this.afterVertex = false;
-			this.haveV = false;
-
-			this.reset( debug );
- 		}
-
-		InputObjectStore.prototype.reset = function ( debug ) {
-			this.currentInput = null;
-			this.comments.reset();
-			this.mtllib.reset();
-			this.vertices.reset();
-			this.normals.reset();
-			this.uvs.reset();
-			this.faces.reset();
-			this.groups.reset();
-			this.smoothingGroups.reset();
-			this.usemtls.reset();
-
-			this.afterVertex = false;
-			this.haveV = false;
+			this.reachedNormal = false;
+			this.haveV = restart;
 
 			this.comments.debug = debug;
 			this.mtllib.debug = debug;
@@ -183,140 +213,111 @@ THREE.OBJLoader = (function () {
 			this.groups.debug = debug;
 			this.smoothingGroups.debug = debug;
 			this.usemtls.debug = debug;
+		}
+
+		InputObjectStore.prototype.parseCode = function ( code ) {
+			var result = this.currentInput !== null;
+			if ( result ) {
+
+				this.currentInput.parseCode( code );
+
+			}
+			return result;
 		};
 
-		InputObjectStore.prototype.registerCallbackReportStatistics = function ( callbackReportStatistics ) {
-			this.callbackReportStatistics = callbackReportStatistics;
+		/**
+		 * It can be of type 'v', 'vn' and 'vt' in the end
+		 */
+		InputObjectStore.prototype.detectV = function () {
+			// Identify with next character
+			this.haveV = true;
 		};
 
-		InputObjectStore.prototype.registerCallbackObjectComplete = function ( callbackObjectComplete ) {
-			this.callbackObjectComplete = callbackObjectComplete;
+		InputObjectStore.prototype.detectSpace = function () {
+			return this.haveV ? this.newV() : false;
 		};
 
-		InputObjectStore.prototype.processByte = function ( code ) {
+		InputObjectStore.prototype.newV = function () {
+			// when reachedNormal is true a complete object must have been parsed as we reached vertices again
+			// ObjLoader will re-init this storage
+			if ( ! this.reachedNormal ) {
 
-			// detect end of line
-			if ( code === 10 || code === 13 ) {
+				this.currentInput = this.vertices;
+				this.currentInput.newLine();
 
-				// if CR exists this.currentInput will be null afterwards
-				// LF with CR will then do nothing
-				// LF without CR will have this.currentInput != null or null beacause of empty line
-				if ( this.currentInput !== null ) {
+			}
 
-					this.currentInput.detectedLF();
-					this.currentInput = null;
+			// reset always to reset detection
+			this.haveV = false;
+			return this.reachedNormal;
+		};
 
-				}
+		InputObjectStore.prototype.newVn = function () {
+			if ( this.haveV ) {
 
-				if ( code === 10 ) {
-					this.lineCount ++;
-				}
+				this.currentInput = this.normals;
+				this.currentInput.newLine();
+				this.reachedNormal = true;
 
-			} else if ( this.currentInput !== null ) {
+			}
+			// reset always to reset detection
+			this.haveV = false;
+		};
 
-				this.currentInput.parseObjInput( code );
+		InputObjectStore.prototype.newVt = function () {
+			if ( this.haveV ) {
 
-			// It can be of type 'v', 'vn' and 'vt' in the end
-			} else  if ( this.haveV ) {
+				this.currentInput = this.uvs;
+				this.currentInput.newLine();
 
-				if ( code === 110 ) {
+			}
+			// reset always to reset detection
+			this.haveV = false;
+		};
 
-					this.afterVertex = true;
-					this.currentInput = this.normals;
+		InputObjectStore.prototype.newF = function () {
+			this.currentInput = this.faces;
+			this.currentInput.newLine();
+		};
 
-				} else if ( code === 116 ) {
+		InputObjectStore.prototype.newS = function () {
+			this.currentInput = this.smoothingGroups;
+			this.currentInput.newLine();
+		};
 
-					this.currentInput = this.uvs;
+		InputObjectStore.prototype.newG = function () {
+			this.currentInput = this.groups;
+			this.currentInput.newLine();
+		};
 
-				} else if ( code === 32 ) {
+		InputObjectStore.prototype.newU = function () {
+			this.currentInput = this.usemtls;
+			this.currentInput.newLine();
+		};
 
-					// when afterVertex is true a new vertex is added, then this storage has to re-init
-					// and provide its data
-					if ( this.afterVertex ) {
+		InputObjectStore.prototype.newM = function () {
+			this.currentInput = this.mtllib;
+			this.currentInput.newLine();
+		};
 
-						if ( this.callbackObjectComplete !== null ) {
-							this.callbackObjectComplete( this );
-						}
+		InputObjectStore.prototype.newSharp = function () {
+			this.currentInput = this.comments;
+			this.currentInput.newLine();
+		};
 
-						if ( this.callbackReportStatistics !== null ) {
-							this.callbackReportStatistics( this.createReport() );
-						}
+		InputObjectStore.prototype.detectCRLF = function () {
+			// if CR exists currentInput will be null afterwards
+			// LF with CR will then do nothing
+			// LF without CR will have currentInput != null or null because of empty line
+			if ( this.currentInput !== null ) {
 
-						this.reset( false );
-						this.overallObjectCount++;
+				this.currentInput.detectedLF();
+				this.currentInput = null;
 
-					} else {
-
-						this.currentInput = this.vertices;
-
-					}
-
-				} else {
-
-					console.error( 'No space after v: ' + code + ' line: ' + this.lineCount );
-				}
-
-				if ( this.currentInput !== null ) {
-
-					this.currentInput.newLine();
-
-				}
-				this.haveV = false;
-
-			} else {
-
-				switch ( code ) {
-					// v
-					case 118:
-						// Identify with next character
-						this.haveV = true;
-						break;
-
-					// f
-					case 102:
-						this.currentInput = this.faces;
-						break;
-
-					// s
-					case 115:
-						this.currentInput = this.smoothingGroups;
-						break;
-
-					// g
-					case 103:
-						this.currentInput = this.groups;
-						break;
-
-					// u
-					case 117:
-						this.currentInput = this.usemtls;
-						break;
-
-					// #
-					case 35:
-						this.currentInput = this.comments;
-						break;
-
-					// m
-					case 109:
-						this.currentInput = this.mtllib;
-						break;
-
-					// SPACE at start of line : mark as not usable so far
-					case 32:
-					default:
-						break;
-				}
-
-				if ( ! this.haveV && this.currentInput !== null ) {
-
-					this.currentInput.newLine();
-
-				}
 			}
 		};
 
-		InputObjectStore.prototype.createReport = function () {
+		InputObjectStore.prototype.createReport = function ( overallObjectCount ) {
 			var overallFaceTypesCount = [ 0, 0, 0, 0 ];
 			var type;
 
@@ -332,7 +333,7 @@ THREE.OBJLoader = (function () {
 			}
 
 			return {
-				index: this.overallObjectCount,
+				index: overallObjectCount,
 				name: this.groups.bufferIndex === 1 ? this.groups.buffer[ 0 ] : 'noname',
 				mtllib: this.mtllib.bufferIndex === 1 ? this.mtllib.buffer[ 0 ] : this.mtllib.bufferIndex,
 				vertexCount: this.vertices.bufferIndex / 3,
@@ -354,8 +355,7 @@ THREE.OBJLoader = (function () {
 	var BaseStore = (function () {
 
 		function BaseStore( description, inputBufferLength ) {
-			this.buffer = new Array( DEFAULT_ARRAY_SIZE );
-//			this.buffer = [];
+			this.buffer = [];
 			this.bufferIndex = 0;
 			this.debug = false;
 			this.description = description ? description : 'noname: ';
@@ -369,7 +369,7 @@ THREE.OBJLoader = (function () {
 			this.input = '';
 		}
 
-		BaseStore.prototype.parseObjInput = function ( code ) {
+		BaseStore.prototype.parseCode = function ( code ) {
 			this.input += String.fromCharCode( code );
 		};
 
@@ -444,7 +444,7 @@ THREE.OBJLoader = (function () {
 			BaseStore.call( this, type, 3 );
 		}
 
-		VertexStore.prototype.parseObjInput = function ( code ) {
+		VertexStore.prototype.parseCode = function ( code ) {
 			// "v   1.0 2.0 3.0" or
 			// "vn  1.0 2.0 3.0" or
 
@@ -474,7 +474,7 @@ THREE.OBJLoader = (function () {
 			this.retrievedFloatCount = 0;
 		}
 
-		UvsStore.prototype.parseObjInput = function ( code ) {
+		UvsStore.prototype.parseCode = function ( code ) {
 			// "vt  1.0 2.0 0.0" -> do not use "w"
 
 			// w is optional for 2D textures; only required for 3D textures (not implemented)
@@ -532,8 +532,7 @@ THREE.OBJLoader = (function () {
 			// 1: "f vertex/uv			vertex/uv			vertex/uv"
 			// 2: "f vertex//normal		vertex//normal		vertex//normal"
 			// 3: "f vertex				vertex				vertex"
-			this.typesPerLine = new Array( DEFAULT_ARRAY_SIZE );
-//			this.typesPerLine = [];
+			this.typesPerLine = [];
 			this.typesPerLineIndex = 0;
 
 			// variables re-init per input line (called by InputObjectStore)
@@ -543,7 +542,7 @@ THREE.OBJLoader = (function () {
 			this.slashLast = 0;
 		}
 
-		FaceStore.prototype.parseObjInput = function ( code ) {
+		FaceStore.prototype.parseCode = function ( code ) {
 
 			if ( code === 32 ) {
 
@@ -625,7 +624,7 @@ THREE.OBJLoader = (function () {
 			this.foundFirstSpace = false;
 		}
 
-		NameStore.prototype.parseObjInput = function ( code ) {
+		NameStore.prototype.parseCode = function ( code ) {
 			if ( this.foundFirstSpace ) {
 
 				this.input += String.fromCharCode( code );
