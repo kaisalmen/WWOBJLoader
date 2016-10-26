@@ -354,16 +354,12 @@ THREE.OBJLoader = (function () {
 
 	var BaseStore = (function () {
 
-		function BaseStore( description, inputBufferLength ) {
+		function BaseStore( description ) {
 			this.buffer = [];
 			this.bufferIndex = 0;
+			this.bufferOffset = this.bufferIndex;
 			this.debug = false;
 			this.description = description ? description : 'noname: ';
-
-			// Always re-use input array
-			this.inputBuffer = new Array( inputBufferLength );
-//			this.inputBuffer = [];
-			this.inputBufferIndex = 0;
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.input = '';
@@ -376,39 +372,24 @@ THREE.OBJLoader = (function () {
 		BaseStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.inputBuffer[ this.inputBufferIndex ] = this.input;
-				this.inputBufferIndex++;
+				this.buffer[ this.bufferIndex ] = this.input;
+				this.bufferIndex++;
 				this.input = '';
 
 			}
 		};
 
-		BaseStore.prototype.attachInputBuffer = function () {
-			// Both Chrome and Firefox perform equally
-			for ( var i = 0; i < this.inputBufferIndex; i++ ) {
-				this.buffer[ this.bufferIndex ] = this.inputBuffer[ i ];
-				this.bufferIndex++;
-			}
-		};
-
 		BaseStore.prototype.detectedLF = function () {
 			this.verify();
-			this.attachInputBuffer();
 
 			if ( this.debug ) {
-				console.log( this.description + ': ' + this.inputBuffer.slice( 0, this.inputBufferIndex ) );
+				console.log( this.description + ': ' + this.buffer.slice( this.bufferOffset, this.bufferIndex ) );
 			}
 		};
 
 		BaseStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputBufferIndex = 0;
-		};
-
-		BaseStore.prototype.reset = function () {
-			// this.buffer is not shrinked on reset for now
-			this.bufferIndex = 0;
-			this.newLine();
+			this.bufferOffset = this.bufferIndex;
 		};
 
 		return BaseStore;
@@ -420,15 +401,15 @@ THREE.OBJLoader = (function () {
 		CommentStore.prototype.constructor = BaseStore;
 
 		function CommentStore( description ) {
-			BaseStore.call( this, description, 1 );
+			BaseStore.call( this, description );
 		}
 
 		/**
 		 * all comments are taken even empty ones "# "
 		 */
 		CommentStore.prototype.verify = function () {
-			this.inputBuffer[ this.inputBufferIndex ] = this.input;
-			this.inputBufferIndex++;
+			this.buffer[ this.bufferIndex ] = this.input;
+			this.bufferIndex++;
 			this.input = '';
 		};
 
@@ -495,8 +476,8 @@ THREE.OBJLoader = (function () {
 		UvsStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.inputBuffer[ this.inputBufferIndex ] = this.input;
-				this.inputBufferIndex++;
+				this.buffer[ this.bufferIndex ] = this.input;
+				this.bufferIndex++;
 				this.input = '';
 
 				this.retrievedFloatCount++;
@@ -506,7 +487,7 @@ THREE.OBJLoader = (function () {
 
 		UvsStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputBufferIndex = 0;
+			this.bufferOffset = this.bufferIndex;
 
 			this.retrievedFloatCount = 0;
 		};
@@ -573,7 +554,6 @@ THREE.OBJLoader = (function () {
 
 		FaceStore.prototype.detectedLF = function () {
 			this.verify();
-			this.attachInputBuffer();
 
 			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
 			this.typesPerLine[ this.typesPerLineIndex ] = type;
@@ -581,28 +561,19 @@ THREE.OBJLoader = (function () {
 
 			if ( this.debug ) {
 
-				console.log( 'Faces type: ' + type + ': ' + this.inputBuffer.slice( 0, TYPE_ARRAY_LENGTH_LOOKUP[ type ] ) );
+				console.log( 'Faces type: ' + type + ': ' + this.buffer.slice( this.bufferOffset, this.bufferIndex ) );
 
 			}
 		};
 
 		FaceStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputBufferIndex = 0;
+			this.bufferOffset = this.bufferIndex;
 
 			this.lineIndex = 0;
 			this.slashCount = 0;
 			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
 			this.slashLast = 0;
-		};
-
-		FaceStore.prototype.reset = function () {
-			// this.buffer is not shrinked on reset for now
-			this.bufferIndex = 0;
-			// this.typesPerLine is not shrinked on reset for now
-			this.typesPerLineIndex = 0;
-
-			this.newLine();
 		};
 
 		FaceStore.prototype.getTypeArrayLengthLookup = function () {
@@ -638,7 +609,7 @@ THREE.OBJLoader = (function () {
 
 		NameStore.prototype.newLine = function () {
 			this.input = '';
-			this.inputBufferIndex = 0;
+			this.bufferOffset = this.bufferIndex;
 
 			this.foundFirstSpace = false;
 		};
