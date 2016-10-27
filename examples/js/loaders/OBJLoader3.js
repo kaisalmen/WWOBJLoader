@@ -66,7 +66,7 @@ THREE.OBJLoader = (function () {
 		var processInputObject = function () {
 			if ( overallObjectCount < 3 ) {
 
-				objectStoreResults[ objectStoreResults.length ] = objectStore.createReport( this.overallObjectCount );
+				objectStoreResults[ objectStoreResults.length ] = objectStore.createReport( overallObjectCount );
 
 			}
 			overallObjectCount++;
@@ -228,6 +228,9 @@ THREE.OBJLoader = (function () {
 
 					case 102: // f
 						this.setActiveStore( this.faces );
+						if ( this.faces.activeSmoothingGroup !== this.smoothingGroups.current ) {
+							this.faces.setActiveSmoothingGroup( this.smoothingGroups.current );
+						}
 						this.reachedFaces = true;
 						break;
 
@@ -243,7 +246,9 @@ THREE.OBJLoader = (function () {
 						this.setActiveStore( this.objects );
 
 						// new instance required, because "o" found and previous vertices exist
-						if ( this.vertices.buffer.length > 0 ) this.callbackProcessObject();
+						if ( this.vertices.buffer.length > 0 ) {
+							this.callbackProcessObject();
+						}
 						break;
 
 					case 117: // u
@@ -261,7 +266,9 @@ THREE.OBJLoader = (function () {
 							this.identifiedLine = true;
 
 							// new instance required if reached faces already (= reached next block of v)
-							if ( this.reachedFaces ) this.callbackProcessObject();
+							if ( this.reachedFaces ) {
+								this.callbackProcessObject();
+							}
 
 						}
 						break;
@@ -289,13 +296,21 @@ THREE.OBJLoader = (function () {
 		InputObjectStore.prototype.createReport = function ( overallObjectCount ) {
 			var overallFaceTypesCount = [ 0, 0, 0, 0 ];
 			var type;
+			var length;
 
-			for ( var i = 0, typesLength = this.faces.typesPerLineIndex; i < typesLength; i++ ) {
-				type = this.faces.typesPerLine[ i ];
-				overallFaceTypesCount[ type ] = overallFaceTypesCount[ type ] + 1;
+			var smoothTypes;
+			for ( var name in this.faces.typesPerLine ) {
+				//console.log(  name );
+				smoothTypes = this.faces.typesPerLine[ name ];
+				length = smoothTypes.length;
+				for ( var i = 0; i < length; i++ ) {
+					type = smoothTypes[ i ];
+					overallFaceTypesCount[ type ] = overallFaceTypesCount[ type ] + 1;
+				}
 			}
+
 			var typeLookup = this.faces.getTypeArrayLengthLookup();
-			var length = typeLookup.length;
+			length = typeLookup.length;
 			var overallFacesAttr = [];
 			for ( type = 0; type < length; type++ ) {
 				overallFacesAttr[ type ] = overallFaceTypesCount[ type ] * typeLookup[ type ];
@@ -303,7 +318,7 @@ THREE.OBJLoader = (function () {
 
 			return {
 				index: overallObjectCount,
-				name: this.objects.buffer.length === 1 ? this.objects.buffer[ 0 ] : 'noname',
+				name: this.objects.buffer.length === 1 ? this.objects.buffer[ 0 ] : this.groups.buffer.length === 1 ? this.groups.buffer[ 0 ] : 'noname',
 				mtllib: this.mtllib.buffer.length === 1 ? this.mtllib.buffer[ 0 ] : this.mtllib.buffer.length,
 				vertexCount: this.vertices.buffer.length / 3,
 				normalCount: this.normals.buffer.length / 3,
@@ -459,7 +474,8 @@ THREE.OBJLoader = (function () {
 		function FaceStore() {
 			// Important: According to spec there are more than 3 value groups allowed per face desc.
 			// This is currently ignored
-			BaseStore.call( this, 'Face', 9 );
+			BaseStore.call( this, 'f' );
+
 			this.vertexOffset = 1;
 			this.uvOffset = 1;
 			this.normalOffset = 1;
@@ -469,15 +485,43 @@ THREE.OBJLoader = (function () {
 			// 1: "f vertex/uv			vertex/uv			vertex/uv"
 			// 2: "f vertex//normal		vertex//normal		vertex//normal"
 			// 3: "f vertex				vertex				vertex"
-			this.typesPerLine = [];
-			this.typesPerLineIndex = 0;
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.lineIndex = 0;
 			this.slashCount = 0;
 			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
 			this.slashLast = 0;
+
+
+			// buffer needs to be re-declared and faces are stored according smoothing groups
+			this.activeSmoothingGroup = 0;
+			this.bufferInUse = this.buffer[ this.activeSmoothingGroup ] = [];
+
+			this.typesPerLine = [];
+			this.typesPerLineInUse = this.typesPerLine[ this.activeSmoothingGroup ] = [];
 		}
+
+		FaceStore.prototype.setActiveSmoothingGroup = function ( activeSmoothingGroup ) {
+			this.activeSmoothingGroup = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
+			if ( this.buffer[ this.activeSmoothingGroup ] === undefined ) {
+
+				this.bufferInUse = this.buffer[ this.activeSmoothingGroup ] = [];
+
+			} else {
+
+				this.bufferInUse = this.buffer[ this.activeSmoothingGroup ];
+
+			}
+			if ( this.typesPerLine[ this.activeSmoothingGroup ] === undefined ) {
+
+				this.typesPerLineInUse = this.typesPerLine[ this.activeSmoothingGroup ] = [];
+
+			} else {
+
+				this.typesPerLineInUse = this.typesPerLine[ this.activeSmoothingGroup ];
+
+			}
+		};
 
 		FaceStore.prototype.parseCode = function ( code ) {
 
@@ -511,7 +555,7 @@ THREE.OBJLoader = (function () {
 		FaceStore.prototype.verify = function () {
 			if ( this.input.length > 0 ) {
 
-				this.buffer.push( parseInt( this.input, 10 ) );
+				this.bufferInUse.push( parseInt( this.input, 10 ) );
 				this.input = '';
 
 			}
@@ -521,8 +565,7 @@ THREE.OBJLoader = (function () {
 			this.verify();
 
 			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
-			this.typesPerLine[ this.typesPerLineIndex ] = type;
-			this.typesPerLineIndex++;
+			this.typesPerLineInUse.push( type );
 
 			if ( this.debug ) {
 
@@ -557,6 +600,7 @@ THREE.OBJLoader = (function () {
 
 			// variables re-init per input line (called by InputObjectStore)
 			this.foundFirstSpace = false;
+			this.current = '';
 		}
 
 		NameStore.prototype.parseCode = function ( code ) {
@@ -569,6 +613,15 @@ THREE.OBJLoader = (function () {
 				this.foundFirstSpace = true;
 			}
 
+		};
+
+		NameStore.prototype.verify = function () {
+			if ( this.input.length > 0 ) {
+
+				this.current = this.input;
+				BaseStore.prototype.verify.call( this );
+
+			}
 		};
 
 		NameStore.prototype.newLine = function () {
