@@ -63,13 +63,15 @@ THREE.OBJLoader = (function () {
 		var overallObjectCount = 0;
 		var objectStoreResults = [];
 
+		var scope = this;
 		var processInputObject = function () {
-			if ( overallObjectCount < 3 ) {
+			if ( scope.debug && overallObjectCount < 4 ) {
 
-				objectStoreResults[ objectStoreResults.length ] = objectStore.createReport( overallObjectCount );
+				objectStore.outputObjectBuilder.buildRawMeshData();
+				objectStoreResults[ objectStoreResults.length ] = createReport( objectStore.outputObjectBuilder );
+				overallObjectCount++;
 
 			}
-			overallObjectCount++;
 
 			objectStore = objectStore.newInstance();
 
@@ -101,57 +103,62 @@ THREE.OBJLoader = (function () {
 
 		if ( this.debug ) {
 
-			var singleResultSet;
 			for ( i = 0, length = objectStoreResults.length; i < length; i ++ ) {
-
-				singleResultSet = objectStoreResults[ i ];
-				console.log( 'Object number: ' + singleResultSet.index + ' Object name: ' + singleResultSet.name );
-				console.log( 'Mtllib: ' + singleResultSet.mtllib );
-				console.log( 'Vertex count: ' + singleResultSet.vertexCount );
-				console.log( 'Normal count: ' + singleResultSet.normalCount );
-				console.log( 'UV count: ' + singleResultSet.uvCount );
-//				console.log( 'Faces Type counts: ' + singleResultSet.overallFaceTypesCount );
-//				console.log( 'Faces attr count per type: ' + singleResultSet.overallFacesAttr );
-				console.log( 'Object count: ' + singleResultSet.objectCount );
-				console.log( 'Group count: ' + singleResultSet.groupCount );
-				console.log( 'Smoothing group count: ' + singleResultSet.smoothingGroupCount );
-				console.log( 'Usemtl: ' + singleResultSet.usemtl );
-				console.log( 'Comments count: ' + singleResultSet.commentCount );
-				console.log( '' );
+				printSingleReport( i, objectStoreResults[ i ] );
 			}
 		}
 
 		return this.container;
 	};
 
+	var createReport = function ( oobRef ) {
+		return {
+			name: oobRef.objectName ? oobRef.objectName : 'groups',
+			mtllibName: oobRef.mtllibName,
+			vertexCount: oobRef.vertices.buffer.length / 3,
+			normalCount: oobRef.normals.buffer.length / 3,
+			uvCount: oobRef.uvs.buffer.length / 2,
+//				overallFaceTypesCount: overallFaceTypesCount,
+//				overallFacesAttr: overallFacesAttr,
+			objectGroupCount: oobRef.objectGroupCount,
+			smoothingGroupCount: oobRef.smoothingGroupCount,
+			mtlCount: oobRef.mtlCount,
+			commentCount: oobRef.comments ? oobRef.comments.length : 0
+		};
+	};
+
+	var printSingleReport = function ( index, singleResultSet ) {
+		console.log( 'Object number: ' + index + ' Object name: ' + singleResultSet.name );
+		console.log( 'Mtllib name: ' + singleResultSet.mtllibName );
+		console.log( 'Vertex count: ' + singleResultSet.vertexCount );
+		console.log( 'Normal count: ' + singleResultSet.normalCount );
+		console.log( 'UV count: ' + singleResultSet.uvCount );
+//				console.log( 'Faces Type counts: ' + singleResultSet.overallFaceTypesCount );
+//				console.log( 'Faces attr count per type: ' + singleResultSet.overallFacesAttr );
+		console.log( 'Group count: ' + singleResultSet.objectGroupCount );
+		console.log( 'SmoothingGroup count: ' + singleResultSet.smoothingGroupCount );
+		console.log( 'Material count: ' + singleResultSet.mtlCount );
+		console.log( 'Comments count: ' + singleResultSet.commentCount );
+		console.log( '' );
+	};
+
 	var InputObjectStore = (function () {
 
 		function InputObjectStore() {
 			// globals (per InputObjectStore)
-
-
 			this.store = null;
 			this.comments = new BaseStore( '#' );
-			this.mtllib = new NameStore( 'mtllib' );
+			this.mtllib = new NameStore( 'mtllib', 'updateMtllib' );
 			this.vertices = new VertexStore( 'v' );
 			this.normals = new VertexStore( 'vn' );
 			this.uvs = new UvsStore();
 
-			this.outputObjectBuilder = new OutputObjectBuilder( this.mtllib, this.vertices, this.normals, this.uvs );
-			this.objects = new NameStore( 'o' );
-			this.objects.setLFCallbackFunctionName( this.outputObjectBuilder, 'updateObject' );
-
-			this.groups = new NameStore( 'g' );
-			this.groups.setLFCallbackFunctionName( this.outputObjectBuilder, 'updateGroup' );
-
-			this.usemtls = new NameStore( 'usemtl' );
-			this.usemtls.setLFCallbackFunctionName( this.outputObjectBuilder, 'updateMtl' );
-
+			this.outputObjectBuilder = new OutputObjectBuilder( this.vertices, this.normals, this.uvs );
+			this.objects = new NameStore( 'o', 'updateObject' );
+			this.groups = new NameStore( 'g', 'updateGroup' );
+			this.usemtls = new NameStore( 'usemtl', 'updateMtl' );
 			this.faces = new FaceStore();
-			this.faces.setLFCallbackFunctionName( this.outputObjectBuilder, 'updateFace' );
-
-			this.smoothingGroups = new NameStore( 's' );
-			this.smoothingGroups.setLFCallbackFunctionName( this.outputObjectBuilder, 'updateSmoothingGroup' );
+			this.smoothingGroups = new NameStore( 's', 'updateSmoothingGroup' );
 
 			this.reachedFaces = false;
 			this.lineCount = 0;
@@ -165,11 +172,11 @@ THREE.OBJLoader = (function () {
 			objectStore.lineCount = this.lineCount;
 
 			if ( this.store === this.objects ) {
-				objectStore.store = this.objects;
+				objectStore.store = objectStore.objects;
 				objectStore.identifiedLine = true;
 			} else if ( this.store === this.vertices ) {
-				objectStore.store = this.vertices;
-				objectStore.identifiedLine = true;
+				objectStore.store = objectStore.vertices;
+				objectStore.identifiedLine = false;
 			}
 			objectStore.setCallbackProcessObject( this.callbackProcessObject );
 
@@ -209,7 +216,7 @@ THREE.OBJLoader = (function () {
 				// LF => signal store end of line and reset that line type is known
 				if ( code === 10 ) {
 
-					this.store.detectedLF();
+					this.store.detectedLF( this.outputObjectBuilder );
 					this.store = null;
 					this.identifiedLine = false;
 					this.lineCount ++;
@@ -269,9 +276,7 @@ THREE.OBJLoader = (function () {
 					case 32: // SPACE at start of line: not needed, but after 'v' will start new vertex parsing
 						if ( this.store === this.vertices ) {
 
-							this.store.newLine();
 							this.identifiedLine = true;
-
 							// new instance required if reached faces already (= reached next block of v)
 							if ( this.reachedFaces ) {
 								this.callbackProcessObject();
@@ -296,76 +301,32 @@ THREE.OBJLoader = (function () {
 
 		InputObjectStore.prototype.setActiveStore = function ( store ) {
 			this.store = store;
-			this.store.newLine();
 			this.identifiedLine = true;
-		};
-
-		InputObjectStore.prototype.createReport = function ( overallObjectCount ) {
-/*
-			var overallFaceTypesCount = [ 0, 0, 0, 0 ];
-			var type;
-			var length;
-
-			var smoothTypes;
-			for ( var name in this.faces.typesPerLine ) {
-				//console.log(  name );
-				smoothTypes = this.faces.typesPerLine[ name ];
-				length = smoothTypes.length;
-				for ( var i = 0; i < length; i++ ) {
-					type = smoothTypes[ i ];
-					overallFaceTypesCount[ type ] = overallFaceTypesCount[ type ] + 1;
-				}
-			}
-
-			var typeLookup = this.faces.getTypeArrayLengthLookup();
-			length = typeLookup.length;
-			var overallFacesAttr = [];
-			for ( type = 0; type < length; type++ ) {
-				overallFacesAttr[ type ] = overallFaceTypesCount[ type ] * typeLookup[ type ];
-			}
-*/
-			return {
-				index: overallObjectCount,
-				name: this.objects.buffer.length === 1 ? this.objects.buffer[ 0 ] : this.groups.buffer.length === 1 ? this.groups.buffer[ 0 ] : 'noname',
-				mtllib: this.mtllib.buffer.length === 1 ? this.mtllib.buffer[ 0 ] : this.mtllib.buffer.length,
-				vertexCount: this.vertices.buffer.length / 3,
-				normalCount: this.normals.buffer.length / 3,
-				uvCount: this.uvs.buffer.length / 2,
-//				overallFaceTypesCount: overallFaceTypesCount,
-//				overallFacesAttr: overallFacesAttr,
-				groupCount: this.groups.buffer.length,
-				objectCount: this.objects.buffer.length,
-				smoothingGroupCount: this.smoothingGroups.buffer.length,
-				usemtl: this.usemtls.buffer.length === 1 ? this.usemtls.buffer[ 0 ] : this.usemtls.buffer.length,
-				commentCount: this.comments.buffer.length
-			};
 		};
 
 		return InputObjectStore;
 	})();
 
+	// Define trim function to use once
+	// Faster to just trim left side of the line. Use if available.
+	var trimLeft = function ( line ) { return line.trimLeft(); };
+	var trimNormal = function ( line ) { return line.trim(); };
+	var trimFunction = typeof ''.trimLeft === 'function' ?  trimLeft : trimNormal;
 
 	var BaseStore = (function () {
 
-		function BaseStore( description, bufferLength ) {
-			this.buffer = bufferLength !== undefined ? new Array( bufferLength ) : [];
+		function BaseStore( description, minInputLength ) {
+			this.buffer = [];
 			this.bufferOffset = 0;
 			this.bufferIndex = 0;
 
 			// variables re-init (newLine) per input line (called by InputObjectStore)
 			this.input = '';
+			this.minInputLength = minInputLength !== undefined ? minInputLength : -1;
 			this.description = description ? description : 'noname: ';
-
-			this.oobRef = null;
-			this.lfCallbackFunctionName;
 
 			this.debug = false;
 		}
-
-		BaseStore.prototype.setLFCallbackFunctionName = function ( oobRef, lfCallbackFunctionName ) {
-			this.oobRef = oobRef;
-			this.lfCallbackFunctionName = lfCallbackFunctionName;
-		};
 
 
 		BaseStore.prototype.parseCode = function ( code ) {
@@ -375,33 +336,34 @@ THREE.OBJLoader = (function () {
 		/**
 		 * Per default all input is taken even empty ones like "# "
 		 */
-		BaseStore.prototype.pushToBuffer = function () {
-			this.buffer[ this.bufferIndex ] = this.input;
-			this.bufferIndex++;
+		BaseStore.prototype.pushToBuffer = function ( transformedInput ) {
+			var success = false;
+			if ( this.input.length > this.minInputLength ) {
+
+				this.buffer[ this.bufferIndex ] = transformedInput;
+				this.bufferIndex ++;
+				success = true;
+
+			}
+			return success;
 		};
 
 		BaseStore.prototype.getSingleLineBuffer = function () {
 			var output = [];
 			for ( var i = this.bufferOffset, j = 0; i < this.bufferIndex; i++ ) {
+
 				output[ j ] = this.buffer[ i ];
 				j++;
+
 			}
 			return output;
 		};
 
-		BaseStore.prototype.detectedLF = function () {
-			this.pushToBuffer();
+		BaseStore.prototype.detectedLF = function ( oobRef ) {
+			this.pushToBuffer( this.input );
 
-			if ( this.lfCallbackFunctionName ) {
-				this.oobRef[this.lfCallbackFunctionName]( this.getSingleLineBuffer() );
-			}
+			if ( this.debug ) console.log( this.description + ': ' + this.getSingleLineBuffer() );
 
-			if ( this.debug ) {
-				console.log( this.description + ': ' + this.getSingleLineBuffer() );
-			}
-		};
-
-		BaseStore.prototype.newLine = function () {
 			this.input = '';
 			this.bufferOffset = this.bufferIndex;
 		};
@@ -415,7 +377,7 @@ THREE.OBJLoader = (function () {
 		VertexStore.prototype.constructor = VertexStore;
 
 		function VertexStore( type ) {
-			BaseStore.call( this, type );
+			BaseStore.call( this, type, 0 );
 		}
 
 		VertexStore.prototype.parseCode = function ( code ) {
@@ -424,7 +386,8 @@ THREE.OBJLoader = (function () {
 
 			if ( code === 32) {
 
-				this.pushToBuffer();
+				this.pushToBuffer( parseFloat( this.input ) );
+				this.input = '';
 
 			} else {
 
@@ -433,14 +396,13 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		VertexStore.prototype.pushToBuffer = function () {
-			if ( this.input.length > 0 ) {
+		VertexStore.prototype.detectedLF = function ( oobRef ) {
+			this.pushToBuffer( parseFloat( this.input ) );
 
-				this.buffer[ this.bufferIndex ] = parseFloat( this.input );
-				this.bufferIndex++;
-				this.input = '';
+			if ( this.debug ) console.log( this.description + ': ' + this.getSingleLineBuffer() );
 
-			}
+			this.input = '';
+			this.bufferOffset = this.bufferIndex;
 		};
 
 		return VertexStore;
@@ -454,7 +416,7 @@ THREE.OBJLoader = (function () {
 		function UvsStore() {
 			VertexStore.call( this, 'vt' );
 
-			// variables re-init per input line (called by InputObjectStore)
+			// variables re-init per input line
 			this.retrievedFloatCount = 0;
 		}
 
@@ -462,27 +424,26 @@ THREE.OBJLoader = (function () {
 			// "vt  1.0 2.0 0.0" -> do not use "w"
 
 			// w is optional for 2D textures; only required for 3D textures (not implemented)
-			if ( this.retrievedFloatCount < 2 ) {
+			if ( this.retrievedFloatCount == 2 ) return;
 
-				VertexStore.prototype.parseCode.call( this, code );
+			if ( code === 32 ) {
+
+				if ( this.pushToBuffer( parseFloat( this.input ) ) ) {
+
+					this.retrievedFloatCount++;
+					this.input = '';
+
+				}
+
+			} else {
+
+				this.input += String.fromCharCode( code );
 
 			}
 		};
 
-		UvsStore.prototype.pushToBuffer = function () {
-			if ( this.input.length > 0 ) {
-
-				this.buffer[ this.bufferIndex ] = parseFloat( this.input );
-				this.bufferIndex++;
-				this.input = '';
-				this.retrievedFloatCount++;
-
-			}
-		};
-
-		UvsStore.prototype.newLine = function () {
-			BaseStore.prototype.newLine.call( this );
-
+		UvsStore.prototype.detectedLF = function ( oobRef ) {
+			VertexStore.prototype.detectedLF.call( this, oobRef );
 			this.retrievedFloatCount = 0;
 		};
 
@@ -500,7 +461,7 @@ THREE.OBJLoader = (function () {
 		function FaceStore() {
 			// Important: According to spec there are more than 3 value groups allowed per face desc.
 			// This is currently ignored
-			BaseStore.call( this, 'f' );
+			BaseStore.call( this, 'f', 0 );
 
 			// possible types
 			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
@@ -519,7 +480,8 @@ THREE.OBJLoader = (function () {
 
 			if ( code === 32 ) {
 
-				this.pushToBuffer();
+				this.pushToBuffer( parseInt( this.input, 10 ) );
+				this.input = '';
 
 			} else if ( code === 47 ) {
 
@@ -534,7 +496,8 @@ THREE.OBJLoader = (function () {
 
 				}
 
-				this.pushToBuffer();
+				this.pushToBuffer( parseInt( this.input, 10 ) );
+				this.input = '';
 
 			} else {
 
@@ -544,35 +507,17 @@ THREE.OBJLoader = (function () {
 			this.lineIndex++;
 		};
 
-		FaceStore.prototype.pushToBuffer = function () {
-			if ( this.input.length > 0 ) {
-
-				this.buffer[ this.bufferIndex ] = parseInt( this.input, 10 );
-				this.bufferIndex++;
-				this.input = '';
-
-			}
-		};
-
-		FaceStore.prototype.detectedLF = function () {
-			this.pushToBuffer();
+		FaceStore.prototype.detectedLF = function ( oobRef ) {
+			this.pushToBuffer( parseInt( this.input, 10 ) );
 
 			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
+			oobRef.updateFace( type, this.bufferIndex, this.buffer );
 
-			if ( this.lfCallbackFunctionName ) {
-				this.oobRef[this.lfCallbackFunctionName]( type, this.bufferIndex, this.getSingleLineBuffer() );
-			}
+			if ( this.debug ) console.log( 'Faces type: ' + type + ': ' + this.buffer );
 
-			if ( this.debug ) {
-
-				console.log( 'Faces type: ' + type + ': ' + this.buffer.slice( this.bufferOffset, this.buffer.length ) );
-
-			}
-		};
-
-		FaceStore.prototype.newLine = function () {
 			// rewrite buffer every line
 			this.input = '';
+			this.buffer = [];
 			this.bufferIndex = 0;
 			this.bufferOffset = 0;
 
@@ -594,10 +539,9 @@ THREE.OBJLoader = (function () {
 		NameStore.prototype = Object.create( BaseStore.prototype );
 		NameStore.prototype.constructor = NameStore;
 
-		function NameStore( description ) {
-			BaseStore.call( this, description );
-
-			// variables re-init per input line (called by InputObjectStore)
+		function NameStore( description, oobRefFunction ) {
+			BaseStore.call( this, description, 0 );
+			this.oobRefFunction = oobRefFunction;
 			this.foundFirstSpace = false;
 		}
 
@@ -610,20 +554,17 @@ THREE.OBJLoader = (function () {
 
 				this.foundFirstSpace = true;
 			}
-
 		};
 
-		NameStore.prototype.pushToBuffer = function () {
-			if ( this.input.length > 0 ) {
+		NameStore.prototype.detectedLF = function ( oobRef ) {
+			this.pushToBuffer( this.input );
 
-				BaseStore.prototype.pushToBuffer.call( this );
+			oobRef[this.oobRefFunction]( this.input );
 
-			}
-		};
+			if ( this.debug ) console.log( this.description + ': ' + this.input );
 
-		NameStore.prototype.newLine = function () {
-			BaseStore.prototype.newLine.call( this );
-
+			this.input = '';
+			this.bufferOffset = this.bufferIndex;
 			this.foundFirstSpace = false;
 		};
 
@@ -632,39 +573,68 @@ THREE.OBJLoader = (function () {
 
 	var OutputObjectBuilder = (function () {
 
-		function OutputObjectBuilder( mtllib, vertices, normals, uvs ) {
-			this.objectName = '';
+		function OutputObjectBuilder( vertices, normals, uvs, comments ) {
+			this.objectName;
 
-			this.mtllib = mtllib;
 			this.vertices = vertices;
 			this.normals = normals;
 			this.uvs = uvs;
+			this.comments = comments;
 
-			// faces are stored according groups
+			this.mtllibName = '';
+
+			// faces are stored according groups and then according smoothing groups
 			this.activeGroup = '';
-			this.groupBuffers = [];
-			this.groupBufferInUse = null;
+			this.objectGroupBuffers = [];
+			this.objectGroupBufferInUse = null;
+			this.objectGroupCount = 0;
+
+			this.activeMtlName = '';
+			this.mtlBufferInUse = null;
+			this.mtlCount = 0;
 
 			this.activeSmoothingGroup = 0;
-			this.smoothBufferInUse = [];
-			this.smoothBufferInUseIndex = 0;
+			this.smoothingGroupBufferInUse = [];
+			this.smoothingGroupBufferInUseIndex = 0;
+			this.smoothingGroupCount = 0;
 		}
 
 		OutputObjectBuilder.prototype.updateObject = function ( objectName ) {
 			this.objectName = objectName;
 		};
 
+		OutputObjectBuilder.prototype.updateMtllib = function ( mtllibName ) {
+			this.mtllibName = mtllibName;
+		};
+
 		OutputObjectBuilder.prototype.updateGroup = function ( groupName ) {
 			if ( this.activeGroup === groupName ) return;
 
 			this.activeGroup = groupName;
-			if ( this.groupBuffers[ this.activeGroup ] === undefined ) {
+			if ( this.objectGroupBuffers[ this.activeGroup ] === undefined ) {
 
-				this.groupBufferInUse = this.groupBuffers[ this.activeGroup ] = [];
+				this.objectGroupBufferInUse = this.objectGroupBuffers[ this.activeGroup ] = [];
+				this.objectGroupCount++;
 
 			} else {
 
-				this.groupBufferInUse = this.groupBuffers[ this.activeGroup ];
+				this.objectGroupBufferInUse = this.objectGroupBuffers[ this.activeGroup ];
+
+			}
+		};
+
+		OutputObjectBuilder.prototype.updateMtl = function ( mtlName ) {
+			if ( this.activeMtlName === mtlName ) return;
+
+			this.activeMtlName = mtlName;
+			if ( this.objectGroupBufferInUse[ this.activeMtlName ] === undefined ) {
+
+				this.mtlBufferInUse = this.objectGroupBufferInUse[ this.activeMtlName ] = [];
+				this.mtlCount++;
+
+			} else {
+
+				this.mtlBufferInUse = this.objectGroupBufferInUse[ this.activeMtlName ];
 
 			}
 		};
@@ -674,29 +644,50 @@ THREE.OBJLoader = (function () {
 			if ( this.activeSmoothingGroup === normalized ) return;
 
 			this.activeSmoothingGroup = normalized;
-			if ( this.groupBufferInUse[ this.activeSmoothingGroup ] === undefined ) {
+			if ( this.mtlBufferInUse[ this.activeSmoothingGroup ] === undefined ) {
 
-				this.smoothBufferInUse = this.groupBufferInUse[ this.activeSmoothingGroup ] = [];
+				this.smoothingGroupBufferInUse = this.mtlBufferInUse[ this.activeSmoothingGroup ] = [];
+				this.smoothingGroupCount++;
 
 			} else {
 
-				this.smoothBufferInUse = this.groupBufferInUse[ this.activeSmoothingGroup ];
+				this.smoothingGroupBufferInUse = this.mtlBufferInUse[ this.activeSmoothingGroup ];
 
 			}
 		};
 
 		OutputObjectBuilder.prototype.updateFace = function ( type, count, lineBuffer ) {
-			this.smoothBufferInUse[ this.smoothBufferInUseIndex ] = type;
-			this.smoothBufferInUseIndex++;
+			this.smoothingGroupBufferInUse[ this.smoothingGroupBufferInUseIndex ] = type;
+			this.smoothingGroupBufferInUseIndex++;
 
 			for ( var i = 0; i < count; i++ ) {
-				this.smoothBufferInUse[ this.smoothBufferInUseIndex ] = lineBuffer[ i ];
-				this.smoothBufferInUseIndex++;
+				this.smoothingGroupBufferInUse[ this.smoothingGroupBufferInUseIndex ] = lineBuffer[ i ];
+				this.smoothingGroupBufferInUseIndex++;
 			}
 		};
 
-		OutputObjectBuilder.prototype.updateMtl = function ( mtlName ) {
 
+		OutputObjectBuilder.prototype.buildRawMeshData = function () {
+			var materialGroups;
+			var smooothingGroups;
+			var facesInfo;
+
+			for ( var groupName in this.objectGroupBuffers ) {
+
+				materialGroups = this.objectGroupBuffers[ groupName ];
+				console.log( groupName + ': ' +  materialGroups );
+				for ( var materialName in materialGroups ) {
+
+					smooothingGroups = materialGroups[ materialName ];
+					console.log( 'Smoothing groups for material: ' + materialName );
+					for ( var smooothingGroupName in smooothingGroups ) {
+
+						facesInfo = smooothingGroups[ smooothingGroupName ];
+						console.log( 'Smoothing group ' + smooothingGroupName + ' face info count stored: ' + facesInfo.length );
+
+					}
+				}
+			}
 		};
 
 		return OutputObjectBuilder;
