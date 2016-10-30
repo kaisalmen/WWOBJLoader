@@ -78,6 +78,7 @@ THREE.OBJLoader = (function () {
 		};
 		inputObjectStore.setCallbackRequestReport( callbackRequestReport );
 //		inputObjectStore.setDebug( debug );
+		inputObjectStore.outputObjectBuilder.debug = debug;
 
 		if ( this.loadAsArrayBuffer ) {
 
@@ -138,6 +139,7 @@ THREE.OBJLoader = (function () {
 
 			// globals (per InputObjectStore)
 			this.comments = new LineParserBase( '#', this.outputObjectBuilder, 'pushComment' );
+
 			this.mtllib = new LineParserString( 'mtllib', this.outputObjectBuilder, 'pushMtllib' );
 			this.vertices = new LineParserVertex( 'v', 3, this.outputObjectBuilder, 'pushVertex' );
 			this.normals = new LineParserVertex( 'vn', 3, this.outputObjectBuilder, 'pushNormal' );
@@ -147,7 +149,17 @@ THREE.OBJLoader = (function () {
 			this.usemtls = new LineParserString( 'usemtl', this.outputObjectBuilder, 'pushMtl' );
 			this.faces = new LineParserFace( this.outputObjectBuilder );
 			this.smoothingGroups = new LineParserString( 's', this.outputObjectBuilder, 'pushSmoothingGroup' );
-
+/*
+			this.mtllib = new LineParserBase( 'mtllib', this.outputObjectBuilder );
+			this.vertices = new LineParserBase( 'v', this.outputObjectBuilder );
+			this.normals = new LineParserBase( 'vn', this.outputObjectBuilder );
+			this.uvs = new LineParserBase( this.outputObjectBuilder );
+			this.objects = new LineParserBase( 'o', this.outputObjectBuilder );
+			this.groups = new LineParserBase( 'g', this.outputObjectBuilder );
+			this.usemtls = new LineParserBase( 'usemtl', this.outputObjectBuilder );
+			this.faces = new LineParserBase( this.outputObjectBuilder );
+			this.smoothingGroups = new LineParserBase( 's', this.outputObjectBuilder );
+ */
 			this.parser = null;
 			this.callbackRequestReport = null;
 
@@ -321,7 +333,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		InputObjectStore.prototype.processCompletedObject = function () {
-			this.outputObjectBuilder.buildRawMeshData();
+			this.outputObjectBuilder.buildRawMeshData( this.inputObjectCount );
 			this.inputObjectCount++;
 			if ( this.callbackRequestReport !== null ) this.callbackRequestReport();
 			this.reset();
@@ -357,7 +369,7 @@ THREE.OBJLoader = (function () {
 		 * Extensions behave differently by overriding this method.
 		 */
 		LineParserBase.prototype.detectedLF = function () {
-			this.oobRef[ this.oobRefFunction ]( this.input );
+			if ( this.oobRefFunction) this.oobRef[ this.oobRefFunction ]( this.input );
 
 			if ( this.debug ) console.log( this.description + ': ' + this.input );
 
@@ -598,12 +610,9 @@ THREE.OBJLoader = (function () {
 
 			// faces are stored according groups and then according smoothing groups
 			this.activeGroup = 'none';
-			this.objectGroupBuffers = [];
-			this.objectGroupBufferInUse = null;
 			this.objectGroupCount = 0;
 
 			this.activeMtlName = 'none';
-			this.mtlBufferInUse = null;
 			this.mtlCount = 0;
 
 			this.activeSmoothingGroup = 0;
@@ -619,9 +628,8 @@ THREE.OBJLoader = (function () {
 		var buildIndex = function ( groupName, mtlName, smoothingGroup ) {
 			return groupName + "_" + mtlName + "_" + smoothingGroup;
 		};
-
+/*
 		var GroupMtlSmoothTriple = (function () {
-
 
 			function GroupMtlSmoothTriple( groupName, mtlName, smoothingGroup ) {
 				this.groupName = groupName;
@@ -632,9 +640,7 @@ THREE.OBJLoader = (function () {
 
 			return GroupMtlSmoothTriple;
 		})();
-
-
-
+*/
 		OutputObjectBuilder.prototype.pushToBuffer = function ( source, target, targetIndex ) {
 			for ( var i = 0, length = source.length; i < length; i++ ) {
 
@@ -671,65 +677,41 @@ THREE.OBJLoader = (function () {
 
 		OutputObjectBuilder.prototype.pushGroup = function ( groupName ) {
 			if ( this.activeGroup === groupName ) return;
-
-//			console.log( groupName );
 			this.activeGroup = groupName;
-			if ( this.objectGroupBuffers[ this.activeGroup ] === undefined ) {
+			this.objectGroupCount++;
 
-				this.objectGroupBufferInUse = this.objectGroupBuffers[ this.activeGroup ] = [];
-				this.objectGroupCount++;
-
-			} else {
-
-				this.objectGroupBufferInUse = this.objectGroupBuffers[ this.activeGroup ];
-
-			}
+			this.verifyIndex();
 		};
 
 		OutputObjectBuilder.prototype.pushMtl = function ( mtlName ) {
 			if ( this.activeMtlName === mtlName ) return;
-
 			this.activeMtlName = mtlName;
-			if ( this.objectGroupBufferInUse[ this.activeMtlName ] === undefined ) {
+			this.mtlCount++;
 
-				this.mtlBufferInUse = this.objectGroupBufferInUse[ this.activeMtlName ] = [];
-				this.mtlCount++;
-
-			} else {
-
-				this.mtlBufferInUse = this.objectGroupBufferInUse[ this.activeMtlName ];
-
-			}
+			this.verifyIndex();
 		};
 
 		OutputObjectBuilder.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
 			var normalized = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
 			if ( this.activeSmoothingGroup === normalized ) return;
-
 			this.activeSmoothingGroup = normalized;
-			if ( this.mtlBufferInUse[ this.activeSmoothingGroup ] === undefined ) {
+			this.smoothingGroupCount++;
 
-				this.smoothingGroupBufferInUse = this.mtlBufferInUse[ this.activeSmoothingGroup ] = [];
-				this.smoothingGroupCount++;
+			this.verifyIndex();
+		};
 
-			} else {
-
-				this.smoothingGroupBufferInUse = this.mtlBufferInUse[ this.activeSmoothingGroup ];
-
-			}
-/*
+		OutputObjectBuilder.prototype.verifyIndex = function () {
 			var index = buildIndex( this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
-			var select = this.groupMtlSmoothTriples[index];
-			if ( select === null ) {
 
-				this.smoothingGroupBufferInUse = [];
+			if ( this.groupMtlSmoothTriples[ index ] === undefined ) {
+
+				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ] = [];
 
 			} else {
 
-				this.smoothingGroupBufferInUse = select;
+				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ];
 
 			}
-*/
 		};
 
 		OutputObjectBuilder.prototype.pushFace = function ( type, count, lineBuffer ) {
@@ -742,27 +724,14 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
+		OutputObjectBuilder.prototype.buildRawMeshData = function ( index ) {
+			if ( this.debug ) {
 
-		OutputObjectBuilder.prototype.buildRawMeshData = function () {
-			var materialGroups;
-			var smoothingGroups;
-			var facesInfo;
-
-			for ( var groupName in this.objectGroupBuffers ) {
-
-				materialGroups = this.objectGroupBuffers[ groupName ];
-				if ( this.debug ) console.log( groupName + ': ' +  materialGroups );
-				for ( var materialName in materialGroups ) {
-
-					smoothingGroups = materialGroups[ materialName ];
-					if ( this.debug ) console.log( 'Smoothing groups for material: ' + materialName );
-					for ( var smoothingGroupName in smoothingGroups ) {
-
-						facesInfo = smoothingGroups[ smoothingGroupName ];
-						if ( this.debug ) console.log( 'Smoothing group ' + smoothingGroupName + ' face info count stored: ' + facesInfo.length );
-
-					}
+				console.log( 'buildRawMeshData: ' + index + ' name: ' + this.objectName );
+				for ( var index in this.groupMtlSmoothTriples ) {
+					console.log( index + ' # face infos stored: ' + this.groupMtlSmoothTriples[ index ].length );
 				}
+
 			}
 		};
 
