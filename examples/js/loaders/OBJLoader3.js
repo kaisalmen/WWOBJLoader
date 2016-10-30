@@ -8,13 +8,11 @@ THREE.OBJLoader = (function () {
 
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-		this.debug = true;
 
 		this.path = null;
 		this.loadAsArrayBuffer = true;
 
 		this.materials = null;
-		this.container = null;
 
 		this.reInit( true, '', null );
 	}
@@ -41,7 +39,6 @@ THREE.OBJLoader = (function () {
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 
 		this.materials = materials;
-		this.container = new THREE.Group();
 	};
 
 	// Define trim function to use once
@@ -65,60 +62,45 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-		console.time( 'Parse' );
-		var objectStore = new InputObjectStore();
-		var overallObjectCount = 0;
+
+		var inputObjectStore = new InputObjectStore();
 		var objectStoreResults = [];
 
+		var debug = true;
 		var scope = this;
-		var processInputObject = function () {
-			if ( scope.debug && overallObjectCount < 4 ) {
+		var callbackRequestReport = function () {
+			if ( debug && inputObjectStore.inputObjectCount <= 3 ) {
 
-				objectStore.outputObjectBuilder.buildRawMeshData();
-				objectStoreResults[ objectStoreResults.length ] = createReport( objectStore.outputObjectBuilder );
-				overallObjectCount++;
+				objectStoreResults[ objectStoreResults.length ] = scope.createReport( inputObjectStore.outputObjectBuilder );
+				inputObjectStore.setDebug( ! debug );
 
 			}
-
-			objectStore.reset();
-
 		};
-		objectStore.setCallbackProcessObject( processInputObject );
-//		objectStore.setDebug( this.debug );
+		inputObjectStore.setCallbackRequestReport( callbackRequestReport );
+//		inputObjectStore.setDebug( debug );
 
-		var i;
-		var length;
 		if ( this.loadAsArrayBuffer ) {
 
-			var view = new Uint8Array( loadedContent );
-			for ( i = 0, length = view.byteLength; i < length; i++ ) {
-
-				objectStore.parseCode( view [ i ] );
-
-			}
+			inputObjectStore.parseArrayBuffer( loadedContent );
 
 		} else {
 
-			for ( i = 0, length = loadedContent.length; i < length; i++ ) {
+			inputObjectStore.parseString( loadedContent );
 
-				objectStore.parseCode( loadedContent[ i ].charCodeAt( 0 ) );
+		}
 
+		if ( debug ) {
+
+			for ( var i = 0, length = objectStoreResults.length; i < length; i ++ ) {
+				this.printSingleReport( i, objectStoreResults[ i ] );
 			}
 
 		}
-		console.timeEnd( 'Parse' );
 
-		if ( this.debug ) {
-
-			for ( i = 0, length = objectStoreResults.length; i < length; i ++ ) {
-				printSingleReport( i, objectStoreResults[ i ] );
-			}
-		}
-
-		return this.container;
+		return inputObjectStore.container;
 	};
 
-	var createReport = function ( oobRef ) {
+	OBJLoader.prototype.createReport = function ( oobRef ) {
 		return {
 			name: oobRef.objectName ? oobRef.objectName : 'groups',
 			mtllibName: oobRef.mtllibName,
@@ -134,7 +116,7 @@ THREE.OBJLoader = (function () {
 		};
 	};
 
-	var printSingleReport = function ( index, singleResultSet ) {
+	OBJLoader.prototype.printSingleReport = function ( index, singleResultSet ) {
 		console.log( 'Object number: ' + index + ' Object name: ' + singleResultSet.name );
 		console.log( 'Mtllib name: ' + singleResultSet.mtllibName );
 		console.log( 'Vertex count: ' + singleResultSet.vertexCount );
@@ -167,20 +149,20 @@ THREE.OBJLoader = (function () {
 			this.smoothingGroups = new LineParserString( 's', this.outputObjectBuilder, 'pushSmoothingGroup' );
 
 			this.parser = null;
+			this.callbackRequestReport = null;
 
 			this.reachedFaces = false;
 			this.lineCount = 0;
+			this.inputObjectCount = 0;
 
-			// per line
-			this.identifiedLine = false;
+			this.container = new THREE.Group();
 		}
 
-		InputObjectStore.prototype.setCallbackProcessObject = function ( callbackProcessObject ) {
-			this.callbackProcessObject = callbackProcessObject;
+		InputObjectStore.prototype.setCallbackRequestReport = function ( callbackRequestReport ) {
+			this.callbackRequestReport = callbackRequestReport;
 		};
 
 		InputObjectStore.prototype.reset = function () {
-			delete this.outputObjectBuilder;
 			this.outputObjectBuilder = new OutputObjectBuilder();
 
 			this.comments.oobRef = this.outputObjectBuilder;
@@ -208,6 +190,33 @@ THREE.OBJLoader = (function () {
 			this.objects.debug = debug;
 			this.smoothingGroups.debug = debug;
 			this.usemtls.debug = debug;
+
+			this.outputObjectBuilder.debug = debug;
+		};
+
+		InputObjectStore.prototype.parseArrayBuffer = function ( arrayBuffer ) {
+			console.time( 'ParseBytes' );
+
+			var view = new Uint8Array( arrayBuffer );
+			for ( var i = 0, length = view.byteLength; i < length; i ++ ) {
+
+				this.parseCode( view [ i ] );
+
+			}
+
+			console.timeEnd( 'ParseBytes' );
+		};
+
+		InputObjectStore.prototype.parseString = function ( input ) {
+			console.time( 'ParseString' );
+
+			for ( var i = 0, length = input.length; i < length; i++ ) {
+
+				this.parseCode( input[ i ].charCodeAt( 0 ) );
+
+			}
+
+			console.timeEnd( 'ParseString' );
 		};
 
 		/**
@@ -217,100 +226,105 @@ THREE.OBJLoader = (function () {
 		 * @param code
 		 */
 		InputObjectStore.prototype.parseCode = function ( code ) {
-			// fast fail on CR (=ignore)
-			if ( code === 13 ) return;
+			switch ( code ) {
+				case 13: // CR
+					// ignore CR
+					break;
 
-			if ( this.identifiedLine ) {
+				case 10: // LF
+					if ( this.parser === null ) return;
 
-				// LF => signal store end of line and reset that line type is known
-				if ( code === 10 ) {
-
+					// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
 					this.parser.detectedLF();
 					this.parser = null;
-					this.identifiedLine = false;
 					this.lineCount ++;
+					break;
 
-				} else {
+				case 118: // v
+					if ( this.parser !== null ) this.parser.parseCode( code );
+					break;
 
-					this.parser.parseCode( code );
+				case 110: // n
+					this.processIdentifierCharCode( code, this.normals );
+					break;
 
-				}
+				case 116: // t
+					this.processIdentifierCharCode( code, this.uvs );
+					break;
 
-			} else {
+				case 102: // f
+					if ( this.processIdentifierCharCode( code, this.faces ) ) this.reachedFaces = true;
+					break;
 
-				switch ( code ) {
-					case 118: // v
-						// Identify with next character, there don't set "identifiedLine"
+				case 115: // s
+					this.processIdentifierCharCode( code, this.smoothingGroups );
+					break;
+
+				case 103: // g
+					this.processIdentifierCharCode( code, this.groups );
+					break;
+
+				case 111: // o
+					// new instance required, because "o" found and previous vertices exist
+					if ( this.processIdentifierCharCode( code, this.objects ) && this.vertices.buffer.length > 0 ) this.processCompletedObject();
+					break;
+
+				case 117: // u
+					this.processIdentifierCharCode( code, this.usemtls );
+					break;
+
+				case 109: // m
+					this.processIdentifierCharCode( code, this.mtllib );
+					break;
+
+				case 35: // #
+					this.processIdentifierCharCode( code, this.comments );
+					break;
+
+				case 32: // SPACE
+					// at start of line: not needed, but after 'v' will start new vertex parsing
+					if ( this.parser === null ) {
+
 						this.parser = this.vertices;
-						break;
 
-					case 110: // n
-						this.setActiveParser( this.normals );
-						break;
 
-					case 116: // t
-						this.setActiveParser( this.uvs );
-						break;
+					} else if ( this.parser === this.vertices && this.reachedFaces ) {
 
-					case 102: // f
-						this.setActiveParser( this.faces );
-						this.reachedFaces = true;
-						break;
+						// object complete instance required if reached faces already (= reached next block of v)
+						this.processCompletedObject();
 
-					case 115: // s
-						this.setActiveParser( this.smoothingGroups );
-						break;
+					} else {
 
-					case 103: // g
-						this.setActiveParser( this.groups );
-						break;
+						 this.parser.parseCode( code );
 
-					case 111: // o
-						this.setActiveParser( this.objects );
+					}
+					break;
 
-						// new instance required, because "o" found and previous vertices exist
-						if ( this.vertices.buffer.length > 0 ) {
-							this.callbackProcessObject();
-						}
-						break;
 
-					case 117: // u
-						this.setActiveParser( this.usemtls );
-						break;
-
-					case 109: // m
-						this.setActiveParser( this.mtllib );
-						break;
-
-					case 32: // SPACE at start of line: not needed, but after 'v' will start new vertex parsing
-						if ( this.parser === this.vertices ) {
-
-							this.identifiedLine = true;
-							// new instance required if reached faces already (= reached next block of v)
-							if ( this.reachedFaces ) {
-								this.callbackProcessObject();
-							}
-
-						}
-						break;
-
-					case 35: // #
-						this.setActiveParser( this.comments );
-						break;
-
-					case 10: // LF: Empty line without even a space
-						break;
-
-					default:
-						console.error( 'Detected unexpected ' + code + '[' + String.fromCharCode( code ) + '] at line: ' + this.lineCount );
-						break;
-				}
+				default:
+					this.parser.parseCode( code );
+					break;
 			}
 		};
 
-		InputObjectStore.prototype.setActiveParser = function ( parser ) {
-			this.parser = parser;
-			this.identifiedLine = true;
+		InputObjectStore.prototype.processIdentifierCharCode = function ( code, activeParser ) {
+			if ( this.parser === null ) {
+
+				this.parser = activeParser;
+				return true;
+
+			} else {
+
+				this.parser.parseCode( code );
+				return false;
+			}
+		};
+
+		InputObjectStore.prototype.processCompletedObject = function () {
+			this.outputObjectBuilder.buildRawMeshData();
+			this.inputObjectCount++;
+			if ( this.callbackRequestReport !== null ) this.callbackRequestReport();
+			this.reset();
 		};
 
 		return InputObjectStore;
@@ -597,6 +611,8 @@ THREE.OBJLoader = (function () {
 			this.smoothingGroupBufferInUseIndex = 0;
 			this.smoothingGroupCount = 0;
 
+			this.debug = false;
+
 			this.groupMtlSmoothTriples = [];
 		}
 
@@ -735,15 +751,15 @@ THREE.OBJLoader = (function () {
 			for ( var groupName in this.objectGroupBuffers ) {
 
 				materialGroups = this.objectGroupBuffers[ groupName ];
-				console.log( groupName + ': ' +  materialGroups );
+				if ( this.debug ) console.log( groupName + ': ' +  materialGroups );
 				for ( var materialName in materialGroups ) {
 
 					smoothingGroups = materialGroups[ materialName ];
-					console.log( 'Smoothing groups for material: ' + materialName );
+					if ( this.debug ) console.log( 'Smoothing groups for material: ' + materialName );
 					for ( var smoothingGroupName in smoothingGroups ) {
 
 						facesInfo = smoothingGroups[ smoothingGroupName ];
-						console.log( 'Smoothing group ' + smoothingGroupName + ' face info count stored: ' + facesInfo.length );
+						if ( this.debug ) console.log( 'Smoothing group ' + smoothingGroupName + ' face info count stored: ' + facesInfo.length );
 
 					}
 				}
