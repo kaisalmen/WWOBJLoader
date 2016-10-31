@@ -287,7 +287,7 @@ THREE.OBJLoader = (function () {
 
 				case 111: // o
 					// new instance required, because "o" found and previous vertices exist
-					if ( this.processIdentifierCharCode( code, this.objects ) && this.vertices.buffer.length > 0 ) this.processCompletedObject();
+					if ( this.processIdentifierCharCode( code, this.objects ) && this.outputObjectBuilder.vertices.length > 0 ) this.processCompletedObject();
 					break;
 
 				case 109: // m
@@ -611,7 +611,6 @@ THREE.OBJLoader = (function () {
 
 			this.activeSmoothingGroup = 0;
 			this.smoothingGroupBufferInUse = [];
-			this.smoothingGroupBufferInUseIndex = 0;
 			this.smoothingGroupCount = 0;
 
 			this.debug = false;
