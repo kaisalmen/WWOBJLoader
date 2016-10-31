@@ -13,6 +13,8 @@ THREE.OBJLoader = (function () {
 		this.loadAsArrayBuffer = true;
 
 		this.materials = null;
+		this.container = null;
+		this.attachObjectImmediately = false;
 
 		this.reInit( true, '', null );
 	}
@@ -21,13 +23,17 @@ THREE.OBJLoader = (function () {
 		this.path = value;
 	};
 
+	OBJLoader.prototype.setAttachObjectImmediately = function ( container ) {
+		this.container = container;
+		this.attachObjectImmediately = true;
+	};
+
 	OBJLoader.prototype.setMaterials = function ( materials ) {
 		this.materials = materials;
 	};
 
 	/**
-	 * When this is set the ResponseType of the XHRLoader is set to arraybuffer
-	 * and parseArrayBuffer is used.
+	 * When this is set the ResponseType of the XHRLoader is set to arraybuffer and parseArrayBuffer is used.
 	 * @param loadAsArrayBuffer
 	 */
 	OBJLoader.prototype.setLoadAsArrayBuffer = function ( loadAsArrayBuffer ) {
@@ -39,6 +45,8 @@ THREE.OBJLoader = (function () {
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 
 		this.materials = materials;
+		// set own or foreign reference
+		this.container = this.attachObjectImmediately ? this.container : new THREE.Group();
 	};
 
 	// Define trim function to use once
@@ -62,8 +70,7 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-
-		var inputObjectStore = new InputObjectStore();
+		var inputObjectStore = new InputObjectStore( this.container );
 		var objectStoreResults = [];
 
 		var debug = true;
@@ -98,7 +105,7 @@ THREE.OBJLoader = (function () {
 
 		}
 
-		return inputObjectStore.container;
+		return this.container;
 	};
 
 	OBJLoader.prototype.createReport = function ( oobRef ) {
@@ -134,8 +141,9 @@ THREE.OBJLoader = (function () {
 
 	var InputObjectStore = (function () {
 
-		function InputObjectStore() {
-			this.outputObjectBuilder = new OutputObjectBuilder();
+		function InputObjectStore( container ) {
+			this.container = container;
+			this.outputObjectBuilder = new OutputObjectBuilder( this.container );
 
 			// globals (per InputObjectStore)
 			this.comments = new LineParserBase( '#', this.outputObjectBuilder, 'pushComment' );
@@ -166,8 +174,6 @@ THREE.OBJLoader = (function () {
 			this.reachedFaces = false;
 			this.lineCount = 0;
 			this.inputObjectCount = 0;
-
-			this.container = new THREE.Group();
 		}
 
 		InputObjectStore.prototype.setCallbackRequestReport = function ( callbackRequestReport ) {
@@ -175,7 +181,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		InputObjectStore.prototype.reset = function () {
-			this.outputObjectBuilder = new OutputObjectBuilder();
+			this.outputObjectBuilder = new OutputObjectBuilder( this.container );
 
 			this.comments.oobRef = this.outputObjectBuilder;
 			this.mtllib.oobRef = this.outputObjectBuilder;
@@ -232,17 +238,12 @@ THREE.OBJLoader = (function () {
 		};
 
 		/**
-		 * Whenever a line type is identified processCode will either delegate code to current store or
-		 * detected line a line end and then quit. If not the code will be evaluated in switch block.
+		 * TODO: new comment
 		 *
 		 * @param code
 		 */
 		InputObjectStore.prototype.parseCode = function ( code ) {
 			switch ( code ) {
-				case 13: // CR
-					// ignore CR
-					break;
-
 				case 10: // LF
 					if ( this.parser === null ) return;
 
@@ -250,6 +251,10 @@ THREE.OBJLoader = (function () {
 					this.parser.detectedLF();
 					this.parser = null;
 					this.lineCount ++;
+					break;
+
+				case 13: // CR
+					// ignore CR
 					break;
 
 				case 118: // v
@@ -276,13 +281,13 @@ THREE.OBJLoader = (function () {
 					this.processIdentifierCharCode( code, this.groups );
 					break;
 
+				case 117: // u
+					this.processIdentifierCharCode( code, this.usemtls );
+					break;
+
 				case 111: // o
 					// new instance required, because "o" found and previous vertices exist
 					if ( this.processIdentifierCharCode( code, this.objects ) && this.vertices.buffer.length > 0 ) this.processCompletedObject();
-					break;
-
-				case 117: // u
-					this.processIdentifierCharCode( code, this.usemtls );
 					break;
 
 				case 109: // m
@@ -294,11 +299,10 @@ THREE.OBJLoader = (function () {
 					break;
 
 				case 32: // SPACE
-					// at start of line: not needed, but after 'v' will start new vertex parsing
 					if ( this.parser === null ) {
 
+						// at start of line: not needed, but after 'v' will start new vertex parsing
 						this.parser = this.vertices;
-
 
 					} else if ( this.parser === this.vertices && this.reachedFaces ) {
 
@@ -307,11 +311,10 @@ THREE.OBJLoader = (function () {
 
 					} else {
 
-						 this.parser.parseCode( code );
+						this.parser.parseCode( code );
 
 					}
 					break;
-
 
 				default:
 					this.parser.parseCode( code );
@@ -507,7 +510,6 @@ THREE.OBJLoader = (function () {
 
 	var LineParserFace = (function () {
 
-		var DEFAULT_SHORTEST_SLASH_DISTANCE = 100;
 		var TYPE_ARRAY_LENGTH_LOOKUP = [ 9, 6, 6, 3 ];
 
 		LineParserFace.prototype = Object.create( LineParserVertex.prototype );
@@ -524,29 +526,23 @@ THREE.OBJLoader = (function () {
 			// 2: "f vertex//normal		vertex//normal		vertex//normal"
 			// 3: "f vertex				vertex				vertex"
 
-			// variables re-init per input line (called by InputObjectStore)
-			this.lineIndex = 0;
+			// variables re-init by detectedLF
 			this.slashCount = 0;
-			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
-			this.slashLast = 0;
+			this.type = 3;
 		}
 
 		LineParserFace.prototype.parseCode = function ( code ) {
-
 			if ( code === 32 ) {
 
+				if ( this.slashCount === 1 ) this.type = 1;
 				this.pushToBuffer();
 
 			} else if ( code === 47 ) {
 
 				if ( this.slashCount < 2 ) {
 
-					var distance = this.lineIndex - this.slashLast;
-					if ( distance < this.shortestDistance ) {
-						this.shortestDistance = distance;
-					}
-					this.slashLast = this.lineIndex;
-					this.slashCount++;
+					this.slashCount ++;
+					this.type = ( this.input.length === 0 ) ? 2 : 0;
 
 				}
 				this.pushToBuffer();
@@ -556,7 +552,6 @@ THREE.OBJLoader = (function () {
 				this.input += String.fromCharCode( code );
 
 			}
-			this.lineIndex++;
 		};
 
 		LineParserFace.prototype.pushToBuffer = function () {
@@ -572,17 +567,13 @@ THREE.OBJLoader = (function () {
 		LineParserFace.prototype.detectedLF = function () {
 			this.pushToBuffer();
 
-			var type = this.slashCount === 2 ? ( this.shortestDistance === 1 ? 2 : 0 ) : ( this.slashCount === 1 ? 1 : 3 );
-			this.oobRef.pushFace( type, this.bufferIndex, this.buffer );
+			this.oobRef.pushFace( this.type, this.buffer );
 
-			if ( this.debug ) console.log( 'Faces type: ' + type + ': ' + this.buffer );
+			if ( this.debug ) console.log( 'Faces type: ' + this.type + ': ' + this.buffer );
 
 			this.bufferIndex = 0;
-
-			this.lineIndex = 0;
 			this.slashCount = 0;
-			this.shortestDistance = DEFAULT_SHORTEST_SLASH_DISTANCE;
-			this.slashLast = 0;
+			this.type = 3;
 		};
 
 		LineParserFace.prototype.getTypeArrayLengthLookup = function () {
@@ -595,7 +586,10 @@ THREE.OBJLoader = (function () {
 
 	var OutputObjectBuilder = (function () {
 
-		function OutputObjectBuilder() {
+		var FACE_ARRAY_LENGTH = 3;
+
+		function OutputObjectBuilder( container ) {
+			this.container = container;
 			this.objectName;
 
 			this.vertices = [];
@@ -705,7 +699,7 @@ THREE.OBJLoader = (function () {
 
 			if ( this.groupMtlSmoothTriples[ index ] === undefined ) {
 
-				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ] = [];
+				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ] = new FaceIndices();
 
 			} else {
 
@@ -714,25 +708,98 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		OutputObjectBuilder.prototype.pushFace = function ( type, count, lineBuffer ) {
-			this.smoothingGroupBufferInUse[ this.smoothingGroupBufferInUseIndex ] = type;
-			this.smoothingGroupBufferInUseIndex++;
+		OutputObjectBuilder.prototype.pushFace = function ( type, facesArray ) {
+			// possible types
+			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
+			// 1: "f vertex/uv			vertex/uv			vertex/uv"
+			// 2: "f vertex//normal		vertex//normal		vertex//normal"
+			// 3: "f vertex				vertex				vertex"
 
-			for ( var i = 0; i < count; i++ ) {
-				this.smoothingGroupBufferInUse[ this.smoothingGroupBufferInUseIndex ] = lineBuffer[ i ];
-				this.smoothingGroupBufferInUseIndex++;
+			switch ( type ) {
+				case 0:
+					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+
+						base = i * 3;
+						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
+						this.smoothingGroupBufferInUse.vtIndices[ this.smoothingGroupBufferInUse.vtIndex++ ] = facesArray[ base + 1 ];
+						this.smoothingGroupBufferInUse.vnIndices[ this.smoothingGroupBufferInUse.vnIndex++ ] = facesArray[ base + 2 ];
+
+					}
+					break;
+
+				case 1:
+					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+
+						base = i * 2;
+						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
+						this.smoothingGroupBufferInUse.vtIndices[ this.smoothingGroupBufferInUse.vtIndex++ ] = facesArray[ base + 1 ];
+
+					}
+					break;
+
+				case 2:
+					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+
+						base = i * 2;
+						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
+						this.smoothingGroupBufferInUse.vnIndices[ this.smoothingGroupBufferInUse.vnIndex++ ] = facesArray[ base + 1 ];
+
+					}
+					break;
+
+				case 3:
+					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+
+						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ i ];
+
+					}
+					break;
+
+				default:
+					console.error( 'Face type should never be this: ' + type );
+					break;
 			}
+
+			// type is just set once
+			this.smoothingGroupBufferInUse.types[ this.smoothingGroupBufferInUse.typesIndex ] = type;
+			this.smoothingGroupBufferInUse.typesIndex++;
 		};
+
+
+		var FaceIndices = (function () {
+
+			function FaceIndices() {
+				this.types = [];
+				this.typesIndex = 0;
+				this.vIndices = [];
+				this.vIndex = 0;
+				this.vtIndices = [];
+				this.vtIndex = 0;
+				this.vnIndices = [];
+				this.vnIndex = 0;
+			}
+
+			return FaceIndices;
+		})();
+
 
 		OutputObjectBuilder.prototype.buildRawMeshData = function ( index ) {
 			if ( this.debug ) {
 
 				console.log( 'buildRawMeshData: ' + index + ' name: ' + this.objectName );
 				for ( var index in this.groupMtlSmoothTriples ) {
-					console.log( index + ' # face infos stored: ' + this.groupMtlSmoothTriples[ index ].length );
+					console.log(
+						index + ' # faces infos: ' + this.groupMtlSmoothTriples[ index ].typesIndex +
+						' # vertices: ' + this.groupMtlSmoothTriples[ index ].vIndex +
+						' # uvs: ' + this.groupMtlSmoothTriples[ index ].vtIndex +
+						' # normals: ' + this.groupMtlSmoothTriples[ index ].vnIndex
+					);
 				}
 
 			}
+
+
+//			this.container.add( mesh );
 		};
 
 		return OutputObjectBuilder;
