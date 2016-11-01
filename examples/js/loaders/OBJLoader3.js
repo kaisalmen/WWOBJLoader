@@ -9,23 +9,21 @@ THREE.OBJLoader = (function () {
 	function OBJLoader( manager ) {
 		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 
-		this.path = null;
+		this.path = '';
 		this.loadAsArrayBuffer = true;
 
 		this.materials = null;
 		this.container = null;
-		this.attachObjectImmediately = false;
 
-		this.reInit( true, '', null );
+		this.reInit( this.loadAsArrayBuffer, this.path, this.materials, this.container );
 	}
 
 	OBJLoader.prototype.setPath = function ( value ) {
 		this.path = value;
 	};
 
-	OBJLoader.prototype.setAttachObjectImmediately = function ( container ) {
-		this.container = container;
-		this.attachObjectImmediately = true;
+	OBJLoader.prototype.setContainer = function ( container ) {
+		this.container = container === null ? new THREE.Group() : container;
 	};
 
 	OBJLoader.prototype.setMaterials = function ( materials ) {
@@ -40,13 +38,12 @@ THREE.OBJLoader = (function () {
 		this.loadAsArrayBuffer = loadAsArrayBuffer;
 	};
 
-	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, materials ) {
+	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, materials, container ) {
+		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
-		this.loadAsArrayBuffer = loadAsArrayBuffer;
-
-		this.materials = materials;
+		this.setMaterials( materials );
 		// set own or foreign reference
-		this.container = this.attachObjectImmediately ? this.container : new THREE.Group();
+		this.setContainer( container );
 	};
 
 	// Define trim function to use once
@@ -73,7 +70,7 @@ THREE.OBJLoader = (function () {
 		var inputObjectStore = new InputObjectStore( this.container );
 		var objectStoreResults = [];
 
-		var debug = true;
+		var debug = false;
 		var scope = this;
 		var callbackRequestReport = function () {
 			if ( debug && inputObjectStore.inputObjectCount <= 3 ) {
@@ -181,7 +178,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		InputObjectStore.prototype.reset = function () {
-			this.outputObjectBuilder = new OutputObjectBuilder( this.container );
+			this.outputObjectBuilder = this.outputObjectBuilder.newInstance();
 
 			this.comments.oobRef = this.outputObjectBuilder;
 			this.mtllib.oobRef = this.outputObjectBuilder;
@@ -510,8 +507,6 @@ THREE.OBJLoader = (function () {
 
 	var LineParserFace = (function () {
 
-		var TYPE_ARRAY_LENGTH_LOOKUP = [ 9, 6, 6, 3 ];
-
 		LineParserFace.prototype = Object.create( LineParserVertex.prototype );
 		LineParserFace.prototype.constructor = LineParserFace;
 
@@ -576,21 +571,20 @@ THREE.OBJLoader = (function () {
 			this.type = 3;
 		};
 
-		LineParserFace.prototype.getTypeArrayLengthLookup = function () {
-			return TYPE_ARRAY_LENGTH_LOOKUP;
-		};
-
 		return LineParserFace;
 	})();
 
 
 	var OutputObjectBuilder = (function () {
 
-		var FACE_ARRAY_LENGTH = 3;
-
 		function OutputObjectBuilder( container ) {
 			this.container = container;
-			this.objectName;
+			this.globalVertexOffset = 1;
+			this.globalUvOffset = 1;
+			this.globalNormalOffset = 1;
+			this.globalObjectCount = 0;
+
+			this.objectName = 'none';
 
 			this.vertices = [];
 			this.verticesIndex = 0;
@@ -618,22 +612,17 @@ THREE.OBJLoader = (function () {
 			this.groupMtlSmoothTriples = [];
 		}
 
-		var buildIndex = function ( groupName, mtlName, smoothingGroup ) {
-			return groupName + "_" + mtlName + "_" + smoothingGroup;
+
+		OutputObjectBuilder.prototype.newInstance = function () {
+			var newOob = new OutputObjectBuilder( this.container );
+			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
+			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
+			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
+			newOob.globalObjectCount = this.globalObjectCount;
+
+			return newOob;
 		};
-/*
-		var GroupMtlSmoothTriple = (function () {
 
-			function GroupMtlSmoothTriple( groupName, mtlName, smoothingGroup ) {
-				this.groupName = groupName;
-				this.mtlName = mtlName;
-				this.smoothingGroup = smoothingGroup;
-				this.faces = [];
-			}
-
-			return GroupMtlSmoothTriple;
-		})();
-*/
 		OutputObjectBuilder.prototype.pushToBuffer = function ( source, target, targetIndex ) {
 			for ( var i = 0, length = source.length; i < length; i++ ) {
 
@@ -693,12 +682,16 @@ THREE.OBJLoader = (function () {
 			this.verifyIndex();
 		};
 
+		var buildIndex = function ( groupName, mtlName, smoothingGroup ) {
+			return groupName + '|' + mtlName + '|' + smoothingGroup;
+		};
+
 		OutputObjectBuilder.prototype.verifyIndex = function () {
 			var index = buildIndex( this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 
 			if ( this.groupMtlSmoothTriples[ index ] === undefined ) {
 
-				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ] = new FaceIndices();
+				this.smoothingGroupBufferInUse = this.groupMtlSmoothTriples[ index ] = new FaceIndices( this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 
 			} else {
 
@@ -706,6 +699,12 @@ THREE.OBJLoader = (function () {
 
 			}
 		};
+
+		var TYPE_0_ARRAY_LENGTH = 9;
+		var TYPE_1_2_ARRAY_LENGTH = 6;
+		var TYPE_3_ARRAY_LENGTH = 3;
+		var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
+		var UV_VECTOR_LENGTH = 2;
 
 		OutputObjectBuilder.prototype.pushFace = function ( type, facesArray ) {
 			// possible types
@@ -716,40 +715,35 @@ THREE.OBJLoader = (function () {
 
 			switch ( type ) {
 				case 0:
-					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+					for ( var i = 0; i < TYPE_0_ARRAY_LENGTH; i += 3 ) {
 
-						base = i * 3;
-						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
-						this.smoothingGroupBufferInUse.vtIndices[ this.smoothingGroupBufferInUse.vtIndex++ ] = facesArray[ base + 1 ];
-						this.smoothingGroupBufferInUse.vnIndices[ this.smoothingGroupBufferInUse.vnIndex++ ] = facesArray[ base + 2 ];
-
+						this.attachVertex( facesArray[ i ] );
+						this.attachUv( facesArray[ i + 1 ] );
+						this.attachNormal( facesArray[ i + 2 ] );
 					}
 					break;
 
 				case 1:
-					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+					for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
 
-						base = i * 2;
-						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
-						this.smoothingGroupBufferInUse.vtIndices[ this.smoothingGroupBufferInUse.vtIndex++ ] = facesArray[ base + 1 ];
+						this.attachVertex( facesArray[ i ] );
+						this.attachUv( facesArray[ i + 1 ] );
 
 					}
 					break;
 
 				case 2:
-					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+					for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
 
-						base = i * 2;
-						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ base ];
-						this.smoothingGroupBufferInUse.vnIndices[ this.smoothingGroupBufferInUse.vnIndex++ ] = facesArray[ base + 1 ];
-
+						this.attachVertex( facesArray[ i ] );
+						this.attachNormal( facesArray[ i + 1 ] );
 					}
 					break;
 
 				case 3:
-					for ( var i = 0, base; i < FACE_ARRAY_LENGTH; i++ ) {
+					for ( var i = 0; i < TYPE_3_ARRAY_LENGTH; i++ ) {
 
-						this.smoothingGroupBufferInUse.vIndices[ this.smoothingGroupBufferInUse.vIndex++ ] = facesArray[ i ];
+						this.attachVertex( facesArray[ i ] );
 
 					}
 					break;
@@ -758,47 +752,119 @@ THREE.OBJLoader = (function () {
 					console.error( 'Face type should never be this: ' + type );
 					break;
 			}
-
-			// type is just set once
-			this.smoothingGroupBufferInUse.types[ this.smoothingGroupBufferInUse.typesIndex ] = type;
-			this.smoothingGroupBufferInUse.typesIndex++;
 		};
 
+		OutputObjectBuilder.prototype.attachVertex = function ( faceIndex ) {
+			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
+			var number;
+			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
+
+			for ( var i = index ; i < length; i++ ) {
+				number = this.vertices[ i ];
+				if ( isNaN( number ) ) {
+					console.error( number );
+				}
+				this.smoothingGroupBufferInUse.vertexArray[ this.smoothingGroupBufferInUse.vertexArrayIndex++ ] = number;
+			}
+		};
+
+		OutputObjectBuilder.prototype.attachUv = function ( faceIndex ) {
+			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
+			var number;
+			var length = index + UV_VECTOR_LENGTH;
+
+			for ( var i = index ; i < length; i++ ) {
+				number = this.uvs[ i ];
+				if ( isNaN( number ) ) {
+					console.error( number );
+				}
+				this.smoothingGroupBufferInUse.uvArray[ this.smoothingGroupBufferInUse.uvArrayIndex++ ] = number;
+			}
+		};
+
+		OutputObjectBuilder.prototype.attachNormal = function ( faceIndex ) {
+			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
+			var number;
+			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
+
+			for ( var i = index ; i < length; i++ ) {
+				number = this.normals[ i ];
+				if ( isNaN( number ) ) {
+					console.error( number );
+				}
+				this.smoothingGroupBufferInUse.normalArray[ this.smoothingGroupBufferInUse.normalArrayIndex++ ] = number;
+			}
+		};
 
 		var FaceIndices = (function () {
 
-			function FaceIndices() {
-				this.types = [];
-				this.typesIndex = 0;
-				this.vIndices = [];
-				this.vIndex = 0;
-				this.vtIndices = [];
-				this.vtIndex = 0;
-				this.vnIndices = [];
-				this.vnIndex = 0;
+			function FaceIndices( group, material, smoothingGroup ) {
+				this.group = group;
+				this.material = material;
+				this.smoothingGroup = smoothingGroup;
+
+				this.vertexArray = [];
+				this.vertexArrayIndex = 0;
+				this.uvArray = [];
+				this.uvArrayIndex = 0;
+				this.normalArray = [];
+				this.normalArrayIndex = 0;
 			}
 
 			return FaceIndices;
 		})();
 
-
 		OutputObjectBuilder.prototype.buildRawMeshData = function ( index ) {
+			var triple;
+
 			if ( this.debug ) {
 
 				console.log( 'buildRawMeshData: ' + index + ' name: ' + this.objectName );
 				for ( var index in this.groupMtlSmoothTriples ) {
+					triple = this.groupMtlSmoothTriples[ index ];
 					console.log(
-						index + ' # faces infos: ' + this.groupMtlSmoothTriples[ index ].typesIndex +
-						' # vertices: ' + this.groupMtlSmoothTriples[ index ].vIndex +
-						' # uvs: ' + this.groupMtlSmoothTriples[ index ].vtIndex +
-						' # normals: ' + this.groupMtlSmoothTriples[ index ].vnIndex
+						'group: ' + triple.group +
+						' material: ' + triple.material +
+						' smoothingGroup: ' + triple.smoothingGroup +
+						' # vertices: ' + triple.vertexArrayIndex / 3 +
+						' # uvs: ' + + triple.uvArrayIndex / 2 +
+						' # normals: ' + + triple.normalArrayIndex / 3
 					);
 				}
 
 			}
 
 
-//			this.container.add( mesh );
+			for ( var index in this.groupMtlSmoothTriples ) {
+				triple = this.groupMtlSmoothTriples[ index ];
+
+//				if ( triple.vertexArrayIndex > 0 && this.globalObjectCount < 50 ) {
+
+					var bufferGeometry = new THREE.BufferGeometry();
+					bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( triple.vertexArray ), 3 ) );
+					if ( triple.normalArrayIndex > 0 ) {
+
+						bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( triple.normalArray ), 3 ) );
+
+					}
+					else {
+
+						bufferGeometry.computeVertexNormals();
+
+					}
+					if ( triple.uvArrayIndex > 0 ) {
+
+						bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( triple.uvArray ), 2 ) );
+
+					}
+
+					var mesh = new THREE.Mesh( bufferGeometry, new THREE.MeshStandardMaterial() );
+					this.container.add( mesh );
+
+					console.log( 'Object no.: ' + this.globalObjectCount + ' triple: ' + triple.group + '|' + triple.material + '|' + triple.smoothingGroup );
+					this.globalObjectCount++;
+//				}
+			}
 		};
 
 		return OutputObjectBuilder;
