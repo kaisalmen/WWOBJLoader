@@ -33,7 +33,7 @@ THREE.OBJLoader = (function () {
 	};
 
 	/**
-	 * When this is set the ResponseType of the XHRLoader is set to arraybuffer and parseArrayBuffer is used.
+	 * When this is set the ResponseType of the FileLoader is set to arraybuffer and parseArrayBuffer is used.
 	 * @param loadAsArrayBuffer
 	 */
 	OBJLoader.prototype.setLoadAsArrayBuffer = function ( loadAsArrayBuffer ) {
@@ -56,7 +56,7 @@ THREE.OBJLoader = (function () {
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
 		var scope = this;
 
-		var loader = new THREE.XHRLoader( scope.manager );
+		var loader = new THREE.FileLoader( scope.manager );
 		loader.setPath( this.path );
 		loader.setResponseType( this.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
 		loader.load( url, function ( loadedContent ) {
@@ -68,7 +68,7 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 		var inputObjectStore = new InputObjectStore( this.container, this.materials, this.createObjectPerSmoothingGroup );
-		inputObjectStore.setDebug( false, true, false );
+		inputObjectStore.setDebug( false, false, false );
 
 		if ( this.loadAsArrayBuffer ) {
 
