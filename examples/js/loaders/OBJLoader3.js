@@ -93,7 +93,7 @@ THREE.OBJLoader = (function () {
 		function InputObjectStore( container, materials, createObjectPerSmoothingGroup ) {
 			this.container = container;
 			this.outputObjectBuilder = new OutputObjectBuilder( createObjectPerSmoothingGroup );
-			this.extendableMeshCreator = new ExtendableMeshCreator( container, materials );
+			this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator( container, materials );
 
 			// globals (per InputObjectStore)
 			this.comments = new LineParserBase( '#', this.outputObjectBuilder, 'pushComment' );
@@ -466,15 +466,13 @@ THREE.OBJLoader = (function () {
 		LineParserFace.prototype.constructor = LineParserFace;
 
 		function LineParserFace( oobRef ) {
-			// Important: According to spec there are more than 3 value groups allowed per face desc.
-			// This is currently ignored
-			LineParserVertex.call( this, 'f', 9, oobRef );
 
-			// possible types
-			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
-			// 1: "f vertex/uv			vertex/uv			vertex/uv"
-			// 2: "f vertex//normal		vertex//normal		vertex//normal"
-			// 3: "f vertex				vertex				vertex"
+			// Support for triangle or quads
+			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
+			// 1: "f vertex/uv			vertex/uv			vertex/uv			vertex/uv"
+			// 2: "f vertex//normal		vertex//normal		vertex//normal		vertex//normal"
+			// 3: "f vertex				vertex				vertex				vertex"
+			LineParserVertex.call( this, 'f', 12, oobRef );
 
 			// variables re-init by detectedLF
 			this.slashCount = 0;
@@ -517,7 +515,7 @@ THREE.OBJLoader = (function () {
 		LineParserFace.prototype.detectedLF = function () {
 			this.pushToBuffer();
 
-			this.oobRef.pushFace( this.type, this.buffer );
+			this.oobRef.pushFace( this.type, this.buffer, this.bufferIndex );
 
 			if ( this.debug ) console.log( 'Faces type: ' + this.type + ': ' + this.buffer );
 
@@ -531,6 +529,17 @@ THREE.OBJLoader = (function () {
 
 
 	var OutputObjectBuilder = (function () {
+
+		var FACE_LENGTH = 3;
+		var QUAD_LENGTH = 4;
+		var QUAD_VERTEX_INDICES = [ 0, 1, 2, 0, 2, 3 ];
+		var QUAD_VERTEX_INDICES_LENGTH = 6;
+
+		var TYPE_0_PARAM_COUNT = 3;
+		var TYPE_1_AND_2_PARAM_COUNT = 2;
+
+		var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
+		var UV_VECTOR_LENGTH = 2;
 
 		function OutputObjectBuilder( createObjectPerSmoothingGroup, activeGroupOverride ) {
 			this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
@@ -561,8 +570,18 @@ THREE.OBJLoader = (function () {
 
 			this.retrievedObjectDescriptions = [];
 			var index = this.buildIndexRegular();
-			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] =
-				new RetrievedObjectDescription( this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
+					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+
+			this.sharedVertexQuadBuffer = new Array( 4 );
+			this.sharedUvQuadBuffer = new Array( 4 );
+			this.sharedNormalQuadBuffer = new Array( 4 );
+
+			for ( var i = 0; i < QUAD_LENGTH; i++ ) {
+				this.sharedVertexQuadBuffer[ i ] = new Array( VERTEX_AND_NORMAL_VECTOR_LENGTH );
+				this.sharedUvQuadBuffer[ i ] = new Array( UV_VECTOR_LENGTH );
+				this.sharedNormalQuadBuffer[ i ] = new Array( VERTEX_AND_NORMAL_VECTOR_LENGTH );
+			}
 		}
 
 
@@ -658,8 +677,8 @@ THREE.OBJLoader = (function () {
 
 			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
 
-				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new RetrievedObjectDescription(
-					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
+						this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 
 			}
 			else {
@@ -677,58 +696,86 @@ THREE.OBJLoader = (function () {
 			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
-		var TYPE_0_ARRAY_LENGTH = 9;
-		var TYPE_1_2_ARRAY_LENGTH = 6;
-		var TYPE_3_ARRAY_LENGTH = 3;
-		var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
-		var UV_VECTOR_LENGTH = 2;
+		OutputObjectBuilder.prototype.pushFace = function ( type, facesArray, facesArrayIndex ) {
+			var quad = facesArrayIndex % 4 === 0 ? true : false;
+			var i;
 
-		OutputObjectBuilder.prototype.pushFace = function ( type, facesArray ) {
-			// possible types
-			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
-			// 1: "f vertex/uv			vertex/uv			vertex/uv"
-			// 2: "f vertex//normal		vertex//normal		vertex//normal"
-			// 3: "f vertex				vertex				vertex"
+			// Support for triangle or quads
+			// 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
+			// 1: "f vertex/uv			vertex/uv			vertex/uv			vertex/uv"
+			// 2: "f vertex//normal		vertex//normal		vertex//normal		vertex//normal"
+			// 3: "f vertex				vertex				vertex				vertex"
+			if ( type === 0 && quad ) {
 
-			if ( type === 0 ) {
-
-				for ( var i = 0; i < TYPE_0_ARRAY_LENGTH; i += 3 ) {
-
-					this.attachVertex( facesArray[ i ] );
-					this.attachUv( facesArray[ i + 1 ] );
-					this.attachNormal( facesArray[ i + 2 ] );
+				for ( i = 0; i < QUAD_LENGTH; i++ ) {
+					this.prepareQuadVertex( i, facesArray[ i * TYPE_0_PARAM_COUNT ] );
+					this.prepareQuadUv( i, facesArray[ i * TYPE_0_PARAM_COUNT + 1 ] );
+					this.prepareQuadNormal( i, facesArray[ i * TYPE_0_PARAM_COUNT + 2 ] );
 				}
 
-			} else if ( type === 1 ) {
+				this.attachQuadVertex();
+				this.attachQuadUv();
+				this.attachQuadNormal();
 
-				for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
+			} else if ( type === 0 && ! quad ) {
 
-					this.attachVertex( facesArray[ i ] );
-					this.attachUv( facesArray[ i + 1 ] );
-
+				for ( i = 0; i < FACE_LENGTH; i++ ) {
+					this.attachFaceVertex( facesArray[ i * TYPE_0_PARAM_COUNT ] );
+					this.attachFaceUv( facesArray[ i * TYPE_0_PARAM_COUNT + 1 ] );
+					this.attachFaceNormal( facesArray[ i * TYPE_0_PARAM_COUNT + 2 ] );
 				}
 
-			} else if ( type === 2 ) {
+			} else if ( type === 1 && quad ) {
 
-				for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
-
-					this.attachVertex( facesArray[ i ] );
-					this.attachNormal( facesArray[ i + 1 ] );
-
+				for ( i = 0; i < QUAD_LENGTH; i++ ) {
+					this.prepareQuadVertex( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
+					this.prepareQuadUv( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
 				}
 
-			} else if ( type === 3 ) {
+				this.attachQuadVertex();
+				this.attachQuadUv();
 
-				for ( var i = 0; i < TYPE_3_ARRAY_LENGTH; i ++ ) {
+			} else if ( type === 1 && ! quad ) {
 
-					this.attachVertex( facesArray[ i ] );
-
+				for ( i = 0; i < FACE_LENGTH; i++ ) {
+					this.attachFaceVertex( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
+					this.attachFaceUv( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
 				}
 
+			} else if ( type === 2 && quad ) {
+
+				for ( i = 0; i < QUAD_LENGTH; i++ ) {
+					this.prepareQuadVertex( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
+					this.prepareQuadNormal( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
+				}
+
+				this.attachQuadVertex();
+				this.attachQuadNormal();
+
+			} else if ( type === 2 && ! quad ) {
+
+				for ( i = 0; i < FACE_LENGTH; i++ ) {
+					this.attachFaceVertex( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
+					this.attachFaceNormal( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
+				}
+
+			} else if ( type === 3 && quad ) {
+
+				for ( i = 0; i < QUAD_LENGTH; i++ ) {
+					this.prepareQuadVertex( i, facesArray[ i ] );
+				}
+
+				this.attachQuadVertex();
+
+			} else if ( type === 3 && ! quad ) {
+
+				for ( i = 0; i < FACE_LENGTH; i++ ) {
+					this.attachFaceVertex( facesArray[ i ] );
+				}
 			}
 		};
 
-		OutputObjectBuilder.prototype.attachVertex = function ( faceIndex ) {
+		OutputObjectBuilder.prototype.attachFaceVertex = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
 			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
@@ -737,7 +784,7 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		OutputObjectBuilder.prototype.attachUv = function ( faceIndex ) {
+		OutputObjectBuilder.prototype.attachFaceUv = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
 			var length = index + UV_VECTOR_LENGTH;
 
@@ -746,12 +793,66 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		OutputObjectBuilder.prototype.attachNormal = function ( faceIndex ) {
+		OutputObjectBuilder.prototype.attachFaceNormal = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
 			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
 			for ( var i = index ; i < length; i++ ) {
 				this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ i ];
+			}
+		};
+
+		OutputObjectBuilder.prototype.prepareQuadVertex = function ( sharedIndex, faceIndex ) {
+			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
+
+			for ( var i = 0 ; i < VERTEX_AND_NORMAL_VECTOR_LENGTH; i++ ) {
+				this.sharedVertexQuadBuffer[ sharedIndex ][ i ] = this.vertices[ index + i ];
+			}
+		};
+
+		OutputObjectBuilder.prototype.attachQuadVertex = function () {
+			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
+				for ( var j = 0; j < VERTEX_AND_NORMAL_VECTOR_LENGTH; j ++ ) {
+
+					this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex ++ ] =
+						this.sharedVertexQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
+				}
+			}
+		};
+
+		OutputObjectBuilder.prototype.prepareQuadUv = function ( sharedIndex, faceIndex ) {
+			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
+
+			for ( var i = 0 ; i < UV_VECTOR_LENGTH; i++ ) {
+				this.sharedUvQuadBuffer[ sharedIndex ][ i ] = this.uvs[ index + i ];
+			}
+		};
+
+		OutputObjectBuilder.prototype.attachQuadUv = function () {
+			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
+				for ( var j = 0; j < VERTEX_AND_NORMAL_VECTOR_LENGTH; j ++ ) {
+
+					this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] =
+						this.sharedUvQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
+				}
+			}
+		};
+
+		OutputObjectBuilder.prototype.prepareQuadNormal = function ( sharedIndex, faceIndex ) {
+			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
+
+			for ( var i = 0 ; i < VERTEX_AND_NORMAL_VECTOR_LENGTH; i++ ) {
+				this.sharedNormalQuadBuffer[ sharedIndex ][ i ] = this.normals[ index + i ];
+			}
+		};
+
+		OutputObjectBuilder.prototype.attachQuadNormal = function () {
+			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
+				for ( var j = 0; j < VERTEX_AND_NORMAL_VECTOR_LENGTH; j ++ ) {
+
+					this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] =
+						this.sharedNormalQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
+				}
 			}
 		};
 
@@ -787,90 +888,90 @@ THREE.OBJLoader = (function () {
 		return OutputObjectBuilder;
 	})();
 
-	var RetrievedObjectDescription = (function () {
-
-		function RetrievedObjectDescription( objectName, group, materialName, smoothingGroup ) {
-			this.objectName = objectName;
-			this.group = group;
-			this.materialName = materialName;
-			this.smoothingGroup = smoothingGroup;
-
-			this.vertexArray = [];
-			this.vertexArrayIndex = 0;
-			this.uvArray = [];
-			this.uvArrayIndex = 0;
-			this.normalArray = [];
-			this.normalArrayIndex = 0;
-		}
-
-		return RetrievedObjectDescription;
-	})();
-
-	var ExtendableMeshCreator = (function () {
-
-		function ExtendableMeshCreator( container, materials, debug ) {
-			this.container = container;
-			this.materials = materials;
-			this.debug = debug;
-
-			this.globalObjectCount = 0;
-		}
-
-		ExtendableMeshCreator.prototype.buildRawMeshData = function (  retrievedObjectDescriptions, inputObjectCount ) {
-			var triple;
-
-			if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData: Processing object no.: ' + inputObjectCount );
-
-			for ( var index in retrievedObjectDescriptions ) {
-				triple = retrievedObjectDescriptions[ index ];
-
-				if ( triple.vertexArrayIndex > 0 ) {
-
-					if ( this.debug ) {
-						console.log(
-							'Object no.: ' + this.globalObjectCount +
-							' objectName: ' + triple.objectName +
-							' group: ' + triple.group +
-							' materialName: ' + triple.materialName +
-							' smoothingGroup: ' + triple.smoothingGroup +
-							'\nCounts: ' +
-							' #vertices: ' + triple.vertexArrayIndex / 3 +
-							' #uvs: ' + + triple.uvArrayIndex / 2 +
-							' #normals: ' + + triple.normalArrayIndex / 3
-						);
-					}
-
-					var bufferGeometry = new THREE.BufferGeometry();
-					bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( triple.vertexArray ), 3 ) );
-					if ( triple.normalArrayIndex > 0 ) {
-
-						bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( triple.normalArray ), 3 ) );
-
-					}
-					else {
-
-						bufferGeometry.computeVertexNormals();
-
-					}
-					if ( triple.uvArrayIndex > 0 ) {
-
-						bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( triple.uvArray ), 2 ) );
-
-					}
-
-					var material = this.materials.materials[ triple.materialName ];
-					if ( material === undefined ) material =  new THREE.MeshStandardMaterial();
-
-					var mesh = new THREE.Mesh( bufferGeometry, material );
-					this.container.add( mesh );
-
-					this.globalObjectCount++;
-				}
-			}
-		};
-
-		return ExtendableMeshCreator;
-	})();
-
 	return OBJLoader;
+})();
+
+THREE.OBJLoader.RetrievedObjectDescription = (function () {
+
+	function RetrievedObjectDescription( objectName, group, materialName, smoothingGroup ) {
+		this.objectName = objectName;
+		this.group = group;
+		this.materialName = materialName;
+		this.smoothingGroup = smoothingGroup;
+
+		this.vertexArray = [];
+		this.vertexArrayIndex = 0;
+		this.uvArray = [];
+		this.uvArrayIndex = 0;
+		this.normalArray = [];
+		this.normalArrayIndex = 0;
+	}
+
+	return RetrievedObjectDescription;
+})();
+
+THREE.OBJLoader.ExtendableMeshCreator = (function () {
+
+	function ExtendableMeshCreator( container, materials, debug ) {
+		this.container = container;
+		this.materials = materials;
+		this.debug = debug;
+
+		this.globalObjectCount = 0;
+	}
+
+	ExtendableMeshCreator.prototype.buildRawMeshData = function ( retrievedObjectDescriptions, inputObjectCount ) {
+		var triple;
+
+		if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData: Processing object no.: ' + inputObjectCount );
+
+		for ( var index in retrievedObjectDescriptions ) {
+			triple = retrievedObjectDescriptions[ index ];
+
+			if ( triple.vertexArrayIndex > 0 ) {
+
+				if ( this.debug ) {
+					console.log(
+						'Object no.: ' + this.globalObjectCount +
+						' objectName: ' + triple.objectName +
+						' group: ' + triple.group +
+						' materialName: ' + triple.materialName +
+						' smoothingGroup: ' + triple.smoothingGroup +
+						'\nCounts: ' +
+						' #vertices: ' + triple.vertexArrayIndex / 3 +
+						' #uvs: ' + + triple.uvArrayIndex / 2 +
+						' #normals: ' + + triple.normalArrayIndex / 3
+					);
+				}
+
+				var bufferGeometry = new THREE.BufferGeometry();
+				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( triple.vertexArray ), 3 ) );
+				if ( triple.normalArrayIndex > 0 ) {
+
+					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( triple.normalArray ), 3 ) );
+
+				}
+				else {
+
+					bufferGeometry.computeVertexNormals();
+
+				}
+				if ( triple.uvArrayIndex > 0 ) {
+
+					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( triple.uvArray ), 2 ) );
+
+				}
+
+				var material = this.materials.materials[ triple.materialName ];
+				if ( material === undefined ) material =  new THREE.MeshStandardMaterial();
+
+				var mesh = new THREE.Mesh( bufferGeometry, material );
+				this.container.add( mesh );
+
+				this.globalObjectCount++;
+			}
+		}
+	};
+
+	return ExtendableMeshCreator;
 })();
