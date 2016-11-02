@@ -17,7 +17,29 @@ THREE.OBJLoader = (function () {
 
 		this.createObjectPerSmoothingGroup = false;
 
-		this.reInit( this.loadAsArrayBuffer, this.path, this.materials, this.container, this.createObjectPerSmoothingGroup );
+		this.debug = false;
+
+		this.reInit( this.loadAsArrayBuffer, this.path, this.container, this.materials, this.createObjectPerSmoothingGroup );
+
+		// parsing related (will be re-init on every parse call in prepareParsing
+		this.outputObjectBuilder = null;
+		this.extendableMeshCreator = null;
+		this.inputObjectCount = 0;
+
+		this.parsers = {
+			comments: null,
+			mtllib: null,
+			vertices: null,
+			normals: null,
+			uvs: null,
+			objects: null,
+			groups: null,
+			usemtls: null,
+			faces: null,
+			smoothingGroups: null,
+			current: null,
+			reachedFaces: false
+		};
 	}
 
 	OBJLoader.prototype.setPath = function ( value ) {
@@ -44,7 +66,7 @@ THREE.OBJLoader = (function () {
 		this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
 	};
 
-	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, materials, container, createObjectPerSmoothingGroup ) {
+	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, container, materials, createObjectPerSmoothingGroup ) {
 		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
 		this.setMaterials( materials );
@@ -67,235 +89,213 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-		var inputObjectStore = new InputObjectStore( this.container, this.materials, this.createObjectPerSmoothingGroup );
-		inputObjectStore.setDebug( false, true, false );
+		this.prepareParsing();
 
 		if ( this.loadAsArrayBuffer ) {
 
-			inputObjectStore.parseArrayBuffer( loadedContent );
-
-		} else {
-
-			inputObjectStore.parseString( loadedContent );
-
-		}
-
-		// do not forget last object
-		inputObjectStore.processCompletedObject();
-
-		console.log( 'Global output object count: ' + inputObjectStore.extendableMeshCreator.globalObjectCount );
-
-		return this.container;
-	};
-
-	var InputObjectStore = (function () {
-
-		function InputObjectStore( container, materials, createObjectPerSmoothingGroup ) {
-			this.container = container;
-			this.outputObjectBuilder = new OutputObjectBuilder( createObjectPerSmoothingGroup );
-			this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator( container, materials );
-
-			// globals (per InputObjectStore)
-			this.comments = new LineParserBase( '#', this.outputObjectBuilder, 'pushComment' );
-
-			this.mtllib = new LineParserString( 'mtllib', this.outputObjectBuilder, 'pushMtllib' );
-			this.vertices = new LineParserVertex( 'v', 3, this.outputObjectBuilder, 'pushVertex' );
-			this.normals = new LineParserVertex( 'vn', 3, this.outputObjectBuilder, 'pushNormal' );
-			this.uvs = new LineParserUv( this.outputObjectBuilder, 'pushUv' );
-			this.objects = new LineParserString( 'o', this.outputObjectBuilder, 'pushObject' );
-			this.groups = new LineParserString( 'g', this.outputObjectBuilder, 'pushGroup' );
-			this.usemtls = new LineParserString( 'usemtl', this.outputObjectBuilder, 'pushMtl' );
-			this.faces = new LineParserFace( this.outputObjectBuilder );
-			this.smoothingGroups = new LineParserString( 's', this.outputObjectBuilder, 'pushSmoothingGroup' );
-/*
-			this.mtllib = new LineParserBase( 'mtllib', this.outputObjectBuilder );
-			this.vertices = new LineParserBase( 'v', this.outputObjectBuilder );
-			this.normals = new LineParserBase( 'vn', this.outputObjectBuilder );
-			this.uvs = new LineParserBase( this.outputObjectBuilder );
-			this.objects = new LineParserBase( 'o', this.outputObjectBuilder );
-			this.groups = new LineParserBase( 'g', this.outputObjectBuilder );
-			this.usemtls = new LineParserBase( 'usemtl', this.outputObjectBuilder );
-			this.faces = new LineParserBase( this.outputObjectBuilder );
-			this.smoothingGroups = new LineParserBase( 's', this.outputObjectBuilder );
- */
-			this.parser = null;
-
-			this.reachedFaces = false;
-			this.lineCount = 0;
-			this.inputObjectCount = 0;
-
-			this.debug = false;
-		}
-
-		InputObjectStore.prototype.reset = function ( vertexDetection ) {
-			this.outputObjectBuilder = this.outputObjectBuilder.newInstance( vertexDetection );
-
-			this.comments.oobRef = this.outputObjectBuilder;
-			this.mtllib.oobRef = this.outputObjectBuilder;
-			this.vertices.oobRef = this.outputObjectBuilder;
-			this.normals.oobRef = this.outputObjectBuilder;
-			this.uvs.oobRef = this.outputObjectBuilder;
-			this.objects.oobRef = this.outputObjectBuilder;
-			this.groups.oobRef = this.outputObjectBuilder;
-			this.usemtls.oobRef = this.outputObjectBuilder;
-			this.faces.oobRef = this.outputObjectBuilder;
-			this.smoothingGroups.oobRef = this.outputObjectBuilder;
-
-			this.reachedFaces = false;
-		};
-
-		InputObjectStore.prototype.setDebug = function ( inputObjectStore, extendableMeshCreator , parsers ) {
-			this.comments.debug = parsers;
-			this.mtllib.debug = parsers;
-			this.vertices.debug = parsers;
-			this.normals.debug = parsers;
-			this.uvs.debug = parsers;
-			this.faces.debug = parsers;
-			this.groups.debug = parsers;
-			this.objects.debug = parsers;
-			this.smoothingGroups.debug = parsers;
-			this.usemtls.debug = parsers;
-
-			this.debug = inputObjectStore;
-			this.extendableMeshCreator.debug = extendableMeshCreator;
-		};
-
-		InputObjectStore.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 			console.time( 'ParseBytes' );
-
-			var view = new Uint8Array( arrayBuffer );
+			var view = new Uint8Array( loadedContent );
 			for ( var i = 0, length = view.byteLength; i < length; i ++ ) {
 
 				this.parseCode( view [ i ] );
 
 			}
-
 			console.timeEnd( 'ParseBytes' );
-		};
 
-		InputObjectStore.prototype.parseString = function ( input ) {
+		} else {
+
 			console.time( 'ParseString' );
-
-			for ( var i = 0, length = input.length; i < length; i++ ) {
+			for ( var i = 0, length = loadedContent.length; i < length; i++ ) {
 
 				this.parseCode( input[ i ].charCodeAt( 0 ) );
 
 			}
-
 			console.timeEnd( 'ParseString' );
-		};
 
-		/**
-		 * TODO: new comment
-		 *
-		 * @param code
-		 */
-		InputObjectStore.prototype.parseCode = function ( code ) {
-			switch ( code ) {
-				case 10: // LF
-					if ( this.parser === null ) return;
+		}
 
-					// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
-					this.parser.detectedLF();
-					this.parser = null;
-					this.lineCount ++;
-					break;
+		// do not forget last object
+		this.processCompletedObject();
 
-				case 13: // CR
-					// ignore CR
-					break;
+		console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
 
-				case 118: // v
-					if ( this.parser !== null ) this.parser.parseCode( code );
-					break;
+		return this.container;
+	};
 
-				case 110: // n
-					this.processIdentifierCharCode( code, this.normals );
-					break;
+	OBJLoader.prototype.prepareParsing = function () {
+		this.outputObjectBuilder = new OutputObjectBuilder( this.createObjectPerSmoothingGroup );
+		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator( this.container, this.materials );
 
-				case 116: // t
-					this.processIdentifierCharCode( code, this.uvs );
-					break;
+		// globals (per InputObjectStore)
+		this.parsers.comments = new LineParserBase( '#', this.outputObjectBuilder, 'pushComment' );
+///*
+		this.parsers.mtllib = new LineParserString( 'mtllib', this.outputObjectBuilder, 'pushMtllib' );
+		this.parsers.vertices = new LineParserVertex( 'v', 3, this.outputObjectBuilder, 'pushVertex' );
+		this.parsers.normals = new LineParserVertex( 'vn', 3, this.outputObjectBuilder, 'pushNormal' );
+		this.parsers.uvs = new LineParserUv( this.outputObjectBuilder, 'pushUv' );
+		this.parsers.objects = new LineParserString( 'o', this.outputObjectBuilder, 'pushObject' );
+		this.parsers.groups = new LineParserString( 'g', this.outputObjectBuilder, 'pushGroup' );
+		this.parsers.usemtls = new LineParserString( 'usemtl', this.outputObjectBuilder, 'pushMtl' );
+		this.parsers.faces = new LineParserFace( this.outputObjectBuilder );
+		this.parsers.smoothingGroups = new LineParserString( 's', this.outputObjectBuilder, 'pushSmoothingGroup' );
+//*/
+/*
+		this.parsers.mtllib = new LineParserBase( 'mtllib', this.outputObjectBuilder );
+		this.parsers.vertices = new LineParserBase( 'v', this.outputObjectBuilder );
+		this.parsers.normals = new LineParserBase( 'vn', this.outputObjectBuilder );
+		this.parsers.uvs = new LineParserBase( this.outputObjectBuilder );
+		this.parsers.objects = new LineParserBase( 'o', this.outputObjectBuilder );
+		this.parsers.groups = new LineParserBase( 'g', this.outputObjectBuilder );
+		this.parsers.usemtls = new LineParserBase( 'usemtl', this.outputObjectBuilder );
+		this.parsers.faces = new LineParserBase( this.outputObjectBuilder );
+		this.parsers.smoothingGroups = new LineParserBase( 's', this.outputObjectBuilder );
+*/
+		this.parsers.current = null;
+		this.parsers.reachedFaces = false;
+		this.inputObjectCount = 0;
 
-				case 102: // f
-					if ( this.processIdentifierCharCode( code, this.faces ) ) this.reachedFaces = true;
-					break;
+		this.setDebug( false, false, false );
+	};
 
-				case 115: // s
-					this.processIdentifierCharCode( code, this.smoothingGroups );
-					break;
+	/**
+	 * TODO: new comment
+	 *
+	 * @param code
+	 */
+	OBJLoader.prototype.parseCode = function ( code ) {
+		switch ( code ) {
+			case 10: // LF
+				if ( this.parsers.current === null ) return;
 
-				case 103: // g
-					this.processIdentifierCharCode( code, this.groups );
-					break;
+				// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
+				this.parsers.current.detectedLF();
+				this.parsers.current = null;
+				break;
 
-				case 117: // u
-					this.processIdentifierCharCode( code, this.usemtls );
-					break;
+			case 13: // CR
+				// ignore CR
+				break;
 
-				case 111: // o
-					// new instance required, because "o" found and previous vertices exist
-					if ( this.processIdentifierCharCode( code, this.objects ) && this.outputObjectBuilder.vertices.length > 0 ) {
-						this.processCompletedObject( false );
-					}
-					break;
+			case 118: // v
+				if ( this.parsers.current !== null ) this.parsers.current.parseCode( code );
+				break;
 
-				case 109: // m
-					this.processIdentifierCharCode( code, this.mtllib );
-					break;
+			case 110: // n
+				this.processIdentifierCharCode( code, this.parsers.normals );
+				break;
 
-				case 35: // #
-					this.processIdentifierCharCode( code, this.comments );
-					break;
+			case 116: // t
+				this.processIdentifierCharCode( code, this.parsers.uvs );
+				break;
 
-				case 32: // SPACE
-					if ( this.parser === null ) {
+			case 102: // f
+				if ( this.processIdentifierCharCode( code, this.parsers.faces ) ) this.parsers.reachedFaces = true;
+				break;
 
-						// at start of line: not needed, but after 'v' will start new vertex parsing
-						this.parser = this.vertices;
+			case 115: // s
+				this.processIdentifierCharCode( code, this.parsers.smoothingGroups );
+				break;
 
-					} else if ( this.parser === this.vertices && this.reachedFaces ) {
+			case 103: // g
+				this.processIdentifierCharCode( code, this.parsers.groups );
+				break;
 
-						// object complete instance required if reached faces already (= reached next block of v)
-						this.processCompletedObject( true );
+			case 117: // u
+				this.processIdentifierCharCode( code, this.parsers.usemtls );
+				break;
 
-					} else {
+			case 111: // o
+				// new instance required, because "o" found and previous vertices exist
+				if ( this.processIdentifierCharCode( code, this.parsers.objects ) && this.outputObjectBuilder.vertices.length > 0 ) {
+					this.processCompletedObject( false );
+				}
+				break;
 
-						this.parser.parseCode( code );
+			case 109: // m
+				this.processIdentifierCharCode( code, this.parsers.mtllib );
+				break;
 
-					}
-					break;
+			case 35: // #
+				this.processIdentifierCharCode( code, this.parsers.comments );
+				break;
 
-				default:
-					this.parser.parseCode( code );
-					break;
-			}
-		};
+			case 32: // SPACE
+				if ( this.parsers.current === null ) {
 
-		InputObjectStore.prototype.processIdentifierCharCode = function ( code, activeParser ) {
-			if ( this.parser === null ) {
+					// at start of line: not needed, but after 'v' will start new vertex parsing
+					this.parsers.current = this.parsers.vertices;
 
-				this.parser = activeParser;
-				return true;
+				} else if ( this.parsers.current === this.parsers.vertices && this.parsers.reachedFaces ) {
 
-			} else {
+					// object complete instance required if reached faces already (= reached next block of v)
+					this.processCompletedObject( true );
+					this.parsers.reachedFaces = false;
 
-				this.parser.parseCode( code );
-				return false;
-			}
-		};
+				} else {
 
-		InputObjectStore.prototype.processCompletedObject = function ( vertexDetection ) {
-			if ( this.debug ) this.outputObjectBuilder.createReport( this.inputObjectCount, true );
+					this.parsers.current.parseCode( code );
 
-			this.extendableMeshCreator.buildRawMeshData( this.outputObjectBuilder.retrievedObjectDescriptions, this.inputObjectCount );
+				}
+				break;
 
-			this.inputObjectCount++;
-			this.reset( vertexDetection );
-		};
+			default:
+				this.parsers.current.parseCode( code );
+				break;
+		}
+	};
 
-		return InputObjectStore;
-	})();
+	OBJLoader.prototype.processIdentifierCharCode = function ( code, activeParser ) {
+		if ( this.parsers.current === null ) {
+
+			this.parsers.current = activeParser;
+			return true;
+
+		} else {
+
+			this.parsers.current.parseCode( code );
+			return false;
+		}
+	};
+
+	OBJLoader.prototype.processCompletedObject = function ( vertexDetection ) {
+		if ( this.debug ) this.outputObjectBuilder.createReport( this.inputObjectCount, true );
+
+		this.extendableMeshCreator.buildRawMeshData( this.outputObjectBuilder.retrievedObjectDescriptions, this.inputObjectCount );
+
+		this.inputObjectCount++;
+		this.resetObjectBuilder( vertexDetection );
+	};
+
+	OBJLoader.prototype.resetObjectBuilder = function ( vertexDetection ) {
+		this.outputObjectBuilder = this.outputObjectBuilder.newInstance( vertexDetection );
+
+		this.parsers.comments.oobRef = this.outputObjectBuilder;
+		this.parsers.mtllib.oobRef = this.outputObjectBuilder;
+		this.parsers.vertices.oobRef = this.outputObjectBuilder;
+		this.parsers.normals.oobRef = this.outputObjectBuilder;
+		this.parsers.uvs.oobRef = this.outputObjectBuilder;
+		this.parsers.objects.oobRef = this.outputObjectBuilder;
+		this.parsers.groups.oobRef = this.outputObjectBuilder;
+		this.parsers.usemtls.oobRef = this.outputObjectBuilder;
+		this.parsers.faces.oobRef = this.outputObjectBuilder;
+		this.parsers.smoothingGroups.oobRef = this.outputObjectBuilder;
+	};
+
+	OBJLoader.prototype.setDebug = function ( self, parsers, extendableMeshCreator ) {
+		this.parsers.comments.debug = parsers;
+		this.parsers.mtllib.debug = parsers;
+		this.parsers.vertices.debug = parsers;
+		this.parsers.normals.debug = parsers;
+		this.parsers.uvs.debug = parsers;
+		this.parsers.faces.debug = parsers;
+		this.parsers.groups.debug = parsers;
+		this.parsers.objects.debug = parsers;
+		this.parsers.smoothingGroups.debug = parsers;
+		this.parsers.usemtls.debug = parsers;
+
+		this.debug = self;
+		this.extendableMeshCreator.debug = extendableMeshCreator;
+	};
 
 
 	var LineParserBase = (function () {
@@ -912,10 +912,10 @@ THREE.OBJLoader.RetrievedObjectDescription = (function () {
 
 THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
-	function ExtendableMeshCreator( container, materials, debug ) {
+	function ExtendableMeshCreator( container, materials ) {
 		this.container = container;
 		this.materials = materials;
-		this.debug = debug;
+		this.debug = false;
 
 		this.globalObjectCount = 0;
 	}
