@@ -68,7 +68,7 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 		var inputObjectStore = new InputObjectStore( this.container, this.materials, this.createObjectPerSmoothingGroup );
-		inputObjectStore.setDebug( false, false, false );
+		inputObjectStore.setDebug( false, true, false );
 
 		if ( this.loadAsArrayBuffer ) {
 
@@ -83,7 +83,7 @@ THREE.OBJLoader = (function () {
 		// do not forget last object
 		inputObjectStore.processCompletedObject();
 
-		console.log( 'Global object count: ' + inputObjectStore.outputObjectBuilder.globalObjectCount);
+		console.log( 'Global output object count: ' + inputObjectStore.extendableMeshCreator.globalObjectCount );
 
 		return this.container;
 	};
@@ -127,8 +127,8 @@ THREE.OBJLoader = (function () {
 			this.debug = false;
 		}
 
-		InputObjectStore.prototype.reset = function () {
-			this.outputObjectBuilder = this.outputObjectBuilder.newInstance();
+		InputObjectStore.prototype.reset = function ( vertexDetection ) {
+			this.outputObjectBuilder = this.outputObjectBuilder.newInstance( vertexDetection );
 
 			this.comments.oobRef = this.outputObjectBuilder;
 			this.mtllib.oobRef = this.outputObjectBuilder;
@@ -235,7 +235,9 @@ THREE.OBJLoader = (function () {
 
 				case 111: // o
 					// new instance required, because "o" found and previous vertices exist
-					if ( this.processIdentifierCharCode( code, this.objects ) && this.outputObjectBuilder.vertices.length > 0 ) this.processCompletedObject();
+					if ( this.processIdentifierCharCode( code, this.objects ) && this.outputObjectBuilder.vertices.length > 0 ) {
+						this.processCompletedObject( false );
+					}
 					break;
 
 				case 109: // m
@@ -255,7 +257,7 @@ THREE.OBJLoader = (function () {
 					} else if ( this.parser === this.vertices && this.reachedFaces ) {
 
 						// object complete instance required if reached faces already (= reached next block of v)
-						this.processCompletedObject();
+						this.processCompletedObject( true );
 
 					} else {
 
@@ -283,13 +285,13 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		InputObjectStore.prototype.processCompletedObject = function () {
+		InputObjectStore.prototype.processCompletedObject = function ( vertexDetection ) {
 			if ( this.debug ) this.outputObjectBuilder.createReport( this.inputObjectCount, true );
 
 			this.extendableMeshCreator.buildRawMeshData( this.outputObjectBuilder.retrievedObjectDescriptions, this.inputObjectCount );
 
 			this.inputObjectCount++;
-			this.reset();
+			this.reset( vertexDetection );
 		};
 
 		return InputObjectStore;
@@ -487,7 +489,7 @@ THREE.OBJLoader = (function () {
 
 			} else if ( code === 47 ) {
 
-				if ( this.slashCount < 2 ) {
+				if ( this.slashCount < 2 && this.type !== 1 ) {
 
 					this.slashCount ++;
 					this.type = ( this.input.length === 0 ) ? 2 : 0;
@@ -530,7 +532,7 @@ THREE.OBJLoader = (function () {
 
 	var OutputObjectBuilder = (function () {
 
-		function OutputObjectBuilder( createObjectPerSmoothingGroup ) {
+		function OutputObjectBuilder( createObjectPerSmoothingGroup, activeGroupOverride ) {
 			this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
@@ -549,7 +551,7 @@ THREE.OBJLoader = (function () {
 			this.mtllibName = '';
 
 			// faces are store according combined index of groups, material and smoothing group
-			this.activeGroup = 'none';
+			this.activeGroup = ( activeGroupOverride === undefined ) ? 'none' : activeGroupOverride;
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 0;
 
@@ -558,12 +560,23 @@ THREE.OBJLoader = (function () {
 			this.smoothingGroupCount = 0;
 
 			this.retrievedObjectDescriptions = [];
-			this.retrievedObjectDescriptionInUse = [];
+			var index = this.buildIndexRegular();
+			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] =
+				new RetrievedObjectDescription( this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 		}
 
 
-		OutputObjectBuilder.prototype.newInstance = function () {
-			var newOob = new OutputObjectBuilder( this.createObjectPerSmoothingGroup );
+		OutputObjectBuilder.prototype.newInstance = function ( vertexDetection ) {
+			var newOob;
+			if ( vertexDetection ) {
+
+				newOob = new OutputObjectBuilder( this.createObjectPerSmoothingGroup, this.activeGroup );
+
+			} else {
+
+				newOob = new OutputObjectBuilder( this.createObjectPerSmoothingGroup );
+
+			}
 			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
 			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
 			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
@@ -635,17 +648,18 @@ THREE.OBJLoader = (function () {
 
 			if ( this.createObjectPerSmoothingGroup ) {
 
-				index = buildIndex( this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+				index = this.buildIndexRegular();
 
 			} else {
 
-				index = ( this.activeSmoothingGroup === 0 ) ? buildIndex( this.activeGroup, this.activeMtlName, 0 ) : buildIndex( this.activeGroup, this.activeMtlName, 1 );
+				index = ( this.activeSmoothingGroup === 0 ) ? this.buildIndexOverride( 0 ) : this.buildIndexOverride( 1 );
 
 			}
 
 			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
 
-				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new RetrievedObjectDescription( this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new RetrievedObjectDescription(
+					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 
 			}
 			else {
@@ -655,8 +669,12 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		var buildIndex = function ( groupName, mtlName, smoothingGroup ) {
-			return groupName + '|' + mtlName + '|' + smoothingGroup;
+		OutputObjectBuilder.prototype.buildIndexRegular = function () {
+			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
+		};
+
+		OutputObjectBuilder.prototype.buildIndexOverride = function ( smoothingGroup ) {
+			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
 		var TYPE_0_ARRAY_LENGTH = 9;
@@ -692,11 +710,12 @@ THREE.OBJLoader = (function () {
 
 			} else if ( type === 2 ) {
 
-					for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
+				for ( var i = 0; i < TYPE_1_2_ARRAY_LENGTH; i += 2 ) {
 
-						this.attachVertex( facesArray[ i ] );
-						this.attachNormal( facesArray[ i + 1 ] );
-					}
+					this.attachVertex( facesArray[ i ] );
+					this.attachNormal( facesArray[ i + 1 ] );
+
+				}
 
 			} else if ( type === 3 ) {
 
@@ -711,43 +730,28 @@ THREE.OBJLoader = (function () {
 
 		OutputObjectBuilder.prototype.attachVertex = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-			var number;
 			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
 			for ( var i = index ; i < length; i++ ) {
-				number = this.vertices[ i ];
-				if ( isNaN( number ) ) {
-					console.error( number );
-				}
-				this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = number;
+				this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ i ];
 			}
 		};
 
 		OutputObjectBuilder.prototype.attachUv = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
-			var number;
 			var length = index + UV_VECTOR_LENGTH;
 
 			for ( var i = index ; i < length; i++ ) {
-				number = this.uvs[ i ];
-				if ( isNaN( number ) ) {
-					console.error( number );
-				}
-				this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = number;
+				this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ i ];
 			}
 		};
 
 		OutputObjectBuilder.prototype.attachNormal = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-			var number;
 			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
 			for ( var i = index ; i < length; i++ ) {
-				number = this.normals[ i ];
-				if ( isNaN( number ) ) {
-					console.error( number );
-				}
-				this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = number;
+				this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ i ];
 			}
 		};
 
@@ -785,7 +789,8 @@ THREE.OBJLoader = (function () {
 
 	var RetrievedObjectDescription = (function () {
 
-		function RetrievedObjectDescription( group, materialName, smoothingGroup ) {
+		function RetrievedObjectDescription( objectName, group, materialName, smoothingGroup ) {
+			this.objectName = objectName;
 			this.group = group;
 			this.materialName = materialName;
 			this.smoothingGroup = smoothingGroup;
@@ -824,12 +829,14 @@ THREE.OBJLoader = (function () {
 					if ( this.debug ) {
 						console.log(
 							'Object no.: ' + this.globalObjectCount +
+							' objectName: ' + triple.objectName +
 							' group: ' + triple.group +
 							' materialName: ' + triple.materialName +
 							' smoothingGroup: ' + triple.smoothingGroup +
-							' # vertices: ' + triple.vertexArrayIndex / 3 +
-							' # uvs: ' + + triple.uvArrayIndex / 2 +
-							' # normals: ' + + triple.normalArrayIndex / 3
+							'\nCounts: ' +
+							' #vertices: ' + triple.vertexArrayIndex / 3 +
+							' #uvs: ' + + triple.uvArrayIndex / 2 +
+							' #normals: ' + + triple.normalArrayIndex / 3
 						);
 					}
 
