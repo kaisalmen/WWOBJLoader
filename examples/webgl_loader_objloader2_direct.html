@@ -1,330 +1,336 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<title>WWOBJLoader Testbed</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #000;
-				color: #fff;
-				margin: 0px 0px 0px 0px;
-				padding: 0px 0px 0px 0px;
-				border: none;
+
+<title>OBJLoader2 Testbed</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+	body {
+		font-family: Monospace;
+		background-color: #000;
+		color: #fff;
+		margin: 0px 0px 0px 0px;
+		padding: 0px 0px 0px 0px;
+		border: none;
+	}
+	#info {
+		color: #fff;
+		position: absolute;
+		top: 10px;
+		width: 100%;
+		text-align: center;
+		z-index: 100;
+		display:block;
+	}
+	#info a, .button {
+		color: #f00;
+		font-weight: bold;
+		text-decoration: underline;
+		cursor: pointer
+	}
+	#glFullscreen {
+		width: 100%;
+		height: 100vh;
+		min-width: 640px;
+		min-height: 360px;
+		position: relative;
+		overflow: hidden;
+	}
+	#example {
+		width: 100%;
+		height: 100%;
+		top: 0px;
+		left: 0px;
+		background-color: #000000;
+	}
+	#feedback {
+		color: darkorange;
+	}
+	#menu {
+		margin: 4px 4px 4px 4px;
+		padding: 4px 12px 4px 12px;
+		border: solid darkorange;
+		border-radius: 8px;
+		position: absolute;
+		left: 0px;
+		top: 0px;
+	}
+	#shading, #side {
+		border: solid 4px;
+		border-radius: 4px;
+		font-size: 18pt;
+		cursor: pointer;
+		width: 200px;
+	}
+	#shading {
+		border-color: darkgreen;
+		background-color: darkgreen;
+	}
+	#side {
+		border-color: darkorange;
+		background-color: darkorange;
+	}
+</style>
+
+
+
+<div id="info">
+	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
+	<div id="feedback"></div>
+</div>
+<div id="glFullscreen">
+	<div id="menu">
+		<p id="shading" onclick="APP.alterSmoothShading()">Smooth Shading</p>
+		<p id="side" onclick="APP.alterDouble()">Front Side</p>
+	</div>
+	<canvas id="example"></canvas>
+</div>
+
+<script src="../build/three.js"></script>
+<script src="js/Detector.js"></script>
+
+<script src="js/controls/TrackballControls.js"></script>
+<script src="js/loaders/MTLLoader.js"></script>
+<script src="js/loaders/OBJLoader2.js"></script>
+
+<script src="js/apps/ThreeJsApp.js"></script>
+<script src="js/apps/AppRunner.js"></script>
+
+<script>
+
+	if (THREE.examples.loaders === undefined) {
+		THREE.examples.loaders = {};
+	}
+
+	/**
+	 * ThreeJsApp serves as base class that defines an application life-cycle and
+	 * handles some things you always need to do when writing an example:
+	 * - Renderer init
+	 * - Perspective scene with camera (enabled by default)
+	 *   - CubeMap scene (disabled by default)
+	 * - Orthographic scene with camera (disabled by default)
+	 * - Canvas/renderer size changes
+	 *
+	 * This example extends ThreeJsApp and overwrites only functions needed.
+	 */
+	THREE.examples.loaders.OBJLoader2SimpleCheck = (function () {
+
+		OBJLoader2SimpleCheck.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
+			constructor: {
+				configurable: true,
+				enumerable: true,
+				value: OBJLoader2SimpleCheck,
+				writable: true
 			}
-			#info {
-				color: #fff;
-				position: absolute;
-				top: 10px;
-				width: 100%;
-				text-align: center;
-				z-index: 100;
-				display:block;
-			}
-			#info a, .button {
-				color: #f00;
-				font-weight: bold;
-				text-decoration: underline;
-				cursor: pointer
-			}
-			#glFullscreen {
-				width: 100%;
-				height: 100vh;
-				min-width: 640px;
-				min-height: 360px;
-				position: relative;
-				overflow: hidden;
-			}
-			#example {
-				width: 100%;
-				height: 100%;
-				top: 0px;
-				left: 0px;
-				background-color: #000000;
-			}
-			#feedback {
-				color: darkorange;
-			}
-			#menu {
-				margin: 4px 4px 4px 4px;
-				padding: 4px 12px 4px 12px;
-				border: solid darkorange;
-				border-radius: 8px;
-				position: absolute;
-				left: 0px;
-				top: 0px;
-			}
-			#shading, #side {
-				border: solid 4px;
-				border-radius: 4px;
-				font-size: 18pt;
-				cursor: pointer;
-				width: 200px;
-			}
-			#shading {
-				border-color: darkgreen;
-				background-color: darkgreen;
-			}
-			#side {
-				border-color: darkorange;
-				background-color: darkorange;
-			}
-		</style>
-	</head>
+		});
 
-	<body>
-		<div id="info">
-			<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct testing
-			<div id="feedback"></div>
-		</div>
-		<div id="glFullscreen">
-			<div id="menu">
-				<p id="shading" onclick="APP.alterSmoothShading()">Smooth Shading</p>
-				<p id="side" onclick="APP.alterDouble()">Front Side</p>
-			</div>
-			<canvas id="example"></canvas>
-		</div>
+		function OBJLoader2SimpleCheck( elementToBindTo ) {
+			THREE.examples.apps.ThreeJsApp.call( this );
 
-		<script src="../build/three.js"></script>
-		<script src="js/Detector.js"></script>
+			// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
+			// Only define what is required (name and htmlCanvas).
+			this.configure( {
+				name: 'OBJLoader2SimpleCheck',
+				htmlCanvas: elementToBindTo
+			} );
 
-		<script src="js/controls/TrackballControls.js"></script>
-		<script src="js/loaders/MTLLoader.js"></script>
-		<script src="js/loaders/OBJLoader2.js"></script>
+			this.lights = null;
+			this.controls = null;
 
-		<script src="js/apps/ThreeJsApp.js"></script>
-		<script src="js/apps/AppRunner.js"></script>
+			this.smoothShading = true;
+			this.doubleSide = false;
 
-		<script>
-
-			if (THREE.examples.loaders === undefined) {
-				THREE.examples.loaders = {};
-			}
-
-			/**
-			 * ThreeJsApp serves as base class that defines an application life-cycle and
-			 * handles some things you always need to do when writing an example:
-			 * - Renderer init
-			 * - Perspective scene with camera (enabled by default)
-			 *   - CubeMap scene (disabled by default)
-			 * - Orthographic scene with camera (disabled by default)
-			 * - Canvas/renderer size changes
-			 *
-			 * This example extends ThreeJsApp and overwrites only functions needed.
-			 */
-			THREE.examples.loaders.OBJLoader2SimpleCheck = (function () {
-
-				OBJLoader2SimpleCheck.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
-					constructor: {
-						configurable: true,
-						enumerable: true,
-						value: OBJLoader2SimpleCheck,
-						writable: true
-					}
-				});
-
-				function OBJLoader2SimpleCheck( elementToBindTo ) {
-					THREE.examples.apps.ThreeJsApp.call( this );
-
-					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
-					// Only define what is required (name and htmlCanvas).
-					this.configure( {
-						name: 'OBJLoader2SimpleCheck',
-						htmlCanvas: elementToBindTo
-					} );
-
-					this.lights = null;
-					this.controls = null;
-
-					this.smoothShading = true;
-					this.doubleSide = false;
-
-					this.cube = null;
-					this.pivot = null;
+			this.cube = null;
+			this.pivot = null;
 /*
-					this.fileDef = {
-						path: './obj/PTV1/',
-						fileObj: 'PTV1.obj',
-						texturePath: './obj/PTV1/',
-						fileMtl: 'PTV1.mtl'
-					}
+			this.fileDef = {
+				path: './obj/datamogensen/',
+				fileObj: '7.obj',
+			 	texturePath: './obj/datamogensen/',
+			 	fileMtl: '7.mtl'
+			};
 */
-					this.fileDef = {
-						path: './obj/female02/',
-						fileObj: 'female02.obj',
-						texturePath: './obj/female02/',
-						fileMtl: 'female02.mtl'
+///*
+			this.fileDef = {
+				path: './obj/PTV1/',
+				fileObj: 'PTV1.obj',
+				texturePath: './obj/PTV1/',
+				fileMtl: 'PTV1.mtl'
+			};
+//*/
+/*
+			this.fileDef = {
+				path: './obj/female02/',
+				fileObj: 'female02.obj',
+				texturePath: './obj/female02/',
+				fileMtl: 'female02.mtl'
+			};
+*/
+		}
+
+		// ThreeJsApp.initPreGL()  not required, default is used
+
+		OBJLoader2SimpleCheck.prototype.initGL = function () {
+			this.renderer.setClearColor(0x303030);
+
+			var cameraDefaults = {
+				posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
+			};
+			this.scenePerspective.setCameraDefaults( cameraDefaults );
+			this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+
+			this.lights = {
+				ambientLight: new THREE.AmbientLight( 0x202020 ),
+				directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
+				directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
+				directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
+				lightArray: new THREE.Object3D()
+			};
+
+			this.lights.directionalLight1.position.set( -100, 0, 100 );
+			this.lights.directionalLight2.position.set( 100, 0, 100 );
+			this.lights.directionalLight3.position.set( 0, 0, -100 );
+
+			this.lights.lightArray.add( this.lights.directionalLight1 );
+			this.lights.lightArray.add( this.lights.directionalLight2 );
+			this.lights.lightArray.add( this.lights.directionalLight3 );
+			this.scenePerspective.scene.add( this.lights.lightArray );
+
+
+			var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+			var material = new THREE.MeshNormalMaterial();
+			this.cube = new THREE.Mesh( geometry, material );
+			this.cube.position.set( 0, -20, 0 );
+			this.scenePerspective.scene.add( this.cube );
+
+			this.pivot = new THREE.Object3D();
+			this.scenePerspective.scene.add( this.pivot );
+		};
+
+		// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
+
+		OBJLoader2SimpleCheck.prototype.initPostGL = function () {
+			var scope = this;
+
+			var mtlLoader = new THREE.MTLLoader();
+			mtlLoader.setPath( scope.fileDef.texturePath );
+			mtlLoader.load( scope.fileDef.fileMtl, function( materials ) {
+
+				materials.preload();
+
+				var objLoader = new THREE.OBJLoader();
+				objLoader.setMaterials( materials );
+				objLoader.setLoadAsArrayBuffer( true );
+				objLoader.setWorkInline( true );
+				objLoader.setPath( scope.fileDef.path );
+
+				var onSuccess = function ( object ) {
+					scope.pivot.add( object );
+				};
+
+				var onProgress = function ( event ) {
+					if ( event.lengthComputable ) {
+
+						var percentComplete = event.loaded / event.total * 100;
+						var output = 'Download of "' + scope.fileDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
+						console.log(output);
+
 					}
+				};
+
+				var onError = function ( event ) {
+					console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
+				};
+
+				objLoader.load( scope.fileDef.fileObj, onSuccess, onProgress, onError );
+
+			});
+
+			return true;
+		};
+
+		OBJLoader2SimpleCheck.prototype.resizeDisplayGL = function () {
+			this.controls.handleResize();
+		};
+
+		OBJLoader2SimpleCheck.prototype.renderPre = function () {
+			this.controls.update();
+
+			this.cube.rotation.x += 0.05;
+			this.cube.rotation.y += 0.05;
+		};
+
+
+		OBJLoader2SimpleCheck.prototype.alterSmoothShading = function () {
+
+			var scope = this;
+			scope.smoothShading = ! scope.smoothShading;
+			var side = document.getElementById( 'shading' );
+			side.style.backgroundColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
+			side.style.borderColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
+			side.innerHTML = scope.smoothShading ? 'Smooth Shading' : 'Flat Shading';
+			console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
+
+
+			scope.traversalFunction = function ( material ) {
+				material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
+				material.needsUpdate = true;
+			};
+			var scopeTraverse = function ( object3d ) {
+				scope.traverseScene( object3d );
+			};
+			scope.pivot.traverse( scopeTraverse );
+		};
+
+		OBJLoader2SimpleCheck.prototype.alterDouble = function () {
+
+			var scope = this;
+			scope.doubleSide = ! scope.doubleSide;
+			var side = document.getElementById( 'side' );
+			side.style.backgroundColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
+			side.style.borderColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
+			side.innerHTML = scope.doubleSide ? 'Double Side' : 'Front Side';
+			console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
+
+
+			scope.traversalFunction  = function ( material ) {
+				material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
+			};
+
+			var scopeTraverse = function ( object3d ) {
+				scope.traverseScene( object3d );
+			};
+			scope.pivot.traverse( scopeTraverse );
+		};
+
+		OBJLoader2SimpleCheck.prototype.traverseScene = function ( object3d ) {
+
+			if ( object3d.material instanceof THREE.MultiMaterial ) {
+
+				for ( var matName in object3d.material.materials ) {
+
+					this.traversalFunction( object3d.material.materials[matName] );
+
 				}
 
-				// ThreeJsApp.initPreGL()  not required, default is used
+			} else if ( object3d.material ) {
 
-				OBJLoader2SimpleCheck.prototype.initGL = function () {
-					this.renderer.setClearColor(0x303030);
+				this.traversalFunction( object3d.material );
 
-					var cameraDefaults = {
-						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
-					};
-					this.scenePerspective.setCameraDefaults( cameraDefaults );
-					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+			}
 
-					this.lights = {
-						ambientLight: new THREE.AmbientLight( 0x202020 ),
-						directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
-						directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
-						directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
-						lightArray: new THREE.Object3D()
-					};
-
-					this.lights.directionalLight1.position.set( -100, 0, 100 );
-					this.lights.directionalLight2.position.set( 100, 0, 100 );
-					this.lights.directionalLight3.position.set( 0, 0, -100 );
-
-					this.lights.lightArray.add( this.lights.directionalLight1 );
-					this.lights.lightArray.add( this.lights.directionalLight2 );
-					this.lights.lightArray.add( this.lights.directionalLight3 );
-					this.scenePerspective.scene.add( this.lights.lightArray );
+		};
 
 
-					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-					var material = new THREE.MeshNormalMaterial();
-					this.cube = new THREE.Mesh( geometry, material );
-                    this.cube.position.set( 0, -20, 0 );
-					this.scenePerspective.scene.add( this.cube );
+		// ThreeJsApp.renderPost()  not required, default is used
 
-					this.pivot = new THREE.Object3D();
-					this.scenePerspective.scene.add( this.pivot );
-				};
+		return OBJLoader2SimpleCheck;
 
-				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
+	})();
 
-				OBJLoader2SimpleCheck.prototype.initPostGL = function () {
-					var scope = this;
+	var APP = new THREE.examples.loaders.OBJLoader2SimpleCheck( document.getElementById( 'example' ) );
 
-					var mtlLoader = new THREE.MTLLoader();
-					mtlLoader.setPath( scope.fileDef.texturePath );
-					mtlLoader.load( scope.fileDef.fileMtl, function( materials ) {
+	// AppRunner handles ThreeJsApp init, window resize event and render loop
+	var appRunner = new THREE.examples.apps.AppRunner( APP );
+	appRunner.run( true );
 
-						materials.preload();
-
-						var objLoader = new THREE.OBJLoader();
-						objLoader.setMaterials( materials );
-						objLoader.setLoadAsArrayBuffer( true );
-						objLoader.setWorkInline( true );
-						objLoader.setPath( scope.fileDef.path );
-
-						var onSuccess = function ( object ) {
-							scope.pivot.add( object );
-						};
-
-						var onProgress = function ( event ) {
-							if ( event.lengthComputable ) {
-
-								var percentComplete = event.loaded / event.total * 100;
-								var output = 'Download of "' + scope.fileDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
-								console.log(output);
-
-							}
-						};
-
-						var onError = function ( event ) {
-							console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
-						};
-
-						objLoader.load( scope.fileDef.fileObj, onSuccess, onProgress, onError );
-
-					});
-
-					return true;
-				};
-
-				OBJLoader2SimpleCheck.prototype.resizeDisplayGL = function () {
-					this.controls.handleResize();
-				};
-
-				OBJLoader2SimpleCheck.prototype.renderPre = function () {
-					this.controls.update();
-
-					this.cube.rotation.x += 0.05;
-					this.cube.rotation.y += 0.05;
-				};
-
-
-				OBJLoader2SimpleCheck.prototype.alterSmoothShading = function () {
-
-					var scope = this;
-					scope.smoothShading = ! scope.smoothShading;
-					var side = document.getElementById( 'shading' );
-					side.style.backgroundColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-					side.style.borderColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-					side.innerHTML = scope.smoothShading ? 'Smooth Shading' : 'Flat Shading';
-					console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
-
-
-					scope.traversalFunction = function ( material ) {
- 						material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
-						material.needsUpdate = true;
-					};
-					var scopeTraverse = function ( object3d ) {
-						scope.traverseScene( object3d );
-					};
-					scope.pivot.traverse( scopeTraverse );
-				};
-
-				OBJLoader2SimpleCheck.prototype.alterDouble = function () {
-
-					var scope = this;
-					scope.doubleSide = ! scope.doubleSide;
-					var side = document.getElementById( 'side' );
-					side.style.backgroundColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-					side.style.borderColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-					side.innerHTML = scope.doubleSide ? 'Double Side' : 'Front Side';
-					console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
-
-
-					scope.traversalFunction  = function ( material ) {
-						material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
-					};
-
-					var scopeTraverse = function ( object3d ) {
-						scope.traverseScene( object3d );
-					};
-					scope.pivot.traverse( scopeTraverse );
-				};
-
-				OBJLoader2SimpleCheck.prototype.traverseScene = function ( object3d ) {
-
-					if ( object3d.material instanceof THREE.MultiMaterial ) {
-
-						for ( var matName in object3d.material.materials ) {
-
-							this.traversalFunction( object3d.material.materials[matName] );
-
-						}
-
-					} else if ( object3d.material ) {
-
-						this.traversalFunction( object3d.material );
-
-					}
-
-				};
-
-
-				// ThreeJsApp.renderPost()  not required, default is used
-
-				return OBJLoader2SimpleCheck;
-
-			})();
-
-			var APP = new THREE.examples.loaders.OBJLoader2SimpleCheck( document.getElementById( 'example' ) );
-
-			// AppRunner handles ThreeJsApp init, window resize event and render loop
-			var appRunner = new THREE.examples.apps.AppRunner( APP );
-			appRunner.run( true );
-
-		</script>
-
-	</body>
-</html>
+</script>
