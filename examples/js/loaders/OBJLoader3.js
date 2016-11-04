@@ -140,15 +140,15 @@ THREE.OBJLoader = (function () {
 		this.parsers.smoothingGroups = new LineParserString( 's', 'pushSmoothingGroup' );
 //*/
 /*
-		this.parsers.mtllib = new LineParserBase( 'mtllib', this.outputObjectBuilder );
-		this.parsers.vertices = new LineParserBase( 'v', this.outputObjectBuilder );
-		this.parsers.normals = new LineParserBase( 'vn', this.outputObjectBuilder );
-		this.parsers.uvs = new LineParserBase( this.outputObjectBuilder );
-		this.parsers.objects = new LineParserBase( 'o', this.outputObjectBuilder );
-		this.parsers.groups = new LineParserBase( 'g', this.outputObjectBuilder );
-		this.parsers.usemtls = new LineParserBase( 'usemtl', this.outputObjectBuilder );
-		this.parsers.faces = new LineParserBase( this.outputObjectBuilder );
-		this.parsers.smoothingGroups = new LineParserBase( 's', this.outputObjectBuilder );
+		this.parsers.mtllib = new LineParserBase( 'mtllib' );
+		this.parsers.vertices = new LineParserBase( 'v' );
+		this.parsers.normals = new LineParserBase( 'vn' );
+		this.parsers.uvs = new LineParserBase( 'vt' );
+		this.parsers.objects = new LineParserBase( 'o');
+		this.parsers.groups = new LineParserBase( 'g' );
+		this.parsers.usemtls = new LineParserBase( 'usemtl' );
+		this.parsers.faces = new LineParserBase( 'f' );
+		this.parsers.smoothingGroups = new LineParserBase( 's' );
 */
 		this.parsers.current = null;
 		this.reachedFaces = false;
@@ -238,10 +238,8 @@ THREE.OBJLoader = (function () {
 					// at start of line: not needed, but after 'v' will start new vertex parsing
 					this.parsers.current = this.parsers.vertices;
 
-				} else if ( this.parsers.current === this.parsers.vertices && this.reachedFaces ) {
-
 					// object complete instance required if reached faces already (= reached next block of v)
-					this.processCompletedObject( true );
+					if ( this.reachedFaces ) this.processCompletedObject( true );
 
 				} else {
 
@@ -508,17 +506,6 @@ THREE.OBJLoader = (function () {
 		return LineParserFace;
 	})();
 
-	var FACE_LENGTH = 3;
-	var QUAD_LENGTH = 4;
-	var QUAD_VERTEX_INDICES = [ 0, 1, 2, 0, 2, 3 ];
-	var QUAD_VERTEX_INDICES_LENGTH = 6;
-
-	var TYPE_0_PARAM_COUNT = 3;
-	var TYPE_1_AND_2_PARAM_COUNT = 2;
-
-	var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
-	var UV_VECTOR_LENGTH = 2;
-
 	var FACE_TYPE_0_FACE = 0;
 	var FACE_TYPE_1_FACE = 1;
 	var FACE_TYPE_2_FACE = 2;
@@ -529,6 +516,9 @@ THREE.OBJLoader = (function () {
 	var FACE_TYPE_3_QUAD = 13;
 
 	var OutputObjectBuilder = (function () {
+
+		var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
+		var UV_VECTOR_LENGTH = 2;
 
 		function OutputObjectBuilder( createObjectPerSmoothingGroup, activeGroupOverride ) {
 			this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
@@ -561,16 +551,6 @@ THREE.OBJLoader = (function () {
 			var index = this.buildIndexRegular();
 			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
 					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
-
-			this.sharedVertexQuadBuffer = new Array( 4 );
-			this.sharedUvQuadBuffer = new Array( 4 );
-			this.sharedNormalQuadBuffer = new Array( 4 );
-
-			for ( var i = 0; i < QUAD_LENGTH; i++ ) {
-				this.sharedVertexQuadBuffer[ i ] = new Array( VERTEX_AND_NORMAL_VECTOR_LENGTH );
-				this.sharedUvQuadBuffer[ i ] = new Array( UV_VECTOR_LENGTH );
-				this.sharedNormalQuadBuffer[ i ] = new Array( VERTEX_AND_NORMAL_VECTOR_LENGTH );
-			}
 		}
 
 
@@ -696,67 +676,107 @@ THREE.OBJLoader = (function () {
 			// 3: "f vertex				vertex				vertex				vertex"
 			switch ( combinedType ) {
 				case FACE_TYPE_0_QUAD:
-					for ( i = 0; i < QUAD_LENGTH; i++ ) {
-						this.prepareQuadVertex( i, facesArray[ i * TYPE_0_PARAM_COUNT ] );
-						this.prepareQuadUv( i, facesArray[ i * TYPE_0_PARAM_COUNT + 1 ] );
-						this.prepareQuadNormal( i, facesArray[ i * TYPE_0_PARAM_COUNT + 2 ] );
-					}
-					this.attachQuadVertex();
-					this.attachQuadUv();
-					this.attachQuadNormal();
+					// 0, 1, 2, 0, 2, 3
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceNormal( facesArray[2] );
+					this.attachFaceVertex( facesArray[3] );
+					this.attachFaceUv( facesArray[4] );
+					this.attachFaceNormal( facesArray[5] );
+					this.attachFaceVertex( facesArray[6] );
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceVertex( facesArray[6] );
+					this.attachFaceUv( facesArray[7] );
+					this.attachFaceNormal( facesArray[8] );
+					this.attachFaceVertex( facesArray[9] );
+
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceNormal( facesArray[2] );
+					this.attachFaceUv( facesArray[7] );
+					this.attachFaceNormal( facesArray[8] );
+					this.attachFaceUv( facesArray[10] );
+					this.attachFaceNormal( facesArray[11] );
 					break;
 
 				case FACE_TYPE_0_FACE:
-					for ( i = 0; i < 9; i += 3 ) {
-						this.attachFaceVertex( facesArray[ i ] );
-						this.attachFaceUv( facesArray[ i + 1 ] );
-						this.attachFaceNormal( facesArray[ i + 2 ] );
-					}
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceNormal( facesArray[2] );
+					this.attachFaceVertex( facesArray[3] );
+					this.attachFaceUv( facesArray[4] );
+					this.attachFaceNormal( facesArray[5] );
+					this.attachFaceVertex( facesArray[6] );
+					this.attachFaceUv( facesArray[7] );
+					this.attachFaceNormal( facesArray[8] );
 					break;
 
 				case FACE_TYPE_1_QUAD:
-					for ( i = 0; i < QUAD_LENGTH; i++ ) {
-						this.prepareQuadVertex( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
-						this.prepareQuadUv( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
-					}
-					this.attachQuadVertex();
-					this.attachQuadUv();
+					// 0, 1, 2, 0, 2, 3
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
+					this.attachFaceUv( facesArray[3] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceUv( facesArray[5] );
+
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceUv( facesArray[5] );
+					this.attachFaceVertex( facesArray[6] );
+					this.attachFaceUv( facesArray[7] );
 					break;
 
 				case FACE_TYPE_1_FACE:
-					for ( i = 0; i < FACE_LENGTH; i++ ) {
-						this.attachFaceVertex( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
-						this.attachFaceUv( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
-					}
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceUv( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
+					this.attachFaceUv( facesArray[3] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceUv( facesArray[5] );
 					break;
 
 				case FACE_TYPE_2_QUAD:
-					for ( i = 0; i < QUAD_LENGTH; i++ ) {
-						this.prepareQuadVertex( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
-						this.prepareQuadNormal( i, facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
-					}
-					this.attachQuadVertex();
-					this.attachQuadNormal();
+					// 0, 1, 2, 0, 2, 3
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceNormal( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
+					this.attachFaceNormal( facesArray[3] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceNormal( facesArray[5] );
+
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceNormal( facesArray[1] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceNormal( facesArray[5] );
+					this.attachFaceVertex( facesArray[6] );
+					this.attachFaceNormal( facesArray[7] );
 					break;
 
 				case FACE_TYPE_2_FACE:
-					for ( i = 0; i < FACE_LENGTH; i++ ) {
-						this.attachFaceVertex( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT ] );
-						this.attachFaceNormal( facesArray[ i * TYPE_1_AND_2_PARAM_COUNT + 1 ] );
-					}
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceNormal( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
+					this.attachFaceNormal( facesArray[3] );
+					this.attachFaceVertex( facesArray[4] );
+					this.attachFaceNormal( facesArray[5] );
 					break;
 
 				case FACE_TYPE_3_QUAD:
-					for ( i = 0; i < QUAD_LENGTH; i++ ) {
-						this.prepareQuadVertex( i, facesArray[ i ] );
-					}
-					this.attachQuadVertex();
+					// 0, 1, 2, 0, 2, 3
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceVertex( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
+
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceVertex( facesArray[2] );
+					this.attachFaceVertex( facesArray[3] );
 					break;
 
 				case FACE_TYPE_3_FACE:
-					for ( i = 0; i < FACE_LENGTH; i++ ) {
-						this.attachFaceVertex( facesArray[ i ] );
-					}
+					this.attachFaceVertex( facesArray[0] );
+					this.attachFaceVertex( facesArray[1] );
+					this.attachFaceVertex( facesArray[2] );
 					break;
 				default:
 					break;
@@ -765,83 +785,25 @@ THREE.OBJLoader = (function () {
 
 		OutputObjectBuilder.prototype.attachFaceVertex = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
-			for ( var i = index ; i < length; i++ ) {
-				this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ i ];
-			}
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index ];
 		};
 
 		OutputObjectBuilder.prototype.attachFaceUv = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
-			var length = index + UV_VECTOR_LENGTH;
 
-			for ( var i = index ; i < length; i++ ) {
-				this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ i ];
-			}
+			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index++ ];
+			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index ];
 		};
 
 		OutputObjectBuilder.prototype.attachFaceNormal = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-			var length = index + VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
-			for ( var i = index ; i < length; i++ ) {
-				this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ i ];
-			}
-		};
-
-		OutputObjectBuilder.prototype.prepareQuadVertex = function ( sharedIndex, faceIndex ) {
-			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-
-			for ( var i = 0 ; i < VERTEX_AND_NORMAL_VECTOR_LENGTH; i++ ) {
-				this.sharedVertexQuadBuffer[ sharedIndex ][ i ] = this.vertices[ index + i ];
-			}
-		};
-
-		OutputObjectBuilder.prototype.attachQuadVertex = function () {
-			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
-				for ( var j = 0; j < VERTEX_AND_NORMAL_VECTOR_LENGTH; j ++ ) {
-
-					this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex ++ ] =
-						this.sharedVertexQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
-				}
-			}
-		};
-
-		OutputObjectBuilder.prototype.prepareQuadUv = function ( sharedIndex, faceIndex ) {
-			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
-
-			for ( var i = 0 ; i < UV_VECTOR_LENGTH; i++ ) {
-				this.sharedUvQuadBuffer[ sharedIndex ][ i ] = this.uvs[ index + i ];
-			}
-		};
-
-		OutputObjectBuilder.prototype.attachQuadUv = function () {
-			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
-				for ( var j = 0; j < UV_VECTOR_LENGTH; j ++ ) {
-
-					this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] =
-						this.sharedUvQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
-				}
-			}
-		};
-
-		OutputObjectBuilder.prototype.prepareQuadNormal = function ( sharedIndex, faceIndex ) {
-			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
-
-			for ( var i = 0 ; i < VERTEX_AND_NORMAL_VECTOR_LENGTH; i++ ) {
-				this.sharedNormalQuadBuffer[ sharedIndex ][ i ] = this.normals[ index + i ];
-			}
-		};
-
-		OutputObjectBuilder.prototype.attachQuadNormal = function () {
-			for ( var i = 0 ; i < QUAD_VERTEX_INDICES_LENGTH; i++ ) {
-				for ( var j = 0; j < VERTEX_AND_NORMAL_VECTOR_LENGTH; j ++ ) {
-
-					this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] =
-						this.sharedNormalQuadBuffer[ QUAD_VERTEX_INDICES[ i ] ][ j ];
-				}
-			}
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index ];
 		};
 
 		OutputObjectBuilder.prototype.createReport = function ( inputObjectCount, printDirectly ) {
