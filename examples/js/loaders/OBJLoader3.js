@@ -130,8 +130,8 @@ THREE.OBJLoader = (function () {
 		this.parsers.comments = new LineParserBase( '#', 'pushComment' );
 ///*
 		this.parsers.mtllib = new LineParserString( 'mtllib', 'pushMtllib' );
-		this.parsers.vertices = new LineParserVertex( 'v', 3, 'pushVertex' );
-		this.parsers.normals = new LineParserVertex( 'vn', 3, 'pushNormal' );
+		this.parsers.vertices = new LineParserVertex( 'v', 'pushVertex' );
+		this.parsers.normals = new LineParserVertex( 'vn', 'pushNormal' );
 		this.parsers.uvs = new LineParserUv( 'pushUv' );
 		this.parsers.objects = new LineParserString( 'o', 'pushObject' );
 		this.parsers.groups = new LineParserString( 'g', 'pushGroup' );
@@ -352,10 +352,10 @@ THREE.OBJLoader = (function () {
 		LineParserVertex.prototype = Object.create( LineParserBase.prototype );
 		LineParserVertex.prototype.constructor = LineParserVertex;
 
-		function LineParserVertex( type, bufferLength, oobRefFunction ) {
+		function LineParserVertex( type, oobRefFunction ) {
 			LineParserBase.call( this, type, oobRefFunction );
 			this.minInputLength = 0;
-			this.buffer = new Array( bufferLength );
+			this.buffer = new Array( 3 );
 			this.bufferIndex = 0;
 		}
 
@@ -403,8 +403,9 @@ THREE.OBJLoader = (function () {
 		LineParserUv.prototype.constructor = LineParserUv;
 
 		function LineParserUv( oobRefFunction ) {
-			LineParserVertex.call( this, 'vt', 2, oobRefFunction );
+			LineParserVertex.call( this, 'vt', oobRefFunction );
 
+			this.buffer = new Array( 2 );
 			// variables re-init per input line
 			this.retrievedFloatCount = 0;
 		}
