@@ -77,6 +77,15 @@ THREE.OBJLoader = (function () {
 		return this.parser.finalize();
 	};
 
+	// OBJLoader internal static variables
+	var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
+	var UV_VECTOR_LENGTH = 2;
+
+	var FACE_ARRAY_LENGTH = 3;
+
+	var QUAD_INDICES = [ 0, 1, 2, 0, 2, 3 ];
+	var QUAD_INDICES_ARRAY_LENGTH = 6;
+
 	var OBJCodeParser = (function () {
 
 		function OBJCodeParser() {
@@ -260,8 +269,8 @@ THREE.OBJLoader = (function () {
 
 		var LineParserBase = (function () {
 
-			function LineParserBase( description, oobRefFunction  ) {
-				this.oobRefFunction = oobRefFunction;
+			function LineParserBase( description, robRefFunction  ) {
+				this.robRefFunction = robRefFunction;
 
 				// variables re-init (newLine) per input line (called by InputObjectStore)
 				this.input = '';
@@ -282,8 +291,8 @@ THREE.OBJLoader = (function () {
 			 * Per default only the input is passed to the ObjectOutputBuilder.
 			 * Extensions behave differently by overriding this method.
 			 */
-			LineParserBase.prototype.detectedLF = function ( oobRef ) {
-				if ( this.oobRefFunction) oobRef[ this.oobRefFunction ]( this.input );
+			LineParserBase.prototype.detectedLF = function ( robRef ) {
+				if ( this.robRefFunction) robRef[ this.robRefFunction ]( this.input );
 
 				if ( this.debug ) console.log( this.description + ': ' + this.input );
 
@@ -299,8 +308,8 @@ THREE.OBJLoader = (function () {
 			LineParserString.prototype = Object.create( LineParserBase.prototype );
 			LineParserString.prototype.constructor = LineParserString;
 
-			function LineParserString( description, oobRefFunction ) {
-				LineParserBase.call( this, description, oobRefFunction );
+			function LineParserString( description, robRefFunction ) {
+				LineParserBase.call( this, description, robRefFunction );
 				this.foundFirstSpace = false;
 			}
 
@@ -315,8 +324,8 @@ THREE.OBJLoader = (function () {
 				}
 			};
 
-			LineParserString.prototype.detectedLF = function ( oobRef ) {
-				oobRef[this.oobRefFunction]( this.input );
+			LineParserString.prototype.detectedLF = function ( robRef ) {
+				robRef[this.robRefFunction]( this.input );
 
 				if ( this.debug ) console.log( this.description + ': ' + this.input );
 
@@ -333,8 +342,8 @@ THREE.OBJLoader = (function () {
 			LineParserVertex.prototype = Object.create( LineParserBase.prototype );
 			LineParserVertex.prototype.constructor = LineParserVertex;
 
-			function LineParserVertex( type, oobRefFunction ) {
-				LineParserBase.call( this, type, oobRefFunction );
+			function LineParserVertex( type, robRefFunction ) {
+				LineParserBase.call( this, type, robRefFunction );
 				this.minInputLength = 0;
 				this.buffer = new Array( 3 );
 				this.bufferIndex = 0;
@@ -365,10 +374,10 @@ THREE.OBJLoader = (function () {
 				}
 			};
 
-			LineParserVertex.prototype.detectedLF = function ( oobRef ) {
+			LineParserVertex.prototype.detectedLF = function ( robRef ) {
 				this.pushToBuffer();
 
-				if ( this.oobRefFunction ) oobRef[ this.oobRefFunction ]( this.buffer );
+				if ( this.robRefFunction ) robRef[ this.robRefFunction ]( this.buffer );
 				if ( this.debug ) console.log( this.description + ': ' + this.buffer );
 
 				this.bufferIndex = 0;
@@ -383,8 +392,8 @@ THREE.OBJLoader = (function () {
 			LineParserUv.prototype = Object.create( LineParserVertex.prototype );
 			LineParserUv.prototype.constructor = LineParserUv;
 
-			function LineParserUv( oobRefFunction ) {
-				LineParserVertex.call( this, 'vt', oobRefFunction );
+			function LineParserUv( robRefFunction ) {
+				LineParserVertex.call( this, 'vt', robRefFunction );
 
 				this.buffer = new Array( 2 );
 				// variables re-init per input line
@@ -411,8 +420,8 @@ THREE.OBJLoader = (function () {
 				}
 			};
 
-			LineParserUv.prototype.detectedLF = function ( oobRef ) {
-				LineParserVertex.prototype.detectedLF.call( this, oobRef );
+			LineParserUv.prototype.detectedLF = function ( robRef ) {
+				LineParserVertex.prototype.detectedLF.call( this, robRef );
 				this.retrievedFloatCount = 0;
 			};
 
@@ -475,11 +484,75 @@ THREE.OBJLoader = (function () {
 				}
 			};
 
-			LineParserFace.prototype.detectedLF = function ( oobRef ) {
+			LineParserFace.prototype.detectedLF = function ( robRef ) {
 				this.pushToBuffer();
 
-				var combinedType = this.bufferIndex % 4 === 0 ?  10 + this.type : this.type;
-				oobRef.pushFace( combinedType, this.buffer );
+				var haveQuad = this.bufferIndex % 4 === 0;
+				if ( haveQuad ) {
+
+					if ( this.type === 0 ) {
+
+						robRef.pushQuadVVtVn(
+							[ this.buffer[0], this.buffer[3], this.buffer[6], this.buffer[9] ],
+							[ this.buffer[1], this.buffer[4], this.buffer[7], this.buffer[10] ],
+							[ this.buffer[2], this.buffer[5], this.buffer[8], this.buffer[11] ]
+						);
+
+					} else if ( this.type === 1 ) {
+
+						robRef.pushQuadVVt(
+							[ this.buffer[0], this.buffer[2], this.buffer[4], this.buffer[6] ],
+							[ this.buffer[1], this.buffer[3], this.buffer[5], this.buffer[7] ]
+						);
+
+					} else if ( this.type === 2 ) {
+
+						robRef.pushQuadVVn(
+							[ this.buffer[0], this.buffer[2], this.buffer[4], this.buffer[6] ],
+							[ this.buffer[1], this.buffer[3], this.buffer[5], this.buffer[7] ]
+						);
+
+					} else if ( this.type === 3 ) {
+
+						robRef.pushQuadV(
+							[ this.buffer[0], this.buffer[1], this.buffer[2], this.buffer[3] ]
+						);
+
+					}
+
+				} else {
+
+					if ( this.type === 0 ) {
+
+						robRef.pushFaceVVtVn(
+							 [ this.buffer[ 0 ], this.buffer[ 3 ], this.buffer[ 6 ] ],
+							 [ this.buffer[ 1 ], this.buffer[ 4 ], this.buffer[ 7 ] ],
+							 [ this.buffer[ 2 ], this.buffer[ 5 ], this.buffer[ 8 ] ]
+						);
+
+					} else if ( this.type === 1 ) {
+
+						robRef.pushFaceVVt(
+							[ this.buffer[0], this.buffer[2], this.buffer[4] ],
+							[ this.buffer[1], this.buffer[3], this.buffer[5] ]
+						);
+
+					} else if ( this.type === 2 ) {
+
+						robRef.pushFaceVVn(
+							[ this.buffer[0], this.buffer[2], this.buffer[4] ],
+							[ this.buffer[1], this.buffer[3], this.buffer[5] ]
+						);
+
+					} else if ( this.type === 3 ) {
+
+						robRef.pushFaceV(
+							[ this.buffer[0], this.buffer[1], this.buffer[2] ]
+						);
+
+					}
+
+				}
 
 				if ( this.debug ) console.log( 'Faces type: ' + this.type + ': ' + this.buffer );
 
@@ -494,22 +567,9 @@ THREE.OBJLoader = (function () {
 		return OBJCodeParser;
 	})();
 
-
-	var FACE_TYPE_0_FACE = 0;
-	var FACE_TYPE_1_FACE = 1;
-	var FACE_TYPE_2_FACE = 2;
-	var FACE_TYPE_3_FACE = 3;
-	var FACE_TYPE_0_QUAD = 10;
-	var FACE_TYPE_1_QUAD = 11;
-	var FACE_TYPE_2_QUAD = 12;
-	var FACE_TYPE_3_QUAD = 13;
-
 	var RawObjectBuilder = (function () {
 
-		var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
-		var UV_VECTOR_LENGTH = 2;
-
-		function RawOjectBuilder( activeGroupOverride ) {
+		function RawObjectBuilder( activeGroupOverride ) {
 			this.createObjectPerSmoothingGroup = false;
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
@@ -542,19 +602,19 @@ THREE.OBJLoader = (function () {
 				this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
 		}
 
-		RawOjectBuilder.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
+		RawObjectBuilder.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
 			this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
 		};
 
-		RawOjectBuilder.prototype.newInstance = function ( vertexDetection ) {
+		RawObjectBuilder.prototype.newInstance = function ( vertexDetection ) {
 			var newOob;
 			if ( vertexDetection ) {
 
-				newOob = new RawOjectBuilder( this.createObjectPerSmoothingGroup, this.activeGroup );
+				newOob = new RawObjectBuilder( this.createObjectPerSmoothingGroup, this.activeGroup );
 
 			} else {
 
-				newOob = new RawOjectBuilder( this.createObjectPerSmoothingGroup );
+				newOob = new RawObjectBuilder( this.createObjectPerSmoothingGroup );
 
 			}
 			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
@@ -564,7 +624,7 @@ THREE.OBJLoader = (function () {
 			return newOob;
 		};
 
-		RawOjectBuilder.prototype.pushToBuffer = function ( source, target, targetIndex ) {
+		RawObjectBuilder.prototype.pushToBuffer = function ( source, target, targetIndex ) {
 			for ( var i = 0, length = source.length; i < length; i++ ) {
 
 				target[ targetIndex ] = source[ i ];
@@ -574,31 +634,31 @@ THREE.OBJLoader = (function () {
 			return targetIndex;
 		};
 
-		RawOjectBuilder.prototype.pushVertex = function ( vertexArray ) {
+		RawObjectBuilder.prototype.pushVertex = function ( vertexArray ) {
 			this.verticesIndex = this.pushToBuffer( vertexArray, this.vertices, this.verticesIndex );
 		};
 
-		RawOjectBuilder.prototype.pushNormal = function ( normalArray ) {
+		RawObjectBuilder.prototype.pushNormal = function ( normalArray ) {
 			this.normalsIndex = this.pushToBuffer( normalArray, this.normals, this.normalsIndex );
 		};
 
-		RawOjectBuilder.prototype.pushUv = function ( uvArray ) {
+		RawObjectBuilder.prototype.pushUv = function ( uvArray ) {
 			this.uvsIndex = this.pushToBuffer( uvArray, this.uvs, this.uvsIndex );
 		};
 
-		RawOjectBuilder.prototype.pushComment = function ( comment ) {
+		RawObjectBuilder.prototype.pushComment = function ( comment ) {
 			this.comments.push( comment );
 		};
 
-		RawOjectBuilder.prototype.pushObject = function ( objectName ) {
+		RawObjectBuilder.prototype.pushObject = function ( objectName ) {
 			this.objectName = objectName;
 		};
 
-		RawOjectBuilder.prototype.pushMtllib = function ( mtllibName ) {
+		RawObjectBuilder.prototype.pushMtllib = function ( mtllibName ) {
 			this.mtllibName = mtllibName;
 		};
 
-		RawOjectBuilder.prototype.pushGroup = function ( groupName ) {
+		RawObjectBuilder.prototype.pushGroup = function ( groupName ) {
 			if ( this.activeGroup === groupName ) return;
 			this.activeGroup = groupName;
 			this.objectGroupCount++;
@@ -606,7 +666,7 @@ THREE.OBJLoader = (function () {
 			this.verifyIndex();
 		};
 
-		RawOjectBuilder.prototype.pushMtl = function ( mtlName ) {
+		RawObjectBuilder.prototype.pushMtl = function ( mtlName ) {
 			if ( this.activeMtlName === mtlName ) return;
 			this.activeMtlName = mtlName;
 			this.mtlCount++;
@@ -614,7 +674,7 @@ THREE.OBJLoader = (function () {
 			this.verifyIndex();
 		};
 
-		RawOjectBuilder.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
+		RawObjectBuilder.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
 			var normalized = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
 			if ( this.activeSmoothingGroup === normalized ) return;
 			this.activeSmoothingGroup = normalized;
@@ -623,7 +683,7 @@ THREE.OBJLoader = (function () {
 			this.verifyIndex();
 		};
 
-		RawOjectBuilder.prototype.verifyIndex = function () {
+		RawObjectBuilder.prototype.verifyIndex = function () {
 			var index;
 
 			if ( this.createObjectPerSmoothingGroup ) {
@@ -649,126 +709,72 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		RawOjectBuilder.prototype.buildIndexRegular = function () {
+		RawObjectBuilder.prototype.buildIndexRegular = function () {
 			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
 		};
 
-		RawOjectBuilder.prototype.buildIndexOverride = function ( smoothingGroup ) {
+		RawObjectBuilder.prototype.buildIndexOverride = function ( smoothingGroup ) {
 			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
-
-		RawOjectBuilder.prototype.pushFace = function ( combinedType, facesArray ) {
-			switch ( combinedType ) {
-				case FACE_TYPE_0_QUAD:
-					// 0, 1, 2, 0, 2, 3
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceNormal( facesArray[2] );
-					this.attachFaceVertex( facesArray[3] );
-					this.attachFaceUv( facesArray[4] );
-					this.attachFaceNormal( facesArray[5] );
-					this.attachFaceVertex( facesArray[6] );
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceVertex( facesArray[6] );
-					this.attachFaceUv( facesArray[7] );
-					this.attachFaceNormal( facesArray[8] );
-					this.attachFaceVertex( facesArray[9] );
-
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceNormal( facesArray[2] );
-					this.attachFaceUv( facesArray[7] );
-					this.attachFaceNormal( facesArray[8] );
-					this.attachFaceUv( facesArray[10] );
-					this.attachFaceNormal( facesArray[11] );
-					break;
-
-				case FACE_TYPE_0_FACE:
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceNormal( facesArray[2] );
-					this.attachFaceVertex( facesArray[3] );
-					this.attachFaceUv( facesArray[4] );
-					this.attachFaceNormal( facesArray[5] );
-					this.attachFaceVertex( facesArray[6] );
-					this.attachFaceUv( facesArray[7] );
-					this.attachFaceNormal( facesArray[8] );
-					break;
-
-				case FACE_TYPE_1_QUAD:
-					// 0, 1, 2, 0, 2, 3
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-					this.attachFaceUv( facesArray[3] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceUv( facesArray[5] );
-
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceUv( facesArray[5] );
-					this.attachFaceVertex( facesArray[6] );
-					this.attachFaceUv( facesArray[7] );
-					break;
-
-				case FACE_TYPE_1_FACE:
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceUv( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-					this.attachFaceUv( facesArray[3] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceUv( facesArray[5] );
-					break;
-
-				case FACE_TYPE_2_QUAD:
-					// 0, 1, 2, 0, 2, 3
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceNormal( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-					this.attachFaceNormal( facesArray[3] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceNormal( facesArray[5] );
-
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceNormal( facesArray[1] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceNormal( facesArray[5] );
-					this.attachFaceVertex( facesArray[6] );
-					this.attachFaceNormal( facesArray[7] );
-					break;
-
-				case FACE_TYPE_2_FACE:
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceNormal( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-					this.attachFaceNormal( facesArray[3] );
-					this.attachFaceVertex( facesArray[4] );
-					this.attachFaceNormal( facesArray[5] );
-					break;
-
-				case FACE_TYPE_3_QUAD:
-					// 0, 1, 2, 0, 2, 3
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceVertex( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceVertex( facesArray[2] );
-					this.attachFaceVertex( facesArray[3] );
-					break;
-
-				case FACE_TYPE_3_FACE:
-					this.attachFaceVertex( facesArray[0] );
-					this.attachFaceVertex( facesArray[1] );
-					this.attachFaceVertex( facesArray[2] );
-					break;
-				default:
-					break;
+		RawObjectBuilder.prototype.pushFaceVVtVn = function ( vIndices, vtIndices, vnIndices ) {
+			for ( var i = 0; i < FACE_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ i ] );
+ 				this.attachFaceUv( vtIndices[ i ] );
+ 				this.attachFaceNormal( vnIndices[ i ] );
 			}
 		};
 
-		RawOjectBuilder.prototype.attachFaceVertex = function ( faceIndex ) {
+		RawObjectBuilder.prototype.pushFaceVVt = function ( vIndices, vtIndices ) {
+			for ( var i = 0; i < FACE_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ i ] );
+				this.attachFaceUv( vtIndices[ i ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushFaceVVn = function ( vIndices, vnIndices ) {
+			for ( var i = 0; i < FACE_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ i ] );
+				this.attachFaceNormal( vnIndices[ i ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushFaceV = function ( vIndices ) {
+
+			for ( var i = 0; i < FACE_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ i ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushQuadVVtVn = function ( vIndices, vtIndices, vnIndices ) {
+			for ( var i = 0; i < QUAD_INDICES_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ QUAD_INDICES[ i ] ] );
+				this.attachFaceUv( vtIndices[ QUAD_INDICES[ i ] ] );
+				this.attachFaceNormal( vnIndices[ QUAD_INDICES[ i ] ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushQuadVVt = function ( vIndices, vtIndices ) {
+			for ( var i = 0; i < QUAD_INDICES_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ QUAD_INDICES[ i ] ] );
+				this.attachFaceUv( vtIndices[ QUAD_INDICES[ i ] ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushQuadVVn = function ( vIndices, vnIndices ) {
+			for ( var i = 0; i < QUAD_INDICES_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ QUAD_INDICES[ i ] ] );
+				this.attachFaceNormal( vnIndices[ QUAD_INDICES[ i ] ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.pushQuadV = function ( vIndices ) {
+			for ( var i = 0; i < QUAD_INDICES_ARRAY_LENGTH; i++ ) {
+				this.attachFaceVertex( vIndices[ QUAD_INDICES[ i ] ] );
+			}
+		};
+
+		RawObjectBuilder.prototype.attachFaceVertex = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalVertexOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
 			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
@@ -776,14 +782,14 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index ];
 		};
 
-		RawOjectBuilder.prototype.attachFaceUv = function ( faceIndex ) {
+		RawObjectBuilder.prototype.attachFaceUv = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalUvOffset ) * UV_VECTOR_LENGTH;
 
 			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index++ ];
 			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index ];
 		};
 
-		RawOjectBuilder.prototype.attachFaceNormal = function ( faceIndex ) {
+		RawObjectBuilder.prototype.attachFaceNormal = function ( faceIndex ) {
 			var index = ( faceIndex - this.globalNormalOffset ) * VERTEX_AND_NORMAL_VECTOR_LENGTH;
 
 			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
@@ -791,7 +797,7 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index ];
 		};
 
-		RawOjectBuilder.prototype.createReport = function ( inputObjectCount, printDirectly ) {
+		RawObjectBuilder.prototype.createReport = function ( inputObjectCount, printDirectly ) {
 			var report = {
 				name: this.objectName ? this.objectName : 'groups',
 				mtllibName: this.mtllibName,
@@ -820,7 +826,7 @@ THREE.OBJLoader = (function () {
 			return report;
 		};
 
-		return RawOjectBuilder;
+		return RawObjectBuilder;
 	})();
 
 	return OBJLoader;
