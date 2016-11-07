@@ -145,6 +145,12 @@ THREE.OBJLoader = (function () {
 			this.reachedFaces = false;
 			this.inputObjectCount = 0;
 
+			this.text = null;
+			this.view = null;
+			this.pointer = 0;
+			this.one = 0;
+			this.two = 0;
+
 			this.setDebug( false, false, false );
 		}
 
@@ -164,118 +170,159 @@ THREE.OBJLoader = (function () {
 		OBJCodeParser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 			console.time( 'ParseBytes' );
 
-			var view = new Uint8Array( arrayBuffer );
-			for ( var i = 0, length = view.byteLength; i < length; i ++ ) {
-				this.parseCode( view [ i ] );
+			this.view = new Uint8Array( arrayBuffer );
+			this.retrieveFirstTwoLineCodesAB();
+			this.selectParser();
+
+			var code = 0;
+			for ( var length = this.view.byteLength; this.pointer < length; this.pointer++ ) {
+				code = this.view [ this.pointer ];
+
+				if ( code === 10 || code === 13 ) {
+
+					// jump over LF if CR exists
+					if ( code === 13 ) {
+						this.pointer++;
+					}
+					if ( this.parsers.current !== null ) {
+
+						// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
+						this.parsers.current.detectedLF( this.rawObjectBuilder );
+						this.parsers.current = null;
+
+					}
+					this.retrieveFirstTwoLineCodesAB();
+					this.selectParser();
+
+				} else  {
+
+					this.parsers.current.parseCode( code );
+
+				}
 			}
 
 			console.timeEnd( 'ParseBytes' );
 		};
 
-		OBJCodeParser.prototype.parseText = function ( input ) {
+		OBJCodeParser.prototype.retrieveFirstTwoLineCodesAB = function () {
+			var code = this.view [ this.pointer ];
+			this.pointer++;
+
+			while ( code === 10 || code === 13 || code === 32 ) {
+				code = this.view [ this.pointer ];
+				this.pointer++;
+			}
+
+			this.one = code;
+			this.two = this.view [ this.pointer ];
+		};
+
+		OBJCodeParser.prototype.parseText = function ( text ) {
 			console.time( 'ParseString' );
 
-			for ( var i = 0, length = input.length; i < length; i++ ) {
-				this.parseCode( input[ i ].charCodeAt( 0 ) );
+			this.text = text;
+			this.retrieveFirstTwoLineCodesText();
+			this.selectParser();
+
+			var code = 0;
+			for ( var length = this.text.length; this.pointer < length; this.pointer++ ) {
+				code = this.text[ this.pointer ].charCodeAt( 0 );
+
+				if ( code === 10 || code === 13 ) {
+
+					// jump over LF if CR exists
+					if ( code === 13 ) {
+						this.pointer++;
+					}
+
+					if ( this.parsers.current !== null ) {
+
+						// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
+						this.parsers.current.detectedLF( this.rawObjectBuilder );
+						this.parsers.current = null;
+
+					}
+
+					this.retrieveFirstTwoLineCodesText();
+					this.selectParser();
+
+				} else  {
+
+					this.parsers.current.parseCode( code );
+
+				}
 			}
 
 			console.timeEnd( 'ParseString' );
 		};
 
-		/**
-		 * TODO: new comment
-		 *
-		 * @param code
-		 */
-		OBJCodeParser.prototype.parseCode = function ( code ) {
-			switch ( code ) {
-				case 10: // LF
-					if ( this.parsers.current === null ) return;
+		OBJCodeParser.prototype.retrieveFirstTwoLineCodesText = function () {
+			var code = this.pointer < this.text.length ? this.text[ this.pointer ].charCodeAt( 0 ) : -1;
+			if ( code === -1 ) return;
+			this.pointer++;
 
-					// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
-					this.parsers.current.detectedLF( this.rawObjectBuilder );
-					this.parsers.current = null;
-					break;
-
-				case 13: // CR
-					// ignore CR
-					break;
-
-				case 118: // v
-					if ( this.parsers.current !== null ) this.parsers.current.parseCode( code );
-					break;
-
-				case 110: // n
-					this.processIdentifierCharCode( code, this.parsers.normals );
-					break;
-
-				case 116: // t
-					this.processIdentifierCharCode( code, this.parsers.uvs );
-					break;
-
-				case 102: // f
-					if ( this.processIdentifierCharCode( code, this.parsers.faces ) ) this.reachedFaces = true;
-					break;
-
-				case 115: // s
-					this.processIdentifierCharCode( code, this.parsers.smoothingGroups );
-					break;
-
-				case 103: // g
-					this.processIdentifierCharCode( code, this.parsers.groups );
-					break;
-
-				case 117: // u
-					this.processIdentifierCharCode( code, this.parsers.usemtls );
-					break;
-
-				case 111: // o
-					// new instance required, because "o" found and previous vertices exist
-					if ( this.processIdentifierCharCode( code, this.parsers.objects ) && this.rawObjectBuilder.vertices.length > 0 ) {
-						this.processCompletedObject( false );
-					}
-					break;
-
-				case 109: // m
-					this.processIdentifierCharCode( code, this.parsers.mtllib );
-					break;
-
-				case 35: // #
-					this.processIdentifierCharCode( code, this.parsers.comments );
-					break;
-
-				case 32: // SPACE
-					if ( this.parsers.current === null ) {
-
-						// at start of line: not needed, but after 'v' will start new vertex parsing
-						this.parsers.current = this.parsers.vertices;
-
-						// object complete instance required if reached faces already (= reached next block of v)
-						if ( this.reachedFaces ) this.processCompletedObject( true );
-
-					} else {
-
-						this.parsers.current.parseCode( code );
-
-					}
-					break;
-
-				default:
-					this.parsers.current.parseCode( code );
-					break;
+			while ( ( code === 10 || code === 13 || code === 32 ) && this.pointer < this.text.length) {
+				code = this.text[ this.pointer ].charCodeAt( 0 );
+				this.pointer++;
 			}
+
+			this.one = code;
+			this.two = this.pointer < this.text.length ? this.text[ this.pointer ].charCodeAt( 0 ) : -1;
+			if ( code === -1 ) return;
 		};
 
-		OBJCodeParser.prototype.processIdentifierCharCode = function ( code, activeParser ) {
-			if ( this.parsers.current === null ) {
+		OBJCodeParser.prototype.selectParser = function () {
+			if ( this.one === 118 && this.two === 32 ) {
+				// 'v '
+				// object complete instance required if reached faces already (= reached next block of v)
+				if ( this.reachedFaces ) this.processCompletedObject( true );
 
-				this.parsers.current = activeParser;
-				return true;
+				this.parsers.current = this.parsers.vertices;
 
-			} else {
+			} else if ( this.one === 118 && this.two === 116 ) {
+				// 'vt'
+				this.parsers.current = this.parsers.uvs;
 
-				this.parsers.current.parseCode( code );
-				return false;
+			} else if ( this.one === 118 && this.two === 110 ) {
+				// 'vn'
+				this.parsers.current = this.parsers.normals;
+
+			} else if ( this.one === 102 && this.two === 32 ) {
+				// 'f '
+				this.parsers.current = this.parsers.faces;
+				this.reachedFaces = true;
+
+			} else if ( this.one === 115 && this.two === 32 ) {
+				// 's '
+				this.parsers.current = this.parsers.smoothingGroups;
+				this.parsers.current.foundFirstSpace = true;
+
+			} else if ( this.one === 103 && this.two === 32 ) {
+				// 'g '
+				this.parsers.current = this.parsers.groups;
+				this.parsers.current.foundFirstSpace = true;
+
+			} else if ( this.one === 117 && this.two === 115 ) {
+				// 'us'emtl
+				this.parsers.current = this.parsers.usemtls;
+
+			} else if ( this.one === 111 && this.two === 32 ) {
+				// 'o '
+				// new instance required, because "o" found and previous vertices exist
+				if ( this.rawObjectBuilder.vertices.length > 0 ) {
+					this.processCompletedObject( false );
+				}
+				this.parsers.current = this.parsers.objects;
+				this.parsers.current.foundFirstSpace = true;
+
+			} else if ( this.one === 109 && this.two === 116 ) {
+				// 'mt'llib
+				this.parsers.current = this.parsers.mtllib;
+
+			} else if ( this.one === 35 ) {
+				// '#'
+				this.parsers.current = this.parsers.comments;
+
 			}
 		};
 
