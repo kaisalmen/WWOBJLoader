@@ -136,7 +136,6 @@
 			this.cube = null;
 			this.pivot = null;
 
-
 			this.fileDef = {
 				path: './obj/female02/',
 				fileObj: 'female02.obj',
@@ -157,7 +156,7 @@
 				texturePath: './obj/zomax/',
 				fileMtl: ''
 			};
-*/
+ */
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
@@ -212,7 +211,6 @@
 
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setMaterials( materials );
-				objLoader.setLoadAsArrayBuffer( true );
 				objLoader.setPath( scope.fileDef.path );
 
 				var onSuccess = function ( object3d ) {

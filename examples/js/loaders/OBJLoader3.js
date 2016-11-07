@@ -7,40 +7,73 @@
 THREE.OBJLoader = (function () {
 
 	function OBJLoader( manager ) {
-		this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
+		this.manager = null;
+		this.loader = null;
 		this.path = '';
 		this.loadAsArrayBuffer = true;
 		this.parser = null;
 		this.debug = false;
 
-		this.reInit( this.loadAsArrayBuffer, this.path );
+		this.reInit( manager );
 	}
 
-	OBJLoader.prototype.setPath = function ( value ) {
-		this.path = value;
+	OBJLoader.prototype.setPath = function ( path ) {
+		this.path = ( path == null ) ? '' : path;
 	};
 
 	/**
 	 * When this is set the ResponseType of the FileLoader is set to arraybuffer and parseArrayBuffer is used.
+	 * Default is true.
+	 *
 	 * @param loadAsArrayBuffer
 	 */
 	OBJLoader.prototype.setLoadAsArrayBuffer = function ( loadAsArrayBuffer ) {
-		this.loadAsArrayBuffer = loadAsArrayBuffer;
+		this.loadAsArrayBuffer = ( loadAsArrayBuffer == null ) ? true : false;
 	};
 
+	/**
+	 * Set the node where the loaded objects will be attached.
+	 * Default is new empty THREE.Group
+	 *
+	 * @param container
+	 */
 	OBJLoader.prototype.setContainer = function ( container ) {
 		this.parser.extendableMeshCreator.setContainer( container );
 	};
 
+	/**
+	 * Set materials loaded by MTLLoader.
+	 * Default is null.
+	 *
+	 * @param materials
+	 */
 	OBJLoader.prototype.setMaterials = function ( materials ) {
 		this.parser.extendableMeshCreator.setMaterials( materials );
 	};
 
+	/**
+	 * If this is set a new object is created for every object + smoothing group
+	 * Default is false.
+	 *
+	 * @param createObjectPerSmoothingGroup
+	 */
 	OBJLoader.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
 		this.parser.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 	};
 
-	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, container, materials, createObjectPerSmoothingGroup ) {
+	/**
+	 * Convienece method used for init or re-init
+	 *
+	 * @param manager
+	 * @param loadAsArrayBuffer
+	 * @param path
+	 * @param container
+	 * @param materials
+	 * @param createObjectPerSmoothingGroup
+	 */
+	OBJLoader.prototype.reInit = function ( manager, loadAsArrayBuffer, path, container, materials, createObjectPerSmoothingGroup ) {
+		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
+		this.loader = new THREE.FileLoader( this.manager );
 		this.parser = new OBJCodeParser();
 		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
@@ -51,13 +84,13 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
 		var scope = this;
+		scope.loader.setPath( this.path );
+		scope.loader.setResponseType( scope.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
+		scope.loader.load( url, function ( loadedContent ) {
 
-		var loader = new THREE.FileLoader( scope.manager );
-		loader.setPath( this.path );
-		loader.setResponseType( this.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
-		loader.load( url, function ( loadedContent ) {
-
-			onLoad( scope.parse( loadedContent ) );
+			var container = scope.parse( loadedContent )
+			scope.loader = null;
+			onLoad( container );
 
 		}, onProgress, onError );
 	};
@@ -74,7 +107,10 @@ THREE.OBJLoader = (function () {
 		}
 
 		// do not forget last object
-		return this.parser.finalize();
+		var container = this.parser.finalize();
+		this.parser = null;
+
+		return container;
 	};
 
 	// OBJLoader internal static variables
@@ -264,7 +300,10 @@ THREE.OBJLoader = (function () {
 
 			console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
 
-			return this.extendableMeshCreator.container;
+			var container = this.extendableMeshCreator.container;
+			this.extendableMeshCreator = null;
+
+			return container;
 		};
 
 		var LineParserBase = (function () {
@@ -603,7 +642,7 @@ THREE.OBJLoader = (function () {
 		}
 
 		RawObjectBuilder.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-			this.createObjectPerSmoothingGroup = createObjectPerSmoothingGroup;
+			this.createObjectPerSmoothingGroup = ( createObjectPerSmoothingGroup == null ) ? false : createObjectPerSmoothingGroup;
 		};
 
 		RawObjectBuilder.prototype.newInstance = function ( vertexDetection ) {
@@ -863,11 +902,11 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	}
 
 	ExtendableMeshCreator.prototype.setContainer = function ( container ) {
-		this.container = ( container !== undefined && container !== null ) ? container : this.container;
+		this.container = ( container == null ) ? new THREE.Group() : container;
 	};
 
 	ExtendableMeshCreator.prototype.setMaterials = function ( materials ) {
-		this.materials = materials;
+		this.materials = ( materials == null ) ? null : materials;
 	};
 
 	ExtendableMeshCreator.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount ) {
@@ -912,8 +951,11 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 				}
 
-				var material = this.materials.materials[ retrievedObjectDescription.materialName ];
-				if ( material === undefined ) material = new THREE.MeshStandardMaterial();
+				var material;
+				if ( this.materials !== null ) {
+					material = this.materials.materials[ retrievedObjectDescription.materialName ];
+				}
+				if ( material == null ) material = new THREE.MeshStandardMaterial();
 
 				// clone material in case flat shading is needed due to smoothingGroup 0
 				if ( retrievedObjectDescription.smoothingGroup === 0 ) {
