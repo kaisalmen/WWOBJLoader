@@ -96,15 +96,18 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
+
 		if ( this.loadAsArrayBuffer ) {
 
-			this.parser.parseArrayBuffer( loadedContent );
+			this.parser.prepareArrayBuffer( loadedContent );
 
 		} else {
 
-			this.parser.parseText( loadedContent );
+			this.parser.prepareText( loadedContent );
+
 
 		}
+		this.parser.parse();
 
 		// do not forget last object
 		var container = this.parser.finalize();
@@ -147,11 +150,14 @@ THREE.OBJLoader = (function () {
 
 			this.text = null;
 			this.view = null;
+			this.contentLength = 0;
 			this.pointer = 0;
 			this.one = 0;
 			this.two = 0;
 
-			this.setDebug( false, false, false );
+			this.selectFunction = this.getCodeFromArrayBuffer;
+
+			this.setDebug( false, false, true );
 		}
 
 		OBJCodeParser.prototype.setDebug = function ( self, parsers, extendableMeshCreator ) {
@@ -167,16 +173,40 @@ THREE.OBJLoader = (function () {
 			this.extendableMeshCreator.debug = extendableMeshCreator;
 		};
 
-		OBJCodeParser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
-			console.time( 'ParseBytes' );
-
+		OBJCodeParser.prototype.prepareArrayBuffer = function ( arrayBuffer ) {
+			this.selectFunction = this.getCodeFromArrayBuffer;
 			this.view = new Uint8Array( arrayBuffer );
-			this.retrieveFirstTwoLineCodesAB();
+			this.contentLength = this.view.byteLength;
+		};
+
+		OBJCodeParser.prototype.getCodeFromArrayBuffer = function () {
+			var code = this.view[ this.pointer ];
+			this.pointer++;
+			return code;
+		};
+
+		OBJCodeParser.prototype.prepareText = function ( text ) {
+			this.selectFunction = this.getCodeFromText;
+			this.text = text;
+			this.contentLength = this.text.length;
+		};
+
+		OBJCodeParser.prototype.getCodeFromText = function () {
+			var code = this.text[ this.pointer ];
+			code = ( code === undefined ) ? -1 : code.charCodeAt( 0 );
+			this.pointer++;
+			return code;
+		};
+
+		OBJCodeParser.prototype.parse = function () {
+			console.time( 'Parse' );
+
+			this.retrieveFirstTwoLineCodes();
 			this.selectParser();
 
 			var code = 0;
-			for ( var length = this.view.byteLength; this.pointer < length; this.pointer++ ) {
-				code = this.view [ this.pointer ];
+			while ( this.pointer < this.contentLength ) {
+				code = this.selectFunction();
 
 				if ( code === 10 || code === 13 ) {
 
@@ -191,7 +221,7 @@ THREE.OBJLoader = (function () {
 						this.parsers.current = null;
 
 					}
-					this.retrieveFirstTwoLineCodesAB();
+					this.retrieveFirstTwoLineCodes();
 					this.selectParser();
 
 				} else  {
@@ -201,74 +231,18 @@ THREE.OBJLoader = (function () {
 				}
 			}
 
-			console.timeEnd( 'ParseBytes' );
+			console.timeEnd( 'Parse' );
 		};
 
-		OBJCodeParser.prototype.retrieveFirstTwoLineCodesAB = function () {
-			var code = this.view [ this.pointer ];
-			this.pointer++;
+		OBJCodeParser.prototype.retrieveFirstTwoLineCodes = function () {
+			var code = this.selectFunction();
 
 			while ( code === 10 || code === 13 || code === 32 ) {
-				code = this.view [ this.pointer ];
-				this.pointer++;
+				code = this.selectFunction();
 			}
 
 			this.one = code;
-			this.two = this.view [ this.pointer ];
-		};
-
-		OBJCodeParser.prototype.parseText = function ( text ) {
-			console.time( 'ParseString' );
-
-			this.text = text;
-			this.retrieveFirstTwoLineCodesText();
-			this.selectParser();
-
-			var code = 0;
-			for ( var length = this.text.length; this.pointer < length; this.pointer++ ) {
-				code = this.text[ this.pointer ].charCodeAt( 0 );
-
-				if ( code === 10 || code === 13 ) {
-
-					// jump over LF if CR exists
-					if ( code === 13 ) {
-						this.pointer++;
-					}
-
-					if ( this.parsers.current !== null ) {
-
-						// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
-						this.parsers.current.detectedLF( this.rawObjectBuilder );
-						this.parsers.current = null;
-
-					}
-
-					this.retrieveFirstTwoLineCodesText();
-					this.selectParser();
-
-				} else  {
-
-					this.parsers.current.parseCode( code );
-
-				}
-			}
-
-			console.timeEnd( 'ParseString' );
-		};
-
-		OBJCodeParser.prototype.retrieveFirstTwoLineCodesText = function () {
-			var code = this.pointer < this.text.length ? this.text[ this.pointer ].charCodeAt( 0 ) : -1;
-			if ( code === -1 ) return;
-			this.pointer++;
-
-			while ( ( code === 10 || code === 13 || code === 32 ) && this.pointer < this.text.length) {
-				code = this.text[ this.pointer ].charCodeAt( 0 );
-				this.pointer++;
-			}
-
-			this.one = code;
-			this.two = this.pointer < this.text.length ? this.text[ this.pointer ].charCodeAt( 0 ) : -1;
-			if ( code === -1 ) return;
+			this.two = this.selectFunction();
 		};
 
 		OBJCodeParser.prototype.selectParser = function () {
