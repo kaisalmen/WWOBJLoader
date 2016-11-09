@@ -125,6 +125,20 @@ THREE.OBJLoader = (function () {
 	var QUAD_INDICES = [ 0, 1, 2, 0, 2, 3 ];
 	var QUAD_INDICES_ARRAY_LENGTH = 6;
 
+	var CODE_LF = 10;
+	var CODE_CR = 13;
+	var CODE_SPACE = 32;
+	var CODE_SLASH = 47;
+	var CODE_F = 102;
+	var CODE_G = 103;
+	var CODE_M = 109;
+	var CODE_N = 110;
+	var CODE_O = 111;
+	var CODE_S = 115;
+	var CODE_T = 116;
+	var CODE_U = 117;
+	var CODE_V = 118;
+
 	var OBJCodeParser = (function () {
 
 		function OBJCodeParser() {
@@ -133,16 +147,16 @@ THREE.OBJLoader = (function () {
 
 			// globals (per InputObjectStore)
 			this.parsers = {
-				comments: new LineParserBase( '#', 'pushComment' ),
-				mtllib:  new LineParserString( 'mtllib', 'pushMtllib' ),
-				vertices: new LineParserVertex( 'v', 'pushVertex' ),
-				normals:  new LineParserVertex( 'vn', 'pushNormal' ),
+				void: new LineParserBase(),
+				mtllib:  new LineParserString( 'pushMtllib' ),
+				vertices: new LineParserVertex( 'pushVertex' ),
+				normals:  new LineParserVertex( 'pushNormal' ),
 				uvs:  new LineParserUv( 'pushUv' ),
-				objects:  new LineParserString( 'o', 'pushObject' ),
-				groups: new LineParserString( 'g', 'pushGroup' ),
-				usemtls:  new LineParserString( 'usemtl', 'pushMtl' ),
+				objects:  new LineParserString( 'pushObject' ),
+				groups: new LineParserString( 'pushGroup' ),
+				usemtls:  new LineParserString( 'pushMtl' ),
 				faces:  new LineParserFace(),
-				smoothingGroups:  new LineParserString( 's', 'pushSmoothingGroup' ),
+				smoothingGroups:  new LineParserString( 'pushSmoothingGroup' ),
 				current: null
 			};
 			this.reachedFaces = false;
@@ -152,25 +166,15 @@ THREE.OBJLoader = (function () {
 			this.view = null;
 			this.contentLength = 0;
 			this.pointer = 0;
-			this.one = 0;
-			this.two = 0;
 
 			this.selectFunction = this.getCodeFromArrayBuffer;
 
-			this.setDebug( false, false, true );
+			this.setDebug( false, false, false );
 		}
 
-		OBJCodeParser.prototype.setDebug = function ( self, parsers, extendableMeshCreator ) {
-			this.debug = self;
-
-			var singleParser;
-			for ( var propName in this.parsers ) {
-				if ( this.parsers.hasOwnProperty( propName ) ) {
-					singleParser = this.parsers[ propName ];
-					if ( singleParser !== null) singleParser.debug = parsers;
-				}
-			}
-			this.extendableMeshCreator.debug = extendableMeshCreator;
+		OBJCodeParser.prototype.setDebug = function ( debugObjCodeParser, debugExtendableMeshCreator ) {
+			this.debug = debugObjCodeParser;
+			this.extendableMeshCreator.debug = debugExtendableMeshCreator;
 		};
 
 		OBJCodeParser.prototype.prepareArrayBuffer = function ( arrayBuffer ) {
@@ -180,9 +184,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.getCodeFromArrayBuffer = function () {
-			var code = this.view[ this.pointer ];
-			this.pointer++;
-			return code;
+			return this.view[ this.pointer++ ];
 		};
 
 		OBJCodeParser.prototype.prepareText = function ( text ) {
@@ -192,26 +194,20 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.getCodeFromText = function () {
-			var code = this.text[ this.pointer ];
-			code = ( code === undefined ) ? -1 : code.charCodeAt( 0 );
-			this.pointer++;
-			return code;
+			return this.text[ this.pointer++ ].charCodeAt( 0 );
 		};
 
 		OBJCodeParser.prototype.parse = function () {
 			console.time( 'Parse' );
 
-			this.retrieveFirstTwoLineCodes();
-			this.selectParser();
-
-			var code = 0;
+			// first will entry will lead to identification of line
+			var code = CODE_LF;
 			while ( this.pointer < this.contentLength ) {
-				code = this.selectFunction();
 
-				if ( code === 10 || code === 13 ) {
+				if ( code === CODE_LF || code === CODE_CR ) {
 
 					// jump over LF if CR exists
-					if ( code === 13 ) {
+					if ( code === CODE_CR ) {
 						this.pointer++;
 					}
 					if ( this.parsers.current !== null ) {
@@ -221,66 +217,75 @@ THREE.OBJLoader = (function () {
 						this.parsers.current = null;
 
 					}
-					this.retrieveFirstTwoLineCodes();
-					this.selectParser();
+					code = this.identifyLineType();
 
-				} else  {
+				} else {
 
 					this.parsers.current.parseCode( code );
-
+					code = this.selectFunction();
 				}
+
 			}
 
 			console.timeEnd( 'Parse' );
 		};
 
-		OBJCodeParser.prototype.retrieveFirstTwoLineCodes = function () {
-			var code = this.selectFunction();
-
-			while ( code === 10 || code === 13 || code === 32 ) {
-				code = this.selectFunction();
+		OBJCodeParser.prototype.identifyLineType = function () {
+			// fast-fail for EOL
+			if ( this.pointer + 1 >= this.contentLength ) {
+				this.pointer++;
+				return CODE_LF;
 			}
 
-			this.one = code;
-			this.two = this.selectFunction();
-		};
+			var first = this.selectFunction();
+			if ( first === CODE_LF || first === CODE_CR ) {
+				// incase of immediate new line, just let the main loop handle it
+				return first;
 
-		OBJCodeParser.prototype.selectParser = function () {
-			if ( this.one === 118 && this.two === 32 ) {
+			} else if ( first === CODE_SPACE ) {
+				// in case of leading space, restart detection
+				return CODE_LF;
+			}
+
+			var second = this.selectFunction();
+			// a possible scenario is an empty comment line '#'
+			if ( second === CODE_LF || second === CODE_CR ) return second;
+
+			if ( first === CODE_V && second === CODE_SPACE ) {
 				// 'v '
 				// object complete instance required if reached faces already (= reached next block of v)
 				if ( this.reachedFaces ) this.processCompletedObject( true );
 
 				this.parsers.current = this.parsers.vertices;
 
-			} else if ( this.one === 118 && this.two === 116 ) {
+			} else if ( first === CODE_V && second === CODE_T ) {
 				// 'vt'
 				this.parsers.current = this.parsers.uvs;
 
-			} else if ( this.one === 118 && this.two === 110 ) {
+			} else if ( first === CODE_V && second === CODE_N ) {
 				// 'vn'
 				this.parsers.current = this.parsers.normals;
 
-			} else if ( this.one === 102 && this.two === 32 ) {
+			} else if ( first === CODE_F && second === CODE_SPACE ) {
 				// 'f '
 				this.parsers.current = this.parsers.faces;
 				this.reachedFaces = true;
 
-			} else if ( this.one === 115 && this.two === 32 ) {
+			} else if ( first === CODE_S && second === CODE_SPACE ) {
 				// 's '
 				this.parsers.current = this.parsers.smoothingGroups;
 				this.parsers.current.foundFirstSpace = true;
 
-			} else if ( this.one === 103 && this.two === 32 ) {
+			} else if ( first === CODE_G && second === CODE_SPACE ) {
 				// 'g '
 				this.parsers.current = this.parsers.groups;
 				this.parsers.current.foundFirstSpace = true;
 
-			} else if ( this.one === 117 && this.two === 115 ) {
+			} else if ( first === CODE_U && second === CODE_S ) {
 				// 'us'emtl
 				this.parsers.current = this.parsers.usemtls;
 
-			} else if ( this.one === 111 && this.two === 32 ) {
+			} else if ( first === CODE_O && second === CODE_SPACE ) {
 				// 'o '
 				// new instance required, because "o" found and previous vertices exist
 				if ( this.rawObjectBuilder.vertices.length > 0 ) {
@@ -289,16 +294,18 @@ THREE.OBJLoader = (function () {
 				this.parsers.current = this.parsers.objects;
 				this.parsers.current.foundFirstSpace = true;
 
-			} else if ( this.one === 109 && this.two === 116 ) {
+			} else if ( first === CODE_M && second === CODE_T ) {
 				// 'mt'llib
 				this.parsers.current = this.parsers.mtllib;
 
-			} else if ( this.one === 35 ) {
-				// '#'
-				this.parsers.current = this.parsers.comments;
-
+			} else  {
+				// '#' or anything else
+				this.parsers.current = this.parsers.void;
 			}
+
+			return this.selectFunction();
 		};
+
 
 		OBJCodeParser.prototype.processCompletedObject = function ( vertexDetection ) {
 			if ( this.debug ) this.rawObjectBuilder.createReport( this.inputObjectCount, true );
@@ -329,34 +336,23 @@ THREE.OBJLoader = (function () {
 
 		var LineParserBase = (function () {
 
-			function LineParserBase( description, robRefFunction  ) {
+			function LineParserBase( robRefFunction  ) {
 				this.robRefFunction = robRefFunction;
-
-				// variables re-init (newLine) per input line (called by InputObjectStore)
 				this.input = '';
-				this.description = description ? description : 'noname: ';
-
-				this.debug = false;
 			}
 
 			/**
-			 * Per default all input is taken.
-			 * Extensions behave differently by overriding this method.
+			 * Extensions need to override this to be able to process a given charCode.
 			 */
 			LineParserBase.prototype.parseCode = function ( code ) {
-				this.input += String.fromCharCode( code );
+
 			};
 
 			/**
-			 * Per default only the input is passed to the ObjectOutputBuilder.
-			 * Extensions behave differently by overriding this method.
+			 * Extensions need to override this. It is called to signal forwarding data to the RawObjectBuilder
 			 */
 			LineParserBase.prototype.detectedLF = function ( robRef ) {
-				if ( this.robRefFunction) robRef[ this.robRefFunction ]( this.input );
 
-				if ( this.debug ) console.log( this.description + ': ' + this.input );
-
-				this.input = '';
 			};
 
 			return LineParserBase;
@@ -368,8 +364,8 @@ THREE.OBJLoader = (function () {
 			LineParserString.prototype = Object.create( LineParserBase.prototype );
 			LineParserString.prototype.constructor = LineParserString;
 
-			function LineParserString( description, robRefFunction ) {
-				LineParserBase.call( this, description, robRefFunction );
+			function LineParserString( robRefFunction ) {
+				LineParserBase.call( this, robRefFunction );
 				this.foundFirstSpace = false;
 			}
 
@@ -378,16 +374,14 @@ THREE.OBJLoader = (function () {
 
 					this.input += String.fromCharCode( code );
 
-				} else if ( code === 32 ) {
+				} else if ( code === CODE_SPACE ) {
 
 					this.foundFirstSpace = true;
 				}
 			};
 
 			LineParserString.prototype.detectedLF = function ( robRef ) {
-				robRef[this.robRefFunction]( this.input );
-
-				if ( this.debug ) console.log( this.description + ': ' + this.input );
+				robRef[ this.robRefFunction ]( this.input );
 
 				this.input = '';
 				this.foundFirstSpace = false;
@@ -402,8 +396,8 @@ THREE.OBJLoader = (function () {
 			LineParserVertex.prototype = Object.create( LineParserBase.prototype );
 			LineParserVertex.prototype.constructor = LineParserVertex;
 
-			function LineParserVertex( type, robRefFunction ) {
-				LineParserBase.call( this, type, robRefFunction );
+			function LineParserVertex( robRefFunction ) {
+				LineParserBase.call( this, robRefFunction );
 				this.minInputLength = 0;
 				this.buffer = new Array( 3 );
 				this.bufferIndex = 0;
@@ -413,7 +407,7 @@ THREE.OBJLoader = (function () {
 				// "v   1.0 2.0 3.0" or
 				// "vn  1.0 2.0 3.0" or
 
-				if ( code === 32) {
+				if ( code === CODE_SPACE ) {
 
 					this.pushToBuffer();
 
@@ -437,8 +431,7 @@ THREE.OBJLoader = (function () {
 			LineParserVertex.prototype.detectedLF = function ( robRef ) {
 				this.pushToBuffer();
 
-				if ( this.robRefFunction ) robRef[ this.robRefFunction ]( this.buffer );
-				if ( this.debug ) console.log( this.description + ': ' + this.buffer );
+				robRef[ this.robRefFunction ]( this.buffer );
 
 				this.bufferIndex = 0;
 			};
@@ -453,7 +446,7 @@ THREE.OBJLoader = (function () {
 			LineParserUv.prototype.constructor = LineParserUv;
 
 			function LineParserUv( robRefFunction ) {
-				LineParserVertex.call( this, 'vt', robRefFunction );
+				LineParserVertex.call( this, robRefFunction );
 
 				this.buffer = new Array( 2 );
 				// variables re-init per input line
@@ -512,12 +505,12 @@ THREE.OBJLoader = (function () {
 			}
 
 			LineParserFace.prototype.parseCode = function ( code ) {
-				if ( code === 32 ) {
+				if ( code === CODE_SPACE ) {
 
 					if ( this.slashCount === 1 ) this.type = 1;
 					this.pushToBuffer();
 
-				} else if ( code === 47 ) {
+				} else if ( code === CODE_SLASH ) {
 
 					if ( this.slashCount < 2 && this.type !== 1 ) {
 
@@ -613,9 +606,6 @@ THREE.OBJLoader = (function () {
 					}
 
 				}
-
-				if ( this.debug ) console.log( 'Faces type: ' + this.type + ': ' + this.buffer );
-
 				this.bufferIndex = 0;
 				this.slashCount = 0;
 				this.type = 3;
@@ -643,7 +633,6 @@ THREE.OBJLoader = (function () {
 			this.normalsIndex = 0;
 			this.uvs = [];
 			this.uvsIndex = 0;
-			this.comments = [];
 
 			this.mtllibName = '';
 
@@ -704,10 +693,6 @@ THREE.OBJLoader = (function () {
 
 		RawObjectBuilder.prototype.pushUv = function ( uvArray ) {
 			this.uvsIndex = this.pushToBuffer( uvArray, this.uvs, this.uvsIndex );
-		};
-
-		RawObjectBuilder.prototype.pushComment = function ( comment ) {
-			this.comments.push( comment );
 		};
 
 		RawObjectBuilder.prototype.pushObject = function ( objectName ) {
@@ -866,8 +851,7 @@ THREE.OBJLoader = (function () {
 				uvCount: this.uvs.length / 2,
 				objectGroupCount: this.objectGroupCount,
 				smoothingGroupCount: this.smoothingGroupCount,
-				mtlCount: this.mtlCount,
-				commentCount: this.comments ? this.comments.length : 0
+				mtlCount: this.mtlCount
 			};
 
 			if ( printDirectly ) {
@@ -879,7 +863,6 @@ THREE.OBJLoader = (function () {
 				console.log( 'Group count: ' + report.objectGroupCount );
 				console.log( 'SmoothingGroup count: ' + report.smoothingGroupCount );
 				console.log( 'Material count: ' + report.mtlCount );
-				console.log( 'Comments count: ' + report.commentCount );
 				console.log( '' );
 			}
 
