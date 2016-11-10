@@ -88,7 +88,7 @@ THREE.OBJLoader = (function () {
 		scope.loader.setResponseType( scope.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
 		scope.loader.load( url, function ( loadedContent ) {
 
-			var container = scope.parse( loadedContent )
+			var container = scope.parse( loadedContent );
 			scope.loader = null;
 			onLoad( container );
 
@@ -119,6 +119,7 @@ THREE.OBJLoader = (function () {
 	// OBJLoader internal static variables
 	var VERTEX_AND_NORMAL_VECTOR_LENGTH = 3;
 	var UV_VECTOR_LENGTH = 2;
+	var MIN_INPUT_LENGTH = 0;
 
 	var FACE_ARRAY_LENGTH = 3;
 
@@ -131,6 +132,7 @@ THREE.OBJLoader = (function () {
 	var CODE_SLASH = 47;
 	var CODE_F = 102;
 	var CODE_G = 103;
+	var CODE_L = 108;
 	var CODE_M = 109;
 	var CODE_N = 110;
 	var CODE_O = 111;
@@ -148,17 +150,19 @@ THREE.OBJLoader = (function () {
 			// globals (per InputObjectStore)
 			this.parsers = {
 				void: new LineParserBase(),
-				mtllib:  new LineParserString( 'pushMtllib' ),
+				mtllib:  new LineParserStringSpace( 'pushMtllib' ),
 				vertices: new LineParserVertex( 'pushVertex' ),
 				normals:  new LineParserVertex( 'pushNormal' ),
 				uvs:  new LineParserUv( 'pushUv' ),
 				objects:  new LineParserString( 'pushObject' ),
 				groups: new LineParserString( 'pushGroup' ),
-				usemtls:  new LineParserString( 'pushMtl' ),
+				usemtls:  new LineParserStringSpace( 'pushMtl' ),
 				faces:  new LineParserFace(),
+ 				lines:  new LineParserLine(),
 				smoothingGroups:  new LineParserString( 'pushSmoothingGroup' ),
 				current: null
 			};
+
 			this.reachedFaces = false;
 			this.inputObjectCount = 0;
 
@@ -167,9 +171,9 @@ THREE.OBJLoader = (function () {
 			this.contentLength = 0;
 			this.pointer = 0;
 
-			this.selectFunction = this.getCodeFromArrayBuffer;
+			this.retrieveCodeFunction = this.getCodeFromArrayBuffer;
 
-			this.setDebug( false, false, false );
+			this.setDebug( false, false );
 		}
 
 		OBJCodeParser.prototype.setDebug = function ( debugObjCodeParser, debugExtendableMeshCreator ) {
@@ -178,7 +182,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.prepareArrayBuffer = function ( arrayBuffer ) {
-			this.selectFunction = this.getCodeFromArrayBuffer;
+			this.retrieveCodeFunction = this.getCodeFromArrayBuffer;
 			this.view = new Uint8Array( arrayBuffer );
 			this.contentLength = this.view.byteLength;
 		};
@@ -188,7 +192,7 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.prepareText = function ( text ) {
-			this.selectFunction = this.getCodeFromText;
+			this.retrieveCodeFunction = this.getCodeFromText;
 			this.text = text;
 			this.contentLength = this.text.length;
 		};
@@ -202,6 +206,8 @@ THREE.OBJLoader = (function () {
 
 			// first will entry will lead to identification of line
 			var code = CODE_LF;
+			var line = [];
+			var index = 0;
 			while ( this.pointer < this.contentLength ) {
 
 				if ( code === CODE_LF || code === CODE_CR ) {
@@ -213,16 +219,18 @@ THREE.OBJLoader = (function () {
 					if ( this.parsers.current !== null ) {
 
 						// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
-						this.parsers.current.detectedLF( this.rawObjectBuilder );
+						this.parsers.current.processLine( line, index, this.rawObjectBuilder );
 						this.parsers.current = null;
 
 					}
 					code = this.identifyLineType();
+					index = 0;
 
 				} else {
 
-					this.parsers.current.parseCode( code );
-					code = this.selectFunction();
+					line[ index++ ] = code;
+					code = this.retrieveCodeFunction();
+
 				}
 
 			}
@@ -237,7 +245,7 @@ THREE.OBJLoader = (function () {
 				return CODE_LF;
 			}
 
-			var first = this.selectFunction();
+			var first = this.retrieveCodeFunction();
 			if ( first === CODE_LF || first === CODE_CR ) {
 				// incase of immediate new line, just let the main loop handle it
 				return first;
@@ -247,7 +255,7 @@ THREE.OBJLoader = (function () {
 				return CODE_LF;
 			}
 
-			var second = this.selectFunction();
+			var second = this.retrieveCodeFunction();
 			// a possible scenario is an empty comment line '#'
 			if ( second === CODE_LF || second === CODE_CR ) return second;
 
@@ -274,12 +282,14 @@ THREE.OBJLoader = (function () {
 			} else if ( first === CODE_S && second === CODE_SPACE ) {
 				// 's '
 				this.parsers.current = this.parsers.smoothingGroups;
-				this.parsers.current.foundFirstSpace = true;
 
 			} else if ( first === CODE_G && second === CODE_SPACE ) {
 				// 'g '
 				this.parsers.current = this.parsers.groups;
-				this.parsers.current.foundFirstSpace = true;
+
+			} else if ( first === CODE_L && second === CODE_SPACE ) {
+				// 'l '
+				this.parsers.current = this.parsers.lines;
 
 			} else if ( first === CODE_U && second === CODE_S ) {
 				// 'us'emtl
@@ -292,7 +302,6 @@ THREE.OBJLoader = (function () {
 					this.processCompletedObject( false );
 				}
 				this.parsers.current = this.parsers.objects;
-				this.parsers.current.foundFirstSpace = true;
 
 			} else if ( first === CODE_M && second === CODE_T ) {
 				// 'mt'llib
@@ -303,7 +312,7 @@ THREE.OBJLoader = (function () {
 				this.parsers.current = this.parsers.void;
 			}
 
-			return this.selectFunction();
+			return this.retrieveCodeFunction();
 		};
 
 
@@ -338,26 +347,18 @@ THREE.OBJLoader = (function () {
 
 			function LineParserBase( robRefFunction  ) {
 				this.robRefFunction = robRefFunction;
-				this.input = '';
 			}
 
 			/**
-			 * Extensions need to override this to be able to process a given charCode.
+			 * Extensions need to override this method.
+			 * End of line is detected. Data needs to be processed and forwarded to RawObjectBuilder
 			 */
-			LineParserBase.prototype.parseCode = function ( code ) {
-
-			};
-
-			/**
-			 * Extensions need to override this. It is called to signal forwarding data to the RawObjectBuilder
-			 */
-			LineParserBase.prototype.detectedLF = function ( robRef ) {
+			LineParserBase.prototype.processLine = function ( line, index, robRef ) {
 
 			};
 
 			return LineParserBase;
 		})();
-
 
 		var LineParserString = (function () {
 
@@ -366,28 +367,51 @@ THREE.OBJLoader = (function () {
 
 			function LineParserString( robRefFunction ) {
 				LineParserBase.call( this, robRefFunction );
-				this.foundFirstSpace = false;
 			}
 
-			LineParserString.prototype.parseCode = function ( code ) {
-				if ( this.foundFirstSpace ) {
+			LineParserString.prototype.processLine = function ( line, index, robRef ) {
+				var input = '';
 
-					this.input += String.fromCharCode( code );
-
-				} else if ( code === CODE_SPACE ) {
-
-					this.foundFirstSpace = true;
+				for ( var i = 0; i < index; i++ ) {
+					input += String.fromCharCode( line[ i ] );
 				}
-			};
 
-			LineParserString.prototype.detectedLF = function ( robRef ) {
-				robRef[ this.robRefFunction ]( this.input );
-
-				this.input = '';
-				this.foundFirstSpace = false;
+				robRef[ this.robRefFunction ]( input );
 			};
 
 			return LineParserString;
+		})();
+
+		var LineParserStringSpace = (function () {
+
+			LineParserStringSpace.prototype = Object.create( LineParserBase.prototype );
+			LineParserStringSpace.prototype.constructor = LineParserStringSpace;
+
+			function LineParserStringSpace( robRefFunction ) {
+				LineParserBase.call( this, robRefFunction );
+			}
+
+			LineParserStringSpace.prototype.processLine = function ( line, index, robRef ) {
+				var input = '';
+				var foundFirstSpace = false;
+				var code;
+
+				for ( var i = 0; i < index; i++ ) {
+					code = line[ i ];
+					if ( foundFirstSpace ) {
+
+						input += String.fromCharCode( code );
+
+					} else if ( code === CODE_SPACE ) {
+
+						foundFirstSpace = true;
+					}
+				}
+
+				robRef[ this.robRefFunction ]( input );
+			};
+
+			return LineParserStringSpace;
 		})();
 
 
@@ -398,42 +422,38 @@ THREE.OBJLoader = (function () {
 
 			function LineParserVertex( robRefFunction ) {
 				LineParserBase.call( this, robRefFunction );
-				this.minInputLength = 0;
 				this.buffer = new Array( 3 );
 				this.bufferIndex = 0;
 			}
 
-			LineParserVertex.prototype.parseCode = function ( code ) {
-				// "v   1.0 2.0 3.0" or
-				// "vn  1.0 2.0 3.0" or
+			LineParserVertex.prototype.pushToBuffer = function ( input ) {
+				if ( input.length > MIN_INPUT_LENGTH ) {
 
-				if ( code === CODE_SPACE ) {
-
-					this.pushToBuffer();
-
-				} else {
-
-					this.input += String.fromCharCode( code );
-
+					this.buffer[ this.bufferIndex++ ] = parseFloat( input );
 				}
 			};
 
-			LineParserVertex.prototype.pushToBuffer = function () {
-				if ( this.input.length > this.minInputLength ) {
+			LineParserVertex.prototype.processLine = function ( line, index, robRef ) {
+				this.bufferIndex = 0;
+				var input = '';
+				var code;
 
-					this.buffer[ this.bufferIndex ] = parseFloat( this.input );
-					this.bufferIndex++;
-					this.input = '';
+				for ( var i = 0; i < index; i++ ) {
+					code = line[ i ];
+					if ( code === CODE_SPACE ) {
 
+						this.pushToBuffer( input );
+						input = '';
+
+					} else {
+
+						input += String.fromCharCode( code );
+
+					}
 				}
-			};
-
-			LineParserVertex.prototype.detectedLF = function ( robRef ) {
-				this.pushToBuffer();
+				this.pushToBuffer( input );
 
 				robRef[ this.robRefFunction ]( this.buffer );
-
-				this.bufferIndex = 0;
 			};
 
 			return LineParserVertex;
@@ -447,35 +467,44 @@ THREE.OBJLoader = (function () {
 
 			function LineParserUv( robRefFunction ) {
 				LineParserVertex.call( this, robRefFunction );
-
 				this.buffer = new Array( 2 );
-				// variables re-init per input line
-				this.retrievedFloatCount = 0;
 			}
 
-			LineParserUv.prototype.parseCode = function ( code ) {
-				// "vt  1.0 2.0 0.0" -> do not use "w"
+			LineParserUv.prototype.pushToBuffer = function ( input ) {
+				if ( input.length > MIN_INPUT_LENGTH ) {
 
-				// w is optional for 2D textures; only required for 3D textures (not implemented)
-				if ( this.retrievedFloatCount == 2 ) return;
+					this.buffer[ this.bufferIndex++ ] = parseFloat( input );
+					return 1;
 
-				LineParserVertex.prototype.parseCode.call( this, code );
-			};
+				} else {
 
-			LineParserUv.prototype.pushToBuffer = function () {
-				if ( this.input.length > this.minInputLength ) {
-
-					this.buffer[ this.bufferIndex ] = parseFloat( this.input );
-					this.bufferIndex++;
-					this.retrievedFloatCount++;
-					this.input = '';
+					return 0;
 
 				}
 			};
 
-			LineParserUv.prototype.detectedLF = function ( robRef ) {
-				LineParserVertex.prototype.detectedLF.call( this, robRef );
-				this.retrievedFloatCount = 0;
+			LineParserUv.prototype.processLine = function ( line, index, robRef ) {
+				this.bufferIndex = 0;
+				var retrievedFloatCount = 0;
+				var input = '';
+				var code;
+
+				for ( var i = 0; i < index; i++ ) {
+					code = line[ i ];
+					if ( code === CODE_SPACE ) {
+
+						retrievedFloatCount += this.pushToBuffer( input );
+						if ( retrievedFloatCount == 2 ) break;
+						input = '';
+
+					} else {
+
+						input += String.fromCharCode( code );
+
+					}
+				}
+
+				robRef.pushUv( this.buffer );
 			};
 
 			return LineParserUv;
@@ -495,55 +524,57 @@ THREE.OBJLoader = (function () {
 			LineParserFace.prototype.constructor = LineParserFace;
 
 			function LineParserFace() {
-
-
-				LineParserVertex.call( this, 'f', 12 );
-
-				// variables re-init by detectedLF
-				this.slashCount = 0;
-				this.type = 3;
+				LineParserVertex.call( this );
+				this.buffer = new Array( 12 );
 			}
 
-			LineParserFace.prototype.parseCode = function ( code ) {
-				if ( code === CODE_SPACE ) {
+			LineParserFace.prototype.pushToBuffer = function ( input ) {
+				if ( input.length > MIN_INPUT_LENGTH ) {
 
-					if ( this.slashCount === 1 ) this.type = 1;
-					this.pushToBuffer();
+					this.buffer[ this.bufferIndex++ ] = parseInt( input, 10 );
 
-				} else if ( code === CODE_SLASH ) {
+				}
+			};
 
-					if ( this.slashCount < 2 && this.type !== 1 ) {
+			LineParserFace.prototype.processLine = function ( line, index, robRef ) {
+				this.bufferIndex = 0;
+				var code;
+				var input = '';
+				var slashCount = 0;
+				var type = 3;
 
-						this.slashCount ++;
-						this.type = ( this.input.length === 0 ) ? 2 : 0;
+				for ( var i = 0; i < index; i++ ) {
+					code = line[ i ];
+					if ( code === CODE_SPACE ) {
+
+						if ( slashCount === 1 ) type = 1;
+						this.pushToBuffer( input );
+						input = '';
+
+					} else if ( code === CODE_SLASH ) {
+
+						if ( slashCount < 2 && type !== 1 ) {
+
+							slashCount ++;
+							type = ( input.length === 0 ) ? 2 : 0;
+
+						}
+						this.pushToBuffer( input );
+						input = '';
+
+					} else {
+
+						input += String.fromCharCode( code );
 
 					}
-					this.pushToBuffer();
-
-				} else {
-
-					this.input += String.fromCharCode( code );
-
 				}
-			};
+				this.pushToBuffer( input );
 
-			LineParserFace.prototype.pushToBuffer = function () {
-				if ( this.input.length > this.minInputLength ) {
-
-					this.buffer[ this.bufferIndex ] = parseInt( this.input, 10 );
-					this.bufferIndex++;
-					this.input = '';
-
-				}
-			};
-
-			LineParserFace.prototype.detectedLF = function ( robRef ) {
-				this.pushToBuffer();
 
 				var haveQuad = this.bufferIndex % 4 === 0;
 				if ( haveQuad ) {
 
-					if ( this.type === 0 ) {
+					if ( type === 0 ) {
 
 						robRef.pushQuadVVtVn(
 							[ this.buffer[0], this.buffer[3], this.buffer[6], this.buffer[9] ],
@@ -551,21 +582,21 @@ THREE.OBJLoader = (function () {
 							[ this.buffer[2], this.buffer[5], this.buffer[8], this.buffer[11] ]
 						);
 
-					} else if ( this.type === 1 ) {
+					} else if ( type === 1 ) {
 
 						robRef.pushQuadVVt(
 							[ this.buffer[0], this.buffer[2], this.buffer[4], this.buffer[6] ],
 							[ this.buffer[1], this.buffer[3], this.buffer[5], this.buffer[7] ]
 						);
 
-					} else if ( this.type === 2 ) {
+					} else if ( type === 2 ) {
 
 						robRef.pushQuadVVn(
 							[ this.buffer[0], this.buffer[2], this.buffer[4], this.buffer[6] ],
 							[ this.buffer[1], this.buffer[3], this.buffer[5], this.buffer[7] ]
 						);
 
-					} else if ( this.type === 3 ) {
+					} else if ( type === 3 ) {
 
 						robRef.pushQuadV(
 							[ this.buffer[0], this.buffer[1], this.buffer[2], this.buffer[3] ]
@@ -575,7 +606,7 @@ THREE.OBJLoader = (function () {
 
 				} else {
 
-					if ( this.type === 0 ) {
+					if ( type === 0 ) {
 
 						robRef.pushFaceVVtVn(
 							 [ this.buffer[ 0 ], this.buffer[ 3 ], this.buffer[ 6 ] ],
@@ -583,35 +614,53 @@ THREE.OBJLoader = (function () {
 							 [ this.buffer[ 2 ], this.buffer[ 5 ], this.buffer[ 8 ] ]
 						);
 
-					} else if ( this.type === 1 ) {
+					} else if ( type === 1 ) {
 
 						robRef.pushFaceVVt(
 							[ this.buffer[0], this.buffer[2], this.buffer[4] ],
 							[ this.buffer[1], this.buffer[3], this.buffer[5] ]
 						);
 
-					} else if ( this.type === 2 ) {
+					} else if ( type === 2 ) {
 
 						robRef.pushFaceVVn(
 							[ this.buffer[0], this.buffer[2], this.buffer[4] ],
 							[ this.buffer[1], this.buffer[3], this.buffer[5] ]
 						);
 
-					} else if ( this.type === 3 ) {
+					} else if ( type === 3 ) {
 
 						robRef.pushFaceV(
 							[ this.buffer[0], this.buffer[1], this.buffer[2] ]
 						);
 
 					}
-
 				}
-				this.bufferIndex = 0;
-				this.slashCount = 0;
-				this.type = 3;
 			};
 
 			return LineParserFace;
+		})();
+
+		var LineParserLine = (function () {
+
+			LineParserLine.prototype = Object.create( LineParserBase.prototype );
+			LineParserLine.prototype.constructor = LineParserLine;
+
+			function LineParserLine( robRefFunction ) {
+				LineParserBase.call( this, robRefFunction );
+			}
+
+			LineParserLine.prototype.processLine = function ( line, index, robRef ) {
+				var input = '';
+
+				for ( var i = 0; i < index; i++ ) {
+					input += String.fromCharCode( line[ i ] );
+				}
+
+				robRef.pushLine( input );
+			};
+
+			return LineParserLine;
 		})();
 
 		return OBJCodeParser;
@@ -840,6 +889,10 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
 			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
 			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index ];
+		};
+
+		RawObjectBuilder.prototype.pushLine = function ( line ) {
+
 		};
 
 		RawObjectBuilder.prototype.createReport = function ( inputObjectCount, printDirectly ) {
