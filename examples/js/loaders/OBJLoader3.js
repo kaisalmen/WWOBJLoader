@@ -96,7 +96,7 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
-
+		console.time( 'Parse' );
 		if ( this.loadAsArrayBuffer ) {
 
 			this.parser.prepareArrayBuffer( loadedContent );
@@ -112,6 +112,7 @@ THREE.OBJLoader = (function () {
 		// do not forget last object
 		var container = this.parser.finalize();
 		this.parser = null;
+		console.timeEnd( 'Parse' );
 
 		return container;
 	};
@@ -149,17 +150,17 @@ THREE.OBJLoader = (function () {
 
 			// globals (per InputObjectStore)
 			this.parsers = {
-				void: new LineParserBase(),
-				mtllib:  new LineParserStringSpace( 'pushMtllib' ),
-				vertices: new LineParserVertex( 'pushVertex' ),
-				normals:  new LineParserVertex( 'pushNormal' ),
-				uvs:  new LineParserUv( 'pushUv' ),
-				objects:  new LineParserString( 'pushObject' ),
-				groups: new LineParserString( 'pushGroup' ),
-				usemtls:  new LineParserStringSpace( 'pushMtl' ),
+				void: new LineParserBase( 'void' ),
+				mtllib:  new LineParserStringSpace( 'mtllib', 'pushMtllib' ),
+				vertices: new LineParserVertex( 'v', 'pushVertex' ),
+				normals:  new LineParserVertex( 'vn', 'pushNormal' ),
+				uvs:  new LineParserUv(),
+				objects:  new LineParserStringSpace( 'o', 'pushObject' ),
+				groups: new LineParserStringSpace( 'g', 'pushGroup' ),
+				usemtls:  new LineParserStringSpace( 'usemtl', 'pushMtl' ),
 				faces:  new LineParserFace(),
  				lines:  new LineParserLine(),
-				smoothingGroups:  new LineParserString( 'pushSmoothingGroup' ),
+				smoothingGroups:  new LineParserStringSpace( 's', 'pushSmoothingGroup' ),
 				current: null
 			};
 
@@ -201,118 +202,98 @@ THREE.OBJLoader = (function () {
 			return this.text[ this.pointer++ ].charCodeAt( 0 );
 		};
 
-		OBJCodeParser.prototype.parse = function () {
-			console.time( 'Parse' );
-
-			// first will entry will lead to identification of line
-			var code = CODE_LF;
+		OBJCodeParser.prototype.parse= function () {
 			var line = [];
 			var index = 0;
+			var code;
+			var haveV = false;
+
 			while ( this.pointer < this.contentLength ) {
 
+				code = this.retrieveCodeFunction();
 				if ( code === CODE_LF || code === CODE_CR ) {
-
-					// jump over LF if CR exists
-					if ( code === CODE_CR ) {
-						this.pointer++;
-					}
 					if ( this.parsers.current !== null ) {
 
-						// LF => signal store end of line and reset parser to null (re-evaluate starts for next line)
 						this.parsers.current.processLine( line, index, this.rawObjectBuilder );
 						this.parsers.current = null;
 
 					}
-					code = this.identifyLineType();
 					index = 0;
+
+				} else if ( this.parsers.current === null ) {
+
+					switch ( code ) {
+
+						case CODE_V:
+							haveV = true;
+							break;
+
+						case CODE_N:
+							this.parsers.current = this.parsers.normals;
+							break;
+
+						case CODE_T:
+							this.parsers.current = this.parsers.uvs;
+							break;
+
+						case CODE_F:
+							this.parsers.current = this.parsers.faces;
+							this.reachedFaces = true;
+							break;
+
+						case CODE_L:
+							this.parsers.current = this.parsers.usemtls;
+							break;
+
+						case CODE_S:
+							this.parsers.current = this.parsers.smoothingGroups;
+							break;
+
+						case CODE_G:
+							this.parsers.current = this.parsers.groups;
+							break;
+
+						case CODE_U: // usemtl
+							this.parsers.current = this.parsers.usemtls;
+							break;
+
+						case CODE_O:
+							// new instance required, because "o" found and previous vertices exist
+							this.parsers.current = this.parsers.objects;
+							if ( this.rawObjectBuilder.vertices.length > 0 ) {
+								this.processCompletedObject( false );
+							}
+							break;
+
+						case CODE_M: // mtllib
+							this.parsers.current = this.parsers.mtllib;
+							break;
+
+						case CODE_SPACE:
+							if ( haveV ) {
+								// at start of line: not needed, but after 'v' will start new vertex parsing
+								this.parsers.current = this.parsers.vertices;
+
+								// object complete instance required if reached faces already (= reached next block of v)
+								if ( this.reachedFaces ) {
+									this.processCompletedObject( true );
+								}
+								haveV = false;
+							}
+							break;
+
+						default:
+							// # (comments), other non-identified empty lines
+							this.parsers.current = this.parsers.void;
+							break;
+					}
 
 				} else {
 
-					line[ index++ ] = code;
-					code = this.retrieveCodeFunction();
+					line[ index ++ ] = code;
 
 				}
-
 			}
-
-			console.timeEnd( 'Parse' );
-		};
-
-		OBJCodeParser.prototype.identifyLineType = function () {
-			// fast-fail for EOL
-			if ( this.pointer + 1 >= this.contentLength ) {
-				this.pointer++;
-				return CODE_LF;
-			}
-
-			var first = this.retrieveCodeFunction();
-			if ( first === CODE_LF || first === CODE_CR ) {
-				// incase of immediate new line, just let the main loop handle it
-				return first;
-
-			} else if ( first === CODE_SPACE ) {
-				// in case of leading space, restart detection
-				return CODE_LF;
-			}
-
-			var second = this.retrieveCodeFunction();
-			// a possible scenario is an empty comment line '#'
-			if ( second === CODE_LF || second === CODE_CR ) return second;
-
-			if ( first === CODE_V && second === CODE_SPACE ) {
-				// 'v '
-				// object complete instance required if reached faces already (= reached next block of v)
-				if ( this.reachedFaces ) this.processCompletedObject( true );
-
-				this.parsers.current = this.parsers.vertices;
-
-			} else if ( first === CODE_V && second === CODE_T ) {
-				// 'vt'
-				this.parsers.current = this.parsers.uvs;
-
-			} else if ( first === CODE_V && second === CODE_N ) {
-				// 'vn'
-				this.parsers.current = this.parsers.normals;
-
-			} else if ( first === CODE_F && second === CODE_SPACE ) {
-				// 'f '
-				this.parsers.current = this.parsers.faces;
-				this.reachedFaces = true;
-
-			} else if ( first === CODE_S && second === CODE_SPACE ) {
-				// 's '
-				this.parsers.current = this.parsers.smoothingGroups;
-
-			} else if ( first === CODE_G && second === CODE_SPACE ) {
-				// 'g '
-				this.parsers.current = this.parsers.groups;
-
-			} else if ( first === CODE_L && second === CODE_SPACE ) {
-				// 'l '
-				this.parsers.current = this.parsers.lines;
-
-			} else if ( first === CODE_U && second === CODE_S ) {
-				// 'us'emtl
-				this.parsers.current = this.parsers.usemtls;
-
-			} else if ( first === CODE_O && second === CODE_SPACE ) {
-				// 'o '
-				// new instance required, because "o" found and previous vertices exist
-				if ( this.rawObjectBuilder.vertices.length > 0 ) {
-					this.processCompletedObject( false );
-				}
-				this.parsers.current = this.parsers.objects;
-
-			} else if ( first === CODE_M && second === CODE_T ) {
-				// 'mt'llib
-				this.parsers.current = this.parsers.mtllib;
-
-			} else  {
-				// '#' or anything else
-				this.parsers.current = this.parsers.void;
-			}
-
-			return this.retrieveCodeFunction();
 		};
 
 
@@ -345,7 +326,8 @@ THREE.OBJLoader = (function () {
 
 		var LineParserBase = (function () {
 
-			function LineParserBase( robRefFunction  ) {
+			function LineParserBase( name, robRefFunction  ) {
+				this.name = name;
 				this.robRefFunction = robRefFunction;
 			}
 
@@ -360,35 +342,13 @@ THREE.OBJLoader = (function () {
 			return LineParserBase;
 		})();
 
-		var LineParserString = (function () {
-
-			LineParserString.prototype = Object.create( LineParserBase.prototype );
-			LineParserString.prototype.constructor = LineParserString;
-
-			function LineParserString( robRefFunction ) {
-				LineParserBase.call( this, robRefFunction );
-			}
-
-			LineParserString.prototype.processLine = function ( line, index, robRef ) {
-				var input = '';
-
-				for ( var i = 0; i < index; i++ ) {
-					input += String.fromCharCode( line[ i ] );
-				}
-
-				robRef[ this.robRefFunction ]( input );
-			};
-
-			return LineParserString;
-		})();
-
 		var LineParserStringSpace = (function () {
 
 			LineParserStringSpace.prototype = Object.create( LineParserBase.prototype );
 			LineParserStringSpace.prototype.constructor = LineParserStringSpace;
 
-			function LineParserStringSpace( robRefFunction ) {
-				LineParserBase.call( this, robRefFunction );
+			function LineParserStringSpace( name, robRefFunction ) {
+				LineParserBase.call( this, name, robRefFunction );
 			}
 
 			LineParserStringSpace.prototype.processLine = function ( line, index, robRef ) {
@@ -420,8 +380,8 @@ THREE.OBJLoader = (function () {
 			LineParserVertex.prototype = Object.create( LineParserBase.prototype );
 			LineParserVertex.prototype.constructor = LineParserVertex;
 
-			function LineParserVertex( robRefFunction ) {
-				LineParserBase.call( this, robRefFunction );
+			function LineParserVertex( name, robRefFunction ) {
+				LineParserBase.call( this, name, robRefFunction );
 				this.buffer = new Array( 3 );
 				this.bufferIndex = 0;
 			}
@@ -465,8 +425,8 @@ THREE.OBJLoader = (function () {
 			LineParserUv.prototype = Object.create( LineParserVertex.prototype );
 			LineParserUv.prototype.constructor = LineParserUv;
 
-			function LineParserUv( robRefFunction ) {
-				LineParserVertex.call( this, robRefFunction );
+			function LineParserUv() {
+				LineParserVertex.call( this, 'uv' );
 				this.buffer = new Array( 2 );
 			}
 
@@ -512,7 +472,7 @@ THREE.OBJLoader = (function () {
 
 
 		/**
-		 * Support for triangle or quads:
+		 * Support for triangle and quads:
 		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
 		 * 1: "f vertex/uv			vertex/uv			vertex/uv			vertex/uv"
 		 * 2: "f vertex//normal		vertex//normal		vertex//normal		vertex//normal"
@@ -524,7 +484,7 @@ THREE.OBJLoader = (function () {
 			LineParserFace.prototype.constructor = LineParserFace;
 
 			function LineParserFace() {
-				LineParserVertex.call( this );
+				LineParserVertex.call( this, 'f' );
 				this.buffer = new Array( 12 );
 			}
 
@@ -646,8 +606,8 @@ THREE.OBJLoader = (function () {
 			LineParserLine.prototype = Object.create( LineParserBase.prototype );
 			LineParserLine.prototype.constructor = LineParserLine;
 
-			function LineParserLine( robRefFunction ) {
-				LineParserBase.call( this, robRefFunction );
+			function LineParserLine() {
+				LineParserBase.call( this, 'l' );
 			}
 
 			LineParserLine.prototype.processLine = function ( line, index, robRef ) {
