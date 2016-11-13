@@ -1047,7 +1047,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 				this.buildSingleMaterialMesh( retrievedObjectDescriptions[ 0 ] );
 
 			} else {
-/*
+
 				var bufferGeometry = new THREE.BufferGeometry();
 				var vertexBA = new THREE.BufferAttribute( new Float32Array( absoluteVertexCount ), 3 );
 				bufferGeometry.addAttribute( 'position', vertexBA );
@@ -1115,7 +1115,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 				var mesh = new THREE.Mesh( bufferGeometry, multiMaterial );
 				this.container.add( mesh );
 				this.globalObjectCount ++;
-*/
+
 			}
 
 		} else {
