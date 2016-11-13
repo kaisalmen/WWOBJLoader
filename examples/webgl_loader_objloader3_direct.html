@@ -143,6 +143,13 @@
 				fileMtl: 'female02.mtl'
 			};
 /*
+ 			this.fileDef = {
+ 				path: './obj/cerberus/',
+ 				fileObj: 'Cerberus.obj',
+ 				texturePath: './obj/cerberus/',
+ 				fileMtl: ''
+ 			};
+
 			this.fileDef = {
 				path: './obj/PTV1/',
 				fileObj: 'PTV1.obj',
@@ -156,7 +163,7 @@
 				texturePath: './obj/zomax/',
 				fileMtl: ''
 			};
- */
+*/
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
@@ -212,6 +219,7 @@
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setMaterials( materials );
 				objLoader.setPath( scope.fileDef.path );
+				objLoader.setUseMultiMaterials( true );
 
 				var onSuccess = function ( object3d ) {
 					if ( object3d !== undefined && object3d !== null ) {

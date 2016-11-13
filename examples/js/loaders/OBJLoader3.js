@@ -192,8 +192,7 @@ THREE.OBJLoader = (function () {
 			return this.objData[ this.pointer++ ].charCodeAt( 0 );
 		};
 
-		OBJCodeParser.prototype.parse= function () {
-			// globals (per InputObjectStore)
+		OBJCodeParser.prototype.parse = function () {
 			var parsers = {
 				void: new LineParserBase( 'void' ),
 				mtllib:  new LineParserStringSpace( 'mtllib', 'pushMtllib' ),
@@ -394,13 +393,6 @@ THREE.OBJLoader = (function () {
 				this.bufferIndex = 0;
 			}
 
-			LineParserVertex.prototype.pushToBuffer = function ( input ) {
-				if ( input.length > MIN_INPUT_LENGTH ) {
-
-					this.buffer[ this.bufferIndex++ ] = parseFloat( input );
-				}
-			};
-
 			LineParserVertex.prototype.processLine = function ( line, index, robRef ) {
 				this.bufferIndex = 0;
 				var input = '';
@@ -410,7 +402,7 @@ THREE.OBJLoader = (function () {
 					code = line[ i ];
 					if ( code === CODE_SPACE ) {
 
-						this.pushToBuffer( input );
+						if ( input.length > MIN_INPUT_LENGTH ) this.buffer[ this.bufferIndex++ ] = parseFloat( input );
 						input = '';
 
 					} else {
@@ -419,7 +411,7 @@ THREE.OBJLoader = (function () {
 
 					}
 				}
-				this.pushToBuffer( input );
+				if ( input.length > MIN_INPUT_LENGTH ) this.buffer[ this.bufferIndex++ ] = parseFloat( input );
 
 				robRef[ this.robRefFunction ]( this.buffer );
 			};
@@ -438,22 +430,8 @@ THREE.OBJLoader = (function () {
 				this.buffer = new Array( 2 );
 			}
 
-			LineParserUv.prototype.pushToBuffer = function ( input ) {
-				if ( input.length > MIN_INPUT_LENGTH ) {
-
-					this.buffer[ this.bufferIndex++ ] = parseFloat( input );
-					return 1;
-
-				} else {
-
-					return 0;
-
-				}
-			};
-
 			LineParserUv.prototype.processLine = function ( line, index, robRef ) {
 				this.bufferIndex = 0;
-				var retrievedFloatCount = 0;
 				var input = '';
 				var code;
 
@@ -461,9 +439,13 @@ THREE.OBJLoader = (function () {
 					code = line[ i ];
 					if ( code === CODE_SPACE ) {
 
-						retrievedFloatCount += this.pushToBuffer( input );
-						if ( retrievedFloatCount == 2 ) break;
+						if ( input.length > MIN_INPUT_LENGTH ) {
+
+							this.buffer[ this.bufferIndex ++ ] = parseFloat( input );
+
+						}
 						input = '';
+						if ( this.bufferIndex === 2 ) break;
 
 					} else {
 
@@ -471,6 +453,7 @@ THREE.OBJLoader = (function () {
 
 					}
 				}
+				if ( input.length > MIN_INPUT_LENGTH ) this.buffer[ this.bufferIndex ] = parseFloat( input );
 
 				robRef.pushUv( this.buffer );
 			};
