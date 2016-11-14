@@ -164,7 +164,7 @@ THREE.OBJLoader = (function () {
 			this.retrieveCodeFunction = this.getCodeFromArrayBuffer;
 			this.reachedFaces = false;
 
-			this.setDebug( false, false );
+			this.setDebug( true, true );
 		}
 
 		OBJCodeParser.prototype.setDebug = function ( debugObjCodeParser, debugExtendableMeshCreator ) {
@@ -1059,6 +1059,11 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 				var materialName;
 				var materialIndex = 0;
 
+				var materialIndexMapping = [];
+				var indexedMaterial;
+
+				if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
+				
 				for ( var index in retrievedObjectDescriptions ) {
 					retrievedObjectDescription = retrievedObjectDescriptions[ index ];
 
@@ -1072,14 +1077,23 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 					// clone material in case flat shading is needed due to smoothingGroup 0
 					if ( retrievedObjectDescription.smoothingGroup === 0 ) {
 						material = material.clone();
+						materialName += '_clone';
+						material.name = materialName;
 						material.shading = THREE.FlatShading;
 					}
-					materials[ materialIndex ] = material;
+
+					// re-use material if already used before. Reduces materials array size and eliminates duplicates
+					indexedMaterial = materialIndexMapping[ materialName ];
+					if ( indexedMaterial == null ) {
+						indexedMaterial = materialIndex;
+						materialIndexMapping[ materialName ] = indexedMaterial;
+
+						materials[ materialIndex++ ] = material;
+					}
 
 					vertexBA.set( retrievedObjectDescription.vertexArray, vertexOffset );
-					bufferGeometry.addGroup( vertexOffset, retrievedObjectDescription.vertexArrayIndex, materialIndex );
+					bufferGeometry.addGroup( vertexOffset, retrievedObjectDescription.vertexArrayIndex, indexedMaterial );
 					vertexOffset += retrievedObjectDescription.vertexArrayIndex;
-					materialIndex++;
 
 					if ( normalBA ) {
 						normalBA.set( retrievedObjectDescription.normalArray, normalOffset );
@@ -1090,6 +1104,18 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 						uvOffset += retrievedObjectDescription.uvArrayIndex;
 					}
 
+					if ( this.debug ) {
+						console.log(
+							'objectName: ' + retrievedObjectDescription.objectName +
+							'\ngroup: ' + retrievedObjectDescription.group +
+							'\nmaterialName: ' + materialName +
+							'\nmaterialIndex: ' + indexedMaterial +
+							'\nsmoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
+							'\n#vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
+							'\n#uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
+							'\n#normals: ' + retrievedObjectDescription.normalArrayIndex / 3
+						);
+					}
 				}
 				var multiMaterial = new THREE.MultiMaterial( materials );
 
@@ -1115,14 +1141,13 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		if ( this.debug ) {
 			console.log(
 				'Object no.: ' + this.globalObjectCount +
-				' objectName: ' + retrievedObjectDescription.objectName +
-				' group: ' + retrievedObjectDescription.group +
-				' materialName: ' + retrievedObjectDescription.materialName +
-				' smoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
-				'\nCounts: ' +
-				' #vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
-				' #uvs: ' + + retrievedObjectDescription.uvArrayIndex / 2 +
-				' #normals: ' + + retrievedObjectDescription.normalArrayIndex / 3
+				'\nobjectName: ' + retrievedObjectDescription.objectName +
+				'\ngroup: ' + retrievedObjectDescription.group +
+				'\nmaterialName: ' + retrievedObjectDescription.materialName +
+				'\nsmoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
+				'\n#vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
+				'\n#uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
+				'\n#normals: ' + retrievedObjectDescription.normalArrayIndex / 3
 			);
 		}
 
@@ -1152,6 +1177,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		// clone material in case flat shading is needed due to smoothingGroup 0
 		if ( retrievedObjectDescription.smoothingGroup === 0 ) {
 			material = material.clone();
+			material.name += '_clone';
 			material.shading = THREE.FlatShading;
 		}
 
