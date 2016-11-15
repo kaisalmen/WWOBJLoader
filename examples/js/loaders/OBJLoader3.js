@@ -1060,39 +1060,46 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 				var materialIndex = 0;
 
 				var materialIndexMapping = [];
-				var indexedMaterial;
+				var selectedMaterialIndex;
 
 				if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
-				
+
 				for ( var index in retrievedObjectDescriptions ) {
 					retrievedObjectDescription = retrievedObjectDescriptions[ index ];
 
 					materialName = retrievedObjectDescription.materialName;
-					material = this.materials.materials[ materialName ];
-					if ( material == null ) {
-						material = new THREE.MeshStandardMaterial();
-						console.error( 'Material "' + materialName + '" defined in OBJ file was defined in MTL file!' );
-					}
+					if ( this.materials !== null ) material = this.materials.create( materialName );
 
+					if ( ! material ) {
+
+						material = new THREE.MeshStandardMaterial();
+						material.name = materialName;
+						console.error( 'Material "' + materialName + '" defined in OBJ file was defined in MTL file!' );
+
+					}
 					// clone material in case flat shading is needed due to smoothingGroup 0
 					if ( retrievedObjectDescription.smoothingGroup === 0 ) {
+
 						material = material.clone();
-						materialName += '_clone';
+						materialName = materialName + '_clone';
 						material.name = materialName;
 						material.shading = THREE.FlatShading;
+
 					}
 
 					// re-use material if already used before. Reduces materials array size and eliminates duplicates
-					indexedMaterial = materialIndexMapping[ materialName ];
-					if ( indexedMaterial == null ) {
-						indexedMaterial = materialIndex;
-						materialIndexMapping[ materialName ] = indexedMaterial;
+					selectedMaterialIndex = materialIndexMapping[ materialName ];
+					if ( ! selectedMaterialIndex ) {
 
-						materials[ materialIndex++ ] = material;
+						selectedMaterialIndex = materialIndex;
+						materialIndexMapping[ materialName ] = materialIndex;
+						materials.push( material );
+						materialIndex++;
+
 					}
 
 					vertexBA.set( retrievedObjectDescription.vertexArray, vertexOffset );
-					bufferGeometry.addGroup( vertexOffset, retrievedObjectDescription.vertexArrayIndex, indexedMaterial );
+					bufferGeometry.addGroup( vertexOffset, retrievedObjectDescription.vertexArrayIndex, selectedMaterialIndex );
 					vertexOffset += retrievedObjectDescription.vertexArrayIndex;
 
 					if ( normalBA ) {
@@ -1109,7 +1116,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 							'objectName: ' + retrievedObjectDescription.objectName +
 							'\ngroup: ' + retrievedObjectDescription.group +
 							'\nmaterialName: ' + materialName +
-							'\nmaterialIndex: ' + indexedMaterial +
+							'\nmaterialIndex: ' + selectedMaterialIndex +
 							'\nsmoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
 							'\n#vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
 							'\n#uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
@@ -1169,16 +1176,23 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		}
 
 		var material;
-		if ( this.materials !== null ) {
-			material = this.materials.materials[ retrievedObjectDescription.materialName ];
-		}
-		if ( material == null ) material = new THREE.MeshStandardMaterial();
+		var materialName = retrievedObjectDescription.materialName;
+		if ( this.materials !== null ) material = this.materials.create( materialName );
 
+		if ( ! material ) {
+
+			material = new THREE.MeshStandardMaterial();
+			material.name = materialName;
+
+		}
 		// clone material in case flat shading is needed due to smoothingGroup 0
 		if ( retrievedObjectDescription.smoothingGroup === 0 ) {
+
 			material = material.clone();
-			material.name += '_clone';
+			materialName = materialName + '_clone';
+			material.name = materialName;
 			material.shading = THREE.FlatShading;
+
 		}
 
 		var mesh = new THREE.Mesh( bufferGeometry, material );
