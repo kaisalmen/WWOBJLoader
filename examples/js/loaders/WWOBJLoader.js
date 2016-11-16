@@ -11,32 +11,38 @@ importScripts( THREE.WebWorker.Commons.paths.mtlLoaderPath );
 
 THREE.WebWorker.WWOBJLoader = (function () {
 
-	WWOBJLoader.prototype = Object.create( THREE.OBJLoader.prototype, {
-		constructor: {
-			configurable: true,
-			enumerable: true,
-			value: WWOBJLoader,
-			writable: true
-		}
-	} );
+	WWOBJLoader.prototype = Object.create( THREE.OBJLoader.ExtendableMeshCreator.prototype );
+	WWOBJLoader.prototype.constructor = WWOBJLoader;
 
 	function WWOBJLoader() {
-		THREE.OBJLoader.call( this );
-		this.cmdState = 'created';
-		this.debug = false;
+		THREE.OBJLoader.ExtendableMeshCreator.call( this );
+		this.objLoader = new THREE.OBJLoader();
+		this.objLoader.setExtendableMeshCreator( this );
 
+		this.cmdState = 'created';
 		this.objFile = '';
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
-
-		this.counter = 0;
 	}
+
+	/**
+	 * It is ensured that retrievedObjectDescriptions only contain objects with vertices (no need to check)
+	 * @param retrievedObjectDescriptions
+	 * @param inputObjectCount
+	 * @param absoluteVertexCount
+	 * @param absoluteNormalCount
+	 * @param absoluteUvCount
+	 */
+	/*
+	ExtendableMeshCreator.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount,
+														   absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
+		var retrievedObjectDescription;
+	};
+	*/
 
 	WWOBJLoader.prototype._buildSingleMesh = function ( object, material ) {
 		// Fast-Fail: Skip o/g line declarations that did not follow with any faces
 		if ( object.geometry.vertices.length === 0 ) return null;
-
-		this.counter ++;
 
 		var geometry = object.geometry;
 		var objectMaterials = object.materials;
@@ -87,7 +93,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 			materialGroups: multiMaterial ? JSON.stringify( materialGroups ) : null,
 			vertices: verticesOut,
 			normals: normalsOut,
-			uvs: uvsOut,
+			uvs: uvsOut
 		}, [ verticesOut.buffer ], normalsOut !== null ? [ normalsOut.buffer ] : null, uvsOut !== null ? [ uvsOut.buffer ] : null );
 
 		return null;
@@ -102,12 +108,8 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.objFile = payload.objFile === null ? '' : payload.objFile;
 		this.objAsArrayBuffer = this.dataAvailable ? payload.objAsArrayBuffer : null;
 
-		// configure OBJLoader
-		this.reInit(
-			payload.loadAsArrayBuffer === undefined ? false : this.dataAvailable || payload.loadAsArrayBuffer,
-			payload.workInline === undefined ? true : payload.workInline,
-			payload.basePath === null ? undefined : payload.basePath
-		);
+		// re-init OBJLoader
+		this.objLoader.reInit( true, payload.basePath );
 	};
 
 	WWOBJLoader.prototype.initMaterials = function ( payload ) {
@@ -118,7 +120,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		materialCreator.setMaterials( materialsJSON );
 		materialCreator.preload();
 
-		this.setMaterials( materialCreator );
+		this.objLoader.setMaterials( materialCreator );
 	};
 
 	WWOBJLoader.prototype.run = function () {
@@ -132,13 +134,11 @@ THREE.WebWorker.WWOBJLoader = (function () {
 			self.postMessage( {
 				cmd: scope.cmdState
 			} );
-
-			scope.dispose();
 		};
 
 		if ( scope.dataAvailable ) {
 
-			scope.parseArrayBuffer( scope.objAsArrayBuffer );
+			scope.objLoader.parse( scope.objAsArrayBuffer );
 			complete();
 
 		} else {
@@ -158,7 +158,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 				console.error( xhr );
 			};
 
-			scope.load( scope.objFile, onLoad, onProgress, onError );
+			scope.objLoader.load( scope.objFile, onLoad, onProgress, onError );
 
 		}
 	};

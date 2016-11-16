@@ -12,9 +12,16 @@ THREE.OBJLoader = (function () {
 		this.path = '';
 		this.loadAsArrayBuffer = true;
 		this.parser = null;
-		this.debug = false;
 
-		this.reInit( manager );
+		this.manager = ( manager === null ) ? THREE.DefaultLoadingManager : manager;
+		this.loader = new THREE.FileLoader( this.manager );
+		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
+		this.parser = new OBJCodeParser( this.extendableMeshCreator );
+
+		this.extendableMeshCreator.debug = true;
+		this.parser.debug = true;
+
+		this.init = false;
 	}
 
 	OBJLoader.prototype.setPath = function ( path ) {
@@ -28,7 +35,7 @@ THREE.OBJLoader = (function () {
 	 * @param loadAsArrayBuffer
 	 */
 	OBJLoader.prototype.setLoadAsArrayBuffer = function ( loadAsArrayBuffer ) {
-		this.loadAsArrayBuffer = ( loadAsArrayBuffer == null ) ? true : false;
+		this.loadAsArrayBuffer = ( loadAsArrayBuffer == null ) ? true : loadAsArrayBuffer;
 	};
 
 	/**
@@ -38,7 +45,7 @@ THREE.OBJLoader = (function () {
 	 * @param container
 	 */
 	OBJLoader.prototype.setContainer = function ( container ) {
-		this.parser.extendableMeshCreator.setContainer( container );
+		this.extendableMeshCreator.setContainer( container );
 	};
 
 	/**
@@ -48,7 +55,7 @@ THREE.OBJLoader = (function () {
 	 * @param materials
 	 */
 	OBJLoader.prototype.setMaterials = function ( materials ) {
-		this.parser.extendableMeshCreator.setMaterials( materials );
+		this.extendableMeshCreator.setMaterials( materials );
 	};
 
 	/**
@@ -58,7 +65,7 @@ THREE.OBJLoader = (function () {
 	 * @param createObjectPerSmoothingGroup
 	 */
 	OBJLoader.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-		this.parser.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
+		this.parser.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 	};
 
 	/**
@@ -66,7 +73,21 @@ THREE.OBJLoader = (function () {
 	 * @param useMultiMaterials
 	 */
 	OBJLoader.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.parser.extendableMeshCreator.setUseMultiMaterials( useMultiMaterials );
+		this.extendableMeshCreator.setUseMultiMaterials( useMultiMaterials );
+	};
+
+	/**
+	 * Allow to set own ExtendableMeshCreator (e.g. web worker)
+	 * @param extendableMeshCreator
+	 */
+	OBJLoader.prototype.setExtendableMeshCreator = function ( extendableMeshCreator ) {
+		if ( extendableMeshCreator != null ) {
+
+			this.extendableMeshCreator = extendableMeshCreator;
+			this.parser.extendableMeshCreator = this.extendableMeshCreator;
+			console.log( 'Updated ExtendableMeshCreator' );
+
+		}
 	};
 
 	/**
@@ -79,15 +100,15 @@ THREE.OBJLoader = (function () {
 	 * @param materials
 	 * @param createObjectPerSmoothingGroup
 	 */
-	OBJLoader.prototype.reInit = function ( manager, loadAsArrayBuffer, path, container, materials, createObjectPerSmoothingGroup ) {
-		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
-		this.loader = new THREE.FileLoader( this.manager );
-		this.parser = new OBJCodeParser();
+	OBJLoader.prototype.reInit = function ( loadAsArrayBuffer, path, container, materials,
+											createObjectPerSmoothingGroup, useMultiMaterials ) {
+		if ( this.init ) return;
+
 		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
-		this.setMaterials( materials );
-		this.setContainer( container );
 		this.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
+		this.extendableMeshCreator.reInit( container, materials, useMultiMaterials );
+		this.init = true;
 	};
 
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
@@ -105,6 +126,8 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 		console.time( 'Parse' );
+		this.reInit();
+
 		if ( this.loadAsArrayBuffer ) {
 
 			this.parser.prepareArrayBuffer( loadedContent );
@@ -113,14 +136,26 @@ THREE.OBJLoader = (function () {
 
 			this.parser.prepareText( loadedContent );
 
-
 		}
 		this.parser.parse();
 
 		// do not forget last object
-		var container = this.parser.finalize();
+		var container = this.finalize();
 		this.parser = null;
+
 		console.timeEnd( 'Parse' );
+
+		return container;
+	};
+
+	OBJLoader.prototype.finalize = function () {
+		this.parser.finalize();
+
+		console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
+		var container = this.extendableMeshCreator.container;
+		this.extendableMeshCreator.finalize();
+
+		this.init = false;
 
 		return container;
 	};
@@ -152,9 +187,9 @@ THREE.OBJLoader = (function () {
 
 	var OBJCodeParser = (function () {
 
-		function OBJCodeParser() {
+		function OBJCodeParser( extendableMeshCreator ) {
 			this.rawObjectBuilder = new RawObjectBuilder( false );
-			this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
+			this.extendableMeshCreator = extendableMeshCreator;
 			this.inputObjectCount = 0;
 
 			this.objData = null;
@@ -163,13 +198,10 @@ THREE.OBJLoader = (function () {
 			this.pointer = 0;
 			this.retrieveCodeFunction = this.getCodeFromArrayBuffer;
 			this.reachedFaces = false;
-
-			this.setDebug( true, true );
 		}
 
-		OBJCodeParser.prototype.setDebug = function ( debugObjCodeParser, debugExtendableMeshCreator ) {
-			this.debug = debugObjCodeParser;
-			this.extendableMeshCreator.debug = debugExtendableMeshCreator;
+		OBJCodeParser.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
+			this.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 		};
 
 		OBJCodeParser.prototype.prepareArrayBuffer = function ( arrayBuffer ) {
@@ -322,13 +354,6 @@ THREE.OBJLoader = (function () {
 
 		OBJCodeParser.prototype.finalize = function () {
 			this.processCompletedObject( false );
-
-			console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
-
-			var container = this.extendableMeshCreator.container;
-			this.extendableMeshCreator = null;
-
-			return container;
 		};
 
 		var LineParserBase = (function () {
@@ -991,23 +1016,38 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 	function ExtendableMeshCreator() {
 		this.container = new THREE.Group();
-		this.materials = null;
+		this.materials = { materials: [] };
 		this.debug = false;
-		this.useMultiMaterials = true;
-
+		this.useMultiMaterials = false;
 		this.globalObjectCount = 0;
+
+		this.reInit();
 	}
 
 	ExtendableMeshCreator.prototype.setContainer = function ( container ) {
-		this.container = ( container == null ) ? new THREE.Group() : container;
+		this.container = ( container == null ) ? this.container : container;
 	};
 
 	ExtendableMeshCreator.prototype.setMaterials = function ( materials ) {
-		this.materials = ( materials == null ) ? { materials: [] } : materials;
+		this.materials = ( materials == null ) ? this.materials : materials;
 	};
 
 	ExtendableMeshCreator.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.useMultiMaterials = ( useMultiMaterials == null ) ? true : useMultiMaterials;
+		this.useMultiMaterials = ( useMultiMaterials == null ) ? this.useMultiMaterials : useMultiMaterials;
+	};
+
+	ExtendableMeshCreator.prototype.reInit = function ( container, materials, useMultiMaterials ) {
+		this.setContainer( container );
+		this.setMaterials( materials );
+		this.setUseMultiMaterials( useMultiMaterials );
+		this.globalObjectCount = 0;
+		this.debug = false;
+	};
+
+	ExtendableMeshCreator.prototype.finalize = function () {
+		this.container = new THREE.Group();
+		this.materials = { materials: [] };
+		this.globalObjectCount = 0;
 	};
 
 	/**
