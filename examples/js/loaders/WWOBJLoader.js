@@ -94,7 +94,6 @@ THREE.WebWorker.WWOBJLoader = (function () {
 	WWOBJLoader.prototype.init = function ( payload ) {
 		this.cmdState = 'init';
 
-		this.debug = payload.debug;
 		this.dataAvailable = payload.dataAvailable;
 		this.objFile = payload.objFile === null ? '' : payload.objFile;
 		this.objAsArrayBuffer = this.dataAvailable ? payload.objAsArrayBuffer : null;
@@ -138,11 +137,18 @@ THREE.WebWorker.WWOBJLoader = (function () {
 				complete();
 			};
 
-			var onProgress = function ( xhr ) {
-				if ( xhr.lengthComputable ) {
+			var refPercentComplete = 0;
+			var percentComplete = 0;
+			var output;
 
-					var percentComplete = xhr.loaded / xhr.total * 100;
-					var output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
+			var onProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
+
+				percentComplete = Math.round( event.loaded / event.total * 100 );
+				if ( percentComplete > refPercentComplete ) {
+
+					refPercentComplete = percentComplete;
+					output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
 					console.log( output );
 					self.postMessage( {
 						cmd: 'report_progress',
@@ -152,8 +158,8 @@ THREE.WebWorker.WWOBJLoader = (function () {
 				}
 			};
 
-			var onError = function ( xhr ) {
-				console.error( xhr );
+			var onError = function ( event ) {
+				console.error( event );
 			};
 
 			scope.objLoader.load( scope.objFile, onLoad, onProgress, onError );

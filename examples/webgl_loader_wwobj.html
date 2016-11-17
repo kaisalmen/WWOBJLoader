@@ -172,14 +172,8 @@
 			 */
 			THREE.examples.loaders.WWOBJLoaderChecker = (function () {
 
-				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
-					constructor: {
-						configurable: true,
-						enumerable: true,
-						value: WWOBJLoaderChecker,
-						writable: true
-					}
-				});
+				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+				WWOBJLoaderChecker.prototype.constructor = WWOBJLoaderChecker;
 
 				function WWOBJLoaderChecker( elementToBindTo ) {
 					THREE.examples.apps.ThreeJsApp.call( this );
@@ -206,7 +200,6 @@
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
 					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
-					this.wwObjFrontEnd.setDebug( true );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {

@@ -133,7 +133,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
-			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: basePath,
 			objFile: objFile,
@@ -156,7 +155,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
-			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: null,
 			objFile: null,

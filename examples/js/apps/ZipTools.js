@@ -25,8 +25,6 @@ THREE.examples.apps.ZipTools = (function () {
 
 	ZipTools.prototype.load = function ( filename, callbacks ) {
 		var scope = this;
-		var refPercentComplete = 0;
-		var percentComplete = 0;
 
 		var onSuccess = function ( zipDataFromXHR ) {
 			scope.zip.loadAsync( zipDataFromXHR )
@@ -38,23 +36,20 @@ THREE.examples.apps.ZipTools = (function () {
 			} );
 		};
 
+		var refPercentComplete = 0;
+		var percentComplete = 0;
+		var output;
 		var onProgress = function ( event ) {
-			if ( event.lengthComputable ) {
+			if ( ! event.lengthComputable ) return;
 
-				percentComplete = Math.round( event.loaded / event.total * 100 );
+			percentComplete = Math.round( event.loaded / event.total * 100 );
+			if ( percentComplete > refPercentComplete ) {
 
-				if ( percentComplete > refPercentComplete ) {
+				refPercentComplete = percentComplete;
+				output = 'Download of "' + filename + '": ' + percentComplete + '%';
+				console.log( output );
+				if ( callbacks.progress !== null && callbacks.progress !== undefined ) callbacks.progress( output );
 
-					refPercentComplete = percentComplete;
-					var output = 'Download of "' + filename + '": ' + percentComplete + '%';
-					console.log( output );
-					if ( callbacks.progress !== null && callbacks.progress !== undefined ) {
-
-						callbacks.progress( output );
-
-					}
-
-				}
 			}
 		};
 
