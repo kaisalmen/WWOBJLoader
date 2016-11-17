@@ -12,6 +12,7 @@
 				margin: 0px 0px 0px 0px;
 				padding: 0px 0px 0px 0px;
 				border: none;
+				cursor: default;
 			}
 			#info {
 				color: #fff;
@@ -22,7 +23,7 @@
 				z-index: 100;
 				display:block;
 			}
-			#info a, .button {
+			#info a {
 				color: #f00;
 				font-weight: bold;
 				text-decoration: underline;
@@ -49,15 +50,15 @@
 			#menu {
 				margin: 4px 4px 4px 4px;
 				padding: 4px 12px 4px 12px;
-				border-style: solid;
+				border: solid darkorange;
 				border-radius: 8px;
-				border-color: darkorange;
 				position: absolute;
 				left: 0px;
 				top: 0px;
 			}
 			#clear {
 				color: red;
+				cursor: pointer;
 			}
 			h1 {
 				color: darkorange;
@@ -65,7 +66,7 @@
 			p {
 				margin: 4px 0px 4px 0px;
 				font-size: 18pt;
-				cursor: pointer;
+				color: #e1e1e1;
 			}
 			a {
 				color: #00a200;
@@ -79,8 +80,15 @@
 				color: #00a200;
 				text-decoration: underline;
 			}
-			span {
-				color: #00a200;
+			.offsite {  color: #00a200;
+				font-size: 14px;
+			}
+			.extras {
+				color: #e1e1e1;
+				font-size: 14px;
+			}
+			.asset {
+				cursor: pointer;
 			}
 		</style>
 	</head>
@@ -93,13 +101,37 @@
 		<div id="glFullscreen">
 			<div id="menu">
 				<h1>Select OBJ files:</h1>
-				<p onclick="loadAssets( objsFemaleMale )">Male + Female <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
-				<p onclick="loadAssets( objsWaltHead )">Walt Head <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
-				<p onclick="loadAssets( objsCerberus )">Cerberus <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
-				<p onclick="loadAssets( objsVive )">Vive Controller <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
-				<p onclick="loadAssets( objsZomaxSink )">Sink (178 MB) <span>(<a href="https://zomax.net/free-stuff/">Zomax</a>)</span></p>
-				<p onclick="loadAssets( objsZomaxOven )">Oven (150 MB) <span>(<a href="https://zomax.net/free-stuff/">Zomax</a>)</span></p>
-				<p onclick="loadAssets( objsPtv1Zip )">PTV1 (150 MB) <span>(<a href="http://kaisalmen.de">Kai</a>/<a href="http://zeroSouth.com">ZeroSouth</a>)</span></p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsFemaleMale )">Male + Female</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsWaltHead )">Walt Head</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsCerberus )">Cerberus</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsVive )">Vive Controller</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsZomaxSink )">Sink</span>
+					<span class="extras">(45MB->178MB)</span>
+					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsZomaxOven )">Oven</span>
+					<span class="extras">(43MB->150MB)</span>
+					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsPtv1Zip )">PTV1</span>
+					<span class="extras">(26MB->150MB)</span>
+					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
+				</p>
 				<br><br>
 				<p id="clear" onclick="clearAllAssests()">Clear all</p>
 			</div>

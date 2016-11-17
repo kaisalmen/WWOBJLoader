@@ -702,7 +702,7 @@ THREE.OBJLoader = (function () {
 
 	var RawObjectBuilder = (function () {
 
-		function RawObjectBuilder( activeGroupOverride ) {
+		function RawObjectBuilder() {
 			this.createObjectPerSmoothingGroup = false;
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
@@ -722,8 +722,9 @@ THREE.OBJLoader = (function () {
 			this.absoluteUvCount = 0;
 			this.mtllibName = '';
 
-			// faces are store according combined index of groups, material and smoothing group
-			this.activeGroup = ( activeGroupOverride === undefined ) ? 'none' : activeGroupOverride;
+			// faces are stored according combined index of object, group, material
+			// and plus smoothing group if createObjectPerSmoothingGroup=true
+			this.activeGroupName = 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 0;
 
@@ -733,8 +734,8 @@ THREE.OBJLoader = (function () {
 
 			this.retrievedObjectDescriptions = [];
 			var index = this.buildIndexRegular();
-			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
-				this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+			this.retrievedObjectDescriptionInUse = new THREE.OBJLoader.RetrievedObjectDescription( this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
+			this.retrievedObjectDescriptions[ index ] = this.retrievedObjectDescriptionInUse;
 		}
 
 		RawObjectBuilder.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
@@ -742,22 +743,24 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.newInstance = function ( vertexDetection ) {
-			var newOob;
-			if ( vertexDetection ) {
+			var newOob = new RawObjectBuilder();
+			if ( vertexDetection ) newOob.overrideActiveGroupName( this.activeGroupName );
 
-				newOob = new RawObjectBuilder( this.activeGroup );
-
-			} else {
-
-				newOob = new RawObjectBuilder();
-
-			}
 			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
 			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
 			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
 			newOob.setCreateObjectPerSmoothingGroup( this.createObjectPerSmoothingGroup );
 
 			return newOob;
+		};
+
+		/**
+		 * Active group name needs to be set if new object was detected by 'v' insterad of 'o'
+		 * @param activeGroupName
+		 */
+		RawObjectBuilder.prototype.overrideActiveGroupName = function ( activeGroupName ) {
+			this.activeGroupName = activeGroupName;
+			this.retrievedObjectDescriptionInUse.groupName = activeGroupName;
 		};
 
 		/**
@@ -772,6 +775,8 @@ THREE.OBJLoader = (function () {
 			for ( var name in temp ) {
 				retrievedObjectDescription = temp[ name ];
 				if ( retrievedObjectDescription.vertexArrayIndex > 0 ) {
+
+					if ( retrievedObjectDescription.objectName === 'none' ) retrievedObjectDescription.objectName = retrievedObjectDescription.groupName;
 
 					this.retrievedObjectDescriptions[ index++ ] = retrievedObjectDescription;
 					this.absoluteVertexCount += retrievedObjectDescription.vertexArrayIndex;
@@ -813,8 +818,8 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.pushGroup = function ( groupName ) {
-			if ( this.activeGroup === groupName ) return;
-			this.activeGroup = groupName;
+			if ( this.activeGroupName === groupName ) return;
+			this.activeGroupName = groupName;
 			this.objectGroupCount++;
 
 			this.verifyIndex();
@@ -853,7 +858,7 @@ THREE.OBJLoader = (function () {
 			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
 
 				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
-					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+					this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
 
 			}
 			else {
@@ -864,11 +869,11 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.buildIndexRegular = function () {
-			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
+			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
 		};
 
 		RawObjectBuilder.prototype.buildIndexOverride = function ( smoothingGroup ) {
-			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + smoothingGroup;
+			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
 		RawObjectBuilder.prototype.pushFaceVVtVn = function ( vIndices, vtIndices, vnIndices ) {
@@ -998,9 +1003,9 @@ THREE.OBJLoader = (function () {
 
 THREE.OBJLoader.RetrievedObjectDescription = (function () {
 
-	function RetrievedObjectDescription( objectName, group, materialName, smoothingGroup ) {
+	function RetrievedObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
 		this.objectName = objectName;
-		this.group = group;
+		this.groupName = groupName;
 		this.materialName = materialName;
 		this.smoothingGroup = smoothingGroup;
 
@@ -1233,7 +1238,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		console.log(
 			' Output Object no.: ' + this.globalObjectCount +
 			'\n objectName: ' + retrievedObjectDescription.objectName +
-			'\n group: ' + retrievedObjectDescription.group +
+			'\n groupName: ' + retrievedObjectDescription.groupName +
 			'\n materialName: ' + retrievedObjectDescription.materialName +
 			'\n materialIndex: ' + selectedMaterialIndex +
 			'\n smoothingGroup: ' + retrievedObjectDescription.smoothingGroup +

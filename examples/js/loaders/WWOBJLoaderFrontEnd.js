@@ -21,7 +21,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.mtlAsString = null;
 
 		this.materials = [];
-		this.defaultMaterial = new THREE.MeshPhongMaterial();
+		this.defaultMaterial = new THREE.MeshPhongMaterial( { color: 0xDCF1FF} );
 		this.defaultMaterial.name = "defaultMaterial";
 
 		this.counter = 0;
