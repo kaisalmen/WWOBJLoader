@@ -59,13 +59,28 @@
 			#clear {
 				color: red;
 			}
-			h2 {
+			h1 {
 				color: darkorange;
 			}
 			p {
 				margin: 4px 0px 4px 0px;
 				font-size: 18pt;
 				cursor: pointer;
+			}
+			a {
+				color: #00a200;
+				text-decoration: none;
+			}
+			a:visited {
+				color: #006400;
+				text-decoration: none;
+			}
+			a:hover {
+				color: #00a200;
+				text-decoration: underline;
+			}
+			span {
+				color: #00a200;
 			}
 		</style>
 	</head>
@@ -77,21 +92,21 @@
 		</div>
 		<div id="glFullscreen">
 			<div id="menu">
-				<h2>Select OBJ files:</h2>
-				<p onclick="loadAssets( objsFemaleMale )">Male + Female</p>
-				<p onclick="loadAssets( objsCapsule )">Capsule</p>
-				<p onclick="loadAssets( objsCerberus )">Cerberus</p>
-				<p onclick="loadAssets( objsZomaxZip )">Sink + Oven</p>
-				<p onclick="loadAssets( objsPtv1Zip )">PTV1</p>
-				<br>
-<!--
+				<h1>Select OBJ files:</h1>
+				<p onclick="loadAssets( objsFemaleMale )">Male + Female <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
+				<p onclick="loadAssets( objsWaltHead )">Walt Head <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
+				<p onclick="loadAssets( objsCerberus )">Cerberus <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
+				<p onclick="loadAssets( objsVive )">Vive Controller <span>(<a href="http://threejs.org" target="_blank">three.js</a>)</span></p>
+				<p onclick="loadAssets( objsZomaxSink )">Sink (178 MB) <span>(<a href="https://zomax.net/free-stuff/">Zomax</a>)</span></p>
+				<p onclick="loadAssets( objsZomaxOven )">Oven (150 MB) <span>(<a href="https://zomax.net/free-stuff/">Zomax</a>)</span></p>
+				<p onclick="loadAssets( objsPtv1Zip )">PTV1 (150 MB) <span>(<a href="http://kaisalmen.de">Kai</a>/<a href="http://zeroSouth.com">ZeroSouth</a>)</span></p>
+				<br><br>
 				<p id="clear" onclick="clearAllAssests()">Clear all</p>
--->
 			</div>
 			<canvas id="example"></canvas>
 		</div>
 
-		<script src="../build/three.js"></script>
+		<script src="../build/three.min.js"></script>
 
 		<script src="js/Detector.js"></script>
 
@@ -285,6 +300,7 @@
 
 								pivot = new THREE.Object3D();
 								pivot.position.set( obj2Load.pos.x, obj2Load.pos.y, obj2Load.pos.z );
+								pivot.scale.set( obj2Load.scale, obj2Load.scale, obj2Load.scale );
 								obj2Load.pivot = pivot;
 								this.objs2Load.push( obj2Load );
 								this.allAssets[obj2Load.name] = obj2Load;
@@ -375,7 +391,7 @@
 
 			})();
 
-			var WWOBJLoaderDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos ) {
+			var WWOBJLoaderDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos, scale ) {
 				this.name = name;
 				this.pathBase = pathBase;
 				this.fileObj = fileObj;
@@ -383,6 +399,7 @@
 				this.pathTexture = pathTexture;
 				this.fileZip = fileZip;
 				this.pos = pos;
+				this.scale = scale == null ? 1.0 : scale;
 				this.pivot = null;
 			};
 
@@ -393,18 +410,23 @@
 
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-			var objsZomaxZip = [];
-			objsZomaxZip.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
-			objsZomaxZip.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
+			var objsZomaxOven = [];
+			objsZomaxOven.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+
+			var objsZomaxSink = [];
+			objsZomaxSink.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
 
 			var objsPtv1Zip = [];
-			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -150, y: 0, z: -175 } ) );
+			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
 
 			var objsCerberus = [];
-			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: 20, z: 0 } ) );
+			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
 
-			var objsCapsule = [];
-			objsCapsule.push( new WWOBJLoaderDef( 'capsule', '../../obj/capsule/', 'capsule.obj', 'capsule.mtl', './obj/capsule/', null, { x: 0, y: 0, z: 0 } ) );
+			var objsWaltHead = [];
+			objsWaltHead.push( new WWOBJLoaderDef( 'WaltHead', '../../obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', './obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
+
+			var objsVive = [];
+			objsVive.push( new WWOBJLoaderDef( 'Vive Controller', '../../obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, './obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {
