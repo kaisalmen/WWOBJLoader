@@ -140,8 +140,15 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 			var onProgress = function ( xhr ) {
 				if ( xhr.lengthComputable ) {
+
 					var percentComplete = xhr.loaded / xhr.total * 100;
-					console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+					var output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
+					console.log( output );
+					self.postMessage( {
+						cmd: 'report_progress',
+						output: output
+					} );
+
 				}
 			};
 
