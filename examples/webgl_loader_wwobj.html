@@ -12,6 +12,7 @@
 				margin: 0px 0px 0px 0px;
 				padding: 0px 0px 0px 0px;
 				border: none;
+				cursor: default;
 			}
 			#info {
 				color: #fff;
@@ -22,7 +23,7 @@
 				z-index: 100;
 				display:block;
 			}
-			#info a, .button {
+			#info a {
 				color: #f00;
 				font-weight: bold;
 				text-decoration: underline;
@@ -49,22 +50,44 @@
 			#menu {
 				margin: 4px 4px 4px 4px;
 				padding: 4px 12px 4px 12px;
-				border-style: solid;
+				border: solid darkorange;
 				border-radius: 8px;
-				border-color: darkorange;
 				position: absolute;
 				left: 0px;
 				top: 0px;
 			}
 			#clear {
 				color: red;
+				cursor: pointer;
 			}
-			h2 {
+			h1 {
 				color: darkorange;
 			}
 			p {
 				margin: 4px 0px 4px 0px;
 				font-size: 18pt;
+				color: #e1e1e1;
+			}
+			a {
+				color: #00a200;
+				text-decoration: none;
+			}
+			a:visited {
+				color: #006400;
+				text-decoration: none;
+			}
+			a:hover {
+				color: #00a200;
+				text-decoration: underline;
+			}
+			.offsite {  color: #00a200;
+				font-size: 14px;
+			}
+			.extras {
+				color: #e1e1e1;
+				font-size: 14px;
+			}
+			.asset {
 				cursor: pointer;
 			}
 		</style>
@@ -77,19 +100,45 @@
 		</div>
 		<div id="glFullscreen">
 			<div id="menu">
-				<h2>Select OBJ files:</h2>
-				<p onclick="loadAssets( objsFemaleMale )">Male + Female</p>
-				<p onclick="loadAssets( objsCapsule )">Capsule</p>
-				<p onclick="loadAssets( objsCerberus )">Cerberus</p>
-				<p onclick="loadAssets( objsZomaxZip )">Sink + Oven</p>
-				<p onclick="loadAssets( objsPtv1Zip )">PTV1</p>
-				<br>
+				<h1>Select OBJ files:</h1>
+				<p>
+					<span class="asset" onclick="loadAssets( objsFemaleMale )">Male + Female</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsWaltHead )">Walt Head</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsCerberus )">Cerberus</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsVive )">Vive Controller</span>
+					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsZomaxSink )">Sink</span>
+					<span class="extras">(45MB->178MB)</span>
+					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsZomaxOven )">Oven</span>
+					<span class="extras">(43MB->150MB)</span>
+					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+				</p>
+				<p>
+					<span class="asset" onclick="loadAssets( objsPtv1Zip )">PTV1</span>
+					<span class="extras">(26MB->150MB)</span>
+					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
+				</p>
+				<br><br>
 				<p id="clear" onclick="clearAllAssests()">Clear all</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
 
-		<script src="../build/three.js"></script>
+		<script src="../build/three.min.js"></script>
 
 		<script src="js/Detector.js"></script>
 
@@ -123,14 +172,8 @@
 			 */
 			THREE.examples.loaders.WWOBJLoaderChecker = (function () {
 
-				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
-					constructor: {
-						configurable: true,
-						enumerable: true,
-						value: WWOBJLoaderChecker,
-						writable: true
-					}
-				});
+				WWOBJLoaderChecker.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+				WWOBJLoaderChecker.prototype.constructor = WWOBJLoaderChecker;
 
 				function WWOBJLoaderChecker( elementToBindTo ) {
 					THREE.examples.apps.ThreeJsApp.call( this );
@@ -157,7 +200,6 @@
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
 					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
-					this.wwObjFrontEnd.setDebug( true );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {
@@ -283,6 +325,7 @@
 
 								pivot = new THREE.Object3D();
 								pivot.position.set( obj2Load.pos.x, obj2Load.pos.y, obj2Load.pos.z );
+								pivot.scale.set( obj2Load.scale, obj2Load.scale, obj2Load.scale );
 								obj2Load.pivot = pivot;
 								this.objs2Load.push( obj2Load );
 								this.allAssets[obj2Load.name] = obj2Load;
@@ -373,7 +416,7 @@
 
 			})();
 
-			var WWOBJLoaderDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos ) {
+			var WWOBJLoaderDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos, scale ) {
 				this.name = name;
 				this.pathBase = pathBase;
 				this.fileObj = fileObj;
@@ -381,6 +424,7 @@
 				this.pathTexture = pathTexture;
 				this.fileZip = fileZip;
 				this.pos = pos;
+				this.scale = scale == null ? 1.0 : scale;
 				this.pivot = null;
 			};
 
@@ -391,18 +435,23 @@
 
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-			var objsZomaxZip = [];
-			objsZomaxZip.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
-			objsZomaxZip.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
+			var objsZomaxOven = [];
+			objsZomaxOven.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+
+			var objsZomaxSink = [];
+			objsZomaxSink.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
 
 			var objsPtv1Zip = [];
-			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -150, y: 0, z: -175 } ) );
+			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
 
 			var objsCerberus = [];
-			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: 20, z: 0 } ) );
+			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
 
-			var objsCapsule = [];
-			objsCapsule.push( new WWOBJLoaderDef( 'capsule', '../../obj/capsule/', 'capsule.obj', 'capsule.mtl', './obj/capsule/', null, { x: 0, y: 0, z: 0 } ) );
+			var objsWaltHead = [];
+			objsWaltHead.push( new WWOBJLoaderDef( 'WaltHead', '../../obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', './obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
+
+			var objsVive = [];
+			objsVive.push( new WWOBJLoaderDef( 'Vive Controller', '../../obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, './obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {

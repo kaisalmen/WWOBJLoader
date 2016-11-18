@@ -7,18 +7,23 @@
 THREE.OBJLoader = (function () {
 
 	function OBJLoader( manager ) {
-		this.manager = null;
-		this.loader = null;
-		this.path = '';
-		this.loadAsArrayBuffer = true;
-		this.parser = null;
-		this.debug = false;
+		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
 
-		this.reInit( manager );
+		this.loadAsArrayBuffer = true;
+		this.path = '';
+		this.fileLoader = null;
+
+		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
+		this.parser = new OBJCodeParser( this.extendableMeshCreator );
+
+		this.extendableMeshCreator.debug = true;
+		this.parser.debug = false;
+
+		this.validated = false;
 	}
 
 	OBJLoader.prototype.setPath = function ( path ) {
-		this.path = ( path == null ) ? '' : path;
+		this.path = ( path == null ) ? this.path : path;
 	};
 
 	/**
@@ -28,7 +33,7 @@ THREE.OBJLoader = (function () {
 	 * @param loadAsArrayBuffer
 	 */
 	OBJLoader.prototype.setLoadAsArrayBuffer = function ( loadAsArrayBuffer ) {
-		this.loadAsArrayBuffer = ( loadAsArrayBuffer == null ) ? true : false;
+		this.loadAsArrayBuffer = ( loadAsArrayBuffer == null ) ? this.loadAsArrayBuffer : loadAsArrayBuffer;
 	};
 
 	/**
@@ -38,7 +43,7 @@ THREE.OBJLoader = (function () {
 	 * @param container
 	 */
 	OBJLoader.prototype.setContainer = function ( container ) {
-		this.parser.extendableMeshCreator.setContainer( container );
+		this.extendableMeshCreator.setContainer( container );
 	};
 
 	/**
@@ -48,7 +53,7 @@ THREE.OBJLoader = (function () {
 	 * @param materials
 	 */
 	OBJLoader.prototype.setMaterials = function ( materials ) {
-		this.parser.extendableMeshCreator.setMaterials( materials );
+		this.extendableMeshCreator.setMaterials( materials );
 	};
 
 	/**
@@ -58,7 +63,7 @@ THREE.OBJLoader = (function () {
 	 * @param createObjectPerSmoothingGroup
 	 */
 	OBJLoader.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-		this.parser.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
+		this.parser.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 	};
 
 	/**
@@ -66,38 +71,55 @@ THREE.OBJLoader = (function () {
 	 * @param useMultiMaterials
 	 */
 	OBJLoader.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.parser.extendableMeshCreator.setUseMultiMaterials( useMultiMaterials );
+		this.extendableMeshCreator.setUseMultiMaterials( useMultiMaterials );
 	};
 
 	/**
-	 * Convienece method used for init or re-init
+	 * Allow to set own ExtendableMeshCreator (e.g. web worker)
+	 * @param extendableMeshCreator
+	 */
+	OBJLoader.prototype.setExtendableMeshCreator = function ( extendableMeshCreator ) {
+		if ( extendableMeshCreator != null ) {
+
+			this.extendableMeshCreator = extendableMeshCreator;
+			this.parser.extendableMeshCreator = this.extendableMeshCreator;
+			console.log( 'Updated ExtendableMeshCreator' );
+
+		}
+	};
+
+	/**
+	 * Check initialization status: Used for init and re-init
 	 *
-	 * @param manager
 	 * @param loadAsArrayBuffer
 	 * @param path
 	 * @param container
 	 * @param materials
 	 * @param createObjectPerSmoothingGroup
+	 * @param useMultiMaterials
 	 */
-	OBJLoader.prototype.reInit = function ( manager, loadAsArrayBuffer, path, container, materials, createObjectPerSmoothingGroup ) {
-		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
-		this.loader = new THREE.FileLoader( this.manager );
-		this.parser = new OBJCodeParser();
+	OBJLoader.prototype.validate = function ( loadAsArrayBuffer, path, container, materials,
+											createObjectPerSmoothingGroup, useMultiMaterials ) {
+		if ( this.validated ) return;
+
+		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
-		this.setMaterials( materials );
-		this.setContainer( container );
 		this.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
+		this.extendableMeshCreator.validate( container, materials, useMultiMaterials );
+		this.validated = true;
 	};
 
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
 		var scope = this;
-		scope.loader.setPath( this.path );
-		scope.loader.setResponseType( scope.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
-		scope.loader.load( url, function ( loadedContent ) {
+		scope.validate();
+
+		scope.fileLoader.setPath( this.path );
+		scope.fileLoader.setResponseType( scope.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
+		scope.fileLoader.load( url, function ( loadedContent ) {
 
 			var container = scope.parse( loadedContent );
-			scope.loader = null;
+			scope.fileLoader = null;
 			onLoad( container );
 
 		}, onProgress, onError );
@@ -105,6 +127,8 @@ THREE.OBJLoader = (function () {
 
 	OBJLoader.prototype.parse = function ( loadedContent ) {
 		console.time( 'Parse' );
+		this.validate();
+
 		if ( this.loadAsArrayBuffer ) {
 
 			this.parser.prepareArrayBuffer( loadedContent );
@@ -113,14 +137,24 @@ THREE.OBJLoader = (function () {
 
 			this.parser.prepareText( loadedContent );
 
-
 		}
 		this.parser.parse();
 
 		// do not forget last object
-		var container = this.parser.finalize();
-		this.parser = null;
+		var container = this.finalize();
 		console.timeEnd( 'Parse' );
+
+		return container;
+	};
+
+	OBJLoader.prototype.finalize = function () {
+		this.parser.finalize();
+
+		console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
+		var container = this.extendableMeshCreator.container;
+		this.extendableMeshCreator.finalize();
+
+		this.validated = false;
 
 		return container;
 	};
@@ -152,10 +186,10 @@ THREE.OBJLoader = (function () {
 
 	var OBJCodeParser = (function () {
 
-		function OBJCodeParser() {
+		function OBJCodeParser( extendableMeshCreator ) {
 			this.rawObjectBuilder = new RawObjectBuilder( false );
-			this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
-			this.inputObjectCount = 0;
+			this.extendableMeshCreator = extendableMeshCreator;
+			this.inputObjectCount = 1;
 
 			this.objData = null;
 			this.contentLength = 0;
@@ -163,13 +197,10 @@ THREE.OBJLoader = (function () {
 			this.pointer = 0;
 			this.retrieveCodeFunction = this.getCodeFromArrayBuffer;
 			this.reachedFaces = false;
-
-			this.setDebug( true, true );
 		}
 
-		OBJCodeParser.prototype.setDebug = function ( debugObjCodeParser, debugExtendableMeshCreator ) {
-			this.debug = debugObjCodeParser;
-			this.extendableMeshCreator.debug = debugExtendableMeshCreator;
+		OBJCodeParser.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
+			this.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 		};
 
 		OBJCodeParser.prototype.prepareArrayBuffer = function ( arrayBuffer ) {
@@ -266,7 +297,8 @@ THREE.OBJLoader = (function () {
 							// new instance required, because "o" found and previous vertices exist
 							parsers.current = parsers.objects;
 							if ( this.rawObjectBuilder.vertices.length > 0 ) {
-								this.processCompletedObject( false );
+								this.processCompletedObject();
+								this.rawObjectBuilder = this.rawObjectBuilder.newInstance( false );
 							}
 							break;
 
@@ -281,7 +313,8 @@ THREE.OBJLoader = (function () {
 
 								// object complete instance required if reached faces already (= reached next block of v)
 								if ( this.reachedFaces ) {
-									this.processCompletedObject( true );
+									this.processCompletedObject();
+									this.rawObjectBuilder = this.rawObjectBuilder.newInstance( true );
 								}
 								haveV = false;
 							}
@@ -302,7 +335,7 @@ THREE.OBJLoader = (function () {
 		};
 
 
-		OBJCodeParser.prototype.processCompletedObject = function ( vertexDetection ) {
+		OBJCodeParser.prototype.processCompletedObject = function () {
 			this.rawObjectBuilder.finalize();
 
 			if ( this.debug ) this.rawObjectBuilder.createReport( this.inputObjectCount, true );
@@ -315,20 +348,14 @@ THREE.OBJLoader = (function () {
 				this.rawObjectBuilder.absoluteUvCount
 			);
 			this.inputObjectCount++;
-
-			this.rawObjectBuilder = this.rawObjectBuilder.newInstance( vertexDetection );
 			this.reachedFaces = false;
 		};
 
 		OBJCodeParser.prototype.finalize = function () {
 			this.processCompletedObject( false );
-
-			console.log( 'Global output object count: ' + this.extendableMeshCreator.globalObjectCount );
-
-			var container = this.extendableMeshCreator.container;
-			this.extendableMeshCreator = null;
-
-			return container;
+			this.rawObjectBuilder = new RawObjectBuilder( false );
+			this.inputObjectCount = 1;
+			this.pointer = 0;
 		};
 
 		var LineParserBase = (function () {
@@ -675,7 +702,7 @@ THREE.OBJLoader = (function () {
 
 	var RawObjectBuilder = (function () {
 
-		function RawObjectBuilder( activeGroupOverride ) {
+		function RawObjectBuilder() {
 			this.createObjectPerSmoothingGroup = false;
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
@@ -695,8 +722,9 @@ THREE.OBJLoader = (function () {
 			this.absoluteUvCount = 0;
 			this.mtllibName = '';
 
-			// faces are store according combined index of groups, material and smoothing group
-			this.activeGroup = ( activeGroupOverride === undefined ) ? 'none' : activeGroupOverride;
+			// faces are stored according combined index of object, group, material
+			// and plus smoothing group if createObjectPerSmoothingGroup=true
+			this.activeGroupName = 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 0;
 
@@ -706,8 +734,8 @@ THREE.OBJLoader = (function () {
 
 			this.retrievedObjectDescriptions = [];
 			var index = this.buildIndexRegular();
-			this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
-				this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+			this.retrievedObjectDescriptionInUse = new THREE.OBJLoader.RetrievedObjectDescription( this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
+			this.retrievedObjectDescriptions[ index ] = this.retrievedObjectDescriptionInUse;
 		}
 
 		RawObjectBuilder.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
@@ -715,21 +743,24 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.newInstance = function ( vertexDetection ) {
-			var newOob;
-			if ( vertexDetection ) {
+			var newOob = new RawObjectBuilder();
+			if ( vertexDetection ) newOob.overrideActiveGroupName( this.activeGroupName );
 
-				newOob = new RawObjectBuilder( this.createObjectPerSmoothingGroup, this.activeGroup );
-
-			} else {
-
-				newOob = new RawObjectBuilder( this.createObjectPerSmoothingGroup );
-
-			}
 			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
 			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
 			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
+			newOob.setCreateObjectPerSmoothingGroup( this.createObjectPerSmoothingGroup );
 
 			return newOob;
+		};
+
+		/**
+		 * Active group name needs to be set if new object was detected by 'v' insterad of 'o'
+		 * @param activeGroupName
+		 */
+		RawObjectBuilder.prototype.overrideActiveGroupName = function ( activeGroupName ) {
+			this.activeGroupName = activeGroupName;
+			this.retrievedObjectDescriptionInUse.groupName = activeGroupName;
 		};
 
 		/**
@@ -744,6 +775,8 @@ THREE.OBJLoader = (function () {
 			for ( var name in temp ) {
 				retrievedObjectDescription = temp[ name ];
 				if ( retrievedObjectDescription.vertexArrayIndex > 0 ) {
+
+					if ( retrievedObjectDescription.objectName === 'none' ) retrievedObjectDescription.objectName = retrievedObjectDescription.groupName;
 
 					this.retrievedObjectDescriptions[ index++ ] = retrievedObjectDescription;
 					this.absoluteVertexCount += retrievedObjectDescription.vertexArrayIndex;
@@ -785,8 +818,8 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.pushGroup = function ( groupName ) {
-			if ( this.activeGroup === groupName ) return;
-			this.activeGroup = groupName;
+			if ( this.activeGroupName === groupName ) return;
+			this.activeGroupName = groupName;
 			this.objectGroupCount++;
 
 			this.verifyIndex();
@@ -825,7 +858,7 @@ THREE.OBJLoader = (function () {
 			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
 
 				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
-					this.objectName, this.activeGroup, this.activeMtlName, this.activeSmoothingGroup );
+					this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
 
 			}
 			else {
@@ -836,11 +869,11 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObjectBuilder.prototype.buildIndexRegular = function () {
-			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
+			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + this.activeSmoothingGroup;
 		};
 
 		RawObjectBuilder.prototype.buildIndexOverride = function ( smoothingGroup ) {
-			return this.objectName + '|' + this.activeGroup + '|' + this.activeMtlName + '|' + smoothingGroup;
+			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
 		RawObjectBuilder.prototype.pushFaceVVtVn = function ( vIndices, vtIndices, vnIndices ) {
@@ -970,9 +1003,9 @@ THREE.OBJLoader = (function () {
 
 THREE.OBJLoader.RetrievedObjectDescription = (function () {
 
-	function RetrievedObjectDescription( objectName, group, materialName, smoothingGroup ) {
+	function RetrievedObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
 		this.objectName = objectName;
-		this.group = group;
+		this.groupName = groupName;
 		this.materialName = materialName;
 		this.smoothingGroup = smoothingGroup;
 
@@ -991,23 +1024,44 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 	function ExtendableMeshCreator() {
 		this.container = new THREE.Group();
-		this.materials = null;
+		this.materials = { materials: [] };
 		this.debug = false;
-		this.useMultiMaterials = true;
+		this.useMultiMaterials = false;
+		this.globalObjectCount = 1;
 
-		this.globalObjectCount = 0;
-	}
+		this.validated = false;
+}
 
 	ExtendableMeshCreator.prototype.setContainer = function ( container ) {
-		this.container = ( container == null ) ? new THREE.Group() : container;
+		this.container = ( container == null ) ? this.container : container;
 	};
 
 	ExtendableMeshCreator.prototype.setMaterials = function ( materials ) {
-		this.materials = ( materials == null ) ? { materials: [] } : materials;
+		this.materials = ( materials == null ) ? this.materials : materials;
 	};
 
 	ExtendableMeshCreator.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.useMultiMaterials = ( useMultiMaterials == null ) ? true : useMultiMaterials;
+		this.useMultiMaterials = ( useMultiMaterials == null ) ? this.useMultiMaterials : useMultiMaterials;
+	};
+
+	ExtendableMeshCreator.prototype.setDebug = function ( debug ) {
+		this.debug = ( debug == null ) ? this.debug : debug;
+	};
+
+	ExtendableMeshCreator.prototype.validate = function ( container, materials, useMultiMaterials, debug ) {
+		if ( this.validated ) return;
+
+		this.setContainer( container );
+		this.setMaterials( materials );
+		this.setUseMultiMaterials( useMultiMaterials );
+		this.setDebug( debug );
+		this.globalObjectCount = 1;
+	};
+
+	ExtendableMeshCreator.prototype.finalize = function () {
+		this.container = new THREE.Group();
+		this.materials = { materials: [] };
+		this.validated = false;
 	};
 
 	/**
@@ -1021,7 +1075,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	ExtendableMeshCreator.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount,
 														   absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 		var retrievedObjectDescription;
-		if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData: Processing object no.: ' + inputObjectCount );
+		if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
 
 		if ( this.useMultiMaterials ) {
 
@@ -1068,7 +1122,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 					retrievedObjectDescription = retrievedObjectDescriptions[ index ];
 
 					materialName = retrievedObjectDescription.materialName;
-					if ( this.materials !== null ) material = this.materials.create( materialName );
+					if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
 
 					if ( ! material ) {
 
@@ -1111,18 +1165,8 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 						uvOffset += retrievedObjectDescription.uvArrayIndex;
 					}
 
-					if ( this.debug ) {
-						console.log(
-							'objectName: ' + retrievedObjectDescription.objectName +
-							'\ngroup: ' + retrievedObjectDescription.group +
-							'\nmaterialName: ' + materialName +
-							'\nmaterialIndex: ' + selectedMaterialIndex +
-							'\nsmoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
-							'\n#vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
-							'\n#uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
-							'\n#normals: ' + retrievedObjectDescription.normalArrayIndex / 3
-						);
-					}
+					if ( this.debug ) this.printReport( retrievedObjectDescription, selectedMaterialIndex );
+
 				}
 				var multiMaterial = new THREE.MultiMaterial( materials );
 
@@ -1130,8 +1174,8 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 				var mesh = new THREE.Mesh( bufferGeometry, multiMaterial );
 				this.container.add( mesh );
-				this.globalObjectCount ++;
 
+				this.globalObjectCount++;
 			}
 
 		} else {
@@ -1144,19 +1188,6 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	};
 
 	ExtendableMeshCreator.prototype.buildSingleMaterialMesh = function ( retrievedObjectDescription ) {
-
-		if ( this.debug ) {
-			console.log(
-				'Object no.: ' + this.globalObjectCount +
-				'\nobjectName: ' + retrievedObjectDescription.objectName +
-				'\ngroup: ' + retrievedObjectDescription.group +
-				'\nmaterialName: ' + retrievedObjectDescription.materialName +
-				'\nsmoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
-				'\n#vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
-				'\n#uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
-				'\n#normals: ' + retrievedObjectDescription.normalArrayIndex / 3
-			);
-		}
 
 		var bufferGeometry = new THREE.BufferGeometry();
 		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( retrievedObjectDescription.vertexArray ), 3 ) );
@@ -1177,7 +1208,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 		var material;
 		var materialName = retrievedObjectDescription.materialName;
-		if ( this.materials !== null ) material = this.materials.create( materialName );
+		if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
 
 		if ( ! material ) {
 
@@ -1197,7 +1228,24 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 		var mesh = new THREE.Mesh( bufferGeometry, material );
 		this.container.add( mesh );
-		this.globalObjectCount ++;
+
+		if ( this.debug ) this.printReport( retrievedObjectDescription, 0 );
+
+		this.globalObjectCount++;
+	};
+
+	ExtendableMeshCreator.prototype.printReport = function ( retrievedObjectDescription, selectedMaterialIndex ) {
+		console.log(
+			' Output Object no.: ' + this.globalObjectCount +
+			'\n objectName: ' + retrievedObjectDescription.objectName +
+			'\n groupName: ' + retrievedObjectDescription.groupName +
+			'\n materialName: ' + retrievedObjectDescription.materialName +
+			'\n materialIndex: ' + selectedMaterialIndex +
+			'\n smoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
+			'\n #vertices: ' + retrievedObjectDescription.vertexArrayIndex / 3 +
+			'\n #uvs: ' + retrievedObjectDescription.uvArrayIndex / 2 +
+			'\n #normals: ' + retrievedObjectDescription.normalArrayIndex / 3
+		);
 	};
 
 	return ExtendableMeshCreator;

@@ -21,7 +21,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.mtlAsString = null;
 
 		this.materials = [];
-		this.defaultMaterial = new THREE.MeshPhongMaterial();
+		this.defaultMaterial = new THREE.MeshPhongMaterial( { color: 0xDCF1FF} );
 		this.defaultMaterial.name = "defaultMaterial";
 
 		this.counter = 0;
@@ -133,7 +133,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
-			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: basePath,
 			objFile: objFile,
@@ -156,7 +155,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
-			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: null,
 			objFile: null,
@@ -371,7 +369,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 				var output = '(' + this.counter + '): ' + payload.meshName;
 				this.announceProgress( 'Adding mesh', output );
-
 				break;
 
 			case 'complete':
@@ -384,7 +381,10 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					this.callbackCompletedLoading();
 
 				}
+				break;
 
+			case 'report_progress':
+				this.announceProgress( '', payload.output );
 				break;
 
 			default:
