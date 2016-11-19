@@ -16,7 +16,7 @@ THREE.OBJLoader = (function () {
 		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
 		this.parser = new OBJCodeParser( this.extendableMeshCreator );
 
-		this.extendableMeshCreator.debug = true;
+		this.extendableMeshCreator.debug = false;
 		this.parser.debug = false;
 
 		this.validated = false;
@@ -133,9 +133,157 @@ THREE.OBJLoader = (function () {
 
 			//this.parser.prepareArrayBuffer( loadedContent );
 
+			var robRef = this.parser.rawObjectBuilder;
+			var scope = this;
+			var processLine = function ( lineBuffer, lineBufferIndex ) {
+
+				id = lineBuffer[ 0 ];
+
+				switch ( id ) {
+					case STRING_V:
+						 robRef.pushVertex( lineBuffer[1], lineBuffer[2], lineBuffer[3] );
+
+						 // object complete instance required if reached faces already (= reached next block of v)
+						 if ( reachedFaces ) {
+							 scope.parser.processCompletedObject();
+							 robRef = robRef.newInstance( true );
+						 }
+						reachedFaces = false;
+						break;
+					case STRING_VN:
+						robRef.pushNormal( lineBuffer[1], lineBuffer[2], lineBuffer[3] );
+						break;
+
+					case STRING_VT:
+						robRef.pushUv( lineBuffer[1], lineBuffer[2] );
+						break;
+
+					case STRING_F:
+						reachedFaces = true;
+
+						/**
+						 * Support for triangle and quads:
+						 * 0: "f vertex/uv/normal    vertex/uv/normal    vertex/uv/normal    vertex/uv/normal"
+						 * 1: "f vertex/uv            vertex/uv            vertex/uv            vertex/uv"
+						 * 2: "f vertex//normal        vertex//normal        vertex//normal        vertex//normal"
+						 * 3: "f vertex                vertex                vertex                vertex"
+						 */
+						faceType = 1;
+						if ( lineBufferIndex === 10 ) {
+							faceType = 0;
+						}
+						else if ( lineBufferIndex === 4 ) {
+							faceType = 3;
+						}
+						else if ( slashes[ 1 ] - slashes[ 0 ] === 1 ) {
+							faceType = 2;
+						}
+
+						if ( lc < 20 ) console.log( 'faceType: ' + faceType + ' lineBufferIndex: ' + lineBufferIndex + ' buffer: ' + lineBuffer );
+						lc ++;
+						var haveQuad = ( lineBufferIndex - 1 ) % 4 === 0;
+/*
+						if ( haveQuad ) {
+
+							if ( faceType === 0 ) {
+
+								robRef.pushQuadVVtVn(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 7 ] ), parseInt( lineBuffer[ 10 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 8 ] ), parseInt( lineBuffer[ 11 ] ) ],
+									[ parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 9 ] ), parseInt( lineBuffer[ 12 ] ) ]
+								);
+
+							}
+							else if ( faceType === 1 ) {
+
+								robRef.pushQuadVVt(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 7 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 8 ] ) ]
+								);
+
+							}
+							else if ( faceType === 2 ) {
+
+								robRef.pushQuadVVn(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 7 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 8 ] ) ] );
+
+							}
+							else if ( faceType === 3 ) {
+
+								robRef.pushQuadV(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 4 ] ) ]
+								);
+
+							}
+
+						}
+						else {
+
+							if ( faceType === 0 ) {
+
+								robRef.pushFaceVVtVn(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 7 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 8 ] ) ],
+									[ parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 9 ] ) ]
+								);
+
+							}
+							else if ( faceType === 1 ) {
+
+								robRef.pushFaceVVt(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ) ]
+								);
+
+							}
+							else if ( faceType === 2 ) {
+
+								robRef.pushFaceVVn(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ) ],
+									[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ) ]
+								);
+
+							}
+							else if ( faceType === 3 ) {
+
+								robRef.pushFaceV(
+									[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 3 ] ) ]
+								);
+
+							}
+						}
+*/
+						break;
+
+					case STRING_L:
+						break;
+
+					case STRING_S:
+						break;
+
+					case STRING_G:
+						break;
+
+					case STRING_O:
+						break;
+
+					case STRING_M:
+						break;
+
+					case STRING_U:
+						break;
+
+					case STRING_SHARP:
+					default:
+						break;
+				}
+
+			};
+
 			var code;
 			var pointer = 0;
-			var lineIndex = 0;
+			var lineBufferIndex = 0;
 			var lineBuffer = new Array(20);
 
 			var objData = new Uint8Array( loadedContent );
@@ -145,10 +293,10 @@ THREE.OBJLoader = (function () {
 			var id;
 
 			var reachedFaces = false;
-			var slashCount = 0;
 			var faceType = 3;
-
-			var robRef = this.parser.rawObjectBuilder;
+			var slashes = new Array(6);
+			var slashesIndex = 0;
+			var slashesRefIndex = 0;
 
 			while ( pointer < length ) {
 
@@ -157,149 +305,35 @@ THREE.OBJLoader = (function () {
 
 					if ( code === CODE_CR ) pointer++;
 
-					if ( lineIndex > 0 ) {
-
-						id = lineBuffer[ 0 ];
-						if ( id === 'v' ) {
-
-							robRef.pushVertex( parseFloat( lineBuffer[1] ), parseFloat( lineBuffer[2] ), parseFloat( lineBuffer[3] ) );
-
-							// object complete instance required if reached faces already (= reached next block of v)
-							if ( reachedFaces ) {
-								this.parser.processCompletedObject();
-								robRef = robRef.newInstance( true );
-							}
-							reachedFaces = false;
-
-						} else if ( id === 'vn' ) {
-
-							robRef.pushNormal( parseFloat( lineBuffer[1] ), parseFloat( lineBuffer[2] ), parseFloat( lineBuffer[3] ) );
-
-						} else if ( id === 'vt' ) {
-
-							robRef.pushUv( parseFloat( lineBuffer[1] ), parseFloat( lineBuffer[2] ) );
-
-						} else if ( id === 'f' ) {
-
-							reachedFaces = true;
-							if ( lc < 20) console.log( 'faceType: ' + faceType + ' lineIndex: ' + lineIndex + ' buffer: ' + lineBuffer );
-							lc++;
-
-							var haveQuad = ( lineIndex - 1 ) % 4 === 0;
-							if ( haveQuad ) {
-
-								if ( faceType === 0 ) {
-
-									robRef.pushQuadVVtVn(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 7 ] ), parseInt( lineBuffer[ 10 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 8 ] ), parseInt( lineBuffer[ 11 ] ) ],
-										[ parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 9 ] ), parseInt( lineBuffer[ 12 ] ) ]
-									);
-
-								} else if ( faceType === 1 ) {
-
-									robRef.pushQuadVVt(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 7 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 8 ] ) ]
-									);
-
-								} else if ( faceType === 2 ) {
-
-									robRef.pushQuadVVn(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 7 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 8 ] ) ]									);
-
-								} else if ( faceType === 3 ) {
-
-									robRef.pushQuadV(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 4 ] ) ]
-									);
-
-								}
-
-							} else {
-
-								if ( faceType === 0 ) {
-
-									robRef.pushFaceVVtVn(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 7 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 5 ] ), parseInt( lineBuffer[ 8 ] ) ],
-										[ parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 6 ] ), parseInt( lineBuffer[ 9 ] ) ]
-									);
-
-								} else if ( faceType === 1 ) {
-
-									robRef.pushFaceVVt(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ) ]
-									);
-
-								} else if ( faceType === 2 ) {
-
-									robRef.pushFaceVVn(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 3 ] ), parseInt( lineBuffer[ 5 ] ) ],
-										[ parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 4 ] ), parseInt( lineBuffer[ 6 ] ) ]
-									);
-
-								} else if ( faceType === 3 ) {
-
-									robRef.pushFaceV(
-										[ parseInt( lineBuffer[ 1 ] ), parseInt( lineBuffer[ 2 ] ), parseInt( lineBuffer[ 3 ] ) ]
-									);
-
-								}
-							}
-
-						} else if ( id === 'l' ) {
-
-						} else if ( id === 's' ) {
-
-						} else if ( id === 'g' ) {
-
-						} else if ( id === 'u' ) {
-
-						} else if ( id === 'o' ) {
-
-						} else if ( id === 'm' ) {
-
-						} else if ( id === '#' ) {
-
-						}
+					if ( word.length > 0 ) {
+						lineBuffer[ lineBufferIndex ++ ] = word;
+						word = '';
 					}
 
-					lineIndex = 0;
+					if ( lineBufferIndex > 0 ) {
+						processLine( lineBuffer, lineBufferIndex );
+					}
 					word = '';
-					slashCount = 0;
-					faceType = 3;
+					lineBufferIndex = 0;
+					slashesIndex = 0;
+					slashesRefIndex = pointer + 1;
 
 				} else if ( code === CODE_SPACE ) {
 
 					if ( word.length > 0 ) {
-						lineBuffer[ lineIndex ++ ] = word;
+						lineBuffer[ lineBufferIndex ++ ] = word;
 						word = '';
-					}
-
-					if ( reachedFaces ) {
-						if ( slashCount === 1 ) faceType = 1;
 					}
 
 				} else if ( code === CODE_SLASH ) {
 
-					if ( reachedFaces ) {
-
-						if ( slashCount < 2 && faceType !== 1 ) {
-
-							slashCount ++;
-							faceType = ( word.length === 0 ) ? 2 : 0;
-
-						}
-
-					}
+					slashes[ slashesIndex++ ] = pointer - slashesRefIndex;
 
 					if ( word.length > 0 ) {
-						lineBuffer[ lineIndex ++ ] = word;
+						lineBuffer[ lineBufferIndex ++ ] = word;
 						word = '';
 					}
+
 
 				} else {
 
@@ -307,40 +341,6 @@ THREE.OBJLoader = (function () {
 
 				}
 			}
-
-/*
-			var wordArray = [];
-			var wordArrayIndex = 0;
-			var i;
-			while ( pointer < length ) {
-
-				code = objData[ pointer++ ];
-				if ( code === CODE_LF || code === CODE_CR ) {
-
-					if ( lc < 20) console.log( 'lineIndex: ' + lineIndex + ' buffer: ' + lineBuffer );
-
-					if ( code === CODE_CR ) pointer++;
-					lineIndex = 0;
-					lc++;
-					wordArrayIndex = 0;
-
-
-				} else if ( code === CODE_SPACE  || code === CODE_SLASH ) {
-
-					for ( i = 0; i < wordArrayIndex; i++ ) {
-						word += String.fromCharCode( wordArray[ i ] );
-					}
-					lineBuffer[ lineIndex++ ] = word;
-					word = '';
-					wordArrayIndex = 0;
-
-				} else {
-
-					wordArray[ wordArrayIndex++ ] = code;
-
-				}
-			}
-*/
 
 		} else {
 
@@ -392,6 +392,18 @@ THREE.OBJLoader = (function () {
 	var CODE_T = 116;
 	var CODE_U = 117;
 	var CODE_V = 118;
+
+	var STRING_SHARP = '#';
+	var STRING_V = 'v';
+	var STRING_VN = 'vn';
+	var STRING_VT = 'vt';
+	var STRING_F = 'f';
+	var STRING_L = 'l';
+	var STRING_S = 's';
+	var STRING_G = 'g';
+	var STRING_O = 'o';
+	var STRING_U = 'u';
+	var STRING_M = 'm';
 
 	var OBJCodeParser = (function () {
 
@@ -1006,16 +1018,21 @@ THREE.OBJLoader = (function () {
 			return targetIndex;
 		};
 
-		RawObjectBuilder.prototype.pushVertex = function ( vertexArray ) {
-			this.verticesIndex = this.pushToBuffer( vertexArray, VERTEX_AND_NORMAL_VECTOR_LENGTH, this.vertices, this.verticesIndex );
+		RawObjectBuilder.prototype.pushVertex = function ( v0, v1, v2) {
+			this.vertices[ this.verticesIndex++ ] = parseFloat( v0 );
+			this.vertices[ this.verticesIndex++ ] = parseFloat( v1 );
+			this.vertices[ this.verticesIndex++ ] = parseFloat( v2 );
 		};
 
-		RawObjectBuilder.prototype.pushNormal = function ( normalArray ) {
-			this.normalsIndex = this.pushToBuffer( normalArray, VERTEX_AND_NORMAL_VECTOR_LENGTH, this.normals, this.normalsIndex );
+		RawObjectBuilder.prototype.pushNormal = function ( vn0, vn1, vn2 ) {
+			this.normals[ this.normalsIndex++ ] = parseFloat( vn0 );
+			this.normals[ this.normalsIndex++ ] = parseFloat( vn1 );
+			this.normals[ this.normalsIndex++ ] = parseFloat( vn2 );
 		};
 
-		RawObjectBuilder.prototype.pushUv = function ( uvArray ) {
-			this.uvsIndex = this.pushToBuffer( uvArray, UV_VECTOR_LENGTH, this.uvs, this.uvsIndex );
+		RawObjectBuilder.prototype.pushUv = function ( uv0, uv1 ) {
+			this.uvs[ this.uvsIndex++ ] = parseFloat( uv0 );
+			this.uvs[ this.uvsIndex++ ] = parseFloat( uv1 );
 		};
 
 		RawObjectBuilder.prototype.pushObject = function ( objectName ) {
