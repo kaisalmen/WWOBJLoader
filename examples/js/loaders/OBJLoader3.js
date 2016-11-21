@@ -106,7 +106,10 @@ THREE.OBJLoader = (function () {
 		this.setLoadAsArrayBuffer( loadAsArrayBuffer );
 		this.setPath( path );
 		this.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
+
+		this.parser.validate();
 		this.extendableMeshCreator.validate( container, materials, useMultiMaterials );
+
 		this.validated = true;
 	};
 
@@ -171,125 +174,174 @@ THREE.OBJLoader = (function () {
 			this.rawObjectBuilder = new RawObjectBuilder( false );
 			this.extendableMeshCreator = extendableMeshCreator;
 			this.inputObjectCount = 1;
+
+			this.buffer;
+			this.bufferPointer = 0;
+			this.slashes;
+			this.slashesIndex = 0;
+			this.reachedFaces = false;
 		}
 
 		OBJCodeParser.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
 			this.rawObjectBuilder.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 		};
 
-		OBJCodeParser.prototype.parse = function ( loadAsArrayBuffer, loadedContent) {
+		OBJCodeParser.prototype.validate = function () {
+			this.rawObjectBuilder = new RawObjectBuilder( false );
+			this.inputObjectCount = 1;
+
+			this.buffer = [];
+			this.bufferPointer = 0;
+			this.slashes = [];
+			this.slashesIndex = 0;
+			this.reachedFaces = false;
+		};
+
+		OBJCodeParser.prototype.parse = function ( loadAsArrayBuffer, loadedContent ) {
 			var objData = ( loadAsArrayBuffer ) ? new Uint8Array( loadedContent ) : loadedContent;
 			var contentLength = ( loadAsArrayBuffer ) ? objData.byteLength : objData.length;
-
-			var code;
-			var objDataPointer = 0;
-			var reachedFaces = false;
-
-			var word = '';
-			var buffer = [];
-			var bufferPointer = 0;
-			var slashes = [];
-			var slashesIndex = 0;
 			var slashesRefIndex = 0;
+			var objDataPointer = 0;
+			var word = '';
 
-			while ( objDataPointer < contentLength ) {
+			if ( loadAsArrayBuffer ) {
 
-				code = objData[ objDataPointer++ ];
-				if ( code === CODE_LF || code === CODE_CR ) {
+				var code;
+				while ( objDataPointer < contentLength ) {
 
-					// jump over CR (=ignore and do not look next)
-					if ( code === CODE_CR ) objDataPointer++;
+					code = objData[ objDataPointer++ ];
+					if ( code === CODE_LF || code === CODE_CR ) {
 
-					if ( word.length > 0 ) {
+						// jump over CR (=ignore and do not look next)
+						if ( code === CODE_CR ) objDataPointer++;
 
-						buffer[ bufferPointer++ ] = word;
-						word = '';
+						if ( word.length > 0 ) {
 
-					}
+							this.buffer[ this.bufferPointer ++ ] = word;
+							word = '';
 
-					if ( bufferPointer > 0 ) {
-
-						switch ( buffer[ 0 ] ) {
-							case LINE_V:
-
-								// object complete instance required if reached faces already (= reached next block of v)
-								if ( reachedFaces ) {
-									this.processCompletedObject();
-									this.rawObjectBuilder = this.rawObjectBuilder.newInstance( true );
-									reachedFaces = false;
-								}
-								this.rawObjectBuilder.pushVertex( buffer );
-								break;
-
-							case LINE_VT:
-								this.rawObjectBuilder.pushUv( buffer );
-								break;
-
-							case LINE_VN:
-								this.rawObjectBuilder.pushNormal( buffer );
-								break;
-
-							case LINE_F:
-								reachedFaces = true;
-								this.rawObjectBuilder.buildFace( buffer, bufferPointer - 1, slashes[ 1 ] - slashes[ 0 ] );
-								break;
-
-							case LINE_L:
-								this.rawObjectBuilder.buildLine( buffer, slashesIndex === 1 );
-								break;
-
-							case LINE_S:
-								this.rawObjectBuilder.pushSmoothingGroup( buffer[ 1 ] );
-								break;
-
-							case LINE_G:
-								this.rawObjectBuilder.pushGroup( buffer[ 1 ] );
-								break;
-
-							case LINE_O:
-								if ( this.rawObjectBuilder.vertices.length > 0 ) {
-									this.processCompletedObject();
-									this.rawObjectBuilder = this.rawObjectBuilder.newInstance( false );
-								}
-								this.rawObjectBuilder.pushObject( buffer[ 1 ] );
-								break;
-
-							case LINE_MTLLIB:
-								this.rawObjectBuilder.pushMtllib( buffer[ 1 ] );
-								break;
-
-							case LINE_USEMTL:
-								this.rawObjectBuilder.pushUsemtl( buffer[ 1 ] );
-								break;
-
-							default:
-								break;
 						}
-						bufferPointer = 0;
+						this.processLine();
+						slashesRefIndex = objDataPointer;
+
+					} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
+
+						if ( word.length > 0 ) {
+
+							this.buffer[ this.bufferPointer ++ ] = word;
+							word = '';
+
+						}
+						if (  code === CODE_SLASH ) this.slashes[ this.slashesIndex ++ ] = objDataPointer - slashesRefIndex;
+
+					} else {
+
+						word += String.fromCharCode( code );
+
 					}
-					slashesIndex = 0;
-					slashesRefIndex = objDataPointer;
+				}
 
-				} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
+			} else {
 
-					if ( word.length > 0 ) {
+				var char;
+				while ( objDataPointer < contentLength ) {
 
-						buffer[ bufferPointer++ ] = word;
-						word = '';
+					char = objData[ objDataPointer++ ];
+					if ( char === '\n' || char === '\r' ) {
+
+						// jump over CR (=ignore and do not look next)
+						if ( char === '\r' ) objDataPointer++;
+
+						if ( word.length > 0 ) {
+
+							this.buffer[ this.bufferPointer ++ ] = word;
+							word = '';
+
+						}
+						this.processLine();
+						slashesRefIndex = objDataPointer;
+
+					} else if ( char === ' ' || char === '/' ) {
+
+						if ( word.length > 0 ) {
+
+							this.buffer[ this.bufferPointer ++ ] = word;
+							word = '';
+
+						}
+						if ( char === '/' ) this.slashes[ this.slashesIndex ++ ] = objDataPointer - slashesRefIndex;
+
+					} else {
+
+						word += char;
 
 					}
-					if ( code === CODE_SLASH ) {
-
-						slashes[ slashesIndex++ ] = objDataPointer - slashesRefIndex;
-
-					}
-
-				} else {
-
-					word += String.fromCharCode( code );
-
 				}
 			}
+		};
+
+		OBJCodeParser.prototype.processLine = function () {
+			if ( this.bufferPointer > 0 ) {
+
+				switch ( this.buffer[ 0 ] ) {
+					case LINE_V:
+
+						// object complete instance required if reached faces already (= reached next block of v)
+						if ( this.reachedFaces ) {
+							this.processCompletedObject();
+							this.rawObjectBuilder = this.rawObjectBuilder.newInstance( true );
+							this.reachedFaces = false;
+						}
+						this.rawObjectBuilder.pushVertex( this.buffer );
+						break;
+
+					case LINE_VT:
+						this.rawObjectBuilder.pushUv( this.buffer );
+						break;
+
+					case LINE_VN:
+						this.rawObjectBuilder.pushNormal( this.buffer );
+						break;
+
+					case LINE_F:
+						this.reachedFaces = true;
+						this.rawObjectBuilder.buildFace( this.buffer, this.bufferPointer - 1, this.slashes[ 1 ] - this.slashes[ 0 ] );
+						break;
+
+					case LINE_L:
+						this.rawObjectBuilder.buildLine( this.buffer, this.slashesIndex === 1 );
+						break;
+
+					case LINE_S:
+						this.rawObjectBuilder.pushSmoothingGroup( this.buffer[ 1 ] );
+						break;
+
+					case LINE_G:
+						this.rawObjectBuilder.pushGroup( this.buffer[ 1 ] );
+						break;
+
+					case LINE_O:
+						if ( this.rawObjectBuilder.vertices.length > 0 ) {
+							this.processCompletedObject();
+							this.rawObjectBuilder = this.rawObjectBuilder.newInstance( false );
+						}
+						this.rawObjectBuilder.pushObject( this.buffer[ 1 ] );
+						break;
+
+					case LINE_MTLLIB:
+						this.rawObjectBuilder.pushMtllib( this.buffer[ 1 ] );
+						break;
+
+					case LINE_USEMTL:
+						this.rawObjectBuilder.pushUsemtl( this.buffer[ 1 ] );
+						break;
+
+					default:
+						break;
+				}
+				this.bufferPointer = 0;
+			}
+			this.slashesIndex = 0;
 		};
 
 		OBJCodeParser.prototype.processCompletedObject = function () {
@@ -309,8 +361,6 @@ THREE.OBJLoader = (function () {
 
 		OBJCodeParser.prototype.finalize = function () {
 			this.processCompletedObject( false );
-			this.rawObjectBuilder = new RawObjectBuilder( false );
-			this.inputObjectCount = 1;
 		};
 
 		return OBJCodeParser;
