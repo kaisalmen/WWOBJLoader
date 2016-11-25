@@ -114,11 +114,11 @@ THREE.OBJLoader = (function () {
 	};
 
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError ) {
-		var scope = this;
-		scope.validate();
+		this.validate();
+		this.fileLoader.setPath( this.path );
+		this.fileLoader.setResponseType( this.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
 
-		scope.fileLoader.setPath( this.path );
-		scope.fileLoader.setResponseType( scope.loadAsArrayBuffer ? 'arraybuffer' : 'text' );
+		var scope = this;
 		scope.fileLoader.load( url, function ( loadedContent ) {
 
 			var container = scope.parse( loadedContent );
@@ -171,15 +171,9 @@ THREE.OBJLoader = (function () {
 		var LINE_USEMTL = 'usemtl';
 
 		function OBJCodeParser( extendableMeshCreator ) {
-			this.rawObjectBuilder = new RawObjectBuilder( false );
+			this.rawObjectBuilder = new RawObjectBuilder();
 			this.extendableMeshCreator = extendableMeshCreator;
 			this.inputObjectCount = 1;
-
-			this.buffer;
-			this.bufferPointer = 0;
-			this.slashes;
-			this.slashesIndex = 0;
-			this.reachedFaces = false;
 		}
 
 		OBJCodeParser.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
@@ -187,162 +181,109 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.validate = function () {
-			this.rawObjectBuilder = new RawObjectBuilder( false );
+			this.rawObjectBuilder = new RawObjectBuilder();
 			this.inputObjectCount = 1;
-
-			this.buffer = [];
-			this.bufferPointer = 0;
-			this.slashes = [];
-			this.slashesIndex = 0;
-			this.reachedFaces = false;
 		};
 
 		OBJCodeParser.prototype.parse = function ( loadAsArrayBuffer, loadedContent ) {
 			var objData = ( loadAsArrayBuffer ) ? new Uint8Array( loadedContent ) : loadedContent;
 			var contentLength = ( loadAsArrayBuffer ) ? objData.byteLength : objData.length;
-			var slashesRefIndex = 0;
-			var objDataPointer = 0;
+			var buffer = [];
+			var bufferPointer = 0;
+			var slashesBuffer = [];
+			var slashesBufferPointer = 0;
+			var slashMinDistance = 0;
+			var slashRef = 0;
+			var reachedFaces = false;
+			var code;
 			var word = '';
 
-			if ( loadAsArrayBuffer ) {
+			for ( var i = 0; i < contentLength; i++ ) {
 
-				var code;
-				while ( objDataPointer < contentLength ) {
+				code = objData[ i ];
+				if ( code === CODE_LF || code === CODE_CR ) {
 
-					code = objData[ objDataPointer++ ];
-					if ( code === CODE_LF || code === CODE_CR ) {
+					// jump over CR (=ignore and do not look next)
+					if ( code === CODE_CR ) i++;
+					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+					word = '';
 
-						// jump over CR (=ignore and do not look next)
-						if ( code === CODE_CR ) objDataPointer++;
+					if ( bufferPointer > 0 ) {
 
-						if ( word.length > 0 ) {
+						switch ( buffer[ 0 ] ) {
+							case LINE_V:
 
-							this.buffer[ this.bufferPointer ++ ] = word;
-							word = '';
+								// object complete instance required if reached faces already (= reached next block of v)
+								if ( reachedFaces ) {
+									this.processCompletedObject();
+									this.rawObjectBuilder = this.rawObjectBuilder.newInstance( true );
+									reachedFaces = false;
+								}
+								this.rawObjectBuilder.pushVertex( buffer );
+								break;
 
+							case LINE_VT:
+								this.rawObjectBuilder.pushUv( buffer );
+								break;
+
+							case LINE_VN:
+								this.rawObjectBuilder.pushNormal( buffer );
+								break;
+
+							case LINE_F:
+								reachedFaces = true;
+								slashMinDistance = ( slashesBufferPointer > 1 ) ? slashesBuffer[ 1 ] - slashesBuffer[ 0 ] : 0;
+								this.rawObjectBuilder.buildFace( buffer, bufferPointer - 1, slashesBufferPointer, slashMinDistance );
+								break;
+
+							case LINE_L:
+								this.rawObjectBuilder.buildLine( buffer, slashesBufferPointer === 1 );
+								break;
+
+							case LINE_S:
+								this.rawObjectBuilder.pushSmoothingGroup( buffer[ 1 ] );
+								break;
+
+							case LINE_G:
+								this.rawObjectBuilder.pushGroup( buffer[ 1 ] );
+								break;
+
+							case LINE_O:
+								if ( this.rawObjectBuilder.vertices.length > 0 ) {
+									this.processCompletedObject();
+									this.rawObjectBuilder = this.rawObjectBuilder.newInstance( false );
+								}
+								this.rawObjectBuilder.pushObject( buffer[ 1 ] );
+								break;
+
+							case LINE_MTLLIB:
+								this.rawObjectBuilder.pushMtllib( buffer[ 1 ] );
+								break;
+
+							case LINE_USEMTL:
+								this.rawObjectBuilder.pushUsemtl( buffer[ 1 ] );
+								break;
+
+							default:
+								break;
 						}
-						this.processLine();
-						slashesRefIndex = objDataPointer;
-
-					} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
-
-						if ( word.length > 0 ) {
-
-							this.buffer[ this.bufferPointer ++ ] = word;
-							word = '';
-
-						}
-						if (  code === CODE_SLASH ) this.slashes[ this.slashesIndex ++ ] = objDataPointer - slashesRefIndex;
-
-					} else {
-
-						word += String.fromCharCode( code );
-
+						bufferPointer = 0;
 					}
-				}
+					slashesBufferPointer = 0;
+					slashRef = i;
 
-			} else {
+				} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
 
-				var char;
-				while ( objDataPointer < contentLength ) {
+					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+					word = '';
+					if ( code === CODE_SLASH ) slashesBuffer[ slashesBufferPointer++ ] = i - slashRef;
 
-					char = objData[ objDataPointer++ ];
-					if ( char === '\n' || char === '\r' ) {
+				} else {
 
-						// jump over CR (=ignore and do not look next)
-						if ( char === '\r' ) objDataPointer++;
+					word += String.fromCharCode( code );
 
-						if ( word.length > 0 ) {
-
-							this.buffer[ this.bufferPointer ++ ] = word;
-							word = '';
-
-						}
-						this.processLine();
-						slashesRefIndex = objDataPointer;
-
-					} else if ( char === ' ' || char === '/' ) {
-
-						if ( word.length > 0 ) {
-
-							this.buffer[ this.bufferPointer ++ ] = word;
-							word = '';
-
-						}
-						if ( char === '/' ) this.slashes[ this.slashesIndex ++ ] = objDataPointer - slashesRefIndex;
-
-					} else {
-
-						word += char;
-
-					}
 				}
 			}
-		};
-
-		OBJCodeParser.prototype.processLine = function () {
-			if ( this.bufferPointer > 0 ) {
-
-				switch ( this.buffer[ 0 ] ) {
-					case LINE_V:
-
-						// object complete instance required if reached faces already (= reached next block of v)
-						if ( this.reachedFaces ) {
-							this.processCompletedObject();
-							this.rawObjectBuilder = this.rawObjectBuilder.newInstance( true );
-							this.reachedFaces = false;
-						}
-						this.rawObjectBuilder.pushVertex( this.buffer );
-						break;
-
-					case LINE_VT:
-						this.rawObjectBuilder.pushUv( this.buffer );
-						break;
-
-					case LINE_VN:
-						this.rawObjectBuilder.pushNormal( this.buffer );
-						break;
-
-					case LINE_F:
-						this.reachedFaces = true;
-						var slashMinDistance = ( this.slashesIndex > 1 ) ? this.slashes[ 1 ] -  this.slashes[ 0 ] : 0;
-						this.rawObjectBuilder.buildFace( this.buffer, this.bufferPointer - 1, this.slashesIndex, slashMinDistance );
-						break;
-
-					case LINE_L:
-						this.rawObjectBuilder.buildLine( this.buffer, this.slashesIndex === 1 );
-						break;
-
-					case LINE_S:
-						this.rawObjectBuilder.pushSmoothingGroup( this.buffer[ 1 ] );
-						break;
-
-					case LINE_G:
-						this.rawObjectBuilder.pushGroup( this.buffer[ 1 ] );
-						break;
-
-					case LINE_O:
-						if ( this.rawObjectBuilder.vertices.length > 0 ) {
-							this.processCompletedObject();
-							this.rawObjectBuilder = this.rawObjectBuilder.newInstance( false );
-						}
-						this.rawObjectBuilder.pushObject( this.buffer[ 1 ] );
-						break;
-
-					case LINE_MTLLIB:
-						this.rawObjectBuilder.pushMtllib( this.buffer[ 1 ] );
-						break;
-
-					case LINE_USEMTL:
-						this.rawObjectBuilder.pushUsemtl( this.buffer[ 1 ] );
-						break;
-
-					default:
-						break;
-				}
-				this.bufferPointer = 0;
-			}
-			this.slashesIndex = 0;
 		};
 
 		OBJCodeParser.prototype.processCompletedObject = function () {
