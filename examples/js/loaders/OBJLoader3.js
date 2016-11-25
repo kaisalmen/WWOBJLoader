@@ -305,7 +305,8 @@ THREE.OBJLoader = (function () {
 
 					case LINE_F:
 						this.reachedFaces = true;
-						this.rawObjectBuilder.buildFace( this.buffer, this.bufferPointer - 1, this.slashes[ 1 ] - this.slashes[ 0 ] );
+						var slashMinDistance = ( this.slashesIndex > 1 ) ? this.slashes[ 1 ] -  this.slashes[ 0 ] : 0;
+						this.rawObjectBuilder.buildFace( this.buffer, this.bufferPointer - 1, this.slashesIndex, slashMinDistance );
 						break;
 
 					case LINE_L:
@@ -367,9 +368,6 @@ THREE.OBJLoader = (function () {
 	})();
 
 	var RawObjectBuilder = (function () {
-
-		// OBJLoader internal static variables
-		var QUAD_INDICES = [ 0, 1, 2, 2, 3, 0 ];
 
 		function RawObjectBuilder() {
 			this.createObjectPerSmoothingGroup = false;
@@ -514,6 +512,10 @@ THREE.OBJLoader = (function () {
 			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
+		var QUAD_INDICES_1 = [ 1, 2, 3, 3, 4, 1 ];
+		var QUAD_INDICES_2 = [ 1, 3, 5, 5, 7, 1 ];
+		var QUAD_INDICES_3 = [ 1, 4, 7, 7, 10, 1 ];
+
 		/**
 		 * Support for triangle and quads:
 		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
@@ -521,90 +523,95 @@ THREE.OBJLoader = (function () {
 		 * 2: "f vertex//normal     vertex//normal      vertex//normal      vertex//normal"
 		 * 3: "f vertex             vertex              vertex              vertex"
 		 *
+		 * N-Gons are not supported
+		 *
 		 * @param indexArray
 		 * @param indexArrayEnd
 		 * @param slashMinDistance
 		 */
-		RawObjectBuilder.prototype.buildFace = function ( indexArray, elementCount, slashMinDistance ) {
-
-			var haveQuad = ( elementCount ) % 4 === 0;
-			var idFaceType0 = haveQuad ? 12 : 9;
-			var idFaceType3 = haveQuad ? 4 : 3;
-
-			var faceType = 1;
-			if ( elementCount === idFaceType0 ) {
-				faceType = 0;
-			}
-			else if ( elementCount === idFaceType3 ) {
-				faceType = 3;
-			}
-			else if ( slashMinDistance === 1 ) {
-				faceType = 2;
-			}
-
-			// first element in indexArray is the line identification,
+		RawObjectBuilder.prototype.buildFace = function ( indexArray, elementCount, slashesLength, slashMinDistance ) {
+			// for triangle and quad first element in indexArray is the line identification,
 			// therefore offset of one needs to be taken into account
-			if ( haveQuad ) {
-				var q = 0;
-				if ( faceType === 0 ) {
+			// Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
 
-					// FaceA: 0, 1, 2  FaceB: 2, 3, 0
-					for ( ; q < 6; q++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES[ q ] * 3 + 1 ] );
-						this.attachFaceVt( indexArray[ QUAD_INDICES[ q ] * 3 + 2 ] );
-						this.attachFaceVn( indexArray[ QUAD_INDICES[ q ] * 3 + 3 ] );
-					}
-				}
-				else if ( faceType === 1 ) {
+			if ( slashMinDistance === 0 ) {
 
-					for ( ; q < 6; q++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES[ q ] * 2 + 1 ] );
-						this.attachFaceVt( indexArray[ QUAD_INDICES[ q ] * 2 + 2 ] );
-					}
-				}
-				else if ( faceType === 2 ) {
+				if ( elementCount === 3 ) {
 
-					for ( ; q < 6; q++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES[ q ] * 2 + 1 ] );
-						this.attachFaceVn( indexArray[ QUAD_INDICES[ q ] * 2 + 2 ] );
+					for ( var i = 1; i < 4; i ++ ) {
+						this.attachFaceV_( indexArray[ i ] );
 					}
-				}
-				else if ( faceType === 3 ) {
 
-					for ( ; q < 6; q++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES[ q ] + 1 ] );
+				} else if ( elementCount === 4 ) {
+
+					for ( var q = 0; q < 6; q ++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_1[ q ] ] );
 					}
+
+				} else {
+					console.log( 'ignore: ngon: type3' );
 				}
+
+			} else if ( slashMinDistance === 1 ) {
+
+				if ( elementCount === 6 ) {
+
+					for ( var i = 1; i < 7; i += 2 ) {
+						this.attachFaceV_( indexArray[ i ] );
+						this.attachFaceVn( indexArray[ i + 1 ] );
+					}
+
+				} else if ( elementCount === 8 ) {
+
+					for ( var q = 0; q < 6; q++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
+						this.attachFaceVn( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
+					}
+
+				} else {
+					console.log( 'ignore: ngon: type2' );
+				}
+
+			} else if ( elementCount % slashesLength === 0 ) {
+
+				if ( elementCount === 6 ) {
+
+					for ( var i = 1; i < 7; i += 2 ) {
+						this.attachFaceV_( indexArray[ i ] );
+						this.attachFaceVt( indexArray[ i + 1 ] );
+					}
+
+				} else if ( elementCount === 8 ) {
+
+					for ( var q = 0; q < 6; q ++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
+						this.attachFaceVt( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
+					}
+
+				} else {
+					console.log( 'ignore: ngon: type1' );
+				}
+
 			} else {
 
-				var i = 1;
-				if ( faceType === 0 ) {
+				if ( elementCount === 9 ) {
 
-					for ( ; i < 10; i += 3 ) {
+					for ( var i = 1; i < 10; i += 3 ) {
 						this.attachFaceV_( indexArray[ i ] );
 						this.attachFaceVt( indexArray[ i + 1 ] );
 						this.attachFaceVn( indexArray[ i + 2 ] );
 					}
-				}
-				else if ( faceType === 1 ) {
 
-					for ( ; i < 7; i += 2 ) {
-						this.attachFaceV_( indexArray[ i ] );
-						this.attachFaceVt( indexArray[ i + 1 ] );
-					}
-				}
-				else if ( faceType === 2 ) {
+				} else if ( elementCount === 8 ) {
 
-					for ( ; i < 7; i += 2 ) {
-						this.attachFaceV_( indexArray[ i ] );
-						this.attachFaceVn( indexArray[ i + 1 ] );
+					for ( var q = 0; q < 6; q ++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_3[ q ] ] );
+						this.attachFaceVt( indexArray[ QUAD_INDICES_3[ q ] + 1 ] );
+						this.attachFaceVn( indexArray[ QUAD_INDICES_3[ q ] + 2 ] );
 					}
-				}
-				else if ( faceType === 3 ) {
 
-					for ( ; i < 4; i ++ ) {
-						this.attachFaceV_( indexArray[ i ] );
-					}
+				} else {
+					console.log( 'ignore: ngon: type0' );
 				}
 			}
 		};
@@ -616,17 +623,6 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
 			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
 			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index ];
-/*
-			if ( isNaN( this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex - 3 ] ) ) {
-				console.error( 'NAN' );
-			}
-			if ( isNaN( this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex - 2 ] ) ) {
-				console.error( 'NAN' );
-			}
-			if ( isNaN( this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex - 1 ] ) ) {
-				console.error( 'NAN' );
-			}
-*/
 		};
 
 		RawObjectBuilder.prototype.attachFaceVt = function ( faceIndex ) {
