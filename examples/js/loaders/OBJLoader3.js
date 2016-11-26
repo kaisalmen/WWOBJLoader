@@ -190,13 +190,11 @@ THREE.OBJLoader = (function () {
 			var contentLength = ( loadAsArrayBuffer ) ? objData.byteLength : objData.length;
 			var buffer = [];
 			var bufferPointer = 0;
-			var slashesBuffer = [];
-			var slashesBufferPointer = 0;
-			var slashMinDistance = 0;
-			var slashRef = 0;
 			var reachedFaces = false;
 			var code;
 			var word = '';
+			var slashCount = 0;
+			var faceType = 3;
 
 			for ( var i = 0; i < contentLength; i++ ) {
 
@@ -208,7 +206,7 @@ THREE.OBJLoader = (function () {
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 
-					if ( bufferPointer > 0 ) {
+					if ( bufferPointer > 1 ) {
 
 						switch ( buffer[ 0 ] ) {
 							case LINE_V:
@@ -232,12 +230,15 @@ THREE.OBJLoader = (function () {
 
 							case LINE_F:
 								reachedFaces = true;
-								slashMinDistance = ( slashesBufferPointer > 1 ) ? slashesBuffer[ 1 ] - slashesBuffer[ 0 ] : 0;
-								this.rawObjectBuilder.buildFace( buffer, bufferPointer - 1, slashesBufferPointer, slashMinDistance );
+								var haveQuad = ( bufferPointer - 1 ) % 4 === 0;
+								this.rawObjectBuilder.buildFace( buffer, haveQuad, faceType );
+								faceType = 3;
+								slashCount = 0;
 								break;
 
 							case LINE_L:
-								this.rawObjectBuilder.buildLine( buffer, slashesBufferPointer === 1 );
+								this.rawObjectBuilder.buildLine( buffer, slashCount === 1 );
+								slashCount = 0;
 								break;
 
 							case LINE_S:
@@ -267,16 +268,27 @@ THREE.OBJLoader = (function () {
 							default:
 								break;
 						}
-						bufferPointer = 0;
 					}
-					slashesBufferPointer = 0;
-					slashRef = i;
+					bufferPointer = 0;
 
 				} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
 
-					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+					if ( code == CODE_SLASH ) {
+
+						if ( slashCount < 2 && faceType !== 1 ) {
+
+							faceType = ( word.length === 0 ) ? 2 : 0;
+							slashCount++;
+
+						}
+
+					} else {
+
+						if ( slashCount === 1 ) faceType = 1;
+
+					}
+					if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 					word = '';
-					if ( code === CODE_SLASH ) slashesBuffer[ slashesBufferPointer++ ] = i - slashRef;
 
 				} else {
 
@@ -467,83 +479,17 @@ THREE.OBJLoader = (function () {
 		 * N-Gons are not supported
 		 *
 		 * @param indexArray
-		 * @param indexArrayEnd
-		 * @param slashMinDistance
+		 * @param haveQuad
+		 * @param faceType
 		 */
-		RawObjectBuilder.prototype.buildFace = function ( indexArray, elementCount, slashesLength, slashMinDistance ) {
+		RawObjectBuilder.prototype.buildFace = function ( indexArray, haveQuad, faceType ) {
 			// for triangle and quad first element in indexArray is the line identification,
 			// therefore offset of one needs to be taken into account
 			// Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
 
-			if ( slashMinDistance === 0 ) {
+			if ( haveQuad ) {
 
-				if ( elementCount === 3 ) {
-
-					for ( var i = 1; i < 4; i ++ ) {
-						this.attachFaceV_( indexArray[ i ] );
-					}
-
-				} else if ( elementCount === 4 ) {
-
-					for ( var q = 0; q < 6; q ++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES_1[ q ] ] );
-					}
-
-				} else {
-					console.log( 'ignore: ngon: type3' );
-				}
-
-			} else if ( slashMinDistance === 1 ) {
-
-				if ( elementCount === 6 ) {
-
-					for ( var i = 1; i < 7; i += 2 ) {
-						this.attachFaceV_( indexArray[ i ] );
-						this.attachFaceVn( indexArray[ i + 1 ] );
-					}
-
-				} else if ( elementCount === 8 ) {
-
-					for ( var q = 0; q < 6; q++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
-						this.attachFaceVn( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
-					}
-
-				} else {
-					console.log( 'ignore: ngon: type2' );
-				}
-
-			} else if ( elementCount % slashesLength === 0 ) {
-
-				if ( elementCount === 6 ) {
-
-					for ( var i = 1; i < 7; i += 2 ) {
-						this.attachFaceV_( indexArray[ i ] );
-						this.attachFaceVt( indexArray[ i + 1 ] );
-					}
-
-				} else if ( elementCount === 8 ) {
-
-					for ( var q = 0; q < 6; q ++ ) {
-						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
-						this.attachFaceVt( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
-					}
-
-				} else {
-					console.log( 'ignore: ngon: type1' );
-				}
-
-			} else {
-
-				if ( elementCount === 9 ) {
-
-					for ( var i = 1; i < 10; i += 3 ) {
-						this.attachFaceV_( indexArray[ i ] );
-						this.attachFaceVt( indexArray[ i + 1 ] );
-						this.attachFaceVn( indexArray[ i + 2 ] );
-					}
-
-				} else if ( elementCount === 8 ) {
+				if ( faceType === 0 ) {
 
 					for ( var q = 0; q < 6; q ++ ) {
 						this.attachFaceV_( indexArray[ QUAD_INDICES_3[ q ] ] );
@@ -551,8 +497,58 @@ THREE.OBJLoader = (function () {
 						this.attachFaceVn( indexArray[ QUAD_INDICES_3[ q ] + 2 ] );
 					}
 
-				} else {
-					console.log( 'ignore: ngon: type0' );
+				} else if ( faceType === 1 ) {
+
+					for ( var q = 0; q < 6; q++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
+						this.attachFaceVt( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
+					}
+
+				} else if ( faceType === 2 ) {
+
+					for ( var q = 0; q < 6; q++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_2[ q ] ] );
+						this.attachFaceVn( indexArray[ QUAD_INDICES_2[ q ] + 1 ] );
+					}
+
+				} else  {
+
+					for ( var q = 0; q < 6; q ++ ) {
+						this.attachFaceV_( indexArray[ QUAD_INDICES_1[ q ] ] );
+					}
+
+				}
+
+			} else {
+
+				if ( faceType === 0 ) {
+
+					for ( var i = 1; i < 10; i += 3 ) {
+						this.attachFaceV_( indexArray[ i ] );
+						this.attachFaceVt( indexArray[ i + 1 ] );
+						this.attachFaceVn( indexArray[ i + 2 ] );
+					}
+
+				} else if ( faceType === 1 ) {
+
+					for ( var i = 1; i < 7; i += 2 ) {
+						this.attachFaceV_( indexArray[ i ] );
+						this.attachFaceVt( indexArray[ i + 1 ] );
+					}
+
+				} else if ( faceType === 2 ) {
+
+					for ( var i = 1; i < 7; i += 2 ) {
+						this.attachFaceV_( indexArray[ i ] );
+						this.attachFaceVn( indexArray[ i + 1 ] );
+					}
+
+				} else  {
+
+					for ( var i = 1; i < 4; i ++ ) {
+						this.attachFaceV_( indexArray[ i ] );
+					}
+
 				}
 			}
 		};
