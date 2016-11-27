@@ -125,6 +125,8 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.initWithFiles = function ( basePath, objFile, mtlFile, texturePath ) {
+		// fast-fail
+		if ( objFile == null ) throw 'Provided file is not properly defined! Aborting';
 
 		this.initWorker();
 
@@ -147,6 +149,8 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.initWithData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
+		// fast-fail
+		if ( objAsArrayBuffer == null || objAsArrayBuffer.buffer == null ) throw 'Provided arraybuffer is not properly defined! Aborting';
 
 		this.initWorker();
 
@@ -158,7 +162,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 			dataAvailable: this.dataAvailable,
 			basePath: null,
 			objFile: null,
-			objAsArrayBuffer: objAsArrayBuffer === undefined ? null : objAsArrayBuffer
+			objAsArrayBuffer: objAsArrayBuffer
 		}, [ objAsArrayBuffer.buffer ] );
 
 		this.mtlAsString = mtlAsString;

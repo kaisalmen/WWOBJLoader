@@ -96,10 +96,10 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 		this.dataAvailable = payload.dataAvailable;
 		this.objFile = payload.objFile === null ? '' : payload.objFile;
-		this.objAsArrayBuffer = this.dataAvailable ? payload.objAsArrayBuffer : null;
+		this.objAsArrayBuffer = payload.objAsArrayBuffer;
 
 		// re-init OBJLoader
-		this.objLoader.validate( true, payload.basePath );
+		this.objLoader.setPath( payload.basePath );
 	};
 
 	WWOBJLoader.prototype.initMaterials = function ( payload ) {
@@ -128,7 +128,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 		if ( scope.dataAvailable ) {
 
-			scope.objLoader.parse( scope.objAsArrayBuffer );
+			scope.objLoader.parseArrayBuffer( scope.objAsArrayBuffer );
 			complete();
 
 		} else {
