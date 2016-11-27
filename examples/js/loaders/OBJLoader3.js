@@ -46,16 +46,6 @@ THREE.OBJLoader = (function () {
 	};
 
 	/**
-	 * If this is set a new object is created for every object + smoothing group
-	 * Default is false.
-	 *
-	 * @param createObjectPerSmoothingGroup
-	 */
-	OBJLoader.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-		this.parser.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
-	};
-
-	/**
 	 * Will create multi-materials instead of multiple objects with different material definitions
 	 * @param useMultiMaterials
 	 */
@@ -83,16 +73,13 @@ THREE.OBJLoader = (function () {
 	 * @param path
 	 * @param container
 	 * @param materials
-	 * @param createObjectPerSmoothingGroup
 	 * @param useMultiMaterials
 	 */
-	OBJLoader.prototype.validate = function ( path, container, materials,
-											createObjectPerSmoothingGroup, useMultiMaterials ) {
+	OBJLoader.prototype.validate = function ( path, container, materials, useMultiMaterials ) {
 		if ( this.validated ) return;
 
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.setPath( path );
-		this.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
 
 		this.parser.validate();
 		this.extendableMeshCreator.validate( container, materials, useMultiMaterials );
@@ -162,10 +149,6 @@ THREE.OBJLoader = (function () {
 			this.extendableMeshCreator = extendableMeshCreator;
 			this.inputObjectCount = 1;
 		}
-
-		OBJCodeParser.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-			this.rawObject.setCreateObjectPerSmoothingGroup( createObjectPerSmoothingGroup );
-		};
 
 		OBJCodeParser.prototype.validate = function () {
 			this.rawObject = new RawObject();
@@ -295,17 +278,10 @@ THREE.OBJLoader = (function () {
 		};
 
 		OBJCodeParser.prototype.processCompletedObject = function () {
-			this.rawObject.finalize();
+			this.rawObject.finalize( this.extendableMeshCreator, this.inputObjectCount );
 
 			if ( this.debug ) this.rawObject.createReport( this.inputObjectCount, true );
 
-			this.extendableMeshCreator.buildMesh(
-				this.rawObject.retrievedObjectDescriptions,
-				this.inputObjectCount,
-				this.rawObject.absoluteVertexCount,
-				this.rawObject.absoluteNormalCount,
-				this.rawObject.absoluteUvCount
-			);
 			this.inputObjectCount++;
 		};
 
@@ -319,27 +295,17 @@ THREE.OBJLoader = (function () {
 	var RawObject = (function () {
 
 		function RawObject() {
-			this.createObjectPerSmoothingGroup = false;
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
 			this.globalNormalOffset = 1;
 
 			this.objectName = 'none';
-
 			this.vertices = [];
-			this.verticesIndex = 0;
 			this.normals = [];
-			this.normalsIndex = 0;
 			this.uvs = [];
-			this.uvsIndex = 0;
-
-			this.absoluteVertexCount = 0;
-			this.absoluteNormalCount = 0;
-			this.absoluteUvCount = 0;
 			this.mtllibName = '';
 
 			// faces are stored according combined index of object, group, material
-			// and plus smoothing group if createObjectPerSmoothingGroup=true
 			this.activeGroupName = 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 0;
@@ -354,46 +320,35 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptions[ index ] = this.retrievedObjectDescriptionInUse;
 		}
 
-		RawObject.prototype.setCreateObjectPerSmoothingGroup = function ( createObjectPerSmoothingGroup ) {
-			this.createObjectPerSmoothingGroup = ( createObjectPerSmoothingGroup == null ) ? false : createObjectPerSmoothingGroup;
-		};
-
 		RawObject.prototype.newInstance = function ( vertexDetection ) {
 			var newOob = new RawObject();
-			if ( vertexDetection ) newOob.overrideActiveGroupName( this.activeGroupName );
+			if ( vertexDetection ) {
+				newOob.activeGroupName = this.activeGroupName;
+				newOob.retrievedObjectDescriptionInUse.groupName = this.activeGroupName;
+			}
 
-			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
-			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
-			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
-			newOob.setCreateObjectPerSmoothingGroup( this.createObjectPerSmoothingGroup );
+			newOob.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
+			newOob.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
+			newOob.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
 
 			return newOob;
 		};
 
-		/**
-		 * Active group name needs to be set if new object was detected by 'v' insterad of 'o'
-		 * @param activeGroupName
-		 */
-		RawObject.prototype.overrideActiveGroupName = function ( activeGroupName ) {
-			this.activeGroupName = activeGroupName;
-			this.retrievedObjectDescriptionInUse.groupName = activeGroupName;
-		};
-
 		RawObject.prototype.pushVertex = function ( buffer ) {
-			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 1 ] );
-			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 2 ] );
-			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 3 ] );
+			this.vertices.push( parseFloat( buffer[ 1 ] ) );
+			this.vertices.push( parseFloat( buffer[ 2 ] ) );
+			this.vertices.push( parseFloat( buffer[ 3 ] ) );
 		};
 
 		RawObject.prototype.pushUv = function ( buffer ) {
-			this.uvs[ this.uvsIndex++ ] = parseFloat( buffer[ 1 ] );
-			this.uvs[ this.uvsIndex++ ] = parseFloat( buffer[ 2 ] );
+			this.uvs.push( parseFloat( buffer[ 1 ] ) );
+			this.uvs.push( parseFloat( buffer[ 2 ] ) );
 		};
 
 		RawObject.prototype.pushNormal = function ( buffer ) {
-			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 1 ] );
-			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 2 ] );
-			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 3 ] );
+			this.normals.push( parseFloat( buffer[ 1 ] ) );
+			this.normals.push( parseFloat( buffer[ 2 ] ) );
+			this.normals.push( parseFloat( buffer[ 3 ] ) );
 		};
 
 		RawObject.prototype.pushObject = function ( objectName ) {
@@ -430,17 +385,8 @@ THREE.OBJLoader = (function () {
 		};
 
 		RawObject.prototype.verifyIndex = function () {
-			var index;
+			var index = ( this.activeSmoothingGroup === 0 ) ? this.buildIndexOverride( 0 ) : this.buildIndexOverride( 1 );
 
-			if ( this.createObjectPerSmoothingGroup ) {
-
-				index = this.buildIndexRegular();
-
-			} else {
-
-				index = ( this.activeSmoothingGroup === 0 ) ? this.buildIndexOverride( 0 ) : this.buildIndexOverride( 1 );
-
-			}
 			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
 
 				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
@@ -560,26 +506,26 @@ THREE.OBJLoader = (function () {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
 
-			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
-			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
-			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index ];
+			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index++ ] );
+			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index++ ] );
+			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index ] );
 		};
 
 		RawObject.prototype.attachFaceVt = function ( faceIndex ) {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalUvOffset ) * 2;
 
-			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index++ ];
-			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index ];
+			this.retrievedObjectDescriptionInUse.uvArray.push( this.uvs[ index++ ] );
+			this.retrievedObjectDescriptionInUse.uvArray.push( this.uvs[ index ] );
 		};
 
 		RawObject.prototype.attachFaceVn = function ( faceIndex ) {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
 
-			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
-			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
-			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index ];
+			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index++ ] );
+			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index++ ] );
+			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index ] );
 		};
 
 		/**
@@ -597,13 +543,13 @@ THREE.OBJLoader = (function () {
 			if ( haveSlash ) {
 
 				for ( ; i < length; i++ ) {
-					this.vertices[ this.verticesIndex++ ] = parseInt( lineArray[ i ] );
-					this.uvs[ this.uvsIndex++ ] = parseInt( lineArray[ i ] );
+					this.vertices.push( parseInt( lineArray[ i ] ) );
+					this.uvs.push( parseInt( lineArray[ i ] ) );
 				}
 			} else {
 
 				for ( ; i < length; i++ ) {
-					this.vertices[ this.verticesIndex++ ] = parseInt( lineArray[ i ] );
+					this.vertices.push( parseInt( lineArray[ i ] ) );
 				}
 			}
 		};
@@ -611,25 +557,40 @@ THREE.OBJLoader = (function () {
 		/**
 		 * Clear any empty RetrievedObjectDescription
 		 */
-		RawObject.prototype.finalize = function () {
+		RawObject.prototype.finalize = function ( extendableMeshCreator, inputObjectCount ) {
 			var temp = this.retrievedObjectDescriptions;
 			this.retrievedObjectDescriptions = [];
 			var retrievedObjectDescription;
 			var index = 0;
+			var absoluteVertexCount = 0;
+			var absoluteNormalCount = 0;
+			var absoluteUvCount = 0;
 
 			for ( var name in temp ) {
+
 				retrievedObjectDescription = temp[ name ];
+				retrievedObjectDescription.vertexArrayIndex = retrievedObjectDescription.vertexArray.length;
+				retrievedObjectDescription.uvArrayIndex = retrievedObjectDescription.uvArray.length;
+				retrievedObjectDescription.normalArrayIndex = retrievedObjectDescription.normalArray.length;
 				if ( retrievedObjectDescription.vertexArrayIndex > 0 ) {
 
 					if ( retrievedObjectDescription.objectName === 'none' ) retrievedObjectDescription.objectName = retrievedObjectDescription.groupName;
 
 					this.retrievedObjectDescriptions[ index++ ] = retrievedObjectDescription;
-					this.absoluteVertexCount += retrievedObjectDescription.vertexArrayIndex;
-					this.absoluteNormalCount += retrievedObjectDescription.normalArrayIndex;
-					this.absoluteUvCount += retrievedObjectDescription.uvArrayIndex;
+					absoluteVertexCount += retrievedObjectDescription.vertexArrayIndex;
+					absoluteUvCount += retrievedObjectDescription.uvArrayIndex;
+					absoluteNormalCount += retrievedObjectDescription.normalArrayIndex;
 
 				}
 			}
+
+			extendableMeshCreator.buildMesh(
+				this.retrievedObjectDescriptions,
+				inputObjectCount,
+				absoluteVertexCount,
+				absoluteNormalCount,
+				absoluteUvCount
+			);
 		};
 
 		RawObject.prototype.createReport = function ( inputObjectCount, printDirectly ) {
