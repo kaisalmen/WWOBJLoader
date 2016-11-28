@@ -128,7 +128,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 		if ( scope.dataAvailable ) {
 
-			scope.objLoader.parseArrayBuffer( scope.objAsArrayBuffer );
+			scope.objLoader.parse( scope.objAsArrayBuffer );
 			complete();
 
 		} else {

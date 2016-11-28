@@ -80,7 +80,7 @@ THREE.OBJLoader = (function () {
 		var scope = this;
 		scope.fileLoader.load( url, function ( content ) {
 
-			var objGroup = ( useArrayBuffer || useArrayBuffer == null ) ? scope.parseArrayBuffer( content ) : scope.parseText( content );
+			var objGroup = ( useArrayBuffer || useArrayBuffer == null ) ? scope.parse( content ) : scope.parseText( content );
 			scope.fileLoader = null;
 			onLoad( objGroup );
 
@@ -92,7 +92,10 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param arrayBuffer
 	 */
-	OBJLoader.prototype.parseArrayBuffer = function ( arrayBuffer ) {
+	OBJLoader.prototype.parse = function ( arrayBuffer ) {
+		// fast-fail on bad type
+		if ( ! ( arrayBuffer instanceof ArrayBuffer ) ) throw 'Provided input is not of type arraybuffer! Aborting...';
+
 		console.log( 'Parsing arrayBuffer...' );
 		console.time( 'parseArrayBuffer' );
 
@@ -111,6 +114,9 @@ THREE.OBJLoader = (function () {
 	 * @param text
 	 */
 	OBJLoader.prototype.parseText = function ( text ) {
+		// fast-fail on bad type
+		if ( ! ( typeof( text ) === 'string' || text instanceof String ) ) throw 'Provided input is not of type String! Aborting...';
+
 		console.log( 'Parsing text...' );
 		console.time( 'parseText' );
 
