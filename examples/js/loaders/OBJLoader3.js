@@ -419,8 +419,11 @@ THREE.OBJLoader = (function () {
 
 			this.objectName = 'none';
 			this.vertices = [];
+			this.verticesIndex = 0;
 			this.normals = [];
+			this.normalsIndex = 0;
 			this.uvs = [];
+			this.uvsIndex = 0;
 			this.mtllibName = '';
 
 			// faces are stored according combined index of object, group, material
@@ -445,28 +448,28 @@ THREE.OBJLoader = (function () {
 				newOob.retrievedObjectDescriptionInUse.groupName = this.activeGroupName;
 			}
 
-			newOob.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
-			newOob.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
-			newOob.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
+			newOob.globalVertexOffset = this.globalVertexOffset + this.verticesIndex / 3;
+			newOob.globalUvOffset = this.globalUvOffset + this.uvsIndex / 2;
+			newOob.globalNormalOffset = this.globalNormalOffset + this.normalsIndex / 3;
 
 			return newOob;
 		};
 
 		RawObject.prototype.pushVertex = function ( buffer ) {
-			this.vertices.push( parseFloat( buffer[ 1 ] ) );
-			this.vertices.push( parseFloat( buffer[ 2 ] ) );
-			this.vertices.push( parseFloat( buffer[ 3 ] ) );
+			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 1 ] );
+			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 2 ] );
+			this.vertices[ this.verticesIndex++ ] = parseFloat( buffer[ 3 ] );
 		};
 
 		RawObject.prototype.pushUv = function ( buffer ) {
-			this.uvs.push( parseFloat( buffer[ 1 ] ) );
-			this.uvs.push( parseFloat( buffer[ 2 ] ) );
+			this.uvs[ this.uvsIndex++ ] = parseFloat( buffer[ 1 ] );
+			this.uvs[ this.uvsIndex++ ] = parseFloat( buffer[ 2 ] );
 		};
 
 		RawObject.prototype.pushNormal = function ( buffer ) {
-			this.normals.push( parseFloat( buffer[ 1 ] ) );
-			this.normals.push( parseFloat( buffer[ 2 ] ) );
-			this.normals.push( parseFloat( buffer[ 3 ] ) );
+			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 1 ] );
+			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 2 ] );
+			this.normals[ this.normalsIndex++ ] = parseFloat( buffer[ 3 ] );
 		};
 
 		RawObject.prototype.pushObject = function ( objectName ) {
@@ -602,26 +605,26 @@ THREE.OBJLoader = (function () {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
 
-			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index++ ] );
-			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index++ ] );
-			this.retrievedObjectDescriptionInUse.vertexArray.push( this.vertices[ index ] );
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index++ ];
+			this.retrievedObjectDescriptionInUse.vertexArray[ this.retrievedObjectDescriptionInUse.vertexArrayIndex++ ] = this.vertices[ index ];
 		};
 
 		RawObject.prototype.attachFaceVt = function ( faceIndex ) {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalUvOffset ) * 2;
 
-			this.retrievedObjectDescriptionInUse.uvArray.push( this.uvs[ index++ ] );
-			this.retrievedObjectDescriptionInUse.uvArray.push( this.uvs[ index ] );
+			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index++ ];
+			this.retrievedObjectDescriptionInUse.uvArray[ this.retrievedObjectDescriptionInUse.uvArrayIndex++ ] = this.uvs[ index ];
 		};
 
 		RawObject.prototype.attachFaceVn = function ( faceIndex ) {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
 
-			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index++ ] );
-			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index++ ] );
-			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index ] );
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index++ ];
+			this.retrievedObjectDescriptionInUse.normalArray[ this.retrievedObjectDescriptionInUse.normalArrayIndex++ ] = this.normals[ index ];
 		};
 
 		/*
@@ -659,9 +662,6 @@ THREE.OBJLoader = (function () {
 			for ( var name in temp ) {
 
 				retrievedObjectDescription = temp[ name ];
-				retrievedObjectDescription.vertexArrayIndex = retrievedObjectDescription.vertexArray.length;
-				retrievedObjectDescription.uvArrayIndex = retrievedObjectDescription.uvArray.length;
-				retrievedObjectDescription.normalArrayIndex = retrievedObjectDescription.normalArray.length;
 				if ( retrievedObjectDescription.vertexArrayIndex > 0 ) {
 
 					if ( retrievedObjectDescription.objectName === 'none' ) retrievedObjectDescription.objectName = retrievedObjectDescription.groupName;
@@ -687,9 +687,9 @@ THREE.OBJLoader = (function () {
 			var report = {
 				name: this.objectName ? this.objectName : 'groups',
 				mtllibName: this.mtllibName,
-				vertexCount: this.vertices.length / 3,
-				normalCount: this.normals.length / 3,
-				uvCount: this.uvs.length / 2,
+				vertexCount: this.verticesIndex / 3,
+				normalCount: this.normalsIndex / 3,
+				uvCount: this.uvsIndex / 2,
 				objectGroupCount: this.objectGroupCount,
 				smoothingGroupCount: this.smoothingGroupCount,
 				mtlCount: this.mtlCount,
