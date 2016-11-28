@@ -204,65 +204,70 @@ THREE.OBJLoader = (function () {
 
 		OBJCodeParser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 			var arrayBufferView = new Uint8Array( arrayBuffer );
-			var arrayBufferViewLength = arrayBufferView.byteLength;
+			var length = arrayBufferView.byteLength;
 			var code;
 			var word = '';
-			for ( var i = 0; i < arrayBufferViewLength; i++ ) {
+			for ( var i = 0; i < length; i++ ) {
 
 				code = arrayBufferView[ i ];
-				if ( code === CODE_SPACE ) {
+				switch ( code ) {
+					case CODE_SPACE:
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						break;
 
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+					case CODE_SLASH:
+						this.slashes[ this.slashesPointer++ ] = i;
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						break;
 
-				} else if ( code === CODE_SLASH ) {
+					case CODE_LF:
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						this.processLine();
+						break;
 
-					this.slashes[ this.slashesPointer++ ] = i;
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+					case CODE_CR:
+						break;
 
-				} else if ( code === CODE_LF ) {
-
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
-					this.processLine();
-
-				} else if ( code !== CODE_CR ) {
-
-					word += String.fromCharCode( code );
-
+					default:
+						word += String.fromCharCode( code );
+						break;
 				}
 			}
 		};
 
 		OBJCodeParser.prototype.parseText = function ( text ) {
-			var textLength = text.length;
+			var length = text.length;
 			var char;
 			var word = '';
-			for ( var i = 0; i < textLength; i++ ) {
+			for ( var i = 0; i < length; i++ ) {
 
 				char = text[ i ];
-				if ( char === STRING_SPACE ) {
+				switch ( char ) {
+					case STRING_SPACE:
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						break;
 
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+					case STRING_SLASH:
+						this.slashes[ this.slashesPointer++ ] = i;
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						break;
 
-				} else if ( char === STRING_SLASH ) {
+					case STRING_LF:
+						if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+						word = '';
+						this.processLine();
+						break;
 
-					this.slashes[ this.slashesPointer++ ] = i;
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+					case STRING_CR:
+						break;
 
-				} else if ( char === STRING_LF ) {
-
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
-					this.processLine();
-
-				} else if ( char !== STRING_CR ) {
-
-					word += char;
-
+					default:
+						word += char;
 				}
 			}
 		};
