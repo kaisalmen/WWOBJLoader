@@ -210,18 +210,22 @@ THREE.OBJLoader = (function () {
 			for ( var i = 0; i < arrayBufferViewLength; i++ ) {
 
 				code = arrayBufferView[ i ];
-				if ( code === CODE_SPACE || code === CODE_LF || code === CODE_CR  || code === CODE_SLASH ) {
+				if ( code === CODE_SPACE ) {
 
-					if ( code === CODE_SLASH ) this.evaluateFaceSlash( word.length === 0 );
-					// if space was detected and only one slash was detected before, then it can only be type1
-					if ( code === CODE_SPACE && this.slashCount === 1 ) this.faceType = 1;
+					if ( this.slashCount === 1 ) this.faceType = 1;
+					word = this.storeWord( word );
 
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+				} else if ( code === CODE_SLASH ) {
 
-					if ( code === CODE_LF ) this.processLine();
+					this.evaluateFaceSlash( word.length === 0 );
+					word = this.storeWord( word );
 
-				} else {
+				} else if ( code === CODE_LF ) {
+
+					word = this.storeWord( word );
+					this.processLine();
+
+				} else if ( code !== CODE_CR ) {
 
 					word += String.fromCharCode( code );
 
@@ -236,23 +240,32 @@ THREE.OBJLoader = (function () {
 			for ( var i = 0; i < textLength; i++ ) {
 
 				char = text[ i ];
-				if ( char === STRING_SPACE || char === STRING_LF || char === STRING_CR || char === STRING_SLASH ) {
+				if ( char === STRING_SPACE ) {
 
-					if ( char === STRING_SLASH ) this.evaluateFaceSlash( word.length === 0 );
-					// if space was detected and only one slash was detected before, then it can only be type1
-					if ( char === STRING_SPACE && this.slashCount === 1 ) this.faceType = 1;
+					if ( this.slashCount === 1 ) this.faceType = 1;
+					word = this.storeWord( word );
 
-					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-					word = '';
+				} else if ( char === STRING_SLASH ) {
 
-					if ( char === STRING_LF ) this.processLine();
+					this.evaluateFaceSlash( word.length === 0 );
+					word = this.storeWord( word );
 
-				} else {
+				} else if ( char === STRING_LF ) {
+
+					word = this.storeWord( word );
+					this.processLine();
+
+				} else if ( char !== STRING_CR ) {
 
 					word += char;
 
 				}
 			}
+		};
+
+		OBJCodeParser.prototype.storeWord = function ( word ) {
+			if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+			return '';
 		};
 
 		/**
