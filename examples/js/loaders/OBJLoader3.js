@@ -304,27 +304,38 @@ THREE.OBJLoader = (function () {
 						 * 2: "f vertex//normal ..."
 						 * 3: "f vertex ..."
 						 */
-						var faceType = 3;
+						var haveQuad = bufferLength % 4 === 0;
 						if ( this.slashesPointer > 2 && ( this.slashes[ 1 ] - this.slashes[ 0 ] ) === 1 ) {
 
-							faceType = 2;
+							if ( haveQuad ) {
+								this.rawObject.buildQuadVVn( this.buffer );
+							} else {
+								this.rawObject.buildFaceVVn( this.buffer );
+							}
 
 						} else if ( bufferLength === this.slashesPointer * 2 ) {
 
-							faceType = 1;
+							if ( haveQuad ) {
+								this.rawObject.buildQuadVVt( this.buffer );
+							} else {
+								this.rawObject.buildFaceVVt( this.buffer );
+							}
 
 						} else if ( bufferLength * 2 === this.slashesPointer * 3 ) {
 
-							faceType = 0;
-
-						}
-						if  ( bufferLength % 4 === 0 ) {
-
-							this.rawObject.buildQuad( this.buffer, faceType );
+							if ( haveQuad ) {
+								this.rawObject.buildQuadVVtVn( this.buffer );
+							} else {
+								this.rawObject.buildFaceVVtVn( this.buffer );
+							}
 
 						} else {
 
-							this.rawObject.buildFace( this.buffer, faceType );
+							if ( haveQuad ) {
+								this.rawObject.buildQuadV( this.buffer );
+							} else {
+								this.rawObject.buildFaceV( this.buffer );
+							}
 
 						}
 						this.slashesPointer = 0;
@@ -506,98 +517,76 @@ THREE.OBJLoader = (function () {
 			return this.objectName + '|' + this.activeGroupName + '|' + this.activeMtlName + '|' + smoothingGroup;
 		};
 
+		/*
+		 * Build Face/Quad: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
+		 * N-Gons are not supported
+		 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
+		 *
+		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	(vertex/uv/normal)"
+		 * 1: "f vertex/uv          vertex/uv           vertex/uv           (vertex/uv       )"
+		 * 2: "f vertex//normal     vertex//normal      vertex//normal      (vertex//normal  )"
+		 * 3: "f vertex             vertex              vertex              (vertex          )"
+		 *
+		 * @param indexArray
+		 * @param faceType
+		 */
 		var QUAD_INDICES_1 = [ 1, 2, 3, 3, 4, 1 ];
 		var QUAD_INDICES_2 = [ 1, 3, 5, 5, 7, 1 ];
 		var QUAD_INDICES_3 = [ 1, 4, 7, 7, 10, 1 ];
 
-		/**
-		 * Build Quad: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
-		 * N-Gons are not supported
-		 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
-		 *
-		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
-		 * 1: "f vertex/uv          vertex/uv           vertex/uv           vertex/uv       "
-		 * 2: "f vertex//normal     vertex//normal      vertex//normal      vertex//normal  "
-		 * 3: "f vertex             vertex              vertex              vertex          "
-		 *
-		 * @param indexArray
-		 * @param faceType
-		 */
-		RawObject.prototype.buildQuad = function ( indexArray, faceType ) {
-			var i = 0;
-			if ( faceType === 0 ) {
-
-				for ( ; i < 6; i ++ ) {
-					this.attachFaceV_( indexArray[ QUAD_INDICES_3[ i ] ] );
-					this.attachFaceVt( indexArray[ QUAD_INDICES_3[ i ] + 1 ] );
-					this.attachFaceVn( indexArray[ QUAD_INDICES_3[ i ] + 2 ] );
-				}
-
-			} else if ( faceType === 1 ) {
-
-				for ( ; i < 6; i++ ) {
-					this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
-					this.attachFaceVt( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
-				}
-
-			} else if ( faceType === 2 ) {
-
-				for ( ; i < 6; i++ ) {
-					this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
-					this.attachFaceVn( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
-				}
-
-			} else  {
-
-				for ( ; i < 6; i ++ ) {
-					this.attachFaceV_( indexArray[ QUAD_INDICES_1[ i ] ] );
-				}
-
+		RawObject.prototype.buildQuadVVtVn = function ( indexArray ) {
+			for ( var i = 0; i < 6; i ++ ) {
+				this.attachFaceV_( indexArray[ QUAD_INDICES_3[ i ] ] );
+				this.attachFaceVt( indexArray[ QUAD_INDICES_3[ i ] + 1 ] );
+				this.attachFaceVn( indexArray[ QUAD_INDICES_3[ i ] + 2 ] );
 			}
 		};
 
-		/**
-		 * Build Face: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
-		 * N-Gons are not supported
-		 *
-		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal"
-		 * 1: "f vertex/uv          vertex/uv           vertex/uv       "
-		 * 2: "f vertex//normal     vertex//normal      vertex//normal  "
-		 * 3: "f vertex             vertex              vertex          "
-		 *
-		 * @param indexArray
-		 * @param faceType
-		 */
-		RawObject.prototype.buildFace = function ( indexArray, faceType ) {
-			var i = 1;
-			if ( faceType === 0 ) {
+		RawObject.prototype.buildQuadVVt = function ( indexArray ) {
+			for ( var i = 0; i < 6; i ++ ) {
+				this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
+				this.attachFaceVt( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
+			}
+		};
 
-				for ( ; i < 10; i += 3 ) {
-					this.attachFaceV_( indexArray[ i ] );
-					this.attachFaceVt( indexArray[ i + 1 ] );
-					this.attachFaceVn( indexArray[ i + 2 ] );
-				}
+		RawObject.prototype.buildQuadVVn = function ( indexArray ) {
+			for ( var i = 0; i < 6; i ++ ) {
+				this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
+				this.attachFaceVn( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
+			}
+		};
 
-			} else if ( faceType === 1 ) {
+		RawObject.prototype.buildQuadV = function ( indexArray ) {
+			for ( var i = 0; i < 6; i ++ ) {
+				this.attachFaceV_( indexArray[ QUAD_INDICES_1[ i ] ] );
+			}
+		};
 
-				for ( ; i < 7; i += 2 ) {
-					this.attachFaceV_( indexArray[ i ] );
-					this.attachFaceVt( indexArray[ i + 1 ] );
-				}
+		RawObject.prototype.buildFaceVVtVn = function ( indexArray ) {
+			for ( var i = 1; i < 10; i += 3 ) {
+				this.attachFaceV_( indexArray[ i ] );
+				this.attachFaceVt( indexArray[ i + 1 ] );
+				this.attachFaceVn( indexArray[ i + 2 ] );
+			}
+		};
 
-			} else if ( faceType === 2 ) {
+		RawObject.prototype.buildFaceVVt = function ( indexArray ) {
+			for ( var i = 1; i < 7; i += 2 ) {
+				this.attachFaceV_( indexArray[ i ] );
+				this.attachFaceVt( indexArray[ i + 1 ] );
+			}
+		};
 
-				for ( ; i < 7; i += 2 ) {
-					this.attachFaceV_( indexArray[ i ] );
-					this.attachFaceVn( indexArray[ i + 1 ] );
-				}
+		RawObject.prototype.buildFaceVVn = function ( indexArray ) {
+			for ( var i = 1; i < 7; i += 2 ) {
+				this.attachFaceV_( indexArray[ i ] );
+				this.attachFaceVn( indexArray[ i + 1 ] );
+			}
+		};
 
-			} else  {
-
-				for ( ; i < 4; i ++ ) {
-					this.attachFaceV_( indexArray[ i ] );
-				}
-
+		RawObject.prototype.buildFaceV = function ( indexArray ) {
+			for ( var i = 1; i < 4; i ++ ) {
+				this.attachFaceV_( indexArray[ i ] );
 			}
 		};
 
