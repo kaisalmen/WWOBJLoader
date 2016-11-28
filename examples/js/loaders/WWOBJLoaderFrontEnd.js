@@ -126,7 +126,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 	WWOBJLoaderFrontEnd.prototype.initWithFiles = function ( basePath, objFile, mtlFile, texturePath ) {
 		// fast-fail on bad type
-		if ( ! ( typeof( text ) === 'string' || text instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+		if ( ! ( typeof( objFile ) === 'string' || objFile instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
 
 		this.initWorker();
 
@@ -150,7 +150,9 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 	WWOBJLoaderFrontEnd.prototype.initWithData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
 		// fast-fail on bad type
-		if ( ! ( objAsArrayBuffer instanceof ArrayBuffer ) ) throw 'Provided input is not of type arraybuffer! Aborting...';
+		if ( ! ( objAsArrayBuffer instanceof ArrayBuffer || objAsArrayBuffer instanceof Uint8Array ) ) {
+			throw 'Provided input is not of type arraybuffer! Aborting...';
+		}
 
 		this.initWorker();
 

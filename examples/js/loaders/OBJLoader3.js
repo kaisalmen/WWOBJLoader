@@ -94,7 +94,9 @@ THREE.OBJLoader = (function () {
 	 */
 	OBJLoader.prototype.parse = function ( arrayBuffer ) {
 		// fast-fail on bad type
-		if ( ! ( arrayBuffer instanceof ArrayBuffer ) ) throw 'Provided input is not of type arraybuffer! Aborting...';
+		if ( ! ( arrayBuffer instanceof ArrayBuffer || arrayBuffer instanceof Uint8Array ) ) {
+			throw 'Provided input is not of type arraybuffer! Aborting...';
+		}
 
 		console.log( 'Parsing arrayBuffer...' );
 		console.time( 'parseArrayBuffer' );
@@ -131,11 +133,6 @@ THREE.OBJLoader = (function () {
 
 	/**
 	 * Check initialization status: Used for init and re-init
-	 *
-	 * @param path
-	 * @param objGroup
-	 * @param materials
-	 * @param useMultiMaterials
 	 */
 	OBJLoader.prototype.validate = function () {
 		if ( this.validated ) return;
@@ -184,10 +181,10 @@ THREE.OBJLoader = (function () {
 
 		function OBJCodeParser( extendableMeshCreator ) {
 			this.extendableMeshCreator = extendableMeshCreator;
-			this.rawObject;
+			this.rawObject = null;
 			this.inputObjectCount = 1;
 
-			this.buffer;
+			this.buffer = null;
 			this.bufferPointer = 0;
 			this.reachedFaces = false;
 			this.slashCount = 0;
@@ -213,17 +210,16 @@ THREE.OBJLoader = (function () {
 			for ( var i = 0; i < arrayBufferViewLength; i++ ) {
 
 				code = arrayBufferView[ i ];
-				if ( code === CODE_LF || code === CODE_CR ) {
+				if ( code === CODE_SPACE || code === CODE_LF || code === CODE_CR  || code === CODE_SLASH ) {
 
-					// jump over CR
-					if ( code === CODE_CR ) i++;
-					word = this.evaluateWord( word );
-					this.processSingleLine();
+					if ( code === CODE_SLASH ) this.evaluateFaceSlash( word.length === 0 );
+					// if space was detected and only one slash was detected before, then it can only be type1
+					if ( code === CODE_SPACE && this.slashCount === 1 ) this.faceType = 1;
 
-				} else if ( code === CODE_SPACE || code === CODE_SLASH ) {
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
-					this.evaluateSlash( code === CODE_SLASH, word.length === 0 );
-					word = this.evaluateWord( word );
+					if ( code === CODE_LF ) this.processLine();
 
 				} else {
 
@@ -240,17 +236,16 @@ THREE.OBJLoader = (function () {
 			for ( var i = 0; i < textLength; i++ ) {
 
 				char = text[ i ];
-				if ( char === STRING_LF || char === STRING_CR ) {
+				if ( char === STRING_SPACE || char === STRING_LF || char === STRING_CR || char === STRING_SLASH ) {
 
-					// jump over CR
-					if ( char === STRING_CR ) i++;
-					word = this.evaluateWord( word );
-					this.processSingleLine();
+					if ( char === STRING_SLASH ) this.evaluateFaceSlash( word.length === 0 );
+					// if space was detected and only one slash was detected before, then it can only be type1
+					if ( char === STRING_SPACE && this.slashCount === 1 ) this.faceType = 1;
 
-				} else if ( char === STRING_SPACE || char === STRING_SLASH ) {
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
-					this.evaluateSlash( char === STRING_SLASH, word.length === 0 );
-					word = this.evaluateWord( word );
+					if ( char === STRING_LF ) this.processLine();
 
 				} else {
 
@@ -260,29 +255,25 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		OBJCodeParser.prototype.evaluateWord = function ( word ) {
-			if ( word.length > 0 ) this.buffer[ this.bufferPointer ++ ] = word;
-			return '';
-		};
+		/**
+		 * faceType and possible face descriptions:
+		 * 0: "f vertex/uv/normal "
+		 * 1: "f vertex/uv "
+		 * 2: "f vertex//normal "
+		 * 3: "f vertex "
+		 *
+		 * @param emptyWord
+		 */
+		OBJCodeParser.prototype.evaluateFaceSlash = function ( emptyWord ) {
+			if ( this.slashCount < 2 && this.faceType !== 1 ) {
 
-		OBJCodeParser.prototype.evaluateSlash = function ( haveSlash, emptyWord ) {
-			if ( haveSlash ) {
-
-				if ( this.slashCount < 2 && this.faceType !== 1 ) {
-
-					this.faceType = ( emptyWord ) ? 2 : 0;
-					this.slashCount++;
-
-				}
-
-			} else {
-
-				if ( this.slashCount === 1 ) this.faceType = 1;
+				this.faceType = ( emptyWord ) ? 2 : 0;
+				this.slashCount ++;
 
 			}
 		};
 
-		OBJCodeParser.prototype.processSingleLine = function () {
+		OBJCodeParser.prototype.processLine = function () {
 			if ( this.bufferPointer > 1 ) {
 
 				switch ( this.buffer[ 0 ] ) {
@@ -290,11 +281,16 @@ THREE.OBJLoader = (function () {
 
 						// object complete instance required if reached faces already (= reached next block of v)
 						if ( this.reachedFaces ) {
-							this.processCompletedObject();
-							this.rawObject = this.rawObject.newInstance( true );
-							this.reachedFaces = false;
+
+							this.processCompletedObject( true );
+							this.rawObject.pushVertex( this.buffer );
+							this.buffer = [];
+
+						} else {
+
+							this.rawObject.pushVertex( this.buffer );
+
 						}
-						this.rawObject.pushVertex( this.buffer );
 						break;
 
 					case LINE_VT:
@@ -336,10 +332,17 @@ THREE.OBJLoader = (function () {
 
 					case LINE_O:
 						if ( this.rawObject.vertices.length > 0 ) {
-							this.processCompletedObject();
-							this.rawObject = this.rawObject.newInstance( false );
+
+							this.processCompletedObject( false );
+							this.rawObject.pushObject( this.buffer[ 1 ] );
+							this.buffer = [];
+
+						} else {
+
+							this.rawObject.pushObject( this.buffer[ 1 ] );
+
 						}
-						this.rawObject.pushObject( this.buffer[ 1 ] );
+
 						break;
 
 					case LINE_MTLLIB:
@@ -357,12 +360,15 @@ THREE.OBJLoader = (function () {
 			this.bufferPointer = 0;
 		};
 
-		OBJCodeParser.prototype.processCompletedObject = function () {
-			this.rawObject.finalize( this.extendableMeshCreator, this.inputObjectCount );
 
+		OBJCodeParser.prototype.processCompletedObject = function ( vertexDetection ) {
+			this.rawObject.finalize( this.extendableMeshCreator, this.inputObjectCount );
 			if ( this.debug ) this.rawObject.createReport( this.inputObjectCount, true );
 
 			this.inputObjectCount++;
+			this.rawObject = this.rawObject.newInstance( vertexDetection );
+			this.reachedFaces = false;
+
 		};
 
 		OBJCodeParser.prototype.finalize = function () {
@@ -731,8 +737,8 @@ THREE.OBJLoader.RetrievedObjectDescription = (function () {
 THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 	function ExtendableMeshCreator() {
-		this.objGroup = new THREE.Group();
-		this.materials = { materials: [] };
+		this.objGroup = null;
+		this.materials = null;
 		this.debug = false;
 		this.useMultiMaterials = false;
 		this.globalObjectCount = 1;
@@ -741,11 +747,11 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 }
 
 	ExtendableMeshCreator.prototype.setObjGroup = function ( objGroup ) {
-		this.objGroup = ( objGroup == null ) ? this.objGroup : objGroup;
+		this.objGroup = ( objGroup == null ) ? ( this.objGroup == null ? new THREE.Group() : this.objGroup )  : objGroup;
 	};
 
 	ExtendableMeshCreator.prototype.setMaterials = function ( materials ) {
-		this.materials = ( materials == null ) ? this.materials : materials;
+		this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
 	};
 
 	ExtendableMeshCreator.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
@@ -767,6 +773,8 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	};
 
 	ExtendableMeshCreator.prototype.finalize = function () {
+		this.objGroup = null;
+		this.materials = null;
 		this.validated = false;
 	};
 
@@ -781,6 +789,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	ExtendableMeshCreator.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount,
 														   absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 		var retrievedObjectDescription;
+		var index;
 		if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
 
 		if ( this.useMultiMaterials ) {
@@ -824,7 +833,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 				if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
 
-				for ( var index in retrievedObjectDescriptions ) {
+				for ( index in retrievedObjectDescriptions ) {
 					retrievedObjectDescription = retrievedObjectDescriptions[ index ];
 
 					materialName = retrievedObjectDescription.materialName;
@@ -886,7 +895,7 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 		} else {
 
-			for ( var index in retrievedObjectDescriptions ) {
+			for ( index in retrievedObjectDescriptions ) {
 				retrievedObjectDescription = retrievedObjectDescriptions[ index ];
 				this.buildSingleMaterialMesh( retrievedObjectDescription );
 			}
