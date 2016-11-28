@@ -117,12 +117,13 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.cmdState = 'run';
 		var scope = this;
 
-		var complete = function () {
+		var complete = function ( errorMessage ) {
 			console.log( 'OBJ loading complete!' );
 
 			scope.cmdState = 'complete';
 			self.postMessage( {
-				cmd: scope.cmdState
+				cmd: scope.cmdState,
+				msg: errorMessage
 			} );
 		};
 
@@ -160,6 +161,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 			var onError = function ( event ) {
 				console.error( event );
+				complete( 'Error occurred while downloading "' + scope.objFile + '".' );
 			};
 
 			scope.objLoader.load( scope.objFile, onLoad, onProgress, onError );

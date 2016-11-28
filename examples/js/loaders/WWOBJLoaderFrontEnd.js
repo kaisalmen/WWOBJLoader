@@ -380,7 +380,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 			case 'complete':
 
 				console.timeEnd( 'WWOBJLoaderFrontEnd' );
-				this.announceProgress();
+				if ( payload.msg != null ) this.announceProgress( payload.msg );
 
  				if ( this.callbackCompletedLoading !== null ) {
 
