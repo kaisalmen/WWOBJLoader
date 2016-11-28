@@ -10,7 +10,7 @@ THREE.OBJLoader = (function () {
 		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
-		this.fileLoader = null;
+		this.fileLoader = new THREE.FileLoader( this.manager );
 
 		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
 		this.parser = new OBJCodeParser( this.extendableMeshCreator );
@@ -137,7 +137,7 @@ THREE.OBJLoader = (function () {
 	OBJLoader.prototype.validate = function () {
 		if ( this.validated ) return;
 
-		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.setPath( null );
 
 		this.parser.validate();
@@ -186,9 +186,9 @@ THREE.OBJLoader = (function () {
 
 			this.buffer = null;
 			this.bufferPointer = 0;
+			this.slashes = [];
+			this.slashesPointer = 0;
 			this.reachedFaces = false;
-			this.slashCount = 0;
-			this.faceType = 0;
 		}
 
 		OBJCodeParser.prototype.validate = function () {
@@ -197,9 +197,9 @@ THREE.OBJLoader = (function () {
 
 			this.buffer = [];
 			this.bufferPointer = 0;
+			this.slashes = [];
+			this.slashesPointer = 0;
 			this.reachedFaces = false;
-			this.slashCount = 0;
-			this.faceType = 3;
 		};
 
 		OBJCodeParser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
@@ -212,17 +212,19 @@ THREE.OBJLoader = (function () {
 				code = arrayBufferView[ i ];
 				if ( code === CODE_SPACE ) {
 
-					if ( this.slashCount === 1 ) this.faceType = 1;
-					word = this.storeWord( word );
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
 				} else if ( code === CODE_SLASH ) {
 
-					this.evaluateFaceSlash( word.length === 0 );
-					word = this.storeWord( word );
+					this.slashes[ this.slashesPointer++ ] = i;
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
 				} else if ( code === CODE_LF ) {
 
-					word = this.storeWord( word );
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 					this.processLine();
 
 				} else if ( code !== CODE_CR ) {
@@ -242,17 +244,19 @@ THREE.OBJLoader = (function () {
 				char = text[ i ];
 				if ( char === STRING_SPACE ) {
 
-					if ( this.slashCount === 1 ) this.faceType = 1;
-					word = this.storeWord( word );
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
 				} else if ( char === STRING_SLASH ) {
 
-					this.evaluateFaceSlash( word.length === 0 );
-					word = this.storeWord( word );
+					this.slashes[ this.slashesPointer++ ] = i;
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 
 				} else if ( char === STRING_LF ) {
 
-					word = this.storeWord( word );
+					if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
+					word = '';
 					this.processLine();
 
 				} else if ( char !== STRING_CR ) {
@@ -263,31 +267,9 @@ THREE.OBJLoader = (function () {
 			}
 		};
 
-		OBJCodeParser.prototype.storeWord = function ( word ) {
-			if ( word.length > 0 ) this.buffer[ this.bufferPointer++ ] = word;
-			return '';
-		};
-
-		/**
-		 * faceType and possible face descriptions:
-		 * 0: "f vertex/uv/normal "
-		 * 1: "f vertex/uv "
-		 * 2: "f vertex//normal "
-		 * 3: "f vertex "
-		 *
-		 * @param emptyWord
-		 */
-		OBJCodeParser.prototype.evaluateFaceSlash = function ( emptyWord ) {
-			if ( this.slashCount < 2 && this.faceType !== 1 ) {
-
-				this.faceType = ( emptyWord ) ? 2 : 0;
-				this.slashCount ++;
-
-			}
-		};
-
 		OBJCodeParser.prototype.processLine = function () {
-			if ( this.bufferPointer > 1 ) {
+			var bufferLength = this.bufferPointer - 1;
+			if ( bufferLength > 0 ) {
 
 				switch ( this.buffer[ 0 ] ) {
 					case LINE_V:
@@ -316,23 +298,41 @@ THREE.OBJLoader = (function () {
 
 					case LINE_F:
 						this.reachedFaces = true;
-						var haveQuad = ( this.bufferPointer - 1 ) % 4 === 0;
-						if  ( haveQuad ) {
+						/*
+						 * 0: "f vertex/uv/normal ..."
+						 * 1: "f vertex/uv ..."
+						 * 2: "f vertex//normal ..."
+						 * 3: "f vertex ..."
+						 */
+						var faceType = 3;
+						if ( this.slashesPointer > 2 && ( this.slashes[ 1 ] - this.slashes[ 0 ] ) === 1 ) {
 
-							this.rawObject.buildQuad( this.buffer, this.faceType );
+							faceType = 2;
+
+						} else if ( bufferLength === this.slashesPointer * 2 ) {
+
+							faceType = 1;
+
+						} else if ( bufferLength * 2 === this.slashesPointer * 3 ) {
+
+							faceType = 0;
+
+						}
+						if  ( bufferLength % 4 === 0 ) {
+
+							this.rawObject.buildQuad( this.buffer, faceType );
 
 						} else {
 
-							this.rawObject.buildFace( this.buffer, this.faceType );
+							this.rawObject.buildFace( this.buffer, faceType );
 
 						}
-						this.faceType = 3;
-						this.slashCount = 0;
+						this.slashesPointer = 0;
 						break;
 
 					case LINE_L:
-						this.rawObject.buildLine( this.buffer, this.slashCount === 1 );
-						this.slashCount = 0;
+						this.rawObject.buildLine( this.buffer, bufferLength === this.slashesPointer * 2 );
+						this.slashesPointer = 0;
 						break;
 
 					case LINE_S:
