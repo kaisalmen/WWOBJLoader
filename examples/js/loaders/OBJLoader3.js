@@ -342,7 +342,15 @@ THREE.OBJLoader = (function () {
 						break;
 
 					case LINE_L:
-						this.rawObject.buildLine( this.buffer, bufferLength === this.slashesPointer * 2 );
+						if ( bufferLength === this.slashesPointer * 2 ) {
+
+							this.rawObject.buildLineVvt( this.buffer );
+
+						} else {
+
+							this.rawObject.buildLineV( this.buffer );
+
+						}
 						this.slashesPointer = 0;
 						break;
 
@@ -616,29 +624,23 @@ THREE.OBJLoader = (function () {
 			this.retrievedObjectDescriptionInUse.normalArray.push( this.normals[ index ] );
 		};
 
-		/**
-		 * Support for lines with or without texture
+		/*
+		 * Support for lines with or without texture. irst element in indexArray is the line identification
 		 * 0: "f vertex/uv		vertex/uv 		..."
 		 * 1: "f vertex			vertex 			..."
-		 *
-		 * @param lineArray
-		 * @param haveSlash
 		 */
-		RawObject.prototype.buildLine = function ( lineArray, haveSlash ) {
-			// first element in indexArray is the line identification
-			var i = 1;
+		RawObject.prototype.buildLineVvt = function ( lineArray ) {
 			var length = lineArray.length;
-			if ( haveSlash ) {
+			for ( var i = 1; i < length; i ++ ) {
+				this.vertices.push( parseInt( lineArray[ i ] ) );
+				this.uvs.push( parseInt( lineArray[ i ] ) );
+			}
+		};
 
-				for ( ; i < length; i++ ) {
-					this.vertices.push( parseInt( lineArray[ i ] ) );
-					this.uvs.push( parseInt( lineArray[ i ] ) );
-				}
-			} else {
-
-				for ( ; i < length; i++ ) {
-					this.vertices.push( parseInt( lineArray[ i ] ) );
-				}
+		RawObject.prototype.buildLineV = function ( lineArray ) {
+			var length = lineArray.length;
+			for ( var i = 1; i < length; i++ ) {
+				this.vertices.push( parseInt( lineArray[ i ] ) );
 			}
 		};
 
