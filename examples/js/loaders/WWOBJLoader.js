@@ -52,9 +52,9 @@ THREE.WebWorker.WWOBJLoader = (function () {
 	};
 
 	WWOBJLoader.prototype.buildSingleMaterialMesh = function ( retrievedObjectDescription ) {
-		var verticesOut = new Float32Array( retrievedObjectDescription.vertexArray );
-		var normalsOut = ( retrievedObjectDescription.normalArrayIndex > 0 ) ? new Float32Array( retrievedObjectDescription.normalArray ) : null;
-		var uvsOut = ( retrievedObjectDescription.uvArrayIndex > 0 ) ? new Float32Array( retrievedObjectDescription.uvArray ) : null;
+		var verticesOut = new Float32Array( retrievedObjectDescription.vertices );
+		var normalsOut = ( retrievedObjectDescription.normals.length > 0 ) ? new Float32Array( retrievedObjectDescription.normals ) : null;
+		var uvsOut = ( retrievedObjectDescription.uvs.length > 0 ) ? new Float32Array( retrievedObjectDescription.uvs ) : null;
 
 		var material;
 		var materialName = retrievedObjectDescription.materialName;
