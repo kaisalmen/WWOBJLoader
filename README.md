@@ -1,6 +1,33 @@
 New OBJLoader prototyping for three.js
 ===
 
+## New Repository structure
+As proposed in the issue discussion of three.js [#9756](https://github.com/mrdoob/three.js/issues/9756) I have adjusted the repository structure:
+- **src**: Contains own sources
+- **test**: Contains Tests/HTML Examples
+- **resource**: Contains OBJs, MTLs and textures
+
+External libraries (three.js and jszip) are initialized with npm. Therefore, **npm** installation is required.
+Before you can start to play around after checkout please run:
+`npm update`
+
+### 2016-12-01: Status Update
+This changed since last status update:
+- Repository structure has been adjusted
+- OBJLoader3 has been renamed to OBJLoader2
+- Parser rework has been completed: I turned some circles to understand browser performance differences and Javascript performance problems in general.
+- Both arraybuffer and text can be parsed
+- Code documentation has been improved
+- Face N-Gons are not supported (this gave me some headaches and I changed the parsing approach), but it was not supported by old parser either. Triangular and quad faces are fully supported
+- Re-usage of OBJLoader like WWOBJLoader does is not an issue. I took care in resource clean-up and re-validation of the loader status and all involved objects
+
+Next on my agenda:
+- Multi-Material issues must be resolved
+- Test automation
+- Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
+- Split OBJLoader2 into multiple files (aim: worker without three.js import)
+
+
 ### 2016-11-06: Status update
 - New OBJLoader has almost reached feature parity with the existing OBJLoader
 - Features still missing in comparison with existing OBJLoader:
