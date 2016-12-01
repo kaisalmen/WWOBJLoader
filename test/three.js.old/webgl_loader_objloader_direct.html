@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<title>OBJLoader2 Testbed</title>
+<title>OBJLoader Testbed</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>
@@ -74,26 +74,25 @@
 
 
 <div id="info">
-	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
+	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader direct loader test
 	<div id="feedback"></div>
 </div>
 <div id="glFullscreen">
 	<div id="menu">
 		<p id="shading" onclick="APP.alterSmoothShading()">Smooth Shading</p>
 		<p id="side" onclick="APP.alterDouble()">Front Side</p>
-	</div>
+	</div>../
 	<canvas id="example"></canvas>
 </div>
 
-<script src="../build/three.min.js"></script>
-<script src="js/Detector.js"></script>
+<script src="../../node_modules/three/build/three.min.js"></script>
+<script src="../../node_modules/three/examples/js/Detector.js"></script>
+<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/OBJLoader.js"></script>
 
-<script src="js/controls/TrackballControls.js"></script>
-<script src="js/loaders/MTLLoader.js"></script>
-<script src="js/loaders/OBJLoader2.js"></script>
-
-<script src="js/apps/ThreeJsApp.js"></script>
-<script src="js/apps/AppRunner.js"></script>
+<script src="../../src/apps/ThreeJsApp.js"></script>
+<script src="../../src/apps/AppRunner.js"></script>
 
 <script>
 
@@ -141,25 +140,31 @@
 
 			this.cube = null;
 			this.pivot = null;
-
+/*
 			this.fileDef = {
-				path: './obj/female02/',
+				path: '../../resource/obj/female02/',
 				fileObj: 'female02.obj',
-				texturePath: './obj/female02/',
+				texturePath: '../../resource/obj/female02/',
 				fileMtl: 'female02.mtl'
+			};
+*/
+ 			this.fileDef = {
+				path: '../../resource/obj/Cerberus/',
+				fileObj: 'Cerberus.obj',
+				fileMtl: ''
 			};
 /*
 			this.fileDef = {
-				path: './obj/PTV1/',
+				path: '../../resource/obj/PTV1/',
 				fileObj: 'PTV1.obj',
-				texturePath: './obj/PTV1/',
+				texturePath: '../../resource/obj/PTV1/',
 				fileMtl: 'PTV1.mtl'
 			};
 
 			this.fileDef = {
-				path: './obj/zomax/',
+				path: '../../resource/obj/zomax/',
 				fileObj: 'zomax-net_haze-oven-scene.obj',
-				texturePath: './obj/zomax/',
+				texturePath: '../../resource/obj/zomax/',
 				fileMtl: ''
 			};
 */
@@ -217,8 +222,6 @@
 
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setMaterials( materials );
-				objLoader.setLoadAsArrayBuffer( true );
-				objLoader.setWorkInline( true );
 				objLoader.setPath( scope.fileDef.path );
 
 				var onSuccess = function ( object ) {

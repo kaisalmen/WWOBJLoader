@@ -138,20 +138,18 @@
 			<canvas id="example"></canvas>
 		</div>
 
-		<script src="../build/three.min.js"></script>
+		<script src="../node_modules/three/build/three.min.js"></script>
+		<script src="../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-		<script src="js/Detector.js"></script>
+		<script src="../node_modules/jszip/dist/jszip.min.js"></script>
 
-		<script src="js/libs/jszip.min.js"></script>
-
-		<script src="js/controls/TrackballControls.js"></script>
-		<script src="js/loaders/MTLLoader.js"></script>
-
-		<script src="js/apps/ThreeJsApp.js"></script>
-		<script src="js/apps/AppRunner.js"></script>
-		<script src="js/apps/ZipTools.js"></script>
-		<script src="js/loaders/WWCommons.js"></script>
-		<script src="js/loaders/WWOBJLoaderFrontEnd.js"></script>
+		<script src="../src/apps/ThreeJsApp.js"></script>
+		<script src="../src/apps/AppRunner.js"></script>
+		<script src="../src/apps/ZipTools.js"></script>
+		<script src="../src/loaders/WWCommons.js"></script>
+		<script src="../src/loaders/WWOBJLoaderFrontEnd.js"></script>
 
 		<script>
 
@@ -199,7 +197,7 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( './' );
+					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( '..' );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {
@@ -430,28 +428,28 @@
 
 
 			var objsFemaleMale = [];
-			objsFemaleMale.push( new WWOBJLoaderDef( 'male02', '../../obj/male02/', 'male02.obj', 'male02.mtl', './obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
-			objsFemaleMale.push( new WWOBJLoaderDef( 'female02', '../../obj/female02/', 'female02.obj', 'female02.mtl', './obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
+			objsFemaleMale.push( new WWOBJLoaderDef( 'male02', '../../resource/obj/male02/', 'male02.obj', 'male02.mtl', '../resource/obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
+			objsFemaleMale.push( new WWOBJLoaderDef( 'female02', '../../resource/obj/female02/', 'female02.obj', 'female02.mtl', '../resource/obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
 
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 			var objsZomaxOven = [];
-			objsZomaxOven.push( new WWOBJLoaderDef( 'oven', './obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+			objsZomaxOven.push( new WWOBJLoaderDef( 'oven', '../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
 
 			var objsZomaxSink = [];
-			objsZomaxSink.push( new WWOBJLoaderDef( 'sink', './obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
+			objsZomaxSink.push( new WWOBJLoaderDef( 'sink', '../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
 
 			var objsPtv1Zip = [];
-			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', './obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', './obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
+			objsPtv1Zip.push( new WWOBJLoaderDef( 'PTV1', '../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../resource/obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
 
 			var objsCerberus = [];
-			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../obj/Cerberus/', 'Cerberus.obj', null, './obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
+			objsCerberus.push( new WWOBJLoaderDef( 'cerberus', '../../resource/obj/Cerberus/', 'Cerberus.obj', null, '../resource/obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
 
 			var objsWaltHead = [];
-			objsWaltHead.push( new WWOBJLoaderDef( 'WaltHead', '../../obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', './obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
+			objsWaltHead.push( new WWOBJLoaderDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
 
 			var objsVive = [];
-			objsVive.push( new WWOBJLoaderDef( 'Vive Controller', '../../obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, './obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
+			objsVive.push( new WWOBJLoaderDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../resource/obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {

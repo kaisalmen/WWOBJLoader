@@ -10,7 +10,7 @@ THREE.OBJLoader = (function () {
 		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
-		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.fileLoader = new THREE.XHRLoader( this.manager );
 
 		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
 		this.parser = new OBJCodeParser( this.extendableMeshCreator );
@@ -137,7 +137,7 @@ THREE.OBJLoader = (function () {
 	OBJLoader.prototype.validate = function () {
 		if ( this.validated ) return;
 
-		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
+		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
 		this.setPath( null );
 
 		this.parser.validate();

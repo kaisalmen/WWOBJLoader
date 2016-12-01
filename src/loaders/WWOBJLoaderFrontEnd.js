@@ -104,9 +104,9 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.initWorker = function () {
-		if ( this.worker === null ) {
+		if ( this.worker == null ) {
 
-			this.worker = new Worker( this.basedir + "/js/loaders/WWOBJLoader.js" );
+			this.worker = new Worker( this.basedir + "/src/loaders/WWOBJLoader.js" );
 
 			var scope = this;
 			var scopeFunction = function ( e ) {
@@ -116,7 +116,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		}
 
-		if ( this.mtlLoader === null ) {
+		if ( this.mtlLoader == null ) {
 
 			this.mtlLoader = new THREE.MTLLoader();
 
@@ -135,6 +135,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
+			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: basePath,
 			objFile: objFile,
@@ -161,6 +162,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.worker.postMessage( {
 			cmd: 'init',
+			debug: this.debug,
 			dataAvailable: this.dataAvailable,
 			basePath: null,
 			objFile: null,

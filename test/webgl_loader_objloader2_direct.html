@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<title>OBJLoader Testbed</title>
+<title>OBJLoader2 Testbed</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 <style>
@@ -74,7 +74,7 @@
 
 
 <div id="info">
-	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader direct loader test
+	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
 	<div id="feedback"></div>
 </div>
 <div id="glFullscreen">
@@ -85,15 +85,14 @@
 	<canvas id="example"></canvas>
 </div>
 
-<script src="../build/three.min.js"></script>
-<script src="js/Detector.js"></script>
+<script src="../node_modules/three/build/three.min.js"></script>
+<script src="../node_modules/three/examples/js/Detector.js"></script>
+<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="js/controls/TrackballControls.js"></script>
-<script src="js/loaders/MTLLoader.js"></script>
-<script src="js/loaders/OBJLoader.js"></script>
-
-<script src="js/apps/ThreeJsApp.js"></script>
-<script src="js/apps/AppRunner.js"></script>
+<script src="../src/loaders/OBJLoader2.js"></script>
+<script src="../src/apps/ThreeJsApp.js"></script>
+<script src="../src/apps/AppRunner.js"></script>
 
 <script>
 
@@ -114,22 +113,16 @@
 	 */
 	THREE.examples.loaders.OBJLoader2SimpleCheck = (function () {
 
-		OBJLoader2SimpleCheck.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype, {
-			constructor: {
-				configurable: true,
-				enumerable: true,
-				value: OBJLoader2SimpleCheck,
-				writable: true
-			}
-		});
+		OBJLoader2Verification.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+		OBJLoader2Verification.prototype.constructor = OBJLoader2Verification;
 
-		function OBJLoader2SimpleCheck( elementToBindTo ) {
+		function OBJLoader2Verification( elementToBindTo ) {
 			THREE.examples.apps.ThreeJsApp.call( this );
 
 			// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
 			// Only define what is required (name and htmlCanvas).
 			this.configure( {
-				name: 'OBJLoader2SimpleCheck',
+				name: 'OBJLoader2Verification',
 				htmlCanvas: elementToBindTo
 			} );
 
@@ -143,37 +136,37 @@
 			this.pivot = null;
 /*
 			this.fileDef = {
-				path: './obj/female02/',
+				path: '../resource/obj/female02/',
 				fileObj: 'female02.obj',
-				texturePath: './obj/female02/',
+				texturePath: '../resource/obj/female02/',
 				fileMtl: 'female02.mtl'
 			};
 */
  			this.fileDef = {
-				path: './obj/Cerberus/',
-				fileObj: 'Cerberus.obj',
-				fileMtl: ''
-			};
+ 				path: '../resource/obj/Cerberus/',
+ 				fileObj: 'Cerberus.obj',
+ 				fileMtl: ''
+ 			};
 /*
 			this.fileDef = {
-				path: './obj/PTV1/',
+				path: '../resource/obj/PTV1/',
 				fileObj: 'PTV1.obj',
-				texturePath: './obj/PTV1/',
+				texturePath: '../resource/obj/PTV1/',
 				fileMtl: 'PTV1.mtl'
 			};
 
 			this.fileDef = {
-				path: './obj/zomax/',
-				fileObj: 'zomax-net_haze-oven-scene.obj',
-				texturePath: './obj/zomax/',
+				path: '../resource/obj/zomax/',
+				fileObj: 'zomax-net_haze-sink-scene.obj',
+				texturePath: '../resource/obj/zomax/',
 				fileMtl: ''
 			};
-*/
+ */
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
 
-		OBJLoader2SimpleCheck.prototype.initGL = function () {
+		OBJLoader2Verification.prototype.initGL = function () {
 			this.renderer.setClearColor(0x303030);
 
 			var cameraDefaults = {
@@ -212,7 +205,7 @@
 
 		// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
-		OBJLoader2SimpleCheck.prototype.initPostGL = function () {
+		OBJLoader2Verification.prototype.initPostGL = function () {
 			var scope = this;
 
 			var mtlLoader = new THREE.MTLLoader();
@@ -225,8 +218,12 @@
 				objLoader.setMaterials( materials );
 				objLoader.setPath( scope.fileDef.path );
 
-				var onSuccess = function ( object ) {
-					scope.pivot.add( object );
+				var onSuccess = function ( object3d ) {
+					if ( object3d !== undefined && object3d !== null ) {
+
+						scope.pivot.add( object3d );
+
+					}
 				};
 
 				var onProgress = function ( event ) {
@@ -250,11 +247,11 @@
 			return true;
 		};
 
-		OBJLoader2SimpleCheck.prototype.resizeDisplayGL = function () {
+		OBJLoader2Verification.prototype.resizeDisplayGL = function () {
 			this.controls.handleResize();
 		};
 
-		OBJLoader2SimpleCheck.prototype.renderPre = function () {
+		OBJLoader2Verification.prototype.renderPre = function () {
 			this.controls.update();
 
 			this.cube.rotation.x += 0.05;
@@ -262,7 +259,7 @@
 		};
 
 
-		OBJLoader2SimpleCheck.prototype.alterSmoothShading = function () {
+		OBJLoader2Verification.prototype.alterSmoothShading = function () {
 
 			var scope = this;
 			scope.smoothShading = ! scope.smoothShading;
@@ -283,7 +280,7 @@
 			scope.pivot.traverse( scopeTraverse );
 		};
 
-		OBJLoader2SimpleCheck.prototype.alterDouble = function () {
+		OBJLoader2Verification.prototype.alterDouble = function () {
 
 			var scope = this;
 			scope.doubleSide = ! scope.doubleSide;
@@ -304,7 +301,7 @@
 			scope.pivot.traverse( scopeTraverse );
 		};
 
-		OBJLoader2SimpleCheck.prototype.traverseScene = function ( object3d ) {
+		OBJLoader2Verification.prototype.traverseScene = function ( object3d ) {
 
 			if ( object3d.material instanceof THREE.MultiMaterial ) {
 
@@ -322,10 +319,9 @@
 
 		};
 
-
 		// ThreeJsApp.renderPost()  not required, default is used
 
-		return OBJLoader2SimpleCheck;
+		return OBJLoader2Verification;
 
 	})();
 

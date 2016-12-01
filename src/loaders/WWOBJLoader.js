@@ -16,7 +16,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 	function WWOBJLoader() {
 		THREE.OBJLoader.ExtendableMeshCreator.call( this );
-		this.debug = true;
+		this.debug = false;
 		this.objLoader = new THREE.OBJLoader();
 		this.objLoader.setExtendableMeshCreator( this );
 
@@ -97,6 +97,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.dataAvailable = payload.dataAvailable;
 		this.objFile = payload.objFile === null ? '' : payload.objFile;
 		this.objAsArrayBuffer = payload.objAsArrayBuffer;
+		this.debug = payload.debug;
 
 		// re-init OBJLoader
 		this.objLoader.setPath( payload.basePath );

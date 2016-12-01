@@ -1,0 +1,28 @@
+{
+  "name": "WWOBJLoader",
+  "version": "0.2.1",
+  "description": "New OBJLoader utilizing web worker for three.js",
+  "main": "build/WWOBJLoader.js",
+  "author": "kaisalmen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaisalmen/WWOBJLoader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
+  },
+  "directories": {
+    "resource": "resource",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
+  "dependencies": {
+    "three": "^0.82.1",
+    "jszip": "^3.1.3"
+  }
+}

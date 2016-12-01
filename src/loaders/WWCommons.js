@@ -13,9 +13,9 @@ if ( THREE.WebWorker === undefined ) {
 	THREE.WebWorker = {
 		Commons: {
 			paths: {
-				threejsPath: '../../../../build/three.min.js',
-				objLoaderPath: './OBJLoader3.js',
-				mtlLoaderPath: './MTLLoader.js'
+				threejsPath: '../../../../node_modules/three/build/three.min.js',
+				objLoaderPath: './OBJLoader2.js',
+				mtlLoaderPath: '../../../../node_modules/three/examples/js/loaders/MTLLoader.js'
 			}
 		}
 	}
