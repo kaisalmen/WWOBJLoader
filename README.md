@@ -20,9 +20,9 @@ This changed since last status update:
 - Code documentation has been improved
 - Face N-Gons are not supported (this gave me some headaches and I changed the parsing approach), but it was not supported by old parser either. Triangular and quad faces are fully supported
 - Re-usage of OBJLoader like WWOBJLoader does is not an issue. I took care in resource clean-up and re-validation of the loader status and all involved objects
+- **Multi-Material bug is fixed**: Vertex group start and offset were not correctly calculated
 
 Next on my agenda:
-- Multi-Material issues must be resolved
 - Test automation
 - Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
 - Split OBJLoader2 into multiple files (aim: worker without three.js import)

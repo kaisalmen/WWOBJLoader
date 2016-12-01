@@ -15,8 +15,8 @@ THREE.OBJLoader = (function () {
 		this.extendableMeshCreator = new THREE.OBJLoader.ExtendableMeshCreator();
 		this.parser = new OBJCodeParser( this.extendableMeshCreator );
 
-		this.extendableMeshCreator.debug = false;
 		this.parser.debug = false;
+		this.extendableMeshCreator.debug = false;
 
 		this.validated = false;
 	}
@@ -70,6 +70,17 @@ THREE.OBJLoader = (function () {
 			console.log( 'Updated ExtendableMeshCreator with own implementation.' );
 
 		}
+	};
+
+	/**
+	 * Allows to set debug mode for the parser and the extendableMeshCreatorDebug
+	 *
+	 * @param parserDebug
+	 * @param extendableMeshCreatorDebug
+	 */
+	OBJLoader.prototype.setDebug = function ( parserDebug, extendableMeshCreatorDebug ) {
+		this.parser.debug = parserDebug;
+		this.extendableMeshCreator.debug = extendableMeshCreatorDebug;
 	};
 
 	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
@@ -825,7 +836,9 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 				}
 
-				var vertexOffset = 0;
+				var vertexBAOffset = 0;
+				var vertexGroupOffset = 0;
+				var vertexLength;
 				var normalOffset = 0;
 				var uvOffset = 0;
 
@@ -872,9 +885,11 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 					}
 
-					vertexBA.set( retrievedObjectDescription.vertices, vertexOffset );
-					bufferGeometry.addGroup( vertexOffset, retrievedObjectDescription.vertices.length, selectedMaterialIndex );
-					vertexOffset += retrievedObjectDescription.vertices.length;
+					vertexLength = retrievedObjectDescription.vertices.length;
+					vertexBA.set( retrievedObjectDescription.vertices, vertexBAOffset );
+					vertexBAOffset += vertexLength;
+					bufferGeometry.addGroup( vertexGroupOffset, vertexLength / 3, selectedMaterialIndex );
+					vertexGroupOffset += vertexLength / 3;
 
 					if ( normalBA ) {
 						normalBA.set( retrievedObjectDescription.normals, normalOffset );

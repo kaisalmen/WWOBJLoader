@@ -161,7 +161,14 @@
 				texturePath: '../resource/obj/zomax/',
 				fileMtl: ''
 			};
- */
+
+			this.fileDef = {
+				path: '../resource/obj/cube/',
+				fileObj: 'cube.obj',
+				texturePath: '../resource/obj/cube/',
+				fileMtl: 'cube.mtl'
+			};
+*/
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
@@ -217,6 +224,8 @@
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setMaterials( materials );
 				objLoader.setPath( scope.fileDef.path );
+				objLoader.setUseMultiMaterials( true );
+				objLoader.setDebug( false, false );
 
 				var onSuccess = function ( object3d ) {
 					if ( object3d !== undefined && object3d !== null ) {
