@@ -24,10 +24,11 @@ This changed since last status update:
 - **2016-12-01**: Multi-Material bug is fixed: Vertex group start and offset were not correctly calculated
 - **2016-12-02**: WWOBJLoader and OBJLoader2 are both using MultiMaterial. Simplified code.
 - **2016-12-02**: WWOBJLoader no longer requires MTTLoader
+- **2016-12-02**: Split OBJLoader2 into multiple files: Extracted OBJParser.js and OBJMeshCreator.js
+- **2016-12-02**: WWOBJLoader is independent of three.js. It only requires OBJParser.js
 
 Next on my agenda:
-- Split OBJLoader2 into multiple files (aim: worker without three.js import)
-- Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
+- **Ongoing** Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
 - Test automation
 
 ## Examples:

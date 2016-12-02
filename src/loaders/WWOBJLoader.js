@@ -4,51 +4,148 @@
 
 'use strict';
 
-if ( THREE === undefined ) var THREE = {}
+if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
+if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
 
-importScripts( '../../node_modules/three/build/three.min.js' );
-importScripts( './OBJLoader2.js' );
+importScripts( './OBJParser.js' );
 
 THREE.WebWorker.WWOBJLoader = (function () {
 
-	WWOBJLoader.prototype = Object.create( THREE.OBJLoader.ExtendableMeshCreator.prototype );
-	WWOBJLoader.prototype.constructor = WWOBJLoader;
-
 	function WWOBJLoader() {
-		THREE.OBJLoader.ExtendableMeshCreator.call( this );
-		this.debug = false;
-		this.objLoader = new THREE.OBJLoader();
-		this.objLoader.setExtendableMeshCreator( this );
-
+		this.meshCreator = new THREE.WebWorker.WWMeshCreator();
+		this.parser = new THREE.OBJLoader.Parser( this.meshCreator );
+		this.parser.debug = false;
+		this.validated = false;
 		this.cmdState = 'created';
-		this.objFile = '';
-		this.dataAvailable = false;
-		this.objAsArrayBuffer = null;
+
+		this.debug = false;
 	}
 
 	/**
-	 * It is ensured that outputObjectDescriptions only contain objects with vertices (no need to check)
-	 * @param outputObjectDescriptions
+	 * Allows to set debug mode for the parser and the meshCreatorDebug
+	 *
+	 * @param parserDebug
+	 * @param meshCreatorDebug
+	 */
+	WWOBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
+		this.parser.debug = parserDebug;
+		this.meshCreator.debug = meshCreatorDebug;
+	};
+
+	/**
+	 * Validate status, then parse arrayBuffer, finalize and return objGroup
+	 *
+	 * @param arrayBuffer
+	 */
+	WWOBJLoader.prototype.parse = function ( arrayBuffer ) {
+		console.log( 'Parsing arrayBuffer...' );
+		console.time( 'parseArrayBuffer' );
+
+		this.validate();
+		this.parser.parseArrayBuffer( arrayBuffer );
+		var objGroup = this.finalize();
+
+		console.timeEnd( 'parseArrayBuffer' );
+
+		return objGroup;
+	};
+
+	/**
+	 * Check initialization status: Used for init and re-init
+	 */
+	WWOBJLoader.prototype.validate = function () {
+		if ( this.validated ) return;
+
+		this.parser.validate();
+		this.meshCreator.validate();
+
+		this.validated = true;
+	};
+
+	WWOBJLoader.prototype.finalize = function () {
+		console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
+		this.parser.finalize();
+		this.meshCreator.finalize();
+		this.validated = false;
+	};
+
+	WWOBJLoader.prototype.init = function ( payload ) {
+		this.cmdState = 'init';
+		this.setDebug( payload.debug, payload.debug );
+	};
+
+	WWOBJLoader.prototype.initMaterials = function ( payload ) {
+		this.cmdState = 'initMaterials';
+		this.meshCreator.setMaterials( payload.materialNames );
+	};
+
+	WWOBJLoader.prototype.run = function ( payload ) {
+		this.cmdState = 'run';
+
+		this.parse( payload.objAsArrayBuffer );
+		console.log( 'OBJ loading complete!' );
+
+		this.cmdState = 'complete';
+		self.postMessage( {
+			cmd: this.cmdState,
+			msg: null
+		} );
+	};
+
+	return WWOBJLoader;
+})();
+
+THREE.WebWorker.WWMeshCreator = (function () {
+
+	function WWMeshCreator() {
+		this.materials = null;
+		this.debug = false;
+		this.globalObjectCount = 1;
+		this.validated = false;
+	}
+
+	WWMeshCreator.prototype.setMaterials = function ( materials ) {
+		this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
+	};
+
+	WWMeshCreator.prototype.setDebug = function ( debug ) {
+		this.debug = ( debug == null ) ? this.debug : debug;
+	};
+
+	WWMeshCreator.prototype.validate = function () {
+		if ( this.validated ) return;
+
+		this.setMaterials( null );
+		this.setDebug( null );
+		this.globalObjectCount = 1;
+	};
+
+	WWMeshCreator.prototype.finalize = function () {
+		this.materials = null;
+		this.validated = false;
+	};
+
+	/**
+	 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check)
+	 * @param rawObjectDescriptions
 	 * @param inputObjectCount
 	 * @param absoluteVertexCount
 	 * @param absoluteNormalCount
 	 * @param absoluteUvCount
 	 */
-	WWOBJLoader.prototype.buildMesh = function ( outputObjectDescriptions, inputObjectCount,
-												 absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
-
+	WWMeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 		if ( this.debug ) console.log( 'WWOBJLoader.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
 
 		var vertexFa = new Float32Array( absoluteVertexCount );
 		var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
 		var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
 
-		var outputObjectDescription;
+		var rawObjectDescription;
 		var materialDescription;
 		var materialDescriptions = [];
 
-		var createMultiMaterial = ( outputObjectDescriptions.length > 1 ) ? true : false;
+		var createMultiMaterial = ( rawObjectDescriptions.length > 1 ) ? true : false;
 		var materialIndex = 0;
 		var materialIndexMapping = [];
 		var selectedMaterialIndex;
@@ -61,10 +158,10 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		var normalOffset = 0;
 		var uvOffset = 0;
 
-		for ( var oodIndex in outputObjectDescriptions ) {
-			outputObjectDescription = outputObjectDescriptions[ oodIndex ];
+		for ( var oodIndex in rawObjectDescriptions ) {
+			rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
-			materialDescription = { name: outputObjectDescription.materialName, flat: false, default: false };
+			materialDescription = { name: rawObjectDescription.materialName, flat: false, default: false };
 			if ( this.materials[ materialDescription.name ] === null ) {
 
 				materialDescription.default = true;
@@ -72,9 +169,9 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 			}
 			// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-			if ( outputObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
+			if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
 
-			vertexLength = outputObjectDescription.vertices.length;
+			vertexLength = rawObjectDescription.vertices.length;
 			if ( createMultiMaterial ) {
 
 				// re-use material if already used before. Reduces materials array size and eliminates duplicates
@@ -102,28 +199,28 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 			}
 
-			vertexFa.set( outputObjectDescription.vertices, vertexBAOffset );
+			vertexFa.set( rawObjectDescription.vertices, vertexBAOffset );
 			vertexBAOffset += vertexLength;
 
 			if ( normalFA ) {
 
-				normalFA.set( outputObjectDescription.normals, normalOffset );
-				normalOffset += outputObjectDescription.normals.length;
+				normalFA.set( rawObjectDescription.normals, normalOffset );
+				normalOffset += rawObjectDescription.normals.length;
 
 			}
 			if ( uvFA ) {
 
-				uvFA.set( outputObjectDescription.uvs, uvOffset );
-				uvOffset += outputObjectDescription.uvs.length;
+				uvFA.set( rawObjectDescription.uvs, uvOffset );
+				uvOffset += rawObjectDescription.uvs.length;
 
 			}
-			if ( this.debug ) this.printReport( outputObjectDescription, selectedMaterialIndex );
+			if ( this.debug ) this.printReport( rawObjectDescription, selectedMaterialIndex );
 
 		}
 
 		self.postMessage( {
 			cmd: 'objData',
-			meshName: outputObjectDescription.objectName,
+			meshName: rawObjectDescription.objectName,
 			multiMaterial: createMultiMaterial,
 			materialDescriptions: materialDescriptions,
 			materialGroups: materialGroups,
@@ -135,81 +232,9 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.globalObjectCount++;
 	};
 
-	WWOBJLoader.prototype.init = function ( payload ) {
-		this.cmdState = 'init';
-
-		this.dataAvailable = payload.dataAvailable;
-		this.objFile = payload.objFile === null ? '' : payload.objFile;
-		this.objAsArrayBuffer = payload.objAsArrayBuffer;
-		this.debug = payload.debug;
-
-		// re-init OBJLoader
-		this.objLoader.setPath( payload.basePath );
-	};
-
-	WWOBJLoader.prototype.initMaterials = function ( payload ) {
-		this.cmdState = 'initMaterials';
-		this.objLoader.setMaterials( payload.materialNames );
-	};
-
-	WWOBJLoader.prototype.run = function () {
-		this.cmdState = 'run';
-		var scope = this;
-
-		var complete = function ( errorMessage ) {
-			console.log( 'OBJ loading complete!' );
-
-			scope.cmdState = 'complete';
-			self.postMessage( {
-				cmd: scope.cmdState,
-				msg: errorMessage
-			} );
-		};
-
-		if ( scope.dataAvailable ) {
-
-			scope.objLoader.parse( scope.objAsArrayBuffer );
-			complete();
-
-		} else {
-
-			var onLoad = function () {
-				complete();
-			};
-
-			var refPercentComplete = 0;
-			var percentComplete = 0;
-			var output;
-
-			var onProgress = function ( event ) {
-				if ( ! event.lengthComputable ) return;
-
-				percentComplete = Math.round( event.loaded / event.total * 100 );
-				if ( percentComplete > refPercentComplete ) {
-
-					refPercentComplete = percentComplete;
-					output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
-					console.log( output );
-					self.postMessage( {
-						cmd: 'report_progress',
-						output: output
-					} );
-
-				}
-			};
-
-			var onError = function ( event ) {
-				console.error( event );
-				complete( 'Error occurred while downloading "' + scope.objFile + '".' );
-			};
-
-			scope.objLoader.load( scope.objFile, onLoad, onProgress, onError );
-
-		}
-	};
-
-	return WWOBJLoader;
+	return WWMeshCreator;
 })();
+
 
 var implRef = new THREE.WebWorker.WWOBJLoader( this );
 
@@ -231,7 +256,7 @@ var runner = function ( event ) {
 
 		case 'run':
 
-			implRef.run();
+			implRef.run( payload );
 			break;
 
 		default:
