@@ -334,7 +334,15 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 			case 'complete':
 
 				console.timeEnd( 'WWOBJLoaderFrontEnd' );
-				if ( payload.msg != null ) this.announceProgress( payload.msg );
+				if ( payload.msg != null ) {
+
+					this.announceProgress( payload.msg );
+
+				} else {
+
+					this.announceProgress( '' );
+
+				}
 
  				if ( this.callbackCompletedLoading !== null ) {
 

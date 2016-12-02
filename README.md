@@ -11,7 +11,8 @@ External libraries (three.js and jszip) are initialized with npm. Therefore, **n
 Before you can start to play around after checkout please run:
 `npm update`
 
-### Current Status
+
+## Current Status
 This changed since last status update:
 - Repository structure has been adjusted
 - OBJLoader3 has been renamed to OBJLoader2
@@ -28,6 +29,16 @@ Next on my agenda:
 - Split OBJLoader2 into multiple files (aim: worker without three.js import)
 - Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
 - Test automation
+
+## Examples:
+[OBJLoader2](http://kaisalmen.de/proto/test/webgl_loader_objloader2_direct.html)<br>
+[WWOBJLoader](http://kaisalmen.de/proto/test/webgl_loader_wwobj.html)<br>
+[Original OBJLoader](http://kaisalmen.de/proto/test/three.js.old/webgl_loader_objloader_direct.html)
+
+Larger models not in the prototype repository:<br>
+[Compressed PTV1 Model](http://kaisalmen.de/proto/resource/obj/PTV1/PTV1.zip) (150MB)<br>
+[Compressed Sink Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
+[Compressed Oven Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)
 
 
 ### 2016-11-06: Status update
@@ -57,15 +68,6 @@ Only 60% of the original at peek (150 MB input model) has a peak at  approx. 800
 So far, I only ran desktop tests: Firefox is generally faster than Chrome (~125%). 150MB model is loaded in ~6.4 seconds in Firefox and ~8 seconds in Chrome. Existing OBJLoader loader takes 5.1s in Firefox and 5.3s in Chrome.
 Tests were performed on: Core i7-6700, 32GB DDR4-2133, 960GTX 4GB, Windows 10 14393.351, Firefox 49 and Chrome Canary 56.
 Biggest room for improvement: Assembling a single line and then using a regex to divide it, seems to be faster than evaluating every byte and drawing conclusions. This is not what I expected. I will write a second OBJCodeParser that works differently. From my point of view OO approach is not hindering performance.
-
-
-##### Examples:
-[Existing OBJLoader](http://kaisalmen.de/proto/examples/webgl_loader_objloader_direct.html)
-
-[New OBJLoader](http://kaisalmen.de/proto/examples/webgl_loader_objloader3_direct.html)
-
-Larger model not in the prototype repository (27MB zip):
-[Compressed 150MB Model](http://kaisalmen.de//proto/examples/obj/PTV1/PTV1.zip)
 
 
 ### 2016-09-29: Objectives
