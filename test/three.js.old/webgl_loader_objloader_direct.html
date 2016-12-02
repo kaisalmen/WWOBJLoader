@@ -81,7 +81,7 @@
 	<div id="menu">
 		<p id="shading" onclick="APP.alterSmoothShading()">Smooth Shading</p>
 		<p id="side" onclick="APP.alterDouble()">Front Side</p>
-	</div>../
+	</div>
 	<canvas id="example"></canvas>
 </div>
 
@@ -140,20 +140,20 @@
 
 			this.cube = null;
 			this.pivot = null;
-/*
+
 			this.fileDef = {
 				path: '../../resource/obj/female02/',
 				fileObj: 'female02.obj',
 				texturePath: '../../resource/obj/female02/',
 				fileMtl: 'female02.mtl'
 			};
-*/
+/*
  			this.fileDef = {
 				path: '../../resource/obj/Cerberus/',
 				fileObj: 'Cerberus.obj',
 				fileMtl: ''
 			};
-/*
+
 			this.fileDef = {
 				path: '../../resource/obj/PTV1/',
 				fileObj: 'PTV1.obj',
@@ -167,7 +167,14 @@
 				texturePath: '../../resource/obj/zomax/',
 				fileMtl: ''
 			};
-*/
+
+			this.fileDef = {
+				path: '../../resource/obj/cube/',
+				fileObj: 'cube.obj',
+				texturePath: '../../resource/obj/cube/',
+				fileMtl: 'cube.mtl'
+			};
+ */
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
@@ -258,6 +265,10 @@
 
 			this.cube.rotation.x += 0.05;
 			this.cube.rotation.y += 0.05;
+
+			this.lights.lightArray.rotation.x += 0.005;
+			this.lights.lightArray.rotation.y += 0.005;
+			this.lights.lightArray.rotation.z += 0.005;
 		};
 
 

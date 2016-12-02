@@ -51,14 +51,6 @@ THREE.OBJLoader = (function () {
 	};
 
 	/**
-	 * Will create multi-materials instead of multiple objects with different material definitions
-	 * @param useMultiMaterials
-	 */
-	OBJLoader.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.extendableMeshCreator.setUseMultiMaterials( useMultiMaterials );
-	};
-
-	/**
 	 * Allow to set own ExtendableMeshCreator (e.g. web worker)
 	 * @param extendableMeshCreator
 	 */
@@ -445,23 +437,23 @@ THREE.OBJLoader = (function () {
 			this.mtlCount = 0;
 			this.smoothingGroupCount = 0;
 
-			this.retrievedObjectDescriptions = [];
+			this.outputObjectDescriptions = [];
 			var index = this.buildIndexRegular();
-			this.retrievedObjectDescriptionInUse = new THREE.OBJLoader.RetrievedObjectDescription( this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
-			this.retrievedObjectDescriptions[ index ] = this.retrievedObjectDescriptionInUse;
+			this.outputObjectDescriptionInUse = new THREE.OBJLoader.OutputObjectDescription( this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
+			this.outputObjectDescriptions[ index ] = this.outputObjectDescriptionInUse;
 		}
 
 		RawObject.prototype.newInstance = function ( vertexDetection ) {
-			var newOob = new RawObject();
+			var newRawObject = new RawObject();
 			if ( vertexDetection ) {
-				newOob.activeGroupName = this.activeGroupName;
-				newOob.retrievedObjectDescriptionInUse.groupName = this.activeGroupName;
+				newRawObject.activeGroupName = this.activeGroupName;
+				newRawObject.outputObjectDescriptionInUse.groupName = this.activeGroupName;
 			}
-			newOob.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
-			newOob.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
-			newOob.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
+			newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
+			newRawObject.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
+			newRawObject.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
 
-			return newOob;
+			return newRawObject;
 		};
 
 		RawObject.prototype.pushVertex = function ( buffer ) {
@@ -520,14 +512,14 @@ THREE.OBJLoader = (function () {
 		RawObject.prototype.verifyIndex = function () {
 			var index = ( this.activeSmoothingGroup === 0 ) ? this.buildIndexOverride( 0 ) : this.buildIndexOverride( 1 );
 
-			if ( this.retrievedObjectDescriptions[ index ] === undefined ) {
+			if ( this.outputObjectDescriptions[ index ] === undefined ) {
 
-				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ] = new THREE.OBJLoader.RetrievedObjectDescription(
+				this.outputObjectDescriptionInUse = this.outputObjectDescriptions[ index ] = new THREE.OBJLoader.OutputObjectDescription(
 					this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
 
 			} else {
 
-				this.retrievedObjectDescriptionInUse = this.retrievedObjectDescriptions[ index ];
+				this.outputObjectDescriptionInUse = this.outputObjectDescriptions[ index ];
 
 			}
 		};
@@ -617,7 +609,7 @@ THREE.OBJLoader = (function () {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
 
-			var rodiu = this.retrievedObjectDescriptionInUse;
+			var rodiu = this.outputObjectDescriptionInUse;
 			var vertices = this.vertices;
 			rodiu.vertices.push( vertices[ index++ ] );
 			rodiu.vertices.push( vertices[ index++ ] );
@@ -628,7 +620,7 @@ THREE.OBJLoader = (function () {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalUvOffset ) * 2;
 
-			var rodiu = this.retrievedObjectDescriptionInUse;
+			var rodiu = this.outputObjectDescriptionInUse;
 			var uvs = this.uvs;
 			rodiu.uvs.push( uvs[ index++ ] );
 			rodiu.uvs.push( uvs[ index ] );
@@ -638,7 +630,7 @@ THREE.OBJLoader = (function () {
 			var faceIndexInt =  parseInt( faceIndex );
 			var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
 
-			var rodiu = this.retrievedObjectDescriptionInUse;
+			var rodiu = this.outputObjectDescriptionInUse;
 			var normals = this.normals;
 			rodiu.normals.push( normals[ index++ ] );
 			rodiu.normals.push( normals[ index++ ] );
@@ -666,12 +658,12 @@ THREE.OBJLoader = (function () {
 		};
 
 		/**
-		 * Clear any empty RetrievedObjectDescription
+		 * Clear any empty outputObjectDescription
 		 */
 		RawObject.prototype.finalize = function ( extendableMeshCreator, inputObjectCount ) {
-			var temp = this.retrievedObjectDescriptions;
-			this.retrievedObjectDescriptions = [];
-			var retrievedObjectDescription;
+			var temp = this.outputObjectDescriptions;
+			this.outputObjectDescriptions = [];
+			var outputObjectDescription;
 			var index = 0;
 			var absoluteVertexCount = 0;
 			var absoluteNormalCount = 0;
@@ -679,20 +671,20 @@ THREE.OBJLoader = (function () {
 
 			for ( var name in temp ) {
 
-				retrievedObjectDescription = temp[ name ];
-				if ( retrievedObjectDescription.vertices.length > 0 ) {
+				outputObjectDescription = temp[ name ];
+				if ( outputObjectDescription.vertices.length > 0 ) {
 
-					if ( retrievedObjectDescription.objectName === 'none' ) retrievedObjectDescription.objectName = retrievedObjectDescription.groupName;
-					this.retrievedObjectDescriptions[ index++ ] = retrievedObjectDescription;
-					absoluteVertexCount += retrievedObjectDescription.vertices.length;
-					absoluteUvCount += retrievedObjectDescription.uvs.length;
-					absoluteNormalCount += retrievedObjectDescription.normals.length;
+					if ( outputObjectDescription.objectName === 'none' ) outputObjectDescription.objectName = outputObjectDescription.groupName;
+					this.outputObjectDescriptions[ index++ ] = outputObjectDescription;
+					absoluteVertexCount += outputObjectDescription.vertices.length;
+					absoluteUvCount += outputObjectDescription.uvs.length;
+					absoluteNormalCount += outputObjectDescription.normals.length;
 
 				}
 			}
 
 			extendableMeshCreator.buildMesh(
-				this.retrievedObjectDescriptions,
+				this.outputObjectDescriptions,
 				inputObjectCount,
 				absoluteVertexCount,
 				absoluteNormalCount,
@@ -710,7 +702,7 @@ THREE.OBJLoader = (function () {
 				objectGroupCount: this.objectGroupCount,
 				smoothingGroupCount: this.smoothingGroupCount,
 				mtlCount: this.mtlCount,
-				retrievedObjectDescriptions: this.retrievedObjectDescriptions.length
+				outputObjectDescriptions: this.outputObjectDescriptions.length
 			};
 
 			if ( printDirectly ) {
@@ -722,7 +714,7 @@ THREE.OBJLoader = (function () {
 				console.log( 'Group count: ' + report.objectGroupCount );
 				console.log( 'SmoothingGroup count: ' + report.smoothingGroupCount );
 				console.log( 'Material count: ' + report.mtlCount );
-				console.log( 'Real RetrievedObjectDescription count: ' + report.retrievedObjectDescriptions );
+				console.log( 'Real OutputObjectDescription count: ' + report.outputObjectDescriptions );
 				console.log( '' );
 			}
 
@@ -736,9 +728,9 @@ THREE.OBJLoader = (function () {
 })();
 
 
-THREE.OBJLoader.RetrievedObjectDescription = (function () {
+THREE.OBJLoader.OutputObjectDescription = (function () {
 
-	function RetrievedObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
+	function OutputObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
 		this.objectName = objectName;
 		this.groupName = groupName;
 		this.materialName = materialName;
@@ -748,7 +740,7 @@ THREE.OBJLoader.RetrievedObjectDescription = (function () {
 		this.normals = [];
 	}
 
-	return RetrievedObjectDescription;
+	return OutputObjectDescription;
 })();
 
 THREE.OBJLoader.ExtendableMeshCreator = (function () {
@@ -757,7 +749,6 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		this.objGroup = null;
 		this.materials = null;
 		this.debug = false;
-		this.useMultiMaterials = false;
 		this.globalObjectCount = 1;
 
 		this.validated = false;
@@ -771,10 +762,6 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 		this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
 	};
 
-	ExtendableMeshCreator.prototype.setUseMultiMaterials = function ( useMultiMaterials ) {
-		this.useMultiMaterials = ( useMultiMaterials == null ) ? this.useMultiMaterials : useMultiMaterials;
-	};
-
 	ExtendableMeshCreator.prototype.setDebug = function ( debug ) {
 		this.debug = ( debug == null ) ? this.debug : debug;
 	};
@@ -784,7 +771,6 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 
 		this.setObjGroup( null );
 		this.setMaterials( null );
-		this.setUseMultiMaterials( null );
 		this.setDebug( null );
 		this.globalObjectCount = 1;
 	};
@@ -796,191 +782,134 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 	};
 
 	/**
-	 * It is ensured that retrievedObjectDescriptions only contain objects with vertices (no need to check)
-	 * @param retrievedObjectDescriptions
+	 * It is ensured that outputObjectDescriptions only contain objects with vertices (no need to check)
+	 * @param outputObjectDescriptions
 	 * @param inputObjectCount
 	 * @param absoluteVertexCount
 	 * @param absoluteNormalCount
 	 * @param absoluteUvCount
 	 */
-	ExtendableMeshCreator.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount,
+	ExtendableMeshCreator.prototype.buildMesh = function ( outputObjectDescriptions, inputObjectCount,
 														   absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
-		var retrievedObjectDescription;
-		var index;
+
 		if ( this.debug ) console.log( 'ExtendableMeshCreator.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
 
-		if ( this.useMultiMaterials ) {
-
-			if ( retrievedObjectDescriptions.length === 1 ) {
-
-				this.buildSingleMaterialMesh( retrievedObjectDescriptions[ 0 ] );
-
-			} else {
-
-				var bufferGeometry = new THREE.BufferGeometry();
-				var vertexBA = new THREE.BufferAttribute( new Float32Array( absoluteVertexCount ), 3 );
-				bufferGeometry.addAttribute( 'position', vertexBA );
-
-				var normalBA;
-				if ( absoluteNormalCount > 0 ) {
-
-					normalBA = new THREE.BufferAttribute( new Float32Array( absoluteNormalCount ), 3 );
-					bufferGeometry.addAttribute( 'normal', normalBA );
-
-				}
-				var uvBA;
-				if ( absoluteUvCount > 0 ) {
-
-					uvBA = new THREE.BufferAttribute( new Float32Array( absoluteUvCount ), 2 );
-					bufferGeometry.addAttribute( 'uv', uvBA );
-
-				}
-
-				var vertexBAOffset = 0;
-				var vertexGroupOffset = 0;
-				var vertexLength;
-				var normalOffset = 0;
-				var uvOffset = 0;
-
-				var materials = [];
-				var material;
-				var materialName;
-				var materialIndex = 0;
-				var materialIndexMapping = [];
-				var selectedMaterialIndex;
-
-				if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
-
-				for ( index in retrievedObjectDescriptions ) {
-					retrievedObjectDescription = retrievedObjectDescriptions[ index ];
-
-					materialName = retrievedObjectDescription.materialName;
-					if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
-
-					if ( ! material ) {
-
-						material = new THREE.MeshStandardMaterial();
-						material.name = materialName;
-						console.error( 'Material "' + materialName + '" defined in OBJ file was defined in MTL file!' );
-
-					}
-					// clone material in case flat shading is needed due to smoothingGroup 0
-					if ( retrievedObjectDescription.smoothingGroup === 0 ) {
-
-						material = material.clone();
-						materialName = materialName + '_clone';
-						material.name = materialName;
-						material.shading = THREE.FlatShading;
-
-					}
-
-					// re-use material if already used before. Reduces materials array size and eliminates duplicates
-					selectedMaterialIndex = materialIndexMapping[ materialName ];
-					if ( ! selectedMaterialIndex ) {
-
-						selectedMaterialIndex = materialIndex;
-						materialIndexMapping[ materialName ] = materialIndex;
-						materials.push( material );
-						materialIndex++;
-
-					}
-
-					vertexLength = retrievedObjectDescription.vertices.length;
-					vertexBA.set( retrievedObjectDescription.vertices, vertexBAOffset );
-					vertexBAOffset += vertexLength;
-					bufferGeometry.addGroup( vertexGroupOffset, vertexLength / 3, selectedMaterialIndex );
-					vertexGroupOffset += vertexLength / 3;
-
-					if ( normalBA ) {
-						normalBA.set( retrievedObjectDescription.normals, normalOffset );
-						normalOffset += retrievedObjectDescription.normals.length;
-					}
-					if ( uvBA ) {
-						uvBA.set( retrievedObjectDescription.uvs, uvOffset );
-						uvOffset += retrievedObjectDescription.uvs.length;
-					}
-
-					if ( this.debug ) this.printReport( retrievedObjectDescription, selectedMaterialIndex );
-
-				}
-				var multiMaterial = new THREE.MultiMaterial( materials );
-
-				if ( ! normalBA ) bufferGeometry.computeVertexNormals();
-
-				var mesh = new THREE.Mesh( bufferGeometry, multiMaterial );
-				this.objGroup.add( mesh );
-
-				this.globalObjectCount++;
-			}
-
-		} else {
-
-			for ( index in retrievedObjectDescriptions ) {
-				retrievedObjectDescription = retrievedObjectDescriptions[ index ];
-				this.buildSingleMaterialMesh( retrievedObjectDescription );
-			}
-		}
-	};
-
-	ExtendableMeshCreator.prototype.buildSingleMaterialMesh = function ( retrievedObjectDescription ) {
-
 		var bufferGeometry = new THREE.BufferGeometry();
-		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( retrievedObjectDescription.vertices ), 3 ) );
-		if ( retrievedObjectDescription.normals.length > 0 ) {
+		var vertexBA = new THREE.BufferAttribute( new Float32Array( absoluteVertexCount ), 3 );
+		bufferGeometry.addAttribute( 'position', vertexBA );
 
-			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( retrievedObjectDescription.normals ), 3 ) );
+		var normalBA;
+		if ( absoluteNormalCount > 0 ) {
 
-		} else {
-
-			bufferGeometry.computeVertexNormals();
-
-		}
-		if ( retrievedObjectDescription.uvs.length > 0 ) {
-
-			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( retrievedObjectDescription.uvs ), 2 ) );
+			normalBA = new THREE.BufferAttribute( new Float32Array( absoluteNormalCount ), 3 );
+			bufferGeometry.addAttribute( 'normal', normalBA );
 
 		}
+		var uvBA;
+		if ( absoluteUvCount > 0 ) {
 
+			uvBA = new THREE.BufferAttribute( new Float32Array( absoluteUvCount ), 2 );
+			bufferGeometry.addAttribute( 'uv', uvBA );
+
+		}
+
+		if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
+
+		var outputObjectDescription;
 		var material;
-		var materialName = retrievedObjectDescription.materialName;
-		if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
+		var materialName;
+		var createMultiMaterial = ( outputObjectDescriptions.length > 1 ) ? true : false;
+		var materials = [];
+		var materialIndex = 0;
+		var materialIndexMapping = [];
+		var selectedMaterialIndex;
 
-		if ( ! material ) {
+		var vertexBAOffset = 0;
+		var vertexGroupOffset = 0;
+		var vertexLength;
+		var normalOffset = 0;
+		var uvOffset = 0;
 
-			material = new THREE.MeshStandardMaterial();
-			material.name = materialName;
+		for ( var oodIndex in outputObjectDescriptions ) {
+			outputObjectDescription = outputObjectDescriptions[ oodIndex ];
+
+			materialName = outputObjectDescription.materialName;
+			if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
+
+			if ( ! material ) {
+
+				material = new THREE.MeshStandardMaterial();
+				material.name = materialName;
+				console.error( 'Material "' + materialName + '" defined in OBJ file was defined in MTL file!' );
+
+			}
+			// clone material in case flat shading is needed due to smoothingGroup 0
+			if ( outputObjectDescription.smoothingGroup === 0 ) {
+
+				material = material.clone();
+				materialName = materialName + '_clone';
+				material.name = materialName;
+				material.shading = THREE.FlatShading;
+
+			}
+
+			vertexLength = outputObjectDescription.vertices.length;
+			if ( createMultiMaterial ) {
+
+				// re-use material if already used before. Reduces materials array size and eliminates duplicates
+				selectedMaterialIndex = materialIndexMapping[ materialName ];
+				if ( ! selectedMaterialIndex ) {
+
+					selectedMaterialIndex = materialIndex;
+					materialIndexMapping[ materialName ] = materialIndex;
+					materials.push( material );
+					materialIndex++;
+
+				}
+
+				bufferGeometry.addGroup( vertexGroupOffset, vertexLength / 3, selectedMaterialIndex );
+				vertexGroupOffset += vertexLength / 3;
+			}
+
+
+			vertexBA.set( outputObjectDescription.vertices, vertexBAOffset );
+			vertexBAOffset += vertexLength;
+
+			if ( normalBA ) {
+
+				normalBA.set( outputObjectDescription.normals, normalOffset );
+				normalOffset += outputObjectDescription.normals.length;
+
+			}
+			if ( uvBA ) {
+
+				uvBA.set( outputObjectDescription.uvs, uvOffset );
+				uvOffset += outputObjectDescription.uvs.length;
+
+			}
+			if ( this.debug ) this.printReport( outputObjectDescription, selectedMaterialIndex );
 
 		}
+		if ( ! normalBA ) bufferGeometry.computeVertexNormals();
 
-		// clone material in case flat shading is needed due to smoothingGroup 0
-		if ( retrievedObjectDescription.smoothingGroup === 0 ) {
-
-			material = material.clone();
-			materialName = materialName + '_clone';
-			material.name = materialName;
-			material.shading = THREE.FlatShading;
-
-		}
-
+		if ( createMultiMaterial ) material = new THREE.MultiMaterial( materials );
 		var mesh = new THREE.Mesh( bufferGeometry, material );
 		this.objGroup.add( mesh );
-
-		if ( this.debug ) this.printReport( retrievedObjectDescription, 0 );
 
 		this.globalObjectCount++;
 	};
 
-	ExtendableMeshCreator.prototype.printReport = function ( retrievedObjectDescription, selectedMaterialIndex ) {
+	ExtendableMeshCreator.prototype.printReport = function ( outputObjectDescription, selectedMaterialIndex ) {
 		console.log(
 			' Output Object no.: ' + this.globalObjectCount +
-			'\n objectName: ' + retrievedObjectDescription.objectName +
-			'\n groupName: ' + retrievedObjectDescription.groupName +
-			'\n materialName: ' + retrievedObjectDescription.materialName +
+			'\n objectName: ' + outputObjectDescription.objectName +
+			'\n groupName: ' + outputObjectDescription.groupName +
+			'\n materialName: ' + outputObjectDescription.materialName +
 			'\n materialIndex: ' + selectedMaterialIndex +
-			'\n smoothingGroup: ' + retrievedObjectDescription.smoothingGroup +
-			'\n #vertices: ' + retrievedObjectDescription.vertices.length / 3 +
-			'\n #uvs: ' + retrievedObjectDescription.uvs.length / 2 +
-			'\n #normals: ' + retrievedObjectDescription.normals.length / 3
+			'\n smoothingGroup: ' + outputObjectDescription.smoothingGroup +
+			'\n #vertices: ' + outputObjectDescription.vertices.length / 3 +
+			'\n #uvs: ' + outputObjectDescription.uvs.length / 2 +
+			'\n #normals: ' + outputObjectDescription.normals.length / 3
 		);
 	};
 

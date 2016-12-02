@@ -20,7 +20,7 @@ g right
 usemtl green
 f 4 3 7 8
 g top
-usemtl gold
+usemtl lightblue
 f 5 1 4 8
 g left
 usemtl orange

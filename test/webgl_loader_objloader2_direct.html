@@ -134,20 +134,20 @@
 
 			this.cube = null;
 			this.pivot = null;
-/*
+
 			this.fileDef = {
 				path: '../resource/obj/female02/',
 				fileObj: 'female02.obj',
 				texturePath: '../resource/obj/female02/',
 				fileMtl: 'female02.mtl'
 			};
-*/
+/*
  			this.fileDef = {
  				path: '../resource/obj/Cerberus/',
  				fileObj: 'Cerberus.obj',
  				fileMtl: ''
  			};
-/*
+
 			this.fileDef = {
 				path: '../resource/obj/PTV1/',
 				fileObj: 'PTV1.obj',
@@ -167,8 +167,8 @@
 				fileObj: 'cube.obj',
 				texturePath: '../resource/obj/cube/',
 				fileMtl: 'cube.mtl'
-			};
-*/
+			}
+ */
 		}
 
 		// ThreeJsApp.initPreGL()  not required, default is used
@@ -224,7 +224,6 @@
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setMaterials( materials );
 				objLoader.setPath( scope.fileDef.path );
-				objLoader.setUseMultiMaterials( true );
 				objLoader.setDebug( false, false );
 
 				var onSuccess = function ( object3d ) {
@@ -265,6 +264,10 @@
 
 			this.cube.rotation.x += 0.05;
 			this.cube.rotation.y += 0.05;
+
+			this.lights.lightArray.rotation.x += 0.005;
+			this.lights.lightArray.rotation.y += 0.005;
+			this.lights.lightArray.rotation.z += 0.005;
 		};
 
 
