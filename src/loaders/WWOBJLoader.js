@@ -7,7 +7,7 @@
 if ( THREE === undefined ) var THREE = {}
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
-importScripts( '../../../../node_modules/three/build/three.min.js' );
+importScripts( '../../node_modules/three/build/three.min.js' );
 importScripts( './OBJLoader2.js' );
 
 THREE.WebWorker.WWOBJLoader = (function () {
