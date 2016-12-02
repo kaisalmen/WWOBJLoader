@@ -148,7 +148,6 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWCommons.js"></script>
 		<script src="../src/loaders/WWOBJLoaderFrontEnd.js"></script>
 
 		<script>
@@ -263,6 +262,10 @@
 
 					this.cube.rotation.x += 0.05;
 					this.cube.rotation.y += 0.05;
+
+					this.lights.lightArray.rotation.x += 0.005;
+					this.lights.lightArray.rotation.y += 0.005;
+					this.lights.lightArray.rotation.z += 0.005;
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {

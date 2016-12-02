@@ -834,22 +834,33 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 			outputObjectDescription = outputObjectDescriptions[ oodIndex ];
 
 			materialName = outputObjectDescription.materialName;
-			if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
-
+			material = this.materials[ materialName ];
 			if ( ! material ) {
 
-				material = new THREE.MeshStandardMaterial();
-				material.name = materialName;
-				console.error( 'Material "' + materialName + '" defined in OBJ file was defined in MTL file!' );
+				material = this.materials[ 'defaultMaterial' ];
+				if ( ! material ) {
+
+					material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF} );
+					material.name = 'defaultMaterial';
+					this.materials[ 'defaultMaterial' ] = material;
+
+				}
+				console.error( 'Material with name "' + materialName + '" defined in OBJ file was defined in MTL file! Assigning "defaultMaterial".' );
 
 			}
 			// clone material in case flat shading is needed due to smoothingGroup 0
 			if ( outputObjectDescription.smoothingGroup === 0 ) {
 
-				material = material.clone();
-				materialName = materialName + '_clone';
-				material.name = materialName;
-				material.shading = THREE.FlatShading;
+				materialName = material.name + '_flat';
+				var materialClone = this.materials[ materialName ];
+				if ( ! materialClone ) {
+
+					materialClone = material.clone();
+					materialClone.name = materialName;
+					materialClone.shading = THREE.FlatShading;
+					this.materials[ materialName ] = name;
+
+				}
 
 			}
 
@@ -870,7 +881,6 @@ THREE.OBJLoader.ExtendableMeshCreator = (function () {
 				bufferGeometry.addGroup( vertexGroupOffset, vertexLength / 3, selectedMaterialIndex );
 				vertexGroupOffset += vertexLength / 3;
 			}
-
 
 			vertexBA.set( outputObjectDescription.vertices, vertexBAOffset );
 			vertexBAOffset += vertexLength;

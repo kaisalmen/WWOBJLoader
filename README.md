@@ -11,7 +11,7 @@ External libraries (three.js and jszip) are initialized with npm. Therefore, **n
 Before you can start to play around after checkout please run:
 `npm update`
 
-### 2016-12-01: Status Update
+### Current Status
 This changed since last status update:
 - Repository structure has been adjusted
 - OBJLoader3 has been renamed to OBJLoader2
@@ -20,12 +20,14 @@ This changed since last status update:
 - Code documentation has been improved
 - Face N-Gons are not supported (this gave me some headaches and I changed the parsing approach), but it was not supported by old parser either. Triangular and quad faces are fully supported
 - Re-usage of OBJLoader like WWOBJLoader does is not an issue. I took care in resource clean-up and re-validation of the loader status and all involved objects
-- **Multi-Material bug is fixed**: Vertex group start and offset were not correctly calculated
+- **2016-12-01**: Multi-Material bug is fixed: Vertex group start and offset were not correctly calculated
+- **2016-12-02**: WWOBJLoader and OBJLoader2 are both using MultiMaterial. Simplified code.
+- **2016-12-02**: WWOBJLoader no longer requires MTTLoader
 
 Next on my agenda:
-- Test automation
-- Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
 - Split OBJLoader2 into multiple files (aim: worker without three.js import)
+- Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
+- Test automation
 
 
 ### 2016-11-06: Status update

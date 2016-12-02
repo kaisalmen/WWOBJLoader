@@ -4,10 +4,11 @@
 
 'use strict';
 
-importScripts( './WWCommons.js' );
-importScripts( THREE.WebWorker.Commons.paths.threejsPath );
-importScripts( THREE.WebWorker.Commons.paths.objLoaderPath );
-importScripts( THREE.WebWorker.Commons.paths.mtlLoaderPath );
+if ( THREE === undefined ) var THREE = {}
+if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
+
+importScripts( '../../../../node_modules/three/build/three.min.js' );
+importScripts( './OBJLoader2.js' );
 
 THREE.WebWorker.WWOBJLoader = (function () {
 
@@ -27,66 +28,109 @@ THREE.WebWorker.WWOBJLoader = (function () {
 	}
 
 	/**
-	 * It is ensured that retrievedObjectDescriptions only contain objects with vertices (no need to check)
-	 * @param retrievedObjectDescriptions
+	 * It is ensured that outputObjectDescriptions only contain objects with vertices (no need to check)
+	 * @param outputObjectDescriptions
 	 * @param inputObjectCount
 	 * @param absoluteVertexCount
 	 * @param absoluteNormalCount
 	 * @param absoluteUvCount
 	 */
+	WWOBJLoader.prototype.buildMesh = function ( outputObjectDescriptions, inputObjectCount,
+												 absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 
-	WWOBJLoader.prototype.buildMesh = function ( retrievedObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
-		var retrievedObjectDescription;
 		if ( this.debug ) console.log( 'WWOBJLoader.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
-/*
-		ignore for now
-		if ( this.useMultiMaterials ) {
 
-		} else {
- */
-			for ( var index in retrievedObjectDescriptions ) {
-				retrievedObjectDescription = retrievedObjectDescriptions[ index ];
-				this.buildSingleMaterialMesh( retrievedObjectDescription );
+		var vertexFa = new Float32Array( absoluteVertexCount );
+		var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
+		var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+
+		var outputObjectDescription;
+		var materialDescription;
+		var materialDescriptions = [];
+
+		var createMultiMaterial = ( outputObjectDescriptions.length > 1 ) ? true : false;
+		var materialIndex = 0;
+		var materialIndexMapping = [];
+		var selectedMaterialIndex;
+		var materialGroup;
+		var materialGroups = [];
+
+		var vertexBAOffset = 0;
+		var vertexGroupOffset = 0;
+		var vertexLength;
+		var normalOffset = 0;
+		var uvOffset = 0;
+
+		for ( var oodIndex in outputObjectDescriptions ) {
+			outputObjectDescription = outputObjectDescriptions[ oodIndex ];
+
+			materialDescription = { name: outputObjectDescription.materialName, flat: false, default: false };
+			if ( this.materials[ materialDescription.name ] === null ) {
+
+				materialDescription.default = true;
+				console.error( 'Material with name "' + materialDescription.name + '" defined in OBJ file was defined in material names retrieved from mtl file!' );
+
 			}
-//		}
-	};
+			// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
+			if ( outputObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
 
-	WWOBJLoader.prototype.buildSingleMaterialMesh = function ( retrievedObjectDescription ) {
-		var verticesOut = new Float32Array( retrievedObjectDescription.vertices );
-		var normalsOut = ( retrievedObjectDescription.normals.length > 0 ) ? new Float32Array( retrievedObjectDescription.normals ) : null;
-		var uvsOut = ( retrievedObjectDescription.uvs.length > 0 ) ? new Float32Array( retrievedObjectDescription.uvs ) : null;
+			vertexLength = outputObjectDescription.vertices.length;
+			if ( createMultiMaterial ) {
 
-		var material;
-		var materialName = retrievedObjectDescription.materialName;
-		if ( this.materials !== null && this.materials instanceof THREE.MTLLoader.MaterialCreator ) material = this.materials.create( materialName );
+				// re-use material if already used before. Reduces materials array size and eliminates duplicates
 
-		if ( ! material ) {
+				selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
+				if ( ! selectedMaterialIndex ) {
 
-			material = new THREE.MeshStandardMaterial();
-			material.name = materialName;
+					selectedMaterialIndex = materialIndex;
+					materialIndexMapping[ materialDescription.name ] = materialIndex;
+					materialDescriptions.push( materialDescription );
+					materialIndex++;
 
-		}
-		// clone material in case flat shading is needed due to smoothingGroup 0
-		if ( retrievedObjectDescription.smoothingGroup === 0 ) {
+				}
+				materialGroup = {
+					start: vertexGroupOffset,
+					count: vertexLength / 3,
+					index: selectedMaterialIndex
+				};
+				materialGroups.push( materialGroup );
+				vertexGroupOffset += vertexLength / 3;
 
-			material = material.clone();
-			materialName = materialName + '_clone';
-			material.name = materialName;
-			material.shading = THREE.FlatShading;
+			} else {
+
+				materialDescriptions.push( materialDescription );
+
+			}
+
+			vertexFa.set( outputObjectDescription.vertices, vertexBAOffset );
+			vertexBAOffset += vertexLength;
+
+			if ( normalFA ) {
+
+				normalFA.set( outputObjectDescription.normals, normalOffset );
+				normalOffset += outputObjectDescription.normals.length;
+
+			}
+			if ( uvFA ) {
+
+				uvFA.set( outputObjectDescription.uvs, uvOffset );
+				uvOffset += outputObjectDescription.uvs.length;
+
+			}
+			if ( this.debug ) this.printReport( outputObjectDescription, selectedMaterialIndex );
+
 		}
 
 		self.postMessage( {
 			cmd: 'objData',
-			meshName: retrievedObjectDescription.objectName,
-			multiMaterial: false,
-			materialName: materialName,
-			materialGroups: null,
-			vertices: verticesOut,
-			normals: normalsOut,
-			uvs: uvsOut
-		}, [ verticesOut.buffer ], normalsOut !== null ? [ normalsOut.buffer ] : null, uvsOut !== null ? [ uvsOut.buffer ] : null );
-
-		if ( this.debug ) this.printReport( retrievedObjectDescription, 0 );
+			meshName: outputObjectDescription.objectName,
+			multiMaterial: createMultiMaterial,
+			materialDescriptions: materialDescriptions,
+			materialGroups: materialGroups,
+			vertices: vertexFa,
+			normals: normalFA,
+			uvs: uvFA
+		}, [ vertexFa.buffer ], normalFA !== null ? [ normalFA.buffer ] : null, uvFA !== null ? [ uvFA.buffer ] : null );
 
 		this.globalObjectCount++;
 	};
@@ -105,13 +149,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 
 	WWOBJLoader.prototype.initMaterials = function ( payload ) {
 		this.cmdState = 'initMaterials';
-
-		var materialsJSON = JSON.parse( payload.materials );
-		var materialCreator = new THREE.MTLLoader.MaterialCreator( payload.baseUrl, payload.options );
-		materialCreator.setMaterials( materialsJSON );
-		materialCreator.preload();
-
-		this.objLoader.setMaterials( materialCreator );
+		this.objLoader.setMaterials( payload.materialNames );
 	};
 
 	WWOBJLoader.prototype.run = function () {

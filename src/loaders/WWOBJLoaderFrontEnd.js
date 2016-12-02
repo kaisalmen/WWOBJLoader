@@ -4,6 +4,9 @@
 
 'use strict';
 
+if ( THREE === undefined ) var THREE = {}
+if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
+
 THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 	function WWOBJLoaderFrontEnd( basedir ) {
@@ -21,8 +24,9 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.mtlAsString = null;
 
 		this.materials = [];
-		this.defaultMaterial = new THREE.MeshPhongMaterial( { color: 0xDCF1FF} );
-		this.defaultMaterial.name = "defaultMaterial";
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF} );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
 
 		this.counter = 0;
 		this.objGroup = null;
@@ -61,21 +65,13 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.addMaterial = function ( name, material ) {
-		if ( material.name !== name ) {
-
-			material.name = name;
-
-		}
+		if ( material.name !== name ) material.name = name;
 		this.materials[ name ] = material;
 	};
 
 	WWOBJLoaderFrontEnd.prototype.getMaterial = function ( name ) {
 		var material = this.materials[ name ];
-		if ( material === undefined ) {
-
-			material = null;
-
-		}
+		if ( ! material ) material = null;
 		return material;
 	};
 
@@ -197,89 +193,31 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		}
 
-		var processMaterials = function ( materialsOrg ) {
+		var processMaterials = function ( materialCreator ) {
+			materialCreator.preload();
+			var materialCreatorMaterials = materialCreator.materials;
+			var materialNames = [];
+			for ( var materialName in materialCreatorMaterials ) {
 
-			var matInfoOrg = materialsOrg.materialsInfo;
+				if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
 
-			// Clone mtl input material objects
-			var matInfoMod = {};
-			var name, matOrg, matMod;
-			for ( name in matInfoOrg ) {
-
-				if ( matInfoOrg.hasOwnProperty( name ) ) {
-
-					matOrg = matInfoOrg[ name ];
-					matMod = Object.assign( {}, matOrg );
-
-					if ( matMod.hasOwnProperty( 'map_kd' ) ) {
-
-						delete matMod[ 'map_kd' ];
-
-					}
-					if ( matMod.hasOwnProperty( 'map_ks' ) ) {
-
-						delete matMod[ 'map_ks' ];
-
-					}
-					if ( matMod.hasOwnProperty( 'map_bump' ) ) {
-
-						delete matMod[ 'map_bump' ];
-
-					}
-					if ( matMod.hasOwnProperty( 'bump' ) ) {
-
-						delete matMod[ 'bump' ];
-
-					}
-					matInfoMod[ name ] = matMod;
+					materialNames.push( materialName );
+					scope.materials[ materialName ] = materialCreatorMaterials[ materialName ];
 
 				}
-			}
-			var materialsMod = new THREE.MTLLoader.MaterialCreator( materialsOrg.baseUrl, materialsOrg.options );
-			materialsMod.setMaterials( matInfoMod );
-			materialsMod.preload();
 
-			// set 'castrated' materials in associated materials array
-			for ( name in materialsMod.materials ) {
-
-				if ( materialsMod.materials.hasOwnProperty( name ) ) {
-
-					scope.materials[ name ] = materialsMod.materials[ name ];
-
-				}
 			}
 
-			// pass 'castrated' materials to web worker
+			// pass materialNames to web worker
 			scope.worker.postMessage( {
 				cmd: 'initMaterials',
-				materials: JSON.stringify( matInfoMod ),
-				baseUrl: materialsMod.baseUrl,
-				options: materialsMod.options
+				materialNames: materialNames
 			} );
 
 			// process obj immediately
 			kickRun();
 
-
-			console.time( 'Loading MTL textures' );
-			materialsOrg.preload();
-
-			// update stored materials with texture mapping information (= fully restoration)
-			var matWithTextures = materialsOrg.materials;
-			var intermediate;
-			var updated;
-			for ( name in scope.materials ) {
-
-				if ( scope.materials.hasOwnProperty( name ) && matWithTextures.hasOwnProperty( name ) ) {
-
-					intermediate = scope.materials[ name ];
-					updated = matWithTextures[ name ];
-					intermediate.setValues( updated );
-
-				}
-			}
-
-			if ( scope.callbackMaterialsLoaded !== null ) {
+			if ( scope.callbackMaterialsLoaded != null ) {
 
 				scope.materials = scope.callbackMaterialsLoaded( scope.materials );
 
@@ -300,7 +238,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 	WWOBJLoaderFrontEnd.prototype.processData = function ( event ) {
 		var payload = event.data;
-		var material;
 
 		switch ( payload.cmd ) {
 			case 'objData':
@@ -323,43 +260,58 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
 
 				}
-				if ( payload.multiMaterial ) {
 
-					var materialNames = JSON.parse( payload.materialName );
-					var multiMaterials = [];
-					var name;
-					for ( var key in materialNames ) {
+				var materialDescriptions = payload.materialDescriptions;
+				var materialDescription;
+				var material;
+				var materialName;
+				var createMultiMaterial = payload.multiMaterial;
+				var multiMaterials = [];
 
-						name = materialNames[ key ];
-						multiMaterials.push( this.materials[ name ] );
+				for ( var key in materialDescriptions ) {
+
+					materialDescription = materialDescriptions[ key ];
+					material = this.materials[ materialDescription.name ];
+
+					if ( materialDescription.default ) {
+
+						material = this.materials[ 'defaultMaterial' ];
+
+					} else if ( materialDescription.clone ) {
+
+						materialName = material.name + '_flat';
+						var materialClone = this.materials[ materialName ];
+						if ( ! materialClone ) {
+
+							materialClone = material.clone();
+							materialClone.name = materialName;
+							materialClone.shading = THREE.FlatShading;
+							this.materials[ materialName ] = name;
+
+						}
+
+					} else if ( ! material ) {
+
+						material = this.materials[ 'defaultMaterial' ];
 
 					}
+					if ( createMultiMaterial ) multiMaterials.push( material );
+
+				}
+
+				if ( createMultiMaterial ) {
 
 					material = new THREE.MultiMaterial( multiMaterials );
+					var materialGroups = payload.materialGroups;
+					var materialGroup;
+					for ( var key in materialGroups ) {
 
-				} else {
-
-					material = this.materials[ payload.materialName ];
-
-				}
-
-				if ( material === null || material === undefined ) {
-
-					material = this.defaultMaterial;
-
-				}
-
-				if ( payload.materialGroups !== null ) {
-
-					var materialGroups = JSON.parse( payload.materialGroups );
-					for ( var group, i = 0, length = materialGroups.length; i < length; i ++ ) {
-
-						group = materialGroups[ i ];
-						bufferGeometry.addGroup( group.start, group.count, group.index );
+						materialGroup = materialGroups[ key ];
+						bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
 
 					}
-				}
 
+				}
 				if ( this.callbackMeshLoaded !== null ) {
 
 					var materialOverride = this.callbackMeshLoaded( payload.meshName, material );
