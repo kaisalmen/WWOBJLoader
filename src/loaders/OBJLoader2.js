@@ -41,10 +41,10 @@ THREE.OBJLoader = (function () {
 	 * Set the node where the loaded objects will be attached.
 	 * Default is new empty THREE.Group
 	 *
-	 * @param objGroup
+	 * @param sceneGrapAttach
 	 */
-	OBJLoader.prototype.setObjGroup = function ( objGroup ) {
-		this.meshCreator.setObjGroup( objGroup );
+	OBJLoader.prototype.setSceneGrapAttach = function ( sceneGraphAttach ) {
+		this.meshCreator.setSceneGrapAttach( sceneGraphAttach );
 	};
 
 	/**
@@ -83,7 +83,7 @@ THREE.OBJLoader = (function () {
 	};
 
 	/**
-	 * Validate status, then parse arrayBuffer, finalize and return objGroup
+	 * Validate status, then parse arrayBuffer, finalize and return sceneGraphAttach
 	 *
 	 * @param arrayBuffer
 	 */
@@ -99,15 +99,15 @@ THREE.OBJLoader = (function () {
 
 		this.validate();
 		this.parser.parseArrayBuffer( arrayBuffer );
-		var objGroup = this.finalize();
+		var sceneGraphAttach = this.finalize();
 
 		console.timeEnd( 'parseArrayBuffer' );
 
-		return objGroup;
+		return sceneGraphAttach;
 	};
 
 	/**
-	 * Validate status, then parse text, finalize and return objGroup
+	 * Validate status, then parse text, finalize and return sceneGraphAttach
 	 *
 	 * @param text
 	 */
@@ -123,11 +123,11 @@ THREE.OBJLoader = (function () {
 
 		this.validate();
 		this.parser.parseText( text );
-		var objGroup = this.finalize();
+		var sceneGraphAttach = this.finalize();
 
 		console.timeEnd( 'parseText' );
 
-		return objGroup;
+		return sceneGraphAttach;
 	};
 
 	/**
@@ -149,11 +149,11 @@ THREE.OBJLoader = (function () {
 
 		this.parser.finalize();
 		this.fileLoader = null;
-		var objGroup = this.meshCreator.objGroup;
+		var sceneGraphAttach = this.meshCreator.sceneGrapAttach;
 		this.meshCreator.finalize();
 		this.validated = false;
 
-		return objGroup;
+		return sceneGraphAttach;
 	};
 
 	return OBJLoader;

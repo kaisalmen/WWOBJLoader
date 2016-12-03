@@ -148,6 +148,7 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
+		<script src="../src/loaders/WWLoaderBase.js"></script>
 		<script src="../src/loaders/WWOBJLoaderFrontEnd.js"></script>
 
 		<script>
@@ -196,7 +197,7 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( '..' );
+					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( '..', 'src/loaders/WWOBJLoader.js' );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {
@@ -359,7 +360,7 @@
 						scope.loadCounter ++;
 
 						scope.scenePerspective.scene.add( obj2Load.pivot );
-						scope.wwObjFrontEnd.setObjGroup( obj2Load.pivot );
+						scope.wwObjFrontEnd.setSceneGrapAttach( obj2Load.pivot );
 
 						if ( obj2Load.fileZip !== null ) {
 
@@ -369,7 +370,7 @@
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwObjFrontEnd.initWithData( data, mtlAsString, obj2Load.pathTexture );
+								scope.wwObjFrontEnd.initData( data, mtlAsString, obj2Load.pathTexture );
 								scope.wwObjFrontEnd.run();
 							};
 
@@ -399,7 +400,7 @@
 
 						} else {
 
-							scope.wwObjFrontEnd.initWithFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+							scope.wwObjFrontEnd.initFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
 							scope.wwObjFrontEnd.run();
 
 						}

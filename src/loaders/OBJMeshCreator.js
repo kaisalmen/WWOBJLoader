@@ -7,7 +7,7 @@
 THREE.OBJLoader.MeshCreator = (function () {
 
 	function MeshCreator() {
-		this.objGroup = null;
+		this.sceneGrapAttach = null;
 		this.materials = null;
 		this.debug = false;
 		this.globalObjectCount = 1;
@@ -15,8 +15,8 @@ THREE.OBJLoader.MeshCreator = (function () {
 		this.validated = false;
 	}
 
-	MeshCreator.prototype.setObjGroup = function ( objGroup ) {
-		this.objGroup = ( objGroup == null ) ? ( this.objGroup == null ? new THREE.Group() : this.objGroup )  : objGroup;
+	MeshCreator.prototype.setSceneGrapAttach = function ( sceneGraphAttach ) {
+		this.sceneGrapAttach = ( sceneGraphAttach == null ) ? ( this.sceneGrapAttach == null ? new THREE.Group() : this.sceneGrapAttach ) : sceneGraphAttach;
 	};
 
 	MeshCreator.prototype.setMaterials = function ( materials ) {
@@ -30,14 +30,14 @@ THREE.OBJLoader.MeshCreator = (function () {
 	MeshCreator.prototype.validate = function () {
 		if ( this.validated ) return;
 
-		this.setObjGroup( null );
+		this.setSceneGrapAttach( null );
 		this.setMaterials( null );
 		this.setDebug( null );
 		this.globalObjectCount = 1;
 	};
 
 	MeshCreator.prototype.finalize = function () {
-		this.objGroup = null;
+		this.sceneGrapAttach = null;
 		this.materials = null;
 		this.validated = false;
 	};
@@ -164,7 +164,7 @@ THREE.OBJLoader.MeshCreator = (function () {
 
 		if ( createMultiMaterial ) material = new THREE.MultiMaterial( materials );
 		var mesh = new THREE.Mesh( bufferGeometry, material );
-		this.objGroup.add( mesh );
+		this.sceneGrapAttach.add( mesh );
 
 		this.globalObjectCount++;
 	};
