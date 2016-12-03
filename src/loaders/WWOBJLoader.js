@@ -75,8 +75,8 @@ THREE.WebWorker.WWOBJLoader = (function () {
 		this.setDebug( payload.debug, payload.debug );
 	};
 
-	WWOBJLoader.prototype.initMaterials = function ( payload ) {
-		this.cmdState = 'initMaterials';
+	WWOBJLoader.prototype.setMaterials = function ( payload ) {
+		this.cmdState = 'setMaterials';
 		this.meshCreator.setMaterials( payload.materialNames );
 	};
 
@@ -249,9 +249,9 @@ var runner = function ( event ) {
 			implRef.init( payload );
 			break;
 
-		case 'initMaterials':
+		case 'setMaterials':
 
-			implRef.initMaterials( payload );
+			implRef.setMaterials( payload );
 			break;
 
 		case 'run':

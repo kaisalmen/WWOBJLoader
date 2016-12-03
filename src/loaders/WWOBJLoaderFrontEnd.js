@@ -4,7 +4,7 @@
 
 'use strict';
 
-if ( THREE === undefined ) var THREE = {}
+if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
@@ -177,128 +177,109 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.run = function () {
-		var scope = this;
+		if ( this.dataAvailable ) {
 
-		var kickRun = function () {
+			this.processLoadedMaterials( ( this.mtlAsString != null ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
-			// pass materialNames to web worker
-			var materialNames = [];
-			for ( var materialName in scope.materials ) {
-				materialNames.push( materialName );
-			}
-			scope.worker.postMessage( {
-				cmd: 'initMaterials',
-				materialNames: materialNames
-			} );
+		} else {
 
-			var runWorker = function () {
-				scope.worker.postMessage({
-					cmd: 'run',
-					objAsArrayBuffer: scope.objAsArrayBuffer
-				}, [ scope.objAsArrayBuffer.buffer ] );
-			};
+			if ( this.mtlFile == null ) {
 
-			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
-
-				runWorker();
+				this.processLoadedMaterials();
 
 			} else {
 
-				var refPercentComplete = 0;
-				var percentComplete = 0;
-				var output;
-				var onLoad = function ( objAsArrayBuffer ) {
-
-					scope.announceProgress( 'Running web worker!' );
-					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
-					scope.worker.postMessage( {
-						cmd: 'run',
-						objAsArrayBuffer: scope.objAsArrayBuffer
-					}, [ scope.objAsArrayBuffer.buffer ] );
-
+				this.mtlLoader.setPath( this.mtlPath );
+				var scope = this;
+				var scopedProcessLoadedMaterials = function ( materialCreator ) {
+					scope.processLoadedMaterials( materialCreator );
 				};
+				this.mtlLoader.load( this.mtlFile, scopedProcessLoadedMaterials );
 
-				var onProgress = function ( event ) {
-					if ( ! event.lengthComputable ) return;
-
-					percentComplete = Math.round( event.loaded / event.total * 100 );
-					if ( percentComplete > refPercentComplete ) {
-
-						refPercentComplete = percentComplete;
-						output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
-						console.log( output );
-						scope.announceProgress( output );
-
-					}
-				};
-
-				var onError = function ( event ) {
-					output = 'Error occurred while downloading "' + scope.objFile + '"';
-					console.error( output + ': ' + event );
-					scope.announceProgress( output );
-				};
-
-				scope.fileLoader.setPath( scope.objPath );
-				scope.fileLoader.setResponseType( 'arraybuffer' );
-				scope.fileLoader.load( scope.objFile, onLoad, onProgress, onError );
 			}
-		};
 
-		var processMaterials = function ( materialCreator ) {
-			var materialCreatorMaterials = [];
-			if ( materialCreator != null ) {
-				materialCreator.preload();
-				materialCreatorMaterials = materialCreator.materials;
-			}
-			var materialNames = [];
+		}
+	};
+
+	WWOBJLoaderFrontEnd.prototype.processLoadedMaterials = function ( materialCreator ) {
+		var materialCreatorMaterials = [];
+		var materialNames = [];
+		if ( materialCreator != null ) {
+
+			materialCreator.preload();
+			materialCreatorMaterials = materialCreator.materials;
 			for ( var materialName in materialCreatorMaterials ) {
 
 				if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
 
 					materialNames.push( materialName );
-					scope.materials[ materialName ] = materialCreatorMaterials[ materialName ];
+					this.materials[ materialName ] = materialCreatorMaterials[ materialName ];
 
 				}
 
 			}
 
-			// process obj immediately
-			kickRun();
+		}
+		this.worker.postMessage( {
+			cmd: 'setMaterials',
+			materialNames: materialNames
+		} );
 
-			if ( scope.callbackMaterialsLoaded != null ) {
+		if ( this.dataAvailable && this.objAsArrayBuffer ) {
 
-				scope.materials = scope.callbackMaterialsLoaded( scope.materials );
-
-			}
-			console.timeEnd( 'Loading MTL textures' );
-		};
-
-		if ( scope.dataAvailable ) {
-
-			if ( scope.mtlAsString == null ) {
-
-				processMaterials();
-
-			} else {
-
-				processMaterials( scope.mtlLoader.parse( scope.mtlAsString ) );
-
-			}
+			this.worker.postMessage({
+				cmd: 'run',
+				objAsArrayBuffer: this.objAsArrayBuffer
+			}, [ this.objAsArrayBuffer.buffer ] );
 
 		} else {
 
-			if ( scope.mtlFile == null ) {
+			var refPercentComplete = 0;
+			var percentComplete = 0;
+			var output;
+			var scope = this;
 
-				processMaterials();
+			var onLoad = function ( objAsArrayBuffer ) {
 
-			} else {
+				scope.announceProgress( 'Running web worker!' );
+				scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
+				scope.worker.postMessage( {
+					cmd: 'run',
+					objAsArrayBuffer: scope.objAsArrayBuffer
+				}, [ scope.objAsArrayBuffer.buffer ] );
 
-				scope.mtlLoader.setPath( this.mtlPath );
-				scope.mtlLoader.load( scope.mtlFile, processMaterials );
+			};
 
-			}
+			var onProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
+
+				percentComplete = Math.round( event.loaded / event.total * 100 );
+				if ( percentComplete > refPercentComplete ) {
+
+					refPercentComplete = percentComplete;
+					output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
+					console.log( output );
+					scope.announceProgress( output );
+
+				}
+			};
+
+			var onError = function ( event ) {
+				output = 'Error occurred while downloading "' + scope.objFile + '"';
+				console.error( output + ': ' + event );
+				scope.announceProgress( output );
+			};
+
+			this.fileLoader.setPath( this.objPath );
+			this.fileLoader.setResponseType( 'arraybuffer' );
+			this.fileLoader.load( this.objFile, onLoad, onProgress, onError );
+		}
+		if ( this.callbackMaterialsLoaded != null ) {
+
+			this.materials = this.callbackMaterialsLoaded( this.materials );
 
 		}
+		console.timeEnd( 'Loading MTL textures' );
 	};
 
 	WWOBJLoaderFrontEnd.prototype.processData = function ( event ) {
@@ -429,13 +410,24 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 	};
 
 	WWOBJLoaderFrontEnd.prototype.terminateWorker = function () {
-		if ( this.worker !== null ) {
+		if ( this.worker != null ) {
 
 			this.worker.terminate();
 
 		}
 		this.worker = null;
+		this.fileLoader = null;
 		this.mtlLoader = null;
+
+		this.dataAvailable = false;
+		this.objFile = null;
+		this.objPath = null;
+		this.objAsArrayBuffer = null;
+
+		this.mtlFile = null;
+		this.mtlPath = null;
+		this.mtlAsString = null;
+
 		this.materials = [];
 		this.counter = 0;
 	};
