@@ -148,8 +148,8 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWLoaderBase.js"></script>
-		<script src="../src/loaders/WWOBJLoaderFrontEnd.js"></script>
+		<script src="../src/loaders/WebWorkerProxyBase.js"></script>
+		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
 
@@ -183,7 +183,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwObjFrontEnd = null;
+					this.wwObjLoaderProxy = null;
 					this.lights = null;
 					this.controls = null;
 
@@ -197,7 +197,7 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( '..', 'src/loaders/WWOBJLoader.js' );
+					this.wwObjLoaderProxy = new THREE.WebWorker.WWOBJLoaderProxy( '..', 'src/loaders/WWOBJLoader.js' );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {
@@ -205,8 +205,8 @@
 					};
 					// reloadAsset will be recalled after one load is done
 					// It will check status of this.objs2Load internally
-					this.wwObjFrontEnd.registerHookCompletedLoading( reloadAssetsProxy );
-					this.wwObjFrontEnd.registerProgressCallback( this.reportProgress );
+					this.wwObjLoaderProxy.registerHookCompletedLoading( reloadAssetsProxy );
+					this.wwObjLoaderProxy.registerProgressCallback( this.reportProgress );
 
 					// tell ThreeJsApp async loading is done (none needed here)
 					this.preloadDone = true;
@@ -356,7 +356,7 @@
 						scope.loadCounter ++;
 
 						scope.scenePerspective.scene.add( obj2Load.pivot );
-						scope.wwObjFrontEnd.setSceneGraphBaseNode( obj2Load.pivot );
+						scope.wwObjLoaderProxy.setSceneGraphBaseNode( obj2Load.pivot );
 
 						if ( obj2Load.fileZip !== null ) {
 
@@ -366,8 +366,8 @@
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwObjFrontEnd.initData( data, mtlAsString, obj2Load.pathTexture );
-								scope.wwObjFrontEnd.run();
+								scope.wwObjLoaderProxy.initData( data, mtlAsString, obj2Load.pathTexture );
+								scope.wwObjLoaderProxy.run();
 							};
 
 							var setMtlAsString = function ( data ) {
@@ -396,14 +396,14 @@
 
 						} else {
 
-							scope.wwObjFrontEnd.initFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
-							scope.wwObjFrontEnd.run();
+							scope.wwObjLoaderProxy.initFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+							scope.wwObjLoaderProxy.run();
 
 						}
 					} else {
 
 						scope.processing = false;
-//						scope.wwObjFrontEnd.terminateWorker();
+//						scope.wwObjLoaderProxy.terminateWorker();
 
 					}
 				};

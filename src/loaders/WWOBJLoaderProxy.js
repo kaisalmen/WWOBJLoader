@@ -7,12 +7,12 @@
 if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
-THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
+THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
-	WWOBJLoaderFrontEnd.prototype = Object.create( THREE.WebWorker.WWLoaderBase );
-	WWOBJLoaderFrontEnd.prototype.constructor = WWOBJLoaderFrontEnd;
+	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderBase );
+	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
 
-	function WWOBJLoaderFrontEnd( basedir, relativeWorkerSrcPath ) {
+	function WWOBJLoaderProxy( basedir, relativeWorkerSrcPath ) {
 		THREE.WebWorker.WWLoaderBase.call( this, basedir, relativeWorkerSrcPath );
 		this.parent = THREE.WebWorker.WWLoaderBase.prototype;
 
@@ -29,34 +29,41 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.mtlFileAsString = null;
 		this.texturePath = null;
 
+		this.materials = [];
 		this.counter = 0;
+
+		// callbacks
+		this.callbackMaterialsLoaded = null;
+		this.callbackProgress = null;
+		this.callbackMeshLoaded = null;
+		this.callbackCompletedLoading = null;
 	}
 
-	WWOBJLoaderFrontEnd.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+	WWOBJLoaderProxy.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.parent.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
 	};
 
-	WWOBJLoaderFrontEnd.prototype.setDebug = function ( enabled ) {
+	WWOBJLoaderProxy.prototype.setDebug = function ( enabled ) {
 		this.parent.setDebug.call( this, enabled );
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerHookMaterialsLoaded = function ( callback ) {
-		this.parent.registerHookMaterialsLoaded.call( this, callback );
+	WWOBJLoaderProxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+		this.callbackMaterialsLoaded = callbackMaterialsLoaded;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerProgressCallback = function ( callback ) {
-		this.parent.registerProgressCallback.call( this, callback );
+	WWOBJLoaderProxy.prototype.registerProgressCallback = function ( callbackProgress ) {
+		this.callbackProgress = callbackProgress;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerHookMeshLoaded = function ( callback ) {
-		this.parent.registerHookMeshLoaded.call( this, callback );
+	WWOBJLoaderProxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
+		this.callbackMeshLoaded = callbackMeshLoaded;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerHookCompletedLoading = function ( callback ) {
-		this.parent.registerHookCompletedLoading.call( this, callback );
+	WWOBJLoaderProxy.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
+		this.callbackCompletedLoading = callbackCompletedLoading;
 	};
 
-    WWOBJLoaderFrontEnd.prototype.validate = function () {
+    WWOBJLoaderProxy.prototype.validate = function () {
 		if ( this.parent.validate.call( this ) ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
@@ -71,21 +78,20 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.mtlFileAsString = null;
 		this.texturePath = null;
 
+		this.materials = [];
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
+
 		this.counter = 0;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.shutdownWorker = function () {
-		this.parent.shutdownWorker.call( this );
-		this.fileLoader = null;
-		this.mtlLoader = null;
-	};
-
-	WWOBJLoaderFrontEnd.prototype.initFiles = function ( basePath, objFile, mtlFile, texturePath ) {
+	WWOBJLoaderProxy.prototype.initFiles = function ( basePath, objFile, mtlFile, texturePath ) {
 		// fast-fail on bad type
 		if ( ! ( typeof( objFile ) === 'string' || objFile instanceof String ) ) {
 			throw 'Provided file is not properly defined! Aborting...';
 		}
-		console.time( 'WWOBJLoaderFrontEnd' );
+		console.time( 'WWOBJLoaderProxy' );
 		this.validate();
 
 		this.worker.postMessage( {
@@ -100,12 +106,12 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.texturePath = texturePath;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.initData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
+	WWOBJLoaderProxy.prototype.initData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
 		// fast-fail on bad type
 		if ( ! ( objAsArrayBuffer instanceof ArrayBuffer || objAsArrayBuffer instanceof Uint8Array ) ) {
 			throw 'Provided input is not of type arraybuffer! Aborting...';
 		}
-		console.time( 'WWOBJLoaderFrontEnd' );
+		console.time( 'WWOBJLoaderProxy' );
 		this.validate();
 
 		this.worker.postMessage( {
@@ -119,19 +125,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.texturePath = texturePath;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.addMaterial = function ( name, material ) {
-		this.parent.addMaterial.call( this, name, material );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.getMaterial = function ( name ) {
-		this.parent.getMaterial.call( this, name );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.announceProgress = function ( baseText, text ) {
-		this.parent.announceProgress.call( this, baseText, text );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.run = function () {
+	WWOBJLoaderProxy.prototype.run = function () {
 		var scope = this;
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -233,7 +227,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		}
 	};
 
-	WWOBJLoaderFrontEnd.prototype.receiveWorkerMessage = function ( event ) {
+	WWOBJLoaderProxy.prototype.receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -330,7 +324,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 			case 'complete':
 
-				console.timeEnd( 'WWOBJLoaderFrontEnd' );
+				console.timeEnd( 'WWOBJLoaderProxy' );
 				if ( payload.msg != null ) {
 
 					this.announceProgress( payload.msg );
@@ -360,10 +354,63 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		}
 	};
 
-	WWOBJLoaderFrontEnd.prototype.finalize = function () {
+	WWOBJLoaderProxy.prototype.finalize = function () {
 		this.parent.finalize.call( this );
 	};
 
-	return WWOBJLoaderFrontEnd;
+	WWOBJLoaderProxy.prototype.shutdownWorker = function () {
+		this.parent.shutdownWorker.call( this );
+		this.fileLoader = null;
+		this.mtlLoader = null;
+	};
+
+	WWOBJLoaderProxy.prototype.addMaterial = function ( name, material ) {
+		this.parent.addMaterial.call( this, name, material );
+	};
+
+	WWOBJLoaderProxy.prototype.getMaterial = function ( name ) {
+		this.parent.getMaterial.call( this, name );
+	};
+
+	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {
+		this.parent.announceProgress.call( this, baseText, text );
+	};
+
+	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {
+		var output = "";
+		if ( baseText !== null && baseText !== undefined ) {
+
+			output = baseText;
+
+		}
+		if ( text !== null && text !== undefined ) {
+
+			output = output + " " + text;
+
+		}
+		if ( this.callbackProgress !== null ) {
+
+			this.callbackProgress( output );
+
+		}
+		if ( this.debug ) {
+
+			console.log( output );
+
+		}
+	};
+
+	WWOBJLoaderProxy.prototype.addMaterial = function ( name, material ) {
+		if ( material.name !== name ) material.name = name;
+		this.materials[ name ] = material;
+	};
+
+	WWOBJLoaderProxy.prototype.getMaterial = function ( name ) {
+		var material = this.materials[ name ];
+		if ( ! material ) material = null;
+		return material;
+	};
+
+	return WWOBJLoaderProxy;
 
 })();
