@@ -263,10 +263,6 @@
 
 					this.cube.rotation.x += 0.05;
 					this.cube.rotation.y += 0.05;
-
-					this.lights.lightArray.rotation.x += 0.005;
-					this.lights.lightArray.rotation.y += 0.005;
-					this.lights.lightArray.rotation.z += 0.005;
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
@@ -360,7 +356,7 @@
 						scope.loadCounter ++;
 
 						scope.scenePerspective.scene.add( obj2Load.pivot );
-						scope.wwObjFrontEnd.setSceneGrapAttach( obj2Load.pivot );
+						scope.wwObjFrontEnd.setSceneGraphBaseNode( obj2Load.pivot );
 
 						if ( obj2Load.fileZip !== null ) {
 

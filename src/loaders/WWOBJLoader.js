@@ -165,7 +165,7 @@ THREE.WebWorker.WWMeshCreator = (function () {
 			if ( this.materials[ materialDescription.name ] === null ) {
 
 				materialDescription.default = true;
-				console.error( 'Material with name "' + materialDescription.name + '" defined in OBJ file was defined in material names retrieved from mtl file!' );
+				console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
 
 			}
 			// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0

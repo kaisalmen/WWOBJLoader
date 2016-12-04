@@ -7,7 +7,7 @@
 THREE.OBJLoader.MeshCreator = (function () {
 
 	function MeshCreator() {
-		this.sceneGrapAttach = null;
+		this.sceneGraphBaseNode = null;
 		this.materials = null;
 		this.debug = false;
 		this.globalObjectCount = 1;
@@ -15,8 +15,8 @@ THREE.OBJLoader.MeshCreator = (function () {
 		this.validated = false;
 	}
 
-	MeshCreator.prototype.setSceneGrapAttach = function ( sceneGraphAttach ) {
-		this.sceneGrapAttach = ( sceneGraphAttach == null ) ? ( this.sceneGrapAttach == null ? new THREE.Group() : this.sceneGrapAttach ) : sceneGraphAttach;
+	MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.sceneGraphBaseNode = ( sceneGraphBaseNode == null ) ? ( this.sceneGraphBaseNode == null ? new THREE.Group() : this.sceneGraphBaseNode ) : sceneGraphBaseNode;
 	};
 
 	MeshCreator.prototype.setMaterials = function ( materials ) {
@@ -30,14 +30,14 @@ THREE.OBJLoader.MeshCreator = (function () {
 	MeshCreator.prototype.validate = function () {
 		if ( this.validated ) return;
 
-		this.setSceneGrapAttach( null );
+		this.setSceneGraphBaseNode( null );
 		this.setMaterials( null );
 		this.setDebug( null );
 		this.globalObjectCount = 1;
 	};
 
 	MeshCreator.prototype.finalize = function () {
-		this.sceneGrapAttach = null;
+		this.sceneGraphBaseNode = null;
 		this.materials = null;
 		this.validated = false;
 	};
@@ -105,7 +105,7 @@ THREE.OBJLoader.MeshCreator = (function () {
 					this.materials[ 'defaultMaterial' ] = material;
 
 				}
-				console.error( 'Material with name "' + materialName + '" defined in OBJ file was defined in MTL file! Assigning "defaultMaterial".' );
+				console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
 
 			}
 			// clone material in case flat shading is needed due to smoothingGroup 0
@@ -164,7 +164,7 @@ THREE.OBJLoader.MeshCreator = (function () {
 
 		if ( createMultiMaterial ) material = new THREE.MultiMaterial( materials );
 		var mesh = new THREE.Mesh( bufferGeometry, material );
-		this.sceneGrapAttach.add( mesh );
+		this.sceneGraphBaseNode.add( mesh );
 
 		this.globalObjectCount++;
 	};

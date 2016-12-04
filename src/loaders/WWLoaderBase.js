@@ -19,7 +19,7 @@ THREE.WebWorker.WWLoaderBase = (function () {
 
 		this.validated = false;
 		this.materials = [];
-		this.sceneGrapAttach = null;
+		this.sceneGraphBaseNode = null;
 		this.debug = false;
 
 		// callbacks
@@ -29,8 +29,8 @@ THREE.WebWorker.WWLoaderBase = (function () {
 		this.callbackCompletedLoading = null;
 	}
 
-	WWLoaderBase.prototype.setSceneGrapAttach = function ( sceneGrapAttach ) {
-		this.sceneGrapAttach = sceneGrapAttach;
+	WWLoaderBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.sceneGraphBaseNode = sceneGraphBaseNode;
 	};
 
 	WWLoaderBase.prototype.setDebug = function ( enabled ) {

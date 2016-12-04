@@ -41,10 +41,10 @@ THREE.OBJLoader = (function () {
 	 * Set the node where the loaded objects will be attached.
 	 * Default is new empty THREE.Group
 	 *
-	 * @param sceneGrapAttach
+	 * @param sceneGraphBaseNode
 	 */
-	OBJLoader.prototype.setSceneGrapAttach = function ( sceneGraphAttach ) {
-		this.meshCreator.setSceneGrapAttach( sceneGraphAttach );
+	OBJLoader.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.meshCreator.setSceneGraphBaseNode( sceneGraphBaseNode );
 	};
 
 	/**
@@ -149,7 +149,7 @@ THREE.OBJLoader = (function () {
 
 		this.parser.finalize();
 		this.fileLoader = null;
-		var sceneGraphAttach = this.meshCreator.sceneGrapAttach;
+		var sceneGraphAttach = this.meshCreator.sceneGraphBaseNode;
 		this.meshCreator.finalize();
 		this.validated = false;
 

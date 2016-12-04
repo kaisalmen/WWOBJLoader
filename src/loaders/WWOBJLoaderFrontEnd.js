@@ -32,8 +32,8 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 		this.counter = 0;
 	}
 
-	WWOBJLoaderFrontEnd.prototype.setSceneGrapAttach = function ( sceneGrapAttach ) {
-		this.parent.setSceneGrapAttach.call( this, sceneGrapAttach );
+	WWOBJLoaderFrontEnd.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.parent.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
 	};
 
 	WWOBJLoaderFrontEnd.prototype.setDebug = function ( enabled ) {
@@ -322,7 +322,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				mesh.name = payload.meshName;
 
-				this.sceneGrapAttach.add( mesh );
+				this.sceneGraphBaseNode.add( mesh );
 
 				var output = '(' + this.counter + '): ' + payload.meshName;
 				this.announceProgress( 'Adding mesh', output );
