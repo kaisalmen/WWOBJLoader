@@ -26,6 +26,7 @@ This changed since last status update:
 - **2016-12-02**: WWOBJLoader no longer requires MTTLoader
 - **2016-12-02**: Split OBJLoader2 into multiple files: Extracted OBJParser.js and OBJMeshCreator.js
 - **2016-12-02**: WWOBJLoader is independent of three.js. It only requires OBJParser.js
+- **2016-12-04**: OBJParser.js: Bugfix: group definition (g name) in OBJ filedid not lead to new object creation
 
 Next on my agenda:
 - **Ongoing** Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)

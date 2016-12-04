@@ -81,9 +81,9 @@ THREE.OBJLoader.Parser = (function () {
 
 	Parser.prototype.parseText = function ( text ) {
 		var length = text.length;
-		var buffer = new Array( 256 );
+		var buffer = new Array( 32 );
 		var bufferPointer = 0;
-		var slashes = new Array( 256 );
+		var slashes = new Array( 32 );
 		var slashesPointer = 0;
 		var reachedFaces = false;
 		var char;
@@ -130,15 +130,11 @@ THREE.OBJLoader.Parser = (function () {
 				// object complete instance required if reached faces already (= reached next block of v)
 				if ( reachedFaces ) {
 
-					this.processCompletedObject( true );
+					this.processCompletedObject( null, this.rawObject.activeGroupName );
 					reachedFaces = false;
-					this.rawObject.pushVertex( buffer );
-
-				} else {
-
-					this.rawObject.pushVertex( buffer );
 
 				}
+				this.rawObject.pushVertex( buffer );
 				break;
 
 			case LINE_VT:
@@ -158,7 +154,7 @@ THREE.OBJLoader.Parser = (function () {
 				 * 3: "f vertex ..."
 				 */
 				var haveQuad = bufferLength % 4 === 0;
-				if ( slashesPointer > 2 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) {
+				if ( slashesPointer > 1 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) {
 
 					if ( haveQuad ) {
 						this.rawObject.buildQuadVVn( buffer );
@@ -210,18 +206,20 @@ THREE.OBJLoader.Parser = (function () {
 				break;
 
 			case LINE_G:
-//				if ( this.rawObject.vertices.length > 0 ) this.processCompletedObject( false );
-				this.rawObject.pushGroup( buffer[ 1 ] );
+				this.processCompletedGroup( buffer[ 1 ] );
 				break;
 
 			case LINE_O:
 				if ( this.rawObject.vertices.length > 0 ) {
 
-					this.processCompletedObject( false );
+					this.processCompletedObject( buffer[ 1 ], null );
 					reachedFaces = false;
 
+				} else {
+
+					this.rawObject.pushObject( buffer[ 1 ] );
+
 				}
-				this.rawObject.pushObject( buffer[ 1 ] );
 				break;
 
 			case LINE_MTLLIB:
@@ -238,17 +236,30 @@ THREE.OBJLoader.Parser = (function () {
 		return reachedFaces;
 	};
 
+	Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
+		this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+		this.inputObjectCount ++;
+		this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
+	};
 
-	Parser.prototype.processCompletedObject = function ( vertexDetection ) {
-		this.rawObject.finalize( this.meshCreator, this.inputObjectCount );
-		if ( this.debug ) this.rawObject.createReport( this.inputObjectCount, true );
+	Parser.prototype.processCompletedGroup = function ( groupName ) {
+		var notEmpty = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+		if ( notEmpty ) {
 
-		this.inputObjectCount++;
-		this.rawObject = this.rawObject.newInstance( vertexDetection );
+			this.inputObjectCount ++;
+			this.rawObject = this.rawObject.newInstanceFromGroup( groupName );
+
+		} else {
+
+			// if a group was set that did not lead to object creation in finalize, then the group name has to be updated
+			this.rawObject.pushGroup( groupName );
+
+		}
 	};
 
 	Parser.prototype.finalize = function () {
-		this.processCompletedObject( false );
+		this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+		this.inputObjectCount++;
 	};
 
 	return Parser;
@@ -256,23 +267,22 @@ THREE.OBJLoader.Parser = (function () {
 
 THREE.OBJLoader.RawObject = (function () {
 
-	function RawObject() {
+	function RawObject( objectName, groupName, mtllibName ) {
 		this.globalVertexOffset = 1;
 		this.globalUvOffset = 1;
 		this.globalNormalOffset = 1;
 
-		this.objectName = 'none';
 		this.vertices = [];
 		this.normals = [];
 		this.uvs = [];
-		this.mtllibName = '';
 
-		// faces are stored according combined index of object, group, material
-		this.activeGroupName = 'none';
+		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
+		this.mtllibName = ( mtllibName != null ) ? mtllibName : 'none';
+		this.objectName = ( objectName != null ) ? objectName : 'none';
+		this.activeGroupName = ( groupName != null ) ? groupName : 'none';
 		this.activeMtlName = 'none';
 		this.activeSmoothingGroup = 1;
 
-		this.objectGroupCount = 0;
 		this.mtlCount = 0;
 		this.smoothingGroupCount = 0;
 
@@ -283,15 +293,27 @@ THREE.OBJLoader.RawObject = (function () {
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
 
-	RawObject.prototype.newInstance = function ( vertexDetection ) {
-		var newRawObject = new RawObject();
-		if ( vertexDetection ) {
-			newRawObject.activeGroupName = this.activeGroupName;
-			newRawObject.rawObjectDescriptionInUse.groupName = this.activeGroupName;
-		}
+	RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
+		var newRawObject = new RawObject( objectName, groupName, this.mtllibName );
+
+		// move indices forward
 		newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
 		newRawObject.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
 		newRawObject.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
+
+		return newRawObject;
+	};
+
+	RawObject.prototype.newInstanceFromGroup = function ( groupName ) {
+		var newRawObject = new RawObject( this.objectName, groupName, this.mtllibName );
+
+		// keep current buffers and indices forward
+		newRawObject.vertices = this.vertices;
+		newRawObject.uvs = this.uvs;
+		newRawObject.normals = this.normals;
+		newRawObject.globalVertexOffset = this.globalVertexOffset;
+		newRawObject.globalUvOffset = this.globalUvOffset;
+		newRawObject.globalNormalOffset = this.globalNormalOffset;
 
 		return newRawObject;
 	};
@@ -322,7 +344,7 @@ THREE.OBJLoader.RawObject = (function () {
 	};
 
 	RawObject.prototype.pushGroup = function ( groupName ) {
-		if ( this.activeGroupName === groupName ) return;
+		if ( this.activeGroupName === groupName || groupName == null ) return;
 		this.activeGroupName = groupName;
 		this.objectGroupCount++;
 
@@ -330,7 +352,7 @@ THREE.OBJLoader.RawObject = (function () {
 	};
 
 	RawObject.prototype.pushUsemtl = function ( mtlName ) {
-		if ( this.activeMtlName === mtlName ) return;
+		if ( this.activeMtlName === mtlName || mtlName == null ) return;
 		this.activeMtlName = mtlName;
 		this.mtlCount++;
 
@@ -491,7 +513,7 @@ THREE.OBJLoader.RawObject = (function () {
 	/**
 	 * Clear any empty rawObjectDescription and calculate absolute vertex, normal and uv counts
 	 */
-	RawObject.prototype.finalize = function ( meshCreator, inputObjectCount ) {
+	RawObject.prototype.finalize = function ( meshCreator, inputObjectCount, debug ) {
 		var temp = this.rawObjectDescriptions;
 		this.rawObjectDescriptions = [];
 		var rawObjectDescription;
@@ -514,13 +536,22 @@ THREE.OBJLoader.RawObject = (function () {
 			}
 		}
 
-		meshCreator.buildMesh(
-			this.rawObjectDescriptions,
-			inputObjectCount,
-			absoluteVertexCount,
-			absoluteNormalCount,
-			absoluteUvCount
-		);
+		// don not continue if no result
+		var notEmpty = false;
+		if ( index > 0 ) {
+
+			if ( debug ) this.createReport( inputObjectCount, true );
+			meshCreator.buildMesh(
+				this.rawObjectDescriptions,
+				inputObjectCount,
+				absoluteVertexCount,
+				absoluteNormalCount,
+				absoluteUvCount
+			);
+			notEmpty = true;
+
+		}
+		return notEmpty;
 	};
 
 	RawObject.prototype.createReport = function ( inputObjectCount, printDirectly ) {
@@ -530,7 +561,6 @@ THREE.OBJLoader.RawObject = (function () {
 			vertexCount: this.vertices.length / 3,
 			normalCount: this.normals.length / 3,
 			uvCount: this.uvs.length / 2,
-			objectGroupCount: this.objectGroupCount,
 			smoothingGroupCount: this.smoothingGroupCount,
 			mtlCount: this.mtlCount,
 			rawObjectDescriptions: this.rawObjectDescriptions.length
@@ -542,7 +572,6 @@ THREE.OBJLoader.RawObject = (function () {
 			console.log( 'Vertex count: ' + report.vertexCount );
 			console.log( 'Normal count: ' + report.normalCount );
 			console.log( 'UV count: ' + report.uvCount );
-			console.log( 'Group count: ' + report.objectGroupCount );
 			console.log( 'SmoothingGroup count: ' + report.smoothingGroupCount );
 			console.log( 'Material count: ' + report.mtlCount );
 			console.log( 'Real RawObjectDescription count: ' + report.rawObjectDescriptions );
