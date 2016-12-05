@@ -22,11 +22,11 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
-		this.objFile = null;
-		this.objPath = null;
+		this.fileObj = null;
+		this.pathObj = null;
 
-		this.mtlFile = null;
-		this.mtlFileAsString = null;
+		this.fileMtl = null;
+		this.mtlAsString = null;
 		this.texturePath = null;
 
 		this.materials = [];
@@ -63,20 +63,20 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 		this.callbackCompletedLoading = callbackCompletedLoading;
 	};
 
-    WWOBJLoaderProxy.prototype.validate = function () {
+	WWOBJLoaderProxy.prototype.validate = function () {
 		if ( this.parent.validate.call( this ) ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
 
 		this.dataAvailable = false;
-		this.objFile = null;
-		this.objPath = null;
-		this.objAsArrayBuffer = null;
-
-		this.mtlFile = null;
-		this.mtlFileAsString = null;
+		this.fileObj = null;
+		this.pathObj = null;
+		this.fileMtl = null;
 		this.texturePath = null;
+
+		this.objAsArrayBuffer = null;
+		this.mtlAsString = null;
 
 		this.materials = [];
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
@@ -86,43 +86,44 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 		this.counter = 0;
 	};
 
-	WWOBJLoaderProxy.prototype.initFiles = function ( basePath, objFile, mtlFile, texturePath ) {
-		// fast-fail on bad type
-		if ( ! ( typeof( objFile ) === 'string' || objFile instanceof String ) ) {
-			throw 'Provided file is not properly defined! Aborting...';
-		}
-		console.time( 'WWOBJLoaderProxy' );
+	WWOBJLoaderProxy.prototype.init = function ( params ) {
 		this.validate();
-
-		this.worker.postMessage( {
-			cmd: 'init',
-			debug: this.debug
-		} );
-
-		this.dataAvailable = false;
-		this.objFile = objFile;
-		this.objPath = basePath;
-		this.mtlFile = mtlFile;
-		this.texturePath = texturePath;
-	};
-
-	WWOBJLoaderProxy.prototype.initData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
-		// fast-fail on bad type
-		if ( ! ( objAsArrayBuffer instanceof ArrayBuffer || objAsArrayBuffer instanceof Uint8Array ) ) {
-			throw 'Provided input is not of type arraybuffer! Aborting...';
-		}
+		this.dataAvailable = params.dataAvailable;
 		console.time( 'WWOBJLoaderProxy' );
-		this.validate();
+		if ( this.dataAvailable ) {
 
-		this.worker.postMessage( {
-			cmd: 'init',
-			debug: this.debug
-		} );
+			// fast-fail on bad type
+			if ( ! ( params.objAsArrayBuffer instanceof ArrayBuffer || params.objAsArrayBuffer instanceof Uint8Array ) ) {
+				throw 'Provided input is not of type arraybuffer! Aborting...';
+			}
 
-		this.dataAvailable = true;
-		this.objAsArrayBuffer = objAsArrayBuffer;
-		this.mtlFileAsString = mtlAsString;
-		this.texturePath = texturePath;
+			this.worker.postMessage( {
+				cmd: 'init',
+				debug: this.debug
+			} );
+
+			this.objAsArrayBuffer = params.objAsArrayBuffer;
+			this.mtlAsString = params.mtlAsString;
+			this.pathTexture = params.pathTexture;
+
+		} else {
+
+			// fast-fail on bad type
+			if ( ! ( typeof( params.fileObj ) === 'string' || params.fileObj instanceof String ) ) {
+				throw 'Provided file is not properly defined! Aborting...';
+			}
+
+			this.worker.postMessage( {
+				cmd: 'init',
+				debug: this.debug
+			} );
+
+			this.fileObj = params.fileObj;
+			this.pathObj = params.pathObj;
+			this.fileMtl = params.fileMtl;
+			this.pathTexture = params.pathTexture;
+
+		}
 	};
 
 	WWOBJLoaderProxy.prototype.run = function () {
@@ -185,7 +186,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 					if ( percentComplete > refPercentComplete ) {
 
 						refPercentComplete = percentComplete;
-						output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
+						output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
 						scope.announceProgress( output );
 
@@ -193,34 +194,34 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 				};
 
 				var onError = function ( event ) {
-					output = 'Error occurred while downloading "' + scope.objFile + '"';
+					output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
 					scope.announceProgress( output );
 					scope.finalize();
 
 				};
 
-				scope.fileLoader.setPath( scope.objPath );
+				scope.fileLoader.setPath( scope.pathObj );
 				scope.fileLoader.setResponseType( 'arraybuffer' );
-				scope.fileLoader.load( scope.objFile, onLoad, onProgress, onError );
+				scope.fileLoader.load( scope.fileObj, onLoad, onProgress, onError );
 			}
 			console.timeEnd( 'Loading MTL textures' );
 		};
 
 		if ( this.dataAvailable ) {
 
-			processLoadedMaterials( ( this.mtlFileAsString != null ) ? this.mtlLoader.parse( this.mtlFileAsString ) : null );
+			processLoadedMaterials( ( this.mtlAsString != null ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
 		} else {
 
-			if ( this.mtlFile == null ) {
+			if ( this.fileMtl == null ) {
 
 				processLoadedMaterials();
 
 			} else {
 
-				this.mtlLoader.setPath( this.texturePath );
-				this.mtlLoader.load( this.mtlFile, processLoadedMaterials );
+				this.mtlLoader.setPath( this.pathTexture );
+				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
 
 			}
 

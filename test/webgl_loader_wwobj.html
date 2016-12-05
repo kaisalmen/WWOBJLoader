@@ -366,7 +366,12 @@
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwObjLoaderProxy.initData( data, mtlAsString, obj2Load.pathTexture );
+								scope.wwObjLoaderProxy.init( {
+									dataAvailable: true,
+									objAsArrayBuffer: data,
+									mtlAsString: mtlAsString,
+									pathTexture: obj2Load.pathTexture
+								} );
 								scope.wwObjLoaderProxy.run();
 							};
 
@@ -396,7 +401,13 @@
 
 						} else {
 
-							scope.wwObjLoaderProxy.initFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
+							scope.wwObjLoaderProxy.init( {
+								dataAvailable: false,
+								pathObj: obj2Load.pathBase,
+								fileObj: obj2Load.fileObj,
+								fileMtl: obj2Load.fileMtl,
+								pathTexture: obj2Load.pathTexture
+							} );
 							scope.wwObjLoaderProxy.run();
 
 						}

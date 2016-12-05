@@ -16,10 +16,11 @@ THREE.WebWorker.WWLoaderBase = (function () {
 		this.basedir = basedir;
 		this.relativeWorkerSrcPath = relativeWorkerSrcPath;
 		this.worker = null;
-
-		this.validated = false;
 		this.sceneGraphBaseNode = null;
 		this.debug = false;
+
+		this.validated = false;
+		this.running = false;
 	}
 
 	WWLoaderBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
@@ -44,13 +45,10 @@ THREE.WebWorker.WWLoaderBase = (function () {
 
 		}
 		this.validated = true;
+		this.running = true;
 	};
 
-	WWLoaderBase.prototype.initFiles = function () {
-		// Overwrite me, please
-	};
-
-	WWLoaderBase.prototype.initData = function () {
+	WWLoaderBase.prototype.init = function () {
 		// Overwrite me, please
 	};
 
@@ -64,16 +62,19 @@ THREE.WebWorker.WWLoaderBase = (function () {
 
 	WWLoaderBase.prototype.finalize = function () {
 		this.validated = false;
+		this.running = false;
 	};
 
 	WWLoaderBase.prototype.shutdownWorker = function () {
 		if ( this.worker != null ) {
 
+			if ( ! this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+
 			this.worker.terminate();
+			this.worker = null;
+			this.finalize();
 
 		}
-		this.worker = null;
-		this.finalize();
 	};
 
 	return WWLoaderBase;
