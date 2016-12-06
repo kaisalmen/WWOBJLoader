@@ -130,7 +130,7 @@ THREE.OBJLoader.Parser = (function () {
 				// object complete instance required if reached faces already (= reached next block of v)
 				if ( reachedFaces ) {
 
-					this.processCompletedObject( null, this.rawObject.activeGroupName );
+					this.processCompletedObject( null, this.rawObject.groupName );
 					reachedFaces = false;
 
 				}
@@ -238,7 +238,7 @@ THREE.OBJLoader.Parser = (function () {
 
 	Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
 		this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
-		this.inputObjectCount ++;
+		this.inputObjectCount++;
 		this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
 	};
 
@@ -279,7 +279,7 @@ THREE.OBJLoader.RawObject = (function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
 		this.mtllibName = ( mtllibName != null ) ? mtllibName : 'none';
 		this.objectName = ( objectName != null ) ? objectName : 'none';
-		this.activeGroupName = ( groupName != null ) ? groupName : 'none';
+		this.groupName = ( groupName != null ) ? groupName : 'none';
 		this.activeMtlName = 'none';
 		this.activeSmoothingGroup = 1;
 
@@ -288,8 +288,8 @@ THREE.OBJLoader.RawObject = (function () {
 
 		this.rawObjectDescriptions = [];
 		// this default index is required as it is possible to define faces without 'g' or 'usemtl'
-		var index = buildIndex( this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
-		this.rawObjectDescriptionInUse = new THREE.OBJLoader.RawObjectDescription( this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup );
+		var index = buildIndex( this.activeMtlName, this.activeSmoothingGroup );
+		this.rawObjectDescriptionInUse = new THREE.OBJLoader.RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
 
@@ -344,10 +344,7 @@ THREE.OBJLoader.RawObject = (function () {
 	};
 
 	RawObject.prototype.pushGroup = function ( groupName ) {
-		if ( this.activeGroupName === groupName || groupName == null ) return;
-		this.activeGroupName = groupName;
-		this.objectGroupCount++;
-
+		this.groupName = groupName;
 		this.verifyIndex();
 	};
 
@@ -369,12 +366,12 @@ THREE.OBJLoader.RawObject = (function () {
 	};
 
 	RawObject.prototype.verifyIndex = function () {
-		var index = buildIndex( this.activeGroupName, this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
+		var index = buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
 		if ( this.rawObjectDescriptions[ index ] == null ) {
 
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ] =
 				new THREE.OBJLoader.RawObjectDescription(
-					this.objectName, this.activeGroupName, this.activeMtlName, this.activeSmoothingGroup
+					this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup
 				);
 
 		} else {
@@ -384,8 +381,8 @@ THREE.OBJLoader.RawObject = (function () {
 		}
 	};
 
-	var buildIndex = function ( groupName, materialName, smoothingGroup) {
-		return groupName + '|' + materialName + '|' + smoothingGroup;
+	var buildIndex = function ( materialName, smoothingGroup) {
+		return materialName + '|' + smoothingGroup;
 	};
 
 	/*
