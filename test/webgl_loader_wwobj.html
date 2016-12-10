@@ -148,7 +148,8 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WebWorkerProxyBase.js"></script>
+		<script src="../src/loaders/WWManager.js"></script>
+		<script src="../src/loaders/WWProxyBase.js"></script>
 		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
@@ -183,6 +184,8 @@
 						htmlCanvas: elementToBindTo
 					} );
 
+					this.wwManager = new THREE.WebWorker.WWManager();
+					this.wwManager.createGroup( 'objLoaders' );
 					this.wwObjLoaderProxy = null;
 					this.lights = null;
 					this.controls = null;
@@ -197,7 +200,9 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					this.wwObjLoaderProxy = new THREE.WebWorker.WWOBJLoaderProxy( '..', 'src/loaders/WWOBJLoader.js' );
+					this.wwObjLoaderProxy = new THREE.WebWorker.WWOBJLoaderProxy( 'WWOBJLoader', '..', 'src/loaders/WWOBJLoader.js' );
+					this.wwManager.register( 'objLoaders', this.wwObjLoaderProxy );
+					this.wwManager.deregister( 'objLoaders', 'WWOBJLoader' );
 
 					var scope = this;
 					var reloadAssetsProxy = function () {

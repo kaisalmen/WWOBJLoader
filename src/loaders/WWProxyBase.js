@@ -9,12 +9,14 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWLoaderBase = (function () {
 
-	function WWLoaderBase( basedir, relativeWorkerSrcPath ) {
+	function WWLoaderBase( webWorkerName, basedir, relativeWorkerSrcPath ) {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 
+		this.webWorkerName = webWorkerName;
 		this.basedir = basedir;
 		this.relativeWorkerSrcPath = relativeWorkerSrcPath;
+
 		this.worker = null;
 		this.sceneGraphBaseNode = null;
 		this.debug = false;
@@ -29,6 +31,10 @@ THREE.WebWorker.WWLoaderBase = (function () {
 
 	WWLoaderBase.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
+	};
+
+	WWLoaderBase.prototype.getWebWorkerName = function () {
+		return this.webWorkerName;
 	};
 
 	WWLoaderBase.prototype.validate = function () {

@@ -12,8 +12,8 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderBase );
 	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
 
-	function WWOBJLoaderProxy( basedir, relativeWorkerSrcPath ) {
-		THREE.WebWorker.WWLoaderBase.call( this, basedir, relativeWorkerSrcPath );
+	function WWOBJLoaderProxy( webWorkerName, basedir, relativeWorkerSrcPath ) {
+		THREE.WebWorker.WWLoaderBase.call( this, webWorkerName, basedir, relativeWorkerSrcPath );
 		this.parent = THREE.WebWorker.WWLoaderBase.prototype;
 
 		this.manager = THREE.DefaultLoadingManager;
@@ -45,6 +45,10 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
 	WWOBJLoaderProxy.prototype.setDebug = function ( enabled ) {
 		this.parent.setDebug.call( this, enabled );
+	};
+
+	WWOBJLoaderProxy.prototype.getWebWorkerName = function () {
+		return this.parent.getWebWorkerName.call( this );
 	};
 
 	WWOBJLoaderProxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
