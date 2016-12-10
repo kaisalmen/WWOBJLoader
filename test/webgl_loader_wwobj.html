@@ -185,8 +185,8 @@
 					} );
 
 					this.wwManager = new THREE.WebWorker.WWManager();
-					this.wwManager.createGroup( 'objLoaders' );
 					this.wwObjLoaderProxy = null;
+
 					this.lights = null;
 					this.controls = null;
 
@@ -200,11 +200,11 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
+					var scope = this;
 					this.wwObjLoaderProxy = new THREE.WebWorker.WWOBJLoaderProxy( 'WWOBJLoader', '..', 'src/loaders/WWOBJLoader.js' );
-					this.wwManager.register( 'objLoaders', this.wwObjLoaderProxy );
+					this.wwObjLoaderProxy = this.wwManager.register( 'objLoaders', 4 );
 					this.wwManager.deregister( 'objLoaders', 'WWOBJLoader' );
 
-					var scope = this;
 					var reloadAssetsProxy = function () {
 						scope.reloadAssets();
 					};

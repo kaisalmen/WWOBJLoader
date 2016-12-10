@@ -9,12 +9,15 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
-	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderBase );
+	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderProxyBase.prototype );
 	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
 
-	function WWOBJLoaderProxy( webWorkerName, basedir, relativeWorkerSrcPath ) {
-		THREE.WebWorker.WWLoaderBase.call( this, webWorkerName, basedir, relativeWorkerSrcPath );
-		this.parent = THREE.WebWorker.WWLoaderBase.prototype;
+	function WWOBJLoaderProxy() {
+		THREE.WebWorker.WWLoaderProxyBase.call( this );
+	}
+
+	WWOBJLoaderProxy.prototype.newInstance = function ( webWorkerName, basedir, relativeWorkerSrcPath ) {
+		THREE.WebWorker.WWLoaderProxyBase.prototype.newInstance.call( this, webWorkerName, basedir, relativeWorkerSrcPath );
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.XHRLoader( this.manager );
@@ -31,44 +34,10 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
 		this.materials = [];
 		this.counter = 0;
-
-		// callbacks
-		this.callbackMaterialsLoaded = null;
-		this.callbackProgress = null;
-		this.callbackMeshLoaded = null;
-		this.callbackCompletedLoading = null;
 	}
 
-	WWOBJLoaderProxy.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.parent.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
-	};
-
-	WWOBJLoaderProxy.prototype.setDebug = function ( enabled ) {
-		this.parent.setDebug.call( this, enabled );
-	};
-
-	WWOBJLoaderProxy.prototype.getWebWorkerName = function () {
-		return this.parent.getWebWorkerName.call( this );
-	};
-
-	WWOBJLoaderProxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		this.callbackMaterialsLoaded = callbackMaterialsLoaded;
-	};
-
-	WWOBJLoaderProxy.prototype.registerProgressCallback = function ( callbackProgress ) {
-		this.callbackProgress = callbackProgress;
-	};
-
-	WWOBJLoaderProxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
-		this.callbackMeshLoaded = callbackMeshLoaded;
-	};
-
-	WWOBJLoaderProxy.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
-		this.callbackCompletedLoading = callbackCompletedLoading;
-	};
-
 	WWOBJLoaderProxy.prototype.validate = function () {
-		if ( this.parent.validate.call( this ) ) return;
+		if ( THREE.WebWorker.WWLoaderProxyBase.prototype.validate.call( this ) ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
@@ -164,7 +133,6 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 					cmd: 'run',
 					objAsArrayBuffer: scope.objAsArrayBuffer
 				}, [ scope.objAsArrayBuffer.buffer ] );
-				scope.finalize();
 
 			} else {
 
@@ -179,7 +147,6 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 						cmd: 'run',
 						objAsArrayBuffer: scope.objAsArrayBuffer
 					}, [ scope.objAsArrayBuffer.buffer ] );
-					scope.finalize();
 
 				};
 
@@ -340,11 +307,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
 				}
 
- 				if ( this.callbackCompletedLoading !== null ) {
-
-					this.callbackCompletedLoading();
-
-				}
+				this.finalize();
 				break;
 
 			case 'report_progress':
@@ -352,33 +315,16 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 				break;
 
 			default:
-
 				console.error( 'Received unknown command: ' + payload.cmd );
 				break;
 
 		}
 	};
 
-	WWOBJLoaderProxy.prototype.finalize = function () {
-		this.parent.finalize.call( this );
-	};
-
 	WWOBJLoaderProxy.prototype.shutdownWorker = function () {
-		this.parent.shutdownWorker.call( this );
+		THREE.WebWorker.WWLoaderProxyBase.prototype.shutdownWorker.call( this );
 		this.fileLoader = null;
 		this.mtlLoader = null;
-	};
-
-	WWOBJLoaderProxy.prototype.addMaterial = function ( name, material ) {
-		this.parent.addMaterial.call( this, name, material );
-	};
-
-	WWOBJLoaderProxy.prototype.getMaterial = function ( name ) {
-		this.parent.getMaterial.call( this, name );
-	};
-
-	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {
-		this.parent.announceProgress.call( this, baseText, text );
 	};
 
 	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {

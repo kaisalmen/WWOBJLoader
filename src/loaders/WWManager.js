@@ -9,54 +9,45 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWManager = (function () {
 
-	var MAX_WW_PER_GROUP = 2;
-	var MAX_WW_GROUPS = 4;
-
 	function WWManager() {
-		this.maxWebWorkerPerGroup = MAX_WW_PER_GROUP;
-		this.maxWebWorkerGroups = MAX_WW_PER_GROUP;
 		this.groups = {};
 	}
 
-	WWManager.prototype.setMaxWebWorkerPerGroup = function ( maxWebWorkerPerGroup ) {
-		this.maxWebWorkerPerGroup = maxWebWorkerPerGroup;
-	};
+	WWManager.prototype.register = function ( groupName, maxWebWorkerPerGroup ) {
+		var webWorker;
+		var group = this.groups[ groupName ];
+		if ( group == null ) {
 
-	WWManager.prototype.setMaxWebWorkerGroups = function ( maxWebWorkerGroups ) {
-		this.maxWebWorkerGroups = maxWebWorkerGroups;
-	};
+			group = this.groups[ groupName ] = {
+				maxWebWorkerPerGroup: maxWebWorkerPerGroup,
+				webWorkers: []
+			};
 
-	WWManager.prototype.createGroup = function ( groupName ) {
-		this.groups[ groupName ] = {};
-	};
+			webWorker = Object.create( THREE.WebWorker.WWOBJLoaderProxy.prototype );
+			webWorker.newInstance( 'WWOBJLoader', '..', 'src/loaders/WWOBJLoader.js' );
 
-	WWManager.prototype.register = function ( groupName, webWorker ) {
-		var webWorkers = this.groups[ groupName ];
-		var wwLength = Object.keys( webWorkers ).length;
-		var registered = false;
-		if ( wwLength < this.maxWebWorkerPerGroup ) {
+			webWorker.registerHookManagerCompletedLoading( function () {
+				console.log( 'Manager received loading completed from: ' + webWorker.getWebWorkerName() );
+			});
+			group.webWorkers.push( webWorker );
 
-			webWorkers[ webWorker.getWebWorkerName() ] = webWorker;
-			registered = true;
-
+		} else {
+			webWorker = group[ 0 ];
 		}
-		return registered;
+		return webWorker;
 	};
 
-	WWManager.prototype.deregister = function ( groupName, webWorkerName ) {
-		var webWorkers = this.groups[ groupName ];
+	WWManager.prototype.deregister = function ( groupName ) {
+		var group = this.groups[ groupName ];
 		var deregistered = false;
 
-		if ( webWorkers != null ) {
-
-			var webWorker = webWorkers[ webWorkerName ];
-			if ( webWorker != null && webWorker.getWebWorkerName() === webWorkerName ) {
-
+		if ( group != null ) {
+			for ( var i = 0, webWorker, length = group.webWorkers.length; i < length; i++ ) {
+				webWorker = group.webWorkers[ i ];
 				webWorker.shutdownWorker();
-				delete webWorker.webWorkerName;
-				deregistered = true;
-
 			}
+			delete this.groups.groupName;
+			deregistered = true;
 
 		}
 		return deregistered;

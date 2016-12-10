@@ -7,9 +7,12 @@
 if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
-THREE.WebWorker.WWLoaderBase = (function () {
+THREE.WebWorker.WWLoaderProxyBase = (function () {
 
-	function WWLoaderBase( webWorkerName, basedir, relativeWorkerSrcPath ) {
+	function WWLoaderProxyBase() {
+	}
+
+	WWLoaderProxyBase.prototype.newInstance = function ( webWorkerName, basedir, relativeWorkerSrcPath ) {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 
@@ -23,21 +26,53 @@ THREE.WebWorker.WWLoaderBase = (function () {
 
 		this.validated = false;
 		this.running = false;
-	}
 
-	WWLoaderBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		// callbacks
+		this.callbackMaterialsLoaded = null;
+		this.callbackProgress = null;
+		this.callbackMeshLoaded = null;
+		this.callbackCompletedLoading = null;
+
+		this.callbackManagerCompletedLoading = null;
+	};
+
+	WWLoaderProxyBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.sceneGraphBaseNode = sceneGraphBaseNode;
 	};
 
-	WWLoaderBase.prototype.setDebug = function ( enabled ) {
+	WWLoaderProxyBase.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
 	};
 
-	WWLoaderBase.prototype.getWebWorkerName = function () {
+	WWLoaderProxyBase.prototype.getWebWorkerName = function () {
 		return this.webWorkerName;
 	};
 
-	WWLoaderBase.prototype.validate = function () {
+	WWLoaderProxyBase.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+		this.callbackMaterialsLoaded = callbackMaterialsLoaded;
+	};
+
+	WWLoaderProxyBase.prototype.registerProgressCallback = function ( callbackProgress ) {
+		this.callbackProgress = callbackProgress;
+	};
+
+	WWLoaderProxyBase.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
+		this.callbackMeshLoaded = callbackMeshLoaded;
+	};
+
+	WWLoaderProxyBase.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
+		this.callbackCompletedLoading = callbackCompletedLoading;
+	};
+
+	WWLoaderProxyBase.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
+		this.callbackCompletedLoading = callbackCompletedLoading;
+	};
+
+	WWLoaderProxyBase.prototype.registerHookManagerCompletedLoading = function ( callbackManagerCompletedLoading ) {
+		this.callbackManagerCompletedLoading = callbackManagerCompletedLoading;
+	};
+
+	WWLoaderProxyBase.prototype.validate = function () {
 		if ( this.validated ) return true;
 		if ( this.worker == null ) {
 
@@ -54,24 +89,27 @@ THREE.WebWorker.WWLoaderBase = (function () {
 		this.running = true;
 	};
 
-	WWLoaderBase.prototype.init = function () {
+	WWLoaderProxyBase.prototype.init = function () {
 		// Overwrite me, please
 	};
 
-	WWLoaderBase.prototype.run = function () {
+	WWLoaderProxyBase.prototype.run = function () {
 		// Overwrite me, please
 	};
 
-	WWLoaderBase.prototype.receiveWorkerMessage = function ( event ) {
+	WWLoaderProxyBase.prototype.receiveWorkerMessage = function ( event ) {
 		// Overwrite me, please
 	};
 
-	WWLoaderBase.prototype.finalize = function () {
+	WWLoaderProxyBase.prototype.finalize = function () {
+		if ( this.callbackCompletedLoading !== null ) this.callbackCompletedLoading();
+		if ( this.callbackManagerCompletedLoading !== null ) this.callbackManagerCompletedLoading();
+
 		this.validated = false;
 		this.running = false;
 	};
 
-	WWLoaderBase.prototype.shutdownWorker = function () {
+	WWLoaderProxyBase.prototype.shutdownWorker = function () {
 		if ( this.worker != null ) {
 
 			if ( ! this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
@@ -83,6 +121,6 @@ THREE.WebWorker.WWLoaderBase = (function () {
 		}
 	};
 
-	return WWLoaderBase;
+	return WWLoaderProxyBase;
 
 })();
