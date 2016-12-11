@@ -27,9 +27,9 @@ This changed since last status update:
 - **2016-12-02**: Split OBJLoader2 into multiple files: Extracted OBJParser.js and OBJMeshCreator.js
 - **2016-12-02**: WWOBJLoader is independent of three.js. It only requires OBJParser.js
 - **2016-12-04**: OBJParser.js: Bugfix: group definition (g name) in OBJ filedid not lead to new object creation
+- **2016-12-11**: **Ongoing** Created Branch WebWorkerLifecycle: Extracted `WWProxyBase` from `WWOBJLoaderProxy` (former `WWOBJLoaderFrontEnd`). Simplified lifecycle. Created `WWManager` that is able to create and run abritray `WWProxyBase` just by passing params. Target: `WWManager` gets a **run-instructions-pipeline** and spawans a configurable amount of web workers of a specific type (currently there is only WWOBJLoaderProxy). New demo/test will demonstrate this.
 
 Next on my agenda:
-- **Ongoing** Work on Life-cycle of WWOBJLoader and FrontEnd (eventually find a better name)
 - Test automation
 
 ## Examples:

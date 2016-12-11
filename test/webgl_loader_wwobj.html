@@ -185,7 +185,6 @@
 					} );
 
 					this.wwManager = new THREE.WebWorker.WWManager();
-					this.wwObjLoaderProxy = null;
 
 					this.lights = null;
 					this.controls = null;
@@ -201,17 +200,24 @@
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
 					var scope = this;
-					this.wwObjLoaderProxy = new THREE.WebWorker.WWOBJLoaderProxy( 'WWOBJLoader', '..', 'src/loaders/WWOBJLoader.js' );
-					this.wwObjLoaderProxy = this.wwManager.register( 'objLoaders', 4 );
-					this.wwManager.deregister( 'objLoaders', 'WWOBJLoader' );
 
 					var reloadAssetsProxy = function () {
 						scope.reloadAssets();
 					};
-					// reloadAsset will be recalled after one load is done
-					// It will check status of this.objs2Load internally
-					this.wwObjLoaderProxy.registerHookCompletedLoading( reloadAssetsProxy );
-					this.wwObjLoaderProxy.registerProgressCallback( this.reportProgress );
+
+					this.wwManager.register(
+						'WWOBJLoaders', 4, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						{
+							name: 'WWOBJLoader',
+							basedir: '..',
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+						},
+						{
+							completedLoading: reloadAssetsProxy,
+							progress: this.reportProgress
+						}
+
+					);
 
 					// tell ThreeJsApp async loading is done (none needed here)
 					this.preloadDone = true;
@@ -271,6 +277,8 @@
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
+					this.wwManager.unregister( 'WWOBJLoaders', 'WWOBJLoader' );
+
 					var ref;
 					var scope = this;
 
@@ -361,23 +369,21 @@
 						scope.loadCounter ++;
 
 						scope.scenePerspective.scene.add( obj2Load.pivot );
-						scope.wwObjLoaderProxy.setSceneGraphBaseNode( obj2Load.pivot );
 
 						if ( obj2Load.fileZip !== null ) {
-
 
 							var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
 							var mtlAsString = null;
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwObjLoaderProxy.init( {
+								scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+									sceneGraphBaseNode: obj2Load.pivot,
 									dataAvailable: true,
 									objAsArrayBuffer: data,
 									mtlAsString: mtlAsString,
 									pathTexture: obj2Load.pathTexture
 								} );
-								scope.wwObjLoaderProxy.run();
 							};
 
 							var setMtlAsString = function ( data ) {
@@ -406,20 +412,19 @@
 
 						} else {
 
-							scope.wwObjLoaderProxy.init( {
+							scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+								sceneGraphBaseNode: obj2Load.pivot,
 								dataAvailable: false,
 								pathObj: obj2Load.pathBase,
 								fileObj: obj2Load.fileObj,
 								fileMtl: obj2Load.fileMtl,
 								pathTexture: obj2Load.pathTexture
 							} );
-							scope.wwObjLoaderProxy.run();
 
 						}
 					} else {
 
 						scope.processing = false;
-//						scope.wwObjLoaderProxy.terminateWorker();
 
 					}
 				};

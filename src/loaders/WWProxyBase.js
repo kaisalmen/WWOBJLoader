@@ -9,35 +9,30 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWLoaderProxyBase = (function () {
 
-	function WWLoaderProxyBase() {
+	function WWLoaderProxyBase( params ) {
+		this.init( params );
 	}
 
-	WWLoaderProxyBase.prototype.newInstance = function ( webWorkerName, basedir, relativeWorkerSrcPath ) {
+	WWLoaderProxyBase.prototype.init = function ( params ) {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 
-		this.webWorkerName = webWorkerName;
-		this.basedir = basedir;
-		this.relativeWorkerSrcPath = relativeWorkerSrcPath;
+		this.webWorkerName = params.name;
+		this.basedir = params.basedir;
+		this.relativeWorkerSrcPath = params.relativeWorkerSrcPath;
 
 		this.worker = null;
-		this.sceneGraphBaseNode = null;
 		this.debug = false;
 
+		this.sceneGraphBaseNode = null;
 		this.validated = false;
 		this.running = false;
 
-		// callbacks
-		this.callbackMaterialsLoaded = null;
-		this.callbackProgress = null;
-		this.callbackMeshLoaded = null;
-		this.callbackCompletedLoading = null;
-
-		this.callbackManagerCompletedLoading = null;
-	};
-
-	WWLoaderProxyBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.sceneGraphBaseNode = sceneGraphBaseNode;
+		this.callbacks = {
+			progress: null,
+			completedLoading: null,
+			managerCompletedLoading: null
+		}
 	};
 
 	WWLoaderProxyBase.prototype.setDebug = function ( enabled ) {
@@ -48,28 +43,12 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		return this.webWorkerName;
 	};
 
-	WWLoaderProxyBase.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		this.callbackMaterialsLoaded = callbackMaterialsLoaded;
-	};
-
 	WWLoaderProxyBase.prototype.registerProgressCallback = function ( callbackProgress ) {
-		this.callbackProgress = callbackProgress;
-	};
-
-	WWLoaderProxyBase.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
-		this.callbackMeshLoaded = callbackMeshLoaded;
+		if ( callbackProgress != null ) this.callbacks.progress = callbackProgress;
 	};
 
 	WWLoaderProxyBase.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
-		this.callbackCompletedLoading = callbackCompletedLoading;
-	};
-
-	WWLoaderProxyBase.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
-		this.callbackCompletedLoading = callbackCompletedLoading;
-	};
-
-	WWLoaderProxyBase.prototype.registerHookManagerCompletedLoading = function ( callbackManagerCompletedLoading ) {
-		this.callbackManagerCompletedLoading = callbackManagerCompletedLoading;
+		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading = callbackCompletedLoading;
 	};
 
 	WWLoaderProxyBase.prototype.validate = function () {
@@ -85,11 +64,12 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 			this.worker.addEventListener( 'message', scopeFunction, false );
 
 		}
+		this.sceneGraphBaseNode = null;
 		this.validated = true;
 		this.running = true;
 	};
 
-	WWLoaderProxyBase.prototype.init = function () {
+	WWLoaderProxyBase.prototype.prepareRun = function () {
 		// Overwrite me, please
 	};
 
@@ -102,8 +82,8 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 	};
 
 	WWLoaderProxyBase.prototype.finalize = function () {
-		if ( this.callbackCompletedLoading !== null ) this.callbackCompletedLoading();
-		if ( this.callbackManagerCompletedLoading !== null ) this.callbackManagerCompletedLoading();
+		if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading();
+		if ( this.callbacks.managerCompletedLoading != null ) this.callbacks.managerCompletedLoading();
 
 		this.validated = false;
 		this.running = false;
@@ -112,7 +92,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 	WWLoaderProxyBase.prototype.shutdownWorker = function () {
 		if ( this.worker != null ) {
 
-			if ( ! this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
 			this.worker.terminate();
 			this.worker = null;
