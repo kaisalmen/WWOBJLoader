@@ -133,6 +133,7 @@
 					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
 				</p>
 				<br><br>
+				<p id="clear" onclick="terminateManager()">Stop Manager</p>
 				<p id="clear" onclick="clearAllAssests()">Clear all</p>
 			</div>
 			<canvas id="example"></canvas>
@@ -429,6 +430,10 @@
 					}
 				};
 
+				WWOBJLoaderChecker.prototype.terminateManager = function () {
+					this.wwManager.terminateManager();
+				};
+
 				// ThreeJsApp.renderPost()  not required, default is used
 
 				return WWOBJLoaderChecker;
@@ -482,6 +487,10 @@
 
 			var clearAllAssests = function () {
 				APP.clearAllAssests();
+			};
+
+			var terminateManager = function () {
+				APP.terminateManager();
 			};
 /*
 			var i = 0;

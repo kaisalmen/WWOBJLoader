@@ -11,6 +11,11 @@ THREE.WebWorker.WWManager = (function () {
 
 	function WWManager() {
 		this.groups = {};
+		this.queue = [];
+		this.maxQueueSize = 100;
+		this.checkInterval = 10;
+		this.intervalCheck;
+		this.endlessRunner();
 	}
 
 	WWManager.prototype.register = function ( groupName, maxWebWorkerPerGroup, prototypeDef, globalParams, callbacks ) {
@@ -90,20 +95,64 @@ THREE.WebWorker.WWManager = (function () {
 		var group = this.groups[ groupName ];
 		if ( group == null ) throw  'Group "' + groupName + '" does not exist. Unable to run.';
 
-		var webWorker;
-		if ( group.webWorkers.length > 0 ) {
-
-			webWorker = group.webWorkers[ 0 ];
-
-		} else {
-
-			webWorker = this.buildWebWorker( group )
-			group.webWorkers.push( webWorker );
-
+		if ( this.queue.length < this.maxQueueSize ) {
+			this.queue.push( {
+				groupName: groupName,
+				runParams: runParams
+			} );
 		}
+	};
 
-		webWorker.prepareRun( runParams );
-		webWorker.run();
+
+	WWManager.prototype.endlessRunner = function () {
+		var scope = this;
+		var execCount = 0;
+		scope.intervalCheck = setInterval( checkQueueStatus, scope.checkInterval );
+
+		function checkQueueStatus() {
+			execCount++;
+			if ( scope.queue.length > 0 ) {
+
+				var workerDesc = scope.queue[ 0 ];
+				// expect groups is only filled via enqueueForRun
+				var group = scope.groups[ workerDesc.groupName ];
+
+				var webWorker;
+				for ( var i = 0, w, length = group.webWorkers.length; i < length; i++ ) {
+
+					w = group.webWorkers[ i ];
+					if ( ! w.running ) {
+
+						webWorker = w;
+						break;
+
+					}
+
+				}
+				if ( webWorker == null ) {
+
+					if ( group.webWorkers.length < group.maxWebWorkerPerGroup ) {
+
+						webWorker = scope.buildWebWorker( group );
+						group.webWorkers.push( webWorker );
+						webWorker.prepareRun( workerDesc.runParams );
+						webWorker.run();
+						scope.queue.shift();
+					}
+
+				} else {
+
+					webWorker.prepareRun( workerDesc.runParams );
+					webWorker.run();
+					scope.queue.shift();
+
+				}
+			}
+		}
+	};
+
+	WWManager.prototype.terminateManager = function () {
+		clearInterval( this.intervalCheck );
 	};
 
 	return WWManager;
