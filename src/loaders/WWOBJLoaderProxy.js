@@ -7,14 +7,17 @@
 if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
-THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
+THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
-	WWOBJLoaderFrontEnd.prototype = Object.create( THREE.WebWorker.WWLoaderBase );
-	WWOBJLoaderFrontEnd.prototype.constructor = WWOBJLoaderFrontEnd;
+	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderProxyBase.prototype );
+	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
 
-	function WWOBJLoaderFrontEnd( basedir, relativeWorkerSrcPath ) {
-		THREE.WebWorker.WWLoaderBase.call( this, basedir, relativeWorkerSrcPath );
-		this.parent = THREE.WebWorker.WWLoaderBase.prototype;
+	function WWOBJLoaderProxy( params ) {
+		THREE.WebWorker.WWLoaderProxyBase.call( this, params );
+	}
+
+	WWOBJLoaderProxy.prototype.init = function ( params ) {
+		THREE.WebWorker.WWLoaderProxyBase.prototype.init.call( this, params );
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.XHRLoader( this.manager );
@@ -22,116 +25,93 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
-		this.objFile = null;
-		this.objPath = null;
+		this.fileObj = null;
+		this.pathObj = null;
 
-		this.mtlFile = null;
-		this.mtlFileAsString = null;
+		this.fileMtl = null;
+		this.mtlAsString = null;
 		this.texturePath = null;
 
+		this.materials = [];
 		this.counter = 0;
-	}
 
-	WWOBJLoaderFrontEnd.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.parent.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
+		this.callbacks.materialsLoaded = null;
+		this.callbacks.meshLoaded = null;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.setDebug = function ( enabled ) {
-		this.parent.setDebug.call( this, enabled );
+	WWOBJLoaderProxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerHookMaterialsLoaded = function ( callback ) {
-		this.parent.registerHookMaterialsLoaded.call( this, callback );
+	WWOBJLoaderProxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
+		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.registerProgressCallback = function ( callback ) {
-		this.parent.registerProgressCallback.call( this, callback );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.registerHookMeshLoaded = function ( callback ) {
-		this.parent.registerHookMeshLoaded.call( this, callback );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.registerHookCompletedLoading = function ( callback ) {
-		this.parent.registerHookCompletedLoading.call( this, callback );
-	};
-
-    WWOBJLoaderFrontEnd.prototype.validate = function () {
-		if ( this.parent.validate.call( this ) ) return;
+	WWOBJLoaderProxy.prototype.validate = function () {
+		if ( THREE.WebWorker.WWLoaderProxyBase.prototype.validate.call( this ) ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
 
 		this.dataAvailable = false;
-		this.objFile = null;
-		this.objPath = null;
-		this.objAsArrayBuffer = null;
-
-		this.mtlFile = null;
-		this.mtlFileAsString = null;
+		this.fileObj = null;
+		this.pathObj = null;
+		this.fileMtl = null;
 		this.texturePath = null;
+
+		this.objAsArrayBuffer = null;
+		this.mtlAsString = null;
+
+		this.materials = [];
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
 
 		this.counter = 0;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.shutdownWorker = function () {
-		this.parent.shutdownWorker.call( this );
-		this.fileLoader = null;
-		this.mtlLoader = null;
-	};
-
-	WWOBJLoaderFrontEnd.prototype.initFiles = function ( basePath, objFile, mtlFile, texturePath ) {
-		// fast-fail on bad type
-		if ( ! ( typeof( objFile ) === 'string' || objFile instanceof String ) ) {
-			throw 'Provided file is not properly defined! Aborting...';
-		}
-		console.time( 'WWOBJLoaderFrontEnd' );
+	WWOBJLoaderProxy.prototype.prepareRun = function ( params ) {
 		this.validate();
+		this.dataAvailable = params.dataAvailable;
+		this.modelName = params.modelName;
+		console.time( 'WWOBJLoaderProxy' );
+		if ( this.dataAvailable ) {
 
-		this.worker.postMessage( {
-			cmd: 'init',
-			debug: this.debug
-		} );
+			// fast-fail on bad type
+			if ( ! ( params.objAsArrayBuffer instanceof ArrayBuffer || params.objAsArrayBuffer instanceof Uint8Array ) ) {
+				throw 'Provided input is not of type arraybuffer! Aborting...';
+			}
 
-		this.dataAvailable = false;
-		this.objFile = objFile;
-		this.objPath = basePath;
-		this.mtlFile = mtlFile;
-		this.texturePath = texturePath;
-	};
+			this.worker.postMessage( {
+				cmd: 'init',
+				debug: this.debug
+			} );
 
-	WWOBJLoaderFrontEnd.prototype.initData = function ( objAsArrayBuffer, mtlAsString, texturePath ) {
-		// fast-fail on bad type
-		if ( ! ( objAsArrayBuffer instanceof ArrayBuffer || objAsArrayBuffer instanceof Uint8Array ) ) {
-			throw 'Provided input is not of type arraybuffer! Aborting...';
+			this.objAsArrayBuffer = params.objAsArrayBuffer;
+			this.mtlAsString = params.mtlAsString;
+
+		} else {
+
+			// fast-fail on bad type
+			if ( ! ( typeof( params.fileObj ) === 'string' || params.fileObj instanceof String ) ) {
+				throw 'Provided file is not properly defined! Aborting...';
+			}
+
+			this.worker.postMessage( {
+				cmd: 'init',
+				debug: this.debug
+			} );
+
+			this.fileObj = params.fileObj;
+			this.pathObj = params.pathObj;
+			this.fileMtl = params.fileMtl;
+
 		}
-		console.time( 'WWOBJLoaderFrontEnd' );
-		this.validate();
-
-		this.worker.postMessage( {
-			cmd: 'init',
-			debug: this.debug
-		} );
-
-		this.dataAvailable = true;
-		this.objAsArrayBuffer = objAsArrayBuffer;
-		this.mtlFileAsString = mtlAsString;
-		this.texturePath = texturePath;
+		this.pathTexture = params.pathTexture;
+		this.sceneGraphBaseNode = params.sceneGraphBaseNode;
 	};
 
-	WWOBJLoaderFrontEnd.prototype.addMaterial = function ( name, material ) {
-		this.parent.addMaterial.call( this, name, material );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.getMaterial = function ( name ) {
-		this.parent.getMaterial.call( this, name );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.announceProgress = function ( baseText, text ) {
-		this.parent.announceProgress.call( this, baseText, text );
-	};
-
-	WWOBJLoaderFrontEnd.prototype.run = function () {
+	WWOBJLoaderProxy.prototype.run = function () {
 		var scope = this;
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -157,7 +137,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				materialNames: materialNames
 			} );
 
-			if ( scope.callbackMaterialsLoaded != null ) scope.materials = scope.callbackMaterialsLoaded( scope.materials );
+			if ( scope.callbacks.materialsLoaded != null ) scope.materials = scope.callbacks.materialsLoaded( scope.materials );
 
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
 
@@ -165,7 +145,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					cmd: 'run',
 					objAsArrayBuffer: scope.objAsArrayBuffer
 				}, [ scope.objAsArrayBuffer.buffer ] );
-				scope.finalize();
 
 			} else {
 
@@ -180,7 +159,6 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 						cmd: 'run',
 						objAsArrayBuffer: scope.objAsArrayBuffer
 					}, [ scope.objAsArrayBuffer.buffer ] );
-					scope.finalize();
 
 				};
 
@@ -191,7 +169,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					if ( percentComplete > refPercentComplete ) {
 
 						refPercentComplete = percentComplete;
-						output = 'Download of "' + scope.objFile + '": ' + percentComplete + '%';
+						output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
 						scope.announceProgress( output );
 
@@ -199,41 +177,41 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				};
 
 				var onError = function ( event ) {
-					output = 'Error occurred while downloading "' + scope.objFile + '"';
+					output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
 					scope.announceProgress( output );
-					scope.finalize();
+					scope.finalize( 'error' );
 
 				};
 
-				scope.fileLoader.setPath( scope.objPath );
+				scope.fileLoader.setPath( scope.pathObj );
 				scope.fileLoader.setResponseType( 'arraybuffer' );
-				scope.fileLoader.load( scope.objFile, onLoad, onProgress, onError );
+				scope.fileLoader.load( scope.fileObj, onLoad, onProgress, onError );
 			}
 			console.timeEnd( 'Loading MTL textures' );
 		};
 
 		if ( this.dataAvailable ) {
 
-			processLoadedMaterials( ( this.mtlFileAsString != null ) ? this.mtlLoader.parse( this.mtlFileAsString ) : null );
+			processLoadedMaterials( ( this.mtlAsString != null ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
 		} else {
 
-			if ( this.mtlFile == null ) {
+			if ( this.fileMtl == null ) {
 
 				processLoadedMaterials();
 
 			} else {
 
-				this.mtlLoader.setPath( this.texturePath );
-				this.mtlLoader.load( this.mtlFile, processLoadedMaterials );
+				this.mtlLoader.setPath( this.pathTexture );
+				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
 
 			}
 
 		}
 	};
 
-	WWOBJLoaderFrontEnd.prototype.receiveWorkerMessage = function ( event ) {
+	WWOBJLoaderProxy.prototype.receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -309,9 +287,9 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 					}
 
 				}
-				if ( this.callbackMeshLoaded !== null ) {
+				if ( this.callbacks.meshLoaded !== null ) {
 
-					var materialOverride = this.callbackMeshLoaded( payload.meshName, material );
+					var materialOverride = this.callbacks.meshLoaded( payload.meshName, material );
 					if ( materialOverride !== null && materialOverride !== undefined ) {
 
 						material = materialOverride;
@@ -330,7 +308,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 			case 'complete':
 
-				console.timeEnd( 'WWOBJLoaderFrontEnd' );
+				console.timeEnd( 'WWOBJLoaderProxy' );
 				if ( payload.msg != null ) {
 
 					this.announceProgress( payload.msg );
@@ -341,11 +319,7 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 
 				}
 
- 				if ( this.callbackCompletedLoading !== null ) {
-
-					this.callbackCompletedLoading();
-
-				}
+				this.finalize( 'complete' );
 				break;
 
 			case 'report_progress':
@@ -353,17 +327,53 @@ THREE.WebWorker.WWOBJLoaderFrontEnd = (function () {
 				break;
 
 			default:
-
 				console.error( 'Received unknown command: ' + payload.cmd );
 				break;
 
 		}
 	};
 
-	WWOBJLoaderFrontEnd.prototype.finalize = function () {
-		this.parent.finalize.call( this );
+	WWOBJLoaderProxy.prototype.terminate = function () {
+		THREE.WebWorker.WWLoaderProxyBase.prototype.terminate.call( this );
+		this.fileLoader = null;
+		this.mtlLoader = null;
 	};
 
-	return WWOBJLoaderFrontEnd;
+	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {
+		var output = "";
+		if ( baseText !== null && baseText !== undefined ) {
+
+			output = baseText;
+
+		}
+		if ( text !== null && text !== undefined ) {
+
+			output = output + " " + text;
+
+		}
+		if ( this.callbacks.progress !== null ) {
+
+			this.callbacks.progress( output );
+
+		}
+		if ( this.debug ) {
+
+			console.log( output );
+
+		}
+	};
+
+	WWOBJLoaderProxy.prototype.addMaterial = function ( name, material ) {
+		if ( material.name !== name ) material.name = name;
+		this.materials[ name ] = material;
+	};
+
+	WWOBJLoaderProxy.prototype.getMaterial = function ( name ) {
+		var material = this.materials[ name ];
+		if ( ! material ) material = null;
+		return material;
+	};
+
+	return WWOBJLoaderProxy;
 
 })();

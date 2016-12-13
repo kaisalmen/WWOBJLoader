@@ -56,7 +56,7 @@
 				left: 0px;
 				top: 0px;
 			}
-			#clear {
+			.clear {
 				color: red;
 				cursor: pointer;
 			}
@@ -133,7 +133,8 @@
 					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
 				</p>
 				<br><br>
-				<p id="clear" onclick="clearAllAssests()">Clear all</p>
+				<p class="clear" onclick="clearAllAssests()">Clear all</p>
+				<p class="clear" onclick="terminateManager()">Stop Manager</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
@@ -148,8 +149,9 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWLoaderBase.js"></script>
-		<script src="../src/loaders/WWOBJLoaderFrontEnd.js"></script>
+		<script src="../src/loaders/WWManager.js"></script>
+		<script src="../src/loaders/WWProxyBase.js"></script>
+		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
 
@@ -183,7 +185,8 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwObjFrontEnd = null;
+					this.wwManager = new THREE.WebWorker.WWManager( 250, 25 );
+
 					this.lights = null;
 					this.controls = null;
 
@@ -197,16 +200,25 @@
 				}
 
 				WWOBJLoaderChecker.prototype.initPreGL = function () {
-					this.wwObjFrontEnd = new THREE.WebWorker.WWOBJLoaderFrontEnd( '..', 'src/loaders/WWOBJLoader.js' );
-
 					var scope = this;
+
 					var reloadAssetsProxy = function () {
 						scope.reloadAssets();
 					};
-					// reloadAsset will be recalled after one load is done
-					// It will check status of this.objs2Load internally
-					this.wwObjFrontEnd.registerHookCompletedLoading( reloadAssetsProxy );
-					this.wwObjFrontEnd.registerProgressCallback( this.reportProgress );
+
+					this.wwManager.register(
+						'WWOBJLoaders', 4, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						{
+							name: 'WWOBJLoader',
+							basedir: '..',
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+						},
+						{
+							completedLoading: reloadAssetsProxy,
+							progress: this.reportProgress
+						}
+
+					);
 
 					// tell ThreeJsApp async loading is done (none needed here)
 					this.preloadDone = true;
@@ -246,8 +258,6 @@
 					this.scenePerspective.scene.add( this.cube );
 				};
 
-				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
-
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
 					this.reloadAssets();
 
@@ -266,6 +276,8 @@
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
+					this.wwManager.unregister( 'WWOBJLoaders', 'WWOBJLoader' );
+
 					var ref;
 					var scope = this;
 
@@ -356,18 +368,22 @@
 						scope.loadCounter ++;
 
 						scope.scenePerspective.scene.add( obj2Load.pivot );
-						scope.wwObjFrontEnd.setSceneGraphBaseNode( obj2Load.pivot );
 
 						if ( obj2Load.fileZip !== null ) {
-
 
 							var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
 							var mtlAsString = null;
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwObjFrontEnd.initData( data, mtlAsString, obj2Load.pathTexture );
-								scope.wwObjFrontEnd.run();
+								scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+									modelName: obj2Load.name,
+									sceneGraphBaseNode: obj2Load.pivot,
+									dataAvailable: true,
+									objAsArrayBuffer: data,
+									mtlAsString: mtlAsString,
+									pathTexture: obj2Load.pathTexture
+								} );
 							};
 
 							var setMtlAsString = function ( data ) {
@@ -396,16 +412,26 @@
 
 						} else {
 
-							scope.wwObjFrontEnd.initFiles( obj2Load.pathBase, obj2Load.fileObj, obj2Load.fileMtl, obj2Load.pathTexture );
-							scope.wwObjFrontEnd.run();
+							scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+								modelName: obj2Load.name,
+								sceneGraphBaseNode: obj2Load.pivot,
+								dataAvailable: false,
+								pathObj: obj2Load.pathBase,
+								fileObj: obj2Load.fileObj,
+								fileMtl: obj2Load.fileMtl,
+								pathTexture: obj2Load.pathTexture
+							} );
 
 						}
 					} else {
 
 						scope.processing = false;
-//						scope.wwObjFrontEnd.terminateWorker();
 
 					}
+				};
+
+				WWOBJLoaderChecker.prototype.terminateManager = function () {
+					this.wwManager.terminateManager();
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
@@ -453,14 +479,19 @@
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {
+
 					APP.updateAssets( assets );
 					APP.reloadAssets();
-				}
 
+				}
 			};
 
 			var clearAllAssests = function () {
 				APP.clearAllAssests();
+			};
+
+			var terminateManager = function () {
+				APP.terminateManager();
 			};
 /*
 			var i = 0;
