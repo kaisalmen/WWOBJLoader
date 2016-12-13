@@ -9,16 +9,13 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWManager = (function () {
 
-	function WWManager() {
+	function WWManager( maxQueueSize, queueCheckInterval ) {
 		this.groups = {};
-		this.callbacks = {
-			reportProgress: null
-		};
 		this.objectsCompleted = 0;
 
 		this.queue = [];
-		this.maxQueueSize = 100;
-		this.queueCheckInterval = 10;
+		this.maxQueueSize = maxQueueSize;
+		this.queueCheckInterval = queueCheckInterval;
 		this.intervalCheck;
 
 		this.endlessRunner();
@@ -26,18 +23,6 @@ THREE.WebWorker.WWManager = (function () {
 
 	WWManager.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
-	};
-
-	WWManager.prototype.setMaxQueueSize = function ( maxQueueSize ) {
-		this.maxQueueSize = maxQueueSize;
-	};
-
-	WWManager.prototype.setQueueCheckInterval = function ( queueCheckInterval ) {
-		this.queueCheckInterval = queueCheckInterval;
-	};
-
-	WWManager.prototype.setCallbackReportProgreess = function ( reportProgress ) {
-		this.callbacks.reportProgress = reportProgress;
 	};
 
 	WWManager.prototype.register = function ( groupName, maxWebWorkerPerGroup, prototypeDef, globalParams, callbacks ) {
@@ -60,7 +45,7 @@ THREE.WebWorker.WWManager = (function () {
 				}
 
 			}
-			group.webWorkers.push( this.buildWebWorker( group ) );
+			this.buildWebWorker( group );
 
 		} else {
 
@@ -84,19 +69,17 @@ THREE.WebWorker.WWManager = (function () {
 		}
 
 		var scope = this;
-		var managerCompletedLoading = function () {
+		var managerCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
 			scope.objectsCompleted++;
-			var msg = 'WWManager received loading completed (#' + scope.objectsCompleted + ') of "' + webWorker.getModelName() + '" from: ' + webWorker.getWebWorkerName();
-			console.log( msg );
-			if ( scope.callbacks.reportProgress != null ) scope.callbacks.reportProgress( msg );
-
 		};
-		if ( webWorker.callbacks.hasOwnProperty( 'managerCompletedLoading' ) ) {
+		if ( webWorker.callbacks.manager.hasOwnProperty( 'completedLoading' ) ) {
 
-			webWorker.callbacks[ 'managerCompletedLoading' ] = managerCompletedLoading;
+			webWorker.callbacks.manager[ 'completedLoading' ] = managerCompletedLoading;
 
 		}
 
+		webWorker.instanceNo = group.webWorkers.length;
+		group.webWorkers.push( webWorker );
 		return webWorker;
 	};
 
@@ -109,7 +92,7 @@ THREE.WebWorker.WWManager = (function () {
 			for ( var i = 0, webWorker, length = group.webWorkers.length; i < length; i++ ) {
 
 				webWorker = group.webWorkers[ i ];
-				webWorker.shutdownWorker();
+				webWorker.setRequestTerminate();
 
 			}
 			delete this.groups.groupName;
@@ -160,7 +143,6 @@ THREE.WebWorker.WWManager = (function () {
 					if ( group.webWorkers.length < group.maxWebWorkerPerGroup ) {
 
 						webWorker = scope.buildWebWorker( group );
-						group.webWorkers.push( webWorker );
 						webWorker.prepareRun( workerDesc.runParams );
 						webWorker.run();
 						scope.queue.shift();
@@ -178,7 +160,18 @@ THREE.WebWorker.WWManager = (function () {
 	};
 
 	WWManager.prototype.terminateManager = function () {
+		console.log( 'TERMINATE: WWManager received the termination signal!' );
 		clearInterval( this.intervalCheck );
+
+		for ( var key in this.groups ) {
+
+			if ( this.groups.hasOwnProperty( key ) ) {
+
+				this.unregister( this.groups[ key ] );
+
+			}
+
+		}
 	};
 
 	return WWManager;

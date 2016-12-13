@@ -180,7 +180,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 					output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
 					scope.announceProgress( output );
-					scope.finalize();
+					scope.finalize( 'error' );
 
 				};
 
@@ -319,7 +319,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 
 				}
 
-				this.finalize();
+				this.finalize( 'complete' );
 				break;
 
 			case 'report_progress':
@@ -333,8 +333,8 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 		}
 	};
 
-	WWOBJLoaderProxy.prototype.shutdownWorker = function () {
-		THREE.WebWorker.WWLoaderProxyBase.prototype.shutdownWorker.call( this );
+	WWOBJLoaderProxy.prototype.terminate = function () {
+		THREE.WebWorker.WWLoaderProxyBase.prototype.terminate.call( this );
 		this.fileLoader = null;
 		this.mtlLoader = null;
 	};

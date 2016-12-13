@@ -21,6 +21,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		this.basedir = params.basedir;
 		this.relativeWorkerSrcPath = params.relativeWorkerSrcPath;
 
+		this.instanceNo = 0;
 		this.worker = null;
 		this.debug = false;
 
@@ -28,11 +29,16 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		this.modelName = 'none';
 		this.validated = false;
 		this.running = false;
+		this.requestTerminate = false;
 
 		this.callbacks = {
 			progress: null,
 			completedLoading: null,
-			managerCompletedLoading: null
+			errorWhileLoading: null,
+			manager: {
+				completedLoading: null,
+				errorWhileLoading: null
+			}
 		}
 	};
 
@@ -73,6 +79,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		this.modelName = 'none';
 		this.validated = true;
 		this.running = true;
+		this.requestTerminate = false;
 	};
 
 	WWLoaderProxyBase.prototype.prepareRun = function () {
@@ -87,22 +94,38 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		// Overwrite me, please
 	};
 
-	WWLoaderProxyBase.prototype.finalize = function () {
-		if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.modelName );
-		if ( this.callbacks.managerCompletedLoading != null ) this.callbacks.managerCompletedLoading( this.modelName );
+	WWLoaderProxyBase.prototype.finalize = function ( reason ) {
+		if ( reason === 'complete' ) {
 
+			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.webWorkerName, this.modelName, this.instanceNo );
+			if ( this.callbacks.manager.completedLoading != null ) this.callbacks.manager.completedLoading( this.webWorkerName, this.modelName, this.instanceNo );
+
+		} else if ( reason === 'error' ) {
+
+			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo );
+			if ( this.callbacks.manager.errorWhileLoading != null ) this.callbacks.manager.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo );
+
+		}
 		this.validated = false;
 		this.running = false;
+
+		if ( this.requestTerminate ) {
+			this.terminate();
+		}
 	};
 
-	WWLoaderProxyBase.prototype.shutdownWorker = function () {
+	WWLoaderProxyBase.prototype.setRequestTerminate = function () {
+		this.requestTerminate = true;
+	};
+
+	WWLoaderProxyBase.prototype.terminate = function () {
 		if ( this.worker != null ) {
 
 			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
 			this.worker.terminate();
 			this.worker = null;
-			this.finalize();
+			this.finalize( 'terminate' );
 
 		}
 	};

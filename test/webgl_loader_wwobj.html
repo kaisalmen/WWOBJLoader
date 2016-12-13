@@ -185,7 +185,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwManager = new THREE.WebWorker.WWManager();
+					this.wwManager = new THREE.WebWorker.WWManager( 250, 25 );
 
 					this.lights = null;
 					this.controls = null;
@@ -257,8 +257,6 @@
 					this.cube.position.set( 0, -20, 0 );
 					this.scenePerspective.scene.add( this.cube );
 				};
-
-				// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
 				WWOBJLoaderChecker.prototype.initPostGL = function () {
 					this.reloadAssets();
@@ -379,6 +377,7 @@
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
 								scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+									modelName: obj2Load.name,
 									sceneGraphBaseNode: obj2Load.pivot,
 									dataAvailable: true,
 									objAsArrayBuffer: data,
@@ -414,6 +413,7 @@
 						} else {
 
 							scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+								modelName: obj2Load.name,
 								sceneGraphBaseNode: obj2Load.pivot,
 								dataAvailable: false,
 								pathObj: obj2Load.pathBase,

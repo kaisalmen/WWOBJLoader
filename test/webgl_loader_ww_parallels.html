@@ -47,7 +47,7 @@
 			#feedback {
 				color: darkorange;
 			}
-			#menu {
+			.menu {
 				margin: 4px 4px 4px 4px;
 				padding: 4px 12px 4px 12px;
 				border: solid darkorange;
@@ -55,13 +55,29 @@
 				position: absolute;
 				left: 0px;
 				top: 0px;
+				color: darkorange;
+			}
+			.headline {
+				font-size: 20px;
 			}
 			.clear {
 				color: red;
 				cursor: pointer;
 			}
-			h1 {
+			.runner {
+				color: green;
+				cursor: pointer;
+			}
+			.neutral {
+				color: white;
+				font-size: 18px;
+			}
+			.runDesc {
 				color: darkorange;
+				font-size: 20px;
+			}
+			input {
+				cursor: pointer
 			}
 			p {
 				margin: 4px 0px 4px 0px;
@@ -80,29 +96,34 @@
 				color: #00a200;
 				text-decoration: underline;
 			}
-			.offsite {  color: #00a200;
-				font-size: 14px;
-			}
-			.extras {
-				color: #e1e1e1;
-				font-size: 14px;
-			}
-			.asset {
-				cursor: pointer;
-			}
 		</style>
 	</head>
 
 	<body>
 		<div id="info">
 		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
-			<div id="feedback"></div>
+			<div id="feedback">
+
+			</div>
 		</div>
 		<div id="glFullscreen">
-			<div id="menu">
-				<h1>Select OBJ files:</h1>
-				<p class="clear" onclick="clearAllAssests()">Clear all</p>
-				<p class="clear" onclick="terminateManager()">Stop Manager</p>
+			<div class="menu">
+				<span class="headline">Web Worker Manager Control Parameters:</span>
+				<br><br>
+				<label for="inputQueueLength">
+					<span class="runDesc">Queue Length:</span>
+					<input id="inputQueueLength" name="inputQueueLength" type="number" min="1" max="1024" value="128" step="1" autofocus onmouseover="this.focus();">
+				</label>
+				<br>
+				<label for="workers">
+					<span class="runDesc">Workers:</span>
+					<input id="workers" name="workers" type="number" min="1" max="32" value="4" step="1" onmouseover="this.focus();">
+				</label>
+				<br><br>
+				<span class="neutral">Control:</span>
+				<p class="runner" onclick="APP.enqueueAllAssests( document.getElementById('inputQueueLength').value, document.getElementById( 'workers' ).value )">Run Queue</p>
+				<br>
+				<p class="clear" onclick="APP.terminateManager();">Terminate</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
@@ -153,8 +174,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwManager = new THREE.WebWorker.WWManager();
-					this.wwManager.setCallbackReportProgreess( this.reportProgress );
+					this.wwManager = new THREE.WebWorker.WWManager( 250, 25 );
 
 					this.lights = null;
 					this.controls = null;
@@ -164,19 +184,6 @@
 				}
 
 				WWParallels.prototype.initPreGL = function () {
-					this.wwManager.register(
-						'WWOBJLoaders', 4, THREE.WebWorker.WWOBJLoaderProxy.prototype,
-						{
-							name: 'WWOBJLoader',
-							basedir: '..',
-							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
-						},
-						{
-//							progress: this.reportProgress
-						}
-
-					);
-
 					// tell ThreeJsApp async loading is done (none needed here)
 					this.preloadDone = true;
 				};
@@ -217,12 +224,6 @@
 
 				// ThreeJsApp.WWParallels.prototype.initPostGL()  not required, default is used
 
-				WWParallels.prototype.initPostGL = function () {
-					this.enqueueAllAssests();
-
-					return true;
-				};
-
 				WWParallels.prototype.resizeDisplayGL = function () {
 					this.controls.handleResize();
 				};
@@ -234,65 +235,40 @@
 					this.cube.rotation.y += 0.05;
 				};
 
-				WWParallels.prototype.clearAllAssests = function () {
-					this.wwManager.unregister( 'WWOBJLoaders', 'WWOBJLoader' );
-
-					var ref;
-					var scope = this;
-
-					for ( var asset in this.allAssets ) {
-						ref = this.allAssets[asset];
-
-						var remover = function ( object3d ) {
-
-							if ( object3d === ref.pivot ) {
-								return;
-							}
-							console.log( 'Removing ' + object3d.name );
-							scope.scenePerspective.scene.remove( object3d );
-
-							if ( object3d.hasOwnProperty( 'geometry' ) ) {
-								object3d.geometry.dispose();
-							}
-							if ( object3d.hasOwnProperty( 'material' ) ) {
-
-								var mat = object3d.material;
-								if ( mat.hasOwnProperty( 'materials' ) ) {
-
-									for ( var mmat in mat.materials ) {
-										mat.materials[mmat].dispose();
-									}
-								}
-							}
-							if ( object3d.hasOwnProperty( 'texture' ) ) {
-								object3d.texture.dispose();
-							}
-						};
-						scope.scenePerspective.scene.remove( ref.pivot );
-						ref.pivot.traverse( remover );
-						ref.pivot = null;
-					}
-					this.loadCounter = 0;
-					this.allAssets = [];
-				};
-
 				WWParallels.prototype.reportProgress = function( text ) {
 					document.getElementById( 'feedback' ).innerHTML = text;
 				};
 
-				WWParallels.prototype.enqueueAllAssests = function () {
+				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize,maxWebWorkerPerGroup ) {
 					var scope = this;
-/*
-					'oven', '../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip'
-					'sink', '../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip'
-					'PV1', '../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../resource/obj/PTV1/', 'PTV1.zip'
-					'cerberus', '../resource/obj/Cerberus/', 'Cerberus.obj', null, '../resource/obj/Cerberus/'
-					'WaltHead', '../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../resource/obj/walt/'
-*/
+					var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
+						var msg = '#' + scope.wwManager.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
+						console.log( msg );
+						scope.reportProgress( msg );
+					};
+
+					maxQueueSize = Math.min( maxQueueSize, 1024 );
+					maxWebWorkerPerGroup = Math.min( maxWebWorkerPerGroup, 32 );
+					console.log( 'Configuring WWManager with queue size ' + maxQueueSize + ' and ' + maxWebWorkerPerGroup + ' workers.' );
+
+					this.wwManager.maxQueueSize = maxQueueSize;
+					this.wwManager.register(
+						'WWOBJLoaders', maxWebWorkerPerGroup, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						{
+							name: 'WWOBJLoader',
+							basedir: '..',
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+						},
+						{
+//							progress: this.reportProgress,
+							completedLoading: callbackCompletedLoading
+						}
+
+					);
+
 					var models = [];
 					models.push( {
 						modelName: 'male02',
-						sceneGraphBaseNode: null,
 						dataAvailable: false,
 						pathObj: '../resource/obj/male02/',
 						fileObj: 'male02.obj',
@@ -302,7 +278,6 @@
 
 					models.push( {
 						modelName: 'female02',
-						sceneGraphBaseNode: null,
 						dataAvailable: false,
 						pathObj: '../resource/obj/female02/',
 						fileObj: 'female02.obj',
@@ -312,13 +287,25 @@
 
 					models.push( {
 						modelName: 'viveController',
-						sceneGraphBaseNode: null,
 						dataAvailable: false,
 						pathObj: '../resource/obj/vive-controller/',
 						fileObj: 'vr_controller_vive_1_5.obj',
-						pathTexture: null,
-						fileMtl: null,
 						scale: 400.0
+					} );
+
+					models.push( {
+						modelName: 'cerberus',
+						dataAvailable: false,
+						pathObj: '../resource/obj/Cerberus/',
+						fileObj: 'Cerberus.obj'
+					} );
+					models.push( {
+						modelName:'WaltHead',
+						dataAvailable: false,
+						pathObj: '../resource/obj/walt/',
+						fileObj: 'WaltHead.obj',
+						pathTexture: '../resource/obj/walt/',
+						fileMtl: 'WaltHead.mtl'
 					} );
 
 					var pivot;
@@ -326,10 +313,9 @@
 					var distributionMax = 1000;
 					var modelIndex = 0;
 					var model;
-					this.wwManager.setMaxQueueSize( 500 );
 					for ( var i = 0; i < this.wwManager.getMaxQueueSize(); i++ ) {
 
-						modelIndex = Math.floor( Math.random() * 3 );
+						modelIndex = Math.floor( Math.random() * 5 );
 						model = models[ modelIndex ];
 
 						pivot = new THREE.Object3D();
@@ -340,10 +326,10 @@
 						);
 						if ( model.scale != null ) pivot.scale.set( model.scale, model.scale, model.scale );
 
-						scope.scenePerspective.scene.add( pivot );
+						this.scenePerspective.scene.add( pivot );
 
 						model.sceneGraphBaseNode = pivot;
-						scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+						this.wwManager.enqueueForRun( 'WWOBJLoaders', {
 							modelName: model.modelName,
 							sceneGraphBaseNode: model.sceneGraphBaseNode,
 							dataAvailable: model.dataAvailable,
@@ -364,14 +350,6 @@
 				return WWParallels;
 
 			})();
-
-			var clearAllAssests = function () {
-				APP.clearAllAssests();
-			};
-
-			var terminateManager = function () {
-				APP.terminateManager();
-			};
 
 			var APP = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
 
