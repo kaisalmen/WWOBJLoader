@@ -11,12 +11,34 @@ THREE.WebWorker.WWManager = (function () {
 
 	function WWManager() {
 		this.groups = {};
+		this.callbacks = {
+			reportProgress: null
+		};
+		this.objectsCompleted = 0;
+
 		this.queue = [];
 		this.maxQueueSize = 100;
-		this.checkInterval = 10;
+		this.queueCheckInterval = 10;
 		this.intervalCheck;
+
 		this.endlessRunner();
 	}
+
+	WWManager.prototype.getMaxQueueSize = function () {
+		return this.maxQueueSize;
+	};
+
+	WWManager.prototype.setMaxQueueSize = function ( maxQueueSize ) {
+		this.maxQueueSize = maxQueueSize;
+	};
+
+	WWManager.prototype.setQueueCheckInterval = function ( queueCheckInterval ) {
+		this.queueCheckInterval = queueCheckInterval;
+	};
+
+	WWManager.prototype.setCallbackReportProgreess = function ( reportProgress ) {
+		this.callbacks.reportProgress = reportProgress;
+	};
 
 	WWManager.prototype.register = function ( groupName, maxWebWorkerPerGroup, prototypeDef, globalParams, callbacks ) {
 		var group = this.groups[ groupName ];
@@ -60,8 +82,14 @@ THREE.WebWorker.WWManager = (function () {
 			}
 
 		}
+
+		var scope = this;
 		var managerCompletedLoading = function () {
-			console.log( 'WWManager received loading completed from: ' + webWorker.getWebWorkerName() );
+			scope.objectsCompleted++;
+			var msg = 'WWManager received loading completed (#' + scope.objectsCompleted + ') of "' + webWorker.getModelName() + '" from: ' + webWorker.getWebWorkerName();
+			console.log( msg );
+			if ( scope.callbacks.reportProgress != null ) scope.callbacks.reportProgress( msg );
+
 		};
 		if ( webWorker.callbacks.hasOwnProperty( 'managerCompletedLoading' ) ) {
 
@@ -106,11 +134,9 @@ THREE.WebWorker.WWManager = (function () {
 
 	WWManager.prototype.endlessRunner = function () {
 		var scope = this;
-		var execCount = 0;
-		scope.intervalCheck = setInterval( checkQueueStatus, scope.checkInterval );
+		scope.intervalCheck = setInterval( checkQueueStatus, scope.queueCheckInterval );
 
 		function checkQueueStatus() {
-			execCount++;
 			if ( scope.queue.length > 0 ) {
 
 				var workerDesc = scope.queue[ 0 ];

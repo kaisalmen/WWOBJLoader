@@ -73,6 +73,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 	WWOBJLoaderProxy.prototype.prepareRun = function ( params ) {
 		this.validate();
 		this.dataAvailable = params.dataAvailable;
+		this.modelName = params.modelName;
 		console.time( 'WWOBJLoaderProxy' );
 		if ( this.dataAvailable ) {
 

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Web Worker Parallels Demo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px 0px 0px 0px;
+				padding: 0px 0px 0px 0px;
+				border: none;
+				cursor: default;
+			}
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			#info a {
+				color: #f00;
+				font-weight: bold;
+				text-decoration: underline;
+				cursor: pointer
+			}
+			#glFullscreen {
+				width: 100%;
+				height: 100vh;
+				min-width: 640px;
+				min-height: 360px;
+				position: relative;
+				overflow: hidden;
+			}
+			#example {
+				width: 100%;
+				height: 100%;
+				top: 0px;
+				left: 0px;
+				background-color: #000000;
+			}
+			#feedback {
+				color: darkorange;
+			}
+			#menu {
+				margin: 4px 4px 4px 4px;
+				padding: 4px 12px 4px 12px;
+				border: solid darkorange;
+				border-radius: 8px;
+				position: absolute;
+				left: 0px;
+				top: 0px;
+			}
+			.clear {
+				color: red;
+				cursor: pointer;
+			}
+			h1 {
+				color: darkorange;
+			}
+			p {
+				margin: 4px 0px 4px 0px;
+				font-size: 18pt;
+				color: #e1e1e1;
+			}
+			a {
+				color: #00a200;
+				text-decoration: none;
+			}
+			a:visited {
+				color: #006400;
+				text-decoration: none;
+			}
+			a:hover {
+				color: #00a200;
+				text-decoration: underline;
+			}
+			.offsite {  color: #00a200;
+				font-size: 14px;
+			}
+			.extras {
+				color: #e1e1e1;
+				font-size: 14px;
+			}
+			.asset {
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<div id="feedback"></div>
+		</div>
+		<div id="glFullscreen">
+			<div id="menu">
+				<h1>Select OBJ files:</h1>
+				<p class="clear" onclick="clearAllAssests()">Clear all</p>
+				<p class="clear" onclick="terminateManager()">Stop Manager</p>
+			</div>
+			<canvas id="example"></canvas>
+		</div>
+
+		<script src="../node_modules/three/build/three.min.js"></script>
+		<script src="../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+
+		<script src="../node_modules/jszip/dist/jszip.min.js"></script>
+
+		<script src="../src/apps/ThreeJsApp.js"></script>
+		<script src="../src/apps/AppRunner.js"></script>
+		<script src="../src/apps/ZipTools.js"></script>
+		<script src="../src/loaders/WWManager.js"></script>
+		<script src="../src/loaders/WWProxyBase.js"></script>
+		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
+
+		<script>
+
+			if (THREE.examples.loaders === undefined) {
+				THREE.examples.loaders = {};
+			}
+
+			/**
+			 * ThreeJsApp serves as base class that defines an application life-cycle and
+			 * handles some things you always need to do when writing an example:
+			 * - Renderer init
+			 * - Perspective scene with camera (enabled by default)
+			 *   - CubeMap scene (disabled by default)
+			 * - Orthographic scene with camera (disabled by default)
+			 * - Canvas/renderer size changes
+			 *
+			 * This example extends ThreeJsApp and overwrites only functions needed.
+			 */
+			THREE.examples.loaders.WWParallels = (function () {
+
+				WWParallels.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+				WWParallels.prototype.constructor = WWParallels;
+
+				function WWParallels( elementToBindTo ) {
+					THREE.examples.apps.ThreeJsApp.call( this );
+
+					// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
+					// Only define what is required (name and htmlCanvas).
+					this.configure( {
+						name: 'WWParallels',
+						htmlCanvas: elementToBindTo
+					} );
+
+					this.wwManager = new THREE.WebWorker.WWManager();
+					this.wwManager.setCallbackReportProgreess( this.reportProgress );
+
+					this.lights = null;
+					this.controls = null;
+					this.cube = null;
+
+					this.processing = false;
+				}
+
+				WWParallels.prototype.initPreGL = function () {
+					this.wwManager.register(
+						'WWOBJLoaders', 4, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						{
+							name: 'WWOBJLoader',
+							basedir: '..',
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+						},
+						{
+//							progress: this.reportProgress
+						}
+
+					);
+
+					// tell ThreeJsApp async loading is done (none needed here)
+					this.preloadDone = true;
+				};
+
+				WWParallels.prototype.initGL = function () {
+					this.renderer.setClearColor(0x303030);
+
+					var cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
+					};
+					this.scenePerspective.setCameraDefaults( cameraDefaults );
+					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+
+					this.lights = {
+						ambientLight: new THREE.AmbientLight( 0x202020 ),
+						directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
+						directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
+						lightArray: new THREE.Object3D()
+					};
+
+					this.lights.directionalLight1.position.set( -100, 0, 100 );
+					this.lights.directionalLight2.position.set( 100, 0, 100 );
+					this.lights.directionalLight3.position.set( 0, 0, -100 );
+
+					this.lights.lightArray.add( this.lights.directionalLight1 );
+					this.lights.lightArray.add( this.lights.directionalLight2 );
+					this.lights.lightArray.add( this.lights.directionalLight3 );
+					this.scenePerspective.scene.add( this.lights.lightArray );
+
+
+					var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+					var material = new THREE.MeshNormalMaterial();
+					this.cube = new THREE.Mesh( geometry, material );
+					this.cube.position.set( 0, -20, 0 );
+					this.scenePerspective.scene.add( this.cube );
+				};
+
+				// ThreeJsApp.WWParallels.prototype.initPostGL()  not required, default is used
+
+				WWParallels.prototype.initPostGL = function () {
+					this.enqueueAllAssests();
+
+					return true;
+				};
+
+				WWParallels.prototype.resizeDisplayGL = function () {
+					this.controls.handleResize();
+				};
+
+				WWParallels.prototype.renderPre = function () {
+					this.controls.update();
+
+					this.cube.rotation.x += 0.05;
+					this.cube.rotation.y += 0.05;
+				};
+
+				WWParallels.prototype.clearAllAssests = function () {
+					this.wwManager.unregister( 'WWOBJLoaders', 'WWOBJLoader' );
+
+					var ref;
+					var scope = this;
+
+					for ( var asset in this.allAssets ) {
+						ref = this.allAssets[asset];
+
+						var remover = function ( object3d ) {
+
+							if ( object3d === ref.pivot ) {
+								return;
+							}
+							console.log( 'Removing ' + object3d.name );
+							scope.scenePerspective.scene.remove( object3d );
+
+							if ( object3d.hasOwnProperty( 'geometry' ) ) {
+								object3d.geometry.dispose();
+							}
+							if ( object3d.hasOwnProperty( 'material' ) ) {
+
+								var mat = object3d.material;
+								if ( mat.hasOwnProperty( 'materials' ) ) {
+
+									for ( var mmat in mat.materials ) {
+										mat.materials[mmat].dispose();
+									}
+								}
+							}
+							if ( object3d.hasOwnProperty( 'texture' ) ) {
+								object3d.texture.dispose();
+							}
+						};
+						scope.scenePerspective.scene.remove( ref.pivot );
+						ref.pivot.traverse( remover );
+						ref.pivot = null;
+					}
+					this.loadCounter = 0;
+					this.allAssets = [];
+				};
+
+				WWParallels.prototype.reportProgress = function( text ) {
+					document.getElementById( 'feedback' ).innerHTML = text;
+				};
+
+				WWParallels.prototype.enqueueAllAssests = function () {
+					var scope = this;
+/*
+					'oven', '../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip'
+					'sink', '../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip'
+					'PV1', '../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../resource/obj/PTV1/', 'PTV1.zip'
+					'cerberus', '../resource/obj/Cerberus/', 'Cerberus.obj', null, '../resource/obj/Cerberus/'
+					'WaltHead', '../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../resource/obj/walt/'
+*/
+					var models = [];
+					models.push( {
+						modelName: 'male02',
+						sceneGraphBaseNode: null,
+						dataAvailable: false,
+						pathObj: '../resource/obj/male02/',
+						fileObj: 'male02.obj',
+						pathTexture: '../resource/obj/male02/',
+						fileMtl: 'male02.mtl'
+					} );
+
+					models.push( {
+						modelName: 'female02',
+						sceneGraphBaseNode: null,
+						dataAvailable: false,
+						pathObj: '../resource/obj/female02/',
+						fileObj: 'female02.obj',
+						pathTexture: '../resource/obj/female02/',
+						fileMtl: 'female02.mtl'
+					} );
+
+					models.push( {
+						modelName: 'viveController',
+						sceneGraphBaseNode: null,
+						dataAvailable: false,
+						pathObj: '../resource/obj/vive-controller/',
+						fileObj: 'vr_controller_vive_1_5.obj',
+						pathTexture: null,
+						fileMtl: null,
+						scale: 400.0
+					} );
+
+					var pivot;
+					var distributionBase = -500;
+					var distributionMax = 1000;
+					var modelIndex = 0;
+					var model;
+					this.wwManager.setMaxQueueSize( 500 );
+					for ( var i = 0; i < this.wwManager.getMaxQueueSize(); i++ ) {
+
+						modelIndex = Math.floor( Math.random() * 3 );
+						model = models[ modelIndex ];
+
+						pivot = new THREE.Object3D();
+						pivot.position.set(
+							distributionBase + distributionMax * Math.random(),
+							distributionBase + distributionMax * Math.random(),
+							distributionBase + distributionMax * Math.random()
+						);
+						if ( model.scale != null ) pivot.scale.set( model.scale, model.scale, model.scale );
+
+						scope.scenePerspective.scene.add( pivot );
+
+						model.sceneGraphBaseNode = pivot;
+						scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+							modelName: model.modelName,
+							sceneGraphBaseNode: model.sceneGraphBaseNode,
+							dataAvailable: model.dataAvailable,
+							pathObj: model.pathObj,
+							fileObj: model.fileObj,
+							pathTexture: model.pathTexture,
+							fileMtl: model.fileMtl
+						} );
+					}
+				};
+
+				WWParallels.prototype.terminateManager = function () {
+					this.wwManager.terminateManager();
+				};
+
+				// ThreeJsApp.renderPost()  not required, default is used
+
+				return WWParallels;
+
+			})();
+
+			var clearAllAssests = function () {
+				APP.clearAllAssests();
+			};
+
+			var terminateManager = function () {
+				APP.terminateManager();
+			};
+
+			var APP = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
+
+			// AppRunner handles ThreeJsApp init, window resize event and render loop
+			var appRunner = new THREE.examples.apps.AppRunner( APP );
+			appRunner.run( true );
+
+		</script>
+
+	</body>
+</html>

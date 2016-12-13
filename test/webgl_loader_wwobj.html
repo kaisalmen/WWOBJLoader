@@ -56,7 +56,7 @@
 				left: 0px;
 				top: 0px;
 			}
-			#clear {
+			.clear {
 				color: red;
 				cursor: pointer;
 			}
@@ -133,8 +133,8 @@
 					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
 				</p>
 				<br><br>
-				<p id="clear" onclick="terminateManager()">Stop Manager</p>
-				<p id="clear" onclick="clearAllAssests()">Clear all</p>
+				<p class="clear" onclick="clearAllAssests()">Clear all</p>
+				<p class="clear" onclick="terminateManager()">Stop Manager</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
@@ -479,10 +479,11 @@
 
 			var loadAssets = function ( assets ) {
 				if ( ! APP.processing ) {
+
 					APP.updateAssets( assets );
 					APP.reloadAssets();
-				}
 
+				}
 			};
 
 			var clearAllAssests = function () {

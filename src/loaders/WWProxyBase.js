@@ -25,6 +25,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 		this.debug = false;
 
 		this.sceneGraphBaseNode = null;
+		this.modelName = 'none';
 		this.validated = false;
 		this.running = false;
 
@@ -41,6 +42,10 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 
 	WWLoaderProxyBase.prototype.getWebWorkerName = function () {
 		return this.webWorkerName;
+	};
+
+	WWLoaderProxyBase.prototype.getModelName = function () {
+		return this.modelName;
 	};
 
 	WWLoaderProxyBase.prototype.registerProgressCallback = function ( callbackProgress ) {
@@ -65,6 +70,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 
 		}
 		this.sceneGraphBaseNode = null;
+		this.modelName = 'none';
 		this.validated = true;
 		this.running = true;
 	};
@@ -82,8 +88,8 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 	};
 
 	WWLoaderProxyBase.prototype.finalize = function () {
-		if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading();
-		if ( this.callbacks.managerCompletedLoading != null ) this.callbacks.managerCompletedLoading();
+		if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.modelName );
+		if ( this.callbacks.managerCompletedLoading != null ) this.callbacks.managerCompletedLoading( this.modelName );
 
 		this.validated = false;
 		this.running = false;
