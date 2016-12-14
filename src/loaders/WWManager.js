@@ -17,15 +17,27 @@ THREE.WebWorker.WWManager = (function () {
 		this.maxQueueSize = maxQueueSize;
 		this.queueCheckInterval = queueCheckInterval;
 		this.intervalCheck;
-
-		this.endlessRunner();
 	}
 
 	WWManager.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
 	};
 
+	WWManager.prototype.verifyEndlessRunnerExec = function () {
+		if ( ! this.runnerEnabled ) {
+			this.runEndless();
+			this.runnerEnabled = true;
+		}
+	};
+
+	WWManager.prototype.stopEndlessRunnerExec = function () {
+		clearInterval( this.intervalCheck );
+		this.runnerEnabled = false;
+	};
+
 	WWManager.prototype.register = function ( groupName, maxWebWorkerPerGroup, prototypeDef, globalParams, callbacks ) {
+		this.verifyEndlessRunnerExec();
+
 		var group = this.groups[ groupName ];
 		if ( group == null ) {
 
@@ -45,7 +57,6 @@ THREE.WebWorker.WWManager = (function () {
 				}
 
 			}
-			this.buildWebWorker( group );
 
 		} else {
 
@@ -95,7 +106,8 @@ THREE.WebWorker.WWManager = (function () {
 				webWorker.setRequestTerminate();
 
 			}
-			delete this.groups.groupName;
+			group = null;
+			delete this.groups[ groupName ];
 			unregistered = true;
 
 		}
@@ -115,59 +127,45 @@ THREE.WebWorker.WWManager = (function () {
 	};
 
 
-	WWManager.prototype.endlessRunner = function () {
+	WWManager.prototype.runEndless = function () {
 		var scope = this;
 		scope.intervalCheck = setInterval( checkQueueStatus, scope.queueCheckInterval );
 
 		function checkQueueStatus() {
-			if ( scope.queue.length > 0 ) {
+			if ( scope.queue.length === 0 ) return;
 
-				var workerDesc = scope.queue[ 0 ];
-				// expect groups is only filled via enqueueForRun
-				var group = scope.groups[ workerDesc.groupName ];
+			var workerDesc = scope.queue[ 0 ];
+			// expect groups is only filled via enqueueForRun
+			var group = scope.groups[ workerDesc.groupName ];
 
-				var webWorker;
-				for ( var i = 0, w, length = group.webWorkers.length; i < length; i++ ) {
+			var webWorker;
+			for ( var i = 0, length = group.maxWebWorkerPerGroup; i < length; i++ ) {
 
-					w = group.webWorkers[ i ];
-					if ( ! w.running ) {
-
-						webWorker = w;
-						break;
-
-					}
-
-				}
-				if ( webWorker == null ) {
-
-					if ( group.webWorkers.length < group.maxWebWorkerPerGroup ) {
-
-						webWorker = scope.buildWebWorker( group );
-						webWorker.prepareRun( workerDesc.runParams );
-						webWorker.run();
-						scope.queue.shift();
-					}
-
-				} else {
+				webWorker = group.webWorkers[ i ];
+				if ( webWorker == null ) webWorker = scope.buildWebWorker( group );
+				if ( ! webWorker.running ) {
 
 					webWorker.prepareRun( workerDesc.runParams );
 					webWorker.run();
 					scope.queue.shift();
 
+					if ( scope.queue.length === 0 ) break;
+
 				}
+
 			}
 		}
 	};
 
 	WWManager.prototype.terminateManager = function () {
 		console.log( 'TERMINATE: WWManager received the termination signal!' );
-		clearInterval( this.intervalCheck );
+		this.stopEndlessRunnerExec();
 
 		for ( var key in this.groups ) {
 
 			if ( this.groups.hasOwnProperty( key ) ) {
 
-				this.unregister( this.groups[ key ] );
+				this.unregister( key );
 
 			}
 

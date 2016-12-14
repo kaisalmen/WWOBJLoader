@@ -20,8 +20,9 @@
 				top: 10px;
 				width: 100%;
 				text-align: center;
-				z-index: 100;
-				display:block;
+				z-index: 1;
+				display: block;
+				user-select: none;
 			}
 			#info a {
 				color: #f00;
@@ -36,6 +37,7 @@
 				min-height: 360px;
 				position: relative;
 				overflow: hidden;
+				z-index: 0;
 			}
 			#example {
 				width: 100%;
@@ -47,84 +49,28 @@
 			#feedback {
 				color: darkorange;
 			}
-			.menu {
-				margin: 4px 4px 4px 4px;
-				padding: 4px 12px 4px 12px;
-				border: solid darkorange;
-				border-radius: 8px;
+			#dat {
+				user-select: none;
 				position: absolute;
 				left: 0px;
 				top: 0px;
 				color: darkorange;
-			}
-			.headline {
-				font-size: 20px;
-			}
-			.clear {
-				color: red;
-				cursor: pointer;
-			}
-			.runner {
-				color: green;
-				cursor: pointer;
-			}
-			.neutral {
-				color: white;
-				font-size: 18px;
-			}
-			.runDesc {
-				color: darkorange;
-				font-size: 20px;
-			}
-			input {
-				cursor: pointer
-			}
-			p {
-				margin: 4px 0px 4px 0px;
-				font-size: 18pt;
-				color: #e1e1e1;
-			}
-			a {
-				color: #00a200;
-				text-decoration: none;
-			}
-			a:visited {
-				color: #006400;
-				text-decoration: none;
-			}
-			a:hover {
-				color: #00a200;
-				text-decoration: underline;
+				z-Index: 2;
 			}
 		</style>
 	</head>
 
 	<body>
+		<div id="dat">
+
+		</div>
 		<div id="info">
-		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
 			<div id="feedback">
 
 			</div>
 		</div>
 		<div id="glFullscreen">
-			<div class="menu">
-				<span class="headline">Web Worker Manager Control Parameters:</span>
-				<br><br>
-				<label for="inputQueueLength">
-					<span class="runDesc">Queue Length:</span>
-					<input id="inputQueueLength" name="inputQueueLength" type="number" min="1" max="1024" value="128" step="1" autofocus onmouseover="this.focus();">
-				</label>
-				<br>
-				<label for="workers">
-					<span class="runDesc">Workers:</span>
-					<input id="workers" name="workers" type="number" min="1" max="32" value="4" step="1" onmouseover="this.focus();">
-				</label>
-				<br><br>
-				<span class="neutral">Control:</span>
-				<p class="runner" onclick="APP.enqueueAllAssests( document.getElementById('inputQueueLength').value, document.getElementById( 'workers' ).value )">Run Queue</p>
-				<br>
-				<p class="clear" onclick="APP.terminateManager();">Terminate</p>
-			</div>
 			<canvas id="example"></canvas>
 		</div>
 
@@ -133,17 +79,15 @@
 		<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-		<script src="../node_modules/jszip/dist/jszip.min.js"></script>
+		<script src="../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
-		<script src="../src/apps/ZipTools.js"></script>
 		<script src="../src/loaders/WWManager.js"></script>
 		<script src="../src/loaders/WWProxyBase.js"></script>
 		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
-
 			if (THREE.examples.loaders === undefined) {
 				THREE.examples.loaders = {};
 			}
@@ -180,7 +124,7 @@
 					this.controls = null;
 					this.cube = null;
 
-					this.processing = false;
+					this.allAssets = [];
 				}
 
 				WWParallels.prototype.initPreGL = function () {
@@ -195,7 +139,7 @@
 						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
 					};
 					this.scenePerspective.setCameraDefaults( cameraDefaults );
-					this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+					this.controls = new THREE.TrackballControls( this.scenePerspective.camera, this.renderer.domElement );
 
 					this.lights = {
 						ambientLight: new THREE.AmbientLight( 0x202020 ),
@@ -239,8 +183,15 @@
 					document.getElementById( 'feedback' ).innerHTML = text;
 				};
 
-				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize,maxWebWorkerPerGroup ) {
+				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkerPerGroup ) {
 					var scope = this;
+					scope.wwManager.objectsCompleted = 0;
+/*
+					if ( maxQueueSize + scope.wwManager.objectsCompleted > maxQueueSize ) {
+						alert( 'Unable to re-run. Please reload page!' );
+						return;
+					}
+*/
 					var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
 						var msg = '#' + scope.wwManager.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
 						console.log( msg );
@@ -313,6 +264,7 @@
 					var distributionMax = 1000;
 					var modelIndex = 0;
 					var model;
+					var runParams;
 					for ( var i = 0; i < this.wwManager.getMaxQueueSize(); i++ ) {
 
 						modelIndex = Math.floor( Math.random() * 5 );
@@ -329,7 +281,7 @@
 						this.scenePerspective.scene.add( pivot );
 
 						model.sceneGraphBaseNode = pivot;
-						this.wwManager.enqueueForRun( 'WWOBJLoaders', {
+						runParams = {
 							modelName: model.modelName,
 							sceneGraphBaseNode: model.sceneGraphBaseNode,
 							dataAvailable: model.dataAvailable,
@@ -337,8 +289,49 @@
 							fileObj: model.fileObj,
 							pathTexture: model.pathTexture,
 							fileMtl: model.fileMtl
-						} );
+						};
+						this.wwManager.enqueueForRun( 'WWOBJLoaders', runParams );
+						this.allAssets.push( runParams );
 					}
+				};
+
+				WWParallels.prototype.clearAllAssests = function () {
+					var ref;
+					var scope = this;
+
+					for ( var asset in this.allAssets ) {
+						ref = this.allAssets[asset];
+
+						var remover = function ( object3d ) {
+
+							if ( object3d === ref.sceneGraphBaseNode ) {
+								return;
+							}
+							console.log( 'Removing ' + object3d.name );
+							scope.scenePerspective.scene.remove( object3d );
+
+							if ( object3d.hasOwnProperty( 'geometry' ) ) {
+								object3d.geometry.dispose();
+							}
+							if ( object3d.hasOwnProperty( 'material' ) ) {
+
+								var mat = object3d.material;
+								if ( mat.hasOwnProperty( 'materials' ) ) {
+
+									for ( var mmat in mat.materials ) {
+										mat.materials[mmat].dispose();
+									}
+								}
+							}
+							if ( object3d.hasOwnProperty( 'texture' ) ) {
+								object3d.texture.dispose();
+							}
+						};
+						scope.scenePerspective.scene.remove( ref.sceneGraphBaseNode );
+						ref.sceneGraphBaseNode.traverse( remover );
+						ref.sceneGraphBaseNode = null;
+					}
+					this.allAssets = [];
 				};
 
 				WWParallels.prototype.terminateManager = function () {
@@ -352,6 +345,40 @@
 			})();
 
 			var APP = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
+
+			var WWControl = function() {
+				this.queueLength = 128;
+				this.workerCount = 4;
+				this.run = null;
+				this.terminate = function () {
+					APP.terminateManager();
+				};
+				this.clearAllAssests = function () {
+					APP.clearAllAssests();
+				};
+			};
+
+			var wwControl = new WWControl();
+			wwControl.run = function () {
+				APP.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
+			};
+
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+
+			var menuDiv = document.getElementById( 'dat' );
+			menuDiv.appendChild(gui.domElement);
+			var folderQueue = gui.addFolder( 'Web Worker Manager Queue Control' );
+			folderQueue.add( wwControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
+			folderQueue.add( wwControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
+			folderQueue.add( wwControl, 'run' ).name( 'Run Queue' );
+			folderQueue.open();
+
+			var folderWWControl = gui.addFolder( 'Resource Management' );
+			folderWWControl.add( wwControl, 'terminate' ).name( 'Terminate WWManager' );
+			folderWWControl.add( wwControl, 'clearAllAssests' ).name( 'Clear Scene' );
 
 			// AppRunner handles ThreeJsApp init, window resize event and render loop
 			var appRunner = new THREE.examples.apps.AppRunner( APP );
