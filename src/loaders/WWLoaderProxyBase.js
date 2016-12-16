@@ -35,7 +35,7 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 			progress: null,
 			completedLoading: null,
 			errorWhileLoading: null,
-			manager: {
+			director: {
 				completedLoading: null,
 				errorWhileLoading: null
 			}
@@ -95,19 +95,19 @@ THREE.WebWorker.WWLoaderProxyBase = (function () {
 	};
 
 	WWLoaderProxyBase.prototype.finalize = function ( reason ) {
+		this.running = false;
 		if ( reason === 'complete' ) {
 
-			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.webWorkerName, this.modelName, this.instanceNo );
-			if ( this.callbacks.manager.completedLoading != null ) this.callbacks.manager.completedLoading( this.webWorkerName, this.modelName, this.instanceNo );
+			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.completedLoading != null ) this.callbacks.director.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
 
 		} else if ( reason === 'error' ) {
 
-			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo );
-			if ( this.callbacks.manager.errorWhileLoading != null ) this.callbacks.manager.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo );
+			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.errorWhileLoading != null ) this.callbacks.director.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
 
 		}
 		this.validated = false;
-		this.running = false;
 
 		if ( this.requestTerminate ) {
 			this.terminate();

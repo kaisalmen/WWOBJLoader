@@ -65,7 +65,7 @@
 
 		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<a href="http://threejs.org" target="_blank">three.js</a> - WWDirector Parallels Demo
 			<div id="feedback">
 
 			</div>
@@ -83,8 +83,8 @@
 
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
-		<script src="../src/loaders/WWManager.js"></script>
-		<script src="../src/loaders/WWProxyBase.js"></script>
+		<script src="../src/loaders/WWDirector.js"></script>
+		<script src="../src/loaders/WWLoaderProxyBase.js"></script>
 		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
@@ -118,7 +118,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwManager = new THREE.WebWorker.WWManager( 250, 25 );
+					this.wwDirector = new THREE.WebWorker.WWDirector( 256, 4 );
 
 					this.lights = null;
 					this.controls = null;
@@ -185,15 +185,15 @@
 
 				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkerPerGroup ) {
 					var scope = this;
-					scope.wwManager.objectsCompleted = 0;
+					scope.wwDirector.objectsCompleted = 0;
 /*
-					if ( maxQueueSize + scope.wwManager.objectsCompleted > maxQueueSize ) {
+					if ( maxQueueSize + scope.wwDirector.objectsCompleted > maxQueueSize ) {
 						alert( 'Unable to re-run. Please reload page!' );
 						return;
 					}
 */
 					var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
-						var msg = '#' + scope.wwManager.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
+						var msg = '#' + scope.wwDirector.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
 						console.log( msg );
 						scope.reportProgress( msg );
 					};
@@ -202,9 +202,10 @@
 					maxWebWorkerPerGroup = Math.min( maxWebWorkerPerGroup, 32 );
 					console.log( 'Configuring WWManager with queue size ' + maxQueueSize + ' and ' + maxWebWorkerPerGroup + ' workers.' );
 
-					this.wwManager.maxQueueSize = maxQueueSize;
-					this.wwManager.register(
-						'WWOBJLoaders', maxWebWorkerPerGroup, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+					this.wwDirector.maxQueueSize = maxQueueSize;
+					this.wwDirector.maxQueueSize = maxQueueSize;
+					this.wwDirector.register(
+						THREE.WebWorker.WWOBJLoaderProxy.prototype,
 						{
 							name: 'WWOBJLoader',
 							basedir: '..',
@@ -265,7 +266,7 @@
 					var modelIndex = 0;
 					var model;
 					var runParams;
-					for ( var i = 0; i < this.wwManager.getMaxQueueSize(); i++ ) {
+					for ( var i = 0; i < this.wwDirector.getMaxQueueSize(); i++ ) {
 
 						modelIndex = Math.floor( Math.random() * 5 );
 						model = models[ modelIndex ];
@@ -290,9 +291,11 @@
 							pathTexture: model.pathTexture,
 							fileMtl: model.fileMtl
 						};
-						this.wwManager.enqueueForRun( 'WWOBJLoaders', runParams );
+						this.wwDirector.enqueueForRun( runParams );
 						this.allAssets.push( runParams );
 					}
+
+					this.wwDirector.processQueue();
 				};
 
 				WWParallels.prototype.clearAllAssests = function () {
@@ -335,7 +338,7 @@
 				};
 
 				WWParallels.prototype.terminateManager = function () {
-					this.wwManager.terminateManager();
+					this.wwDirector.terminateManager();
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used

@@ -149,8 +149,8 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWManager.js"></script>
-		<script src="../src/loaders/WWProxyBase.js"></script>
+		<script src="../src/loaders/WWDirector.js"></script>
+		<script src="../src/loaders/WWLoaderProxyBase.js"></script>
 		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
 
 		<script>
@@ -185,7 +185,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwManager = new THREE.WebWorker.WWManager( 250, 25 );
+					this.wwDirector = new THREE.WebWorker.WWDirector( 256, 4 );
 
 					this.lights = null;
 					this.controls = null;
@@ -206,8 +206,8 @@
 						scope.reloadAssets();
 					};
 
-					this.wwManager.register(
-						'WWOBJLoaders', 4, THREE.WebWorker.WWOBJLoaderProxy.prototype,
+					this.wwDirector.register(
+						THREE.WebWorker.WWOBJLoaderProxy.prototype,
 						{
 							name: 'WWOBJLoader',
 							basedir: '..',
@@ -276,7 +276,7 @@
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
-					this.wwManager.unregister( 'WWOBJLoaders', 'WWOBJLoader' );
+					this.wwDirector.terminateManager();
 
 					var ref;
 					var scope = this;
@@ -376,7 +376,7 @@
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
-								scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+								scope.wwDirector.enqueueForRun( {
 									modelName: obj2Load.name,
 									sceneGraphBaseNode: obj2Load.pivot,
 									dataAvailable: true,
@@ -384,6 +384,7 @@
 									mtlAsString: mtlAsString,
 									pathTexture: obj2Load.pathTexture
 								} );
+								scope.wwDirector.processQueue();
 							};
 
 							var setMtlAsString = function ( data ) {
@@ -412,7 +413,7 @@
 
 						} else {
 
-							scope.wwManager.enqueueForRun( 'WWOBJLoaders', {
+							scope.wwDirector.enqueueForRun( {
 								modelName: obj2Load.name,
 								sceneGraphBaseNode: obj2Load.pivot,
 								dataAvailable: false,
@@ -421,6 +422,7 @@
 								fileMtl: obj2Load.fileMtl,
 								pathTexture: obj2Load.pathTexture
 							} );
+							scope.wwDirector.processQueue();
 
 						}
 					} else {
@@ -431,7 +433,7 @@
 				};
 
 				WWOBJLoaderChecker.prototype.terminateManager = function () {
-					this.wwManager.terminateManager();
+					this.wwDirector.terminateManager();
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
