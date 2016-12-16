@@ -290,16 +290,11 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 				if ( this.callbacks.meshLoaded !== null ) {
 
 					var materialOverride = this.callbacks.meshLoaded( payload.meshName, material );
-					if ( materialOverride !== null && materialOverride !== undefined ) {
+					if ( materialOverride != null ) material = materialOverride;
 
-						material = materialOverride;
-
-					}
 				}
-
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				mesh.name = payload.meshName;
-
 				this.sceneGraphBaseNode.add( mesh );
 
 				var output = '(' + this.counter + '): ' + payload.meshName;

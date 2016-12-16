@@ -192,6 +192,16 @@
 						console.log( msg );
 						scope.reportProgress( msg );
 					};
+					var callbackMeshLoaded = function ( meshName, material ) {
+						var replacedMaterial = null;
+
+						if ( material != null && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001' ) {
+							replacedMaterial = material;
+							replacedMaterial.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
+						}
+
+						return replacedMaterial;
+					};
 					this.wwDirector.validate( maxQueueSize, maxWebWorkerPerGroup );
 					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.maxQueueSize + ' and ' + this.wwDirector.maxWebWorkerPerGroup + ' workers.' );
 
@@ -204,7 +214,8 @@
 						},
 						{
 //							progress: this.reportProgress,
-							completedLoading: callbackCompletedLoading
+							completedLoading: callbackCompletedLoading,
+							meshLoaded: callbackMeshLoaded
 						}
 
 					);
