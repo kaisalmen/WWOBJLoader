@@ -186,24 +186,15 @@
 				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkerPerGroup ) {
 					var scope = this;
 					scope.wwDirector.objectsCompleted = 0;
-/*
-					if ( maxQueueSize + scope.wwDirector.objectsCompleted > maxQueueSize ) {
-						alert( 'Unable to re-run. Please reload page!' );
-						return;
-					}
-*/
+
 					var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
 						var msg = '#' + scope.wwDirector.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
 						console.log( msg );
 						scope.reportProgress( msg );
 					};
+					this.wwDirector.validate( maxQueueSize, maxWebWorkerPerGroup );
+					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.maxQueueSize + ' and ' + this.wwDirector.maxWebWorkerPerGroup + ' workers.' );
 
-					maxQueueSize = Math.min( maxQueueSize, 1024 );
-					maxWebWorkerPerGroup = Math.min( maxWebWorkerPerGroup, 32 );
-					console.log( 'Configuring WWManager with queue size ' + maxQueueSize + ' and ' + maxWebWorkerPerGroup + ' workers.' );
-
-					this.wwDirector.maxQueueSize = maxQueueSize;
-					this.wwDirector.maxQueueSize = maxQueueSize;
 					this.wwDirector.register(
 						THREE.WebWorker.WWOBJLoaderProxy.prototype,
 						{
@@ -338,7 +329,7 @@
 				};
 
 				WWParallels.prototype.terminateManager = function () {
-					this.wwDirector.terminateManager();
+					this.wwDirector.unregister();
 				};
 
 				// ThreeJsApp.renderPost()  not required, default is used
@@ -357,6 +348,7 @@
 					APP.terminateManager();
 				};
 				this.clearAllAssests = function () {
+					APP.terminateManager();
 					APP.clearAllAssests();
 				};
 			};

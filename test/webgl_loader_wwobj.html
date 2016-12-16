@@ -133,8 +133,7 @@
 					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
 				</p>
 				<br><br>
-				<p class="clear" onclick="clearAllAssests()">Clear all</p>
-				<p class="clear" onclick="terminateManager()">Stop Manager</p>
+				<p class="clear" onclick="APP.clearAllAssests();">Clear all assets</p>
 			</div>
 			<canvas id="example"></canvas>
 		</div>
@@ -276,8 +275,6 @@
 				};
 
 				WWOBJLoaderChecker.prototype.clearAllAssests = function () {
-					this.wwDirector.terminateManager();
-
 					var ref;
 					var scope = this;
 
@@ -432,10 +429,6 @@
 					}
 				};
 
-				WWOBJLoaderChecker.prototype.terminateManager = function () {
-					this.wwDirector.terminateManager();
-				};
-
 				// ThreeJsApp.renderPost()  not required, default is used
 
 				return WWOBJLoaderChecker;
@@ -488,44 +481,6 @@
 				}
 			};
 
-			var clearAllAssests = function () {
-				APP.clearAllAssests();
-			};
-
-			var terminateManager = function () {
-				APP.terminateManager();
-			};
-/*
-			var i = 0;
-			var clearAllAssests = function () {
-
-				var runClearAndReload = function () {
-					console.log( 'Run: ' + i );
-					APP.clearAllAssests();
-					loadAssets( objsFemaleMale );
-					if ( i < 50 ) {
-						clearAllAssests();
-					}
-					i++;
-				};
-
-				var interval = 100;
-				var checkStatus = setInterval( checkStatusTimer, interval );
-
-				function checkStatusTimer() {
-					if ( ! APP.processing ) {
-
-						clearInterval( checkStatus );
-						runClearAndReload();
-
-					} else {
-
-						console.log( i + ': Waiting...' );
-
-					}
-				}
-			};
-*/
 			var APP = new THREE.examples.loaders.WWOBJLoaderChecker( document.getElementById( 'example' ) );
 			// set default asset in objs2Load (array of WWOBJLoaderDef that should be loaded)
 			APP.updateAssets( objsFemaleMale );

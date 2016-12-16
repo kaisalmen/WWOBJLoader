@@ -9,9 +9,12 @@ if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
 THREE.WebWorker.WWDirector = (function () {
 
+	var MAX_WEB_WORKER = 16;
+	var MAX_QUEUE_SIZE = 1024;
+
 	function WWDirector( maxQueueSize, maxWebWorkers ) {
-		this.maxQueueSize = maxQueueSize;
-		this.maxWebWorkers = maxWebWorkers;
+		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
+		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 
 		this.workerDescription = {
 			prototypeDef: null,
@@ -21,25 +24,20 @@ THREE.WebWorker.WWDirector = (function () {
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
-
-		this.running = false;
 	}
 
 	WWDirector.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
 	};
 
-	WWDirector.prototype.verifyRunning = function () {
-		if ( ! this.running ) this.running = true;
-	};
-
-	WWDirector.prototype.stop = function () {
-		this.running = false;
+	WWDirector.prototype.validate = function ( maxQueueSize, maxWebWorkers ) {
+		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
+		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
+		this.objectsCompleted = 0;
+		this.instructionQueue = [];
 	};
 
 	WWDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
-		this.verifyRunning();
-
 		this.workerDescription.prototypeDef = prototypeDef;
 		this.workerDescription.globalParams = globalParams;
 
@@ -92,6 +90,7 @@ THREE.WebWorker.WWDirector = (function () {
 	};
 
 	WWDirector.prototype.unregister = function () {
+		console.log( 'WWDirector received the unregister call. Terminating all workers!' );
 		for ( var i = 0, webWorker, length = this.workerDescription.webWorkers.length; i < length; i++ ) {
 
 			webWorker = this.workerDescription.webWorkers[ i ];
@@ -127,12 +126,6 @@ THREE.WebWorker.WWDirector = (function () {
 			this.instructionQueue.shift();
 
 		}
-	};
-
-	WWDirector.prototype.terminateManager = function () {
-		console.log( 'TERMINATE: WWDirector received the termination signal!' );
-		this.stop();
-		this.unregister();
 	};
 
 	return WWDirector;
