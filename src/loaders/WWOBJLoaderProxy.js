@@ -20,7 +20,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 		THREE.WebWorker.WWLoaderProxyBase.prototype.init.call( this, params );
 
 		this.manager = THREE.DefaultLoadingManager;
-		this.fileLoader = new THREE.XHRLoader( this.manager );
+		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.mtlLoader = null;
 
 		this.dataAvailable = false;
@@ -50,7 +50,7 @@ THREE.WebWorker.WWOBJLoaderProxy = (function () {
 	WWOBJLoaderProxy.prototype.validate = function () {
 		if ( THREE.WebWorker.WWLoaderProxyBase.prototype.validate.call( this ) ) return;
 
-		this.fileLoader = ( this.fileLoader == null ) ? new THREE.XHRLoader( this.manager ) : this.fileLoader;
+		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
 
 		this.dataAvailable = false;

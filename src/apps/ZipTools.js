@@ -16,9 +16,9 @@ THREE.examples.apps.ZipTools = (function () {
 	function ZipTools( path ) {
 		this.zip = new JSZip();
 
-		this.xhrLoader = new THREE.XHRLoader();
-		this.xhrLoader.setPath( path );
-		this.xhrLoader.setResponseType( 'arraybuffer' );
+		this.fileLoader = new THREE.FileLoader();
+		this.fileLoader.setPath( path );
+		this.fileLoader.setResponseType( 'arraybuffer' );
 
 		this.zipContent = null;
 	}
@@ -26,8 +26,8 @@ THREE.examples.apps.ZipTools = (function () {
 	ZipTools.prototype.load = function ( filename, callbacks ) {
 		var scope = this;
 
-		var onSuccess = function ( zipDataFromXHR ) {
-			scope.zip.loadAsync( zipDataFromXHR )
+		var onSuccess = function ( zipDataFromFileLoader ) {
+			scope.zip.loadAsync( zipDataFromFileLoader )
 			.then( function ( zip ) {
 
 				scope.zipContent = zip;
@@ -60,7 +60,7 @@ THREE.examples.apps.ZipTools = (function () {
 		};
 
 		console.log( 'Starting download: ' + filename );
-		this.xhrLoader.load( filename, onSuccess, onProgress, onError );
+		this.fileLoader.load( filename, onSuccess, onProgress, onError );
 	};
 
 	ZipTools.prototype.unpackAsUint8Array = function ( filename, callback ) {

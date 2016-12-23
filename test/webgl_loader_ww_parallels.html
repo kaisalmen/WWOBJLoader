@@ -47,7 +47,13 @@
 				background-color: #000000;
 			}
 			#feedback {
+				position: absolute;
 				color: darkorange;
+				text-align: left;
+				bottom: 0%;
+				left: 0%;
+				width: auto;
+				padding: 0px 0px 4px 4px;
 			}
 			#dat {
 				user-select: none;
@@ -66,12 +72,11 @@
 		</div>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank">three.js</a> - WWDirector Parallels Demo
-			<div id="feedback">
-
-			</div>
 		</div>
 		<div id="glFullscreen">
 			<canvas id="example"></canvas>
+		</div>
+		<div id="feedback">
 		</div>
 
 		<script src="../node_modules/three/build/three.min.js"></script>
@@ -125,6 +130,7 @@
 					this.cube = null;
 
 					this.allAssets = [];
+					this.feedbackArray = null;
 				}
 
 				WWParallels.prototype.initPreGL = function () {
@@ -183,14 +189,20 @@
 					document.getElementById( 'feedback' ).innerHTML = text;
 				};
 
-				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkerPerGroup ) {
+				WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers ) {
 					var scope = this;
 					scope.wwDirector.objectsCompleted = 0;
+					scope.feedbackArray = new Array( maxWebWorkers );
+					for ( var i = 0; i < maxWebWorkers; i++ ) {
+						scope.feedbackArray[ i ] = 'Worker #' + i + ': Awaiting feedback';
+					}
+					scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
 					var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
-						var msg = '#' + scope.wwDirector.objectsCompleted + ': WWManager received loading completed from: ' + webWorkerName + '(' + instanceNo + ') of: ' + modelName;
+						var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 						console.log( msg );
-						scope.reportProgress( msg );
+						scope.feedbackArray[ instanceNo ] = msg;
+						scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 					};
 					var callbackMeshLoaded = function ( meshName, material ) {
 						var replacedMaterial = null;
@@ -202,8 +214,6 @@
 
 						return replacedMaterial;
 					};
-					this.wwDirector.validate( maxQueueSize, maxWebWorkerPerGroup );
-					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.maxQueueSize + ' and ' + this.wwDirector.maxWebWorkerPerGroup + ' workers.' );
 
 					this.wwDirector.register(
 						THREE.WebWorker.WWOBJLoaderProxy.prototype,
@@ -219,6 +229,8 @@
 						}
 
 					);
+					this.wwDirector.validate( maxQueueSize, maxWebWorkers );
+					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.maxQueueSize + ' and ' + this.wwDirector.maxWebWorkers + ' workers.' );
 
 					var models = [];
 					models.push( {
@@ -268,7 +280,7 @@
 					var modelIndex = 0;
 					var model;
 					var runParams;
-					for ( var i = 0; i < this.wwDirector.getMaxQueueSize(); i++ ) {
+					for ( var i = 0; i < maxQueueSize; i++ ) {
 
 						modelIndex = Math.floor( Math.random() * 5 );
 						model = models[ modelIndex ];

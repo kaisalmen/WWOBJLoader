@@ -17,6 +17,7 @@ THREE.WebWorker.WWDirector = (function () {
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 
 		this.workerDescription = {
+			bound: false,
 			prototypeDef: null,
 			globalParams: null,
 			callbacks: {},
@@ -35,9 +36,34 @@ THREE.WebWorker.WWDirector = (function () {
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
+
+		var start = this.workerDescription.webWorkers.length;
+		if ( start < this.maxWebWorkers ) {
+
+			for ( i = start; i < this.maxWebWorkers; i ++ ) {
+
+				webWorker = this.buildWebWorker();
+				this.workerDescription.webWorkers[ i ] = webWorker;
+
+			}
+
+		} else {
+
+			for ( var webWorker, i = start - 1; i >= this.maxWebWorkers; i-- ) {
+
+				webWorker = this.workerDescription.webWorkers[ i ];
+				webWorker.setRequestTerminate();
+
+				this.workerDescription.webWorkers.pop();
+
+			}
+
+		}
 	};
 
 	WWDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
+		if ( this.workerDescription.bound ) return;
+		this.workerDescription.bound = true;
 		this.workerDescription.prototypeDef = prototypeDef;
 		this.workerDescription.globalParams = globalParams;
 
@@ -97,6 +123,7 @@ THREE.WebWorker.WWDirector = (function () {
 			webWorker.setRequestTerminate();
 
 		}
+		this.workerDescription.prototypeDef = false;
 		this.workerDescription.prototypeDef = null;
 		this.workerDescription.globalParams = null;
 		this.workerDescription.callbacks = {};
@@ -117,9 +144,7 @@ THREE.WebWorker.WWDirector = (function () {
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
 		for ( var i = 0; i < length; i++ ) {
 
-			webWorker = this.buildWebWorker();
-			this.workerDescription.webWorkers[ i ] = webWorker;
-
+			webWorker = this.workerDescription.webWorkers[ i ];
 			runParams = this.instructionQueue[ 0 ];
 			webWorker.prepareRun( runParams );
 			webWorker.run();
