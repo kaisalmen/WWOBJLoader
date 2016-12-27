@@ -31,6 +31,10 @@ THREE.WebWorker.WWDirector = (function () {
 		return this.maxQueueSize;
 	};
 
+	WWDirector.prototype.getMaxWebWorkers = function () {
+		return this.maxWebWorkers;
+	};
+
 	WWDirector.prototype.validate = function ( maxQueueSize, maxWebWorkers ) {
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );

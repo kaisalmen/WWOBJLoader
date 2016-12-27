@@ -230,7 +230,7 @@
 
 					);
 					this.wwDirector.validate( maxQueueSize, maxWebWorkers );
-					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.maxQueueSize + ' and ' + this.wwDirector.maxWebWorkers + ' workers.' );
+					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 					var models = [];
 					models.push( {
@@ -388,7 +388,7 @@
 
 			var menuDiv = document.getElementById( 'dat' );
 			menuDiv.appendChild(gui.domElement);
-			var folderQueue = gui.addFolder( 'Web Worker Manager Queue Control' );
+			var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
 			folderQueue.add( wwControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
 			folderQueue.add( wwControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
 			folderQueue.add( wwControl, 'run' ).name( 'Run Queue' );
