@@ -148,9 +148,9 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWDirector.js"></script>
+		<script src="../src/loaders/WWLoaderProxyDirector.js"></script>
 		<script src="../src/loaders/WWLoaderProxyBase.js"></script>
-		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
+		<script src="../src/loaders/WWLoaderProxyOBJLoader2.js"></script>
 
 		<script>
 
@@ -206,11 +206,11 @@
 					};
 
 					this.wwDirector.register(
-						THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						THREE.WebWorker.WWLoaderProxyOBJLoader2.prototype,
 						{
-							name: 'WWOBJLoader',
+							name: 'WWOBJLoader2',
 							basedir: '..',
-							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader2.js'
 						},
 						{
 							completedLoading: reloadAssetsProxy,
@@ -373,6 +373,7 @@
 
 							var setObjAsArrayBuffer = function ( data ) {
 								scope.reportProgress( '' );
+								scope.wwDirector.validate( 1, 1 );
 								scope.wwDirector.enqueueForRun( {
 									modelName: obj2Load.name,
 									sceneGraphBaseNode: obj2Load.pivot,
@@ -410,14 +411,15 @@
 
 						} else {
 
+							scope.wwDirector.validate( 1, 1 );
 							scope.wwDirector.enqueueForRun( {
 								modelName: obj2Load.name,
 								sceneGraphBaseNode: obj2Load.pivot,
 								dataAvailable: false,
 								pathObj: obj2Load.pathBase,
 								fileObj: obj2Load.fileObj,
-								fileMtl: obj2Load.fileMtl,
-								pathTexture: obj2Load.pathTexture
+								pathTexture: obj2Load.pathTexture,
+								fileMtl: obj2Load.fileMtl
 							} );
 							scope.wwDirector.processQueue();
 

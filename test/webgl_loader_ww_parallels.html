@@ -88,9 +88,9 @@
 
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
-		<script src="../src/loaders/WWDirector.js"></script>
+		<script src="../src/loaders/WWLoaderProxyDirector.js"></script>
 		<script src="../src/loaders/WWLoaderProxyBase.js"></script>
-		<script src="../src/loaders/WWOBJLoaderProxy.js"></script>
+		<script src="../src/loaders/WWLoaderProxyOBJLoader2.js"></script>
 
 		<script>
 			if (THREE.examples.loaders === undefined) {
@@ -216,11 +216,11 @@
 					};
 
 					this.wwDirector.register(
-						THREE.WebWorker.WWOBJLoaderProxy.prototype,
+						THREE.WebWorker.WWLoaderProxyOBJLoader2.prototype,
 						{
-							name: 'WWOBJLoader',
+							name: 'WWOBJLoader2',
 							basedir: '..',
-							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader.js'
+							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader2.js'
 						},
 						{
 //							progress: this.reportProgress,

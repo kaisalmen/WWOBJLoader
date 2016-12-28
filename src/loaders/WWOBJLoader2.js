@@ -6,15 +6,15 @@
 
 if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
-if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
+if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
-importScripts( './OBJParser.js' );
+importScripts( './OBJLoader2Parser.js' );
 
 THREE.WebWorker.WWOBJLoader = (function () {
 
 	function WWOBJLoader() {
 		this.meshCreator = new THREE.WebWorker.WWMeshCreator();
-		this.parser = new THREE.OBJLoader.Parser( this.meshCreator );
+		this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
 		this.parser.debug = false;
 		this.validated = false;
 		this.cmdState = 'created';

@@ -4,7 +4,7 @@
 
 'use strict';
 
-THREE.OBJLoader.MeshCreator = (function () {
+THREE.OBJLoader2.MeshCreator = (function () {
 
 	function MeshCreator() {
 		this.sceneGraphBaseNode = null;

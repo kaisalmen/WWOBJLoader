@@ -127,7 +127,7 @@ THREE.WebWorker.WWDirector = (function () {
 			webWorker.setRequestTerminate();
 
 		}
-		this.workerDescription.prototypeDef = false;
+		this.workerDescription.bound = false;
 		this.workerDescription.prototypeDef = null;
 		this.workerDescription.globalParams = null;
 		this.workerDescription.callbacks = {};

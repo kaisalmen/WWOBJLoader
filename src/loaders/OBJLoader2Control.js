@@ -4,23 +4,23 @@
 
 'use strict';
 
-THREE.OBJLoader = {
+THREE.OBJLoader2 = {
 	Parser: null,
 	MeshCreator: null,
 	RawObject: null,
 	RawObjectDescription: null
 };
 
-THREE.OBJLoader = (function () {
+THREE.OBJLoader2 = (function () {
 
-	function OBJLoader( manager ) {
+	function OBJLoader2( manager ) {
 		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 
-		this.meshCreator = new THREE.OBJLoader.MeshCreator();
-		this.parser = new THREE.OBJLoader.Parser( this.meshCreator );
+		this.meshCreator = new THREE.OBJLoader2.MeshCreator();
+		this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
 
 		this.parser.debug = false;
 		this.meshCreator.debug = false;
@@ -33,7 +33,7 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param path
 	 */
-	OBJLoader.prototype.setPath = function ( path ) {
+	OBJLoader2.prototype.setPath = function ( path ) {
 		this.path = ( path == null ) ? this.path : path;
 	};
 
@@ -43,7 +43,7 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param sceneGraphBaseNode
 	 */
-	OBJLoader.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+	OBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.meshCreator.setSceneGraphBaseNode( sceneGraphBaseNode );
 	};
 
@@ -53,7 +53,7 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param materials
 	 */
-	OBJLoader.prototype.setMaterials = function ( materials ) {
+	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator.setMaterials( materials );
 	};
 
@@ -63,12 +63,12 @@ THREE.OBJLoader = (function () {
 	 * @param parserDebug
 	 * @param meshCreatorDebug
 	 */
-	OBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
+	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser.debug = parserDebug;
 		this.meshCreator.debug = meshCreatorDebug;
 	};
 
-	OBJLoader.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
+	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
 		this.validate();
 		this.fileLoader.setPath( this.path );
 		this.fileLoader.setResponseType( ( useArrayBuffer || useArrayBuffer == null ) ? 'arraybuffer' : 'text' );
@@ -87,7 +87,7 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param arrayBuffer
 	 */
-	OBJLoader.prototype.parse = function ( arrayBuffer ) {
+	OBJLoader2.prototype.parse = function ( arrayBuffer ) {
 		// fast-fail on bad type
 		if ( ! ( arrayBuffer instanceof ArrayBuffer || arrayBuffer instanceof Uint8Array ) ) {
 
@@ -111,7 +111,7 @@ THREE.OBJLoader = (function () {
 	 *
 	 * @param text
 	 */
-	OBJLoader.prototype.parseText = function ( text ) {
+	OBJLoader2.prototype.parseText = function ( text ) {
 		// fast-fail on bad type
 		if ( ! ( typeof( text ) === 'string' || text instanceof String ) ) {
 
@@ -133,7 +133,7 @@ THREE.OBJLoader = (function () {
 	/**
 	 * Check initialization status: Used for init and re-init
 	 */
-	OBJLoader.prototype.validate = function () {
+	OBJLoader2.prototype.validate = function () {
 		if ( this.validated ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
@@ -144,7 +144,7 @@ THREE.OBJLoader = (function () {
 		this.validated = true;
 	};
 
-	OBJLoader.prototype.finalize = function () {
+	OBJLoader2.prototype.finalize = function () {
 		console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
 
 		this.parser.finalize();
@@ -156,7 +156,7 @@ THREE.OBJLoader = (function () {
 		return sceneGraphAttach;
 	};
 
-	return OBJLoader;
+	return OBJLoader2;
 })();
 
 

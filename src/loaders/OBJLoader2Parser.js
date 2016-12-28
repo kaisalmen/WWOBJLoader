@@ -4,7 +4,7 @@
 
 'use strict';
 
-THREE.OBJLoader.Parser = (function () {
+THREE.OBJLoader2.Parser = (function () {
 
 	var CODE_LF = 10;
 	var CODE_CR = 13;
@@ -32,7 +32,7 @@ THREE.OBJLoader.Parser = (function () {
 	}
 
 	Parser.prototype.validate = function () {
-		this.rawObject = new THREE.OBJLoader.RawObject();
+		this.rawObject = new THREE.OBJLoader2.RawObject();
 		this.inputObjectCount = 1;
 	};
 
@@ -265,7 +265,7 @@ THREE.OBJLoader.Parser = (function () {
 	return Parser;
 })();
 
-THREE.OBJLoader.RawObject = (function () {
+THREE.OBJLoader2.RawObject = (function () {
 
 	function RawObject( objectName, groupName, mtllibName ) {
 		this.globalVertexOffset = 1;
@@ -289,7 +289,7 @@ THREE.OBJLoader.RawObject = (function () {
 		this.rawObjectDescriptions = [];
 		// this default index is required as it is possible to define faces without 'g' or 'usemtl'
 		var index = buildIndex( this.activeMtlName, this.activeSmoothingGroup );
-		this.rawObjectDescriptionInUse = new THREE.OBJLoader.RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
+		this.rawObjectDescriptionInUse = new THREE.OBJLoader2.RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
 
@@ -370,7 +370,7 @@ THREE.OBJLoader.RawObject = (function () {
 		if ( this.rawObjectDescriptions[ index ] == null ) {
 
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ] =
-				new THREE.OBJLoader.RawObjectDescription(
+				new THREE.OBJLoader2.RawObjectDescription(
 					this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup
 				);
 
@@ -581,7 +581,7 @@ THREE.OBJLoader.RawObject = (function () {
 	return RawObject;
 })();
 
-THREE.OBJLoader.RawObjectDescription = (function () {
+THREE.OBJLoader2.RawObjectDescription = (function () {
 
 	function RawObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
 		this.objectName = objectName;

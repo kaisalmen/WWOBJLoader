@@ -7,7 +7,7 @@
 if ( THREE === undefined ) var THREE = {};
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 
-THREE.WebWorker.WWOBJLoaderProxy = (function () {
+THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 
 	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderProxyBase.prototype );
 	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
