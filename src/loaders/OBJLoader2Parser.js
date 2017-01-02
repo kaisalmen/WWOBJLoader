@@ -1,9 +1,3 @@
-/**
- * @author Kai Salmen / www.kaisalmen.de
- */
-
-'use strict';
-
 THREE.OBJLoader2.Parser = (function () {
 
 	var CODE_LF = 10;

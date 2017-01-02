@@ -1,18 +1,9 @@
-/**
- * @author Kai Salmen / www.kaisalmen.de
- */
-
-'use strict';
-
-if ( THREE === undefined ) var THREE = {};
-if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
-
-THREE.WebWorker.WWDirector = (function () {
+THREE.WebWorker.WWLoaderDirector = (function () {
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;
 
-	function WWDirector( maxQueueSize, maxWebWorkers ) {
+	function WWLoaderDirector( maxQueueSize, maxWebWorkers ) {
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 
@@ -27,15 +18,15 @@ THREE.WebWorker.WWDirector = (function () {
 		this.instructionQueue = [];
 	}
 
-	WWDirector.prototype.getMaxQueueSize = function () {
+	WWLoaderDirector.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
 	};
 
-	WWDirector.prototype.getMaxWebWorkers = function () {
+	WWLoaderDirector.prototype.getMaxWebWorkers = function () {
 		return this.maxWebWorkers;
 	};
 
-	WWDirector.prototype.validate = function ( maxQueueSize, maxWebWorkers ) {
+	WWLoaderDirector.prototype.validate = function ( maxQueueSize, maxWebWorkers ) {
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
@@ -65,7 +56,7 @@ THREE.WebWorker.WWDirector = (function () {
 		}
 	};
 
-	WWDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
+	WWLoaderDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
 		if ( this.workerDescription.bound ) return;
 		this.workerDescription.bound = true;
 		this.workerDescription.prototypeDef = prototypeDef;
@@ -82,7 +73,7 @@ THREE.WebWorker.WWDirector = (function () {
 		}
 	};
 
-	WWDirector.prototype.buildWebWorker = function () {
+	WWLoaderDirector.prototype.buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
 		webWorker.init( this.workerDescription.globalParams );
 
@@ -119,8 +110,8 @@ THREE.WebWorker.WWDirector = (function () {
 		return webWorker;
 	};
 
-	WWDirector.prototype.unregister = function () {
-		console.log( 'WWDirector received the unregister call. Terminating all workers!' );
+	WWLoaderDirector.prototype.unregister = function () {
+		console.log( 'WWLoaderDirector received the unregister call. Terminating all workers!' );
 		for ( var i = 0, webWorker, length = this.workerDescription.webWorkers.length; i < length; i++ ) {
 
 			webWorker = this.workerDescription.webWorkers[ i ];
@@ -134,13 +125,13 @@ THREE.WebWorker.WWDirector = (function () {
 		this.workerDescription.webWorkers = [];
 	};
 
-	WWDirector.prototype.enqueueForRun = function ( runParams ) {
+	WWLoaderDirector.prototype.enqueueForRun = function ( runParams ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
 			this.instructionQueue.push( runParams );
 		}
 	};
 
-	WWDirector.prototype.processQueue = function () {
+	WWLoaderDirector.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
 
 		var webWorker;
@@ -157,6 +148,6 @@ THREE.WebWorker.WWDirector = (function () {
 		}
 	};
 
-	return WWDirector;
+	return WWLoaderDirector;
 
 })();

@@ -1,8 +1,8 @@
 .project
 .idea
 
+/build
 /node_modules
-/*.log
 
 /resource/obj/zomax
 /resource/obj/PTV1
@@ -12,4 +12,3 @@
 /resource/obj/vive-controller
 /resource/obj/walt
 /screenshots
-

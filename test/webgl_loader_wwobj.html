@@ -148,11 +148,11 @@
 		<script src="../src/apps/ThreeJsApp.js"></script>
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
-		<script src="../src/loaders/WWLoaderProxyDirector.js"></script>
-		<script src="../src/loaders/WWLoaderProxyBase.js"></script>
-		<script src="../src/loaders/WWLoaderProxyOBJLoader2.js"></script>
+
+		<script src="../build/WWOBJLoader2Proxy.js"></script>
 
 		<script>
+			'use strict';
 
 			if (THREE.examples.loaders === undefined) {
 				THREE.examples.loaders = {};
@@ -184,7 +184,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwDirector = new THREE.WebWorker.WWDirector( 256, 4 );
+					this.wwDirector = new THREE.WebWorker.WWLoaderDirector( 256, 4 );
 
 					this.lights = null;
 					this.controls = null;
@@ -210,7 +210,7 @@
 						{
 							name: 'WWOBJLoader2',
 							basedir: '..',
-							relativeWorkerSrcPath: 'src/loaders/WWOBJLoader2.js'
+							relativeWorkerSrcPath: 'build/WWOBJLoader2.js'
 						},
 						{
 							completedLoading: reloadAssetsProxy,

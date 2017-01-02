@@ -13,6 +13,13 @@ External libraries (three.js, dat.gui and jszip) are initialized with npm. There
 Before you can start to play around after checkout please run:
 `npm update`
 
+You require gulp to be able to build the arifacts:
+`npm install --global gulp-cli`
+
+Then at the root of the project run `gulp` to create the artifacts:
+- OBJLoader2[.min].js
+- WWOBJLoader2[.min].js
+- WWOBJLoader2Proxy[.min].js
 
 ## Implementation Overview
 In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three pieces:
@@ -55,6 +62,7 @@ The parser and mesh creation functions have reached full feature parity with the
 <br>
 Larger models not in the prototype repository:<br>
 [Compressed PTV1 Model](http://kaisalmen.de/proto/resource/obj/PTV1/PTV1.zip) (150MB)<br>
+Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):
 [Compressed Sink Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
 [Compressed Oven Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
 <br>

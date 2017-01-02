@@ -1,12 +1,3 @@
-/**
- * @author Kai Salmen / www.kaisalmen.de
- */
-
-'use strict';
-
-if ( THREE === undefined ) var THREE = {};
-if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
-
 THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 
 	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderProxyBase.prototype );

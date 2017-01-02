@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-"use strict";
+'use strict';
 
 if ( THREE.examples === undefined ) {
     THREE.examples = {};
