@@ -55,27 +55,23 @@ gulp.task( 'bundle-wwobjloader2', function () {
 			header(
 				"/**\n" +
 				"  * @author Kai Salmen / www.kaisalmen.de\n" +
-				"  */\n" +
-				"\n" +
-				"'use strict';\n" +
-				"\n" +
+				"  */\n\n" +
+				"'use strict';\n\n" +
 				"if ( THREE === undefined ) {\n" +
 				"   var THREE = {}\n" +
-				"};\n" +
+				"};\n\n" +
 				"THREE.OBJLoader2 = {\n" +
 				"	consts: null,\n" +
 				"	Parser: null,\n" +
-				"	MeshCreator: null,\n" +
 				"	RawObject: null,\n" +
 				"	RawObjectDescription: null\n" +
-				"};\n" +
+				"};\n\n" +
 				"THREE.WebWorker = {\n" +
 				"   WWOBJLoader: null,\n" +
 				"   WWMeshCreator: null,\n" +
 				"   WWOBJLoaderRef: null,\n" +
 				"   WWOBJLoaderRunner: null,\n" +
-				"};\n" +
-				"\n"
+				"};\n\n"
 			)
 		)
 		.pipe( gulp.dest( DIR_BUILD ) )

@@ -135,10 +135,26 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 		if ( this.validated ) return;
 		if ( this.worker == null ) {
 
-			var wwCode = '/**\n  * This code was re-constructed for web worker usage\n  */\n\n';
-			wwCode += 'if ( THREE === undefined ) { var THREE = {} }\n';
-			wwCode += 'if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }\n';
-			wwCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }\n\n';
+			var wwCode = '';
+			wwCode += '/**\n';
+			wwCode += '  * This code was re-constructed for web worker usage\n';
+			wwCode += '  */\n\n';
+			wwCode += 'if ( THREE === undefined ) {\n';
+			wwCode += '\tvar THREE = {}\n';
+			wwCode += '};\n\n';
+			wwCode += 'THREE.OBJLoader2 = {\n';
+			wwCode += '\tconsts: null,\n';
+			wwCode += '\tParser: null,\n';
+			wwCode += '\tRawObject: null,\n';
+			wwCode += '\tRawObjectDescription: null\n';
+			wwCode += '};\n\n';
+			wwCode += 'THREE.WebWorker = {\n';
+			wwCode += '\tWWOBJLoader: null,\n';
+			wwCode += '\tWWMeshCreator: null,\n';
+			wwCode += '\tWWOBJLoaderRef: null,\n';
+			wwCode += '\tWWOBJLoaderRunner: null,\n';
+			wwCode += '};\n\n';
+
 			wwCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
 
 			wwCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
@@ -151,7 +167,7 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 			wwCode += buildSingelton( 'THREE.WebWorker.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.WebWorker.WWOBJLoaderRunner );
 			wwCode += 'new THREE.WebWorker.WWOBJLoaderRunner();\n\n';
 
-//			console.log( wwCode );
+			console.log( wwCode );
 			var blob = new Blob( [ wwCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
 
