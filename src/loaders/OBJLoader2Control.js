@@ -1,4 +1,5 @@
 THREE.OBJLoader2 = {
+	consts: null,
 	Parser: null,
 	MeshCreator: null,
 	RawObject: null,

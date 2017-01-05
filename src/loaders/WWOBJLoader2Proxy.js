@@ -1,14 +1,38 @@
-THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
+THREE.WebWorker.WWLoader2Proxy = (function () {
 
-	WWOBJLoaderProxy.prototype = Object.create( THREE.WebWorker.WWLoaderProxyBase.prototype );
-	WWOBJLoaderProxy.prototype.constructor = WWOBJLoaderProxy;
-
-	function WWOBJLoaderProxy( params ) {
-		THREE.WebWorker.WWLoaderProxyBase.call( this, params );
+	function WWOBJLoader2Proxy( params ) {
+		this.init( params );
 	}
 
-	WWOBJLoaderProxy.prototype.init = function ( params ) {
-		THREE.WebWorker.WWLoaderProxyBase.prototype.init.call( this, params );
+	WWOBJLoader2Proxy.prototype.init = function ( params ) {
+		// check worker support first
+		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
+
+		this.webWorkerName = params.name;
+		this.basedir = params.basedir;
+		this.relativeWorkerSrcPath = params.relativeWorkerSrcPath;
+
+		this.instanceNo = 0;
+		this.worker = null;
+		this.debug = false;
+
+		this.sceneGraphBaseNode = null;
+		this.modelName = 'none';
+		this.validated = false;
+		this.running = false;
+		this.requestTerminate = false;
+
+		this.callbacks = {
+			progress: null,
+			completedLoading: null,
+			errorWhileLoading: null,
+			materialsLoaded: null,
+			meshLoaded: null,
+			director: {
+				completedLoading: null,
+				errorWhileLoading: null
+			}
+		};
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -25,21 +49,125 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 
 		this.materials = [];
 		this.counter = 0;
-
-		this.callbacks.materialsLoaded = null;
-		this.callbacks.meshLoaded = null;
 	};
 
-	WWOBJLoaderProxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+	WWOBJLoader2Proxy.prototype.setDebug = function ( enabled ) {
+		this.debug = enabled;
+	};
+
+	WWOBJLoader2Proxy.prototype.getWebWorkerName = function () {
+		return this.webWorkerName;
+	};
+
+	WWOBJLoader2Proxy.prototype.getModelName = function () {
+		return this.modelName;
+	};
+
+	WWOBJLoader2Proxy.prototype.registerProgressCallback = function ( callbackProgress ) {
+		if ( callbackProgress != null ) this.callbacks.progress = callbackProgress;
+	};
+
+	WWOBJLoader2Proxy.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
+		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading = callbackCompletedLoading;
+	};
+
+	WWOBJLoader2Proxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
 		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
 	};
 
-	WWOBJLoaderProxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
+	WWOBJLoader2Proxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
 		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
 	};
 
-	WWOBJLoaderProxy.prototype.validate = function () {
-		if ( THREE.WebWorker.WWLoaderProxyBase.prototype.validate.call( this ) ) return;
+	var buildObject = function ( fullName, object ) {
+		var objectString = fullName + ' = {\n';
+		var part;
+		for ( var name in object ) {
+
+			part = object[ name ];
+			if ( typeof( part ) === 'string' || part instanceof String ) {
+
+				part = part.replace( '\n', '\\n' );
+				part = part.replace( '\r', '\\r' );
+				objectString += '\t' + name + ': "' + part + '",\n';
+
+			} else if ( part instanceof Array ) {
+
+				objectString += '\t' + name + ': [' + part + '],\n';
+
+			} else if ( Number.isInteger( part ) ) {
+
+				objectString += '\t' + name + ': ' + part + ',\n';
+
+			} else if ( typeof part === 'function' ) {
+
+				objectString += '\t' + name + ': ' + part + ',\n';
+
+			}
+
+		}
+		objectString += '}\n';
+
+		return objectString;
+	};
+
+	var buildSingelton = function ( fullName, internalName, object ) {
+		var objectString = fullName + ' = (function () {\n\n';
+		objectString += '\t' + object.prototype.constructor.toString() + ';\n\n';
+		var part;
+		for ( var name in object.prototype ) {
+
+			part = object.prototype[ name ];
+			if ( typeof part === 'function' ) {
+
+				objectString += '\t' + internalName + '.prototype.' + name + ' = ' + part + ';\n\n';
+
+			}
+
+		}
+		objectString += '\treturn ' + internalName + ';\n';
+		objectString += '})();\n';
+
+		return objectString;
+	};
+
+	WWOBJLoader2Proxy.prototype.validate = function () {
+		if ( this.validated ) return;
+		if ( this.worker == null ) {
+
+			var wwCode = '/**\n  * This code was re-constructed for web worker usage\n  */\n\n';
+			wwCode += 'if ( THREE === undefined ) { var THREE = {} }\n';
+			wwCode += 'if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }\n';
+			wwCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }\n\n';
+			wwCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
+
+			wwCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
+			wwCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
+			wwCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
+
+			wwCode += buildSingelton( 'THREE.WebWorker.WWOBJLoader', 'WWOBJLoader', THREE.WebWorker.WWOBJLoader );
+			wwCode += buildSingelton( 'THREE.WebWorker.WWMeshCreator', 'WWMeshCreator', THREE.WebWorker.WWMeshCreator );
+			wwCode += 'THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();\n\n';
+			wwCode += buildSingelton( 'THREE.WebWorker.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.WebWorker.WWOBJLoaderRunner );
+			wwCode += 'new THREE.WebWorker.WWOBJLoaderRunner();\n\n';
+
+//			console.log( wwCode );
+			var blob = new Blob( [ wwCode ], { type: 'text/plain' } );
+			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+
+			var scope = this;
+			var scopeFunction = function ( e ) {
+				scope.receiveWorkerMessage( e );
+			};
+			this.worker.addEventListener( 'message', scopeFunction, false );
+
+		}
+
+		this.sceneGraphBaseNode = null;
+		this.modelName = 'none';
+		this.validated = true;
+		this.running = true;
+		this.requestTerminate = false;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
@@ -61,11 +189,11 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 		this.counter = 0;
 	};
 
-	WWOBJLoaderProxy.prototype.prepareRun = function ( params ) {
+	WWOBJLoader2Proxy.prototype.prepareRun = function ( params ) {
 		this.validate();
 		this.dataAvailable = params.dataAvailable;
 		this.modelName = params.modelName;
-		console.time( 'WWOBJLoaderProxy' );
+		console.time( 'WWOBJLoader2Proxy' );
 		if ( this.dataAvailable ) {
 
 			// fast-fail on bad type
@@ -102,7 +230,7 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 		this.sceneGraphBaseNode = params.sceneGraphBaseNode;
 	};
 
-	WWOBJLoaderProxy.prototype.run = function () {
+	WWOBJLoader2Proxy.prototype.run = function () {
 		var scope = this;
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -202,7 +330,7 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoaderProxy.prototype.receiveWorkerMessage = function ( event ) {
+	WWOBJLoader2Proxy.prototype.receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -294,7 +422,7 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 
 			case 'complete':
 
-				console.timeEnd( 'WWOBJLoaderProxy' );
+				console.timeEnd( 'WWOBJLoader2Proxy' );
 				if ( payload.msg != null ) {
 
 					this.announceProgress( payload.msg );
@@ -319,13 +447,45 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoaderProxy.prototype.terminate = function () {
-		THREE.WebWorker.WWLoaderProxyBase.prototype.terminate.call( this );
+	WWOBJLoader2Proxy.prototype.finalize = function ( reason ) {
+		this.running = false;
+		if ( reason === 'complete' ) {
+
+			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.completedLoading != null ) this.callbacks.director.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+
+		} else if ( reason === 'error' ) {
+
+			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.errorWhileLoading != null ) this.callbacks.director.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+
+		}
+		this.validated = false;
+
+		if ( this.requestTerminate ) {
+			this.terminate();
+		}
+	};
+
+	WWOBJLoader2Proxy.prototype.setRequestTerminate = function () {
+		this.requestTerminate = true;
+	};
+
+	WWOBJLoader2Proxy.prototype.terminate = function () {
+		if ( this.worker != null ) {
+
+			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+
+			this.worker.terminate();
+			this.worker = null;
+			this.finalize( 'terminate' );
+
+		}
 		this.fileLoader = null;
 		this.mtlLoader = null;
 	};
 
-	WWOBJLoaderProxy.prototype.announceProgress = function ( baseText, text ) {
+	WWOBJLoader2Proxy.prototype.announceProgress = function ( baseText, text ) {
 		var output = "";
 		if ( baseText !== null && baseText !== undefined ) {
 
@@ -349,17 +509,17 @@ THREE.WebWorker.WWLoaderProxyOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoaderProxy.prototype.addMaterial = function ( name, material ) {
+	WWOBJLoader2Proxy.prototype.addMaterial = function ( name, material ) {
 		if ( material.name !== name ) material.name = name;
 		this.materials[ name ] = material;
 	};
 
-	WWOBJLoaderProxy.prototype.getMaterial = function ( name ) {
+	WWOBJLoader2Proxy.prototype.getMaterial = function ( name ) {
 		var material = this.materials[ name ];
 		if ( ! material ) material = null;
 		return material;
 	};
 
-	return WWOBJLoaderProxy;
+	return WWOBJLoader2Proxy;
 
 })();
