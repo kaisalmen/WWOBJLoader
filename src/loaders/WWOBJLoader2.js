@@ -1,4 +1,4 @@
-if ( THREE === undefined ) var THREE = {};
+if ( THREE === undefined ) { var THREE = {} }
 if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
@@ -229,38 +229,46 @@ THREE.WebWorker.WWMeshCreator = (function () {
 	return WWMeshCreator;
 })();
 
+THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();
 
-var implRef = new THREE.WebWorker.WWOBJLoader( this );
+THREE.WebWorker.WWOBJLoaderRunner = (function () {
 
-var runner = function ( event ) {
-	var payload = event.data;
-
-	console.log( 'Command state before: ' + implRef.cmdState );
-
-	switch ( payload.cmd ) {
-		case 'init':
-
-			implRef.init( payload );
-			break;
-
-		case 'setMaterials':
-
-			implRef.setMaterials( payload );
-			break;
-
-		case 'run':
-
-			implRef.run( payload );
-			break;
-
-		default:
-
-			console.error( 'WWOBJLoader: Received unknown command: ' + payload.cmd );
-			break;
-
+	function WWOBJLoaderRunner() {
+		self.addEventListener( 'message', this.runner, false );
 	}
 
-	console.log( 'Command state after: ' + implRef.cmdState );
-};
+	WWOBJLoaderRunner.prototype.runner = function ( event ) {
+		var payload = event.data;
 
-self.addEventListener( 'message', runner, false );
+		console.log( 'Command state before: ' + THREE.WebWorker.WWOBJLoaderRef.cmdState );
+
+		switch ( payload.cmd ) {
+			case 'init':
+
+				THREE.WebWorker.WWOBJLoaderRef.init( payload );
+				break;
+
+			case 'setMaterials':
+
+				THREE.WebWorker.WWOBJLoaderRef.setMaterials( payload );
+				break;
+
+			case 'run':
+
+				THREE.WebWorker.WWOBJLoaderRef.run( payload );
+				break;
+
+			default:
+
+				console.error( 'WWOBJLoader: Received unknown command: ' + payload.cmd );
+				break;
+
+		}
+
+		console.log( 'Command state after: ' + THREE.WebWorker.WWOBJLoaderRef.cmdState );
+	};
+
+	return WWOBJLoaderRunner;
+})();
+
+new THREE.WebWorker.WWOBJLoaderRunner();

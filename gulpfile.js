@@ -64,4 +64,28 @@ gulp.task( 'bundle-wwobjloader2proxy', function () {
 		.pipe( gulp.dest( DIR_BUILD ) );
 } );
 
-gulp.task( 'default', [ 'bundle-objloader2', 'bundle-wwobjloader2', 'bundle-wwobjloader2proxy' ] );
+gulp.task( 'bundle-super', function () {
+	return gulp
+		.src( [
+			'src/loaders/OBJLoader2Control.js',
+			'src/loaders/OBJLoader2Parser.js',
+			'src/loaders/OBJLoader2MeshCreator.js',
+			'src/loaders/WWOBJLoader2.js',
+			'src/loaders/WWLoaderProxyBase.js',
+			'src/loaders/WWOBJLoader2Proxy.js',
+			'src/loaders/WWLoaderDirector.js',
+			'src/loaders/OBJLoader2WWBuilder.js'
+		] )
+		.pipe( replace( {
+			patterns: [ {
+				match: /importScripts.*/g,
+				replacement: ""
+			} ]
+		} ) )
+		.pipe( concat( 'OBJLoader2Super.js' ) )
+		.pipe( header( "/**\n  * @author Kai Salmen / www.kaisalmen.de\n  */\n\n'use strict';\n\n" ) )
+		.pipe( gulp.dest( DIR_BUILD ) )
+
+} );
+
+gulp.task( 'default', [ 'bundle-objloader2', 'bundle-wwobjloader2', 'bundle-wwobjloader2proxy', 'bundle-super' ] );
