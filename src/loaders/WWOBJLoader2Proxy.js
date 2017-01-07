@@ -14,6 +14,7 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 
 		this.instanceNo = 0;
 		this.worker = null;
+		this.workerCode = null;
 		this.debug = false;
 
 		this.sceneGraphBaseNode = null;
@@ -79,96 +80,114 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
 	};
 
-	var buildObject = function ( fullName, object ) {
-		var objectString = fullName + ' = {\n';
-		var part;
-		for ( var name in object ) {
+	WWOBJLoader2Proxy.prototype.buildWebWorkerCode = function ( existingWorkerCode ) {
+		if ( existingWorkerCode != null ) this.workerCode = existingWorkerCode;
+		if ( this.workerCode == null ) {
 
-			part = object[ name ];
-			if ( typeof( part ) === 'string' || part instanceof String ) {
+			console.time( 'buildWebWorkerCode' );
+			var buildObject = function ( fullName, object ) {
+				var objectString = fullName + ' = {\n';
+				var part;
+				for ( var name in object ) {
 
-				part = part.replace( '\n', '\\n' );
-				part = part.replace( '\r', '\\r' );
-				objectString += '\t' + name + ': "' + part + '",\n';
+					part = object[ name ];
+					if ( typeof( part ) === 'string' || part instanceof String ) {
 
-			} else if ( part instanceof Array ) {
+						part = part.replace( '\n', '\\n' );
+						part = part.replace( '\r', '\\r' );
+						objectString += '\t' + name + ': "' + part + '",\n';
 
-				objectString += '\t' + name + ': [' + part + '],\n';
+					} else if ( part instanceof Array ) {
 
-			} else if ( Number.isInteger( part ) ) {
+						objectString += '\t' + name + ': [' + part + '],\n';
 
-				objectString += '\t' + name + ': ' + part + ',\n';
+					} else if ( Number.isInteger( part ) ) {
 
-			} else if ( typeof part === 'function' ) {
+						objectString += '\t' + name + ': ' + part + ',\n';
 
-				objectString += '\t' + name + ': ' + part + ',\n';
+					} else if ( typeof part === 'function' ) {
 
-			}
+						objectString += '\t' + name + ': ' + part + ',\n';
 
+					}
+
+				}
+				objectString += '}\n';
+
+				return objectString;
+			};
+
+			var buildSingelton = function ( fullName, internalName, object ) {
+				var objectString = fullName + ' = (function () {\n\n';
+
+				var constructorString = object.prototype.constructor.toString();
+				constructorString = constructorString.replace( 'function e', 'function ' + internalName );
+				objectString += constructorString;
+
+				var funcString;
+				var objectPart;
+				for ( var name in object.prototype ) {
+
+					objectPart = object.prototype[ name ];
+					if ( typeof objectPart === 'function' ) {
+
+						funcString = objectPart.toString();
+						funcString = funcString.replace( 'new e', 'new ' + internalName );
+						objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+
+					}
+
+				}
+				objectString += '\treturn ' + internalName + ';\n';
+				objectString += '})();\n';
+
+				return objectString;
+			};
+
+			this.workerCode = '';
+			this.workerCode += '/**\n';
+			this.workerCode += '  * This code was re-constructed for web worker usage\n';
+			this.workerCode += '  */\n\n';
+			this.workerCode += 'if ( THREE === undefined ) {\n';
+			this.workerCode += '\tvar THREE = {}\n';
+			this.workerCode += '};\n\n';
+			this.workerCode += 'THREE.OBJLoader2 = {\n';
+			this.workerCode += '\tconsts: null,\n';
+			this.workerCode += '\tParser: null,\n';
+			this.workerCode += '\tRawObject: null,\n';
+			this.workerCode += '\tRawObjectDescription: null\n';
+			this.workerCode += '};\n\n';
+			this.workerCode += 'THREE.WebWorker = {\n';
+			this.workerCode += '\tWWOBJLoader: null,\n';
+			this.workerCode += '\tWWMeshCreator: null,\n';
+			this.workerCode += '\tWWOBJLoaderRef: null,\n';
+			this.workerCode += '\tWWOBJLoaderRunner: null,\n';
+			this.workerCode += '};\n\n';
+
+			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
+
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
+
+			this.workerCode += buildSingelton( 'THREE.WebWorker.WWOBJLoader', 'WWOBJLoader', THREE.WebWorker.WWOBJLoader );
+			this.workerCode += buildSingelton( 'THREE.WebWorker.WWMeshCreator', 'WWMeshCreator', THREE.WebWorker.WWMeshCreator );
+			this.workerCode += 'THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();\n\n';
+			this.workerCode += buildSingelton( 'THREE.WebWorker.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.WebWorker.WWOBJLoaderRunner );
+			this.workerCode += 'new THREE.WebWorker.WWOBJLoaderRunner();\n\n';
+
+			console.timeEnd( 'buildWebWorkerCode' );
 		}
-		objectString += '}\n';
 
-		return objectString;
-	};
-
-	var buildSingelton = function ( fullName, internalName, object ) {
-		var objectString = fullName + ' = (function () {\n\n';
-		objectString += '\t' + object.prototype.constructor.toString() + ';\n\n';
-		var part;
-		for ( var name in object.prototype ) {
-
-			part = object.prototype[ name ];
-			if ( typeof part === 'function' ) {
-
-				objectString += '\t' + internalName + '.prototype.' + name + ' = ' + part + ';\n\n';
-
-			}
-
-		}
-		objectString += '\treturn ' + internalName + ';\n';
-		objectString += '})();\n';
-
-		return objectString;
+		return this.workerCode;
 	};
 
 	WWOBJLoader2Proxy.prototype.validate = function () {
 		if ( this.validated ) return;
 		if ( this.worker == null ) {
 
-			var wwCode = '';
-			wwCode += '/**\n';
-			wwCode += '  * This code was re-constructed for web worker usage\n';
-			wwCode += '  */\n\n';
-			wwCode += 'if ( THREE === undefined ) {\n';
-			wwCode += '\tvar THREE = {}\n';
-			wwCode += '};\n\n';
-			wwCode += 'THREE.OBJLoader2 = {\n';
-			wwCode += '\tconsts: null,\n';
-			wwCode += '\tParser: null,\n';
-			wwCode += '\tRawObject: null,\n';
-			wwCode += '\tRawObjectDescription: null\n';
-			wwCode += '};\n\n';
-			wwCode += 'THREE.WebWorker = {\n';
-			wwCode += '\tWWOBJLoader: null,\n';
-			wwCode += '\tWWMeshCreator: null,\n';
-			wwCode += '\tWWOBJLoaderRef: null,\n';
-			wwCode += '\tWWOBJLoaderRunner: null,\n';
-			wwCode += '};\n\n';
-
-			wwCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
-
-			wwCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
-			wwCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
-			wwCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
-
-			wwCode += buildSingelton( 'THREE.WebWorker.WWOBJLoader', 'WWOBJLoader', THREE.WebWorker.WWOBJLoader );
-			wwCode += buildSingelton( 'THREE.WebWorker.WWMeshCreator', 'WWMeshCreator', THREE.WebWorker.WWMeshCreator );
-			wwCode += 'THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();\n\n';
-			wwCode += buildSingelton( 'THREE.WebWorker.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.WebWorker.WWOBJLoaderRunner );
-			wwCode += 'new THREE.WebWorker.WWOBJLoaderRunner();\n\n';
-
-			console.log( wwCode );
-			var blob = new Blob( [ wwCode ], { type: 'text/plain' } );
+			this.buildWebWorkerCode();
+			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
 
 			var scope = this;
@@ -494,6 +513,7 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 
 			this.worker.terminate();
 			this.worker = null;
+			this.workerCode = null;
 			this.finalize( 'terminate' );
 
 		}

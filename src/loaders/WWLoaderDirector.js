@@ -12,7 +12,8 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 			prototypeDef: null,
 			globalParams: null,
 			callbacks: {},
-			webWorkers: []
+			webWorkers: [],
+			codeBuffer: null
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -77,6 +78,16 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
 		webWorker.init( this.workerDescription.globalParams );
 
+		// Ensure code string is built once and then it is just passed on to every new instance
+		if ( this.workerDescription.codeBuffer == null ) {
+
+			this.workerDescription.codeBuffer = webWorker.buildWebWorkerCode();
+
+		} else {
+
+			webWorker.buildWebWorkerCode( this.workerDescription.codeBuffer );
+
+		}
 		for ( var key in this.workerDescription.callbacks ) {
 
 			if ( webWorker.callbacks.hasOwnProperty( key ) && this.workerDescription.callbacks.hasOwnProperty( key ) ) {
@@ -123,6 +134,7 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 		this.workerDescription.globalParams = null;
 		this.workerDescription.callbacks = {};
 		this.workerDescription.webWorkers = [];
+		this.workerDescription.codeBuffer = null;
 	};
 
 	WWLoaderDirector.prototype.enqueueForRun = function ( runParams ) {
