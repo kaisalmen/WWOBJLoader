@@ -10,7 +10,7 @@ THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 		this.workerDescription = {
 			bound: false,
 			prototypeDef: null,
-			globalParams: null,
+			webWorkerName: null,
 			callbacks: {},
 			webWorkers: [],
 			codeBuffer: null
@@ -57,11 +57,11 @@ THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 		}
 	};
 
-	WWLoaderDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
+	WWLoaderDirector.prototype.register = function ( prototypeDef, webWorkerName, callbacks ) {
 		if ( this.workerDescription.bound ) return;
 		this.workerDescription.bound = true;
 		this.workerDescription.prototypeDef = prototypeDef;
-		this.workerDescription.globalParams = globalParams;
+		this.workerDescription.webWorkerName = webWorkerName;
 
 		if ( callbacks != null ) {
 
@@ -76,7 +76,7 @@ THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 
 	WWLoaderDirector.prototype.buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
-		webWorker.init( this.workerDescription.globalParams );
+		webWorker.init( this.workerDescription.webWorkerName );
 
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( this.workerDescription.codeBuffer == null ) {
@@ -131,7 +131,7 @@ THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 		}
 		this.workerDescription.bound = false;
 		this.workerDescription.prototypeDef = null;
-		this.workerDescription.globalParams = null;
+		this.workerDescription.webWorkerName = null;
 		this.workerDescription.callbacks = {};
 		this.workerDescription.webWorkers = [];
 		this.workerDescription.codeBuffer = null;

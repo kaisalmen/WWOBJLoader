@@ -207,16 +207,11 @@
 
 					this.wwDirector.register(
 						THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
-						{
-							name: 'WWOBJLoader2',
-							basedir: '..',
-							relativeWorkerSrcPath: 'build/WWOBJLoader2.js'
-						},
+						'WWOBJLoader2',
 						{
 							completedLoading: reloadAssetsProxy,
 							progress: this.reportProgress
 						}
-
 					);
 
 					// tell ThreeJsApp async loading is done (none needed here)

@@ -4,13 +4,11 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		this.init( params );
 	}
 
-	WWOBJLoader2Proxy.prototype.init = function ( params ) {
+	WWOBJLoader2Proxy.prototype.init = function ( webWorkerName ) {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 
-		this.webWorkerName = params.name;
-		this.basedir = params.basedir;
-		this.relativeWorkerSrcPath = params.relativeWorkerSrcPath;
+		this.webWorkerName = webWorkerName;
 
 		this.instanceNo = 0;
 		this.worker = null;

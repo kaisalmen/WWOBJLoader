@@ -218,17 +218,11 @@
 
 					this.wwDirector.register(
 						THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
+						'WWOBJLoader2',
 						{
-							name: 'WWOBJLoader2',
-							basedir: '..',
-							relativeWorkerSrcPath: 'build/WWOBJLoader2.min.js'
-						},
-						{
-//							progress: this.reportProgress,
 							completedLoading: callbackCompletedLoading,
 							meshLoaded: callbackMeshLoaded
 						}
-
 					);
 					this.wwDirector.validate( maxQueueSize, maxWebWorkers );
 					console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
