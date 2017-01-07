@@ -184,7 +184,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwDirector = new THREE.WebWorker.WWLoaderDirector( 256, 4 );
+					this.wwDirector = new THREE.OBJLoader2.WW.WWLoaderDirector( 256, 4 );
 
 					this.lights = null;
 					this.controls = null;
@@ -206,7 +206,7 @@
 					};
 
 					this.wwDirector.register(
-						THREE.WebWorker.WWLoader2Proxy.prototype,
+						THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
 						{
 							name: 'WWOBJLoader2',
 							basedir: '..',

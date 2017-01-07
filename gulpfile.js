@@ -58,20 +58,20 @@ gulp.task( 'bundle-wwobjloader2', function () {
 				"  */\n\n" +
 				"'use strict';\n\n" +
 				"if ( THREE === undefined ) {\n" +
-				"   var THREE = {}\n" +
+				"\tvar THREE = {}\n" +
 				"};\n\n" +
 				"THREE.OBJLoader2 = {\n" +
-				"	consts: null,\n" +
-				"	Parser: null,\n" +
-				"	RawObject: null,\n" +
-				"	RawObjectDescription: null\n" +
-				"};\n\n" +
-				"THREE.WebWorker = {\n" +
-				"   WWOBJLoader: null,\n" +
-				"   WWMeshCreator: null,\n" +
-				"   WWOBJLoaderRef: null,\n" +
-				"   WWOBJLoaderRunner: null,\n" +
-				"};\n\n"
+				"\tconsts: null,\n" +
+				"\tParser: null,\n" +
+				"\tRawObject: null,\n" +
+				"\tRawObjectDescription: null,\n" +
+				"\tWW: {\n" +
+				"\t\tWWOBJLoader: null,\n" +
+				"\t\tWWMeshCreator: null,\n" +
+				"\t\tWWOBJLoaderRef: null,\n" +
+				"\t\tWWOBJLoaderRunner: null\n" +
+				"\t}" +
+				"}\n\n"
 			)
 		)
 		.pipe( gulp.dest( DIR_BUILD ) )

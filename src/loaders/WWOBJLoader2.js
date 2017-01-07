@@ -1,13 +1,13 @@
 if ( THREE === undefined ) { var THREE = {} }
-if ( THREE.WebWorker === undefined ) { THREE.WebWorker = {} }
+if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} }
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 importScripts( './OBJLoader2Parser.js' );
 
-THREE.WebWorker.WWOBJLoader = (function () {
+THREE.OBJLoader2.WW.WWOBJLoader = (function () {
 
 	function WWOBJLoader() {
-		this.meshCreator = new THREE.WebWorker.WWMeshCreator();
+		this.meshCreator = new THREE.OBJLoader2.WW.WWMeshCreator();
 		this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
 		this.parser.debug = false;
 		this.validated = false;
@@ -90,7 +90,7 @@ THREE.WebWorker.WWOBJLoader = (function () {
 	return WWOBJLoader;
 })();
 
-THREE.WebWorker.WWMeshCreator = (function () {
+THREE.OBJLoader2.WW.WWMeshCreator = (function () {
 
 	function WWMeshCreator() {
 		this.materials = null;
@@ -229,9 +229,9 @@ THREE.WebWorker.WWMeshCreator = (function () {
 	return WWMeshCreator;
 })();
 
-THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();
+THREE.OBJLoader2.WW.WWOBJLoaderRef = new THREE.OBJLoader2.WW.WWOBJLoader();
 
-THREE.WebWorker.WWOBJLoaderRunner = (function () {
+THREE.OBJLoader2.WW.WWOBJLoaderRunner = (function () {
 
 	function WWOBJLoaderRunner() {
 		self.addEventListener( 'message', this.runner, false );
@@ -240,22 +240,22 @@ THREE.WebWorker.WWOBJLoaderRunner = (function () {
 	WWOBJLoaderRunner.prototype.runner = function ( event ) {
 		var payload = event.data;
 
-		console.log( 'Command state before: ' + THREE.WebWorker.WWOBJLoaderRef.cmdState );
+		console.log( 'Command state before: ' + THREE.OBJLoader2.WW.WWOBJLoaderRef.cmdState );
 
 		switch ( payload.cmd ) {
 			case 'init':
 
-				THREE.WebWorker.WWOBJLoaderRef.init( payload );
+				THREE.OBJLoader2.WW.WWOBJLoaderRef.init( payload );
 				break;
 
 			case 'setMaterials':
 
-				THREE.WebWorker.WWOBJLoaderRef.setMaterials( payload );
+				THREE.OBJLoader2.WW.WWOBJLoaderRef.setMaterials( payload );
 				break;
 
 			case 'run':
 
-				THREE.WebWorker.WWOBJLoaderRef.run( payload );
+				THREE.OBJLoader2.WW.WWOBJLoaderRef.run( payload );
 				break;
 
 			default:
@@ -265,10 +265,10 @@ THREE.WebWorker.WWOBJLoaderRunner = (function () {
 
 		}
 
-		console.log( 'Command state after: ' + THREE.WebWorker.WWOBJLoaderRef.cmdState );
+		console.log( 'Command state after: ' + THREE.OBJLoader2.WW.WWOBJLoaderRef.cmdState );
 	};
 
 	return WWOBJLoaderRunner;
 })();
 
-new THREE.WebWorker.WWOBJLoaderRunner();
+new THREE.OBJLoader2.WW.WWOBJLoaderRunner();

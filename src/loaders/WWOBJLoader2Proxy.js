@@ -1,4 +1,4 @@
-THREE.WebWorker.WWLoader2Proxy = (function () {
+THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 
 	function WWOBJLoader2Proxy( params ) {
 		this.init( params );
@@ -155,13 +155,13 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 			this.workerCode += '\tconsts: null,\n';
 			this.workerCode += '\tParser: null,\n';
 			this.workerCode += '\tRawObject: null,\n';
-			this.workerCode += '\tRawObjectDescription: null\n';
-			this.workerCode += '};\n\n';
-			this.workerCode += 'THREE.WebWorker = {\n';
-			this.workerCode += '\tWWOBJLoader: null,\n';
-			this.workerCode += '\tWWMeshCreator: null,\n';
-			this.workerCode += '\tWWOBJLoaderRef: null,\n';
-			this.workerCode += '\tWWOBJLoaderRunner: null,\n';
+			this.workerCode += '\tRawObjectDescription: null,\n';
+			this.workerCode += '\tWW: {\n';
+			this.workerCode += '\t\tWWOBJLoader: null,\n';
+			this.workerCode += '\t\tWWMeshCreator: null,\n';
+			this.workerCode += '\t\tWWOBJLoaderRef: null,\n';
+			this.workerCode += '\t\tWWOBJLoaderRunner: null\n';
+			this.workerCode += '\t}\n';
 			this.workerCode += '};\n\n';
 
 			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
@@ -170,11 +170,11 @@ THREE.WebWorker.WWLoader2Proxy = (function () {
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
 
-			this.workerCode += buildSingelton( 'THREE.WebWorker.WWOBJLoader', 'WWOBJLoader', THREE.WebWorker.WWOBJLoader );
-			this.workerCode += buildSingelton( 'THREE.WebWorker.WWMeshCreator', 'WWMeshCreator', THREE.WebWorker.WWMeshCreator );
-			this.workerCode += 'THREE.WebWorker.WWOBJLoaderRef = new THREE.WebWorker.WWOBJLoader();\n\n';
-			this.workerCode += buildSingelton( 'THREE.WebWorker.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.WebWorker.WWOBJLoaderRunner );
-			this.workerCode += 'new THREE.WebWorker.WWOBJLoaderRunner();\n\n';
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWOBJLoader', 'WWOBJLoader', THREE.OBJLoader2.WW.WWOBJLoader );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWMeshCreator', 'WWMeshCreator', THREE.OBJLoader2.WW.WWMeshCreator );
+			this.workerCode += 'THREE.OBJLoader2.WW.WWOBJLoaderRef = new THREE.OBJLoader2.WW.WWOBJLoader();\n\n';
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWOBJLoaderRunner', 'WWOBJLoaderRunner', THREE.OBJLoader2.WW.WWOBJLoaderRunner );
+			this.workerCode += 'new THREE.OBJLoader2.WW.WWOBJLoaderRunner();\n\n';
 
 			console.timeEnd( 'buildWebWorkerCode' );
 		}

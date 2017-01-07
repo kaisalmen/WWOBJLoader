@@ -1,4 +1,4 @@
-THREE.WebWorker.WWLoaderDirector = (function () {
+THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;
