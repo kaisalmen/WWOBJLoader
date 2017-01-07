@@ -1,4 +1,4 @@
-THREE.WebWorker.WWLoaderDirector = (function () {
+THREE.OBJLoader2.WW.WWLoaderDirector = (function () {
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;
@@ -10,9 +10,10 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 		this.workerDescription = {
 			bound: false,
 			prototypeDef: null,
-			globalParams: null,
+			webWorkerName: null,
 			callbacks: {},
-			webWorkers: []
+			webWorkers: [],
+			codeBuffer: null
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -56,11 +57,11 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 		}
 	};
 
-	WWLoaderDirector.prototype.register = function ( prototypeDef, globalParams, callbacks ) {
+	WWLoaderDirector.prototype.register = function ( prototypeDef, webWorkerName, callbacks ) {
 		if ( this.workerDescription.bound ) return;
 		this.workerDescription.bound = true;
 		this.workerDescription.prototypeDef = prototypeDef;
-		this.workerDescription.globalParams = globalParams;
+		this.workerDescription.webWorkerName = webWorkerName;
 
 		if ( callbacks != null ) {
 
@@ -75,8 +76,18 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 
 	WWLoaderDirector.prototype.buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
-		webWorker.init( this.workerDescription.globalParams );
+		webWorker.init( this.workerDescription.webWorkerName );
 
+		// Ensure code string is built once and then it is just passed on to every new instance
+		if ( this.workerDescription.codeBuffer == null ) {
+
+			this.workerDescription.codeBuffer = webWorker.buildWebWorkerCode();
+
+		} else {
+
+			webWorker.buildWebWorkerCode( this.workerDescription.codeBuffer );
+
+		}
 		for ( var key in this.workerDescription.callbacks ) {
 
 			if ( webWorker.callbacks.hasOwnProperty( key ) && this.workerDescription.callbacks.hasOwnProperty( key ) ) {
@@ -120,9 +131,10 @@ THREE.WebWorker.WWLoaderDirector = (function () {
 		}
 		this.workerDescription.bound = false;
 		this.workerDescription.prototypeDef = null;
-		this.workerDescription.globalParams = null;
+		this.workerDescription.webWorkerName = null;
 		this.workerDescription.callbacks = {};
 		this.workerDescription.webWorkers = [];
+		this.workerDescription.codeBuffer = null;
 	};
 
 	WWLoaderDirector.prototype.enqueueForRun = function ( runParams ) {

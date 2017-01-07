@@ -149,7 +149,7 @@
 		<script src="../src/apps/AppRunner.js"></script>
 		<script src="../src/apps/ZipTools.js"></script>
 
-		<script src="../build/WWOBJLoader2Proxy.js"></script>
+		<script src="../build/WWOBJLoader2.js"></script>
 
 		<script>
 			'use strict';
@@ -184,7 +184,7 @@
 						htmlCanvas: elementToBindTo
 					} );
 
-					this.wwDirector = new THREE.WebWorker.WWLoaderDirector( 256, 4 );
+					this.wwDirector = new THREE.OBJLoader2.WW.WWLoaderDirector( 256, 4 );
 
 					this.lights = null;
 					this.controls = null;
@@ -206,17 +206,12 @@
 					};
 
 					this.wwDirector.register(
-						THREE.WebWorker.WWLoaderProxyOBJLoader2.prototype,
-						{
-							name: 'WWOBJLoader2',
-							basedir: '..',
-							relativeWorkerSrcPath: 'build/WWOBJLoader2.js'
-						},
+						THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
+						'WWOBJLoader2',
 						{
 							completedLoading: reloadAssetsProxy,
 							progress: this.reportProgress
 						}
-
 					);
 
 					// tell ThreeJsApp async loading is done (none needed here)

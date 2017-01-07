@@ -177,7 +177,7 @@ THREE.examples.apps.ThreeJsApp = (function () {
 
     /**
      * Handle any init not related to WebGL (e.g. file loading) incl. async content that need to be completed
-     * before the rest of the initialisation takes part. Once complete asyncDone needs to be set to true.
+     * before the rest of the initialisation takes part. Once complete preloadDone needs to be set to true.
      * Override if needed.
      */
     ThreeJsApp.prototype.initPreGL = function () {

@@ -1,23 +1,44 @@
-THREE.OBJLoader2.Parser = (function () {
+THREE.OBJLoader2.consts = {
+	CODE_LF: 10,
+	CODE_CR: 13,
+	CODE_SPACE: 32,
+	CODE_SLASH: 47,
+	STRING_LF: '\n',
+	STRING_CR: '\r',
+	STRING_SPACE: ' ',
+	STRING_SLASH: '/',
+	LINE_F: 'f',
+	LINE_G: 'g',
+	LINE_L: 'l',
+	LINE_O: 'o',
+	LINE_S: 's',
+	LINE_V: 'v',
+	LINE_VT: 'vt',
+	LINE_VN: 'vn',
+	LINE_MTLLIB: 'mtllib',
+	LINE_USEMTL: 'usemtl',
+	/*
+	 * Build Face/Quad: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
+	 * N-Gons are not supported
+	 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
+	 *
+	 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	(vertex/uv/normal)"
+	 * 1: "f vertex/uv          vertex/uv           vertex/uv           (vertex/uv       )"
+	 * 2: "f vertex//normal     vertex//normal      vertex//normal      (vertex//normal  )"
+	 * 3: "f vertex             vertex              vertex              (vertex          )"
+	 *
+	 * @param indexArray
+	 * @param faceType
+	 */
+	QUAD_INDICES_1: [ 1, 2, 3, 3, 4, 1 ],
+	QUAD_INDICES_2: [ 1, 3, 5, 5, 7, 1 ],
+	QUAD_INDICES_3: [ 1, 4, 7, 7, 10, 1 ],
+	buildIndex: function ( materialName, smoothingGroup) {
+		return materialName + '|' + smoothingGroup;
+	}
+};
 
-	var CODE_LF = 10;
-	var CODE_CR = 13;
-	var CODE_SPACE = 32;
-	var CODE_SLASH = 47;
-	var STRING_LF = '\n';
-	var STRING_CR = '\r';
-	var STRING_SPACE = ' ';
-	var STRING_SLASH = '/';
-	var LINE_F = 'f';
-	var LINE_G = 'g';
-	var LINE_L = 'l';
-	var LINE_O = 'o';
-	var LINE_S = 's';
-	var LINE_V = 'v';
-	var LINE_VT = 'vt';
-	var LINE_VN = 'vn';
-	var LINE_MTLLIB = 'mtllib';
-	var LINE_USEMTL = 'usemtl';
+THREE.OBJLoader2.Parser = (function () {
 
 	function Parser( meshCreator ) {
 		this.meshCreator = meshCreator;
@@ -44,18 +65,18 @@ THREE.OBJLoader2.Parser = (function () {
 
 			code = arrayBufferView[ i ];
 			switch ( code ) {
-				case CODE_SPACE:
+				case THREE.OBJLoader2.consts.CODE_SPACE:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					break;
 
-				case CODE_SLASH:
+				case THREE.OBJLoader2.consts.CODE_SLASH:
 					slashes[ slashesPointer++ ] = i;
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					break;
 
-				case CODE_LF:
+				case THREE.OBJLoader2.consts.CODE_LF:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					reachedFaces = this.processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
@@ -63,7 +84,7 @@ THREE.OBJLoader2.Parser = (function () {
 					bufferPointer = 0;
 					break;
 
-				case CODE_CR:
+				case THREE.OBJLoader2.consts.CODE_CR:
 					break;
 
 				default:
@@ -86,18 +107,18 @@ THREE.OBJLoader2.Parser = (function () {
 
 			char = text[ i ];
 			switch ( char ) {
-				case STRING_SPACE:
+				case THREE.OBJLoader2.consts.STRING_SPACE:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					break;
 
-				case STRING_SLASH:
+				case THREE.OBJLoader2.consts.STRING_SLASH:
 					slashes[ slashesPointer++ ] = i;
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					break;
 
-				case STRING_LF:
+				case THREE.OBJLoader2.consts.STRING_LF:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					reachedFaces = this.processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
@@ -105,7 +126,7 @@ THREE.OBJLoader2.Parser = (function () {
 					bufferPointer = 0;
 					break;
 
-				case STRING_CR:
+				case THREE.OBJLoader2.consts.STRING_CR:
 					break;
 
 				default:
@@ -119,7 +140,7 @@ THREE.OBJLoader2.Parser = (function () {
 
 		var bufferLength = bufferPointer - 1;
 		switch ( buffer[ 0 ] ) {
-			case LINE_V:
+			case THREE.OBJLoader2.consts.LINE_V:
 
 				// object complete instance required if reached faces already (= reached next block of v)
 				if ( reachedFaces ) {
@@ -131,15 +152,15 @@ THREE.OBJLoader2.Parser = (function () {
 				this.rawObject.pushVertex( buffer );
 				break;
 
-			case LINE_VT:
+			case THREE.OBJLoader2.consts.LINE_VT:
 				this.rawObject.pushUv( buffer );
 				break;
 
-			case LINE_VN:
+			case THREE.OBJLoader2.consts.LINE_VN:
 				this.rawObject.pushNormal( buffer );
 				break;
 
-			case LINE_F:
+			case THREE.OBJLoader2.consts.LINE_F:
 				reachedFaces = true;
 				/*
 				 * 0: "f vertex/uv/normal ..."
@@ -183,7 +204,7 @@ THREE.OBJLoader2.Parser = (function () {
 				}
 				break;
 
-			case LINE_L:
+			case THREE.OBJLoader2.consts.LINE_L:
 				if ( bufferLength === slashesPointer * 2 ) {
 
 					this.rawObject.buildLineVvt( buffer );
@@ -195,15 +216,15 @@ THREE.OBJLoader2.Parser = (function () {
 				}
 				break;
 
-			case LINE_S:
+			case THREE.OBJLoader2.consts.LINE_S:
 				this.rawObject.pushSmoothingGroup( buffer[ 1 ] );
 				break;
 
-			case LINE_G:
+			case THREE.OBJLoader2.consts.LINE_G:
 				this.processCompletedGroup( buffer[ 1 ] );
 				break;
 
-			case LINE_O:
+			case THREE.OBJLoader2.consts.LINE_O:
 				if ( this.rawObject.vertices.length > 0 ) {
 
 					this.processCompletedObject( buffer[ 1 ], null );
@@ -216,11 +237,11 @@ THREE.OBJLoader2.Parser = (function () {
 				}
 				break;
 
-			case LINE_MTLLIB:
+			case THREE.OBJLoader2.consts.LINE_MTLLIB:
 				this.rawObject.pushMtllib( buffer[ 1 ] );
 				break;
 
-			case LINE_USEMTL:
+			case THREE.OBJLoader2.consts.LINE_USEMTL:
 				this.rawObject.pushUsemtl( buffer[ 1 ] );
 				break;
 
@@ -282,7 +303,7 @@ THREE.OBJLoader2.RawObject = (function () {
 
 		this.rawObjectDescriptions = [];
 		// this default index is required as it is possible to define faces without 'g' or 'usemtl'
-		var index = buildIndex( this.activeMtlName, this.activeSmoothingGroup );
+		var index = THREE.OBJLoader2.consts.buildIndex( this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptionInUse = new THREE.OBJLoader2.RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
@@ -360,7 +381,7 @@ THREE.OBJLoader2.RawObject = (function () {
 	};
 
 	RawObject.prototype.verifyIndex = function () {
-		var index = buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
+		var index = THREE.OBJLoader2.consts.buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
 		if ( this.rawObjectDescriptions[ index ] == null ) {
 
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ] =
@@ -375,52 +396,31 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	var buildIndex = function ( materialName, smoothingGroup) {
-		return materialName + '|' + smoothingGroup;
-	};
-
-	/*
-	 * Build Face/Quad: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
-	 * N-Gons are not supported
-	 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
-	 *
-	 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	(vertex/uv/normal)"
-	 * 1: "f vertex/uv          vertex/uv           vertex/uv           (vertex/uv       )"
-	 * 2: "f vertex//normal     vertex//normal      vertex//normal      (vertex//normal  )"
-	 * 3: "f vertex             vertex              vertex              (vertex          )"
-	 *
-	 * @param indexArray
-	 * @param faceType
-	 */
-	var QUAD_INDICES_1 = [ 1, 2, 3, 3, 4, 1 ];
-	var QUAD_INDICES_2 = [ 1, 3, 5, 5, 7, 1 ];
-	var QUAD_INDICES_3 = [ 1, 4, 7, 7, 10, 1 ];
-
 	RawObject.prototype.buildQuadVVtVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ QUAD_INDICES_3[ i ] ] );
-			this.attachFaceVt( indexArray[ QUAD_INDICES_3[ i ] + 1 ] );
-			this.attachFaceVn( indexArray[ QUAD_INDICES_3[ i ] + 2 ] );
+			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] ] );
+			this.attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 1 ] );
+			this.attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 2 ] );
 		}
 	};
 
 	RawObject.prototype.buildQuadVVt = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
-			this.attachFaceVt( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
+			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
+			this.attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
 	RawObject.prototype.buildQuadVVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ QUAD_INDICES_2[ i ] ] );
-			this.attachFaceVn( indexArray[ QUAD_INDICES_2[ i ] + 1 ] );
+			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
+			this.attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
 	RawObject.prototype.buildQuadV = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ QUAD_INDICES_1[ i ] ] );
+			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_1[ i ] ] );
 		}
 	};
 
