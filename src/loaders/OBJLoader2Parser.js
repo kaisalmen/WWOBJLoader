@@ -1,3 +1,17 @@
+if ( THREE === undefined ) {
+	var THREE = {}
+};
+
+if ( THREE.OBJLoader2 === undefined ) {
+	THREE.OBJLoader2 = {
+		consts: null,
+		Parser: null,
+		RawObject: null,
+		RawObjectDescription: null,
+		WW: {}
+	}
+};
+
 THREE.OBJLoader2.consts = {
 	CODE_LF: 10,
 	CODE_CR: 13,

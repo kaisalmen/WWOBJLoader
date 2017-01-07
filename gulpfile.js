@@ -41,39 +41,8 @@ gulp.task( 'bundle-wwobjloader2', function () {
 			'src/loaders/WWOBJLoader2Proxy.js',
 			'src/loaders/WWLoaderDirector.js'
 		] )
-		// remove import of other scripts from WWOBJLoader2
-		.pipe( replace( {
-			patterns: [
-				{
-					match: /importScripts.*/g,
-					replacement: ''
-				}
-			]
-		} ) )
 		.pipe( concat( 'WWOBJLoader2.js' ) )
-		.pipe(
-			header(
-				"/**\n" +
-				"  * @author Kai Salmen / www.kaisalmen.de\n" +
-				"  */\n\n" +
-				"'use strict';\n\n" +
-				"if ( THREE === undefined ) {\n" +
-				"\tvar THREE = {}\n" +
-				"};\n\n" +
-				"THREE.OBJLoader2 = {\n" +
-				"\tconsts: null,\n" +
-				"\tParser: null,\n" +
-				"\tRawObject: null,\n" +
-				"\tRawObjectDescription: null,\n" +
-				"\tWW: {\n" +
-				"\t\tWWOBJLoader: null,\n" +
-				"\t\tWWMeshCreator: null,\n" +
-				"\t\tWWOBJLoaderRef: null,\n" +
-				"\t\tWWOBJLoaderRunner: null\n" +
-				"\t}" +
-				"}\n\n"
-			)
-		)
+		.pipe( header( "/**\n  * @author Kai Salmen / www.kaisalmen.de\n  */\n\n'use strict';\n\n" ) )
 		.pipe( gulp.dest( DIR_BUILD ) )
 
 		// create minified version

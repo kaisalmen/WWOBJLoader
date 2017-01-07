@@ -13,44 +13,46 @@ External libraries (three.js, dat.gui and jszip) are initialized with npm. There
 Before you can start to play around after checkout please run:
 `npm update`
 
-You require gulp to be able to build the arifacts:
+You require gulp to be able to build the bundles:
 `npm install --global gulp-cli`
 
-Then at the root of the project run `gulp` to create the artifacts:
+Then at the root of the project run `gulp` to create the bundles in the **build** directory:
 - OBJLoader2[.min].js
 - WWOBJLoader2[.min].js
-- WWOBJLoader2Proxy[.min].js
 
 ## Implementation Overview
 In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three pieces:
-- `OBJLoader2`: Is the class to interact with for setting up, for loading data from a given file or for directly forwarding data to the real parser
-- `OBJParser`: Is invoked by `OBJLoader2` to parse the data and transform it into a "raw" representation
-- `OBJMeshCreator`: Builds meshes from the "raw" representation that can be incorporared into the scenegraph.
+- `OBJLoader2Control`: Is the class to interact with for setting up, for loading data from a given file or for directly forwarding data to the real parser
+- `OBJLoader2Parser`: Is invoked by `OBJLoader2Control` to parse the data and transform it into a "raw" representation
+- `OBJLoader2MeshCreator`: Builds meshes from the "raw" representation that can be incorporared into the scenegraph.
 
 ##### What is the reason for separation?
 The loader should be easily usable within a web worker. But each web worker has its own scope which means any imported code needs to be re-loaded and some things cannot be accessed (e.g. DOM). The aim is to be able to enwrap the parser with two different **cloaks**:
 1. Standard direct usage
 2. Embedded within a web worker
 
-As `OBJParser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required integration (`OBJLoader2` and `OBJMeshCreator`) or `WWOBJLoader` and the communication and data proxy (`WWOBJLoaderProxy`) ensure it. `WWOBJLoaderProxy` basically provides the same functionality as `OBJLoader2` and `OBJMeshCreator`, but the work is done by the web worker.
+As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required integration (`OBJLoader2Control` and `OBJLoader2MeshCreator`) or `WWOBJLoader2` and the communication and data proxy (`WWOBJLoader2Proxy`) ensure it. `WWOBJLoader2Proxy` basically provides the same functionality as `OBJLoader2Control` and `OBJLoader2MeshCreator`, but the work is done by the web worker.
 
-`WWOBJLoaderProxy` is extened from `WWLoaderProxyBase`. The base defines the plan for usage of the proxy. One idea is to build other proxies for other web worker based loaders and the other idea is automation and orchestration.
+`WWOBJLoader2Proxy` could be seen as a template for other proxies of yet non-existingr web worker based loaders.
 
 ##### Directing the symphony
-`WWDirector` is introduced to ease usage of multiple `WWOBJLoaderProxy`. It is able to create a configurable amount of loader proxies that extend `WWLoaderProxyBase` via reflection just by providing parameters. An instruction queue is fed and all workers created will work to deplete it once they have been started. The usage of `WWDirector` is not required.
+`WWLoaderDirector` is introduced to ease usage of multiple `WWOBJLoader2Proxy`. It is able to create a configurable amount of loader proxies via reflection just by providing parameters. An instruction queue is fed and all workers created will work to deplete it once they have been started. The usage of `WWLoaderDirector` is not required.
 
 ##### Parser POIs
 The parser and mesh creation functions have reached full feature parity with the existing OBJ loader. These are some interesting POIs:
-- Per default `OBJLoader2` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
+- Per default `OBJLoader2Control` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
 - Face N-Gons are not supported identically to the old parser
 - Direct re-usage of all involved classes is fully supported. I took care in resource clean-up and re-validation of status on all involved objects
 - "o name" (object), "g name" (group) and new vertex definition without any other declaration lead to new object creation
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
 
+##### Bundle Details
+TODO
+
 
 ##### Improvements
-- Objects are streamed to the scene when `WWOBJLoaderProxy` is used. Add-only-when-fully-loaded should be added
+- Objects are streamed to the scene when `WWOBJLoader2Proxy` is used. Add-only-when-fully-loaded should be added
 - Check need for documentation improvement
 - Test automation with focus on batch execution of tests for retrival of more robust performance numbers
 

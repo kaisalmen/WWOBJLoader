@@ -1,11 +1,3 @@
-THREE.OBJLoader2 = {
-	consts: null,
-	Parser: null,
-	MeshCreator: null,
-	RawObject: null,
-	RawObjectDescription: null
-};
-
 THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
