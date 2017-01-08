@@ -119,7 +119,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 				var objectString = fullName + ' = (function () {\n\n';
 
 				var constructorString = object.prototype.constructor.toString();
-				constructorString = constructorString.replace( 'function e', 'function ' + internalName );
+				constructorString = constructorString.replace( /function\s[a-z]/g, 'function ' + internalName );
 				objectString += constructorString;
 
 				var funcString;
@@ -130,7 +130,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 					if ( typeof objectPart === 'function' ) {
 
 						funcString = objectPart.toString();
-						funcString = funcString.replace( 'new e', 'new ' + internalName );
+						funcString = funcString.replace( /new\s[a-z]/g, 'new ' + internalName );
 						objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
 
 					}

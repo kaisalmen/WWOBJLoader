@@ -36,7 +36,6 @@ gulp.task( 'bundle-wwobjloader2', function () {
 
 	return gulp.src(
 		[
-			'src/loaders/OBJLoader2Parser.js',
 			'src/loaders/WWOBJLoader2.js',
 			'src/loaders/WWOBJLoader2Proxy.js',
 			'src/loaders/WWLoaderDirector.js'
