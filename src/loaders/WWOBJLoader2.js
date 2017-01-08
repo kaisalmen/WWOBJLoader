@@ -1,11 +1,7 @@
 // WWOBJLoader2Proxy will ensure that parser code is available here in blob based worker it builds
-/*
-if ( THREE === undefined ) { var THREE = {} }
-if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} }
-if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+// importScripts( './OBJLoader2Parser.js' );
 
-importScripts( './OBJLoader2Parser.js' );
-*/
+if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} };
 
 THREE.OBJLoader2.WW.WWOBJLoader = (function () {
 

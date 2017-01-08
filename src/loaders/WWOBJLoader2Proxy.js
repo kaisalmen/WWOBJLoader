@@ -146,27 +146,16 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 			this.workerCode += '/**\n';
 			this.workerCode += '  * This code was re-constructed for web worker usage\n';
 			this.workerCode += '  */\n\n';
-			this.workerCode += 'if ( THREE === undefined ) {\n';
-			this.workerCode += '\tvar THREE = {}\n';
-			this.workerCode += '};\n\n';
-			this.workerCode += 'THREE.OBJLoader2 = {\n';
-			this.workerCode += '\tconsts: null,\n';
-			this.workerCode += '\tParser: null,\n';
-			this.workerCode += '\tRawObject: null,\n';
-			this.workerCode += '\tRawObjectDescription: null,\n';
-			this.workerCode += '\tWW: {\n';
-			this.workerCode += '\t\tWWOBJLoader: null,\n';
-			this.workerCode += '\t\tWWMeshCreator: null,\n';
-			this.workerCode += '\t\tWWOBJLoaderRef: null,\n';
-			this.workerCode += '\t\tWWOBJLoaderRunner: null\n';
-			this.workerCode += '\t}\n';
-			this.workerCode += '};\n\n';
+			this.workerCode += 'if ( THREE === undefined ) { var THREE = {} };\n';
+			this.workerCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} };\n\n';
 
 			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
 
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
+
+			this.workerCode += 'if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} };\n\n';
 
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWOBJLoader', 'WWOBJLoader', THREE.OBJLoader2.WW.WWOBJLoader );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWMeshCreator', 'WWMeshCreator', THREE.OBJLoader2.WW.WWMeshCreator );
