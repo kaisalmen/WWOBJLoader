@@ -1,0 +1,43 @@
+#menu {
+    margin: 4px 4px 4px 4px;
+    padding: 4px 12px 4px 12px;
+    border: solid darkorange;
+    border-radius: 8px;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+.clear {
+    color: red;
+    cursor: pointer;
+}
+h1 {
+    color: darkorange;
+}
+p {
+    margin: 4px 0px 4px 0px;
+    font-size: 18pt;
+    color: #e1e1e1;
+}
+a {
+    color: #00a200;
+    text-decoration: none;
+}
+a:visited {
+    color: #006400;
+    text-decoration: none;
+}
+a:hover {
+    color: #00a200;
+    text-decoration: underline;
+}
+.offsite {  color: #00a200;
+    font-size: 14px;
+}
+.extras {
+    color: #e1e1e1;
+    font-size: 14px;
+}
+.asset {
+    cursor: pointer;
+}
