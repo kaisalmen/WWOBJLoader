@@ -36,8 +36,8 @@ gulp.task( 'bundle-wwobjloader2', function () {
 
 	return gulp.src(
 		[
-			'src/loaders/WWOBJLoader2Proxy.js',
-			'src/loaders/WWLoaderDirector.js'
+			'src/loaders/WWOBJLoader2.js',
+			'src/loaders/WWOBJLoader2Director.js'
 		] )
 		.pipe( concat( 'WWOBJLoader2.js' ) )
 		.pipe( header( "/**\n  * @author Kai Salmen / www.kaisalmen.de\n  */\n\n'use strict';\n\n" ) )
