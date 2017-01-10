@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-<link href="css/Common.css" type="text/css" rel="stylesheet"/>
-<link href="css/OBJLoader2.css" type="text/css" rel="stylesheet"/>
+<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+<link href="./OBJLoader2.css" type="text/css" rel="stylesheet"/>
 
 <div id="info">
 	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
@@ -19,17 +19,17 @@
 	<canvas id="example"></canvas>
 </div>
 
-<script src="../node_modules/three/build/three.min.js"></script>
-<script src="../node_modules/three/examples/js/Detector.js"></script>
-<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+<script src="../../node_modules/three/build/three.min.js"></script>
+<script src="../../node_modules/three/examples/js/Detector.js"></script>
+<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="../build/OBJLoader2.min.js"></script>
+<script src="../../src/apps/ThreeJsApp.js"></script>
+<script src="../../src/apps/AppRunner.js"></script>
 
-<script src="../src/apps/ThreeJsApp.js"></script>
-<script src="../src/apps/AppRunner.js"></script>
+<script src="../../build/OBJLoader2.min.js"></script>
 
-<script src="../src/examples/OBJLoader2Verify.js"></script>
+<script src="./OBJLoader2Verify.js"></script>
 <script>
 
 	var APP = new THREE.examples.loaders.OBJLoader2Verify( document.getElementById( 'example' ) );

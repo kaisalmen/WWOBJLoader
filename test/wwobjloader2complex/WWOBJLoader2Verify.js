@@ -293,3 +293,27 @@ var WWOBJLoader2ObjDef = function ( name, pathBase, fileObj, fileMtl, pathTextur
 	this.scale = scale == null ? 1.0 : scale;
 	this.pivot = null;
 };
+
+var objsFemaleMale = [];
+objsFemaleMale.push( new WWOBJLoader2ObjDef( 'male02', '../../resource/obj/male02/', 'male02.obj', 'male02.mtl', '../../resource/obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
+objsFemaleMale.push( new WWOBJLoader2ObjDef( 'female02', '../../resource/obj/female02/', 'female02.obj', 'female02.mtl', '../../resource/obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
+
+// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+var objsZomaxOven = [];
+objsZomaxOven.push( new WWOBJLoader2ObjDef( 'oven', '../../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+
+var objsZomaxSink = [];
+objsZomaxSink.push( new WWOBJLoader2ObjDef( 'sink', '../../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
+
+var objsPtv1Zip = [];
+objsPtv1Zip.push( new WWOBJLoader2ObjDef( 'PTV1', '../../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../../resource/obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
+
+var objsCerberus = [];
+objsCerberus.push( new WWOBJLoader2ObjDef( 'cerberus', '../../resource/obj/Cerberus/', 'Cerberus.obj', null, '../../resource/obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
+
+var objsWaltHead = [];
+objsWaltHead.push( new WWOBJLoader2ObjDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
+
+var objsVive = [];
+objsVive.push( new WWOBJLoader2ObjDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../../resource/obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
