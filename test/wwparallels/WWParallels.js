@@ -34,7 +34,7 @@ THREE.examples.loaders.WWParallels = (function () {
 			htmlCanvas: elementToBindTo
 		} );
 
-		this.wwDirector = new THREE.OBJLoader2.WW.WWLoaderDirector( 256, 4 );
+		this.wwDirector = new THREE.OBJLoader2.WWLoaderDirector();
 
 		this.lights = null;
 		this.controls = null;
@@ -127,7 +127,7 @@ THREE.examples.loaders.WWParallels = (function () {
 		};
 
 		this.wwDirector.register(
-			THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
+			THREE.OBJLoader2.WWOBJLoader2.prototype,
 			'WWOBJLoader2',
 			{
 				completedLoading: callbackCompletedLoading,

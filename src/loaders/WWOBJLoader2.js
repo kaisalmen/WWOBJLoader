@@ -1,12 +1,10 @@
-if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} };
+THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
-THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
-
-	function WWOBJLoader2Proxy( params ) {
-		this.init( params );
+	function WWOBJLoader2( params ) {
+		this._init( params );
 	}
 
-	WWOBJLoader2Proxy.prototype.init = function ( webWorkerName ) {
+	WWOBJLoader2.prototype._init = function ( webWorkerName ) {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 
@@ -52,135 +50,56 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		this.counter = 0;
 	};
 
-	WWOBJLoader2Proxy.prototype.setDebug = function ( enabled ) {
+	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
 	};
 
-	WWOBJLoader2Proxy.prototype.getWebWorkerName = function () {
+	WWOBJLoader2.prototype.getWebWorkerName = function () {
 		return this.webWorkerName;
 	};
 
-	WWOBJLoader2Proxy.prototype.getModelName = function () {
+	WWOBJLoader2.prototype.getModelName = function () {
 		return this.modelName;
 	};
 
-	WWOBJLoader2Proxy.prototype.registerProgressCallback = function ( callbackProgress ) {
+	WWOBJLoader2.prototype.registerProgressCallback = function ( callbackProgress ) {
 		if ( callbackProgress != null ) this.callbacks.progress = callbackProgress;
 	};
 
-	WWOBJLoader2Proxy.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
+	WWOBJLoader2.prototype.registerHookCompletedLoading = function ( callbackCompletedLoading ) {
 		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading = callbackCompletedLoading;
 	};
 
-	WWOBJLoader2Proxy.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+	WWOBJLoader2.prototype.registerHookMaterialsLoaded = function ( callbackMaterialsLoaded ) {
 		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
 	};
 
-	WWOBJLoader2Proxy.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
+	WWOBJLoader2.prototype.registerHookMeshLoaded = function ( callbackMeshLoaded ) {
 		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
 	};
 
-	WWOBJLoader2Proxy.prototype.buildWebWorkerCode = function ( existingWorkerCode ) {
-		if ( existingWorkerCode != null ) this.workerCode = existingWorkerCode;
-		if ( this.workerCode == null ) {
-
-			console.time( 'buildWebWorkerCode' );
-			var buildObject = function ( fullName, object ) {
-				var objectString = fullName + ' = {\n';
-				var part;
-				for ( var name in object ) {
-
-					part = object[ name ];
-					if ( typeof( part ) === 'string' || part instanceof String ) {
-
-						part = part.replace( '\n', '\\n' );
-						part = part.replace( '\r', '\\r' );
-						objectString += '\t' + name + ': "' + part + '",\n';
-
-					} else if ( part instanceof Array ) {
-
-						objectString += '\t' + name + ': [' + part + '],\n';
-
-					} else if ( Number.isInteger( part ) ) {
-
-						objectString += '\t' + name + ': ' + part + ',\n';
-
-					} else if ( typeof part === 'function' ) {
-
-						objectString += '\t' + name + ': ' + part + ',\n';
-
-					}
-
-				}
-				objectString += '}\n';
-
-				return objectString;
-			};
-
-			var buildSingelton = function ( fullName, internalName, object ) {
-				var objectString = fullName + ' = (function () {\n\n';
-
-				var constructorString = object.prototype.constructor.toString();
-				constructorString = constructorString.replace( /function\s[a-z]/g, 'function ' + internalName );
-				objectString += constructorString;
-
-				var funcString;
-				var objectPart;
-				for ( var name in object.prototype ) {
-
-					objectPart = object.prototype[ name ];
-					if ( typeof objectPart === 'function' ) {
-
-						funcString = objectPart.toString();
-						funcString = funcString.replace( /new\s[a-z]/g, 'new ' + internalName );
-						objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
-
-					}
-
-				}
-				objectString += '\treturn ' + internalName + ';\n';
-				objectString += '})();\n';
-
-				return objectString;
-			};
-
-			this.workerCode = '';
-			this.workerCode += '/**\n';
-			this.workerCode += '  * This code was re-constructed for web worker usage\n';
-			this.workerCode += '  */\n\n';
-			this.workerCode += 'if ( THREE === undefined ) { var THREE = {} };\n';
-			this.workerCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} };\n\n';
-
-			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
-
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
-
-			this.workerCode += 'if ( THREE.OBJLoader2.WW === undefined ) { THREE.OBJLoader2.WW = {} };\n\n';
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWOBJLoader', 'WWOBJLoader', wwDef );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWMeshCreator', 'WWMeshCreator', wwMeshCreatorDef );
-			this.workerCode += 'THREE.OBJLoader2.WW.WWOBJLoaderRef = new THREE.OBJLoader2.WW.WWOBJLoader();\n\n';
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.WWOBJLoaderRunner', 'WWOBJLoaderRunner', wwLoaderRunnerDef );
-			this.workerCode += 'new THREE.OBJLoader2.WW.WWOBJLoaderRunner();\n\n';
-
-			console.timeEnd( 'buildWebWorkerCode' );
-		}
-
-		return this.workerCode;
+	WWOBJLoader2.prototype.addMaterial = function ( name, material ) {
+		if ( material.name !== name ) material.name = name;
+		this.materials[ name ] = material;
 	};
 
-	WWOBJLoader2Proxy.prototype.validate = function () {
+	WWOBJLoader2.prototype.getMaterial = function ( name ) {
+		var material = this.materials[ name ];
+		if ( ! material ) material = null;
+		return material;
+	};
+
+	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 		if ( this.worker == null ) {
 
-			this.buildWebWorkerCode();
+			this._buildWebWorkerCode();
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
 
 			var scope = this;
 			var scopeFunction = function ( e ) {
-				scope.receiveWorkerMessage( e );
+				scope._receiveWorkerMessage( e );
 			};
 			this.worker.addEventListener( 'message', scopeFunction, false );
 
@@ -212,11 +131,15 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		this.counter = 0;
 	};
 
-	WWOBJLoader2Proxy.prototype.prepareRun = function ( params ) {
-		this.validate();
+	/**
+	 * Provide parameters for the object+material to be loaded.
+	 * @param params
+	 */
+	WWOBJLoader2.prototype.prepareRun = function ( params ) {
+		this._validate();
 		this.dataAvailable = params.dataAvailable;
 		this.modelName = params.modelName;
-		console.time( 'WWOBJLoader2Proxy' );
+		console.time( 'WWOBJLoader2' );
 		if ( this.dataAvailable ) {
 
 			// fast-fail on bad type
@@ -253,7 +176,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		this.sceneGraphBaseNode = params.sceneGraphBaseNode;
 	};
 
-	WWOBJLoader2Proxy.prototype.run = function () {
+	WWOBJLoader2.prototype.run = function () {
 		var scope = this;
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -295,7 +218,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 				var output;
 				var onLoad = function ( objAsArrayBuffer ) {
 
-					scope.announceProgress( 'Running web worker!' );
+					scope._announceProgress( 'Running web worker!' );
 					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
 					scope.worker.postMessage( {
 						cmd: 'run',
@@ -313,7 +236,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 						refPercentComplete = percentComplete;
 						output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
-						scope.announceProgress( output );
+						scope._announceProgress( output );
 
 					}
 				};
@@ -321,8 +244,8 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 				var onError = function ( event ) {
 					output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
-					scope.announceProgress( output );
-					scope.finalize( 'error' );
+					scope._announceProgress( output );
+					scope._finalize( 'error' );
 
 				};
 
@@ -353,7 +276,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		}
 	};
 
-	WWOBJLoader2Proxy.prototype.receiveWorkerMessage = function ( event ) {
+	WWOBJLoader2.prototype._receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -440,27 +363,27 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 				this.sceneGraphBaseNode.add( mesh );
 
 				var output = '(' + this.counter + '): ' + payload.meshName;
-				this.announceProgress( 'Adding mesh', output );
+				this._announceProgress( 'Adding mesh', output );
 				break;
 
 			case 'complete':
 
-				console.timeEnd( 'WWOBJLoader2Proxy' );
+				console.timeEnd( 'WWOBJLoader2' );
 				if ( payload.msg != null ) {
 
-					this.announceProgress( payload.msg );
+					this._announceProgress( payload.msg );
 
 				} else {
 
-					this.announceProgress( '' );
+					this._announceProgress( '' );
 
 				}
 
-				this.finalize( 'complete' );
+				this._finalize( 'complete' );
 				break;
 
 			case 'report_progress':
-				this.announceProgress( '', payload.output );
+				this._announceProgress( '', payload.output );
 				break;
 
 			default:
@@ -470,7 +393,26 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		}
 	};
 
-	WWOBJLoader2Proxy.prototype.finalize = function ( reason ) {
+	WWOBJLoader2.prototype.setRequestTerminate = function () {
+		this.requestTerminate = true;
+	};
+
+	WWOBJLoader2.prototype.terminate = function () {
+		if ( this.worker != null ) {
+
+			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+
+			this.worker.terminate();
+			this.worker = null;
+			this.workerCode = null;
+			this._finalize( 'terminate' );
+
+		}
+		this.fileLoader = null;
+		this.mtlLoader = null;
+	};
+
+	WWOBJLoader2.prototype._finalize = function ( reason ) {
 		this.running = false;
 		if ( reason === 'complete' ) {
 
@@ -490,26 +432,7 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		}
 	};
 
-	WWOBJLoader2Proxy.prototype.setRequestTerminate = function () {
-		this.requestTerminate = true;
-	};
-
-	WWOBJLoader2Proxy.prototype.terminate = function () {
-		if ( this.worker != null ) {
-
-			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
-
-			this.worker.terminate();
-			this.worker = null;
-			this.workerCode = null;
-			this.finalize( 'terminate' );
-
-		}
-		this.fileLoader = null;
-		this.mtlLoader = null;
-	};
-
-	WWOBJLoader2Proxy.prototype.announceProgress = function ( baseText, text ) {
+	WWOBJLoader2.prototype._announceProgress = function ( baseText, text ) {
 		var output = "";
 		if ( baseText !== null && baseText !== undefined ) {
 
@@ -533,282 +456,362 @@ THREE.OBJLoader2.WW.WWLoader2Proxy = (function () {
 		}
 	};
 
-	WWOBJLoader2Proxy.prototype.addMaterial = function ( name, material ) {
-		if ( material.name !== name ) material.name = name;
-		this.materials[ name ] = material;
-	};
+	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {
+		if ( existingWorkerCode != null ) this.workerCode = existingWorkerCode;
+		if ( this.workerCode == null ) {
 
-	WWOBJLoader2Proxy.prototype.getMaterial = function ( name ) {
-		var material = this.materials[ name ];
-		if ( ! material ) material = null;
-		return material;
-	};
+			console.time( 'buildWebWorkerCode' );
+			var wwDef = (function () {
 
-	var wwDef = (function () {
+				function OBJLoader() {
+					this.meshCreator = new THREE.OBJLoader2.WW.MeshCreator();
+					this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
+					this.parser.debug = false;
+					this.validated = false;
+					this.cmdState = 'created';
 
-		function WWOBJLoader() {
-			this.meshCreator = new THREE.OBJLoader2.WW.WWMeshCreator();
-			this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
-			this.parser.debug = false;
-			this.validated = false;
-			this.cmdState = 'created';
-
-			this.debug = false;
-		}
-
-		/**
-		 * Allows to set debug mode for the parser and the meshCreatorDebug
-		 *
-		 * @param parserDebug
-		 * @param meshCreatorDebug
-		 */
-		WWOBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
-			this.parser.debug = parserDebug;
-			this.meshCreator.debug = meshCreatorDebug;
-		};
-
-		/**
-		 * Validate status, then parse arrayBuffer, finalize and return objGroup
-		 *
-		 * @param arrayBuffer
-		 */
-		WWOBJLoader.prototype.parse = function ( arrayBuffer ) {
-			console.log( 'Parsing arrayBuffer...' );
-			console.time( 'parseArrayBuffer' );
-
-			this.validate();
-			this.parser.parseArrayBuffer( arrayBuffer );
-			var objGroup = this.finalize();
-
-			console.timeEnd( 'parseArrayBuffer' );
-
-			return objGroup;
-		};
-
-		/**
-		 * Check initialization status: Used for init and re-init
-		 */
-		WWOBJLoader.prototype.validate = function () {
-			if ( this.validated ) return;
-
-			this.parser.validate();
-			this.meshCreator.validate();
-
-			this.validated = true;
-		};
-
-		WWOBJLoader.prototype.finalize = function () {
-			console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
-			this.parser.finalize();
-			this.meshCreator.finalize();
-			this.validated = false;
-		};
-
-		WWOBJLoader.prototype.init = function ( payload ) {
-			this.cmdState = 'init';
-			this.setDebug( payload.debug, payload.debug );
-		};
-
-		WWOBJLoader.prototype.setMaterials = function ( payload ) {
-			this.cmdState = 'setMaterials';
-			this.meshCreator.setMaterials( payload.materialNames );
-		};
-
-		WWOBJLoader.prototype.run = function ( payload ) {
-			this.cmdState = 'run';
-
-			this.parse( payload.objAsArrayBuffer );
-			console.log( 'OBJ loading complete!' );
-
-			this.cmdState = 'complete';
-			self.postMessage( {
-				cmd: this.cmdState,
-				msg: null
-			} );
-		};
-
-		return WWOBJLoader;
-	})();
-
-	var wwMeshCreatorDef = (function () {
-
-		function WWMeshCreator() {
-			this.materials = null;
-			this.debug = false;
-			this.globalObjectCount = 1;
-			this.validated = false;
-		}
-
-		WWMeshCreator.prototype.setMaterials = function ( materials ) {
-			this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
-		};
-
-		WWMeshCreator.prototype.setDebug = function ( debug ) {
-			this.debug = ( debug == null ) ? this.debug : debug;
-		};
-
-		WWMeshCreator.prototype.validate = function () {
-			if ( this.validated ) return;
-
-			this.setMaterials( null );
-			this.setDebug( null );
-			this.globalObjectCount = 1;
-		};
-
-		WWMeshCreator.prototype.finalize = function () {
-			this.materials = null;
-			this.validated = false;
-		};
-
-		/**
-		 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check)
-		 * @param rawObjectDescriptions
-		 * @param inputObjectCount
-		 * @param absoluteVertexCount
-		 * @param absoluteNormalCount
-		 * @param absoluteUvCount
-		 */
-		WWMeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
-			if ( this.debug ) console.log( 'WWOBJLoader.buildRawMeshData:\nInput object no.: ' + inputObjectCount );
-
-			var vertexFa = new Float32Array( absoluteVertexCount );
-			var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-			var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
-
-			var rawObjectDescription;
-			var materialDescription;
-			var materialDescriptions = [];
-
-			var createMultiMaterial = ( rawObjectDescriptions.length > 1 ) ? true : false;
-			var materialIndex = 0;
-			var materialIndexMapping = [];
-			var selectedMaterialIndex;
-			var materialGroup;
-			var materialGroups = [];
-
-			var vertexBAOffset = 0;
-			var vertexGroupOffset = 0;
-			var vertexLength;
-			var normalOffset = 0;
-			var uvOffset = 0;
-
-			for ( var oodIndex in rawObjectDescriptions ) {
-				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
-
-				materialDescription = { name: rawObjectDescription.materialName, flat: false, default: false };
-				if ( this.materials[ materialDescription.name ] === null ) {
-
-					materialDescription.default = true;
-					console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
-
+					this.debug = false;
 				}
-				// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-				if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
 
-				vertexLength = rawObjectDescription.vertices.length;
-				if ( createMultiMaterial ) {
+				/**
+				 * Allows to set debug mode for the parser and the meshCreatorDebug
+				 *
+				 * @param parserDebug
+				 * @param meshCreatorDebug
+				 */
+				OBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
+					this.parser.debug = parserDebug;
+					this.meshCreator.debug = meshCreatorDebug;
+				};
 
-					// re-use material if already used before. Reduces materials array size and eliminates duplicates
+				/**
+				 * Validate status, then parse arrayBuffer, finalize and return objGroup
+				 *
+				 * @param arrayBuffer
+				 */
+				OBJLoader.prototype.parse = function ( arrayBuffer ) {
+					console.log( 'Parsing arrayBuffer...' );
+					console.time( 'parseArrayBuffer' );
 
-					selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
-					if ( ! selectedMaterialIndex ) {
+					this._validate();
+					this.parser.parseArrayBuffer( arrayBuffer );
+					var objGroup = this._finalize();
 
-						selectedMaterialIndex = materialIndex;
-						materialIndexMapping[ materialDescription.name ] = materialIndex;
-						materialDescriptions.push( materialDescription );
-						materialIndex++;
+					console.timeEnd( 'parseArrayBuffer' );
+
+					return objGroup;
+				};
+
+				OBJLoader.prototype._validate = function () {
+					if ( this.validated ) return;
+
+					this.parser.validate();
+					this.meshCreator.validate();
+
+					this.validated = true;
+				};
+
+				OBJLoader.prototype._finalize = function () {
+					console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
+					this.parser.finalize();
+					this.meshCreator.finalize();
+					this.validated = false;
+				};
+
+				OBJLoader.prototype.init = function ( payload ) {
+					this.cmdState = 'init';
+					this.setDebug( payload.debug, payload.debug );
+				};
+
+				OBJLoader.prototype.setMaterials = function ( payload ) {
+					this.cmdState = 'setMaterials';
+					this.meshCreator.setMaterials( payload.materialNames );
+				};
+
+				OBJLoader.prototype.run = function ( payload ) {
+					this.cmdState = 'run';
+
+					this.parse( payload.objAsArrayBuffer );
+					console.log( 'OBJ loading complete!' );
+
+					this.cmdState = 'complete';
+					self.postMessage( {
+						cmd: this.cmdState,
+						msg: null
+					} );
+				};
+
+				return OBJLoader;
+			})();
+
+			var wwMeshCreatorDef = (function () {
+
+				function MeshCreator() {
+					this.materials = null;
+					this.debug = false;
+					this.globalObjectCount = 1;
+					this.validated = false;
+				}
+
+				MeshCreator.prototype.setMaterials = function ( materials ) {
+					this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
+				};
+
+				MeshCreator.prototype.setDebug = function ( debug ) {
+					this.debug = ( debug == null ) ? this.debug : debug;
+				};
+
+				MeshCreator.prototype.validate = function () {
+					if ( this.validated ) return;
+
+					this.setMaterials( null );
+					this.setDebug( null );
+					this.globalObjectCount = 1;
+				};
+
+				MeshCreator.prototype.finalize = function () {
+					this.materials = null;
+					this.validated = false;
+				};
+
+				/**
+				 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check)
+				 * @param rawObjectDescriptions
+				 * @param inputObjectCount
+				 * @param absoluteVertexCount
+				 * @param absoluteNormalCount
+				 * @param absoluteUvCount
+				 */
+				MeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
+					if ( this.debug ) console.log( 'OBJLoader.buildMesh:\nInput object no.: ' + inputObjectCount );
+
+					var vertexFa = new Float32Array( absoluteVertexCount );
+					var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
+					var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+
+					var rawObjectDescription;
+					var materialDescription;
+					var materialDescriptions = [];
+
+					var createMultiMaterial = ( rawObjectDescriptions.length > 1 ) ? true : false;
+					var materialIndex = 0;
+					var materialIndexMapping = [];
+					var selectedMaterialIndex;
+					var materialGroup;
+					var materialGroups = [];
+
+					var vertexBAOffset = 0;
+					var vertexGroupOffset = 0;
+					var vertexLength;
+					var normalOffset = 0;
+					var uvOffset = 0;
+
+					for ( var oodIndex in rawObjectDescriptions ) {
+						rawObjectDescription = rawObjectDescriptions[ oodIndex ];
+
+						materialDescription = { name: rawObjectDescription.materialName, flat: false, default: false };
+						if ( this.materials[ materialDescription.name ] === null ) {
+
+							materialDescription.default = true;
+							console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
+
+						}
+						// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
+						if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
+
+						vertexLength = rawObjectDescription.vertices.length;
+						if ( createMultiMaterial ) {
+
+							// re-use material if already used before. Reduces materials array size and eliminates duplicates
+
+							selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
+							if ( ! selectedMaterialIndex ) {
+
+								selectedMaterialIndex = materialIndex;
+								materialIndexMapping[ materialDescription.name ] = materialIndex;
+								materialDescriptions.push( materialDescription );
+								materialIndex++;
+
+							}
+							materialGroup = {
+								start: vertexGroupOffset,
+								count: vertexLength / 3,
+								index: selectedMaterialIndex
+							};
+							materialGroups.push( materialGroup );
+							vertexGroupOffset += vertexLength / 3;
+
+						} else {
+
+							materialDescriptions.push( materialDescription );
+
+						}
+
+						vertexFa.set( rawObjectDescription.vertices, vertexBAOffset );
+						vertexBAOffset += vertexLength;
+
+						if ( normalFA ) {
+
+							normalFA.set( rawObjectDescription.normals, normalOffset );
+							normalOffset += rawObjectDescription.normals.length;
+
+						}
+						if ( uvFA ) {
+
+							uvFA.set( rawObjectDescription.uvs, uvOffset );
+							uvOffset += rawObjectDescription.uvs.length;
+
+						}
+						if ( this.debug ) this.printReport( rawObjectDescription, selectedMaterialIndex );
 
 					}
-					materialGroup = {
-						start: vertexGroupOffset,
-						count: vertexLength / 3,
-						index: selectedMaterialIndex
-					};
-					materialGroups.push( materialGroup );
-					vertexGroupOffset += vertexLength / 3;
 
-				} else {
+					self.postMessage( {
+						cmd: 'objData',
+						meshName: rawObjectDescription.objectName,
+						multiMaterial: createMultiMaterial,
+						materialDescriptions: materialDescriptions,
+						materialGroups: materialGroups,
+						vertices: vertexFa,
+						normals: normalFA,
+						uvs: uvFA
+					}, [ vertexFa.buffer ], normalFA !== null ? [ normalFA.buffer ] : null, uvFA !== null ? [ uvFA.buffer ] : null );
 
-					materialDescriptions.push( materialDescription );
+					this.globalObjectCount++;
+				};
 
+				return MeshCreator;
+			})();
+
+			var wwLoaderRunnerDef = (function () {
+
+				function OBJLoaderRunner() {
+					self.addEventListener( 'message', this.runner, false );
 				}
 
-				vertexFa.set( rawObjectDescription.vertices, vertexBAOffset );
-				vertexBAOffset += vertexLength;
+				OBJLoaderRunner.prototype.runner = function ( event ) {
+					var payload = event.data;
 
-				if ( normalFA ) {
+					console.log( 'Command state before: ' + THREE.OBJLoader2.WW.OBJLoaderRef.cmdState );
 
-					normalFA.set( rawObjectDescription.normals, normalOffset );
-					normalOffset += rawObjectDescription.normals.length;
+					switch ( payload.cmd ) {
+						case 'init':
+
+							THREE.OBJLoader2.WW.OBJLoaderRef.init( payload );
+							break;
+
+						case 'setMaterials':
+
+							THREE.OBJLoader2.WW.OBJLoaderRef.setMaterials( payload );
+							break;
+
+						case 'run':
+
+							THREE.OBJLoader2.WW.OBJLoaderRef.run( payload );
+							break;
+
+						default:
+
+							console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
+							break;
+
+					}
+
+					console.log( 'Command state after: ' + THREE.OBJLoader2.WW.OBJLoaderRef.cmdState );
+				};
+
+				return OBJLoaderRunner;
+			})();
+
+			var buildObject = function ( fullName, object ) {
+				var objectString = fullName + ' = {\n';
+				var part;
+				for ( var name in object ) {
+
+					part = object[ name ];
+					if ( typeof( part ) === 'string' || part instanceof String ) {
+
+						part = part.replace( '\n', '\\n' );
+						part = part.replace( '\r', '\\r' );
+						objectString += '\t' + name + ': "' + part + '",\n';
+
+					} else if ( part instanceof Array ) {
+
+						objectString += '\t' + name + ': [' + part + '],\n';
+
+					} else if ( Number.isInteger( part ) ) {
+
+						objectString += '\t' + name + ': ' + part + ',\n';
+
+					} else if ( typeof part === 'function' ) {
+
+						objectString += '\t' + name + ': ' + part + ',\n';
+
+					}
 
 				}
-				if ( uvFA ) {
+				objectString += '}\n\n';
 
-					uvFA.set( rawObjectDescription.uvs, uvOffset );
-					uvOffset += rawObjectDescription.uvs.length;
+				return objectString;
+			};
+
+			var buildSingelton = function ( fullName, internalName, object ) {
+				var objectString = fullName + ' = (function () {\n\n';
+
+				var constructorString = object.prototype.constructor.toString();
+				constructorString = constructorString.replace( /function\s[a-z]/g, 'function ' + internalName );
+				objectString += '\t' + constructorString + '\n\n';
+
+				var funcString;
+				var objectPart;
+				for ( var name in object.prototype ) {
+
+					objectPart = object.prototype[ name ];
+					if ( typeof objectPart === 'function' ) {
+
+						funcString = objectPart.toString();
+						funcString = funcString.replace( /new\s[a-z]/g, 'new ' + internalName );
+						objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+
+					}
 
 				}
-				if ( this.debug ) this.printReport( rawObjectDescription, selectedMaterialIndex );
+				objectString += '\treturn ' + internalName + ';\n';
+				objectString += '})();\n\n';
 
-			}
+				return objectString;
+			};
 
-			self.postMessage( {
-				cmd: 'objData',
-				meshName: rawObjectDescription.objectName,
-				multiMaterial: createMultiMaterial,
-				materialDescriptions: materialDescriptions,
-				materialGroups: materialGroups,
-				vertices: vertexFa,
-				normals: normalFA,
-				uvs: uvFA
-			}, [ vertexFa.buffer ], normalFA !== null ? [ normalFA.buffer ] : null, uvFA !== null ? [ uvFA.buffer ] : null );
+			this.workerCode = '';
+			this.workerCode += '/**\n';
+			this.workerCode += '  * This code was constructed by \n';
+			this.workerCode += '  */\n\n';
+			this.workerCode += 'var THREE = {\n';
+			this.workerCode += '\tOBJLoader2: {\n';
+			this.workerCode += '\t\tWW: {\n';
+			this.workerCode += '\t\t}\n';
+			this.workerCode += '\t}\n';
+			this.workerCode += '};\n\n';
 
-			this.globalObjectCount++;
-		};
+			// parser re-construtcion
+			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
 
-		return WWMeshCreator;
-	})();
+			// web worker construction
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.OBJLoader', 'OBJLoader', wwDef );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.MeshCreator', 'MeshCreator', wwMeshCreatorDef );
+			this.workerCode += 'THREE.OBJLoader2.WW.OBJLoaderRef = new THREE.OBJLoader2.WW.OBJLoader();\n\n';
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.OBJLoaderRunner', 'OBJLoaderRunner', wwLoaderRunnerDef );
+			this.workerCode += 'new THREE.OBJLoader2.WW.OBJLoaderRunner();\n\n';
 
-	var wwLoaderRunnerDef = (function () {
-
-		function WWOBJLoaderRunner() {
-			self.addEventListener( 'message', this.runner, false );
+			console.timeEnd( 'buildWebWorkerCode' );
 		}
 
-		WWOBJLoaderRunner.prototype.runner = function ( event ) {
-			var payload = event.data;
+		return this.workerCode;
+	};
 
-			console.log( 'Command state before: ' + THREE.OBJLoader2.WW.WWOBJLoaderRef.cmdState );
-
-			switch ( payload.cmd ) {
-				case 'init':
-
-					THREE.OBJLoader2.WW.WWOBJLoaderRef.init( payload );
-					break;
-
-				case 'setMaterials':
-
-					THREE.OBJLoader2.WW.WWOBJLoaderRef.setMaterials( payload );
-					break;
-
-				case 'run':
-
-					THREE.OBJLoader2.WW.WWOBJLoaderRef.run( payload );
-					break;
-
-				default:
-
-					console.error( 'WWOBJLoader: Received unknown command: ' + payload.cmd );
-					break;
-
-			}
-
-			console.log( 'Command state after: ' + THREE.OBJLoader2.WW.WWOBJLoaderRef.cmdState );
-		};
-
-		return WWOBJLoaderRunner;
-	})();
-
-	return WWOBJLoader2Proxy;
+	return WWOBJLoader2;
 
 })();
