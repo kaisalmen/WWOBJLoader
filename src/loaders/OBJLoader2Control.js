@@ -1,3 +1,6 @@
+/**
+ * Use this class to load OBJ data from arraybuffer or text
+ */
 THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
@@ -8,9 +11,6 @@ THREE.OBJLoader2 = (function () {
 
 		this.meshCreator = new THREE.OBJLoader2.MeshCreator();
 		this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
-
-		this.parser.debug = false;
-		this.meshCreator.debug = false;
 
 		this.validated = false;
 	}
@@ -25,38 +25,45 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set the node where the loaded objects will be attached.
-	 * Default is new empty THREE.Group
+	 * Set the node where the loaded objects will be attached
 	 *
 	 * @param sceneGraphBaseNode
 	 */
 	OBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.meshCreator.setSceneGraphBaseNode( sceneGraphBaseNode );
+		this.meshCreator._setSceneGraphBaseNode( sceneGraphBaseNode );
 	};
 
 	/**
-	 * Set materials loaded by MTLLoader.
-	 * Default is null.
+	 * Set materials loaded by MTLLoader
 	 *
-	 * @param materials
+	 * @param materials THREE.MTLLoader.MaterialCreator.materials)
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
-		this.meshCreator.setMaterials( materials );
+		this.meshCreator._setMaterials( materials );
 	};
 
 	/**
-	 * Allows to set debug mode for the parser and the meshCreatorDebug
+	 * Allows to set debug mode for the parser and the meshCreator
 	 *
 	 * @param parserDebug
 	 * @param meshCreatorDebug
 	 */
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
-		this.parser.debug = parserDebug;
-		this.meshCreator.debug = meshCreatorDebug;
+		this.parser._setDebug( parserDebug );
+		this.meshCreator._setDebug( meshCreatorDebug );
 	};
 
+	/**
+	 * Use this convenient method to load an OBJ file at the given URL. Per default the fileLoader uses an arraybuffer
+	 *
+	 * @param url
+	 * @param onLoad
+	 * @param onProgress
+	 * @param onError
+	 * @param useArrayBuffer
+	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
-		this.validate();
+		this._validate();
 		this.fileLoader.setPath( this.path );
 		this.fileLoader.setResponseType( ( useArrayBuffer || useArrayBuffer == null ) ? 'arraybuffer' : 'text' );
 
@@ -70,7 +77,7 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Validate status, then parse arrayBuffer, finalize and return sceneGraphAttach
+	 * Default parse function: Parses OBJ file content stored in arrayBuffer and returns the sceneGraphBaseNode
 	 *
 	 * @param arrayBuffer
 	 */
@@ -84,9 +91,9 @@ THREE.OBJLoader2 = (function () {
 		console.log( 'Parsing arrayBuffer...' );
 		console.time( 'parseArrayBuffer' );
 
-		this.validate();
+		this._validate();
 		this.parser.parseArrayBuffer( arrayBuffer );
-		var sceneGraphAttach = this.finalize();
+		var sceneGraphAttach = this._finalize();
 
 		console.timeEnd( 'parseArrayBuffer' );
 
@@ -94,7 +101,7 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Validate status, then parse text, finalize and return sceneGraphAttach
+	 * Legacy parse function: Parses OBJ file content stored in string and returns the sceneGraphBaseNode
 	 *
 	 * @param text
 	 */
@@ -108,39 +115,36 @@ THREE.OBJLoader2 = (function () {
 		console.log( 'Parsing text...' );
 		console.time( 'parseText' );
 
-		this.validate();
+		this._validate();
 		this.parser.parseText( text );
-		var sceneGraphAttach = this.finalize();
+		var sceneGraphBaseNode = this._finalize();
 
 		console.timeEnd( 'parseText' );
 
-		return sceneGraphAttach;
+		return sceneGraphBaseNode;
 	};
 
-	/**
-	 * Check initialization status: Used for init and re-init
-	 */
-	OBJLoader2.prototype.validate = function () {
+	OBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.setPath( null );
-		this.parser.validate();
-		this.meshCreator.validate();
+		this.parser._validate();
+		this.meshCreator._validate();
 
 		this.validated = true;
 	};
 
-	OBJLoader2.prototype.finalize = function () {
+	OBJLoader2.prototype._finalize = function () {
 		console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
 
-		this.parser.finalize();
+		this.parser._finalize();
 		this.fileLoader = null;
-		var sceneGraphAttach = this.meshCreator.sceneGraphBaseNode;
-		this.meshCreator.finalize();
+		var sceneGraphBaseNode = this.meshCreator.sceneGraphBaseNode;
+		this.meshCreator._finalize();
 		this.validated = false;
 
-		return sceneGraphAttach;
+		return sceneGraphBaseNode;
 	};
 
 	return OBJLoader2;

@@ -1,3 +1,6 @@
+/**
+ * MeshCreator is used to transform THREE.OBJLoader2.RawObjectDescriptions to  THREE.Mesh
+ */
 THREE.OBJLoader2.MeshCreator = (function () {
 
 	function MeshCreator() {
@@ -9,35 +12,38 @@ THREE.OBJLoader2.MeshCreator = (function () {
 		this.validated = false;
 	}
 
-	MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+	MeshCreator.prototype._setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.sceneGraphBaseNode = ( sceneGraphBaseNode == null ) ? ( this.sceneGraphBaseNode == null ? new THREE.Group() : this.sceneGraphBaseNode ) : sceneGraphBaseNode;
 	};
 
-	MeshCreator.prototype.setMaterials = function ( materials ) {
+	MeshCreator.prototype._setMaterials = function ( materials ) {
 		this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
 	};
 
-	MeshCreator.prototype.setDebug = function ( debug ) {
+	MeshCreator.prototype._setDebug = function ( debug ) {
 		this.debug = ( debug == null ) ? this.debug : debug;
 	};
 
-	MeshCreator.prototype.validate = function () {
+	MeshCreator.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.setSceneGraphBaseNode( null );
-		this.setMaterials( null );
-		this.setDebug( null );
+		this._setSceneGraphBaseNode( null );
+		this._setMaterials( null );
+		this._setDebug( null );
 		this.globalObjectCount = 1;
 	};
 
-	MeshCreator.prototype.finalize = function () {
+	MeshCreator.prototype._finalize = function () {
 		this.sceneGraphBaseNode = null;
 		this.materials = null;
 		this.validated = false;
 	};
 
 	/**
-	 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check)
+	 * RawObjectDescriptions are transformed to THREE.Mesh.
+	 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check).
+	 * This method shall be overridden by the web worker implementation
+	 *
 	 * @param rawObjectDescriptions
 	 * @param inputObjectCount
 	 * @param absoluteVertexCount
@@ -151,7 +157,7 @@ THREE.OBJLoader2.MeshCreator = (function () {
 				uvOffset += rawObjectDescription.uvs.length;
 
 			}
-			if ( this.debug ) this.printReport( rawObjectDescription, selectedMaterialIndex );
+			if ( this.debug ) this._printReport( rawObjectDescription, selectedMaterialIndex );
 
 		}
 		if ( ! normalBA ) bufferGeometry.computeVertexNormals();
@@ -163,7 +169,7 @@ THREE.OBJLoader2.MeshCreator = (function () {
 		this.globalObjectCount++;
 	};
 
-	MeshCreator.prototype.printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
+	MeshCreator.prototype._printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
 		console.log(
 			' Output Object no.: ' + this.globalObjectCount +
 			'\n objectName: ' + rawObjectDescription.objectName +

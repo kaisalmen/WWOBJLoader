@@ -44,41 +44,41 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.pivot = null;
 
 		this.fileDef = {
-			path: '../resource/obj/female02/',
+			path: '../../resource/obj/female02/',
 			fileObj: 'female02.obj',
-			texturePath: '../resource/obj/female02/',
+			texturePath: '../../resource/obj/female02/',
 			fileMtl: 'female02.mtl'
 		};
 		/*
 		 this.fileDef = {
-		 path: '../resource/obj/Cerberus/',
+		 path: '../../resource/obj/Cerberus/',
 		 fileObj: 'Cerberus.obj',
 		 fileMtl: ''
 		 };
 
 		 this.fileDef = {
-		 path: '../resource/obj/PTV1/',
+		 path: '../../resource/obj/PTV1/',
 		 fileObj: 'PTV1.obj',
-		 texturePath: '../resource/obj/PTV1/',
+		 texturePath: '../../resource/obj/PTV1/',
 		 fileMtl: 'PTV1.mtl'
 		 };
 
 		 this.fileDef = {
-		 path: '../resource/obj/zomax/',
+		 path: '../../resource/obj/zomax/',
 		 fileObj: 'zomax-net_haze-sink-scene.obj',
-		 texturePath: '../resource/obj/zomax/',
+		 texturePath: '../../resource/obj/zomax/',
 		 fileMtl: ''
 		 };
 
 		 this.fileDef = {
-		 path: '../resource/obj/cube/',
+		 path: '../../resource/obj/cube/',
 		 fileObj: 'cube.obj',
-		 texturePath: '../resource/obj/cube/',
+		 texturePath: '../../resource/obj/cube/',
 		 fileMtl: 'cube.mtl'
 		 }
 
 		 this.fileDef = {
-		 path: '../resource/obj/vive-controller/',
+		 path: '../../resource/obj/vive-controller/',
 		 fileObj: 'vr_controller_vive_1_5.obj',
 		 fileMtl: ''
 		 };
@@ -88,7 +88,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 	// ThreeJsApp.initPreGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor(0x303030);
+		this.renderer.setClearColor( 0x303030 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -121,6 +121,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.scenePerspective.scene.add( this.cube );
 
 		this.pivot = new THREE.Object3D();
+		this.pivot.name = 'Pivot';
 		this.scenePerspective.scene.add( this.pivot );
 	};
 
@@ -136,16 +137,13 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 			materials.preload();
 
 			var objLoader = new THREE.OBJLoader2();
+			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( scope.fileDef.path );
 			objLoader.setDebug( false, false );
 
 			var onSuccess = function ( object3d ) {
-				if ( object3d !== undefined && object3d !== null ) {
-
-					scope.pivot.add( object3d );
-
-				}
+				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 			};
 
 			var onProgress = function ( event ) {

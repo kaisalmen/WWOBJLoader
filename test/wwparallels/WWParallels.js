@@ -34,7 +34,7 @@ THREE.examples.loaders.WWParallels = (function () {
 			htmlCanvas: elementToBindTo
 		} );
 
-		this.wwDirector = new THREE.OBJLoader2.WW.WWLoaderDirector( 256, 4 );
+		this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director();
 
 		this.lights = null;
 		this.controls = null;
@@ -127,7 +127,7 @@ THREE.examples.loaders.WWParallels = (function () {
 		};
 
 		this.wwDirector.register(
-			THREE.OBJLoader2.WW.WWLoader2Proxy.prototype,
+			THREE.OBJLoader2.WWOBJLoader2.prototype,
 			'WWOBJLoader2',
 			{
 				completedLoading: callbackCompletedLoading,
@@ -141,25 +141,25 @@ THREE.examples.loaders.WWParallels = (function () {
 		models.push( {
 			modelName: 'male02',
 			dataAvailable: false,
-			pathObj: '../resource/obj/male02/',
+			pathObj: '../../resource/obj/male02/',
 			fileObj: 'male02.obj',
-			pathTexture: '../resource/obj/male02/',
+			pathTexture: '../../resource/obj/male02/',
 			fileMtl: 'male02.mtl'
 		} );
 
 		models.push( {
 			modelName: 'female02',
 			dataAvailable: false,
-			pathObj: '../resource/obj/female02/',
+			pathObj: '../../resource/obj/female02/',
 			fileObj: 'female02.obj',
-			pathTexture: '../resource/obj/female02/',
+			pathTexture: '../../resource/obj/female02/',
 			fileMtl: 'female02.mtl'
 		} );
 
 		models.push( {
 			modelName: 'viveController',
 			dataAvailable: false,
-			pathObj: '../resource/obj/vive-controller/',
+			pathObj: '../../resource/obj/vive-controller/',
 			fileObj: 'vr_controller_vive_1_5.obj',
 			scale: 400.0
 		} );
@@ -167,15 +167,15 @@ THREE.examples.loaders.WWParallels = (function () {
 		models.push( {
 			modelName: 'cerberus',
 			dataAvailable: false,
-			pathObj: '../resource/obj/Cerberus/',
+			pathObj: '../../resource/obj/Cerberus/',
 			fileObj: 'Cerberus.obj'
 		} );
 		models.push( {
 			modelName:'WaltHead',
 			dataAvailable: false,
-			pathObj: '../resource/obj/walt/',
+			pathObj: '../../resource/obj/walt/',
 			fileObj: 'WaltHead.obj',
-			pathTexture: '../resource/obj/walt/',
+			pathTexture: '../../resource/obj/walt/',
 			fileMtl: 'WaltHead.mtl'
 		} );
 

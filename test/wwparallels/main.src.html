@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-<link href="css/Common.css" type="text/css" rel="stylesheet"/>
-<link href="css/WWParallels.css" type="text/css" rel="stylesheet"/>
+<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+<link href="./main.css" type="text/css" rel="stylesheet"/>
 
 <div id="dat">
 
@@ -19,20 +19,21 @@
 <div id="feedback">
 </div>
 
-<script src="../node_modules/three/build/three.min.js"></script>
-<script src="../node_modules/three/examples/js/Detector.js"></script>
-<script src="../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-<script src="../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+<script src="../../node_modules/three/build/three.min.js"></script>
+<script src="../../node_modules/three/examples/js/Detector.js"></script>
+<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-<script src="../src/apps/ThreeJsApp.js"></script>
-<script src="../src/apps/AppRunner.js"></script>
+<script src="../../src/apps/ThreeJsApp.js"></script>
+<script src="../../src/apps/AppRunner.js"></script>
 
-<script src="../build/OBJLoader2.min.js"></script>
-<script src="../build/WWOBJLoader2.min.js"></script>
+<script src="../../src/loaders/OBJLoader2Parser.js"></script>
+<script src="../../src/loaders/WWOBJLoader2.js"></script>
+<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
 
-<script src="../src/examples/WWParallels.js"></script>
+<script src="./WWParallels.js"></script>
 <script>
 
 	var APP = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );

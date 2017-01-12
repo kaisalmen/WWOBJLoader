@@ -1,5 +1,5 @@
-if ( THREE === undefined ) { var THREE = {} };
-if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} };
+if ( THREE === undefined ) { var THREE = {} }
+if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.consts = {
 	CODE_LF: 10,
@@ -36,7 +36,7 @@ THREE.OBJLoader2.consts = {
 	QUAD_INDICES_1: [ 1, 2, 3, 3, 4, 1 ],
 	QUAD_INDICES_2: [ 1, 3, 5, 5, 7, 1 ],
 	QUAD_INDICES_3: [ 1, 4, 7, 7, 10, 1 ],
-	buildIndex: function ( materialName, smoothingGroup) {
+	_buildIndex: function ( materialName, smoothingGroup) {
 		return materialName + '|' + smoothingGroup;
 	}
 };
@@ -47,13 +47,23 @@ THREE.OBJLoader2.Parser = (function () {
 		this.meshCreator = meshCreator;
 		this.rawObject = null;
 		this.inputObjectCount = 1;
+		this.debug = false;
 	}
 
-	Parser.prototype.validate = function () {
+	Parser.prototype._setDebug = function ( debug ) {
+		this.debug = ( debug == null ) ? this.debug : debug;
+	};
+
+	Parser.prototype._validate = function () {
 		this.rawObject = new THREE.OBJLoader2.RawObject();
 		this.inputObjectCount = 1;
 	};
 
+	/**
+	 * Parse the provided arraybuffer
+	 *
+	 * @param arrayBuffer
+	 */
 	Parser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 		var arrayBufferView = new Uint8Array( arrayBuffer );
 		var length = arrayBufferView.byteLength;
@@ -82,7 +92,7 @@ THREE.OBJLoader2.Parser = (function () {
 				case THREE.OBJLoader2.consts.CODE_LF:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
-					reachedFaces = this.processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
+					reachedFaces = this._processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
 					slashesPointer = 0;
 					bufferPointer = 0;
 					break;
@@ -97,6 +107,11 @@ THREE.OBJLoader2.Parser = (function () {
 		}
 	};
 
+	/**
+	 * Parse the provided text
+	 *
+	 * @param text
+	 */
 	Parser.prototype.parseText = function ( text ) {
 		var length = text.length;
 		var buffer = new Array( 32 );
@@ -124,7 +139,7 @@ THREE.OBJLoader2.Parser = (function () {
 				case THREE.OBJLoader2.consts.STRING_LF:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
-					reachedFaces = this.processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
+					reachedFaces = this._processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
 					slashesPointer = 0;
 					bufferPointer = 0;
 					break;
@@ -138,7 +153,7 @@ THREE.OBJLoader2.Parser = (function () {
 		}
 	};
 
-	Parser.prototype.processLine = function ( buffer, bufferPointer, slashes, slashesPointer, reachedFaces ) {
+	Parser.prototype._processLine = function ( buffer, bufferPointer, slashes, slashesPointer, reachedFaces ) {
 		if ( bufferPointer < 1 ) return reachedFaces;
 
 		var bufferLength = bufferPointer - 1;
@@ -148,19 +163,19 @@ THREE.OBJLoader2.Parser = (function () {
 				// object complete instance required if reached faces already (= reached next block of v)
 				if ( reachedFaces ) {
 
-					this.processCompletedObject( null, this.rawObject.groupName );
+					this._processCompletedObject( null, this.rawObject.groupName );
 					reachedFaces = false;
 
 				}
-				this.rawObject.pushVertex( buffer );
+				this.rawObject._pushVertex( buffer );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_VT:
-				this.rawObject.pushUv( buffer );
+				this.rawObject._pushUv( buffer );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_VN:
-				this.rawObject.pushNormal( buffer );
+				this.rawObject._pushNormal( buffer );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_F:
@@ -175,33 +190,33 @@ THREE.OBJLoader2.Parser = (function () {
 				if ( slashesPointer > 1 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) {
 
 					if ( haveQuad ) {
-						this.rawObject.buildQuadVVn( buffer );
+						this.rawObject._buildQuadVVn( buffer );
 					} else {
-						this.rawObject.buildFaceVVn( buffer );
+						this.rawObject._buildFaceVVn( buffer );
 					}
 
 				} else if ( bufferLength === slashesPointer * 2 ) {
 
 					if ( haveQuad ) {
-						this.rawObject.buildQuadVVt( buffer );
+						this.rawObject._buildQuadVVt( buffer );
 					} else {
-						this.rawObject.buildFaceVVt( buffer );
+						this.rawObject._buildFaceVVt( buffer );
 					}
 
 				} else if ( bufferLength * 2 === slashesPointer * 3 ) {
 
 					if ( haveQuad ) {
-						this.rawObject.buildQuadVVtVn( buffer );
+						this.rawObject._buildQuadVVtVn( buffer );
 					} else {
-						this.rawObject.buildFaceVVtVn( buffer );
+						this.rawObject._buildFaceVVtVn( buffer );
 					}
 
 				} else {
 
 					if ( haveQuad ) {
-						this.rawObject.buildQuadV( buffer );
+						this.rawObject._buildQuadV( buffer );
 					} else {
-						this.rawObject.buildFaceV( buffer );
+						this.rawObject._buildFaceV( buffer );
 					}
 
 				}
@@ -210,42 +225,42 @@ THREE.OBJLoader2.Parser = (function () {
 			case THREE.OBJLoader2.consts.LINE_L:
 				if ( bufferLength === slashesPointer * 2 ) {
 
-					this.rawObject.buildLineVvt( buffer );
+					this.rawObject._buildLineVvt( buffer );
 
 				} else {
 
-					this.rawObject.buildLineV( buffer );
+					this.rawObject._buildLineV( buffer );
 
 				}
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_S:
-				this.rawObject.pushSmoothingGroup( buffer[ 1 ] );
+				this.rawObject._pushSmoothingGroup( buffer[ 1 ] );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_G:
-				this.processCompletedGroup( buffer[ 1 ] );
+				this._processCompletedGroup( buffer[ 1 ] );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_O:
 				if ( this.rawObject.vertices.length > 0 ) {
 
-					this.processCompletedObject( buffer[ 1 ], null );
+					this._processCompletedObject( buffer[ 1 ], null );
 					reachedFaces = false;
 
 				} else {
 
-					this.rawObject.pushObject( buffer[ 1 ] );
+					this.rawObject._pushObject( buffer[ 1 ] );
 
 				}
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_MTLLIB:
-				this.rawObject.pushMtllib( buffer[ 1 ] );
+				this.rawObject._pushMtllib( buffer[ 1 ] );
 				break;
 
 			case THREE.OBJLoader2.consts.LINE_USEMTL:
-				this.rawObject.pushUsemtl( buffer[ 1 ] );
+				this.rawObject._pushUsemtl( buffer[ 1 ] );
 				break;
 
 			default:
@@ -254,35 +269,40 @@ THREE.OBJLoader2.Parser = (function () {
 		return reachedFaces;
 	};
 
-	Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
-		this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+	Parser.prototype._processCompletedObject = function ( objectName, groupName ) {
+		this.rawObject._finalize( this.meshCreator, this.inputObjectCount, this.debug );
 		this.inputObjectCount++;
-		this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
+		this.rawObject = this.rawObject._newInstanceFromObject( objectName, groupName );
 	};
 
-	Parser.prototype.processCompletedGroup = function ( groupName ) {
-		var notEmpty = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+	Parser.prototype._processCompletedGroup = function ( groupName ) {
+		var notEmpty = this.rawObject._finalize( this.meshCreator, this.inputObjectCount, this.debug );
 		if ( notEmpty ) {
 
 			this.inputObjectCount ++;
-			this.rawObject = this.rawObject.newInstanceFromGroup( groupName );
+			this.rawObject = this.rawObject._newInstanceFromGroup( groupName );
 
 		} else {
 
 			// if a group was set that did not lead to object creation in finalize, then the group name has to be updated
-			this.rawObject.pushGroup( groupName );
+			this.rawObject._pushGroup( groupName );
 
 		}
 	};
 
-	Parser.prototype.finalize = function () {
-		this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+	Parser.prototype._finalize = function () {
+		this.rawObject._finalize( this.meshCreator, this.inputObjectCount, this.debug );
 		this.inputObjectCount++;
 	};
 
 	return Parser;
 })();
 
+/**
+ * THREE.OBJLoader2.RawObject is only used by THREE.OBJLoader2.Parser.
+ * The user of OBJLoader2 does not need to care about class.
+ * Is defined publicly for inclusion in web worker based OBJ loader (THREE.OBJLoader2.WWOBJLoader2)
+ */
 THREE.OBJLoader2.RawObject = (function () {
 
 	function RawObject( objectName, groupName, mtllibName ) {
@@ -306,12 +326,12 @@ THREE.OBJLoader2.RawObject = (function () {
 
 		this.rawObjectDescriptions = [];
 		// this default index is required as it is possible to define faces without 'g' or 'usemtl'
-		var index = THREE.OBJLoader2.consts.buildIndex( this.activeMtlName, this.activeSmoothingGroup );
+		var index = THREE.OBJLoader2.consts._buildIndex( this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptionInUse = new THREE.OBJLoader2.RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
 
-	RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
+	RawObject.prototype._newInstanceFromObject = function ( objectName, groupName ) {
 		var newRawObject = new RawObject( objectName, groupName, this.mtllibName );
 
 		// move indices forward
@@ -322,7 +342,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		return newRawObject;
 	};
 
-	RawObject.prototype.newInstanceFromGroup = function ( groupName ) {
+	RawObject.prototype._newInstanceFromGroup = function ( groupName ) {
 		var newRawObject = new RawObject( this.objectName, groupName, this.mtllibName );
 
 		// keep current buffers and indices forward
@@ -336,55 +356,55 @@ THREE.OBJLoader2.RawObject = (function () {
 		return newRawObject;
 	};
 
-	RawObject.prototype.pushVertex = function ( buffer ) {
+	RawObject.prototype._pushVertex = function ( buffer ) {
 		this.vertices.push( parseFloat( buffer[ 1 ] ) );
 		this.vertices.push( parseFloat( buffer[ 2 ] ) );
 		this.vertices.push( parseFloat( buffer[ 3 ] ) );
 	};
 
-	RawObject.prototype.pushUv = function ( buffer ) {
+	RawObject.prototype._pushUv = function ( buffer ) {
 		this.uvs.push( parseFloat( buffer[ 1 ] ) );
 		this.uvs.push( parseFloat( buffer[ 2 ] ) );
 	};
 
-	RawObject.prototype.pushNormal = function ( buffer ) {
+	RawObject.prototype._pushNormal = function ( buffer ) {
 		this.normals.push( parseFloat( buffer[ 1 ] ) );
 		this.normals.push( parseFloat( buffer[ 2 ] ) );
 		this.normals.push( parseFloat( buffer[ 3 ] ) );
 	};
 
-	RawObject.prototype.pushObject = function ( objectName ) {
+	RawObject.prototype._pushObject = function ( objectName ) {
 		this.objectName = objectName;
 	};
 
-	RawObject.prototype.pushMtllib = function ( mtllibName ) {
+	RawObject.prototype._pushMtllib = function ( mtllibName ) {
 		this.mtllibName = mtllibName;
 	};
 
-	RawObject.prototype.pushGroup = function ( groupName ) {
+	RawObject.prototype._pushGroup = function ( groupName ) {
 		this.groupName = groupName;
-		this.verifyIndex();
+		this._verifyIndex();
 	};
 
-	RawObject.prototype.pushUsemtl = function ( mtlName ) {
+	RawObject.prototype._pushUsemtl = function ( mtlName ) {
 		if ( this.activeMtlName === mtlName || mtlName == null ) return;
 		this.activeMtlName = mtlName;
 		this.mtlCount++;
 
-		this.verifyIndex();
+		this._verifyIndex();
 	};
 
-	RawObject.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
+	RawObject.prototype._pushSmoothingGroup = function ( activeSmoothingGroup ) {
 		var normalized = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
 		if ( this.activeSmoothingGroup === normalized ) return;
 		this.activeSmoothingGroup = normalized;
 		this.smoothingGroupCount++;
 
-		this.verifyIndex();
+		this._verifyIndex();
 	};
 
-	RawObject.prototype.verifyIndex = function () {
-		var index = THREE.OBJLoader2.consts.buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
+	RawObject.prototype._verifyIndex = function () {
+		var index = THREE.OBJLoader2.consts._buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
 		if ( this.rawObjectDescriptions[ index ] == null ) {
 
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ] =
@@ -399,63 +419,63 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype.buildQuadVVtVn = function ( indexArray ) {
+	RawObject.prototype._buildQuadVVtVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] ] );
-			this.attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 1 ] );
-			this.attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 2 ] );
+			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] ] );
+			this._attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 1 ] );
+			this._attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 2 ] );
 		}
 	};
 
-	RawObject.prototype.buildQuadVVt = function ( indexArray ) {
+	RawObject.prototype._buildQuadVVt = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
-			this.attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
+			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
+			this._attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
-	RawObject.prototype.buildQuadVVn = function ( indexArray ) {
+	RawObject.prototype._buildQuadVVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
-			this.attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
+			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
+			this._attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
-	RawObject.prototype.buildQuadV = function ( indexArray ) {
+	RawObject.prototype._buildQuadV = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
-			this.attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_1[ i ] ] );
+			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_1[ i ] ] );
 		}
 	};
 
-	RawObject.prototype.buildFaceVVtVn = function ( indexArray ) {
+	RawObject.prototype._buildFaceVVtVn = function ( indexArray ) {
 		for ( var i = 1; i < 10; i += 3 ) {
-			this.attachFaceV_( indexArray[ i ] );
-			this.attachFaceVt( indexArray[ i + 1 ] );
-			this.attachFaceVn( indexArray[ i + 2 ] );
+			this._attachFaceV_( indexArray[ i ] );
+			this._attachFaceVt( indexArray[ i + 1 ] );
+			this._attachFaceVn( indexArray[ i + 2 ] );
 		}
 	};
 
-	RawObject.prototype.buildFaceVVt = function ( indexArray ) {
+	RawObject.prototype._buildFaceVVt = function ( indexArray ) {
 		for ( var i = 1; i < 7; i += 2 ) {
-			this.attachFaceV_( indexArray[ i ] );
-			this.attachFaceVt( indexArray[ i + 1 ] );
+			this._attachFaceV_( indexArray[ i ] );
+			this._attachFaceVt( indexArray[ i + 1 ] );
 		}
 	};
 
-	RawObject.prototype.buildFaceVVn = function ( indexArray ) {
+	RawObject.prototype._buildFaceVVn = function ( indexArray ) {
 		for ( var i = 1; i < 7; i += 2 ) {
-			this.attachFaceV_( indexArray[ i ] );
-			this.attachFaceVn( indexArray[ i + 1 ] );
+			this._attachFaceV_( indexArray[ i ] );
+			this._attachFaceVn( indexArray[ i + 1 ] );
 		}
 	};
 
-	RawObject.prototype.buildFaceV = function ( indexArray ) {
+	RawObject.prototype._buildFaceV = function ( indexArray ) {
 		for ( var i = 1; i < 4; i ++ ) {
-			this.attachFaceV_( indexArray[ i ] );
+			this._attachFaceV_( indexArray[ i ] );
 		}
 	};
 
-	RawObject.prototype.attachFaceV_ = function ( faceIndex ) {
+	RawObject.prototype._attachFaceV_ = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
 
@@ -465,7 +485,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		rodiu.vertices.push( this.vertices[ index ] );
 	};
 
-	RawObject.prototype.attachFaceVt = function ( faceIndex ) {
+	RawObject.prototype._attachFaceVt = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalUvOffset ) * 2;
 
@@ -474,7 +494,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		rodiu.uvs.push( this.uvs[ index ] );
 	};
 
-	RawObject.prototype.attachFaceVn = function ( faceIndex ) {
+	RawObject.prototype._attachFaceVn = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
 
@@ -489,7 +509,7 @@ THREE.OBJLoader2.RawObject = (function () {
 	 * 0: "f vertex/uv		vertex/uv 		..."
 	 * 1: "f vertex			vertex 			..."
 	 */
-	RawObject.prototype.buildLineVvt = function ( lineArray ) {
+	RawObject.prototype._buildLineVvt = function ( lineArray ) {
 		var length = lineArray.length;
 		for ( var i = 1; i < length; i ++ ) {
 			this.vertices.push( parseInt( lineArray[ i ] ) );
@@ -497,7 +517,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype.buildLineV = function ( lineArray ) {
+	RawObject.prototype._buildLineV = function ( lineArray ) {
 		var length = lineArray.length;
 		for ( var i = 1; i < length; i++ ) {
 			this.vertices.push( parseInt( lineArray[ i ] ) );
@@ -507,7 +527,7 @@ THREE.OBJLoader2.RawObject = (function () {
 	/**
 	 * Clear any empty rawObjectDescription and calculate absolute vertex, normal and uv counts
 	 */
-	RawObject.prototype.finalize = function ( meshCreator, inputObjectCount, debug ) {
+	RawObject.prototype._finalize = function ( meshCreator, inputObjectCount, debug ) {
 		var temp = this.rawObjectDescriptions;
 		this.rawObjectDescriptions = [];
 		var rawObjectDescription;
@@ -534,7 +554,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		var notEmpty = false;
 		if ( index > 0 ) {
 
-			if ( debug ) this.createReport( inputObjectCount, true );
+			if ( debug ) this._createReport( inputObjectCount, true );
 			meshCreator.buildMesh(
 				this.rawObjectDescriptions,
 				inputObjectCount,
@@ -548,7 +568,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		return notEmpty;
 	};
 
-	RawObject.prototype.createReport = function ( inputObjectCount, printDirectly ) {
+	RawObject.prototype._createReport = function ( inputObjectCount, printDirectly ) {
 		var report = {
 			name: this.objectName ? this.objectName : 'groups',
 			mtllibName: this.mtllibName,
@@ -578,6 +598,9 @@ THREE.OBJLoader2.RawObject = (function () {
 	return RawObject;
 })();
 
+/**
+ * Description used to pass info to mesh building function
+ */
 THREE.OBJLoader2.RawObjectDescription = (function () {
 
 	function RawObjectDescription( objectName, groupName, materialName, smoothingGroup ) {
