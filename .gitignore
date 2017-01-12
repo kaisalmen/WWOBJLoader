@@ -2,6 +2,7 @@
 .idea
 
 /build
+/examples
 /node_modules
 
 /resource/obj/zomax
@@ -11,4 +12,8 @@
 /resource/obj/capsule
 /resource/obj/vive-controller
 /resource/obj/walt
+
 /screenshots
+
+/test/webgl_loader_objloader2_direct.html
+/testwebgl_loader_wwobj.html
