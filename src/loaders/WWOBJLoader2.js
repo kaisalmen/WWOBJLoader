@@ -466,7 +466,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				function OBJLoader() {
 					this.meshCreator = new THREE.OBJLoader2.WW.MeshCreator();
 					this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
-					this.parser.debug = false;
 					this.validated = false;
 					this.cmdState = 'created';
 
@@ -479,9 +478,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				 * @param parserDebug
 				 * @param meshCreatorDebug
 				 */
-				OBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
-					this.parser.debug = parserDebug;
-					this.meshCreator.debug = meshCreatorDebug;
+				OBJLoader.prototype._setDebug = function ( parserDebug, meshCreatorDebug ) {
+					this.parser._setDebug( parserDebug );
+					this.meshCreator._setDebug( meshCreatorDebug );
 				};
 
 				/**
@@ -505,27 +504,27 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				OBJLoader.prototype._validate = function () {
 					if ( this.validated ) return;
 
-					this.parser.validate();
-					this.meshCreator.validate();
+					this.parser._validate();
+					this.meshCreator._validate();
 
 					this.validated = true;
 				};
 
 				OBJLoader.prototype._finalize = function () {
 					console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
-					this.parser.finalize();
-					this.meshCreator.finalize();
+					this.parser._finalize();
+					this.meshCreator._finalize();
 					this.validated = false;
 				};
 
 				OBJLoader.prototype.init = function ( payload ) {
 					this.cmdState = 'init';
-					this.setDebug( payload.debug, payload.debug );
+					this._setDebug( payload.debug, payload.debug );
 				};
 
 				OBJLoader.prototype.setMaterials = function ( payload ) {
 					this.cmdState = 'setMaterials';
-					this.meshCreator.setMaterials( payload.materialNames );
+					this.meshCreator._setMaterials( payload.materialNames );
 				};
 
 				OBJLoader.prototype.run = function ( payload ) {
@@ -553,29 +552,31 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					this.validated = false;
 				}
 
-				MeshCreator.prototype.setMaterials = function ( materials ) {
+				MeshCreator.prototype._setMaterials = function ( materials ) {
 					this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
 				};
 
-				MeshCreator.prototype.setDebug = function ( debug ) {
+				MeshCreator.prototype._setDebug = function ( debug ) {
 					this.debug = ( debug == null ) ? this.debug : debug;
 				};
 
-				MeshCreator.prototype.validate = function () {
+				MeshCreator.prototype._validate = function () {
 					if ( this.validated ) return;
 
-					this.setMaterials( null );
-					this.setDebug( null );
+					this._setMaterials( null );
+					this._setDebug( null );
 					this.globalObjectCount = 1;
 				};
 
-				MeshCreator.prototype.finalize = function () {
+				MeshCreator.prototype._finalize = function () {
 					this.materials = null;
 					this.validated = false;
 				};
 
 				/**
-				 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check)
+				 * RawObjectDescriptions are transformed to THREE.Mesh.
+				 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check).
+				 *
 				 * @param rawObjectDescriptions
 				 * @param inputObjectCount
 				 * @param absoluteVertexCount

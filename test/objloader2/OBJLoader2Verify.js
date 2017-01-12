@@ -88,7 +88,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 	// ThreeJsApp.initPreGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor(0x303030);
+		this.renderer.setClearColor( 0x303030 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -121,6 +121,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.scenePerspective.scene.add( this.cube );
 
 		this.pivot = new THREE.Object3D();
+		this.pivot.name = 'Pivot';
 		this.scenePerspective.scene.add( this.pivot );
 	};
 
@@ -136,16 +137,13 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 			materials.preload();
 
 			var objLoader = new THREE.OBJLoader2();
+			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( scope.fileDef.path );
 			objLoader.setDebug( false, false );
 
 			var onSuccess = function ( object3d ) {
-				if ( object3d !== undefined && object3d !== null ) {
-
-					scope.pivot.add( object3d );
-
-				}
+				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 			};
 
 			var onProgress = function ( event ) {
