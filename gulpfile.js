@@ -10,16 +10,18 @@ var header = require( 'gulp-header' );
 
 var replace = require( 'gulp-replace-task' );
 
+var jsdoc = require('gulp-jsdoc3');
+
 var DIR_BUILD = 'build/';
 
 gulp.task( 'bundle-objloader2', function () {
 	return gulp.src(
-		[
-			'src/loaders/OBJLoader2Control.js',
-			'src/loaders/OBJLoader2Parser.js',
-			'src/loaders/OBJLoader2MeshCreator.js'
-		] )
-
+			[
+				'src/loaders/OBJLoader2Control.js',
+				'src/loaders/OBJLoader2Parser.js',
+				'src/loaders/OBJLoader2MeshCreator.js'
+			]
+		)
 		// all input files are concatenated and then saved to OBJLoader2.js
 		.pipe( concat( 'OBJLoader2.js' ) )
 		.pipe( header( "/**\n  * @author Kai Salmen / www.kaisalmen.de\n  */\n\n'use strict';\n\n" ) )
@@ -35,10 +37,11 @@ gulp.task( 'bundle-objloader2', function () {
 gulp.task( 'bundle-wwobjloader2', function () {
 
 	return gulp.src(
-		[
-			'src/loaders/WWOBJLoader2.js',
-			'src/loaders/WWOBJLoader2Director.js'
-		] )
+			[
+				'src/loaders/WWOBJLoader2.js',
+				'src/loaders/WWOBJLoader2Director.js'
+			]
+		)
 		.pipe( concat( 'WWOBJLoader2.js' ) )
 		.pipe( header( "/**\n  * @author Kai Salmen / www.kaisalmen.de\n  */\n\n'use strict';\n\n" ) )
 		.pipe( gulp.dest( DIR_BUILD ) )
@@ -49,4 +52,18 @@ gulp.task( 'bundle-wwobjloader2', function () {
 		.pipe( gulp.dest( DIR_BUILD ) );
 } );
 
-gulp.task( 'default', [ 'bundle-objloader2', 'bundle-wwobjloader2' ] );
+gulp.task( 'doc', function ( cb ) {
+	var config = require('./jsdoc.json');
+	gulp.src(
+		[
+			'./src/loaders/*.js',
+			'README.md'
+		],
+		{
+			read: false
+		}
+		)
+		.pipe( jsdoc( config, cb ) );
+});
+
+gulp.task( 'default', [ 'bundle-objloader2', 'bundle-wwobjloader2', 'doc' ] );
