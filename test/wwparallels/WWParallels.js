@@ -126,15 +126,15 @@ THREE.examples.loaders.WWParallels = (function () {
 			return replacedMaterial;
 		};
 
-		this.wwDirector.register(
-			THREE.OBJLoader2.WWOBJLoader2.prototype,
+		this.wwDirector.prepareWorkers(
 			'WWOBJLoader2',
 			{
 				completedLoading: callbackCompletedLoading,
 				meshLoaded: callbackMeshLoaded
-			}
+			},
+			maxQueueSize,
+			maxWebWorkers
 		);
-		this.wwDirector.validate( maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 		var models = [];
@@ -257,7 +257,7 @@ THREE.examples.loaders.WWParallels = (function () {
 	};
 
 	WWParallels.prototype.terminateManager = function () {
-		this.wwDirector.unregister();
+		this.wwDirector.deregister();
 	};
 
 	// ThreeJsApp.renderPost()  not required, default is used

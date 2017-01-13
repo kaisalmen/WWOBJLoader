@@ -34,7 +34,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 			htmlCanvas: elementToBindTo
 		} );
 
-		this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director();
+		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 
 		this.lights = null;
 		this.controls = null;
@@ -54,15 +54,21 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		var reloadAssetsProxy = function () {
 			scope.reloadAssets();
 		};
-
-		this.wwDirector.register(
-			THREE.OBJLoader2.WWOBJLoader2.prototype,
-			'WWOBJLoader2',
-			{
-				completedLoading: reloadAssetsProxy,
-				progress: this.reportProgress
+		var materialsLoaded = function ( materials ) {
+			var count = 0;
+			console.log( 'The following materials have been loaded:' );
+			for ( var mat in materials ) {
+				count++;
 			}
-		);
+			console.log( 'Loaded #' + count + ' materials.' );
+		};
+		var meshLoaded = function ( meshName ) {
+			// just for demonstration...
+		};
+		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
+		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
+		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
+		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
 
 		// tell ThreeJsApp async loading is done (none needed here)
 		this.preloadDone = true;
@@ -218,16 +224,14 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
-					scope.wwDirector.validate( 1, 1 );
-					scope.wwDirector.enqueueForRun( {
-						modelName: obj2Load.name,
-						sceneGraphBaseNode: obj2Load.pivot,
+					scope.wwObjLoader2.prepareRun( {
 						dataAvailable: true,
 						objAsArrayBuffer: data,
 						mtlAsString: mtlAsString,
-						pathTexture: obj2Load.pathTexture
+						pathTexture: obj2Load.pathTexture,
+						sceneGraphBaseNode: obj2Load.pivot
 					} );
-					scope.wwDirector.processQueue();
+					scope.wwObjLoader2.run();
 				};
 
 				var setMtlAsString = function ( data ) {
@@ -256,17 +260,16 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 			} else {
 
-				scope.wwDirector.validate( 1, 1 );
-				scope.wwDirector.enqueueForRun( {
-					modelName: obj2Load.name,
-					sceneGraphBaseNode: obj2Load.pivot,
+				scope.reportProgress( '' );
+				scope.wwObjLoader2.prepareRun( {
 					dataAvailable: false,
 					pathObj: obj2Load.pathBase,
 					fileObj: obj2Load.fileObj,
 					pathTexture: obj2Load.pathTexture,
-					fileMtl: obj2Load.fileMtl
+					fileMtl: obj2Load.fileMtl,
+					sceneGraphBaseNode: obj2Load.pivot
 				} );
-				scope.wwDirector.processQueue();
+				scope.wwObjLoader2.run();
 
 			}
 		} else {
