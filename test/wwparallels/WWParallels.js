@@ -109,7 +109,7 @@ THREE.examples.loaders.WWParallels = (function () {
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackCompletedLoading = function ( webWorkerName, modelName, instanceNo ) {
+		var callbackCompletedLoading = function ( modelName, instanceNo ) {
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
@@ -127,7 +127,6 @@ THREE.examples.loaders.WWParallels = (function () {
 		};
 
 		this.wwDirector.prepareWorkers(
-			'WWOBJLoader2',
 			{
 				completedLoading: callbackCompletedLoading,
 				meshLoaded: callbackMeshLoaded

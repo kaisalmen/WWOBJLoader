@@ -1,6 +1,6 @@
-if ( THREE === undefined ) { var THREE = {} }
-if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
-
+/**
+ * Constants used by  THREE.OBJLoader2.Parser
+ */
 THREE.OBJLoader2.consts = {
 	CODE_LF: 10,
 	CODE_CR: 13,
@@ -41,6 +41,10 @@ THREE.OBJLoader2.consts = {
 	}
 };
 
+/**
+ * Parse OBJ data either from ArrayBuffer or string
+ * @class
+ */
 THREE.OBJLoader2.Parser = (function () {
 
 	function Parser( meshCreator ) {
@@ -55,14 +59,15 @@ THREE.OBJLoader2.Parser = (function () {
 	};
 
 	Parser.prototype._validate = function () {
-		this.rawObject = new THREE.OBJLoader2.RawObject();
+		this.rawObject = new THREE.OBJLoader2._RawObject();
 		this.inputObjectCount = 1;
 	};
 
 	/**
 	 * Parse the provided arraybuffer
+	 * @memberOf THREE.OBJLoader2.Parser
 	 *
-	 * @param arrayBuffer
+	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
 	Parser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 		var arrayBufferView = new Uint8Array( arrayBuffer );
@@ -109,8 +114,9 @@ THREE.OBJLoader2.Parser = (function () {
 
 	/**
 	 * Parse the provided text
+	 * @memberOf THREE.OBJLoader2.Parser
 	 *
-	 * @param text
+	 * @param {string} text OBJ data as string
 	 */
 	Parser.prototype.parseText = function ( text ) {
 		var length = text.length;
@@ -299,13 +305,13 @@ THREE.OBJLoader2.Parser = (function () {
 })();
 
 /**
- * THREE.OBJLoader2.RawObject is only used by THREE.OBJLoader2.Parser.
- * The user of OBJLoader2 does not need to care about class.
- * Is defined publicly for inclusion in web worker based OBJ loader (THREE.OBJLoader2.WWOBJLoader2)
+ * {@link THREE.OBJLoader2._RawObject} is only used by {@link THREE.OBJLoader2.Parser}.
+ * The user of OBJLoader2 does not need to care about this class.
+ * It is defined publicly for inclusion in web worker based OBJ loader ({@link THREE.OBJLoader2.WWOBJLoader2})
  */
-THREE.OBJLoader2.RawObject = (function () {
+THREE.OBJLoader2._RawObject = (function () {
 
-	function RawObject( objectName, groupName, mtllibName ) {
+	function _RawObject( objectName, groupName, mtllibName ) {
 		this.globalVertexOffset = 1;
 		this.globalUvOffset = 1;
 		this.globalNormalOffset = 1;
@@ -331,8 +337,8 @@ THREE.OBJLoader2.RawObject = (function () {
 		this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 	}
 
-	RawObject.prototype._newInstanceFromObject = function ( objectName, groupName ) {
-		var newRawObject = new RawObject( objectName, groupName, this.mtllibName );
+	_RawObject.prototype._newInstanceFromObject = function ( objectName, groupName ) {
+		var newRawObject = new _RawObject( objectName, groupName, this.mtllibName );
 
 		// move indices forward
 		newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
@@ -342,8 +348,8 @@ THREE.OBJLoader2.RawObject = (function () {
 		return newRawObject;
 	};
 
-	RawObject.prototype._newInstanceFromGroup = function ( groupName ) {
-		var newRawObject = new RawObject( this.objectName, groupName, this.mtllibName );
+	_RawObject.prototype._newInstanceFromGroup = function ( groupName ) {
+		var newRawObject = new _RawObject( this.objectName, groupName, this.mtllibName );
 
 		// keep current buffers and indices forward
 		newRawObject.vertices = this.vertices;
@@ -356,37 +362,37 @@ THREE.OBJLoader2.RawObject = (function () {
 		return newRawObject;
 	};
 
-	RawObject.prototype._pushVertex = function ( buffer ) {
+	_RawObject.prototype._pushVertex = function ( buffer ) {
 		this.vertices.push( parseFloat( buffer[ 1 ] ) );
 		this.vertices.push( parseFloat( buffer[ 2 ] ) );
 		this.vertices.push( parseFloat( buffer[ 3 ] ) );
 	};
 
-	RawObject.prototype._pushUv = function ( buffer ) {
+	_RawObject.prototype._pushUv = function ( buffer ) {
 		this.uvs.push( parseFloat( buffer[ 1 ] ) );
 		this.uvs.push( parseFloat( buffer[ 2 ] ) );
 	};
 
-	RawObject.prototype._pushNormal = function ( buffer ) {
+	_RawObject.prototype._pushNormal = function ( buffer ) {
 		this.normals.push( parseFloat( buffer[ 1 ] ) );
 		this.normals.push( parseFloat( buffer[ 2 ] ) );
 		this.normals.push( parseFloat( buffer[ 3 ] ) );
 	};
 
-	RawObject.prototype._pushObject = function ( objectName ) {
+	_RawObject.prototype._pushObject = function ( objectName ) {
 		this.objectName = objectName;
 	};
 
-	RawObject.prototype._pushMtllib = function ( mtllibName ) {
+	_RawObject.prototype._pushMtllib = function ( mtllibName ) {
 		this.mtllibName = mtllibName;
 	};
 
-	RawObject.prototype._pushGroup = function ( groupName ) {
+	_RawObject.prototype._pushGroup = function ( groupName ) {
 		this.groupName = groupName;
 		this._verifyIndex();
 	};
 
-	RawObject.prototype._pushUsemtl = function ( mtlName ) {
+	_RawObject.prototype._pushUsemtl = function ( mtlName ) {
 		if ( this.activeMtlName === mtlName || mtlName == null ) return;
 		this.activeMtlName = mtlName;
 		this.mtlCount++;
@@ -394,7 +400,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		this._verifyIndex();
 	};
 
-	RawObject.prototype._pushSmoothingGroup = function ( activeSmoothingGroup ) {
+	_RawObject.prototype._pushSmoothingGroup = function ( activeSmoothingGroup ) {
 		var normalized = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
 		if ( this.activeSmoothingGroup === normalized ) return;
 		this.activeSmoothingGroup = normalized;
@@ -403,7 +409,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		this._verifyIndex();
 	};
 
-	RawObject.prototype._verifyIndex = function () {
+	_RawObject.prototype._verifyIndex = function () {
 		var index = THREE.OBJLoader2.consts._buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
 		if ( this.rawObjectDescriptions[ index ] == null ) {
 
@@ -419,7 +425,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype._buildQuadVVtVn = function ( indexArray ) {
+	_RawObject.prototype._buildQuadVVtVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
 			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] ] );
 			this._attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_3[ i ] + 1 ] );
@@ -427,27 +433,27 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype._buildQuadVVt = function ( indexArray ) {
+	_RawObject.prototype._buildQuadVVt = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
 			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
 			this._attachFaceVt( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
-	RawObject.prototype._buildQuadVVn = function ( indexArray ) {
+	_RawObject.prototype._buildQuadVVn = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
 			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] ] );
 			this._attachFaceVn( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_2[ i ] + 1 ] );
 		}
 	};
 
-	RawObject.prototype._buildQuadV = function ( indexArray ) {
+	_RawObject.prototype._buildQuadV = function ( indexArray ) {
 		for ( var i = 0; i < 6; i ++ ) {
 			this._attachFaceV_( indexArray[ THREE.OBJLoader2.consts.QUAD_INDICES_1[ i ] ] );
 		}
 	};
 
-	RawObject.prototype._buildFaceVVtVn = function ( indexArray ) {
+	_RawObject.prototype._buildFaceVVtVn = function ( indexArray ) {
 		for ( var i = 1; i < 10; i += 3 ) {
 			this._attachFaceV_( indexArray[ i ] );
 			this._attachFaceVt( indexArray[ i + 1 ] );
@@ -455,27 +461,27 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype._buildFaceVVt = function ( indexArray ) {
+	_RawObject.prototype._buildFaceVVt = function ( indexArray ) {
 		for ( var i = 1; i < 7; i += 2 ) {
 			this._attachFaceV_( indexArray[ i ] );
 			this._attachFaceVt( indexArray[ i + 1 ] );
 		}
 	};
 
-	RawObject.prototype._buildFaceVVn = function ( indexArray ) {
+	_RawObject.prototype._buildFaceVVn = function ( indexArray ) {
 		for ( var i = 1; i < 7; i += 2 ) {
 			this._attachFaceV_( indexArray[ i ] );
 			this._attachFaceVn( indexArray[ i + 1 ] );
 		}
 	};
 
-	RawObject.prototype._buildFaceV = function ( indexArray ) {
+	_RawObject.prototype._buildFaceV = function ( indexArray ) {
 		for ( var i = 1; i < 4; i ++ ) {
 			this._attachFaceV_( indexArray[ i ] );
 		}
 	};
 
-	RawObject.prototype._attachFaceV_ = function ( faceIndex ) {
+	_RawObject.prototype._attachFaceV_ = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
 
@@ -485,7 +491,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		rodiu.vertices.push( this.vertices[ index ] );
 	};
 
-	RawObject.prototype._attachFaceVt = function ( faceIndex ) {
+	_RawObject.prototype._attachFaceVt = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalUvOffset ) * 2;
 
@@ -494,7 +500,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		rodiu.uvs.push( this.uvs[ index ] );
 	};
 
-	RawObject.prototype._attachFaceVn = function ( faceIndex ) {
+	_RawObject.prototype._attachFaceVn = function ( faceIndex ) {
 		var faceIndexInt =  parseInt( faceIndex );
 		var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
 
@@ -509,7 +515,7 @@ THREE.OBJLoader2.RawObject = (function () {
 	 * 0: "f vertex/uv		vertex/uv 		..."
 	 * 1: "f vertex			vertex 			..."
 	 */
-	RawObject.prototype._buildLineVvt = function ( lineArray ) {
+	_RawObject.prototype._buildLineVvt = function ( lineArray ) {
 		var length = lineArray.length;
 		for ( var i = 1; i < length; i ++ ) {
 			this.vertices.push( parseInt( lineArray[ i ] ) );
@@ -517,7 +523,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		}
 	};
 
-	RawObject.prototype._buildLineV = function ( lineArray ) {
+	_RawObject.prototype._buildLineV = function ( lineArray ) {
 		var length = lineArray.length;
 		for ( var i = 1; i < length; i++ ) {
 			this.vertices.push( parseInt( lineArray[ i ] ) );
@@ -527,7 +533,7 @@ THREE.OBJLoader2.RawObject = (function () {
 	/**
 	 * Clear any empty rawObjectDescription and calculate absolute vertex, normal and uv counts
 	 */
-	RawObject.prototype._finalize = function ( meshCreator, inputObjectCount, debug ) {
+	_RawObject.prototype._finalize = function ( meshCreator, inputObjectCount, debug ) {
 		var temp = this.rawObjectDescriptions;
 		this.rawObjectDescriptions = [];
 		var rawObjectDescription;
@@ -568,7 +574,7 @@ THREE.OBJLoader2.RawObject = (function () {
 		return notEmpty;
 	};
 
-	RawObject.prototype._createReport = function ( inputObjectCount, printDirectly ) {
+	_RawObject.prototype._createReport = function ( inputObjectCount, printDirectly ) {
 		var report = {
 			name: this.objectName ? this.objectName : 'groups',
 			mtllibName: this.mtllibName,
@@ -595,11 +601,17 @@ THREE.OBJLoader2.RawObject = (function () {
 		return report;
 	};
 
-	return RawObject;
+	return _RawObject;
 })();
 
 /**
  * Description used to pass info to mesh building function
+ * @class
+ *
+ * @param {string} objectName Name of the mesh
+ * @param {string} groupName Name of the group
+ * @param {string} materialName Name of the material
+ * @param {number} smoothingGroup Normalized smoothingGroup (0: THREE.FlatShading, 1: THREE.SmoothShading)
  */
 THREE.OBJLoader2.RawObjectDescription = (function () {
 

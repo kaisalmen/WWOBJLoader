@@ -2,19 +2,17 @@
  * OBJ data will be loaded by dynamically created web worker.
  * First feed instructions with: prepareRun
  * Then: Execute with: run
- *
+ * @class
  */
 THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
-	function WWOBJLoader2( params ) {
-		this._init( params );
+	function WWOBJLoader2() {
+		this._init();
 	}
 
-	WWOBJLoader2.prototype._init = function ( webWorkerName ) {
+	WWOBJLoader2.prototype._init = function () {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
-
-		this.webWorkerName = webWorkerName;
 
 		this.instanceNo = 0;
 		this.worker = null;
@@ -58,6 +56,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Set enable or disable debug logging
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param enabled
 	 */
@@ -67,6 +66,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Register callback function that is invoked by "_announceProgress"
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param callbackProgress
 	 */
@@ -76,6 +76,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Register callback function that is called once loading of the complete model is completed
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param callbackCompletedLoading
 	 */
@@ -85,6 +86,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param callbackMaterialsLoaded
 	 */
@@ -94,6 +96,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Register callback function that is called every time a mesh was loaded
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param callbackMeshLoaded
 	 */
@@ -103,6 +106,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Call requestTerminate to terminate the web worker and free local resource after execution
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param requestTerminate
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = ( requestTerminate != null && requestTerminate ) ? true : false;
@@ -153,6 +159,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Provide parameters for the object+material to be loaded
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param params
 	 * if params.dataAvailable then OBJ data is available as arraybuffer
@@ -214,6 +221,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Run the loader according the preparation instruction provided in prepareRun
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 */
 	WWOBJLoader2.prototype.run = function () {
 		var scope = this;
@@ -456,13 +464,13 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.running = false;
 		if ( reason === 'complete' ) {
 
-			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
-			if ( this.callbacks.director.completedLoading != null ) this.callbacks.director.completedLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.completedLoading != null ) this.callbacks.director.completedLoading( this.modelName, this.instanceNo, this.requestTerminate );
 
 		} else if ( reason === 'error' ) {
 
-			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
-			if ( this.callbacks.director.errorWhileLoading != null ) this.callbacks.director.errorWhileLoading( this.webWorkerName, this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.modelName, this.instanceNo, this.requestTerminate );
+			if ( this.callbacks.director.errorWhileLoading != null ) this.callbacks.director.errorWhileLoading( this.modelName, this.instanceNo, this.requestTerminate );
 
 		}
 		this.validated = false;
@@ -839,7 +847,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			// parser re-construtcion
 			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObject', 'RawObject', THREE.OBJLoader2.RawObject );
+			this.workerCode += buildSingelton( 'THREE.OBJLoader2._RawObject', '_RawObject', THREE.OBJLoader2._RawObject );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
 
 			// web worker construction

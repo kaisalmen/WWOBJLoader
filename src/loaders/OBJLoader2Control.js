@@ -1,7 +1,12 @@
+if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+
 /**
- * Use this class to load OBJ data from arraybuffer or text
+ * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
+ * @class
+ *
+ * @param {THREE.DefaultLoadingManager} [manager] Extension of {@link THREE.DefaultLoadingManager}
  */
-THREE.OBJLoader2 = (function () {
+THREE.OBJLoader2.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
 		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
@@ -17,8 +22,9 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Base path to use
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param path
+	 * @param {string} path The basepath
 	 */
 	OBJLoader2.prototype.setPath = function ( path ) {
 		this.path = ( path == null ) ? this.path : path;
@@ -26,8 +32,9 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Set the node where the loaded objects will be attached
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param sceneGraphBaseNode
+	 * @param {THREE.Object3D} sceneGraphBaseNode Scenegraph object where meshes will be attached
 	 */
 	OBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.meshCreator._setSceneGraphBaseNode( sceneGraphBaseNode );
@@ -35,8 +42,9 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Set materials loaded by MTLLoader
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param materials THREE.MTLLoader.MaterialCreator.materials)
+	 * @param {Array} materials {@link THREE.MTLLoader.MaterialCreator.materials}
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator._setMaterials( materials );
@@ -44,9 +52,10 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Allows to set debug mode for the parser and the meshCreator
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param parserDebug
-	 * @param meshCreatorDebug
+	 * @param {boolean} parserDebug {@link THREE.OBJLoader2._Parser} will produce debug output
+	 * @param {boolean} meshCreatorDebug {@link THREE.OBJLoader2.MeshCreator} will produce debug output
 	 */
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser._setDebug( parserDebug );
@@ -55,12 +64,13 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Use this convenient method to load an OBJ file at the given URL. Per default the fileLoader uses an arraybuffer
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param url
-	 * @param onLoad
-	 * @param onProgress
-	 * @param onError
-	 * @param useArrayBuffer
+	 * @param {string} URL of the file to load
+	 * @param {callback} onLoad Called after loading was successfully completed
+	 * @param {callback} onProgress Called to report progress of loading
+	 * @param {callback} onError Called after an error occurred during loading
+	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
 		this._validate();
@@ -78,8 +88,9 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Default parse function: Parses OBJ file content stored in arrayBuffer and returns the sceneGraphBaseNode
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param arrayBuffer
+	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
 	OBJLoader2.prototype.parse = function ( arrayBuffer ) {
 		// fast-fail on bad type
@@ -102,8 +113,9 @@ THREE.OBJLoader2 = (function () {
 
 	/**
 	 * Legacy parse function: Parses OBJ file content stored in string and returns the sceneGraphBaseNode
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
 	 *
-	 * @param text
+	 * @param {string} text OBJ data as string
 	 */
 	OBJLoader2.prototype.parseText = function ( text ) {
 		// fast-fail on bad type

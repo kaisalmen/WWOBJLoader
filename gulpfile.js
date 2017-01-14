@@ -3,14 +3,13 @@
 var fs = require( 'fs' );
 
 var gulp = require( 'gulp' );
+var clean = require( 'gulp-clean' );
 var rename = require( 'gulp-rename' );
 var concat = require( 'gulp-concat' );
 var uglify = require( 'gulp-uglify' );
 var header = require( 'gulp-header' );
-
 var replace = require( 'gulp-replace-task' );
-
-var jsdoc = require('gulp-jsdoc3');
+var jsdoc = require( 'gulp-jsdoc3' );
 
 var DIR_BUILD = 'build/';
 
@@ -55,15 +54,29 @@ gulp.task( 'bundle-wwobjloader2', function () {
 gulp.task( 'doc', function ( cb ) {
 	var config = require('./jsdoc.json');
 	gulp.src(
-		[
-			'./src/loaders/*.js',
-			'README.md'
-		],
-		{
-			read: false
-		}
+			[
+				'README.md',
+				'src/loaders/OBJLoader2Control.js',
+				'src/loaders/OBJLoader2Parser.js',
+				'src/loaders/OBJLoader2MeshCreator.js',
+				'src/loaders/WWOBJLoader2.js',
+				'src/loaders/WWOBJLoader2Director.js'
+			],
+			{
+				read: false
+			}
 		)
 		.pipe( jsdoc( config, cb ) );
 });
 
-gulp.task( 'default', [ 'bundle-objloader2', 'bundle-wwobjloader2', 'doc' ] );
+gulp.task( 'clean-build', function () {
+	return gulp.src(
+			'build/doc',
+			{
+				read: false
+			}
+		)
+		.pipe( clean() );
+});
+
+gulp.task( 'default', [ 'clean-build', 'bundle-objloader2', 'bundle-wwobjloader2', 'doc' ] );

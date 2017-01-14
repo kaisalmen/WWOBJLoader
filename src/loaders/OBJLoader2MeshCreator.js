@@ -1,5 +1,7 @@
 /**
- * MeshCreator is used to transform THREE.OBJLoader2.RawObjectDescriptions to  THREE.Mesh
+ * MeshCreator is used to transform THREE.OBJLoader2.RawObjectDescriptions to THREE.Mesh
+ *
+ * @class
  */
 THREE.OBJLoader2.MeshCreator = (function () {
 
@@ -43,6 +45,7 @@ THREE.OBJLoader2.MeshCreator = (function () {
 	 * RawObjectDescriptions are transformed to THREE.Mesh.
 	 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check).
 	 * This method shall be overridden by the web worker implementation
+	 * @memberOf THREE.OBJLoader2.MeshCreator
 	 *
 	 * @param rawObjectDescriptions
 	 * @param inputObjectCount

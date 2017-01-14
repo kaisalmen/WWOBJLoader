@@ -1,7 +1,7 @@
-New OBJLoader prototyping for three.js
+OBJLoader2 and WWOBJLoader2 for three.js
 ===
 
-Welcome to the prototyping repository for OBJLoader2 a new loader for the OBJ file format that is additionally executable within a web worker.
+Welcome to the repository for OBJLoader2 a new loader for the OBJ file format that is additionally executable within a web worker.
 
 ## Repository structure
 The directory structure is organized as follows:
@@ -16,9 +16,9 @@ Before you can start to play around after checkout please run:<br>
 You require gulp to be able to build the bundles. If you have not yet installed the cli, execute this:<br>
 `npm install --global gulp-cli`
 
-From the project's root run `gulp` to create the bundles in the **build** directory:
-- **OBJLoader2[.min].js**: Contains all code required for the loader to work
-- **WWOBJLoader2[.min].js**: Consists of web worker control, web worker and director code
+From the project's root run `gulp` to create The documentation in directory **build/docs** and the bundles in directory **build**:
+ - **OBJLoader2[.min].js**: Contains all code required for the loader to work
+ - **WWOBJLoader2[.min].js**: Consists of web worker control, web worker and director code
 
 ## Implementation Overview
 In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three pieces:
@@ -62,6 +62,6 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 <br>
 Larger models not in the prototype repository:<br>
 [Compressed PTV1 Model](http://kaisalmen.de/proto/resource/obj/PTV1/PTV1.zip) (150MB)<br>
-Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):
+Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):<br>
 [Compressed Sink Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
 [Compressed Oven Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>

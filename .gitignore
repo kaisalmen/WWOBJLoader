@@ -5,13 +5,15 @@
 /examples
 /node_modules
 
-/resource/obj/zomax
-/resource/obj/PTV1
-/resource/obj/datamogensen
-/resource/obj/Cerberus
+/resource/obj/1701
 /resource/obj/capsule
+/resource/obj/Cerberus
+/resource/obj/datamogensen
+/resource/obj/PTV1
+/resource/obj/rolleiflex
 /resource/obj/vive-controller
 /resource/obj/walt
+/resource/obj/zomax
 
 /screenshots
 

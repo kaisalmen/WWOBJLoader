@@ -136,7 +136,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 
 			materials.preload();
 
-			var objLoader = new THREE.OBJLoader2();
+			var objLoader = new THREE.OBJLoader2.OBJLoader2();
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( scope.fileDef.path );

@@ -5,6 +5,8 @@
  *   enqueueForRun
  *   processQueue
  *   deregister
+ *
+ * @class
  */
 THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
@@ -17,7 +19,6 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 		this.workerDescription = {
 			prototypeDef: THREE.OBJLoader2.WWOBJLoader2.prototype,
-			webWorkerName: null,
 			callbacks: {},
 			webWorkers: [],
 			codeBuffer: null
@@ -28,6 +29,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
 	 * @returns {*|number}
 	 */
@@ -36,7 +38,8 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
-	 * Returns the maximum number of workers
+	 * Returns the maximum number of workers.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
 	 * @returns {*|number}
 	 */
@@ -46,15 +49,13 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param webWorkerName
 	 * @param callbacks
 	 * @param maxQueueSize
 	 * @param maxWebWorkers
 	 */
-	WWOBJLoader2Director.prototype.prepareWorkers = function ( webWorkerName, callbacks, maxQueueSize, maxWebWorkers ) {
-		this.workerDescription.webWorkerName = webWorkerName;
-
+	WWOBJLoader2Director.prototype.prepareWorkers = function ( callbacks, maxQueueSize, maxWebWorkers ) {
 		if ( callbacks != null ) {
 
 			for ( var key in callbacks ) {
@@ -96,6 +97,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Store run instructions in internal instructionQueue
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
 	 * @param runParams
 	 */
@@ -107,6 +109,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Process the instructionQueue until it is depleted
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 */
 	WWOBJLoader2Director.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
@@ -127,7 +130,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	WWOBJLoader2Director.prototype._buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
-		webWorker._init( this.workerDescription.webWorkerName );
+		webWorker._init();
 
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( this.workerDescription.codeBuffer == null ) {
@@ -149,7 +152,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 		}
 		var scope = this;
-		var managerCompletedLoading = function ( webWorkerName, modelName, instanceNo, requestTerminate ) {
+		var managerCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
 			scope.objectsCompleted++;
 			if ( ! requestTerminate ) {
 
@@ -174,6 +177,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Terminate all workers
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 */
 	WWOBJLoader2Director.prototype.deregister = function () {
 		console.log( 'WWOBJLoader2Director received the unregister call. Terminating all workers!' );
@@ -183,7 +187,6 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			webWorker.setRequestTerminate( true );
 
 		}
-		this.workerDescription.webWorkerName = null;
 		this.workerDescription.callbacks = {};
 		this.workerDescription.webWorkers = [];
 		this.workerDescription.codeBuffer = null;
