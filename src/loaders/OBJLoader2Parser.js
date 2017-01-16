@@ -1,3 +1,5 @@
+if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+
 /**
  * Constants used by  THREE.OBJLoader2.Parser
  */

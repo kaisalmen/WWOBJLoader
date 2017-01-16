@@ -114,7 +114,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.requestTerminate = ( requestTerminate != null && requestTerminate ) ? true : false;
 	};
 
-
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 		if ( this.worker == null ) {
@@ -158,24 +157,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Provide parameters for the object+material to be loaded
+	 * Prepare run
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param params
-	 * if params.dataAvailable then OBJ data is available as arraybuffer
-	 *   params.objAsArrayBuffer (OBJ file content as arraybuffer)
-	 *   params.mtlAsString (MTL file content as string)
-	 *
-	 * else
-	 *   params.fileObj (OBJ file name)
-	 *   params.pathObj (path to OBJ file)
-	 *   params.fileMtl (MTL file name)
-	 *
-	 * BOTH require:
-	 *   params.requestTerminate (request termination of web worker and free local resources after execution)
-	 *   params.pathTexture (path to texture files)
-	 *   params.sceneGraphBaseNode (THREE.Object3D where meshes will be attached)
-	 *
+	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
 	WWOBJLoader2.prototype.prepareRun = function ( params ) {
 		this._validate();
@@ -845,6 +830,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.workerCode += '};\n\n';
 
 			// parser re-construtcion
+			this.workerCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }\n\n';
 			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2._RawObject', '_RawObject', THREE.OBJLoader2._RawObject );
@@ -866,3 +852,63 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	return WWOBJLoader2;
 
 })();
+
+/**
+ * Provide parameters for the object+material to be loaded
+ *
+ * modelName: Overall name of the model
+ * dataAvailable: true => then OBJ data is available as arraybuffer
+ * objAsArrayBuffer: OBJ file content as arraybuffer
+ * pathTexture: path to texture files
+ * mtlAsString: MTL file content as string
+ * sceneGraphBaseNode: THREE.Object3D where meshes will be attached
+ * requestTerminate: Request termination of web worker and free local resources after execution
+ *
+ * @returns {{modelName: string, dataAvailable: boolean, objAsArrayBuffer: null, mtlAsString: null, pathTexture: null, sceneGraphBaseNode: null, requestTerminate: boolean}}
+ * @constructor
+ */
+THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function () {
+
+	var data = {
+		modelName: 'none',
+		dataAvailable: true,
+		objAsArrayBuffer: null,
+		pathTexture: null,
+		mtlAsString: null,
+		sceneGraphBaseNode: null,
+		requestTerminate: false
+	};
+
+	return data;
+};
+
+/**
+ * Provide parameters for the object+material to be loaded
+ *
+ * modelName: Overall name of the model
+ * dataAvailable: false => OBJ data is available as file
+ * pathObj: path to OBJ file
+ * fileObj: OBJ file name
+ * pathTexture: path to texture files
+ * fileMtl: MTL file name
+ * sceneGraphBaseNode: THREE.Object3D where meshes will be attached
+ * requestTerminate: Request termination of web worker and free local resources after execution
+ *
+ * @returns {{modelName: string, dataAvailable: boolean, pathObj: null, fileObj: null, pathTexture: null, fileMtl: null, sceneGraphBaseNode: null, requestTerminate: boolean}}
+ * @constructor
+ */
+THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function () {
+
+	var data = {
+		modelName: 'none',
+		dataAvailable: false,
+		pathObj: null,
+		fileObj: null,
+		pathTexture: null,
+		fileMtl: null,
+		sceneGraphBaseNode: null,
+		requestTerminate: false
+	};
+
+	return data;
+};

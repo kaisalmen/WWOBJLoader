@@ -213,6 +213,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
 			var obj2Load = scope.objs2Load[ scope.loadCounter ];
+			var prepData;
 			scope.loadCounter ++;
 
 			scope.scenePerspective.scene.add( obj2Load.pivot );
@@ -224,13 +225,13 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
-					scope.wwObjLoader2.prepareRun( {
-						dataAvailable: true,
-						objAsArrayBuffer: data,
-						mtlAsString: mtlAsString,
-						pathTexture: obj2Load.pathTexture,
-						sceneGraphBaseNode: obj2Load.pivot
-					} );
+					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer();
+					prepData.modelName = obj2Load.name;
+					prepData.objAsArrayBuffer = data;
+					prepData.mtlAsString = mtlAsString;
+					prepData.pathTexture = obj2Load.pathTexture;
+					prepData.sceneGraphBaseNode = obj2Load.pivot;
+					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
 
@@ -261,14 +262,14 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				scope.wwObjLoader2.prepareRun( {
-					dataAvailable: false,
-					pathObj: obj2Load.pathBase,
-					fileObj: obj2Load.fileObj,
-					pathTexture: obj2Load.pathTexture,
-					fileMtl: obj2Load.fileMtl,
-					sceneGraphBaseNode: obj2Load.pivot
-				} );
+				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile();
+				prepData.modelName = obj2Load.name;
+				prepData.pathObj = obj2Load.pathBase;
+				prepData.fileObj = obj2Load.fileObj;
+				prepData.pathTexture = obj2Load.pathTexture;
+				prepData.fileMtl = obj2Load.fileMtl;
+				prepData.sceneGraphBaseNode = obj2Load.pivot;
+				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 
 			}

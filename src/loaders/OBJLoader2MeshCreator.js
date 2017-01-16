@@ -47,11 +47,11 @@ THREE.OBJLoader2.MeshCreator = (function () {
 	 * This method shall be overridden by the web worker implementation
 	 * @memberOf THREE.OBJLoader2.MeshCreator
 	 *
-	 * @param rawObjectDescriptions
-	 * @param inputObjectCount
-	 * @param absoluteVertexCount
-	 * @param absoluteNormalCount
-	 * @param absoluteUvCount
+	 * @param {THREE.OBJLoader2.RawObjectDescription[]} rawObjectDescriptions Array of descriptive information and data (vertices, normals, uvs) about the parsed object(s)
+	 * @param {number} inputObjectCount Number of objects already retrieved from OBJ
+	 * @param {number} absoluteVertexCount Sum of all vertices of all rawObjectDescriptions
+	 * @param {number} absoluteNormalCount Sum of all normals of all rawObjectDescriptions
+	 * @param {number} absoluteUvCount Sum of all uvs of all rawObjectDescriptions
 	 */
 	MeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 
