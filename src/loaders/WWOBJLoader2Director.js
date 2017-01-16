@@ -31,7 +31,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * Returns the maximum length of the instruction queue.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @returns {*|number}
+	 * @returns {number}
 	 */
 	WWOBJLoader2Director.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
@@ -41,7 +41,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * Returns the maximum number of workers.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @returns {*|number}
+	 * @returns {number}
 	 */
 	WWOBJLoader2Director.prototype.getMaxWebWorkers = function () {
 		return this.maxWebWorkers;
@@ -51,9 +51,10 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param callbacks
-	 * @param maxQueueSize
-	 * @param maxWebWorkers
+	 * @param {callback[]} callbacks Register callbacks for all web workers:
+	 * 		{ progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null }
+	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
+	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
 	WWOBJLoader2Director.prototype.prepareWorkers = function ( callbacks, maxQueueSize, maxWebWorkers ) {
 		if ( callbacks != null ) {
@@ -99,7 +100,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * Store run instructions in internal instructionQueue
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param runParams
+	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
 	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {

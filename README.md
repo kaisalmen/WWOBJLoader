@@ -22,8 +22,8 @@ From the project's root run `gulp` to create The documentation in directory **bu
 
 ## Implementation Overview
 In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three pieces:
-- `OBJLoader2Control`: Is the class to interact with for setting up, for loading data from a given file or for directly forwarding data to the parser
-- `OBJLoader2Parser`: Is invoked by `OBJLoader2Control` or `WWOBJLoader2` to parse the data and transform it into a "raw" representation
+- `OBJLoader2`: Is the class to interact with for setting up, for loading data from a given file or for directly forwarding data to the parser
+- `OBJLoader2Parser`: Is invoked by `OBJLoader2` or `WWOBJLoader2` to parse the data and transform it into a "raw" representation
 - `OBJLoader2MeshCreator`: Builds meshes from the "raw" representation that can be incorporated into the scenegraph.
 
 ##### What is the reason for separation?
@@ -31,7 +31,7 @@ The loader should be easily usable within a web worker. But each web worker has 
 1. Standard direct usage
 2. Embedded within a web worker
 
-As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2Control` and `OBJLoader2MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader` basically provides the same functionality as `OBJLoader2Control` and `OBJLoader2MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
+As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2` and `OBJLoader2MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader` basically provides the same functionality as `OBJLoader2` and `OBJLoader2MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
 
 `WWOBJLoader2` could be seen as a template for other web worker control classes of yet non-existing web worker based loaders.
 
@@ -40,7 +40,7 @@ As `OBJLoader2Parser` is independent of any other code piece of [three.js](https
 
 ##### Parser POIs
 The parser and mesh creation functions have reached full feature parity with the existing OBJ loader. These are some interesting POIs:
-- Per default `OBJLoader2Control` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
+- Per default `OBJLoader2` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
 - Face N-Gons are not supported identically to the old parser
 - Direct re-usage of all involved classes is fully supported. I took care in resource clean-up and re-validation of status on all involved objects
 - "o name" (object), "g name" (group) and new vertex definition without any other declaration lead to new object creation

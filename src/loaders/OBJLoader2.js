@@ -44,7 +44,7 @@ THREE.OBJLoader2 = (function () {
 	 * Set materials loaded by MTLLoader
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {Array} materials {@link THREE.MTLLoader.MaterialCreator.materials}
+	 * @param {THREE.MTLLoader.MaterialCreator.materials[]} materials {@link THREE.MTLLoader.MaterialCreator.materials}
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator._setMaterials( materials );

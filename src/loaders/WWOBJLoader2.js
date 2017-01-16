@@ -58,17 +58,17 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * Set enable or disable debug logging
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param enabled
+	 * @param {boolean} enabled
 	 */
 	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
 	};
 
 	/**
-	 * Register callback function that is invoked by "_announceProgress"
+	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param callbackProgress
+	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
 		if ( callbackProgress != null ) this.callbacks.progress = callbackProgress;
@@ -78,7 +78,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * Register callback function that is called once loading of the complete model is completed
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param callbackCompletedLoading
+	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
 		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading = callbackCompletedLoading;
@@ -88,7 +88,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param callbackMaterialsLoaded
+	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
 		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
@@ -98,17 +98,27 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * Register callback function that is called every time a mesh was loaded
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param callbackMeshLoaded
+	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
 		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
 	};
 
 	/**
+	 * Report if an error prevented loading
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
+	 */
+	WWOBJLoader2.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
+		if ( callbackErrorWhileLoading != null ) this.callbacks.errorWhileLoading = callbackErrorWhileLoading;
+	};
+
+	/**
 	 * Call requestTerminate to terminate the web worker and free local resource after execution
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param requestTerminate
+	 * @param {boolean} requestTerminate
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = ( requestTerminate != null && requestTerminate ) ? true : false;
@@ -157,7 +167,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Prepare run
+	 * Set all parameters for required for execution of "run".
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
@@ -205,7 +215,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Run the loader according the preparation instruction provided in prepareRun
+	 * Run the loader according the preparation instruction provided in "prepareRun".
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 */
 	WWOBJLoader2.prototype.run = function () {
@@ -829,7 +839,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.workerCode += '\t}\n';
 			this.workerCode += '};\n\n';
 
-			// parser re-construtcion
+			// parser re-construction
 			this.workerCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }\n\n';
 			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
 			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
@@ -854,60 +864,58 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 })();
 
 /**
- * Provide parameters for the object+material to be loaded
+ * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ from given ArrayBuffer and MTL from given String
  *
- * modelName: Overall name of the model
- * dataAvailable: true => then OBJ data is available as arraybuffer
- * objAsArrayBuffer: OBJ file content as arraybuffer
- * pathTexture: path to texture files
- * mtlAsString: MTL file content as string
- * sceneGraphBaseNode: THREE.Object3D where meshes will be attached
- * requestTerminate: Request termination of web worker and free local resources after execution
+ * @param {string} modelName Overall name of the model
+ * @param {Uint8Array} objAsArrayBuffer OBJ file content as ArrayBuffer
+ * @param {string} pathTexture Path to texture files
+ * @param {string} mtlAsString MTL file content as string
+ * @param {THREE.Object3D} sceneGraphBaseNode {@link THREE.Object3D} where meshes will be attached
+ * @param {boolean} [requestTerminate=false] Request termination of web worker and free local resources after execution
  *
- * @returns {{modelName: string, dataAvailable: boolean, objAsArrayBuffer: null, mtlAsString: null, pathTexture: null, sceneGraphBaseNode: null, requestTerminate: boolean}}
+ * @returns {{modelName: string, dataAvailable: boolean, objAsArrayBuffer: null, pathTexture: null, mtlAsString: null, sceneGraphBaseNode: null, requestTerminate: boolean}}
  * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function () {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString, sceneGraphBaseNode, requestTerminate ) {
 
 	var data = {
-		modelName: 'none',
+		modelName: ( modelName == null ) ? 'none' : modelName,
 		dataAvailable: true,
-		objAsArrayBuffer: null,
-		pathTexture: null,
-		mtlAsString: null,
-		sceneGraphBaseNode: null,
-		requestTerminate: false
+		objAsArrayBuffer: ( objAsArrayBuffer == null ) ? null : objAsArrayBuffer,
+		pathTexture: ( pathTexture == null ) ? null : pathTexture,
+		mtlAsString: ( mtlAsString == null ) ? null : mtlAsString,
+		sceneGraphBaseNode: ( sceneGraphBaseNode == null ) ? null : sceneGraphBaseNode,
+		requestTerminate: ( requestTerminate == null ) ? false : requestTerminate
 	};
 
 	return data;
 };
 
 /**
- * Provide parameters for the object+material to be loaded
+ * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ and MTL from files
  *
- * modelName: Overall name of the model
- * dataAvailable: false => OBJ data is available as file
- * pathObj: path to OBJ file
- * fileObj: OBJ file name
- * pathTexture: path to texture files
- * fileMtl: MTL file name
- * sceneGraphBaseNode: THREE.Object3D where meshes will be attached
- * requestTerminate: Request termination of web worker and free local resources after execution
+ * @param {string} modelName Overall name of the model
+ * @param {string} pathObj Path to OBJ file
+ * @param {string} fileObj OBJ file name
+ * @param {string} pathTexture Path to texture files
+ * @param {string} fileMtl MTL file name
+ * @param {THREE.Object3D} sceneGraphBaseNode {@link THREE.Object3D} where meshes will be attached
+ * @param {boolean} [requestTerminate=false] Request termination of web worker and free local resources after execution
  *
  * @returns {{modelName: string, dataAvailable: boolean, pathObj: null, fileObj: null, pathTexture: null, fileMtl: null, sceneGraphBaseNode: null, requestTerminate: boolean}}
  * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function () {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl, sceneGraphBaseNode, requestTerminate ) {
 
 	var data = {
-		modelName: 'none',
+		modelName: ( modelName == null ) ? 'none' : modelName,
 		dataAvailable: false,
-		pathObj: null,
-		fileObj: null,
-		pathTexture: null,
-		fileMtl: null,
-		sceneGraphBaseNode: null,
-		requestTerminate: false
+		pathObj: ( pathObj == null ) ? null : pathObj,
+		fileObj: ( fileObj == null ) ? null : fileObj,
+		pathTexture: ( pathTexture == null ) ? null : pathTexture,
+		fileMtl: ( fileMtl == null ) ? null : fileMtl,
+		sceneGraphBaseNode: ( sceneGraphBaseNode == null ) ? null : sceneGraphBaseNode,
+		requestTerminate: ( requestTerminate == null ) ? false : requestTerminate
 	};
 
 	return data;

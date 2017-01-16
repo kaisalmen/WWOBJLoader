@@ -16,7 +16,7 @@ var DIR_BUILD = 'build/';
 gulp.task( 'bundle-objloader2', function () {
 	return gulp.src(
 			[
-				'src/loaders/OBJLoader2Control.js',
+				'src/loaders/OBJLoader2.js',
 				'src/loaders/OBJLoader2Parser.js',
 				'src/loaders/OBJLoader2MeshCreator.js'
 			]
@@ -56,7 +56,7 @@ gulp.task( 'doc', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
-				'src/loaders/OBJLoader2Control.js',
+				'src/loaders/OBJLoader2.js',
 				'src/loaders/OBJLoader2Parser.js',
 				'src/loaders/OBJLoader2MeshCreator.js',
 				'src/loaders/WWOBJLoader2.js',

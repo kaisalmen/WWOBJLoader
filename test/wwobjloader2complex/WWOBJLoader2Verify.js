@@ -65,17 +65,21 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		var meshLoaded = function ( meshName ) {
 			// just for demonstration...
 		};
+		var errorWhileLoading = function () {
+			// just for demonstration...
+		};
 		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
 		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
+		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
 
 		// tell ThreeJsApp async loading is done (none needed here)
 		this.preloadDone = true;
 	};
 
 	WWOBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor(0x303030);
+		this.renderer.setClearColor( 0x101010 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -225,12 +229,9 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
-					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer();
-					prepData.modelName = obj2Load.name;
-					prepData.objAsArrayBuffer = data;
-					prepData.mtlAsString = mtlAsString;
-					prepData.pathTexture = obj2Load.pathTexture;
-					prepData.sceneGraphBaseNode = obj2Load.pivot;
+					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
+						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot
+					);
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
@@ -262,13 +263,9 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile();
-				prepData.modelName = obj2Load.name;
-				prepData.pathObj = obj2Load.pathBase;
-				prepData.fileObj = obj2Load.fileObj;
-				prepData.pathTexture = obj2Load.pathTexture;
-				prepData.fileMtl = obj2Load.fileMtl;
-				prepData.sceneGraphBaseNode = obj2Load.pivot;
+				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
+					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot
+				);
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 

@@ -607,7 +607,7 @@ THREE.OBJLoader2._RawObject = (function () {
 })();
 
 /**
- * Description used to pass info to mesh building function
+ * Descriptive information and data (vertices, normals, uvs) to passed on to mesh building function.
  * @class
  *
  * @param {string} objectName Name of the mesh

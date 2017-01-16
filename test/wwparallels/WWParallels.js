@@ -50,7 +50,7 @@ THREE.examples.loaders.WWParallels = (function () {
 	};
 
 	WWParallels.prototype.initGL = function () {
-		this.renderer.setClearColor(0x303030);
+		this.renderer.setClearColor( 0x101010 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -200,15 +200,10 @@ THREE.examples.loaders.WWParallels = (function () {
 			this.scenePerspective.scene.add( pivot );
 
 			model.sceneGraphBaseNode = pivot;
-			runParams = {
-				modelName: model.modelName,
-				sceneGraphBaseNode: model.sceneGraphBaseNode,
-				dataAvailable: model.dataAvailable,
-				pathObj: model.pathObj,
-				fileObj: model.fileObj,
-				pathTexture: model.pathTexture,
-				fileMtl: model.fileMtl
-			};
+
+			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
+				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode
+			);
 			this.wwDirector.enqueueForRun( runParams );
 			this.allAssets.push( runParams );
 		}

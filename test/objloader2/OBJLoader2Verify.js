@@ -88,7 +88,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 	// ThreeJsApp.initPreGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x303030 );
+		this.renderer.setClearColor( 0x101010 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
