@@ -36,7 +36,6 @@ THREE.examples.loaders.WWParallels = (function () {
 
 		this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director();
 
-		this.lights = null;
 		this.controls = null;
 		this.cube = null;
 
@@ -50,7 +49,7 @@ THREE.examples.loaders.WWParallels = (function () {
 	};
 
 	WWParallels.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x101010 );
+		this.renderer.setClearColor( 0x050505 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -58,23 +57,16 @@ THREE.examples.loaders.WWParallels = (function () {
 		this.scenePerspective.setCameraDefaults( cameraDefaults );
 		this.controls = new THREE.TrackballControls( this.scenePerspective.camera, this.renderer.domElement );
 
-		this.lights = {
-			ambientLight: new THREE.AmbientLight( 0x202020 ),
-			directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
-			lightArray: new THREE.Object3D()
-		};
+		var ambientLight = new THREE.AmbientLight( 0x404040 );
+		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
-		this.lights.directionalLight1.position.set( -100, 0, 100 );
-		this.lights.directionalLight2.position.set( 100, 0, 100 );
-		this.lights.directionalLight3.position.set( 0, 0, -100 );
+		directionalLight1.position.set( -100, -50, 100 );
+		directionalLight2.position.set( 100, 50, -100 );
 
-		this.lights.lightArray.add( this.lights.directionalLight1 );
-		this.lights.lightArray.add( this.lights.directionalLight2 );
-		this.lights.lightArray.add( this.lights.directionalLight3 );
-		this.scenePerspective.scene.add( this.lights.lightArray );
-
+		this.scenePerspective.scene.add( directionalLight1 );
+		this.scenePerspective.scene.add( directionalLight2 );
+		this.scenePerspective.scene.add( ambientLight );
 
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();

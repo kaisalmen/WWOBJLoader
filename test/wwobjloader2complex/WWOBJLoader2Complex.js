@@ -19,12 +19,12 @@ if ( THREE.examples.loaders === undefined ) {
  *
  * This example extends ThreeJsApp and overwrites only functions needed.
  */
-THREE.examples.loaders.WWOBJLoader2Verify = (function () {
+THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 
-	WWOBJLoader2Verify.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
-	WWOBJLoader2Verify.prototype.constructor = WWOBJLoader2Verify;
+	WWOBJLoader2Complex.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
+	WWOBJLoader2Complex.prototype.constructor = WWOBJLoader2Complex;
 
-	function WWOBJLoader2Verify( elementToBindTo ) {
+	function WWOBJLoader2Complex( elementToBindTo ) {
 		THREE.examples.apps.ThreeJsApp.call( this );
 
 		// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
@@ -36,7 +36,6 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 
-		this.lights = null;
 		this.controls = null;
 
 		this.cube = null;
@@ -48,7 +47,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.processing = false;
 	}
 
-	WWOBJLoader2Verify.prototype.initPreGL = function () {
+	WWOBJLoader2Complex.prototype.initPreGL = function () {
 		var scope = this;
 
 		var reloadAssetsProxy = function () {
@@ -78,8 +77,8 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.preloadDone = true;
 	};
 
-	WWOBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x101010 );
+	WWOBJLoader2Complex.prototype.initGL = function () {
+		this.renderer.setClearColor( 0x050505 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -87,23 +86,16 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.scenePerspective.setCameraDefaults( cameraDefaults );
 		this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
 
-		this.lights = {
-			ambientLight: new THREE.AmbientLight( 0x202020 ),
-			directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
-			lightArray: new THREE.Object3D()
-		};
+		var ambientLight = new THREE.AmbientLight( 0x404040 );
+		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
-		this.lights.directionalLight1.position.set( -100, 0, 100 );
-		this.lights.directionalLight2.position.set( 100, 0, 100 );
-		this.lights.directionalLight3.position.set( 0, 0, -100 );
+		directionalLight1.position.set( -100, -50, 100 );
+		directionalLight2.position.set( 100, 50, -100 );
 
-		this.lights.lightArray.add( this.lights.directionalLight1 );
-		this.lights.lightArray.add( this.lights.directionalLight2 );
-		this.lights.lightArray.add( this.lights.directionalLight3 );
-		this.scenePerspective.scene.add( this.lights.lightArray );
-
+		this.scenePerspective.scene.add( directionalLight1 );
+		this.scenePerspective.scene.add( directionalLight2 );
+		this.scenePerspective.scene.add( ambientLight );
 
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
@@ -112,24 +104,24 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.scenePerspective.scene.add( this.cube );
 	};
 
-	WWOBJLoader2Verify.prototype.initPostGL = function () {
+	WWOBJLoader2Complex.prototype.initPostGL = function () {
 		this.reloadAssets();
 
 		return true;
 	};
 
-	WWOBJLoader2Verify.prototype.resizeDisplayGL = function () {
+	WWOBJLoader2Complex.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 	};
 
-	WWOBJLoader2Verify.prototype.renderPre = function () {
+	WWOBJLoader2Complex.prototype.renderPre = function () {
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
 		this.cube.rotation.y += 0.05;
 	};
 
-	WWOBJLoader2Verify.prototype.clearAllAssests = function () {
+	WWOBJLoader2Complex.prototype.clearAllAssests = function () {
 		var ref;
 		var scope = this;
 
@@ -169,7 +161,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.allAssets = [];
 	};
 
-	WWOBJLoader2Verify.prototype.updateAssets = function ( objs ) {
+	WWOBJLoader2Complex.prototype.updateAssets = function ( objs ) {
 		this.objs2Load = [];
 		this.loadCounter = 0;
 		this.processing = true;
@@ -207,11 +199,11 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		}
 	};
 
-	WWOBJLoader2Verify.prototype.reportProgress = function( text ) {
+	WWOBJLoader2Complex.prototype.reportProgress = function( text ) {
 		document.getElementById( 'feedback' ).innerHTML = text;
 	};
 
-	WWOBJLoader2Verify.prototype.reloadAssets = function () {
+	WWOBJLoader2Complex.prototype.reloadAssets = function () {
 		var scope = this;
 
 		if ( scope.loadCounter < scope.objs2Load.length ) {
@@ -279,7 +271,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 	// ThreeJsApp.renderPost()  not required, default is used
 
-	return WWOBJLoader2Verify;
+	return WWOBJLoader2Complex;
 
 })();
 

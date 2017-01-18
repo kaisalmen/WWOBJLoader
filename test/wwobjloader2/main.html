@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<title>OBJLoader2 Testbed</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+<link href="./main.css" type="text/css" rel="stylesheet"/>
+
+<div id="info">
+	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
+	<div id="feedback"></div>
+</div>
+<div id="glFullscreen">
+	<div id="menu">
+		<p id="shading" onclick="APP.alterSmoothShading()">Smooth Shading</p>
+		<p id="side" onclick="APP.alterDouble()">Front Side</p>
+	</div>
+	<canvas id="example"></canvas>
+</div>
+
+<script src="../../node_modules/three/build/three.min.js"></script>
+<script src="../../node_modules/three/examples/js/Detector.js"></script>
+<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+
+<script src="../../src/apps/ThreeJsApp.js"></script>
+<script src="../../src/apps/AppRunner.js"></script>
+
+<script src="../../build/OBJLoader2.js"></script>
+<script src="../../build/WWOBJLoader2.js"></script>
+
+<script src="./WWOBJLoader2Verify.js"></script>
+<script>
+
+	var APP = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
+
+	// AppRunner handles ThreeJsApp init, window resize event and render loop
+	var appRunner = new THREE.examples.apps.AppRunner( APP );
+	appRunner.run( true );
+
+</script>

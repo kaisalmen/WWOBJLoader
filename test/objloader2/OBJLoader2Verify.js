@@ -34,7 +34,6 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 			htmlCanvas: elementToBindTo
 		} );
 
-		this.lights = null;
 		this.controls = null;
 
 		this.smoothShading = true;
@@ -88,7 +87,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 	// ThreeJsApp.initPreGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x101010 );
+		this.renderer.setClearColor( 0x050505 );
 
 		var cameraDefaults = {
 			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
@@ -96,23 +95,16 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.scenePerspective.setCameraDefaults( cameraDefaults );
 		this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
 
-		this.lights = {
-			ambientLight: new THREE.AmbientLight( 0x202020 ),
-			directionalLight1: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight2: new THREE.DirectionalLight( 0xC0C090 ),
-			directionalLight3: new THREE.DirectionalLight( 0xC0C090 ),
-			lightArray: new THREE.Object3D()
-		};
+		var ambientLight = new THREE.AmbientLight( 0x404040 );
+		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
-		this.lights.directionalLight1.position.set( -100, 0, 100 );
-		this.lights.directionalLight2.position.set( 100, 0, 100 );
-		this.lights.directionalLight3.position.set( 0, 0, -100 );
+		directionalLight1.position.set( -100, -50, 100 );
+		directionalLight2.position.set( 100, 50, -100 );
 
-		this.lights.lightArray.add( this.lights.directionalLight1 );
-		this.lights.lightArray.add( this.lights.directionalLight2 );
-		this.lights.lightArray.add( this.lights.directionalLight3 );
-		this.scenePerspective.scene.add( this.lights.lightArray );
-
+		this.scenePerspective.scene.add( directionalLight1 );
+		this.scenePerspective.scene.add( directionalLight2 );
+		this.scenePerspective.scene.add( ambientLight );
 
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
@@ -177,7 +169,6 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.cube.rotation.x += 0.05;
 		this.cube.rotation.y += 0.05;
 	};
-
 
 	OBJLoader2Verify.prototype.alterSmoothShading = function () {
 
