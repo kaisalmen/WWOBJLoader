@@ -4,35 +4,27 @@
 
 'use strict';
 
-if ( THREE.examples.loaders === undefined ) {
-	THREE.examples.loaders = {};
-}
+if ( THREE.examples === undefined ) THREE.examples = {};
+if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
 
-/**
- * ThreeJsApp serves as base class that defines an application life-cycle and
- * handles some things you always need to do when writing an example:
- * - Renderer init
- * - Perspective scene with camera (enabled by default)
- *   - CubeMap scene (disabled by default)
- * - Orthographic scene with camera (disabled by default)
- * - Canvas/renderer size changes
- *
- * This example extends ThreeJsApp and overwrites only functions needed.
- */
 THREE.examples.loaders.OBJLoader2Verify = (function () {
 
-	OBJLoader2Verify.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
-	OBJLoader2Verify.prototype.constructor = OBJLoader2Verify;
-
 	function OBJLoader2Verify( elementToBindTo ) {
-		THREE.examples.apps.ThreeJsApp.call( this );
+		this.renderer = null;
+		this.canvas = elementToBindTo;
+		this.aspectRatio = 1;
+		this.recalcAspectRatio();
 
-		// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
-		// Only define what is required (name and htmlCanvas).
-		this.configure( {
-			name: 'OBJLoader2Verification',
-			htmlCanvas: elementToBindTo
-		} );
+		this.scene = null;
+		this.cameraDefaults = {
+			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+			near: 0.1,
+			far: 10000,
+			fov: 45
+		};
+		this.camera = null;
+		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.controls = null;
 
@@ -42,41 +34,41 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		this.cube = null;
 		this.pivot = null;
 
-		this.fileDef = {
+		this.objDef = {
 			path: '../../resource/obj/female02/',
 			fileObj: 'female02.obj',
 			texturePath: '../../resource/obj/female02/',
 			fileMtl: 'female02.mtl'
 		};
 		/*
-		 this.fileDef = {
+		 this.objDef = {
 		 path: '../../resource/obj/Cerberus/',
 		 fileObj: 'Cerberus.obj',
 		 fileMtl: ''
 		 };
 
-		 this.fileDef = {
+		 this.objDef = {
 		 path: '../../resource/obj/PTV1/',
 		 fileObj: 'PTV1.obj',
 		 texturePath: '../../resource/obj/PTV1/',
 		 fileMtl: 'PTV1.mtl'
 		 };
 
-		 this.fileDef = {
+		 this.objDef = {
 		 path: '../../resource/obj/zomax/',
 		 fileObj: 'zomax-net_haze-sink-scene.obj',
 		 texturePath: '../../resource/obj/zomax/',
 		 fileMtl: ''
 		 };
 
-		 this.fileDef = {
+		 this.objDef = {
 		 path: '../../resource/obj/cube/',
 		 fileObj: 'cube.obj',
 		 texturePath: '../../resource/obj/cube/',
 		 fileMtl: 'cube.mtl'
 		 }
 
-		 this.fileDef = {
+		 this.objDef = {
 		 path: '../../resource/obj/vive-controller/',
 		 fileObj: 'vr_controller_vive_1_5.obj',
 		 fileMtl: ''
@@ -87,13 +79,18 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 	// ThreeJsApp.initPreGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x050505 );
+		this.renderer = new THREE.WebGLRenderer( {
+			canvas: this.canvas,
+			antialias: true,
+			autoClear: true,
+			clearColor: 0x050505
+		} );
 
-		var cameraDefaults = {
-			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
-		};
-		this.scenePerspective.setCameraDefaults( cameraDefaults );
-		this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+		this.scene = new THREE.Scene();
+
+		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+		this.resetCamera();
+		this.controls = new THREE.TrackballControls( this.camera );
 
 		var ambientLight = new THREE.AmbientLight( 0x404040 );
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
@@ -102,36 +99,34 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		directionalLight1.position.set( -100, -50, 100 );
 		directionalLight2.position.set( 100, 50, -100 );
 
-		this.scenePerspective.scene.add( directionalLight1 );
-		this.scenePerspective.scene.add( directionalLight2 );
-		this.scenePerspective.scene.add( ambientLight );
+		this.scene.add( directionalLight1 );
+		this.scene.add( directionalLight2 );
+		this.scene.add( ambientLight );
 
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, -20, 0 );
-		this.scenePerspective.scene.add( this.cube );
+		this.scene.add( this.cube );
 
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
-		this.scenePerspective.scene.add( this.pivot );
+		this.scene.add( this.pivot );
 	};
-
-	// ThreeJsApp.WWOBJLoaderChecker.prototype.initPostGL()  not required, default is used
 
 	OBJLoader2Verify.prototype.initPostGL = function () {
 		var scope = this;
 
 		var mtlLoader = new THREE.MTLLoader();
-		mtlLoader.setPath( scope.fileDef.texturePath );
-		mtlLoader.load( scope.fileDef.fileMtl, function( materials ) {
+		mtlLoader.setPath( scope.objDef.texturePath );
+		mtlLoader.load( scope.objDef.fileMtl, function( materials ) {
 
 			materials.preload();
 
 			var objLoader = new THREE.OBJLoader2();
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
-			objLoader.setPath( scope.fileDef.path );
+			objLoader.setPath( scope.objDef.path );
 			objLoader.setDebug( false, false );
 
 			var onSuccess = function ( object3d ) {
@@ -142,7 +137,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 				if ( event.lengthComputable ) {
 
 					var percentComplete = event.loaded / event.total * 100;
-					var output = 'Download of "' + scope.fileDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
+					var output = 'Download of "' + scope.objDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
 					console.log(output);
 
 				}
@@ -152,7 +147,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 				console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
 			};
 
-			objLoader.load( scope.fileDef.fileObj, onSuccess, onProgress, onError );
+			objLoader.load( scope.objDef.fileObj, onSuccess, onProgress, onError );
 
 		});
 
@@ -161,13 +156,39 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 
 	OBJLoader2Verify.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
+
+		this.recalcAspectRatio();
+		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+		this.updateCamera();
 	};
 
-	OBJLoader2Verify.prototype.renderPre = function () {
+	OBJLoader2Verify.prototype.recalcAspectRatio = function () {
+		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	};
+
+	OBJLoader2Verify.prototype.resetCamera = function () {
+		this.camera.position.copy( this.cameraDefaults.posCamera );
+		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+		this.updateCamera();
+	};
+
+	OBJLoader2Verify.prototype.updateCamera = function () {
+		this.camera.aspect = this.aspectRatio;
+		this.camera.lookAt( this.cameraTarget );
+		this.camera.updateProjectionMatrix();
+	};
+
+	OBJLoader2Verify.prototype.render = function () {
+		if ( ! this.renderer.autoClear ) this.renderer.clear();
+
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
 		this.cube.rotation.y += 0.05;
+
+		this.renderer.render( this.scene, this.camera );
 	};
 
 	OBJLoader2Verify.prototype.alterSmoothShading = function () {
@@ -229,8 +250,6 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		}
 
 	};
-
-	// ThreeJsApp.renderPost()  not required, default is used
 
 	return OBJLoader2Verify;
 

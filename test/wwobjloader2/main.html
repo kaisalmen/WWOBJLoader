@@ -24,19 +24,30 @@
 <script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="../../src/apps/ThreeJsApp.js"></script>
-<script src="../../src/apps/AppRunner.js"></script>
-
 <script src="../../build/OBJLoader2.js"></script>
 <script src="../../build/WWOBJLoader2.js"></script>
 
 <script src="./WWOBJLoader2Verify.js"></script>
 <script>
 
-	var APP = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
+	var app = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
 
-	// AppRunner handles ThreeJsApp init, window resize event and render loop
-	var appRunner = new THREE.examples.apps.AppRunner( APP );
-	appRunner.run( true );
+	var resizeWindow = function () {
+		app.resizeDisplayGL();
+	};
+
+	var render = function () {
+		requestAnimationFrame(render);
+		app.render();
+	};
+
+	window.addEventListener('resize', resizeWindow, false);
+
+	console.log("Starting initialisation phase...");
+	app.initGL();
+	app.resizeDisplayGL();
+	app.initPostGL();
+
+	render();
 
 </script>

@@ -4,35 +4,27 @@
 
 'use strict';
 
-if ( THREE.examples.loaders === undefined ) {
-	THREE.examples.loaders = {};
-}
+if ( THREE.examples === undefined ) THREE.examples = {};
+if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
 
-/**
- * ThreeJsApp serves as base class that defines an application life-cycle and
- * handles some things you always need to do when writing an example:
- * - Renderer init
- * - Perspective scene with camera (enabled by default)
- *   - CubeMap scene (disabled by default)
- * - Orthographic scene with camera (disabled by default)
- * - Canvas/renderer size changes
- *
- * This example extends ThreeJsApp and overwrites only functions needed.
- */
 THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
-	WWOBJLoader2Verify.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
-	WWOBJLoader2Verify.prototype.constructor = WWOBJLoader2Verify;
-
 	function WWOBJLoader2Verify( elementToBindTo ) {
-		THREE.examples.apps.ThreeJsApp.call( this );
+		this.renderer = null;
+		this.canvas = elementToBindTo;
+		this.aspectRatio = 1;
+		this.recalcAspectRatio();
 
-		// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
-		// Only define what is required (name and htmlCanvas).
-		this.configure( {
-			name: 'WWOBJLoader2Verification',
-			htmlCanvas: elementToBindTo
-		} );
+		this.scene = null;
+		this.cameraDefaults = {
+			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+			near: 0.1,
+			far: 10000,
+			fov: 45
+		};
+		this.camera = null;
+		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.controls = null;
 
@@ -41,16 +33,28 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 		this.cube = null;
 		this.pivot = null;
+
+		this.objDef = {
+			path: '../../resource/obj/male02/',
+			fileObj: 'male02.obj',
+			texturePath: '../../resource/obj/male02/',
+			fileMtl: 'male02.mtl'
+		};
 	}
 
 	WWOBJLoader2Verify.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x050505 );
+		this.renderer = new THREE.WebGLRenderer( {
+			canvas: this.canvas,
+			antialias: true,
+			autoClear: true,
+			clearColor: 0x050505
+		} );
 
-		var cameraDefaults = {
-			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
-		};
-		this.scenePerspective.setCameraDefaults( cameraDefaults );
-		this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
+		this.scene = new THREE.Scene();
+
+		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+		this.resetCamera();
+		this.controls = new THREE.TrackballControls( this.camera );
 
 		var ambientLight = new THREE.AmbientLight( 0x404040 );
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
@@ -59,19 +63,19 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		directionalLight1.position.set( -100, -50, 100 );
 		directionalLight2.position.set( 100, 50, -100 );
 
-		this.scenePerspective.scene.add( directionalLight1 );
-		this.scenePerspective.scene.add( directionalLight2 );
-		this.scenePerspective.scene.add( ambientLight );
+		this.scene.add( directionalLight1 );
+		this.scene.add( directionalLight2 );
+		this.scene.add( ambientLight );
 
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, -20, 0 );
-		this.scenePerspective.scene.add( this.cube );
+		this.scene.add( this.cube );
 
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
-		this.scenePerspective.scene.add( this.pivot );
+		this.scene.add( this.pivot );
 	};
 
 	WWOBJLoader2Verify.prototype.initPostGL = function () {
@@ -95,14 +99,8 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
 		wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 
-		var fileDef = {
-			path: '../../resource/obj/male02/',
-			fileObj: 'male02.obj',
-			texturePath: '../../resource/obj/male02/',
-			fileMtl: 'male02.mtl'
-		};
 		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-			'male02', fileDef.path, fileDef.fileObj, fileDef.texturePath, fileDef.fileMtl, this.pivot
+			'male02', this.objDef.path, this.objDef.fileObj, this.objDef.texturePath, this.objDef.fileMtl, this.pivot
 		);
 		wwObjLoader2.prepareRun( prepData );
 		wwObjLoader2.run();
@@ -112,13 +110,39 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 	WWOBJLoader2Verify.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
+
+		this.recalcAspectRatio();
+		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+		this.updateCamera();
 	};
 
-	WWOBJLoader2Verify.prototype.renderPre = function () {
+	WWOBJLoader2Verify.prototype.recalcAspectRatio = function () {
+		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	};
+
+	WWOBJLoader2Verify.prototype.resetCamera = function () {
+		this.camera.position.copy( this.cameraDefaults.posCamera );
+		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+		this.updateCamera();
+	};
+
+	WWOBJLoader2Verify.prototype.updateCamera = function () {
+		this.camera.aspect = this.aspectRatio;
+		this.camera.lookAt( this.cameraTarget );
+		this.camera.updateProjectionMatrix();
+	};
+
+	WWOBJLoader2Verify.prototype.render = function () {
+		if ( ! this.renderer.autoClear ) this.renderer.clear();
+
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
 		this.cube.rotation.y += 0.05;
+
+		this.renderer.render( this.scene, this.camera );
 	};
 
 	WWOBJLoader2Verify.prototype.alterSmoothShading = function () {

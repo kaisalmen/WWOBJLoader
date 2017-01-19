@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
-<link href="./main.css" type="text/css" rel="stylesheet"/>
+<style>
+	/*STUB_CSS_COMMON*/
+	/*STUB_CSS_MAIN*/
+</style>
 
 <div id="info">
 	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
@@ -24,14 +26,13 @@
 <script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="../../src/loaders/OBJLoader2Parser.js"></script>
-<script src="../../src/loaders/WWOBJLoader2.js"></script>
-<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
+<script src="../../build/OBJLoader2.js"></script>
 
-<script src="./WWOBJLoader2Verify.js"></script>
 <script>
 
-	var app = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
+	//STUB
+
+	var app = new THREE.examples.loaders.OBJLoader2Verify( document.getElementById( 'example' ) );
 
 	var resizeWindow = function () {
 		app.resizeDisplayGL();

@@ -322,19 +322,6 @@ THREE.examples.apps.Canvas = (function () {
         }
     };
 
-    Canvas.prototype.resetWidth = function ( width, height ) {
-        if (this.htmlCanvas !== null ) {
-
-            if ( this.htmlCanvas.style !== undefined && this.htmlCanvas.style !== null) {
-                this.htmlCanvas.style.width = width + 'px';
-                this.htmlCanvas.style.height = height + 'px';
-            }
-            this.htmlCanvas.offsetWidth = width;
-            this.htmlCanvas.offsetHeight = height;
-        }
-        this.recalcAspectRatio();
-    };
-
     Canvas.prototype.getWidth = function () {
         return this.htmlCanvas === null ? 0 : this.htmlCanvas.offsetWidth;
     };
