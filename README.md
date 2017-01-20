@@ -60,7 +60,7 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 [OBJLoader2](http://kaisalmen.de/proto/test/objloader2/main.min.html)<br>
 [Original OBJLoader](http://kaisalmen.de/proto/test/three.js.old/webgl_loader_objloader_direct.html)<br>
 <br>
-Larger models not in the prototype repository:<br>
+Larger models not in this repository:<br>
 [Compressed PTV1 Model](http://kaisalmen.de/proto/resource/obj/PTV1/PTV1.zip) (150MB)<br>
 Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):<br>
 [Compressed Sink Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
