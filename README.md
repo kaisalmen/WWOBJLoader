@@ -5,12 +5,15 @@ Welcome to the repository for OBJLoader2 a new loader for the OBJ file format th
 
 ## Repository structure
 The directory structure is organized as follows:
-- **src**: Contains sources: Loader and test application support code
-- **test**: Contains Tests/HTML Examples
+- **src**: Contains the sources for the loaders
+- **test**: Contains Tests/HTML examples
 - **resource**: Contains OBJs, MTLs and textures
 
-External libraries (three.js, dat.gui and jszip) are initialized with npm. Therefore, **npm** installation is required.
-Before you can start to play around after checkout please run:<br>
+## Building
+
+Before you can start to play around some post-checkout initialization steps have to be performed.<br>
+**[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** must be installed on your local platform. They are required for retrieving dependencies and for building combined source bundles and the documentation. 
+After checkout run:<br>
 `npm update`
 
 You require gulp to be able to build the bundles. If you have not yet installed the cli, execute this:<br>
@@ -27,11 +30,11 @@ In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/
 - `OBJLoader2MeshCreator`: Builds meshes from the "raw" representation that can be incorporated into the scenegraph.
 
 ##### What is the reason for separation?
-The loader should be easily usable within a web worker. But each web worker has its own scope which means any imported code needs to be re-loaded and some things cannot be accessed (e.g. DOM). The aim is to be able to enwrap the parser with two different **cloaks**:
+The loader should be easily usable within a web worker. But each web worker has its own scope which means any imported code needs to be re-loaded and some things cannot be accessed (e.g. DOM). The aim is to be able to enclose the parser with two different **cloaks**:
 1. Standard direct usage
 2. Embedded within a web worker
 
-As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2` and `OBJLoader2MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader` basically provides the same functionality as `OBJLoader2` and `OBJLoader2MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
+As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2` and `OBJLoader2MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader2` basically provides the same functionality as `OBJLoader2` and `OBJLoader2MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
 
 `WWOBJLoader2` could be seen as a template for other web worker control classes of yet non-existing web worker based loaders.
 
