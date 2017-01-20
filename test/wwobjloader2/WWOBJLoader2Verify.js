@@ -46,9 +46,9 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
-			autoClear: true,
-			clearColor: 0x050505
+			autoClear: true
 		} );
+		this.renderer.setClearColor( 0x050505 );
 
 		this.scene = new THREE.Scene();
 
@@ -204,8 +204,6 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		}
 
 	};
-
-	// ThreeJsApp.renderPost()  not required, default is used
 
 	return WWOBJLoader2Verify;
 

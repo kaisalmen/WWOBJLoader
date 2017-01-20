@@ -46,7 +46,7 @@
 			<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
 		</p>
 		<br><br>
-		<p class="clear" onclick="APP.clearAllAssests();">Clear all assets</p>
+		<p class="clear" onclick="app.clearAllAssests();">Clear all assets</p>
 	</div>
 	<canvas id="example"></canvas>
 </div>
@@ -55,34 +55,43 @@
 <script src="../../node_modules/three/build/three.min.js"></script>
 <script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
-
 <script src="../../node_modules/jszip/dist/jszip.min.js"></script>
 
-<script src="../common/ThreeJsApp.js"></script>
-<script src="../common/AppRunner.js"></script>
-<script src="../common/ZipTools.js"></script>
+<script src="../../src/loaders/OBJLoader2Parser.js"></script>
+<script src="../../src/loaders/WWOBJLoader2.js"></script>
+<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
 
-<script src="../../build/OBJLoader2.js"></script>
-<script src="../../build/WWOBJLoader2.js"></script>
-
-<script src="WWOBJLoader2Complex.js"></script>
+<script src="WWOBJLoader2Stage.js"></script>
 <script>
 
-	var loadAssets = function ( assets ) {
-		if ( ! APP.processing ) {
+	var app = new THREE.examples.loaders.WWOBJLoader2Stage( document.getElementById( 'example' ) );
+	app.updateAssets( objsFemaleMale );
 
-			APP.updateAssets( assets );
-			APP.reloadAssets();
+	var loadAssets = function ( assets ) {
+		if ( ! app.processing ) {
+
+			app.updateAssets( assets );
+			app.reloadAssets();
 
 		}
 	};
 
-	var APP = new THREE.examples.loaders.WWOBJLoader2Complex( document.getElementById( 'example' ) );
-	// set default asset in objs2Load (array of WWOBJLoaderDef that should be loaded)
-	APP.updateAssets( objsFemaleMale );
+	var resizeWindow = function () {
+		app.resizeDisplayGL();
+	};
 
-	// AppRunner handles ThreeJsApp init, window resize event and render loop
-	var appRunner = new THREE.examples.apps.AppRunner( APP );
-	appRunner.run( true );
+	var render = function () {
+		requestAnimationFrame(render);
+		app.render();
+	};
+
+	window.addEventListener('resize', resizeWindow, false);
+
+	console.log("Starting initialisation phase...");
+	app.initGL();
+	app.resizeDisplayGL();
+	app.initPostGL();
+
+	render();
 
 </script>

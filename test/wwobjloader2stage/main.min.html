@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<title>WWOBJLoader Testbed</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+<link href="./main.css" type="text/css" rel="stylesheet"/>
+
+<div id="info">
+<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+	<div id="feedback"></div>
+</div>
+<div id="glFullscreen">
+	<div id="menu">
+		<h1>Select OBJ files:</h1>
+		<p>
+			<span class="asset" onclick="loadAssets( objsFemaleMale )">Male + Female</span>
+			<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsWaltHead )">Walt Head</span>
+			<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsCerberus )">Cerberus</span>
+			<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsVive )">Vive Controller</span>
+			<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsZomaxSink )">Sink</span>
+			<span class="extras">(45MB->178MB)</span>
+			<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsZomaxOven )">Oven</span>
+			<span class="extras">(43MB->150MB)</span>
+			<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
+		</p>
+		<p>
+			<span class="asset" onclick="loadAssets( objsPtv1Zip )">PTV1</span>
+			<span class="extras">(26MB->150MB)</span>
+			<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
+		</p>
+		<br><br>
+		<p class="clear" onclick="app.clearAllAssests();">Clear all assets</p>
+	</div>
+	<canvas id="example"></canvas>
+</div>
+
+<script src="../../node_modules/three/examples/js/Detector.js"></script>
+<script src="../../node_modules/three/build/three.min.js"></script>
+<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+<script src="../../node_modules/jszip/dist/jszip.min.js"></script>
+
+<script src="../../build/OBJLoader2.min.js"></script>
+<script src="../../build/WWOBJLoader2.min.js"></script>
+
+<script src="WWOBJLoader2Stage.js"></script>
+<script>
+
+	var app = new THREE.examples.loaders.WWOBJLoader2Stage( document.getElementById( 'example' ) );
+	app.updateAssets( objsFemaleMale );
+
+	var loadAssets = function ( assets ) {
+		if ( ! app.processing ) {
+
+			app.updateAssets( assets );
+			app.reloadAssets();
+
+		}
+	};
+
+	var resizeWindow = function () {
+		app.resizeDisplayGL();
+	};
+
+	var render = function () {
+		requestAnimationFrame(render);
+		app.render();
+	};
+
+	window.addEventListener('resize', resizeWindow, false);
+
+	console.log("Starting initialisation phase...");
+	app.initGL();
+	app.resizeDisplayGL();
+	app.initPostGL();
+
+	render();
+
+</script>

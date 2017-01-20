@@ -23,11 +23,7 @@
 <script src="../../node_modules/three/examples/js/Detector.js"></script>
 <script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 <script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
-
 <script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
-
-<script src="../common/ThreeJsApp.js"></script>
-<script src="../common/AppRunner.js"></script>
 
 <script src="../../build/OBJLoader2.min.js"></script>
 <script src="../../build/WWOBJLoader2.min.js"></script>
@@ -35,24 +31,24 @@
 <script src="./WWParallels.js"></script>
 <script>
 
-	var APP = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
+	var app = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
 
 	var WWControl = function() {
 		this.queueLength = 128;
 		this.workerCount = 4;
 		this.run = null;
 		this.terminate = function () {
-			APP.terminateManager();
+			app.terminateManager();
 		};
 		this.clearAllAssests = function () {
-			APP.terminateManager();
-			APP.clearAllAssests();
+			app.terminateManager();
+			app.clearAllAssests();
 		};
 	};
 
 	var wwControl = new WWControl();
 	wwControl.run = function () {
-		APP.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
+		app.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
 	};
 
 	var gui = new dat.GUI( {
@@ -72,8 +68,21 @@
 	folderWWControl.add( wwControl, 'terminate' ).name( 'Terminate WWManager' );
 	folderWWControl.add( wwControl, 'clearAllAssests' ).name( 'Clear Scene' );
 
-	// AppRunner handles ThreeJsApp init, window resize event and render loop
-	var appRunner = new THREE.examples.apps.AppRunner( APP );
-	appRunner.run( true );
+	var resizeWindow = function () {
+		app.resizeDisplayGL();
+	};
+
+	var render = function () {
+		requestAnimationFrame(render);
+		app.render();
+	};
+
+	window.addEventListener('resize', resizeWindow, false);
+
+	console.log("Starting initialisation phase...");
+	app.initGL();
+	app.resizeDisplayGL();
+
+	render();
 
 </script>

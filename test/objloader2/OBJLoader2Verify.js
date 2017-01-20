@@ -76,15 +76,13 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 		 */
 	}
 
-	// ThreeJsApp.initPreGL()  not required, default is used
-
 	OBJLoader2Verify.prototype.initGL = function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
-			autoClear: true,
-			clearColor: 0x050505
+			autoClear: true
 		} );
+		this.renderer.setClearColor( 0x050505 );
 
 		this.scene = new THREE.Scene();
 

@@ -4,35 +4,27 @@
 
 'use strict';
 
-if ( THREE.examples.loaders === undefined ) {
-	THREE.examples.loaders = {};
-}
+if ( THREE.examples === undefined ) THREE.examples = {};
+if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
 
-/**
- * ThreeJsApp serves as base class that defines an application life-cycle and
- * handles some things you always need to do when writing an example:
- * - Renderer init
- * - Perspective scene with camera (enabled by default)
- *   - CubeMap scene (disabled by default)
- * - Orthographic scene with camera (disabled by default)
- * - Canvas/renderer size changes
- *
- * This example extends ThreeJsApp and overwrites only functions needed.
- */
-THREE.examples.loaders.WWOBJLoader2Complex = (function () {
+THREE.examples.loaders.WWOBJLoader2Stage = (function () {
 
-	WWOBJLoader2Complex.prototype = Object.create( THREE.examples.apps.ThreeJsApp.prototype );
-	WWOBJLoader2Complex.prototype.constructor = WWOBJLoader2Complex;
+	function WWOBJLoader2Stage( elementToBindTo ) {
+		this.renderer = null;
+		this.canvas = elementToBindTo;
+		this.aspectRatio = 1;
+		this.recalcAspectRatio();
 
-	function WWOBJLoader2Complex( elementToBindTo ) {
-		THREE.examples.apps.ThreeJsApp.call( this );
-
-		// app configuration: see THREE.examples.apps.ThreeJsAppDefaultDefinition (js/apps/ThreeJsApp.js)
-		// Only define what is required (name and htmlCanvas).
-		this.configure( {
-			name: 'WWOBJLoaderChecker',
-			htmlCanvas: elementToBindTo
-		} );
+		this.scene = null;
+		this.cameraDefaults = {
+			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+			near: 0.1,
+			far: 10000,
+			fov: 45
+		};
+		this.camera = null;
+		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 
@@ -47,7 +39,39 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 		this.processing = false;
 	}
 
-	WWOBJLoader2Complex.prototype.initPreGL = function () {
+	WWOBJLoader2Stage.prototype.initGL = function () {
+		this.renderer = new THREE.WebGLRenderer( {
+			canvas: this.canvas,
+			antialias: true,
+			autoClear: true
+		} );
+		this.renderer.setClearColor( 0x0F0F0F );
+
+		this.scene = new THREE.Scene();
+
+		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+		this.resetCamera();
+		this.controls = new THREE.TrackballControls( this.camera );
+
+		var ambientLight = new THREE.AmbientLight( 0x404040 );
+		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+		directionalLight1.position.set( -100, -50, 100 );
+		directionalLight2.position.set( 100, 50, -100 );
+
+		this.scene.add( directionalLight1 );
+		this.scene.add( directionalLight2 );
+		this.scene.add( ambientLight );
+
+		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+		var material = new THREE.MeshNormalMaterial();
+		this.cube = new THREE.Mesh( geometry, material );
+		this.cube.position.set( 0, -20, 0 );
+		this.scene.add( this.cube );
+	};
+
+	WWOBJLoader2Stage.prototype.initPostGL = function () {
 		var scope = this;
 
 		var reloadAssetsProxy = function () {
@@ -73,55 +97,49 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
 		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
 
-		// tell ThreeJsApp async loading is done (none needed here)
-		this.preloadDone = true;
-	};
-
-	WWOBJLoader2Complex.prototype.initGL = function () {
-		this.renderer.setClearColor( 0x050505 );
-
-		var cameraDefaults = {
-			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 )
-		};
-		this.scenePerspective.setCameraDefaults( cameraDefaults );
-		this.controls = new THREE.TrackballControls( this.scenePerspective.camera );
-
-		var ambientLight = new THREE.AmbientLight( 0x404040 );
-		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
-		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
-
-		directionalLight1.position.set( -100, -50, 100 );
-		directionalLight2.position.set( 100, 50, -100 );
-
-		this.scenePerspective.scene.add( directionalLight1 );
-		this.scenePerspective.scene.add( directionalLight2 );
-		this.scenePerspective.scene.add( ambientLight );
-
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-		var material = new THREE.MeshNormalMaterial();
-		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, -20, 0 );
-		this.scenePerspective.scene.add( this.cube );
-	};
-
-	WWOBJLoader2Complex.prototype.initPostGL = function () {
 		this.reloadAssets();
 
 		return true;
 	};
 
-	WWOBJLoader2Complex.prototype.resizeDisplayGL = function () {
+	WWOBJLoader2Stage.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
+
+		this.recalcAspectRatio();
+		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+		this.updateCamera();
 	};
 
-	WWOBJLoader2Complex.prototype.renderPre = function () {
+	WWOBJLoader2Stage.prototype.recalcAspectRatio = function () {
+		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	};
+
+	WWOBJLoader2Stage.prototype.resetCamera = function () {
+		this.camera.position.copy( this.cameraDefaults.posCamera );
+		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+		this.updateCamera();
+	};
+
+	WWOBJLoader2Stage.prototype.updateCamera = function () {
+		this.camera.aspect = this.aspectRatio;
+		this.camera.lookAt( this.cameraTarget );
+		this.camera.updateProjectionMatrix();
+	};
+
+	WWOBJLoader2Stage.prototype.render = function () {
+		if ( ! this.renderer.autoClear ) this.renderer.clear();
+
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
 		this.cube.rotation.y += 0.05;
+
+		this.renderer.render( this.scene, this.camera );
 	};
 
-	WWOBJLoader2Complex.prototype.clearAllAssests = function () {
+	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
 		var ref;
 		var scope = this;
 
@@ -134,7 +152,7 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 					return;
 				}
 				console.log( 'Removing ' + object3d.name );
-				scope.scenePerspective.scene.remove( object3d );
+				scope.scene.remove( object3d );
 
 				if ( object3d.hasOwnProperty( 'geometry' ) ) {
 					object3d.geometry.dispose();
@@ -153,7 +171,7 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 					object3d.texture.dispose();
 				}
 			};
-			scope.scenePerspective.scene.remove( ref.pivot );
+			scope.scene.remove( ref.pivot );
 			ref.pivot.traverse( remover );
 			ref.pivot = null;
 		}
@@ -161,7 +179,7 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 		this.allAssets = [];
 	};
 
-	WWOBJLoader2Complex.prototype.updateAssets = function ( objs ) {
+	WWOBJLoader2Stage.prototype.updateAssets = function ( objs ) {
 		this.objs2Load = [];
 		this.loadCounter = 0;
 		this.processing = true;
@@ -199,11 +217,11 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 		}
 	};
 
-	WWOBJLoader2Complex.prototype.reportProgress = function( text ) {
+	WWOBJLoader2Stage.prototype.reportProgress = function( text ) {
 		document.getElementById( 'feedback' ).innerHTML = text;
 	};
 
-	WWOBJLoader2Complex.prototype.reloadAssets = function () {
+	WWOBJLoader2Stage.prototype.reloadAssets = function () {
 		var scope = this;
 
 		if ( scope.loadCounter < scope.objs2Load.length ) {
@@ -212,11 +230,11 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 			var prepData;
 			scope.loadCounter ++;
 
-			scope.scenePerspective.scene.add( obj2Load.pivot );
+			scope.scene.add( obj2Load.pivot );
 
 			if ( obj2Load.fileZip !== null ) {
 
-				var zipTools = new THREE.examples.apps.ZipTools( obj2Load.pathBase );
+				var zipTools = new THREE.examples.loaders.ZipTools( obj2Load.pathBase );
 				var mtlAsString = null;
 
 				var setObjAsArrayBuffer = function ( data ) {
@@ -269,9 +287,95 @@ THREE.examples.loaders.WWOBJLoader2Complex = (function () {
 		}
 	};
 
-	// ThreeJsApp.renderPost()  not required, default is used
+	return WWOBJLoader2Stage;
 
-	return WWOBJLoader2Complex;
+})();
+
+THREE.examples.loaders.ZipTools = (function () {
+
+	function ZipTools( path ) {
+		this.zip = new JSZip();
+
+		this.fileLoader = new THREE.FileLoader();
+		this.fileLoader.setPath( path );
+		this.fileLoader.setResponseType( 'arraybuffer' );
+
+		this.zipContent = null;
+	}
+
+	ZipTools.prototype.load = function ( filename, callbacks ) {
+		var scope = this;
+
+		var onSuccess = function ( zipDataFromFileLoader ) {
+			scope.zip.loadAsync( zipDataFromFileLoader )
+			.then( function ( zip ) {
+
+				scope.zipContent = zip;
+				callbacks.success();
+
+			} );
+		};
+
+		var refPercentComplete = 0;
+		var percentComplete = 0;
+		var output;
+		var onProgress = function ( event ) {
+			if ( ! event.lengthComputable ) return;
+
+			percentComplete = Math.round( event.loaded / event.total * 100 );
+			if ( percentComplete > refPercentComplete ) {
+
+				refPercentComplete = percentComplete;
+				output = 'Download of "' + filename + '": ' + percentComplete + '%';
+				console.log( output );
+				if ( callbacks.progress !== null && callbacks.progress !== undefined ) callbacks.progress( output );
+
+			}
+		};
+
+		var onError = function ( event ) {
+			var output = 'Error of type "' + event.type + '" occurred when trying to load: ' + filename;
+			console.error( output );
+			callbacks.error( output );
+		};
+
+		console.log( 'Starting download: ' + filename );
+		this.fileLoader.load( filename, onSuccess, onProgress, onError );
+	};
+
+	ZipTools.prototype.unpackAsUint8Array = function ( filename, callback ) {
+
+		if ( JSZip.support.uint8array ) {
+
+			this.zipContent.file( filename ).async( 'uint8array' )
+			.then( function ( dataAsUint8Array ) {
+
+				callback( dataAsUint8Array );
+
+			} );
+
+		} else {
+
+			this.zipContent.file( filename ).async( 'base64' )
+			.then( function ( data64 ) {
+
+				callback( new TextEncoder( 'utf-8' ).encode( data64 ) );
+
+			} );
+
+		}
+	};
+
+	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
+		this.zipContent.file( filename ).async( 'string' )
+		.then( function ( dataAsString ) {
+
+			callback( dataAsString );
+
+		} );
+	};
+
+	return ZipTools;
 
 })();
 

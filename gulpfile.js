@@ -86,11 +86,10 @@ gulp.task( 'create-examples', function () {
 	var css_main = fs.readFileSync( 'test/objloader2/main.css', 'utf8' );
 	var template = fs.readFileSync( 'test/objloader2/OBJLoader2Verify.js', 'utf8' );
 	gulp.src( [ 'test/objloader2/template/main.three.html' ] )
-		// replace //STUB with complete content of OBJLoader2Verify.js
 		.pipe( replace( {
 			patterns: [
 				{
-					match: /\/\/STUB/g,
+					match: /\/\*STUB\*\//g,
 					replacement: template
 				},
 				{
@@ -109,11 +108,10 @@ gulp.task( 'create-examples', function () {
 	template = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Verify.js', 'utf8' );
 	css_main = fs.readFileSync( 'test/wwobjloader2/main.css', 'utf8' );
 	gulp.src( [ 'test/wwobjloader2/template/main.three.html' ] )
-	// replace //STUB with complete content of OBJLoader2Verify.js
 		.pipe( replace( {
 			patterns: [
 				{
-					match: /\/\/STUB/g,
+					match: /\/\*STUB\*\//g,
 					replacement: template
 				},
 				{
@@ -128,6 +126,50 @@ gulp.task( 'create-examples', function () {
 		} ) )
 		.pipe( rename( { basename: 'webgl_loader_wwobjloader2' } ) )
 		.pipe( gulp.dest( DIR_EXAMPLES ) );
+
+	template = fs.readFileSync( 'test/wwobjloader2stage/WWOBJLoader2Stage.js', 'utf8' );
+	css_main = fs.readFileSync( 'test/wwobjloader2stage/main.css', 'utf8' );
+	gulp.src( [ 'test/wwobjloader2stage/template/main.three.html' ] )
+		.pipe( replace( {
+			patterns: [
+				{
+					match: /\/\*STUB\*\//g,
+					replacement: template
+				},
+				{
+					match: /\/\*STUB_CSS_COMMON\*\//g,
+					replacement: css_common
+				},
+				{
+					match: /\/\*STUB_CSS_MAIN\*\//g,
+					replacement: css_main
+				}
+			]
+		} ) )
+		.pipe( rename( { basename: 'webgl_loader_wwobjloader2stage' } ) )
+		.pipe( gulp.dest( DIR_EXAMPLES ) );
+
+	template = fs.readFileSync( 'test/wwparallels/WWParallels.js', 'utf8' );
+	css_main = fs.readFileSync( 'test/wwparallels/main.css', 'utf8' );
+	gulp.src( [ 'test/wwparallels/template/main.three.html' ] )
+	.pipe( replace( {
+		patterns: [
+			{
+				match: /\/\*STUB\*\//g,
+				replacement: template
+			},
+			{
+				match: /\/\*STUB_CSS_COMMON\*\//g,
+				replacement: css_common
+			},
+			{
+				match: /\/\*STUB_CSS_MAIN\*\//g,
+				replacement: css_main
+			}
+		]
+	} ) )
+	.pipe( rename( { basename: 'webgl_loader_wwparallels' } ) )
+	.pipe( gulp.dest( DIR_EXAMPLES ) );
 } );
 
 gulp.task( 'default', [ 'clean-build', 'bundle-objloader2', 'bundle-wwobjloader2', 'create-examples', 'doc' ] );
