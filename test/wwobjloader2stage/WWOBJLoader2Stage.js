@@ -413,4 +413,4 @@ var objsWaltHead = [];
 objsWaltHead.push( new WWOBJLoader2ObjDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
 
 var objsVive = [];
-objsVive.push( new WWOBJLoader2ObjDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../../resource/obj/walt/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
+objsVive.push( new WWOBJLoader2ObjDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../../resource/obj/vive-controller/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
