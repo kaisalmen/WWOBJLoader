@@ -1,3 +1,6 @@
+if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+THREE.OBJLoader2.version = 'dev';
+
 /**
  * OBJ data will be loaded by dynamically created web worker.
  * First feed instructions with: prepareRun
@@ -13,6 +16,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype._init = function () {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
+		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
+		if ( ! typeof window.URL.createObjectURL === 'function'  ) throw "This browser does not support Object creation from URL!";
 
 		this.instanceNo = 0;
 		this.worker = null;
