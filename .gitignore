@@ -17,5 +17,7 @@
 
 /screenshots
 
-/test/webgl_loader_objloader2_direct.html
-/testwebgl_loader_wwobj.html
+/test/objloader2/main.*.html
+/test/wwobjloader2/main.*.html
+/test/wwobjloader2stage/main.*.html
+/test/wwparallels/main.*.html

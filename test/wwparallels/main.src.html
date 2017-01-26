@@ -1,89 +1,94 @@
 <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - Web Worker Parallel Demo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-<title>Web Worker Parallels Demo</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+		<link href="./main.css" type="text/css" rel="stylesheet"/>
+	</head>
 
-<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
-<link href="./main.css" type="text/css" rel="stylesheet"/>
+	<body>
+		<div id="dat">
 
-<div id="dat">
+		</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader2Director Parallels Demo
+		</div>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+		<div id="feedback">
+		</div>
 
-</div>
-<div id="info">
-	<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader2Director Parallels Demo
-</div>
-<div id="glFullscreen">
-	<canvas id="example"></canvas>
-</div>
-<div id="feedback">
-</div>
+		<script src="../../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../../node_modules/three/build/three.js"></script>
+		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-<script src="../../node_modules/three/examples/js/Detector.js"></script>
-<script src="../../node_modules/three/build/three.min.js"></script>
-<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
-<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+		<script src="../../src/loaders/OBJLoader2Parser.js"></script>
+		<script src="../../src/loaders/WWOBJLoader2.js"></script>
+		<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
 
-<script src="../../src/loaders/OBJLoader2Parser.js"></script>
-<script src="../../src/loaders/WWOBJLoader2.js"></script>
-<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
+		<script src="./WWParallels.js"></script>
+		<script>
 
-<script src="./WWParallels.js"></script>
-<script>
+			var app = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
 
-	var app = new THREE.examples.loaders.WWParallels( document.getElementById( 'example' ) );
+			var WWControl = function() {
+				this.queueLength = 128;
+				this.workerCount = 4;
+				this.run = null;
+				this.terminate = function () {
+					app.terminateManager();
+				};
+				this.clearAllAssests = function () {
+					app.terminateManager();
+					app.clearAllAssests();
+				};
+			};
 
-	var WWControl = function() {
-		this.queueLength = 128;
-		this.workerCount = 4;
-		this.run = null;
-		this.terminate = function () {
-			app.terminateManager();
-		};
-		this.clearAllAssests = function () {
-			app.terminateManager();
-			app.clearAllAssests();
-		};
-	};
+			var wwControl = new WWControl();
+			wwControl.run = function () {
+				app.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
+			};
 
-	var wwControl = new WWControl();
-	wwControl.run = function () {
-		app.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
-	};
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
 
-	var gui = new dat.GUI( {
-		autoPlace: false,
-		width: 320
-	} );
+			var menuDiv = document.getElementById( 'dat' );
+			menuDiv.appendChild(gui.domElement);
+			var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
+			folderQueue.add( wwControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
+			folderQueue.add( wwControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
+			folderQueue.add( wwControl, 'run' ).name( 'Run Queue' );
+			folderQueue.open();
 
-	var menuDiv = document.getElementById( 'dat' );
-	menuDiv.appendChild(gui.domElement);
-	var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
-	folderQueue.add( wwControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
-	folderQueue.add( wwControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
-	folderQueue.add( wwControl, 'run' ).name( 'Run Queue' );
-	folderQueue.open();
+			var folderWWControl = gui.addFolder( 'Resource Management' );
+			folderWWControl.add( wwControl, 'terminate' ).name( 'Terminate WWManager' );
+			folderWWControl.add( wwControl, 'clearAllAssests' ).name( 'Clear Scene' );
 
-	var folderWWControl = gui.addFolder( 'Resource Management' );
-	folderWWControl.add( wwControl, 'terminate' ).name( 'Terminate WWManager' );
-	folderWWControl.add( wwControl, 'clearAllAssests' ).name( 'Clear Scene' );
+			var resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
 
-	var resizeWindow = function () {
-		app.resizeDisplayGL();
-	};
+			var render = function () {
+				requestAnimationFrame(render);
+				app.render();
+			};
 
-	var render = function () {
-		requestAnimationFrame(render);
-		app.render();
-	};
+			window.addEventListener('resize', resizeWindow, false);
 
-	window.addEventListener('resize', resizeWindow, false);
+			console.log("Starting initialisation phase...");
+			app.initGL();
+			app.resizeDisplayGL();
 
-	console.log("Starting initialisation phase...");
-	app.initGL();
-	app.resizeDisplayGL();
+			render();
 
-	render();
-
-</script>
+		</script>
+	</body>
+</html>

@@ -1,55 +1,54 @@
 <!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - WWOBJLoader2</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-<title>OBJLoader2 Testbed</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+/*STUB_CSS*/
+	</head>
 
-<style>
-	/*STUB_CSS_COMMON*/
-	/*STUB_CSS_MAIN*/
-</style>
+	<body>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
+			<div id="feedback"></div>
+		</div>
+		<div id="glFullscreen">
+			<div id="menu">
+				<p id="shading" onclick="app.alterSmoothShading()">Smooth Shading</p>
+				<p id="side" onclick="app.alterDouble()">Front Side</p>
+			</div>
+			<canvas id="example"></canvas>
+		</div>
 
-<div id="info">
-	<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
-	<div id="feedback"></div>
-</div>
-<div id="glFullscreen">
-	<div id="menu">
-		<p id="shading" onclick="app.alterSmoothShading()">Smooth Shading</p>
-		<p id="side" onclick="app.alterDouble()">Front Side</p>
-	</div>
-	<canvas id="example"></canvas>
-</div>
+		<script src="../../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../../node_modules/three/build/three.js"></script>
+		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
-<script src="../../node_modules/three/examples/js/Detector.js"></script>
-<script src="../../node_modules/three/build/three.min.js"></script>
-<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+/*STUB_JS_EXT*/
+		<script>
+/*STUB_JS_INLINE*/
+			var app = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
 
-<script src="../../build/OBJLoader2.js"></script>
-<script src="../../build/WWOBJLoader2.js"></script>
-<script>
+			var resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
 
-	/*STUB*/
+			var render = function () {
+				requestAnimationFrame(render);
+				app.render();
+			};
 
-	var app = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
+			window.addEventListener('resize', resizeWindow, false);
 
-	var resizeWindow = function () {
-		app.resizeDisplayGL();
-	};
+			console.log("Starting initialisation phase...");
+			app.initGL();
+			app.resizeDisplayGL();
+			app.initPostGL();
 
-	var render = function () {
-		requestAnimationFrame(render);
-		app.render();
-	};
+			render();
 
-	window.addEventListener('resize', resizeWindow, false);
-
-	console.log("Starting initialisation phase...");
-	app.initGL();
-	app.resizeDisplayGL();
-	app.initPostGL();
-
-	render();
-
-</script>
+		</script>
+	</body>
+</html>
