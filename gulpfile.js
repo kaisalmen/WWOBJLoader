@@ -53,8 +53,7 @@ gulp.task( 'bundle-objloader2', function () {
 	gulp.src(
 			[
 				'src/loaders/OBJLoader2.js',
-				'src/loaders/OBJLoader2Parser.js',
-				'src/loaders/OBJLoader2MeshCreator.js'
+				'src/loaders/OBJLoader2Parser.js'
 			]
 		)
 		.pipe( concat( 'OBJLoader2.js' ) )
@@ -108,7 +107,6 @@ gulp.task( 'doc', function ( cb ) {
 				'README.md',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/OBJLoader2Parser.js',
-				'src/loaders/OBJLoader2MeshCreator.js',
 				'src/loaders/WWOBJLoader2.js',
 				'src/loaders/WWOBJLoader2Director.js'
 			],
@@ -172,8 +170,7 @@ gulp.task( 'create-obj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.code_ext = "\t\t\<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.code_ext += "\t\t\<script src=\"../../src/loaders/OBJLoader2Parser.js\"\>\</script\>\n";
-	exampleDef.js.code_ext += "\t\t\<script src=\"../../src/loaders/OBJLoader2MeshCreator.js\"\>\</script\>\n\n";
+	exampleDef.js.code_ext += "\t\t\<script src=\"../../src/loaders/OBJLoader2Parser.js\"\>\</script\>\n\n";
 	exampleDef.js.code_ext += "\t\t\<script src=\"./OBJLoader2Verify.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
