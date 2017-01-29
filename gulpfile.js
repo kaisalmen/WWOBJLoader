@@ -38,8 +38,7 @@ gulp.task( 'bundle-objloader2', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 			[
-				'src/loaders/OBJLoader2.js',
-				'src/loaders/OBJLoader2Parser.js'
+				'src/loaders/OBJLoader2.js'
 			]
 		)
 		.pipe( concat( 'OBJLoader2.js' ) )
@@ -93,7 +92,6 @@ gulp.task( 'create-docs', function ( cb ) {
 			[
 				'README.md',
 				'src/loaders/OBJLoader2.js',
-				'src/loaders/OBJLoader2Parser.js',
 				'src/loaders/WWOBJLoader2.js',
 				'src/loaders/WWOBJLoader2Director.js'
 			],
@@ -169,7 +167,6 @@ gulp.task( 'create-obj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2Parser.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Verify.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -210,7 +207,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2Parser.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Verify.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -252,7 +249,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2Parser.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2Director.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";

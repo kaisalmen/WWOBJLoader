@@ -514,8 +514,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			var wwDef = (function () {
 
 				function OBJLoader() {
-					this.meshCreator = new THREE.OBJLoader2.WW.MeshCreator();
-					this.parser = new THREE.OBJLoader2.Parser( this.meshCreator );
+					this.meshCreator = new MeshCreator();
+					this.parser = new Parser( this.meshCreator );
 					this.validated = false;
 					this.cmdState = 'created';
 
@@ -743,22 +743,22 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				OBJLoaderRunner.prototype.runner = function ( event ) {
 					var payload = event.data;
 
-					console.log( 'Command state before: ' + THREE.OBJLoader2.WW.OBJLoaderRef.cmdState );
+					console.log( 'Command state before: ' + OBJLoaderRef.cmdState );
 
 					switch ( payload.cmd ) {
 						case 'init':
 
-							THREE.OBJLoader2.WW.OBJLoaderRef.init( payload );
+							OBJLoaderRef.init( payload );
 							break;
 
 						case 'setMaterials':
 
-							THREE.OBJLoader2.WW.OBJLoaderRef.setMaterials( payload );
+							OBJLoaderRef.setMaterials( payload );
 							break;
 
 						case 'run':
 
-							THREE.OBJLoader2.WW.OBJLoaderRef.run( payload );
+							OBJLoaderRef.run( payload );
 							break;
 
 						default:
@@ -768,7 +768,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					}
 
-					console.log( 'Command state after: ' + THREE.OBJLoader2.WW.OBJLoaderRef.cmdState );
+					console.log( 'Command state after: ' + OBJLoaderRef.cmdState );
 				};
 
 				return OBJLoaderRunner;
@@ -835,28 +835,19 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			this.workerCode = '';
 			this.workerCode += '/**\n';
-			this.workerCode += '  * This code was constructed by \n';
+			this.workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
 			this.workerCode += '  */\n\n';
-			this.workerCode += 'var THREE = {\n';
-			this.workerCode += '\tOBJLoader2: {\n';
-			this.workerCode += '\t\tWW: {\n';
-			this.workerCode += '\t\t}\n';
-			this.workerCode += '\t}\n';
-			this.workerCode += '};\n\n';
 
 			// parser re-construction
-			this.workerCode += 'if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }\n\n';
-			this.workerCode += buildObject( 'THREE.OBJLoader2.consts', THREE.OBJLoader2.consts );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.Parser', 'Parser', THREE.OBJLoader2.Parser );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2._RawObject', '_RawObject', THREE.OBJLoader2._RawObject );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.RawObjectDescription', 'RawObjectDescription', THREE.OBJLoader2.RawObjectDescription );
+			var objLoaderHelper = new THREE.OBJLoader2();
+			this.workerCode += objLoaderHelper._buildWebWorkerCode( buildObject, buildSingelton );
 
 			// web worker construction
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.OBJLoader', 'OBJLoader', wwDef );
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.MeshCreator', 'MeshCreator', wwMeshCreatorDef );
-			this.workerCode += 'THREE.OBJLoader2.WW.OBJLoaderRef = new THREE.OBJLoader2.WW.OBJLoader();\n\n';
-			this.workerCode += buildSingelton( 'THREE.OBJLoader2.WW.OBJLoaderRunner', 'OBJLoaderRunner', wwLoaderRunnerDef );
-			this.workerCode += 'new THREE.OBJLoader2.WW.OBJLoaderRunner();\n\n';
+			this.workerCode += buildSingelton( 'OBJLoader', 'OBJLoader', wwDef );
+			this.workerCode += buildSingelton( 'MeshCreator', 'MeshCreator', wwMeshCreatorDef );
+			this.workerCode += 'OBJLoaderRef = new OBJLoader();\n\n';
+			this.workerCode += buildSingelton( 'OBJLoaderRunner', 'OBJLoaderRunner', wwLoaderRunnerDef );
+			this.workerCode += 'new OBJLoaderRunner();\n\n';
 
 			console.timeEnd( 'buildWebWorkerCode' );
 		}
