@@ -563,7 +563,7 @@ THREE.OBJLoader2._RawObject = (function () {
 		if ( index > 0 ) {
 
 			if ( debug ) this._createReport( inputObjectCount, true );
-			meshCreator.buildMesh(
+			meshCreator._buildMesh(
 				this.rawObjectDescriptions,
 				inputObjectCount,
 				absoluteVertexCount,

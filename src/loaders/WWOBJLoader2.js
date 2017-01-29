@@ -633,7 +633,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				 * @param absoluteNormalCount
 				 * @param absoluteUvCount
 				 */
-				MeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
+				MeshCreator.prototype._buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount, absoluteNormalCount, absoluteUvCount ) {
 					if ( this.debug ) console.log( 'OBJLoader.buildMesh:\nInput object no.: ' + inputObjectCount );
 
 					var vertexFa = new Float32Array( absoluteVertexCount );
