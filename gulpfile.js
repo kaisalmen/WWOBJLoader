@@ -54,7 +54,7 @@ gulp.task( 'bundle-objloader2', function () {
 		.pipe( gulp.dest( DIR.BUILD ) )
 
 		// create minified version
-		.pipe( uglify() )
+		.pipe( uglify( { mangle: false } ) )
 		.pipe( rename( { basename: 'OBJLoader2.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
 } );
@@ -81,7 +81,7 @@ gulp.task( 'bundle-wwobjloader2', function () {
 		.pipe( gulp.dest( DIR.BUILD ) )
 
 		// create minified version
-		.pipe( uglify() )
+		.pipe( uglify( { mangle: false } ) )
 		.pipe( rename( { basename: 'WWOBJLoader2.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
 } );
