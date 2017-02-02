@@ -27,6 +27,7 @@ THREE.examples.loaders.WWParallels = (function () {
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director();
+		this.wwDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
 		this.cube = null;
@@ -173,8 +174,9 @@ THREE.examples.loaders.WWParallels = (function () {
 		models.push( {
 			modelName: 'cerberus',
 			dataAvailable: false,
-			pathObj: '../../resource/obj/Cerberus/',
-			fileObj: 'Cerberus.obj'
+			pathObj: '../../resource/obj/cerberus/',
+			fileObj: 'Cerberus.obj',
+			scale: 50.0
 		} );
 		models.push( {
 			modelName:'WaltHead',

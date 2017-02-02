@@ -45,6 +45,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.mtlLoader = null;
+		this.crossOrigin = null;
 
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
@@ -67,6 +68,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
+	};
+
+	/**
+	 * Sets the CORS string to be used.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {string} crossOrigin CORS value
+	 */
+	WWOBJLoader2.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
 	};
 
 	/**
@@ -153,6 +164,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
+		if ( this.crossOrigin != null ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
 		this.dataAvailable = false;
 		this.fileObj = null;
