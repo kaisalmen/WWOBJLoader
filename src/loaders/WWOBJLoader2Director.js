@@ -16,6 +16,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	function WWOBJLoader2Director() {
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
+		this.crossOrigin = null;
 
 		this.workerDescription = {
 			prototypeDef: THREE.OBJLoader2.WWOBJLoader2.prototype,
@@ -45,6 +46,16 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 */
 	WWOBJLoader2Director.prototype.getMaxWebWorkers = function () {
 		return this.maxWebWorkers;
+	};
+
+	/**
+	 * Sets the CORS string to be used.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 *
+	 * @param {string} crossOrigin CORS value
+	 */
+	WWOBJLoader2Director.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
 	};
 
 	/**
@@ -132,6 +143,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	WWOBJLoader2Director.prototype._buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
 		webWorker._init();
+		if ( this.crossOrigin != null )	webWorker.setCrossOrigin( this.crossOrigin );
 
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( this.workerDescription.codeBuffer == null ) {

@@ -80,6 +80,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 	WWOBJLoader2Verify.prototype.initPostGL = function () {
 		var wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
+		wwObjLoader2.setCrossOrigin( 'anonymous' );
 
 		var reportProgress = function ( content ) {
 			console.log( 'Progress: ' + content );

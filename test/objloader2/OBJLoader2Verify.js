@@ -117,6 +117,7 @@ THREE.examples.loaders.OBJLoader2Verify = (function () {
 
 		var mtlLoader = new THREE.MTLLoader();
 		mtlLoader.setPath( scope.objDef.texturePath );
+		mtlLoader.setCrossOrigin( 'anonymous' );
 		mtlLoader.load( scope.objDef.fileMtl, function( materials ) {
 
 			materials.preload();

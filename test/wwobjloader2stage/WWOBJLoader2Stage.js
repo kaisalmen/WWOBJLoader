@@ -27,6 +27,7 @@ THREE.examples.loaders.WWOBJLoader2Stage = (function () {
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
+		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
 
@@ -407,7 +408,7 @@ var objsPtv1Zip = [];
 objsPtv1Zip.push( new WWOBJLoader2ObjDef( 'PTV1', '../../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../../resource/obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
 
 var objsCerberus = [];
-objsCerberus.push( new WWOBJLoader2ObjDef( 'cerberus', '../../resource/obj/Cerberus/', 'Cerberus.obj', null, '../../resource/obj/Cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
+objsCerberus.push( new WWOBJLoader2ObjDef( 'cerberus', '../../resource/obj/cerberus/', 'Cerberus.obj', null, '../../resource/obj/cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
 
 var objsWaltHead = [];
 objsWaltHead.push( new WWOBJLoader2ObjDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
