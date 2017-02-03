@@ -4,10 +4,7 @@
 
 'use strict';
 
-if ( THREE.examples === undefined ) THREE.examples = {};
-if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
-
-THREE.examples.loaders.WWOBJLoader2Stage = (function () {
+var WWOBJLoader2Stage = (function () {
 
 	function WWOBJLoader2Stage( elementToBindTo ) {
 		this.renderer = null;

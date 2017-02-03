@@ -4,10 +4,7 @@
 
 'use strict';
 
-if ( THREE.examples === undefined ) THREE.examples = {};
-if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
-
-THREE.examples.loaders.WWParallels = (function () {
+var WWParallels = (function () {
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;

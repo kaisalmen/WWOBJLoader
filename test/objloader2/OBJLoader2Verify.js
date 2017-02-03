@@ -4,10 +4,7 @@
 
 'use strict';
 
-if ( THREE.examples === undefined ) THREE.examples = {};
-if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
-
-THREE.examples.loaders.OBJLoader2Verify = (function () {
+var OBJLoader2Verify = (function () {
 
 	function OBJLoader2Verify( elementToBindTo ) {
 		this.renderer = null;
