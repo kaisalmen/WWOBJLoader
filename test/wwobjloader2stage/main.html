@@ -83,13 +83,13 @@
 			};
 
 			var render = function () {
-				requestAnimationFrame(render);
+				requestAnimationFrame( render );
 				app.render();
 			};
 
-			window.addEventListener('resize', resizeWindow, false);
+			window.addEventListener( 'resize', resizeWindow, false );
 
-			console.log("Starting initialisation phase...");
+			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
 			app.initPostGL();

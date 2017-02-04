@@ -28,23 +28,23 @@
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 
 		<script src="../../build/OBJLoader2.js"></script>
-		<script src="./OBJLoader2Verify.js"></script>
+		<script src="./OBJLoader2Example.js"></script>
 		<script>
 
-			var app = new OBJLoader2Verify( document.getElementById( 'example' ) );
+			var app = new OBJLoader2Example( document.getElementById( 'example' ) );
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
 			};
 
 			var render = function () {
-				requestAnimationFrame(render);
+				requestAnimationFrame( render );
 				app.render();
 			};
 
-			window.addEventListener('resize', resizeWindow, false);
+			window.addEventListener( 'resize', resizeWindow, false );
 
-			console.log("Starting initialisation phase...");
+			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
 			app.initPostGL();

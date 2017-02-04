@@ -4,9 +4,9 @@
 
 'use strict';
 
-var OBJLoader2Verify = (function () {
+var OBJLoader2Example = (function () {
 
-	function OBJLoader2Verify( elementToBindTo ) {
+	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
 		this.aspectRatio = 1;
@@ -37,43 +37,9 @@ var OBJLoader2Verify = (function () {
 			texturePath: '../../resource/obj/female02/',
 			fileMtl: 'female02.mtl'
 		};
-		/*
-		 this.objDef = {
-		 path: '../../resource/obj/Cerberus/',
-		 fileObj: 'Cerberus.obj',
-		 fileMtl: ''
-		 };
-
-		 this.objDef = {
-		 path: '../../resource/obj/PTV1/',
-		 fileObj: 'PTV1.obj',
-		 texturePath: '../../resource/obj/PTV1/',
-		 fileMtl: 'PTV1.mtl'
-		 };
-
-		 this.objDef = {
-		 path: '../../resource/obj/zomax/',
-		 fileObj: 'zomax-net_haze-sink-scene.obj',
-		 texturePath: '../../resource/obj/zomax/',
-		 fileMtl: ''
-		 };
-
-		 this.objDef = {
-		 path: '../../resource/obj/cube/',
-		 fileObj: 'cube.obj',
-		 texturePath: '../../resource/obj/cube/',
-		 fileMtl: 'cube.mtl'
-		 }
-
-		 this.objDef = {
-		 path: '../../resource/obj/vive-controller/',
-		 fileObj: 'vr_controller_vive_1_5.obj',
-		 fileMtl: ''
-		 };
-		 */
 	}
 
-	OBJLoader2Verify.prototype.initGL = function () {
+	OBJLoader2Example.prototype.initGL = function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
@@ -109,7 +75,7 @@ var OBJLoader2Verify = (function () {
 		this.scene.add( this.pivot );
 	};
 
-	OBJLoader2Verify.prototype.initPostGL = function () {
+	OBJLoader2Example.prototype.initPostGL = function () {
 		var scope = this;
 
 		var mtlLoader = new THREE.MTLLoader();
@@ -150,7 +116,7 @@ var OBJLoader2Verify = (function () {
 		return true;
 	};
 
-	OBJLoader2Verify.prototype.resizeDisplayGL = function () {
+	OBJLoader2Example.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 
 		this.recalcAspectRatio();
@@ -159,24 +125,24 @@ var OBJLoader2Verify = (function () {
 		this.updateCamera();
 	};
 
-	OBJLoader2Verify.prototype.recalcAspectRatio = function () {
+	OBJLoader2Example.prototype.recalcAspectRatio = function () {
 		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
 	};
 
-	OBJLoader2Verify.prototype.resetCamera = function () {
+	OBJLoader2Example.prototype.resetCamera = function () {
 		this.camera.position.copy( this.cameraDefaults.posCamera );
 		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 		this.updateCamera();
 	};
 
-	OBJLoader2Verify.prototype.updateCamera = function () {
+	OBJLoader2Example.prototype.updateCamera = function () {
 		this.camera.aspect = this.aspectRatio;
 		this.camera.lookAt( this.cameraTarget );
 		this.camera.updateProjectionMatrix();
 	};
 
-	OBJLoader2Verify.prototype.render = function () {
+	OBJLoader2Example.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
 		this.controls.update();
@@ -187,7 +153,7 @@ var OBJLoader2Verify = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
-	OBJLoader2Verify.prototype.alterSmoothShading = function () {
+	OBJLoader2Example.prototype.alterSmoothShading = function () {
 
 		var scope = this;
 		scope.smoothShading = ! scope.smoothShading;
@@ -208,7 +174,7 @@ var OBJLoader2Verify = (function () {
 		scope.pivot.traverse( scopeTraverse );
 	};
 
-	OBJLoader2Verify.prototype.alterDouble = function () {
+	OBJLoader2Example.prototype.alterDouble = function () {
 
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
@@ -229,13 +195,13 @@ var OBJLoader2Verify = (function () {
 		scope.pivot.traverse( scopeTraverse );
 	};
 
-	OBJLoader2Verify.prototype.traverseScene = function ( object3d ) {
+	OBJLoader2Example.prototype.traverseScene = function ( object3d ) {
 
 		if ( object3d.material instanceof THREE.MultiMaterial ) {
 
 			for ( var matName in object3d.material.materials ) {
 
-				this.traversalFunction( object3d.material.materials[matName] );
+				this.traversalFunction( object3d.material.materials[ matName ] );
 
 			}
 
@@ -247,6 +213,6 @@ var OBJLoader2Verify = (function () {
 
 	};
 
-	return OBJLoader2Verify;
+	return OBJLoader2Example;
 
 })();

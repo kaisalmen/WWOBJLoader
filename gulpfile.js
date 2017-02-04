@@ -142,7 +142,7 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_code = "\<script src=\"../../build/OBJLoader2.js\"\>\</script\>";
-	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Verify.js', 'utf8' );
+	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';
 	exampleDef.dir.dest = 'build/examples';
@@ -154,7 +154,7 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.link_all = exampleDef.css.link_all_ref;
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "\<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
 	exampleDef.dir.dest = 'test/objloader2';
@@ -162,12 +162,12 @@ gulp.task( 'create-obj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_code = "\<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
 });
@@ -181,7 +181,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
-	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Verify.js', 'utf8' );
+	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
 	exampleDef.dir.dest = 'build/examples';
@@ -194,7 +194,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
 	exampleDef.dir.dest = 'test/wwobjloader2';
@@ -203,13 +203,13 @@ gulp.task( 'create-wwobj2-examples', function () {
 
 	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Verify.js\"\>\</script\>";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
 });
