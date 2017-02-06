@@ -6,19 +6,17 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
-		<link href="./main.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
+		<div id="dat">
+
+		</div>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
 			<div id="feedback"></div>
 		</div>
 		<div id="glFullscreen">
-			<div id="menu">
-				<p id="shading" onclick="app.alterSmoothShading()">Smooth Shading</p>
-				<p id="side" onclick="app.alterDouble()">Front Side</p>
-			</div>
 			<canvas id="example"></canvas>
 		</div>
 
@@ -26,6 +24,7 @@
 		<script src="../../node_modules/three/build/three.js"></script>
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
 		<script src="../../build/OBJLoader2.js"></script>
 		<script src="./OBJLoader2Example.js"></script>
@@ -33,6 +32,37 @@
 
 			var app = new OBJLoader2Example( document.getElementById( 'example' ) );
 
+			// Init dat.gui and controls
+			var OBJLoader2Control = function() {
+				this.smoothShading = app.smoothShading;
+				this.doubleSide = app.doubleSide;
+			};
+			var objLoader2Control = new OBJLoader2Control();
+
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+
+			var menuDiv = document.getElementById( 'dat' );
+			menuDiv.appendChild(gui.domElement);
+			var folderQueue = gui.addFolder( 'OBJLoader2 Options' );
+			var controlSmooth = folderQueue.add( objLoader2Control, 'smoothShading' ).name( 'Smooth Shading' );
+			controlSmooth.onChange( function( value ) {
+				console.log( 'Setting smoothShading to: ' + value );
+				app.alterSmoothShading();
+			});
+
+			var controlDouble = folderQueue.add( objLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
+			controlDouble.onChange( function( value ) {
+				console.log( 'Setting doubleSide to: ' + value );
+				app.alterDouble();
+			});
+			folderQueue.open();
+
+
+
+			// init three.ks example application
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
 			};

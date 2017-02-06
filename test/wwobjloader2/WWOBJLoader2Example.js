@@ -94,8 +94,6 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
-
-
 		var reportProgress = function ( content ) {
 			console.log( 'Progress: ' + content );
 		};
@@ -232,7 +230,6 @@ var WWOBJLoader2Example = (function () {
 		scope.smoothShading = ! scope.smoothShading;
 		console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
 
-
 		scope.traversalFunction = function ( material ) {
 			material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
 			material.needsUpdate = true;
@@ -248,7 +245,6 @@ var WWOBJLoader2Example = (function () {
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
 		console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
-
 
 		scope.traversalFunction  = function ( material ) {
 			material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;

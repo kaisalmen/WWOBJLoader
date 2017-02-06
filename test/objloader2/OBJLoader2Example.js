@@ -51,7 +51,7 @@ var OBJLoader2Example = (function () {
 
 		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 		this.resetCamera();
-		this.controls = new THREE.TrackballControls( this.camera );
+		this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
 
 		var ambientLight = new THREE.AmbientLight( 0x404040 );
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
@@ -157,12 +157,7 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		scope.smoothShading = ! scope.smoothShading;
-		var side = document.getElementById( 'shading' );
-		side.style.backgroundColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-		side.style.borderColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-		side.innerHTML = scope.smoothShading ? 'Smooth Shading' : 'Flat Shading';
 		console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
-
 
 		scope.traversalFunction = function ( material ) {
 			material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
@@ -178,12 +173,7 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
-		var side = document.getElementById( 'side' );
-		side.style.backgroundColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-		side.style.borderColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-		side.innerHTML = scope.doubleSide ? 'Double Side' : 'Front Side';
 		console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
-
 
 		scope.traversalFunction  = function ( material ) {
 			material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
