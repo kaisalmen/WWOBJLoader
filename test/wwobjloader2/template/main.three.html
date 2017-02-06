@@ -29,20 +29,20 @@
 /*STUB_JS_EXT*/
 		<script>
 /*STUB_JS_INLINE*/
-			var app = new THREE.examples.loaders.WWOBJLoader2Verify( document.getElementById( 'example' ) );
+			var app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
 			};
 
 			var render = function () {
-				requestAnimationFrame(render);
+				requestAnimationFrame( render );
 				app.render();
 			};
 
-			window.addEventListener('resize', resizeWindow, false);
+			window.addEventListener( 'resize', resizeWindow, false );
 
-			console.log("Starting initialisation phase...");
+			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
 			app.initPostGL();

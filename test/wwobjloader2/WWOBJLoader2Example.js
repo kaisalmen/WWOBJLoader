@@ -4,12 +4,9 @@
 
 'use strict';
 
-if ( THREE.examples === undefined ) THREE.examples = {};
-if ( THREE.examples.loaders === undefined ) THREE.examples.loaders = {};
+var WWOBJLoader2Example = (function () {
 
-THREE.examples.loaders.WWOBJLoader2Verify = (function () {
-
-	function WWOBJLoader2Verify( elementToBindTo ) {
+	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
 		this.aspectRatio = 1;
@@ -42,7 +39,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		};
 	}
 
-	WWOBJLoader2Verify.prototype.initGL = function () {
+	WWOBJLoader2Example.prototype.initGL = function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
@@ -78,7 +75,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.scene.add( this.pivot );
 	};
 
-	WWOBJLoader2Verify.prototype.initPostGL = function () {
+	WWOBJLoader2Example.prototype.initPostGL = function () {
 		var wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 		wwObjLoader2.setCrossOrigin( 'anonymous' );
 
@@ -109,7 +106,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		return true;
 	};
 
-	WWOBJLoader2Verify.prototype.resizeDisplayGL = function () {
+	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 
 		this.recalcAspectRatio();
@@ -118,24 +115,24 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.updateCamera();
 	};
 
-	WWOBJLoader2Verify.prototype.recalcAspectRatio = function () {
+	WWOBJLoader2Example.prototype.recalcAspectRatio = function () {
 		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
 	};
 
-	WWOBJLoader2Verify.prototype.resetCamera = function () {
+	WWOBJLoader2Example.prototype.resetCamera = function () {
 		this.camera.position.copy( this.cameraDefaults.posCamera );
 		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 		this.updateCamera();
 	};
 
-	WWOBJLoader2Verify.prototype.updateCamera = function () {
+	WWOBJLoader2Example.prototype.updateCamera = function () {
 		this.camera.aspect = this.aspectRatio;
 		this.camera.lookAt( this.cameraTarget );
 		this.camera.updateProjectionMatrix();
 	};
 
-	WWOBJLoader2Verify.prototype.render = function () {
+	WWOBJLoader2Example.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
 		this.controls.update();
@@ -146,7 +143,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
-	WWOBJLoader2Verify.prototype.alterSmoothShading = function () {
+	WWOBJLoader2Example.prototype.alterSmoothShading = function () {
 
 		var scope = this;
 		scope.smoothShading = ! scope.smoothShading;
@@ -167,7 +164,7 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		scope.pivot.traverse( scopeTraverse );
 	};
 
-	WWOBJLoader2Verify.prototype.alterDouble = function () {
+	WWOBJLoader2Example.prototype.alterDouble = function () {
 
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
@@ -188,13 +185,13 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 		scope.pivot.traverse( scopeTraverse );
 	};
 
-	WWOBJLoader2Verify.prototype.traverseScene = function ( object3d ) {
+	WWOBJLoader2Example.prototype.traverseScene = function ( object3d ) {
 
 		if ( object3d.material instanceof THREE.MultiMaterial ) {
 
 			for ( var matName in object3d.material.materials ) {
 
-				this.traversalFunction( object3d.material.materials[matName] );
+				this.traversalFunction( object3d.material.materials[ matName ] );
 
 			}
 
@@ -206,6 +203,6 @@ THREE.examples.loaders.WWOBJLoader2Verify = (function () {
 
 	};
 
-	return WWOBJLoader2Verify;
+	return WWOBJLoader2Example;
 
 })();

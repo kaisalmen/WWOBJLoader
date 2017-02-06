@@ -62,7 +62,7 @@
 /*STUB_JS_EXT*/
 		<script>
 /*STUB_JS_INLINE*/
-			var app = new THREE.examples.loaders.WWOBJLoader2Stage( document.getElementById( 'example' ) );
+			var app = new WWOBJLoader2Stage( document.getElementById( 'example' ) );
 			app.updateAssets( objsFemaleMale );
 
 			var loadAssets = function ( assets ) {
@@ -79,13 +79,13 @@
 			};
 
 			var render = function () {
-				requestAnimationFrame(render);
+				requestAnimationFrame( render );
 				app.render();
 			};
 
-			window.addEventListener('resize', resizeWindow, false);
+			window.addEventListener( 'resize', resizeWindow, false );
 
-			console.log("Starting initialisation phase...");
+			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
 			app.initPostGL();
