@@ -6,26 +6,26 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
-		<link href="./main.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
+		<div id="dat">
+
+		</div>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank">three.js</a> - OBJLoader2 direct loader test
 			<div id="feedback"></div>
 		</div>
 		<div id="glFullscreen">
-			<div id="menu">
-				<p id="shading" onclick="app.alterSmoothShading()">Smooth Shading</p>
-				<p id="side" onclick="app.alterDouble()">Front Side</p>
-			</div>
 			<canvas id="example"></canvas>
 		</div>
+		<input id="fileUploadInput" type="file" name="files[]" multiple accept=".obj,.mtl" />
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
 		<script src="../../node_modules/three/build/three.js"></script>
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
 		<script src="../../build/OBJLoader2.js"></script>
 		<script src="../../build/WWOBJLoader2.js"></script>
@@ -34,6 +34,66 @@
 
 			var app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
 
+			// Init dat.gui and controls
+			var elemFileInput = document.getElementById( 'fileUploadInput' );
+			var WWOBJLoader2Control = function() {
+				this.smoothShading = app.smoothShading;
+				this.doubleSide = app.doubleSide;
+				this.streamMeshes = app.streamMeshes;
+			};
+			var wwObjLoader2Control = new WWOBJLoader2Control();
+
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+
+			var menuDiv = document.getElementById( 'dat' );
+			menuDiv.appendChild(gui.domElement);
+			var folderQueue = gui.addFolder( 'WWOBJLoader2 Options' );
+			var controlSmooth = folderQueue.add( wwObjLoader2Control, 'smoothShading' ).name( 'Smooth Shading' );
+			controlSmooth.onChange( function( value ) {
+				console.log( 'Setting smoothShading to: ' + value );
+				app.alterSmoothShading();
+			});
+
+			var controlDouble = folderQueue.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
+			controlDouble.onChange( function( value ) {
+				console.log( 'Setting doubleSide to: ' + value );
+				app.alterDouble();
+			});
+
+			var controlStreamMeshes = folderQueue.add( wwObjLoader2Control, 'streamMeshes' ).name( 'Stream Meshes' );
+			controlStreamMeshes.onChange( function( value ) {
+				console.log( 'Setting streamMeshes to: ' + value );
+				app.streamMeshes = value;
+			});
+
+			if ( app.fileApiAvailable ) {
+
+				wwObjLoader2Control.pathTexture = '../../resource/obj/female03/';
+				var controlPathTexture = folderQueue.add( wwObjLoader2Control, 'pathTexture' ).name( 'Relative path to textures' );
+				controlPathTexture.onChange( function( value ) {
+					console.log( 'Setting pathTexture to: ' + value );
+					app.pathTexture = value;
+				});
+
+				wwObjLoader2Control.loadObjFile = function () {
+					elemFileInput.click();
+				};
+				folderQueue.add( wwObjLoader2Control, 'loadObjFile' ).name( 'Load OBJ/MTL Files' );
+
+				var handleFileSelect = function ( object3d ) {
+					app._handleFileSelect( object3d, wwObjLoader2Control.pathTexture );
+				};
+				elemFileInput.addEventListener( 'change' , handleFileSelect, false );
+
+			}
+			folderQueue.open();
+
+
+
+			// init three.ks example application
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
 			};
@@ -50,6 +110,7 @@
 			app.resizeDisplayGL();
 			app.initPostGL();
 
+			// kick render loop
 			render();
 
 		</script>

@@ -14,11 +14,3 @@
     width: auto;
     padding: 0px 0px 4px 4px;
 }
-#dat {
-    user-select: none;
-    position: absolute;
-    left: 0px;
-    top: 0px;
-    color: darkorange;
-    z-Index: 2;
-}

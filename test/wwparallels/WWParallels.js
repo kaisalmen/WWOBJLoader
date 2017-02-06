@@ -105,7 +105,7 @@ var WWParallels = (function () {
 		document.getElementById( 'feedback' ).innerHTML = text;
 	};
 
-	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers ) {
+	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, streamMeshes ) {
 		var scope = this;
 		scope.wwDirector.objectsCompleted = 0;
 		scope.feedbackArray = new Array( maxWebWorkers );
@@ -208,7 +208,7 @@ var WWParallels = (function () {
 			model.sceneGraphBaseNode = pivot;
 
 			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode
+				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode, streamMeshes
 			);
 			this.wwDirector.enqueueForRun( runParams );
 			this.allAssets.push( runParams );

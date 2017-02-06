@@ -27,16 +27,34 @@ var WWOBJLoader2Example = (function () {
 
 		this.smoothShading = true;
 		this.doubleSide = false;
+		this.streamMeshes = true;
 
 		this.cube = null;
 		this.pivot = null;
 
-		this.objDef = {
+		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
+		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
+
+		this.defaultObjDef = {
+			name: 'male02',
 			path: '../../resource/obj/male02/',
 			fileObj: 'male02.obj',
-			texturePath: '../../resource/obj/male02/',
+			pathTexture: '../../resource/obj/male02/',
 			fileMtl: 'male02.mtl'
 		};
+
+		// Check for the various File API support.
+		this.fileApiAvailable = true;
+		if ( window.File && window.FileReader && window.FileList && window.Blob ) {
+
+			console.log( 'File API is supported! Enabling all features.' );
+
+		} else {
+
+			this.fileApiAvailable = false;
+			console.warn( 'File API is not supported! Disabling file loading.' );
+
+		}
 	}
 
 	WWOBJLoader2Example.prototype.initGL = function () {
@@ -51,7 +69,7 @@ var WWOBJLoader2Example = (function () {
 
 		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 		this.resetCamera();
-		this.controls = new THREE.TrackballControls( this.camera );
+		this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
 
 		var ambientLight = new THREE.AmbientLight( 0x404040 );
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
@@ -76,8 +94,7 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
-		var wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-		wwObjLoader2.setCrossOrigin( 'anonymous' );
+
 
 		var reportProgress = function ( content ) {
 			console.log( 'Progress: ' + content );
@@ -93,17 +110,83 @@ var WWOBJLoader2Example = (function () {
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
 		};
-		wwObjLoader2.registerCallbackProgress( reportProgress );
-		wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
-		wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
+		this.wwObjLoader2.registerCallbackProgress( reportProgress );
+		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
+		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 
-		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-			'male02', this.objDef.path, this.objDef.fileObj, this.objDef.texturePath, this.objDef.fileMtl, this.pivot
-		);
-		wwObjLoader2.prepareRun( prepData );
-		wwObjLoader2.run();
+		this._loadFiles( this.defaultObjDef );
 
 		return true;
+	};
+
+	WWOBJLoader2Example.prototype._loadFiles = function ( objDef ) {
+		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
+			objDef.name, objDef.path, objDef.fileObj, objDef.pathTexture, objDef.fileMtl, this.pivot, this.streamMeshes
+		);
+		this.wwObjLoader2.prepareRun( prepData );
+		this.wwObjLoader2.run();
+	};
+
+	WWOBJLoader2Example.prototype._handleFileSelect = function ( event, pathTexture ) {
+		var fileObj = null;
+		var fileMtl = null;
+		var files = event.target.files;
+
+		for ( var i = 0, file; file = files[ i ]; i++) {
+
+			if ( file.name.indexOf( '\.obj' ) > 0 && fileObj === null ) {
+				fileObj = file;
+			}
+
+			if ( file.name.indexOf( '\.mtl' ) > 0 && fileMtl === null ) {
+				fileMtl = file;
+			}
+
+		}
+
+		if ( fileObj == null ) {
+			alert( 'Unable to load OBJ file from given files: ' + files.toString() );
+		}
+
+		var fileReader = new FileReader();
+		fileReader.onload = function( fileDataObj ) {
+
+			var uint8Array = new Uint8Array( fileDataObj.target.result );
+			if ( fileMtl === null ) {
+
+				app.loadFilesUser({
+					name: 'userObj',
+					objAsArrayBuffer: uint8Array,
+					pathTexture: pathTexture,
+					mtlAsString: null
+				})
+
+			} else {
+
+				fileReader.onload = function( fileDataMtl ) {
+
+					app.loadFilesUser({
+						name: 'userObj',
+						objAsArrayBuffer: uint8Array,
+						pathTexture: pathTexture,
+						mtlAsString: fileDataMtl.target.result
+					})
+				};
+				fileReader.readAsText( fileMtl );
+
+			}
+
+		};
+		fileReader.readAsArrayBuffer( fileObj );
+
+	};
+
+	WWOBJLoader2Example.prototype.loadFilesUser = function ( objDef ) {
+		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
+			objDef.name, objDef.objAsArrayBuffer, objDef.pathTexture, objDef.mtlAsString, this.pivot, this.streamMeshes
+		);
+		this.wwObjLoader2.prepareRun( prepData );
+		this.wwObjLoader2.run();
 	};
 
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {
@@ -147,10 +230,6 @@ var WWOBJLoader2Example = (function () {
 
 		var scope = this;
 		scope.smoothShading = ! scope.smoothShading;
-		var side = document.getElementById( 'shading' );
-		side.style.backgroundColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-		side.style.borderColor = scope.smoothShading ? 'darkgreen' : 'darkorange';
-		side.innerHTML = scope.smoothShading ? 'Smooth Shading' : 'Flat Shading';
 		console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
 
 
@@ -168,10 +247,6 @@ var WWOBJLoader2Example = (function () {
 
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
-		var side = document.getElementById( 'side' );
-		side.style.backgroundColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-		side.style.borderColor = scope.doubleSide ? 'darkgreen' : 'darkorange';
-		side.innerHTML = scope.doubleSide ? 'Double Side' : 'Front Side';
 		console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
 
 

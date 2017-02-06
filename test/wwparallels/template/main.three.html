@@ -32,10 +32,13 @@
 /*STUB_JS_INLINE*/
 			var app = new WWParallels( document.getElementById( 'example' ) );
 
-			var WWControl = function() {
+			var WWParallelsControl = function() {
 				this.queueLength = 128;
 				this.workerCount = 4;
-				this.run = null;
+				this.streamMeshes = true;
+				this.run = function () {
+					app.enqueueAllAssests( this.queueLength, this.workerCount, this.streamMeshes );
+				};
 				this.terminate = function () {
 					app.terminateManager();
 				};
@@ -44,11 +47,7 @@
 					app.clearAllAssests();
 				};
 			};
-
-			var wwControl = new WWControl();
-			wwControl.run = function () {
-				app.enqueueAllAssests( wwControl.queueLength, wwControl.workerCount );
-			};
+			var wwParallelsControl = new WWParallelsControl();
 
 			var gui = new dat.GUI( {
 				autoPlace: false,
@@ -58,14 +57,15 @@
 			var menuDiv = document.getElementById( 'dat' );
 			menuDiv.appendChild(gui.domElement);
 			var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
-			folderQueue.add( wwControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
-			folderQueue.add( wwControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
-			folderQueue.add( wwControl, 'run' ).name( 'Run Queue' );
+			folderQueue.add( wwParallelsControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
+			folderQueue.add( wwParallelsControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
+			folderQueue.add( wwParallelsControl, 'streamMeshes' );
+			folderQueue.add( wwParallelsControl, 'run' ).name( 'Run Queue' );
 			folderQueue.open();
 
 			var folderWWControl = gui.addFolder( 'Resource Management' );
-			folderWWControl.add( wwControl, 'terminate' ).name( 'Terminate WWManager' );
-			folderWWControl.add( wwControl, 'clearAllAssests' ).name( 'Clear Scene' );
+			folderWWControl.add( wwParallelsControl, 'terminate' ).name( 'Terminate WWManager' );
+			folderWWControl.add( wwParallelsControl, 'clearAllAssests' ).name( 'Clear Scene' );
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();

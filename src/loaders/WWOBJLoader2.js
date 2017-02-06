@@ -201,7 +201,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		if ( this.dataAvailable ) {
 
 			// fast-fail on bad type
-			if ( ! ( params.objAsArrayBuffer instanceof ArrayBuffer || params.objAsArrayBuffer instanceof Uint8Array ) ) {
+			if ( ! params.objAsArrayBuffer instanceof Uint8Array ) {
 				throw 'Provided input is not of type arraybuffer! Aborting...';
 			}
 
@@ -326,6 +326,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			console.timeEnd( 'Loading MTL textures' );
 		};
 
+
+		this.mtlLoader.setPath( this.pathTexture );
 		if ( this.dataAvailable ) {
 
 			processLoadedMaterials( ( this.mtlAsString != null ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
@@ -338,7 +340,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			} else {
 
-				this.mtlLoader.setPath( this.pathTexture );
 				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
 
 			}

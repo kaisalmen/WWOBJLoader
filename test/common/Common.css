@@ -41,3 +41,14 @@ body {
 #feedback {
     color: darkorange;
 }
+#dat {
+    user-select: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-Index: 2;
+}
+#fileUploadInput {
+    visibility: hidden;
+}
+
