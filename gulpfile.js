@@ -185,7 +185,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
 	exampleDef.dir.dest = 'build/examples';
-	exampleDef.file.out = 'webgl_loader_wwobj2';
+	exampleDef.file.out = 'webgl_loader_obj2_ww';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -227,7 +227,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwparallels/template/main.three.html';
 	exampleDef.dir.dest = 'build/examples';
-	exampleDef.file.out = 'webgl_loader_wwobj2_parallels';
+	exampleDef.file.out = 'webgl_loader_obj2_ww_parallels';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -253,6 +253,48 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2Director.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
+	exampleDef.file.out = 'main.src';
+	buildExample();
+});
+
+gulp.task( 'create-wwobj2_stage-examples', function () {
+	exampleDef.css.main = fs.readFileSync( 'test/wwobjloader2stage/main.css', 'utf8' );
+	exampleDef.css.style_all = exampleDef.css.common + "\n" + exampleDef.css.main;
+	exampleDef.css.style_tabs = "\t\t\t";
+	exampleDef.css.link_all = "";
+	exampleDef.css.link_tabs = "";
+	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
+	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2stage/WWOBJLoader2Stage.js', 'utf8' );
+	exampleDef.js.inline_tabs = "\t\t\t";
+	exampleDef.file.src = 'test/wwobjloader2stage/template/main.three.html';
+	exampleDef.dir.dest = 'build/examples';
+	exampleDef.file.out = 'webgl_loader_obj2_ww_stage';
+	buildExample();
+
+	exampleDef.css.style_all = "";
+	exampleDef.css.style_tabs = "";
+	exampleDef.css.link_all = exampleDef.css.link_all_ref;
+	exampleDef.css.link_tabs = "\t\t";
+	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
+	exampleDef.js.inline_code = "";
+	exampleDef.js.inline_tabs = "";
+	exampleDef.dir.dest = 'test/wwobjloader2stage';
+	exampleDef.file.out = 'main';
+	buildExample();
+
+	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
+	exampleDef.file.out = 'main.min';
+	buildExample();
+
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2Director.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
 });
@@ -334,6 +376,17 @@ function buildExample() {
 		.pipe( gulp.dest( exampleDef.dir.dest ) );
 };
 
+gulp.task(
+	'build-examples',
+	[
+		'prepare-examples',
+		'create-obj2-examples',
+		'create-wwobj2-examples',
+		'create-wwobj2_stage-examples',
+		'create-wwobj2_parallels-examples'
+	]
+);
+
 
 gulp.task(
 	'default',
@@ -342,9 +395,6 @@ gulp.task(
 		'bundle-objloader2',
 		'bundle-wwobjloader2',
 		'create-docs',
-		'prepare-examples',
-		'create-obj2-examples',
-		'create-wwobj2-examples',
-		'create-wwobj2_parallels-examples'
+		'build-examples'
 	]
 );

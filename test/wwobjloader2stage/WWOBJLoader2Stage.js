@@ -232,13 +232,13 @@ var WWOBJLoader2Stage = (function () {
 
 			if ( obj2Load.fileZip !== null ) {
 
-				var zipTools = new THREE.examples.loaders.ZipTools( obj2Load.pathBase );
+				var zipTools = new ZipTools( obj2Load.pathBase );
 				var mtlAsString = null;
 
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
 					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot
+						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot, false
 					);
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
@@ -272,7 +272,7 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot
+					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot, false
 				);
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
@@ -289,7 +289,7 @@ var WWOBJLoader2Stage = (function () {
 
 })();
 
-THREE.examples.loaders.ZipTools = (function () {
+var ZipTools = (function () {
 
 	function ZipTools( path ) {
 		this.zip = new JSZip();

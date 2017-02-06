@@ -498,7 +498,7 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype._buildIndex = function ( materialName, smoothingGroup) {
 			return materialName + '|' + smoothingGroup;
-		}
+		};
 
 		RawObject.prototype._newInstanceFromObject = function ( objectName, groupName ) {
 			var newRawObject = new RawObject( objectName, groupName, this.mtllibName );

@@ -11,7 +11,7 @@
 
 	<body>
 		<div id="info">
-		<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
+			<a href="http://threejs.org" target="_blank">three.js</a> - WWOBJLoader
 			<div id="feedback"></div>
 		</div>
 		<div id="glFullscreen">
@@ -62,11 +62,10 @@
 
 		<script src="../../build/OBJLoader2.js"></script>
 		<script src="../../build/WWOBJLoader2.js"></script>
-
-		<script src="WWOBJLoader2Stage.js"></script>
+		<script src="./WWOBJLoader2Stage.js"></script>
 		<script>
 
-			var app = new THREE.examples.loaders.WWOBJLoader2Stage( document.getElementById( 'example' ) );
+			var app = new WWOBJLoader2Stage( document.getElementById( 'example' ) );
 			app.updateAssets( objsFemaleMale );
 
 			var loadAssets = function ( assets ) {
