@@ -24,17 +24,17 @@ From the project's root run `gulp` to create The documentation in directory **bu
  - **WWOBJLoader2[.min].js**: Consists of web worker control, web worker and director code
 
 ## Implementation Overview
-In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three pieces:
-- `OBJLoader2`: Is the class to interact with for setting up, for loading data from a given file or for directly forwarding data to the parser
-- `OBJLoader2Parser`: Is invoked by `OBJLoader2` or `WWOBJLoader2` to parse the data and transform it into a "raw" representation
-- `OBJLoader2MeshCreator`: Builds meshes from the "raw" representation that can be incorporated into the scenegraph.
+In contrast to the existing [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/js/loaders/OBJLoader.js) the new `OBJLoader2` consists of three logical blocks. Only one of these blocks is public:
+- `OBJLoader2` (public): Is the sole class to interact with for setting up, for loading data from a given file or for directly forwarding data to the parser
+- `Parser` (private): Is used by `OBJLoader2` and `WWOBJLoader2` to parse the data and transform it into a "raw" representation.
+- `MeshCreator` (private): Builds meshes from the "raw" representation that can be incorporated into the scenegraph.
 
 ##### What is the reason for separation?
-The loader should be easily usable within a web worker. But each web worker has its own scope which means any imported code needs to be re-loaded and some things cannot be accessed (e.g. DOM). The aim is to be able to enclose the parser with two different **cloaks**:
-1. Standard direct usage
+The loader should be easily usable within a web worker. But each web worker has its own scope which means any imported code needs to be re-loaded and some things cannot be accessed (e.g. DOM). The aim is to be able to enclose the parser with two different **cloaks**:<br>
+1. Standard direct usage<br>
 2. Embedded within a web worker
 
-As `OBJLoader2Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2` and `OBJLoader2MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader2` basically provides the same functionality as `OBJLoader2` and `OBJLoader2MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
+As `Parser` is independent of any other code piece of [three.js](https://threejs.org) or any other library, the surrounding code either needs to directly do the required three.js integration like `OBJLoader2` with `MeshCreator` or `WWOBJLoader2` which serves as a control interface to the web worker code that it dynamically creates during initialization. `WWOBJLoader2` basically provides the same functionality as `OBJLoader2` and `MeshCreator`, but the parsing and mesh preparation work is done by the web worker.
 
 `WWOBJLoader2` could be seen as a template for other web worker control classes of yet non-existing web worker based loaders.
 
@@ -51,10 +51,9 @@ The parser and mesh creation functions have reached full feature parity with the
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
 
 ##### Bundle Details
-The web worker code is contained in `WWOBJLoader2.js`. At worker init a string is built from code within the class that contains all code of `OBJLoader2Parser` and private classes within `WWOBJLoader2._buildWebWorkerCode`. The string contains all code required for the worker to be fully functional. It is put to a blob that is used to create the worker. This reliefs the user of the loader to care about path issues and static imports within the worker are no longer required.
+The web worker code is contained in `WWOBJLoader2.js`. At worker init a string is built from code within the class that contains all code of private classes within `WWOBJLoader2._buildWebWorkerCode`. `OBJLoader2` also provides provides a build function as `Parser` is private to it which is called by during the execution of the function. The string contains all code required for the worker to be fully functional. It is put to a blob that is used to create the worker. This reliefs the user of the loader to care about path issues and static imports within the worker are no longer required.
 
 ##### Improvements
-- Objects are streamed to the scene when `WWOBJLoader2` is used. Add-only-when-fully-loaded should be added
 - Test automation with focus on batch execution of tests for retrieval of more robust performance numbers
 
 ## Examples:
