@@ -48,20 +48,20 @@
 
 			var menuDiv = document.getElementById( 'dat' );
 			menuDiv.appendChild(gui.domElement);
-			var folderQueue = gui.addFolder( 'WWOBJLoader2 Options' );
-			var controlSmooth = folderQueue.add( wwObjLoader2Control, 'smoothShading' ).name( 'Smooth Shading' );
+			var folderOptions = gui.addFolder( 'WWOBJLoader2 Options' );
+			var controlSmooth = folderOptions.add( wwObjLoader2Control, 'smoothShading' ).name( 'Smooth Shading' );
 			controlSmooth.onChange( function( value ) {
 				console.log( 'Setting smoothShading to: ' + value );
 				app.alterSmoothShading();
 			});
 
-			var controlDouble = folderQueue.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
+			var controlDouble = folderOptions.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
 			controlDouble.onChange( function( value ) {
 				console.log( 'Setting doubleSide to: ' + value );
 				app.alterDouble();
 			});
 
-			var controlStreamMeshes = folderQueue.add( wwObjLoader2Control, 'streamMeshes' ).name( 'Stream Meshes' );
+			var controlStreamMeshes = folderOptions.add( wwObjLoader2Control, 'streamMeshes' ).name( 'Stream Meshes' );
 			controlStreamMeshes.onChange( function( value ) {
 				console.log( 'Setting streamMeshes to: ' + value );
 				app.streamMeshes = value;
@@ -70,24 +70,29 @@
 			if ( app.fileApiAvailable ) {
 
 				wwObjLoader2Control.pathTexture = '../../resource/obj/female02/';
-				var controlPathTexture = folderQueue.add( wwObjLoader2Control, 'pathTexture' ).name( 'Relative path to textures' );
+				var controlPathTexture = folderOptions.add( wwObjLoader2Control, 'pathTexture' ).name( 'Relative path to textures' );
 				controlPathTexture.onChange( function( value ) {
 					console.log( 'Setting pathTexture to: ' + value );
-					app.pathTexture = value;
+					app.pathTexture = value + '/';
 				});
 
 				wwObjLoader2Control.loadObjFile = function () {
 					elemFileInput.click();
 				};
-				folderQueue.add( wwObjLoader2Control, 'loadObjFile' ).name( 'Load OBJ/MTL Files' );
+				folderOptions.add( wwObjLoader2Control, 'loadObjFile' ).name( 'Load OBJ/MTL Files' );
 
 				var handleFileSelect = function ( object3d ) {
 					app._handleFileSelect( object3d, wwObjLoader2Control.pathTexture );
 				};
 				elemFileInput.addEventListener( 'change' , handleFileSelect, false );
 
+				wwObjLoader2Control.clearAllAssests = function () {
+					app.clearAllAssests();
+				};
+				folderOptions.add( wwObjLoader2Control, 'clearAllAssests' ).name( 'Clear Scene' );
+
 			}
-			folderQueue.open();
+			folderOptions.open();
 
 
 

@@ -88,6 +88,10 @@ var WWOBJLoader2Example = (function () {
 		this.cube.position.set( 0, -20, 0 );
 		this.scene.add( this.cube );
 
+		this.createPivot();
+	};
+
+	WWOBJLoader2Example.prototype.createPivot = function () {
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
 		this.scene.add( this.pivot );
@@ -143,7 +147,7 @@ var WWOBJLoader2Example = (function () {
 		}
 
 		if ( fileObj == null ) {
-			alert( 'Unable to load OBJ file from given files: ' + files.toString() );
+			alert( 'Unable to load OBJ file from given files.' );
 		}
 
 		var fileReader = new FileReader();
@@ -272,6 +276,39 @@ var WWOBJLoader2Example = (function () {
 
 		}
 
+	};
+
+	WWOBJLoader2Example.prototype.clearAllAssests = function () {
+		var scope = this;
+		var remover = function ( object3d ) {
+
+			if ( object3d === scope.pivot ) {
+				return;
+			}
+			console.log( 'Removing: ' + object3d.name );
+			scope.scene.remove( object3d );
+
+			if ( object3d.hasOwnProperty( 'geometry' ) ) {
+				object3d.geometry.dispose();
+			}
+			if ( object3d.hasOwnProperty( 'material' ) ) {
+
+				var mat = object3d.material;
+				if ( mat.hasOwnProperty( 'materials' ) ) {
+
+					for ( var mmat in mat.materials ) {
+						mat.materials[ mmat ].dispose();
+					}
+				}
+			}
+			if ( object3d.hasOwnProperty( 'texture' ) ) {
+				object3d.texture.dispose();
+			}
+		};
+
+		scope.scene.remove( scope.pivot );
+		scope.pivot.traverse( remover );
+		scope.createPivot();
 	};
 
 	return WWOBJLoader2Example;
