@@ -21,3 +21,6 @@
 /test/wwobjloader2/main.*.html
 /test/wwobjloader2stage/main.*.html
 /test/wwparallels/main.*.html
+
+/*.log
+/*.tgz

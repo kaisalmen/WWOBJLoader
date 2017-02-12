@@ -1,5 +1,5 @@
 {
-  "name": "WWOBJLoader",
+  "name": "wwobjloader",
   "version": "1.0.5",
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WWOBJLoader.js",
@@ -12,6 +12,19 @@
   "bugs": {
     "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
   },
+  "files": [
+    "package.json",
+    "LICENSE",
+    "README.md",
+    "build",
+	"resource/obj/cerberus",
+	"resource/obj/female02",
+	"resource/obj/male02",
+	"resource/obj/vive-controller",
+	"resource/obj/walt",
+    "src",
+    "test"
+  ],
   "directories": {
     "resource": "resource",
     "test": "test"
