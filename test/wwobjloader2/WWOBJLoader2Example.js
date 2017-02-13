@@ -35,14 +35,6 @@ var WWOBJLoader2Example = (function () {
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
 
-		this.defaultObjDef = {
-			name: 'male02',
-			path: '../../resource/obj/male02/',
-			fileObj: 'male02.obj',
-			pathTexture: '../../resource/obj/male02/',
-			fileMtl: 'male02.mtl'
-		};
-
 		// Check for the various File API support.
 		this.fileApiAvailable = true;
 		if ( window.File && window.FileReader && window.FileList && window.Blob ) {
@@ -82,10 +74,13 @@ var WWOBJLoader2Example = (function () {
 		this.scene.add( directionalLight2 );
 		this.scene.add( ambientLight );
 
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+        var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+        this.scene.add(helper);
+
+        var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, -20, 0 );
+		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
 
 		this.createPivot();
@@ -116,15 +111,12 @@ var WWOBJLoader2Example = (function () {
 		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
 		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 
-		this._loadFiles( this.defaultObjDef );
-
 		return true;
 	};
 
-	WWOBJLoader2Example.prototype._loadFiles = function ( objDef ) {
-		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-			objDef.name, objDef.path, objDef.fileObj, objDef.pathTexture, objDef.fileMtl, this.pivot, this.streamMeshes
-		);
+	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
+        prepData.sceneGraphBaseNode = this.pivot;
+		prepData.streamMeshes = this.streamMeshes;
 		this.wwObjLoader2.prepareRun( prepData );
 		this.wwObjLoader2.run();
 	};

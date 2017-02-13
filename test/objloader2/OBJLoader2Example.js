@@ -30,13 +30,6 @@ var OBJLoader2Example = (function () {
 
 		this.cube = null;
 		this.pivot = null;
-
-		this.objDef = {
-			path: '../../resource/obj/female02/',
-			fileObj: 'female02.obj',
-			texturePath: '../../resource/obj/female02/',
-			fileMtl: 'female02.mtl'
-		};
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -64,10 +57,13 @@ var OBJLoader2Example = (function () {
 		this.scene.add( directionalLight2 );
 		this.scene.add( ambientLight );
 
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-		var material = new THREE.MeshNormalMaterial();
-		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, -20, 0 );
+        var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+        this.scene.add(helper);
+
+        var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+        var material = new THREE.MeshNormalMaterial();
+        this.cube = new THREE.Mesh( geometry, material );
+        this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
 
 		this.pivot = new THREE.Object3D();
@@ -75,20 +71,20 @@ var OBJLoader2Example = (function () {
 		this.scene.add( this.pivot );
 	};
 
-	OBJLoader2Example.prototype.initPostGL = function () {
+	OBJLoader2Example.prototype.initPostGL = function ( objDef ) {
 		var scope = this;
 
 		var mtlLoader = new THREE.MTLLoader();
-		mtlLoader.setPath( scope.objDef.texturePath );
+		mtlLoader.setPath( objDef.texturePath );
 		mtlLoader.setCrossOrigin( 'anonymous' );
-		mtlLoader.load( scope.objDef.fileMtl, function( materials ) {
+		mtlLoader.load( objDef.fileMtl, function( materials ) {
 
 			materials.preload();
 
 			var objLoader = new THREE.OBJLoader2();
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
-			objLoader.setPath( scope.objDef.path );
+			objLoader.setPath( objDef.path );
 			objLoader.setDebug( false, false );
 
 			var onSuccess = function ( object3d ) {
@@ -99,7 +95,7 @@ var OBJLoader2Example = (function () {
 				if ( event.lengthComputable ) {
 
 					var percentComplete = event.loaded / event.total * 100;
-					var output = 'Download of "' + scope.objDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
+					var output = 'Download of "' + objDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
 					console.log(output);
 
 				}
@@ -109,7 +105,7 @@ var OBJLoader2Example = (function () {
 				console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
 			};
 
-			objLoader.load( scope.objDef.fileObj, onSuccess, onProgress, onError );
+			objLoader.load( objDef.fileObj, onSuccess, onProgress, onError );
 
 		});
 

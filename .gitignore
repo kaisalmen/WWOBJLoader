@@ -18,9 +18,13 @@
 /screenshots
 
 /test/objloader2/main.*.html
+/test/objloader2/webgl_*.html
 /test/wwobjloader2/main.*.html
+/test/wwobjloader2/webgl_*.html
 /test/wwobjloader2stage/main.*.html
+/test/wwobjloader2stage/webgl_*.html
 /test/wwparallels/main.*.html
+/test/wwparallels/webgl_*.html
 
 /*.log
 /*.tgz

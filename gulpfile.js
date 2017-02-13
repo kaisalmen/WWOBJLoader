@@ -144,7 +144,7 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';
-	exampleDef.dir.dest = 'build/examples';
+	exampleDef.dir.dest = 'test/objloader2';
 	exampleDef.file.out = 'webgl_loader_obj2';
 	buildExample();
 
@@ -182,7 +182,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
-	exampleDef.dir.dest = 'build/examples';
+	exampleDef.dir.dest = 'test/wwobjloader2';
 	exampleDef.file.out = 'webgl_loader_obj2_ww';
 	buildExample();
 
@@ -224,7 +224,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwparallels/WWParallels.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwparallels/template/main.three.html';
-	exampleDef.dir.dest = 'build/examples';
+	exampleDef.dir.dest = 'test/wwparallels';
 	exampleDef.file.out = 'webgl_loader_obj2_ww_parallels';
 	buildExample();
 
@@ -266,7 +266,7 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2stage/WWOBJLoader2Stage.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2stage/template/main.three.html';
-	exampleDef.dir.dest = 'build/examples';
+	exampleDef.dir.dest = 'test/wwobjloader2stage';
 	exampleDef.file.out = 'webgl_loader_obj2_ww_stage';
 	buildExample();
 
