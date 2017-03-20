@@ -61,7 +61,7 @@ var WWParallels = (function () {
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, -20, 0 );
+		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
 	};
 

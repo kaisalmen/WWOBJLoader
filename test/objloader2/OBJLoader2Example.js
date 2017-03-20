@@ -58,7 +58,7 @@ var OBJLoader2Example = (function () {
 		this.scene.add( ambientLight );
 
         var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
-        this.scene.add(helper);
+        this.scene.add( helper );
 
         var geometry = new THREE.BoxGeometry( 10, 10, 10 );
         var material = new THREE.MeshNormalMaterial();

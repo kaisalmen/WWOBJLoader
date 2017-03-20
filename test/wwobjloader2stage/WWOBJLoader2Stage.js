@@ -62,10 +62,13 @@ var WWOBJLoader2Stage = (function () {
 		this.scene.add( directionalLight2 );
 		this.scene.add( ambientLight );
 
+		var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+		this.scene.add( helper );
+
 		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, -20, 0 );
+		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
 	};
 
@@ -238,7 +241,7 @@ var WWOBJLoader2Stage = (function () {
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
 					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot, false
+						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot, true
 					);
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
@@ -272,7 +275,7 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot, false
+					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot, true
 				);
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
