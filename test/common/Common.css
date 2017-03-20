@@ -49,6 +49,6 @@ body {
 	z-Index: 2;
 }
 #fileUploadInput {
-	visibility: hidden;
+	display: none;
 }
 

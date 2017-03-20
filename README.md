@@ -57,13 +57,13 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 - Test automation with focus on batch execution of tests for retrieval of more robust performance numbers
 
 ## Examples:
-[Web Worker OBJ Parallels Demo](https://kaisalmen.de/proto/test/wwparallels/main.min.html)<br>
-[WWOBJLoader](http://kaisalmen.de/proto/test/wwobjloader2complex/main.min.html)<br>
-[OBJLoader2](http://kaisalmen.de/proto/test/objloader2/main.min.html)<br>
-[Original OBJLoader](http://kaisalmen.de/proto/test/three.js.old/webgl_loader_objloader_direct.html)<br>
+[OBJLoader2](http://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
+[WWOBJLoader](http://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
+[WWOBJLoader Stage](http://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
+[Web Worker OBJ Parallels Demo](https://kaisalmen.de/wwobjloader2/wwparallels/main.min.html)<br>
 <br>
 Larger models not in this repository:<br>
-[Compressed PTV1 Model](http://kaisalmen.de/proto/resource/obj/PTV1/PTV1.zip) (150MB)<br>
+[Compressed PTV1 Model](http://kaisalmen.de/resource/obj/PTV1/PTV1.zip) (150MB)<br>
 Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):<br>
-[Compressed Sink Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
-[Compressed Oven Model](http://kaisalmen.de/proto/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
+[Compressed Sink Model](http://kaisalmen.de/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
+[Compressed Oven Model](http://kaisalmen.de/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
