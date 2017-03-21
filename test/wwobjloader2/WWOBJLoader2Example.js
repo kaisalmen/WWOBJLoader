@@ -74,10 +74,10 @@ var WWOBJLoader2Example = (function () {
 		this.scene.add( directionalLight2 );
 		this.scene.add( ambientLight );
 
-        var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
-        this.scene.add( helper );
+		var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+		this.scene.add( helper );
 
-        var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
@@ -115,7 +115,7 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
-        prepData.sceneGraphBaseNode = this.pivot;
+		prepData.sceneGraphBaseNode = this.pivot;
 		prepData.streamMeshes = this.streamMeshes;
 		this.wwObjLoader2.prepareRun( prepData );
 		this.wwObjLoader2.run();

@@ -2,8 +2,8 @@ body {
 	font-family: Monospace;
 	background-color: #000;
 	color: #fff;
-	margin: 0px 0px 0px 0px;
-	padding: 0px 0px 0px 0px;
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
 	border: none;
 	cursor: default;
 }
@@ -34,8 +34,8 @@ body {
 #example {
 	width: 100%;
 	height: 100%;
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	background-color: #000000;
 }
 #feedback {
@@ -44,9 +44,9 @@ body {
 #dat {
 	user-select: none;
 	position: absolute;
-	left: 0px;
-	top: 0px;
-	z-Index: 2;
+	left: 0;
+	top: 0;
+	z-Index: 200;
 }
 #fileUploadInput {
 	display: none;
