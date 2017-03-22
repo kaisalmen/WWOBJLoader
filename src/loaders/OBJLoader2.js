@@ -188,9 +188,9 @@ THREE.OBJLoader2 = (function () {
 		 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
 		 *
 		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	(vertex/uv/normal)"
-		 * 1: "f vertex/uv          vertex/uv           vertex/uv           (vertex/uv       )"
-		 * 2: "f vertex//normal     vertex//normal      vertex//normal      (vertex//normal  )"
-		 * 3: "f vertex             vertex              vertex              (vertex          )"
+		 * 1: "f vertex/uv		  	vertex/uv		   	vertex/uv		   	(vertex/uv		 )"
+		 * 2: "f vertex//normal	 	vertex//normal	  	vertex//normal	  	(vertex//normal  )"
+		 * 3: "f vertex			 	vertex			  	vertex			  	(vertex		  	 )"
 		 *
 		 * @param indexArray
 		 * @param faceType
