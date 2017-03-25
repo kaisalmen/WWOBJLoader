@@ -1,17 +1,18 @@
 OBJLoader2 and WWOBJLoader2 for three.js
 ===
 
-Welcome to the repository for OBJLoader2 a new loader for the OBJ file format that is additionally executable within a web worker.
+OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker (WWOBJLoader2).
 
-## Repository structure
+## Repository structure / NPM content
 The directory structure is organized as follows:
+- **build**: Contains build libraries and documentation (NPM only)
 - **src**: Contains the sources for the loaders
 - **test**: Contains Tests/HTML examples
-- **resource**: Contains OBJs, MTLs and textures
+- **resource**: Contains OBJs, MTLs and textures (GitHub only)
 
 ## Building
 
-Before you can start to play around some post-checkout initialization steps have to be performed.<br>
+**This only applies to GitHub:** Before you can start to play around some post-checkout initialization steps have to be performed.<br>
 **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** must be installed on your local platform. They are required for retrieving dependencies and for building combined source bundles and the documentation. 
 After checkout run:<br>
 `npm update`
@@ -57,13 +58,32 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 - Test automation with focus on batch execution of tests for retrieval of more robust performance numbers
 
 ## Examples:
-[OBJLoader2](http://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
-[WWOBJLoader](http://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
-[WWOBJLoader Stage](http://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
+[OBJLoader2](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
+[WWOBJLoader](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
+[WWOBJLoader Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
 [Web Worker OBJ Parallels Demo](https://kaisalmen.de/wwobjloader2/wwparallels/main.min.html)<br>
+
+### Models and resources
+
+**This applies to NPM only**:<br>
+The following models need to be made available in directories below "resources/obj" otherwise the examples will not work:
+- female02
+- male02
+- female02
+- vive-controller
+- walt
+
+Just download them from the [WWOBJLoader GitHub repository](https://github.com/kaisalmen/WWOBJLoader) or [three.js GitHub repository](https://github.com/mrdoob/three.js).<br>
+
+**This applies to NPM and GitHub**:<br>
+Larger models not found in any GitHub repository which need to be made available in directories below "resources/obj" as well:
+- PTV1
+- zomax
 <br>
-Larger models not in this repository:<br>
-[Compressed PTV1 Model](http://kaisalmen.de/resource/obj/PTV1/PTV1.zip) (150MB)<br>
+Please download the following zip files and put them in the directories named above. There is no need to decompress them:
+
+[Compressed PTV1 model](https://kaisalmen.de/resource/obj/PTV1/PTV1.zip) (150MB)<br>
 Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):<br>
-[Compressed Sink Model](http://kaisalmen.de/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
-[Compressed Oven Model](http://kaisalmen.de/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
+[Compressed Sink model](https://kaisalmen.de/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
+[Compressed Oven model](https://kaisalmen.de/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
+
