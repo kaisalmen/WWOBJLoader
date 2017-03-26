@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WWOBJLoader.js",
   "author": "kaisalmen",

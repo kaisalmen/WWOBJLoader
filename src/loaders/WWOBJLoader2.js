@@ -409,10 +409,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					if ( createMultiMaterial ) multiMaterials.push( material );
 
 				}
-
 				if ( createMultiMaterial ) {
 
-					material = new THREE.MultiMaterial( multiMaterials );
+					material = multiMaterials;
 					var materialGroups = payload.materialGroups;
 					var materialGroup;
 					for ( var key in materialGroups ) {

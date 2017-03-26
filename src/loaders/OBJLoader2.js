@@ -958,7 +958,7 @@ THREE.OBJLoader2 = (function () {
 			}
 			if ( ! normalBA ) bufferGeometry.computeVertexNormals();
 
-			if ( createMultiMaterial ) material = new THREE.MultiMaterial( materials );
+			if ( createMultiMaterial ) material = materials;
 			var mesh = new THREE.Mesh( bufferGeometry, material );
 			this.sceneGraphBaseNode.add( mesh );
 
