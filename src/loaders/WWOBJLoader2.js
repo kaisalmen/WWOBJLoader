@@ -32,17 +32,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.running = false;
 		this.requestTerminate = false;
 
-		this.callbacks = {
-			progress: null,
-			completedLoading: null,
-			errorWhileLoading: null,
-			materialsLoaded: null,
-			meshLoaded: null,
-			director: {
-				completedLoading: null,
-				errorWhileLoading: null
-			}
-		};
+		this.clearAllCallbacks();
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -89,7 +79,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( callbackProgress != null ) this.callbacks.progress = callbackProgress;
+		if ( callbackProgress != null ) this.callbacks.progress.push( callbackProgress );
 	};
 
 	/**
@@ -99,7 +89,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading = callbackCompletedLoading;
+		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading.push( callbackCompletedLoading );
 	};
 
 	/**
@@ -109,7 +99,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
+		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
 	};
 
 	/**
@@ -119,7 +109,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded = callbackMeshLoaded;
+		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
 	};
 
 	/**
@@ -129,7 +119,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( callbackErrorWhileLoading != null ) this.callbacks.errorWhileLoading = callbackErrorWhileLoading;
+		if ( callbackErrorWhileLoading != null ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
+	};
+
+
+	WWOBJLoader2.prototype.clearAllCallbacks = function () {
+		this.callbacks = {
+			progress: [],
+			completedLoading: [],
+			errorWhileLoading: [],
+			materialsLoaded: [],
+			meshLoaded: []
+		};
 	};
 
 	/**
@@ -267,13 +268,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				materialNames: materialNames
 			} );
 
-			if ( scope.callbacks.materialsLoaded != null ) {
+			var materialsFromCallback;
+			var callbackMaterialsLoaded;
+			for ( var index in scope.callbacks.materialsLoaded ) {
 
-				var materialsCallback = scope.callbacks.materialsLoaded( scope.materials );
-				if ( materialsCallback != null ) scope.materials = materialsCallback;
+				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
+				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
+				if ( materialsFromCallback != null ) scope.materials = materialsFromCallback;
 
 			}
-
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
 
 				scope.worker.postMessage({
@@ -423,9 +426,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					}
 
 				}
-				if ( this.callbacks.meshLoaded !== null ) {
+				var materialOverride;
+				var callbackMeshLoaded;
+				for ( var index in this.callbacks.meshLoaded ) {
 
-					var materialOverride = this.callbacks.meshLoaded( payload.meshName, material );
+					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
+					var materialOverride = callbackMeshLoaded( payload.meshName, material );
 					if ( materialOverride != null ) material = materialOverride;
 
 				}
@@ -498,15 +504,26 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._finalize = function ( reason, requestTerminate ) {
 		this.running = false;
+		var index;
+		var callback;
+
 		if ( reason === 'complete' ) {
 
-			if ( this.callbacks.completedLoading != null ) this.callbacks.completedLoading( this.modelName, this.instanceNo, this.requestTerminate );
-			if ( this.callbacks.director.completedLoading != null ) this.callbacks.director.completedLoading( this.modelName, this.instanceNo, this.requestTerminate );
+			for ( index in this.callbacks.completedLoading ) {
+
+				callback = this.callbacks.completedLoading[ index ];
+				callback( this.modelName, this.instanceNo, this.requestTerminate );
+
+			}
 
 		} else if ( reason === 'error' ) {
 
-			if ( this.callbacks.errorWhileLoading != null ) this.callbacks.errorWhileLoading( this.modelName, this.instanceNo, this.requestTerminate );
-			if ( this.callbacks.director.errorWhileLoading != null ) this.callbacks.director.errorWhileLoading( this.modelName, this.instanceNo, this.requestTerminate );
+			for ( index in this.callbacks.errorWhileLoading ) {
+
+				callback = this.callbacks.errorWhileLoading[ index ];
+				callback( this.modelName, this.instanceNo, this.requestTerminate );
+
+			}
 
 		}
 		this.validated = false;
@@ -519,27 +536,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._announceProgress = function ( baseText, text ) {
-		var output = "";
-		if ( baseText !== null && baseText !== undefined ) {
+		var output = ( baseText != null ) ? baseText: "";
+		output = ( text != null ) ? output + " " + text : output;
 
-			output = baseText;
+		var callbackProgress;
+		for ( var index in this.callbacks.progress ) {
 
-		}
-		if ( text !== null && text !== undefined ) {
-
-			output = output + " " + text;
-
-		}
-		if ( this.callbacks.progress !== null ) {
-
-			this.callbacks.progress( output );
+			callbackProgress = this.callbacks.progress[ index ];
+			callbackProgress( output );
 
 		}
-		if ( this.debug ) {
 
-			console.log( output );
-
-		}
+		if ( this.debug ) console.log( output );
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {

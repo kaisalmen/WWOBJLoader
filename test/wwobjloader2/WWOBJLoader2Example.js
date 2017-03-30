@@ -104,12 +104,16 @@ var WWOBJLoader2Example = (function () {
 			}
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
+		var meshLoaded = function ( meshName, material ) {
+			console.log( 'Loaded mesh: ' + meshName + ' Material name: ' + material.name );
+		};
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
 		};
 		this.wwObjLoader2.registerCallbackProgress( reportProgress );
 		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
 		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
+		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;
 	};
