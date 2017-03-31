@@ -135,8 +135,13 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 *
 	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
-	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams ) {
+	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams, callbacks ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
+			if ( callbacks != null ) {
+
+				runParams.callbacks = callbacks;
+
+			}
 			this.instructionQueue.push( runParams );
 		}
 	};
@@ -172,6 +177,21 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			}
 
 		}
+		// register per object callbacks
+		if ( runParams.callbacks != null ) {
+
+			for ( var key in runParams.callbacks ) {
+
+				if ( worker.callbacks.hasOwnProperty( key ) && runParams.callbacks.hasOwnProperty( key ) ) {
+
+					worker.callbacks[ key ].push( runParams.callbacks[ key ] );
+
+				}
+
+			}
+
+		}
+
 		var scope = this;
 		var managerCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
 			scope.objectsCompleted++;
@@ -190,6 +210,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			}
 		};
 		worker.registerCallbackCompletedLoading( managerCompletedLoading );
+
 		worker.prepareRun( runParams );
 		worker.run();
 	};

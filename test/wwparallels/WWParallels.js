@@ -141,6 +141,10 @@ var WWParallels = (function () {
 		);
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
+		var callbackCompletedLoadingWalt = function () {
+			console.log( '\n\nWALT was loaded (#' + scope.wwDirector.objectsCompleted + ')\n\n' );
+		};
+
 		var models = [];
 		models.push( {
 			modelName: 'male02',
@@ -181,7 +185,10 @@ var WWParallels = (function () {
 			pathObj: '../../resource/obj/walt/',
 			fileObj: 'WaltHead.obj',
 			pathTexture: '../../resource/obj/walt/',
-			fileMtl: 'WaltHead.mtl'
+			fileMtl: 'WaltHead.mtl',
+			callbacks: {
+				completedLoading: callbackCompletedLoadingWalt
+			}
 		} );
 
 		var pivot;
@@ -210,7 +217,8 @@ var WWParallels = (function () {
 			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
 				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode, streamMeshes
 			);
-			this.wwDirector.enqueueForRun( runParams );
+
+			this.wwDirector.enqueueForRun( runParams, model.callbacks );
 			this.allAssets.push( runParams );
 		}
 
