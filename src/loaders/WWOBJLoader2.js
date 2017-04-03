@@ -356,9 +356,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		switch ( payload.cmd ) {
 			case 'objData':
 
-				this.counter ++;
-				var bufferGeometry = new THREE.BufferGeometry();
+				this.counter++;
+				var meshName = payload.meshName;
 
+				var bufferGeometry = new THREE.BufferGeometry();
 				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
 				if ( payload.normals !== null ) {
 
@@ -426,28 +427,52 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					}
 
 				}
-				var materialOverride;
+
 				var callbackMeshLoaded;
+				var callbackMeshLoadedResult;
+				var disregardMesh = false;
 				for ( var index in this.callbacks.meshLoaded ) {
 
 					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
-					var materialOverride = callbackMeshLoaded( payload.meshName, material );
-					if ( materialOverride != null ) material = materialOverride;
+					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+
+					if ( callbackMeshLoadedResult != null ) {
+
+						if ( callbackMeshLoadedResult.disregardMesh ) {
+
+							// if one callback disregards the mesh, then processing stops
+							disregardMesh = true;
+							break;
+
+						}
+						if ( callbackMeshLoadedResult.replaceBufferGeometry ) bufferGeometry = callbackMeshLoadedResult.bufferGeometry;
+						if ( callbackMeshLoadedResult.replaceMaterial ) material = callbackMeshLoadedResult.material;
+
+					}
 
 				}
-				var mesh = new THREE.Mesh( bufferGeometry, material );
-				mesh.name = payload.meshName;
-				if ( this.streamMeshes ) {
 
-					this.sceneGraphBaseNode.add( mesh );
+				if ( !disregardMesh ) {
+
+					var mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+
+					if ( this.streamMeshes ) {
+
+						this.sceneGraphBaseNode.add( mesh );
+
+					} else {
+
+						this.meshStore.push( mesh );
+
+					}
+					this._announceProgress( 'Adding mesh: ', '(' + this.counter + '): ' + meshName );
 
 				} else {
 
-					this.meshStore.push( mesh );
+					this._announceProgress( 'Removing mesh : ' + meshName );
 
 				}
-				var output = '(' + this.counter + '): ' + payload.meshName;
-				this._announceProgress( 'Adding mesh', output );
 				break;
 
 			case 'complete':
@@ -914,19 +939,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString, sceneGraphBaseNode, streamMeshes, requestTerminate ) {
-
-	var data = {
-		modelName: ( modelName == null ) ? 'none' : modelName,
+	return {
+		modelName: Boolean( modelName ) ? modelName : 'none',
 		dataAvailable: true,
-		objAsArrayBuffer: ( objAsArrayBuffer == null ) ? null : objAsArrayBuffer,
-		pathTexture: ( pathTexture == null ) ? null : pathTexture,
-		mtlAsString: ( mtlAsString == null ) ? null : mtlAsString,
-		sceneGraphBaseNode: ( sceneGraphBaseNode == null ) ? null : sceneGraphBaseNode,
+		objAsArrayBuffer: Boolean( objAsArrayBuffer ) ? objAsArrayBuffer : null,
+		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
+		mtlAsString: Boolean( mtlAsString ) ? mtlAsString : null,
+		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
 		streamMeshes: ( streamMeshes == null ) ? true : streamMeshes,
-		requestTerminate: ( requestTerminate == null ) ? false : requestTerminate
+		requestTerminate: Boolean( requestTerminate )
 	};
-
-	return data;
 };
 
 /**
@@ -945,18 +967,35 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl, sceneGraphBaseNode, streamMeshes, requestTerminate ) {
-
-	var data = {
-		modelName: ( modelName == null ) ? 'none' : modelName,
+	return {
+		modelName: Boolean( modelName ) ? modelName : 'none',
 		dataAvailable: false,
-		pathObj: ( pathObj == null ) ? null : pathObj,
-		fileObj: ( fileObj == null ) ? null : fileObj,
-		pathTexture: ( pathTexture == null ) ? null : pathTexture,
-		fileMtl: ( fileMtl == null ) ? null : fileMtl,
-		sceneGraphBaseNode: ( sceneGraphBaseNode == null ) ? null : sceneGraphBaseNode,
+		pathObj: Boolean( pathObj ) ? pathObj : null,
+		fileObj: Boolean( fileObj ) ? fileObj : null,
+		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
+		fileMtl: Boolean( fileMtl ) ? fileMtl : null,
+		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
 		streamMeshes: ( streamMeshes == null ) ? true : streamMeshes,
-		requestTerminate: ( requestTerminate == null ) ? false : requestTerminate
+		requestTerminate: Boolean( requestTerminate )
 	};
+};
 
-	return data;
+/**
+ * Object to return by {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded. Used to adjust bufferGeometry or material or prevent complete loading of mesh
+ *
+ * @param {boolean} disregardMesh=false Tell WWOBJLoader2 to completely disregard this mesh
+ * @param {THREE.BufferGeometry} bufferGeometry The {@link THREE.BufferGeometry} to be used
+ * @param {THREE.Material} material The {@link THREE.Material} to be used
+ *
+ * @returns {{ disregardMesh: boolean, replaceBufferGeometry: boolean, bufferGeometry: THREE.BufferGeometry, replaceMaterial: boolean, material: THREE.Material}}
+ * @constructor
+ */
+THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride = function ( disregardMesh, bufferGeometry, material ) {
+	return {
+		disregardMesh: Boolean( disregardMesh ),
+		replaceBufferGeometry: Boolean( bufferGeometry ),
+		bufferGeometry: Boolean( bufferGeometry ) ? bufferGeometry : null,
+		replaceMaterial: Boolean( material ),
+		material: Boolean( material ) ? material : null
+	};
 };

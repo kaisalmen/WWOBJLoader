@@ -193,7 +193,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		}
 
 		var scope = this;
-		var managerCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
+		var directorCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
 			scope.objectsCompleted++;
 			if ( ! requestTerminate ) {
 
@@ -209,7 +209,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 			}
 		};
-		worker.registerCallbackCompletedLoading( managerCompletedLoading );
+		worker.registerCallbackCompletedLoading( directorCompletedLoading );
 
 		worker.prepareRun( runParams );
 		worker.run();

@@ -120,15 +120,18 @@ var WWParallels = (function () {
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 		};
-		var callbackMeshLoaded = function ( meshName, material ) {
-			var replacedMaterial = null;
 
-			if ( material != null && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001' ) {
-				replacedMaterial = material;
-				replacedMaterial.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
+		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+			var materialOverride;
+
+			if ( material != null && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
+
+				materialOverride = material;
+				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
+
 			}
 
-			return replacedMaterial;
+			return new THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride( false, undefined, materialOverride );
 		};
 
 		this.wwDirector.prepareWorkers(
