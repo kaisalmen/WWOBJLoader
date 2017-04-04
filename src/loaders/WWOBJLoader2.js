@@ -79,7 +79,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( callbackProgress != null ) this.callbacks.progress.push( callbackProgress );
+		if ( Boolean( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
 	};
 
 	/**
@@ -89,7 +89,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( callbackCompletedLoading != null ) this.callbacks.completedLoading.push( callbackCompletedLoading );
+		if ( Boolean( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
 	};
 
 	/**
@@ -99,17 +99,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( callbackMaterialsLoaded != null ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
+		if ( Boolean( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
 	};
 
 	/**
-	 * Register callback function that is called every time a mesh was loaded
+	 * Register callback function that is called every time a mesh was loaded.
+	 * Use {@link THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( callbackMeshLoaded != null ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
+		if ( Boolean( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
 	};
 
 	/**
@@ -119,7 +120,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( callbackErrorWhileLoading != null ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
+		if ( Boolean( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
 	};
 
 
@@ -140,12 +141,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {boolean} requestTerminate
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = ( requestTerminate != null && requestTerminate ) ? true : false;
+		this.requestTerminate = Boolean( requestTerminate );
 	};
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		if ( this.worker == null ) {
+		if ( ! Boolean( this.worker ) ) {
 
 			this._buildWebWorkerCode();
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
@@ -167,9 +168,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.running = true;
 		this.requestTerminate = false;
 
-		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
-		this.mtlLoader = ( this.mtlLoader == null ) ?  new THREE.MTLLoader() : this.mtlLoader;
-		if ( this.crossOrigin != null ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
+		this.fileLoader = ( ! Boolean( this.fileLoader ) ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
+		this.mtlLoader = ( ! Boolean( this.mtlLoader ) ) ?  new THREE.MTLLoader() : this.mtlLoader;
+		if ( Boolean( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
 		this.dataAvailable = false;
 		this.fileObj = null;
@@ -247,7 +248,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
 			var materialNames = [];
-			if ( materialCreator != null ) {
+			if ( ! Boolean( materialCreator ) ) {
 
 				materialCreator.preload();
 				materialCreatorMaterials = materialCreator.materials;
@@ -274,7 +275,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
 				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
-				if ( materialsFromCallback != null ) scope.materials = materialsFromCallback;
+				if ( Boolean( materialsFromCallback ) ) scope.materials = materialsFromCallback;
 
 			}
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
@@ -333,17 +334,17 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlLoader.setPath( this.pathTexture );
 		if ( this.dataAvailable ) {
 
-			processLoadedMaterials( ( this.mtlAsString != null ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
+			processLoadedMaterials( ( Boolean( this.mtlAsString ) ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
 		} else {
 
-			if ( this.fileMtl == null ) {
+			if ( Boolean( this.fileMtl ) ) {
 
-				processLoadedMaterials();
+				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
 
 			} else {
 
-				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
+				processLoadedMaterials();
 
 			}
 
@@ -383,7 +384,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var createMultiMaterial = payload.multiMaterial;
 				var multiMaterials = [];
 
-				for ( var key in materialDescriptions ) {
+				var key;
+				for ( key in materialDescriptions ) {
 
 					materialDescription = materialDescriptions[ key ];
 					material = this.materials[ materialDescription.name ];
@@ -419,7 +421,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					material = new THREE.MultiMaterial( multiMaterials );
 					var materialGroups = payload.materialGroups;
 					var materialGroup;
-					for ( var key in materialGroups ) {
+					for ( key in materialGroups ) {
 
 						materialGroup = materialGroups[ key ];
 						bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
@@ -436,7 +438,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
 					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
 
-					if ( callbackMeshLoadedResult != null ) {
+					if ( Boolean( callbackMeshLoadedResult ) ) {
 
 						if ( callbackMeshLoadedResult.disregardMesh ) {
 
@@ -479,16 +481,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				if ( ! this.streamMeshes ) {
 
-					for ( var key in this.meshStore ) {
+					for ( var meshStoreKey in this.meshStore ) {
 
-						this.sceneGraphBaseNode.add( this.meshStore[ key ] );
+						this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
 
 					}
 
 				}
 
 				console.timeEnd( 'WWOBJLoader2' );
-				if ( payload.msg != null ) {
+				if ( Boolean( payload.msg ) ) {
 
 					this._announceProgress( payload.msg );
 
@@ -513,7 +515,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._terminate = function () {
-		if ( this.worker != null ) {
+		if ( Boolean( this.worker ) ) {
 
 			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
@@ -561,8 +563,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._announceProgress = function ( baseText, text ) {
-		var output = ( baseText != null ) ? baseText: "";
-		output = ( text != null ) ? output + " " + text : output;
+		var output = ( Boolean( baseText ) ) ? baseText: "";
+		output = ( Boolean( text ) ) ? output + " " + text : output;
 
 		var callbackProgress;
 		for ( var index in this.callbacks.progress ) {
@@ -576,8 +578,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {
-		if ( existingWorkerCode != null ) this.workerCode = existingWorkerCode;
-		if ( this.workerCode == null ) {
+		if ( Boolean( existingWorkerCode ) ) this.workerCode = existingWorkerCode;
+		if ( ! Boolean( this.workerCode ) ) {
 
 			console.time( 'buildWebWorkerCode' );
 			var wwDef = (function () {
@@ -672,11 +674,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 				WWMeshCreator.prototype.setMaterials = function ( materials ) {
-					this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
+					this.materials = ( ! Boolean( materials ) ) ? ( ( ! Boolean( this.materials ) ) ? { materials: [] } : this.materials ) : materials;
 				};
 
 				WWMeshCreator.prototype.setDebug = function ( debug ) {
-					this.debug = ( debug == null ) ? this.debug : debug;
+					this.debug = ( ! Boolean( debug ) ) ? this.debug : debug;
 				};
 
 				WWMeshCreator.prototype.validate = function () {
