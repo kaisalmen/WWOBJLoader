@@ -483,7 +483,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					for ( var meshStoreKey in this.meshStore ) {
 
-						this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
+						if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
 
 					}
 
@@ -729,6 +729,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					var uvOffset = 0;
 
 					for ( var oodIndex in rawObjectDescriptions ) {
+						if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
 						rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
 						materialDescription = { name: rawObjectDescription.materialName, flat: false, default: false };
@@ -948,7 +949,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
 		mtlAsString: Boolean( mtlAsString ) ? mtlAsString : null,
 		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
-		streamMeshes: ( streamMeshes == null ) ? true : streamMeshes,
+		streamMeshes: ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes,
 		requestTerminate: Boolean( requestTerminate )
 	};
 };
@@ -977,7 +978,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
 		fileMtl: Boolean( fileMtl ) ? fileMtl : null,
 		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
-		streamMeshes: ( streamMeshes == null ) ? true : streamMeshes,
+		streamMeshes: ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes,
 		requestTerminate: Boolean( requestTerminate )
 	};
 };
