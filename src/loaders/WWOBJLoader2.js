@@ -248,7 +248,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
 			var materialNames = [];
-			if ( ! Boolean( materialCreator ) ) {
+			if ( Boolean( materialCreator ) ) {
 
 				materialCreator.preload();
 				materialCreatorMaterials = materialCreator.materials;
@@ -674,7 +674,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 				WWMeshCreator.prototype.setMaterials = function ( materials ) {
-					this.materials = ( ! Boolean( materials ) ) ? ( ( ! Boolean( this.materials ) ) ? { materials: [] } : this.materials ) : materials;
+					this.materials = ( Boolean( materials ) ) ? materials : ( ! Boolean( this.materials ) ? { materials: [] } : this.materials );
 				};
 
 				WWMeshCreator.prototype.setDebug = function ( debug ) {
