@@ -97,15 +97,11 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Progress: ' + content );
 		};
 		var materialsLoaded = function ( materials ) {
-			var count = 0;
-			console.log( 'The following materials have been loaded:' );
-			for ( var mat in materials ) {
-				count++;
-			}
+			var count = Boolean( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
-		var meshLoaded = function ( meshName, material ) {
-			console.log( 'Loaded mesh: ' + meshName + ' Material name: ' + material.name );
+		var meshLoaded = function ( name, bufferGeometry, material ) {
+			console.log( 'Loaded mesh: ' + name + ' Material name: ' + material.name );
 		};
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
@@ -142,7 +138,7 @@ var WWOBJLoader2Example = (function () {
 
 		}
 
-		if ( fileObj == null ) {
+		if ( ! Boolean( fileObj ) ) {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 
@@ -260,9 +256,10 @@ var WWOBJLoader2Example = (function () {
 
 		if ( object3d.material instanceof THREE.MultiMaterial ) {
 
-			for ( var matName in object3d.material.materials ) {
+			var materials = object3d.material.materials;
+			for ( var name in materials ) {
 
-				this.traversalFunction( object3d.material.materials[ matName ] );
+				if ( materials.hasOwnProperty( name ) )	this.traversalFunction( materials[ name ] );
 
 			}
 
@@ -292,8 +289,11 @@ var WWOBJLoader2Example = (function () {
 				var mat = object3d.material;
 				if ( mat.hasOwnProperty( 'materials' ) ) {
 
-					for ( var mmat in mat.materials ) {
-						mat.materials[ mmat ].dispose();
+					var materials = mat.materials;
+					for ( var name in materials ) {
+
+						if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
+
 					}
 				}
 			}

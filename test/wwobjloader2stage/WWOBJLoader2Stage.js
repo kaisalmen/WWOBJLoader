@@ -79,11 +79,7 @@ var WWOBJLoader2Stage = (function () {
 			scope.reloadAssets();
 		};
 		var materialsLoaded = function ( materials ) {
-			var count = 0;
-			console.log( 'The following materials have been loaded:' );
-			for ( var mat in materials ) {
-				count++;
-			}
+			var count = Boolean( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
 		var meshLoaded = function ( meshName ) {
@@ -145,32 +141,30 @@ var WWOBJLoader2Stage = (function () {
 		var scope = this;
 
 		for ( var asset in this.allAssets ) {
-			ref = this.allAssets[asset];
+			ref = this.allAssets[ asset ];
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.pivot ) {
-					return;
-				}
+				if ( object3d === ref.pivot ) return;
+
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
-				if ( object3d.hasOwnProperty( 'geometry' ) ) {
-					object3d.geometry.dispose();
-				}
+				if ( object3d.hasOwnProperty( 'geometry' ) ) object3d.geometry.dispose();
 				if ( object3d.hasOwnProperty( 'material' ) ) {
 
 					var mat = object3d.material;
 					if ( mat.hasOwnProperty( 'materials' ) ) {
 
-						for ( var mmat in mat.materials ) {
-							mat.materials[mmat].dispose();
+						var materials = mat.materials;
+						for ( var name in materials ) {
+
+							if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
+
 						}
 					}
 				}
-				if ( object3d.hasOwnProperty( 'texture' ) ) {
-					object3d.texture.dispose();
-				}
+				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
 			scope.scene.remove( ref.pivot );
 			ref.pivot.traverse( remover );
@@ -388,7 +382,7 @@ var WWOBJLoader2ObjDef = function ( name, pathBase, fileObj, fileMtl, pathTextur
 	this.pathTexture = pathTexture;
 	this.fileZip = fileZip;
 	this.pos = pos;
-	this.scale = scale == null ? 1.0 : scale;
+	this.scale = ! Boolean( scale ) ? 1.0 : scale;
 	this.pivot = null;
 };
 

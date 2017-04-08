@@ -468,11 +468,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 						this.meshStore.push( mesh );
 
 					}
-					this._announceProgress( 'Adding mesh: ', '(' + this.counter + '): ' + meshName );
+					this._announceProgress( 'Adding mesh (' + this.counter + '):', meshName );
 
 				} else {
 
-					this._announceProgress( 'Removing mesh : ' + meshName );
+					this._announceProgress( 'Removing mesh:', meshName );
 
 				}
 				break;

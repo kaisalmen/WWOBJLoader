@@ -109,8 +109,12 @@ var WWParallels = (function () {
 		var scope = this;
 		scope.wwDirector.objectsCompleted = 0;
 		scope.feedbackArray = new Array( maxWebWorkers );
-		for ( var i = 0; i < maxWebWorkers; i++ ) {
+
+		var i;
+		for ( i = 0; i < maxWebWorkers; i++ ) {
+
 			scope.feedbackArray[ i ] = 'Worker #' + i + ': Awaiting feedback';
+
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
@@ -124,7 +128,7 @@ var WWParallels = (function () {
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 			var materialOverride;
 
-			if ( material != null && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
+			if ( Boolean( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
 
 				materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
@@ -145,7 +149,7 @@ var WWParallels = (function () {
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 		var callbackCompletedLoadingWalt = function () {
-			console.log( '\n\nWALT was loaded (#' + scope.wwDirector.objectsCompleted + ')\n\n' );
+			console.log( 'Callback check: WALT was loaded (#' + scope.wwDirector.objectsCompleted + ')' );
 		};
 
 		var models = [];
@@ -200,7 +204,7 @@ var WWParallels = (function () {
 		var modelIndex = 0;
 		var model;
 		var runParams;
-		for ( var i = 0; i < maxQueueSize; i++ ) {
+		for ( i = 0; i < maxQueueSize; i++ ) {
 
 			modelIndex = Math.floor( Math.random() * 5 );
 			model = models[ modelIndex ];
@@ -211,7 +215,7 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random(),
 				distributionBase + distributionMax * Math.random()
 			);
-			if ( model.scale != null ) pivot.scale.set( model.scale, model.scale, model.scale );
+			if ( Boolean( model.scale ) ) pivot.scale.set( model.scale, model.scale, model.scale );
 
 			this.scene.add( pivot );
 
@@ -233,32 +237,29 @@ var WWParallels = (function () {
 		var scope = this;
 
 		for ( var asset in this.allAssets ) {
-			ref = this.allAssets[asset];
+			ref = this.allAssets[ asset ];
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.sceneGraphBaseNode ) {
-					return;
-				}
+				if ( object3d === ref.sceneGraphBaseNode ) return;
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
-				if ( object3d.hasOwnProperty( 'geometry' ) ) {
-					object3d.geometry.dispose();
-				}
+				if ( object3d.hasOwnProperty( 'geometry' ) ) object3d.geometry.dispose();
 				if ( object3d.hasOwnProperty( 'material' ) ) {
 
 					var mat = object3d.material;
 					if ( mat.hasOwnProperty( 'materials' ) ) {
 
-						for ( var mmat in mat.materials ) {
-							mat.materials[mmat].dispose();
+						var materials = mat.materials;
+						for ( var name in materials ) {
+
+							if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
+
 						}
 					}
 				}
-				if ( object3d.hasOwnProperty( 'texture' ) ) {
-					object3d.texture.dispose();
-				}
+				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
 			};
 			scope.scene.remove( ref.sceneGraphBaseNode );
 			ref.sceneGraphBaseNode.traverse( remover );

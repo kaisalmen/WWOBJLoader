@@ -185,9 +185,10 @@ var OBJLoader2Example = (function () {
 
 		if ( object3d.material instanceof THREE.MultiMaterial ) {
 
-			for ( var matName in object3d.material.materials ) {
+			var materials = object3d.material.materials;
+			for ( var name in materials ) {
 
-				this.traversalFunction( object3d.material.materials[ matName ] );
+				if ( materials.hasOwnProperty( name ) )	this.traversalFunction( materials[ name ] );
 
 			}
 
