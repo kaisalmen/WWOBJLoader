@@ -10,7 +10,7 @@ THREE.OBJLoader2.version = 'dev';
 THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
-		this.manager = ( manager == null ) ? THREE.DefaultLoadingManager : manager;
+		this.manager = ( ! Boolean( manager ) ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -28,7 +28,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {string} path The basepath
 	 */
 	OBJLoader2.prototype.setPath = function ( path ) {
-		this.path = ( path == null ) ? this.path : path;
+		this.path = ( ! Boolean( path ) ) ? this.path : path;
 	};
 
 	/**
@@ -76,13 +76,13 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
 		this._validate();
 		this.fileLoader.setPath( this.path );
-		this.fileLoader.setResponseType( ( useArrayBuffer || useArrayBuffer == null ) ? 'arraybuffer' : 'text' );
+		this.fileLoader.setResponseType( ( useArrayBuffer || useArrayBuffer === null || useArrayBuffer === undefined ) ? 'arraybuffer' : 'text' );
 
 		var scope = this;
 		scope.fileLoader.load( url, function ( content ) {
 
 			// only use parseText if useArrayBuffer is explicitly set to false
-			onLoad( ( useArrayBuffer || useArrayBuffer == null ) ? scope.parse( content ) : scope.parseText( content ) );
+			onLoad( ( useArrayBuffer || useArrayBuffer === null || useArrayBuffer === undefined ) ? scope.parse( content ) : scope.parseText( content ) );
 
 		}, onProgress, onError );
 	};
@@ -140,7 +140,7 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.fileLoader = ( this.fileLoader == null ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
+		this.fileLoader = ( ! Boolean( this.fileLoader ) ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
 		this.setPath();
 		this.parser.validate();
 		this.meshCreator.validate();
@@ -214,7 +214,7 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
-			this.debug = ( debug == null ) ? this.debug : debug;
+			this.debug = ( ! Boolean( debug ) ) ? this.debug : debug;
 		};
 
 		Parser.prototype.validate = function () {
@@ -480,9 +480,9 @@ THREE.OBJLoader2 = (function () {
 			this.uvs = [];
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.mtllibName = ( mtllibName != null ) ? mtllibName : 'none';
-			this.objectName = ( objectName != null ) ? objectName : 'none';
-			this.groupName = ( groupName != null ) ? groupName : 'none';
+			this.mtllibName = ( Boolean( mtllibName ) ) ? mtllibName : 'none';
+			this.objectName = ( Boolean( objectName ) ) ? objectName : 'none';
+			this.groupName = ( Boolean( groupName ) ) ? groupName : 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 1;
 
@@ -556,7 +556,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.pushUsemtl = function ( mtlName ) {
-			if ( this.activeMtlName === mtlName || mtlName == null ) return;
+			if ( this.activeMtlName === mtlName || mtlName === null || mtlName === undefined ) return;
 			this.activeMtlName = mtlName;
 			this.mtlCount++;
 
@@ -574,16 +574,11 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.verifyIndex = function () {
 			var index = this.buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
-			if ( this.rawObjectDescriptions[ index ] == null ) {
+			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ];
+			if ( ! Boolean( this.rawObjectDescriptionInUse ) ) {
 
-				this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ] =
-					new RawObjectDescription(
-						this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup
-					);
-
-			} else {
-
-				this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ];
+				this.rawObjectDescriptionInUse = new RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
+				this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 
 			}
 		};
@@ -808,15 +803,15 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-			this.sceneGraphBaseNode = ( sceneGraphBaseNode == null ) ? ( this.sceneGraphBaseNode == null ? new THREE.Group() : this.sceneGraphBaseNode ) : sceneGraphBaseNode;
+			this.sceneGraphBaseNode = Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : ( Boolean( this.sceneGraphBaseNode ) ? this.sceneGraphBaseNode : new THREE.Group() );
 		};
 
 		MeshCreator.prototype.setMaterials = function ( materials ) {
-			this.materials = ( materials == null ) ? ( this.materials == null ? { materials: [] } : this.materials ) : materials;
+			this.materials = Boolean( materials ) ? materials : ( Boolean( this.materials ) ? this.materials : { materials: [] } );
 		};
 
 		MeshCreator.prototype.setDebug = function ( debug ) {
-			this.debug = ( debug == null ) ? this.debug : debug;
+			this.debug = Boolean( debug ) ? debug : this.debug;
 		};
 
 		MeshCreator.prototype.validate = function () {

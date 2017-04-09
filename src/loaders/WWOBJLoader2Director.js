@@ -20,7 +20,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 		this.workerDescription = {
 			prototypeDef: THREE.OBJLoader2.WWOBJLoader2.prototype,
-			callbacks: {},
+			globalCallbacks: {},
 			webWorkers: [],
 			codeBuffer: null
 		};
@@ -59,25 +59,47 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
+	 * Register callbacks for all web workers
+	 *
+	 * @param {callback[]} globalCallbacks
+	 * 		{ progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null }
+	 */
+	WWOBJLoader2Director.prototype.setGlobalCallbacks = function ( globalCallbacks ) {
+		this.workerDescription.globalCallbacks = {};
+		if ( globalCallbacks != null ) {
+
+			var potentialArray;
+			for ( var key in globalCallbacks ) {
+
+				if ( globalCallbacks.hasOwnProperty( key ) ) {
+
+					potentialArray = globalCallbacks[ key ];
+					if ( ! Array.isArray( potentialArray ) ) {
+
+						this.workerDescription.globalCallbacks[ key ] = [ potentialArray ];
+
+					} else {
+
+						this.workerDescription.globalCallbacks[ key ] = potentialArray;
+
+					}
+
+				}
+			}
+		}
+	};
+
+	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param {callback[]} callbacks Register callbacks for all web workers:
+	 * @param {callback[]} globalCallbacks Register callbacks for all web workers:
 	 * 		{ progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null }
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
-	WWOBJLoader2Director.prototype.prepareWorkers = function ( callbacks, maxQueueSize, maxWebWorkers ) {
-		if ( callbacks != null ) {
-
-			for ( var key in callbacks ) {
-
-				if ( callbacks.hasOwnProperty( key ) ) this.workerDescription.callbacks[ key ] = callbacks[ key ];
-
-			}
-
-		}
-
+	WWOBJLoader2Director.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
+		this.setGlobalCallbacks( globalCallbacks );
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
@@ -111,10 +133,15 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * Store run instructions in internal instructionQueue
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
+	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
-	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams ) {
+	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams, callbacks ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
+			if ( callbacks != null ) {
+
+				runParams.callbacks = callbacks;
+
+			}
 			this.instructionQueue.push( runParams );
 		}
 	};
@@ -126,18 +153,66 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	WWOBJLoader2Director.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
 
-		var webWorker;
-		var runParams;
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
 		for ( var i = 0; i < length; i++ ) {
 
-			webWorker = this.workerDescription.webWorkers[ i ];
-			runParams = this.instructionQueue[ 0 ];
-			webWorker.prepareRun( runParams );
-			webWorker.run();
+			this._kickWebWorkerRun( this.workerDescription.webWorkers[ i ], this.instructionQueue[ 0 ] );
 			this.instructionQueue.shift();
 
 		}
+	};
+
+	WWOBJLoader2Director.prototype._kickWebWorkerRun = function( worker, runParams ) {
+		worker.clearAllCallbacks();
+		for ( var key in this.workerDescription.globalCallbacks ) {
+
+			if ( worker.callbacks.hasOwnProperty( key ) && this.workerDescription.globalCallbacks.hasOwnProperty( key ) ) {
+
+				for ( var index in this.workerDescription.globalCallbacks[ key ] ) {
+
+					worker.callbacks[ key ].push( this.workerDescription.globalCallbacks[ key ][ index ] );
+
+				}
+
+			}
+
+		}
+		// register per object callbacks
+		if ( runParams.callbacks != null ) {
+
+			for ( var key in runParams.callbacks ) {
+
+				if ( worker.callbacks.hasOwnProperty( key ) && runParams.callbacks.hasOwnProperty( key ) ) {
+
+					worker.callbacks[ key ].push( runParams.callbacks[ key ] );
+
+				}
+
+			}
+
+		}
+
+		var scope = this;
+		var directorCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
+			scope.objectsCompleted++;
+			if ( ! requestTerminate ) {
+
+				var worker = scope.workerDescription.webWorkers[ instanceNo ];
+				var runParams = scope.instructionQueue[ 0 ];
+				if ( runParams != null ) {
+
+					console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
+					scope._kickWebWorkerRun( worker, runParams );
+					scope.instructionQueue.shift();
+
+				}
+
+			}
+		};
+		worker.registerCallbackCompletedLoading( directorCompletedLoading );
+
+		worker.prepareRun( runParams );
+		worker.run();
 	};
 
 	WWOBJLoader2Director.prototype._buildWebWorker = function () {
@@ -155,34 +230,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			webWorker._buildWebWorkerCode( this.workerDescription.codeBuffer );
 
 		}
-		for ( var key in this.workerDescription.callbacks ) {
 
-			if ( webWorker.callbacks.hasOwnProperty( key ) && this.workerDescription.callbacks.hasOwnProperty( key ) ) {
-
-				webWorker.callbacks[ key ] = this.workerDescription.callbacks[ key ];
-
-			}
-
-		}
-		var scope = this;
-		var managerCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
-			scope.objectsCompleted++;
-			if ( ! requestTerminate ) {
-
-				var rekick = scope.workerDescription.webWorkers[ instanceNo ];
-				var runParams = scope.instructionQueue[ 0 ];
-				if ( runParams != null ) {
-
-					rekick.prepareRun( runParams );
-					rekick.run();
-					scope.instructionQueue.shift();
-
-				}
-
-			}
-		};
-
-		webWorker.callbacks.director[ 'completedLoading' ] = managerCompletedLoading;
 		webWorker.instanceNo = this.workerDescription.webWorkers.length;
 		this.workerDescription.webWorkers.push( webWorker );
 		return webWorker;
@@ -200,7 +248,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			webWorker.setRequestTerminate( true );
 
 		}
-		this.workerDescription.callbacks = {};
+		this.workerDescription.globalCallbacks = {};
 		this.workerDescription.webWorkers = [];
 		this.workerDescription.codeBuffer = null;
 	};
