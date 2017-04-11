@@ -3,6 +3,8 @@ OBJLoader2 and WWOBJLoader2 for three.js
 
 OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker (WWOBJLoader2).
 
+Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
+
 ## Repository structure / NPM content
 The directory structure is organized as follows:
 - **build**: Contains build libraries and documentation (NPM only)
