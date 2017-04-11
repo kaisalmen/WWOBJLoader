@@ -28,3 +28,7 @@
 
 /*.log
 /*.tgz
+/docs/styles
+/docs/fonts
+/docs/img
+/docs/scripts
