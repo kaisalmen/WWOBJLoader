@@ -5,7 +5,7 @@ THREE.OBJLoader2.version = 'dev';
  * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
  * @class
  *
- * @param {THREE.DefaultLoadingManager} [manager] Extension of {@link THREE.DefaultLoadingManager}
+ * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
 THREE.OBJLoader2 = (function () {
 

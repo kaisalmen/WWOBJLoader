@@ -4,11 +4,11 @@
 
 #### Code related changes
 
-##### THREE.WWOBJLoader2
+##### THREE.OBJLoader2.WWOBJLoader2
 - Function `_receiveWorkerMessage` now uses a meshDescription that allows to override material or bufferGeometry or to completely disregard the mesh. `THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride` was introduced for this.
 - Allow usage of multiple callbacks per callback type
 
-##### THREE.WWOBJLoader2Director
+##### THREE.OBJLoader2.WWOBJLoader2Director
 - Added per queue object callbacks
 - Callbacks will be reset and reassigned for every run
 
@@ -38,7 +38,7 @@ Improvements since initial release. This was the first npm release and the first
 - MeshCreator is now private to OBJLoader2
 - Removed underscores from functions of private classes
 
-##### THREE.WWOBJLoader2
+##### THREE.OBJLoader2.WWOBJLoader2
 - Added checks for Blob and URL.createObjectURL
 - Worker code build: Removed need to adjust constructor and some new Object calls
 - Allow to properly set CORS to MTLLoader via WWOBJLoader2 and WWOBJLoader2Director
