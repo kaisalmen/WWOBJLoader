@@ -22,7 +22,7 @@ THREE.OBJLoader2 = (function () {
 	}
 
 	/**
-	 * Base path to use
+	 * Base path to use.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {string} path The basepath
@@ -32,7 +32,7 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set the node where the loaded objects will be attached
+	 * Set the node where the loaded objects will be attached.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scenegraph object where meshes will be attached
@@ -42,21 +42,21 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set materials loaded by MTLLoader
+	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {THREE.MTLLoader.MaterialCreator.materials[]} materials {@link THREE.MTLLoader.MaterialCreator.materials}
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator.setMaterials( materials );
 	};
 
 	/**
-	 * Allows to set debug mode for the parser and the meshCreator
+	 * Allows to set debug mode for the parser and the meshCreator.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {boolean} parserDebug {@link Parser} will produce debug output
-	 * @param {boolean} meshCreatorDebug {@link THREE.OBJLoader2.MeshCreator} will produce debug output
+	 * @param {boolean} parserDebug Internal Parser will produce debug output
+	 * @param {boolean} meshCreatorDebug Internal MeshCreator will produce debug output
 	 */
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser.setDebug( parserDebug );
@@ -69,7 +69,7 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {string} url URL of the file to load
 	 * @param {callback} onLoad Called after loading was successfully completed
-	 * @param {callback} onProgress Called to report progress of loading
+	 * @param {callback} onProgress Called to report progress of loading. The argument will be the XmlHttpRequest instance, that contain {integer total} and {integer loaded} bytes.
 	 * @param {callback} onError Called after an error occurred during loading
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
