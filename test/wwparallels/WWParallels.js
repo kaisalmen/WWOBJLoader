@@ -206,7 +206,7 @@ var WWParallels = (function () {
 		var runParams;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
-			modelIndex = Math.floor( Math.random() * 5 );
+			modelIndex = Math.floor( Math.random() * models.length );
 			model = models[ modelIndex ];
 
 			pivot = new THREE.Object3D();
