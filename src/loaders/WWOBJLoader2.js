@@ -934,23 +934,61 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  * @param {Uint8Array} objAsArrayBuffer OBJ file content as ArrayBuffer
  * @param {string} pathTexture Path to texture files
  * @param {string} mtlAsString MTL file content as string
- * @param {THREE.Object3D} sceneGraphBaseNode {@link THREE.Object3D} where meshes will be attached
- * @param {boolean} streamMeshes=true Singles meshes are directly integrated into scene when loaded or later
- * @param {boolean} [requestTerminate=false] Request termination of web worker and free local resources after execution
  *
  * @returns {{modelName: string, dataAvailable: boolean, objAsArrayBuffer: null, pathTexture: null, mtlAsString: null, sceneGraphBaseNode: null, streamMeshes: boolean, requestTerminate: boolean}}
  * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString, sceneGraphBaseNode, streamMeshes, requestTerminate ) {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
 	return {
+
+		/**
+		 * {@link THREE.Object3D} where meshes will be attached
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
+		 *
+		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
+		 */
+		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
+			this.sceneGraphBaseNode = Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null;
+		},
+
+		/**
+		 * Singles meshes are directly integrated into scene when loaded or later
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
+		 *
+		 * @param {boolean} streamMeshes=true Default is true
+		 */
+		setStreamMeshes: function ( streamMeshes ) {
+			this.streamMeshes = ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes;
+		},
+
+		/**
+		 * Request termination of web worker and free local resources after execution
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
+		 *
+		 * @param {boolean} requestTerminate=false Default is false
+		 */
+		setRequestTerminate: function ( requestTerminate ) {
+			this.requestTerminate = Boolean( requestTerminate );
+		},
+
+		/**
+		 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
+		 *
+		 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+		 */
+		getCallbacks: function () {
+			return this.callbacks;
+		},
 		modelName: Boolean( modelName ) ? modelName : 'none',
 		dataAvailable: true,
 		objAsArrayBuffer: Boolean( objAsArrayBuffer ) ? objAsArrayBuffer : null,
 		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
 		mtlAsString: Boolean( mtlAsString ) ? mtlAsString : null,
-		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
-		streamMeshes: ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes,
-		requestTerminate: Boolean( requestTerminate )
+		sceneGraphBaseNode: null,
+		streamMeshes: true,
+		requestTerminate: false,
+		callbacks: new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks()
 	};
 };
 
@@ -962,26 +1000,134 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  * @param {string} fileObj OBJ file name
  * @param {string} pathTexture Path to texture files
  * @param {string} fileMtl MTL file name
- * @param {THREE.Object3D} sceneGraphBaseNode {@link THREE.Object3D} where meshes will be attached
- * @param {boolean} streamMeshes=true Singles meshes are directly integrated into scene when loaded or later
- * @param {boolean} [requestTerminate=false] Request termination of web worker and free local resources after execution
  *
  * @returns {{modelName: string, dataAvailable: boolean, pathObj: null, fileObj: null, pathTexture: null, fileMtl: null, sceneGraphBaseNode: null, streamMeshes: boolean,  requestTerminate: boolean}}
  * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl, sceneGraphBaseNode, streamMeshes, requestTerminate ) {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
 	return {
+
+		/**
+		 * {@link THREE.Object3D} where meshes will be attached
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
+		 *
+		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
+		 */
+		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
+			this.sceneGraphBaseNode = Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null;
+		},
+
+		/**
+		 * Singles meshes are directly integrated into scene when loaded or later
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
+		 *
+		 * @param {boolean} streamMeshes=true Default is true
+		 */
+		setStreamMeshes: function ( streamMeshes ) {
+			this.streamMeshes = ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes;
+		},
+
+		/**
+		 * Request termination of web worker and free local resources after execution
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
+		 *
+		 * @param {boolean} requestTerminate=false Default is false
+		 */
+		setRequestTerminate: function ( requestTerminate ) {
+			this.requestTerminate = Boolean( requestTerminate );
+		},
+
+		/**
+		 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
+		 *
+		 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+		 */
+		getCallbacks: function () {
+			return this.callbacks;
+		},
 		modelName: Boolean( modelName ) ? modelName : 'none',
 		dataAvailable: false,
 		pathObj: Boolean( pathObj ) ? pathObj : null,
 		fileObj: Boolean( fileObj ) ? fileObj : null,
 		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
 		fileMtl: Boolean( fileMtl ) ? fileMtl : null,
-		sceneGraphBaseNode: Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null,
-		streamMeshes: ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes,
-		requestTerminate: Boolean( requestTerminate )
+		sceneGraphBaseNode: null,
+		streamMeshes: true,
+		requestTerminate: false,
+		callbacks: new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks()
 	};
 };
+
+/**
+ * Callbacks utilized by functions working with {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
+ *
+ * @returns {{setCallbacks: setCallbacks, registerCallbackProgress: registerCallbackProgress, registerCallbackCompletedLoading: registerCallbackCompletedLoading, registerCallbackMaterialsLoaded: registerCallbackMaterialsLoaded, registerCallbackMeshLoaded: registerCallbackMeshLoaded, registerCallbackErrorWhileLoading: THREE.OBJLoader2.WWOBJLoader2.registerCallbackErrorWhileLoading, callbacks: {progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null}}}
+ * @constructor
+ */
+THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
+	return {
+		/**
+		 * Register callback function that is invoked by internal function "_announceProgress" to print feedback
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
+		 *
+		 * @param {callback} callbackProgress Callback function for described functionality
+		 */
+		registerCallbackProgress: function ( callbackProgress ) {
+			if ( Boolean( callbackProgress ) ) this.callbacks.progress = callbackProgress;
+		},
+
+		/**
+		 * Register callback function that is called once loading of the complete model is completed
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
+		 *
+		 * @param {callback} callbackCompletedLoading Callback function for described functionality
+		 */
+		registerCallbackCompletedLoading: function ( callbackCompletedLoading ) {
+			if ( Boolean( callbackCompletedLoading ) ) this.callbacks.completedLoading = callbackCompletedLoading;
+		},
+
+		/**
+		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
+		 *
+		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
+		 */
+		registerCallbackMaterialsLoaded: function ( callbackMaterialsLoaded ) {
+			if ( Boolean( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
+		},
+
+		/**
+		 * Register callback function that is called every time a mesh was loaded.
+		 * Use {@link THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
+		 *
+		 * @param {callback} callbackMeshLoaded Callback function for described functionality
+		 */
+		registerCallbackMeshLoaded: function ( callbackMeshLoaded ) {
+			if ( Boolean( callbackMeshLoaded ) ) this.callbacks.meshLoaded = callbackMeshLoaded;
+		},
+
+		/**
+		 * Report if an error prevented loading
+		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
+		 *
+		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
+		 */
+		registerCallbackErrorWhileLoading: function ( callbackErrorWhileLoading ) {
+			if ( Boolean( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading = callbackErrorWhileLoading;
+		},
+
+		callbacks: {
+			progress: null,
+			completedLoading: null,
+			errorWhileLoading: null,
+			materialsLoaded: null,
+			meshLoaded: null
+		}
+	};
+};
+
 
 /**
  * Object to return by {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded. Used to adjust bufferGeometry or material or prevent complete loading of mesh

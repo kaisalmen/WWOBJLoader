@@ -115,8 +115,8 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
-		prepData.sceneGraphBaseNode = this.pivot;
-		prepData.streamMeshes = this.streamMeshes;
+		prepData.setSceneGraphBaseNode( this.pivot );
+		prepData.setStreamMeshes( this.streamMeshes );
 		this.wwObjLoader2.prepareRun( prepData );
 		this.wwObjLoader2.run();
 	};
@@ -177,8 +177,10 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.loadFilesUser = function ( objDef ) {
 		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-			objDef.name, objDef.objAsArrayBuffer, objDef.pathTexture, objDef.mtlAsString, this.pivot, this.streamMeshes
+			objDef.name, objDef.objAsArrayBuffer, objDef.pathTexture, objDef.mtlAsString
 		);
+		prepData.setSceneGraphBaseNode( this.pivot );
+		prepData.setStreamMeshes( this.streamMeshes );
 		this.wwObjLoader2.prepareRun( prepData );
 		this.wwObjLoader2.run();
 	};

@@ -187,15 +187,12 @@ var WWParallels = (function () {
 			scale: 50.0
 		} );
 		models.push( {
-			modelName:'WaltHead',
+			modelName: 'WaltHead',
 			dataAvailable: false,
 			pathObj: '../../resource/obj/walt/',
 			fileObj: 'WaltHead.obj',
 			pathTexture: '../../resource/obj/walt/',
 			fileMtl: 'WaltHead.mtl',
-			callbacks: {
-				completedLoading: callbackCompletedLoadingWalt
-			}
 		} );
 
 		var pivot;
@@ -222,10 +219,13 @@ var WWParallels = (function () {
 			model.sceneGraphBaseNode = pivot;
 
 			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode, streamMeshes
+				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl
 			);
+			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
+			runParams.setStreamMeshes( streamMeshes );
+			if ( model.name === 'WaltHead' ) runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
 
-			this.wwDirector.enqueueForRun( runParams, model.callbacks );
+			this.wwDirector.enqueueForRun( runParams );
 			this.allAssets.push( runParams );
 		}
 

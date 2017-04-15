@@ -135,13 +135,8 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 *
 	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
-	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams, callbacks ) {
+	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
-			if ( callbacks != null ) {
-
-				runParams.callbacks = callbacks;
-
-			}
 			this.instructionQueue.push( runParams );
 		}
 	};

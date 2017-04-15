@@ -235,8 +235,9 @@ var WWOBJLoader2Stage = (function () {
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
 					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot, true
+						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
 					);
+					prepData.setSceneGraphBaseNode( obj2Load.pivot );
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
@@ -269,8 +270,9 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot, true
+					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
 				);
+				prepData.setSceneGraphBaseNode( obj2Load.pivot );
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 
