@@ -340,7 +340,14 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			if ( Boolean( this.fileMtl ) ) {
 
-				this.mtlLoader.load( this.fileMtl, processLoadedMaterials );
+				var onError = function ( event ) {
+					output = 'Error occurred while downloading "' + scope.fileMtl + '"';
+					console.error( output + ': ' + event );
+					scope._announceProgress( output );
+					scope._finalize( 'error' );
+				};
+				
+				this.mtlLoader.load( this.fileMtl, processLoadedMaterials, undefined, onError );
 
 			} else {
 
