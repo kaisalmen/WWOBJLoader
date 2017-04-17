@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: PrepDataFile</title>
+	<title>Documentation Class: PrepDataCallbacks</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -65,7 +65,7 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: PrepDataFile</h1>
+	<h1 class="page-title">Class: PrepDataCallbacks</h1>
 <section>
 
 <header>
@@ -73,7 +73,7 @@
         <h2>
             <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a><a href="THREE.OBJLoader2.WWOBJLoader2.html">.WWOBJLoader2</a>.</span>
         
-        PrepDataFile
+        PrepDataCallbacks
         </h2>
         
     
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="PrepDataFile"><span class="type-signature"></span>new PrepDataFile(modelName, pathObj, fileObj, pathTexture, fileMtl)</h4>
+    <h4 class="name" id="PrepDataCallbacks"><span class="type-signature"></span>new PrepDataCallbacks()</h4>
     
     
 </dt>
@@ -94,7 +94,7 @@
 
     
     <div class="description">
-        <p>Instruction to configure <a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a>.prepareRun to load OBJ and MTL from files</p>
+        <p>Callbacks utilized by functions working with <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a> or <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></p>
     </div>
     
 
@@ -103,152 +103,6 @@
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>modelName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Overall name of the model</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>pathObj</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Path to OBJ file</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>fileObj</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>OBJ file name</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>pathTexture</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Path to texture files</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>fileMtl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>MTL file name</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -348,7 +202,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".getCallbacks"><span class="type-signature">&lt;static> </span>getCallbacks()</h4>
+    <h4 class="name" id=".registerCallbackCompletedLoading"><span class="type-signature">&lt;static> </span>registerCallbackCompletedLoading(callbackCompletedLoading)</h4>
     
     
 </dt>
@@ -356,105 +210,7 @@
 
     
     <div class="description">
-        <p>Returns all callbacks as <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id=".setRequestTerminate"><span class="type-signature">&lt;static> </span>setRequestTerminate(requestTerminate)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Request termination of web worker and free local resources after execution</p>
+        <p>Register callback function that is called once loading of the complete model is completed</p>
     </div>
     
 
@@ -479,8 +235,6 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -491,13 +245,13 @@
 
         <tr>
             
-                <td class="name"><code>requestTerminate</code></td>
+                <td class="name"><code>callbackCompletedLoading</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">callback</span>
 
 
 
@@ -507,14 +261,8 @@
             
 
             
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
 
-            <td class="description last"><p>Default is false</p></td>
+            <td class="description last"><p>Callback function for described functionality</p></td>
         </tr>
 
     
@@ -582,7 +330,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".setSceneGraphBaseNode"><span class="type-signature">&lt;static> </span>setSceneGraphBaseNode(sceneGraphBaseNode)</h4>
+    <h4 class="name" id=".registerCallbackErrorWhileLoading"><span class="type-signature">&lt;static> </span>registerCallbackErrorWhileLoading(callbackErrorWhileLoading)</h4>
     
     
 </dt>
@@ -590,7 +338,7 @@
 
     
     <div class="description">
-        <p>THREE.Object3D where meshes will be attached</p>
+        <p>Report if an error prevented loading</p>
     </div>
     
 
@@ -625,13 +373,13 @@
 
         <tr>
             
-                <td class="name"><code>sceneGraphBaseNode</code></td>
+                <td class="name"><code>callbackErrorWhileLoading</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">THREE.Object3D</span>
+<span class="param-type">callback</span>
 
 
 
@@ -642,7 +390,7 @@
 
             
 
-            <td class="description last"><p>Scene graph object</p></td>
+            <td class="description last"><p>Callback function for described functionality</p></td>
         </tr>
 
     
@@ -710,7 +458,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".setStreamMeshes"><span class="type-signature">&lt;static> </span>setStreamMeshes(streamMeshes)</h4>
+    <h4 class="name" id=".registerCallbackMaterialsLoaded"><span class="type-signature">&lt;static> </span>registerCallbackMaterialsLoaded(callbackMaterialsLoaded)</h4>
     
     
 </dt>
@@ -718,7 +466,7 @@
 
     
     <div class="description">
-        <p>Singles meshes are directly integrated into scene when loaded or later</p>
+        <p>Register callback function that is called once materials have been loaded. It allows to alter and return materials</p>
     </div>
     
 
@@ -743,7 +491,134 @@
         
 
         
-        <th>Default</th>
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>callbackMaterialsLoaded</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">callback</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Callback function for described functionality</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id=".registerCallbackMeshLoaded"><span class="type-signature">&lt;static> </span>registerCallbackMeshLoaded(callbackMeshLoaded)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Register callback function that is called every time a mesh was loaded.
+Use <a href="THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride</a> for alteration instructions (geometry, material or disregard mesh).</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
         
 
         <th class="last">Description</th>
@@ -755,13 +630,13 @@
 
         <tr>
             
-                <td class="name"><code>streamMeshes</code></td>
+                <td class="name"><code>callbackMeshLoaded</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">callback</span>
 
 
 
@@ -771,14 +646,136 @@
             
 
             
-                <td class="default">
-                
-                    true
-                
-                </td>
+
+            <td class="description last"><p>Callback function for described functionality</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id=".registerCallbackProgress"><span class="type-signature">&lt;static> </span>registerCallbackProgress(callbackProgress)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Register callback function that is invoked by internal function &quot;_announceProgress&quot; to print feedback</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>callbackProgress</code></td>
             
 
-            <td class="description last"><p>Default is true</p></td>
+            <td class="type">
+            
+                
+<span class="param-type">callback</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Callback function for described functionality</p></td>
         </tr>
 
     
