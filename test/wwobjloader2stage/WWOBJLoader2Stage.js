@@ -179,7 +179,7 @@ var WWOBJLoader2Stage = (function () {
 		this.loadCounter = 0;
 		this.processing = true;
 
-		if ( objs !== undefined && objs !== null ) {
+		if ( Boolean( objs ) ) {
 
 			var obj2Load;
 			var pivot;
@@ -227,7 +227,7 @@ var WWOBJLoader2Stage = (function () {
 
 			scope.scene.add( obj2Load.pivot );
 
-			if ( obj2Load.fileZip !== null ) {
+			if ( Boolean( obj2Load.fileZip ) ) {
 
 				var zipTools = new ZipTools( obj2Load.pathBase );
 				var mtlAsString = null;
@@ -249,7 +249,7 @@ var WWOBJLoader2Stage = (function () {
 				};
 
 				var doneUnzipping = function () {
-					if ( obj2Load.fileMtl !== null ) {
+					if ( Boolean( obj2Load.fileMtl ) ) {
 
 						zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
 
@@ -325,7 +325,7 @@ var ZipTools = (function () {
 				refPercentComplete = percentComplete;
 				output = 'Download of "' + filename + '": ' + percentComplete + '%';
 				console.log( output );
-				if ( callbacks.progress !== null && callbacks.progress !== undefined ) callbacks.progress( output );
+				if ( Boolean( callbacks.progress ) ) callbacks.progress( output );
 
 			}
 		};

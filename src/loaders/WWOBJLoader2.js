@@ -123,7 +123,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		if ( Boolean( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
 	};
 
-
+	/**
+	 * Clears all registered callbacks
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 */
 	WWOBJLoader2.prototype.clearAllCallbacks = function () {
 		this.callbacks = {
 			progress: [],
@@ -168,8 +171,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.running = true;
 		this.requestTerminate = false;
 
-		this.fileLoader = ( ! Boolean( this.fileLoader ) ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
-		this.mtlLoader = ( ! Boolean( this.mtlLoader ) ) ?  new THREE.MTLLoader() : this.mtlLoader;
+		this.fileLoader = Boolean( this.fileLoader ) ? this.fileLoader : new THREE.FileLoader( this.manager );
+		this.mtlLoader = Boolean( this.mtlLoader ) ? this.mtlLoader : new THREE.MTLLoader();
 		if ( Boolean( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
 		this.dataAvailable = false;
@@ -334,7 +337,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlLoader.setPath( this.pathTexture );
 		if ( this.dataAvailable ) {
 
-			processLoadedMaterials( ( Boolean( this.mtlAsString ) ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
+			processLoadedMaterials( Boolean( this.mtlAsString ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
 		} else {
 
@@ -674,11 +677,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 				WWMeshCreator.prototype.setMaterials = function ( materials ) {
-					this.materials = ( Boolean( materials ) ) ? materials : ( ! Boolean( this.materials ) ? { materials: [] } : this.materials );
+					this.materials = Boolean( materials ) ? materials : ( Boolean( this.materials ) ? this.materials : { materials: [] } );
 				};
 
 				WWMeshCreator.prototype.setDebug = function ( debug ) {
-					this.debug = ( ! Boolean( debug ) ) ? this.debug : debug;
+					this.debug = Boolean( debug ) ? debug : this.debug;
 				};
 
 				WWMeshCreator.prototype.validate = function () {
@@ -1062,7 +1065,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 /**
  * Callbacks utilized by functions working with {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
  *
- * @returns {{setCallbacks: setCallbacks, registerCallbackProgress: registerCallbackProgress, registerCallbackCompletedLoading: registerCallbackCompletedLoading, registerCallbackMaterialsLoaded: registerCallbackMaterialsLoaded, registerCallbackMeshLoaded: registerCallbackMeshLoaded, registerCallbackErrorWhileLoading: THREE.OBJLoader2.WWOBJLoader2.registerCallbackErrorWhileLoading, callbacks: {progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null}}}
+ * @returns {{registerCallbackProgress: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackProgress, registerCallbackCompletedLoading: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackCompletedLoading, registerCallbackMaterialsLoaded: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackMaterialsLoaded, registerCallbackMeshLoaded: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackMeshLoaded, registerCallbackErrorWhileLoading: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackErrorWhileLoading, progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null}}
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
@@ -1074,7 +1077,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackProgress Callback function for described functionality
 		 */
 		registerCallbackProgress: function ( callbackProgress ) {
-			if ( Boolean( callbackProgress ) ) this.callbacks.progress = callbackProgress;
+			if ( Boolean( callbackProgress ) ) this.progress = callbackProgress;
 		},
 
 		/**
@@ -1084,7 +1087,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackCompletedLoading Callback function for described functionality
 		 */
 		registerCallbackCompletedLoading: function ( callbackCompletedLoading ) {
-			if ( Boolean( callbackCompletedLoading ) ) this.callbacks.completedLoading = callbackCompletedLoading;
+			if ( Boolean( callbackCompletedLoading ) ) this.completedLoading = callbackCompletedLoading;
 		},
 
 		/**
@@ -1094,7 +1097,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 		 */
 		registerCallbackMaterialsLoaded: function ( callbackMaterialsLoaded ) {
-			if ( Boolean( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded = callbackMaterialsLoaded;
+			if ( Boolean( callbackMaterialsLoaded ) ) this.materialsLoaded = callbackMaterialsLoaded;
 		},
 
 		/**
@@ -1105,7 +1108,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackMeshLoaded Callback function for described functionality
 		 */
 		registerCallbackMeshLoaded: function ( callbackMeshLoaded ) {
-			if ( Boolean( callbackMeshLoaded ) ) this.callbacks.meshLoaded = callbackMeshLoaded;
+			if ( Boolean( callbackMeshLoaded ) ) this.meshLoaded = callbackMeshLoaded;
 		},
 
 		/**
@@ -1115,16 +1118,14 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 		 */
 		registerCallbackErrorWhileLoading: function ( callbackErrorWhileLoading ) {
-			if ( Boolean( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading = callbackErrorWhileLoading;
+			if ( Boolean( callbackErrorWhileLoading ) ) this.errorWhileLoading = callbackErrorWhileLoading;
 		},
 
-		callbacks: {
-			progress: null,
-			completedLoading: null,
-			errorWhileLoading: null,
-			materialsLoaded: null,
-			meshLoaded: null
-		}
+		progress: null,
+		completedLoading: null,
+		errorWhileLoading: null,
+		materialsLoaded: null,
+		meshLoaded: null
 	};
 };
 

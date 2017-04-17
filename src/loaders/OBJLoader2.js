@@ -10,7 +10,7 @@ THREE.OBJLoader2.version = 'dev';
 THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
-		this.manager = ( ! Boolean( manager ) ) ? THREE.DefaultLoadingManager : manager;
+		this.manager = ! Boolean( manager ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -28,7 +28,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {string} path The basepath
 	 */
 	OBJLoader2.prototype.setPath = function ( path ) {
-		this.path = ( ! Boolean( path ) ) ? this.path : path;
+		this.path = Boolean( path ) ? path : this.path;
 	};
 
 	/**
@@ -140,8 +140,7 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.fileLoader = ( ! Boolean( this.fileLoader ) ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
-		this.setPath();
+		this.fileLoader = Boolean( this.fileLoader ) ? this.fileLoader : new THREE.FileLoader( this.manager );
 		this.parser.validate();
 		this.meshCreator.validate();
 
@@ -214,7 +213,7 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
-			this.debug = ( ! Boolean( debug ) ) ? this.debug : debug;
+			this.debug = Boolean( debug ) ? debug : this.debug;
 		};
 
 		Parser.prototype.validate = function () {
@@ -480,9 +479,9 @@ THREE.OBJLoader2 = (function () {
 			this.uvs = [];
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.mtllibName = ( Boolean( mtllibName ) ) ? mtllibName : 'none';
-			this.objectName = ( Boolean( objectName ) ) ? objectName : 'none';
-			this.groupName = ( Boolean( groupName ) ) ? groupName : 'none';
+			this.mtllibName = Boolean( mtllibName ) ? mtllibName : 'none';
+			this.objectName = Boolean( objectName ) ? objectName : 'none';
+			this.groupName = Boolean( groupName ) ? groupName : 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 1;
 

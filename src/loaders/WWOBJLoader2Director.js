@@ -66,7 +66,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 */
 	WWOBJLoader2Director.prototype.setGlobalCallbacks = function ( globalCallbacks ) {
 		this.workerDescription.globalCallbacks = {};
-		if ( globalCallbacks != null ) {
+		if ( Boolean( globalCallbacks ) ) {
 
 			var potentialArray;
 			for ( var key in globalCallbacks ) {
@@ -159,13 +159,22 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	WWOBJLoader2Director.prototype._kickWebWorkerRun = function( worker, runParams ) {
 		worker.clearAllCallbacks();
-		for ( var key in this.workerDescription.globalCallbacks ) {
+		var key;
+		var globalCallbacks = this.workerDescription.globalCallbacks;
+		var workerCallbacks = worker.callbacks;
+		var selectedGlobalCallback;
+		for ( key in globalCallbacks ) {
 
-			if ( worker.callbacks.hasOwnProperty( key ) && this.workerDescription.globalCallbacks.hasOwnProperty( key ) ) {
+			if ( workerCallbacks.hasOwnProperty( key ) && globalCallbacks.hasOwnProperty( key ) ) {
 
-				for ( var index in this.workerDescription.globalCallbacks[ key ] ) {
+				selectedGlobalCallback = globalCallbacks[ key ];
+				for ( var index in selectedGlobalCallback ) {
 
-					worker.callbacks[ key ].push( this.workerDescription.globalCallbacks[ key ][ index ] );
+					if ( selectedGlobalCallback.hasOwnProperty( index ) ) {
+
+						workerCallbacks[ key ].push( selectedGlobalCallback[ index ] );
+
+					}
 
 				}
 
@@ -173,13 +182,14 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 		}
 		// register per object callbacks
-		if ( runParams.callbacks != null ) {
+		var runCallbacks = runParams.callbacks;
+		if ( Boolean( runCallbacks ) ) {
 
-			for ( var key in runParams.callbacks ) {
+			for ( key in runCallbacks ) {
 
-				if ( worker.callbacks.hasOwnProperty( key ) && runParams.callbacks.hasOwnProperty( key ) ) {
+				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Boolean( runCallbacks[ key ] ) ) {
 
-					worker.callbacks[ key ].push( runParams.callbacks[ key ] );
+					workerCallbacks[ key ].push( runCallbacks[ key ] );
 
 				}
 
@@ -194,7 +204,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 				var worker = scope.workerDescription.webWorkers[ instanceNo ];
 				var runParams = scope.instructionQueue[ 0 ];
-				if ( runParams != null ) {
+				if ( Boolean( runParams ) ) {
 
 					console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 					scope._kickWebWorkerRun( worker, runParams );
@@ -213,16 +223,16 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	WWOBJLoader2Director.prototype._buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
 		webWorker._init();
-		if ( this.crossOrigin != null )	webWorker.setCrossOrigin( this.crossOrigin );
+		if ( Boolean( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
 
 		// Ensure code string is built once and then it is just passed on to every new instance
-		if ( this.workerDescription.codeBuffer == null ) {
+		if ( Boolean( this.workerDescription.codeBuffer ) ) {
 
-			this.workerDescription.codeBuffer = webWorker._buildWebWorkerCode();
+			webWorker._buildWebWorkerCode( this.workerDescription.codeBuffer );
 
 		} else {
 
-			webWorker._buildWebWorkerCode( this.workerDescription.codeBuffer );
+			this.workerDescription.codeBuffer = webWorker._buildWebWorkerCode();
 
 		}
 

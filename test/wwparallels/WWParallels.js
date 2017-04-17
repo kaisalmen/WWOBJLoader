@@ -192,7 +192,7 @@ var WWParallels = (function () {
 			pathObj: '../../resource/obj/walt/',
 			fileObj: 'WaltHead.obj',
 			pathTexture: '../../resource/obj/walt/',
-			fileMtl: 'WaltHead.mtl',
+			fileMtl: 'WaltHead.mtl'
 		} );
 
 		var pivot;
@@ -223,7 +223,9 @@ var WWParallels = (function () {
 			);
 			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
 			runParams.setStreamMeshes( streamMeshes );
-			if ( model.name === 'WaltHead' ) runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
+			if ( model.modelName === 'WaltHead' ) {
+				runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
+			}
 
 			this.wwDirector.enqueueForRun( runParams );
 			this.allAssets.push( runParams );
