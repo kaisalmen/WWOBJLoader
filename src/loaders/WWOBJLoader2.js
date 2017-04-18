@@ -53,10 +53,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set enable or disable debug logging
+	 * Enable or disable debug logging.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param {boolean} enabled
+	 * @param {boolean} enabled True or false
 	 */
 	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
@@ -73,7 +73,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback
+	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackProgress Callback function for described functionality
@@ -83,7 +83,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Register callback function that is called once loading of the complete model is completed
+	 * Register callback function that is called once loading of the complete model is completed.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
@@ -93,7 +93,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials
+	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
@@ -114,7 +114,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Report if an error prevented loading
+	 * Register callback function that is called to report an error that prevented loading.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
@@ -124,7 +124,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Clears all registered callbacks
+	 * Clears all registered callbacks.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 */
 	WWOBJLoader2.prototype.clearAllCallbacks = function () {
@@ -138,10 +138,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Call requestTerminate to terminate the web worker and free local resource after execution
+	 * Call requestTerminate to terminate the web worker and free local resource after execution.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param {boolean} requestTerminate
+	 * @param {boolean} requestTerminate True or false
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = Boolean( requestTerminate );
@@ -349,7 +349,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					scope._announceProgress( output );
 					scope._finalize( 'error' );
 				};
-				
+
 				this.mtlLoader.load( this.fileMtl, processLoadedMaterials, undefined, onError );
 
 			} else {
@@ -938,7 +938,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 })();
 
 /**
- * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ from given ArrayBuffer and MTL from given String
+ * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ from given ArrayBuffer and MTL from given String.
  *
  * @param {string} modelName Overall name of the model
  * @param {Uint8Array} objAsArrayBuffer OBJ file content as ArrayBuffer
@@ -952,7 +952,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 	return {
 
 		/**
-		 * {@link THREE.Object3D} where meshes will be attached
+		 * {@link THREE.Object3D} where meshes will be attached.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
 		 *
 		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
@@ -962,7 +962,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		},
 
 		/**
-		 * Singles meshes are directly integrated into scene when loaded or later
+		 * Singles meshes are directly integrated into scene when loaded or later.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
 		 *
 		 * @param {boolean} streamMeshes=true Default is true
@@ -972,7 +972,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		},
 
 		/**
-		 * Request termination of web worker and free local resources after execution
+		 * Request termination of web worker and free local resources after execution.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
 		 *
 		 * @param {boolean} requestTerminate=false Default is false
@@ -1003,7 +1003,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 };
 
 /**
- * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ and MTL from files
+ * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ and MTL from files.
  *
  * @param {string} modelName Overall name of the model
  * @param {string} pathObj Path to OBJ file
@@ -1018,7 +1018,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 	return {
 
 		/**
-		 * {@link THREE.Object3D} where meshes will be attached
+		 * {@link THREE.Object3D} where meshes will be attached.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
 		 *
 		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
@@ -1028,7 +1028,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		},
 
 		/**
-		 * Singles meshes are directly integrated into scene when loaded or later
+		 * Singles meshes are directly integrated into scene when loaded or later.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
 		 *
 		 * @param {boolean} streamMeshes=true Default is true
@@ -1038,7 +1038,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		},
 
 		/**
-		 * Request termination of web worker and free local resources after execution
+		 * Request termination of web worker and free local resources after execution.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
 		 *
 		 * @param {boolean} requestTerminate=false Default is false
@@ -1078,7 +1078,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 	return {
 		/**
-		 * Register callback function that is invoked by internal function "_announceProgress" to print feedback
+		 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackProgress Callback function for described functionality
@@ -1088,7 +1088,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		},
 
 		/**
-		 * Register callback function that is called once loading of the complete model is completed
+		 * Register callback function that is called once loading of the complete model is completed.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackCompletedLoading Callback function for described functionality
@@ -1098,7 +1098,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		},
 
 		/**
-		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials
+		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
@@ -1119,7 +1119,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		},
 
 		/**
-		 * Report if an error prevented loading
+		 * Report if an error prevented loading.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality

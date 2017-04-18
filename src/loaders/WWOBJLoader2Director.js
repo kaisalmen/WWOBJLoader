@@ -1,6 +1,6 @@
 /**
  * Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
- * Use:
+ * Workflow:
  *   prepareWorkers
  *   enqueueForRun
  *   processQueue
@@ -59,47 +59,15 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
-	 * Register callbacks for all web workers
-	 *
-	 * @param {callback[]} globalCallbacks
-	 * 		{ progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null }
-	 */
-	WWOBJLoader2Director.prototype.setGlobalCallbacks = function ( globalCallbacks ) {
-		this.workerDescription.globalCallbacks = {};
-		if ( Boolean( globalCallbacks ) ) {
-
-			var potentialArray;
-			for ( var key in globalCallbacks ) {
-
-				if ( globalCallbacks.hasOwnProperty( key ) ) {
-
-					potentialArray = globalCallbacks[ key ];
-					if ( ! Array.isArray( potentialArray ) ) {
-
-						this.workerDescription.globalCallbacks[ key ] = [ potentialArray ];
-
-					} else {
-
-						this.workerDescription.globalCallbacks[ key ] = potentialArray;
-
-					}
-
-				}
-			}
-		}
-	};
-
-	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
-	 * @param {callback[]} globalCallbacks Register callbacks for all web workers:
-	 * 		{ progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null }
+	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
 	WWOBJLoader2Director.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
-		this.setGlobalCallbacks( globalCallbacks );
+		if ( Boolean( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
@@ -130,7 +98,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
-	 * Store run instructions in internal instructionQueue
+	 * Store run instructions in internal instructionQueue.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 *
 	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
@@ -142,7 +110,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
-	 * Process the instructionQueue until it is depleted
+	 * Process the instructionQueue until it is depleted.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 */
 	WWOBJLoader2Director.prototype.processQueue = function () {
@@ -168,15 +136,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			if ( workerCallbacks.hasOwnProperty( key ) && globalCallbacks.hasOwnProperty( key ) ) {
 
 				selectedGlobalCallback = globalCallbacks[ key ];
-				for ( var index in selectedGlobalCallback ) {
-
-					if ( selectedGlobalCallback.hasOwnProperty( index ) ) {
-
-						workerCallbacks[ key ].push( selectedGlobalCallback[ index ] );
-
-					}
-
-				}
+				if ( Boolean( selectedGlobalCallback ) ) workerCallbacks[ key ].push( selectedGlobalCallback );
 
 			}
 
@@ -242,7 +202,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	/**
-	 * Terminate all workers
+	 * Terminate all workers.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
 	 */
 	WWOBJLoader2Director.prototype.deregister = function () {

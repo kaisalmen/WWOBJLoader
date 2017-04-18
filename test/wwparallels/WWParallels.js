@@ -138,14 +138,10 @@ var WWParallels = (function () {
 			return new THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride( false, undefined, materialOverride );
 		};
 
-		this.wwDirector.prepareWorkers(
-			{
-				completedLoading: callbackCompletedLoading,
-				meshLoaded: callbackMeshLoaded
-			},
-			maxQueueSize,
-			maxWebWorkers
-		);
+		var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
+		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 		var callbackCompletedLoadingWalt = function () {
