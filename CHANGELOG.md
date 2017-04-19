@@ -7,9 +7,11 @@
 ##### THREE.OBJLoader2.WWOBJLoader2
 - Function `_receiveWorkerMessage` now uses a meshDescription that allows to override material or bufferGeometry or to completely disregard the mesh. `THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride` was introduced for this.
 - Allow usage of multiple callbacks per callback type
+- `THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer` and `THREE.OBJLoader2.WWOBJLoader2.PrepDataFile` require less mandatory parameters. Setters are introduced to handle optional things
 
 ##### THREE.OBJLoader2.WWOBJLoader2Director
 - Added per queue object callbacks
+- Global callbacks in `prepareWorkers` will be specified with new object `OBJLoader2.WWOBJLoader2.PrepDataCallbacks`. This object is also used in both PrepData objects for defining extra per model callbacks in addition to the global ones  
 - Callbacks will be reset and reassigned for every run
 
 ##### All
