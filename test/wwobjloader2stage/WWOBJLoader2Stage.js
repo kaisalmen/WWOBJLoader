@@ -179,7 +179,7 @@ var WWOBJLoader2Stage = (function () {
 		this.loadCounter = 0;
 		this.processing = true;
 
-		if ( objs !== undefined && objs !== null ) {
+		if ( Boolean( objs ) ) {
 
 			var obj2Load;
 			var pivot;
@@ -227,7 +227,7 @@ var WWOBJLoader2Stage = (function () {
 
 			scope.scene.add( obj2Load.pivot );
 
-			if ( obj2Load.fileZip !== null ) {
+			if ( Boolean( obj2Load.fileZip ) ) {
 
 				var zipTools = new ZipTools( obj2Load.pathBase );
 				var mtlAsString = null;
@@ -235,8 +235,9 @@ var WWOBJLoader2Stage = (function () {
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
 					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString, obj2Load.pivot, true
+						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
 					);
+					prepData.setSceneGraphBaseNode( obj2Load.pivot );
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
@@ -248,7 +249,7 @@ var WWOBJLoader2Stage = (function () {
 				};
 
 				var doneUnzipping = function () {
-					if ( obj2Load.fileMtl !== null ) {
+					if ( Boolean( obj2Load.fileMtl ) ) {
 
 						zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
 
@@ -269,8 +270,9 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl, obj2Load.pivot, true
+					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
 				);
+				prepData.setSceneGraphBaseNode( obj2Load.pivot );
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 
@@ -323,7 +325,7 @@ var ZipTools = (function () {
 				refPercentComplete = percentComplete;
 				output = 'Download of "' + filename + '": ' + percentComplete + '%';
 				console.log( output );
-				if ( callbacks.progress !== null && callbacks.progress !== undefined ) callbacks.progress( output );
+				if ( Boolean( callbacks.progress ) ) callbacks.progress( output );
 
 			}
 		};

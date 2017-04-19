@@ -5,12 +5,12 @@ THREE.OBJLoader2.version = 'dev';
  * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
  * @class
  *
- * @param {THREE.DefaultLoadingManager} [manager] Extension of {@link THREE.DefaultLoadingManager}
+ * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
 THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
-		this.manager = ( ! Boolean( manager ) ) ? THREE.DefaultLoadingManager : manager;
+		this.manager = ! Boolean( manager ) ? THREE.DefaultLoadingManager : manager;
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -22,17 +22,17 @@ THREE.OBJLoader2 = (function () {
 	}
 
 	/**
-	 * Base path to use
+	 * Base path to use.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {string} path The basepath
 	 */
 	OBJLoader2.prototype.setPath = function ( path ) {
-		this.path = ( ! Boolean( path ) ) ? this.path : path;
+		this.path = Boolean( path ) ? path : this.path;
 	};
 
 	/**
-	 * Set the node where the loaded objects will be attached
+	 * Set the node where the loaded objects will be attached.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scenegraph object where meshes will be attached
@@ -42,21 +42,21 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set materials loaded by MTLLoader
+	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {THREE.MTLLoader.MaterialCreator.materials[]} materials {@link THREE.MTLLoader.MaterialCreator.materials}
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator.setMaterials( materials );
 	};
 
 	/**
-	 * Allows to set debug mode for the parser and the meshCreator
+	 * Allows to set debug mode for the parser and the meshCreator.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {boolean} parserDebug {@link Parser} will produce debug output
-	 * @param {boolean} meshCreatorDebug {@link THREE.OBJLoader2.MeshCreator} will produce debug output
+	 * @param {boolean} parserDebug Internal Parser will produce debug output
+	 * @param {boolean} meshCreatorDebug Internal MeshCreator will produce debug output
 	 */
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser.setDebug( parserDebug );
@@ -69,7 +69,7 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {string} url URL of the file to load
 	 * @param {callback} onLoad Called after loading was successfully completed
-	 * @param {callback} onProgress Called to report progress of loading
+	 * @param {callback} onProgress Called to report progress of loading. The argument will be the XmlHttpRequest instance, that contain {integer total} and {integer loaded} bytes.
 	 * @param {callback} onError Called after an error occurred during loading
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
@@ -140,8 +140,7 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.fileLoader = ( ! Boolean( this.fileLoader ) ) ? new THREE.FileLoader( this.manager ) : this.fileLoader;
-		this.setPath();
+		this.fileLoader = Boolean( this.fileLoader ) ? this.fileLoader : new THREE.FileLoader( this.manager );
 		this.parser.validate();
 		this.meshCreator.validate();
 
@@ -214,7 +213,7 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
-			this.debug = ( ! Boolean( debug ) ) ? this.debug : debug;
+			this.debug = Boolean( debug ) ? debug : this.debug;
 		};
 
 		Parser.prototype.validate = function () {
@@ -480,9 +479,9 @@ THREE.OBJLoader2 = (function () {
 			this.uvs = [];
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.mtllibName = ( Boolean( mtllibName ) ) ? mtllibName : 'none';
-			this.objectName = ( Boolean( objectName ) ) ? objectName : 'none';
-			this.groupName = ( Boolean( groupName ) ) ? groupName : 'none';
+			this.mtllibName = Boolean( mtllibName ) ? mtllibName : 'none';
+			this.objectName = Boolean( objectName ) ? objectName : 'none';
+			this.groupName = Boolean( groupName ) ? groupName : 'none';
 			this.activeMtlName = 'none';
 			this.activeSmoothingGroup = 1;
 

@@ -17,7 +17,7 @@ var packageContent = require('./package.json');
 
 var DIR = {
 	BUILD: 'build/',
-	DOCS: 'build/docs',
+	DOCS: 'docs/',
 	EXAMPLES: 'build/examples',
 	TEST: 'test/'
 };
@@ -89,6 +89,12 @@ gulp.task( 'bundle-wwobjloader2', function () {
 
 
 gulp.task( 'create-docs', function ( cb ) {
+	del.sync( DIR.DOCS + 'fonts' );
+	del.sync( DIR.DOCS + 'img' );
+	del.sync( DIR.DOCS + 'scripts' );
+	del.sync( DIR.DOCS + 'styles' );
+	del.sync( DIR.DOCS + '*.html' );
+	del.sync( DIR.DOCS + '*.md' );
 	gulp.src(
 			[
 				'README.md',
@@ -101,6 +107,9 @@ gulp.task( 'create-docs', function ( cb ) {
 			}
 		)
 		.pipe( jsdoc( config, cb ) );
+
+	gulp.src( [ 'CHANGELOG.md' ] )
+		.pipe( gulp.dest( DIR.DOCS ) );
 });
 
 

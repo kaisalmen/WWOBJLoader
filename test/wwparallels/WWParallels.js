@@ -138,14 +138,10 @@ var WWParallels = (function () {
 			return new THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride( false, undefined, materialOverride );
 		};
 
-		this.wwDirector.prepareWorkers(
-			{
-				completedLoading: callbackCompletedLoading,
-				meshLoaded: callbackMeshLoaded
-			},
-			maxQueueSize,
-			maxWebWorkers
-		);
+		var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
+		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 		var callbackCompletedLoadingWalt = function () {
@@ -187,15 +183,12 @@ var WWParallels = (function () {
 			scale: 50.0
 		} );
 		models.push( {
-			modelName:'WaltHead',
+			modelName: 'WaltHead',
 			dataAvailable: false,
 			pathObj: '../../resource/obj/walt/',
 			fileObj: 'WaltHead.obj',
 			pathTexture: '../../resource/obj/walt/',
-			fileMtl: 'WaltHead.mtl',
-			callbacks: {
-				completedLoading: callbackCompletedLoadingWalt
-			}
+			fileMtl: 'WaltHead.mtl'
 		} );
 
 		var pivot;
@@ -206,7 +199,7 @@ var WWParallels = (function () {
 		var runParams;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
-			modelIndex = Math.floor( Math.random() * 5 );
+			modelIndex = Math.floor( Math.random() * models.length );
 			model = models[ modelIndex ];
 
 			pivot = new THREE.Object3D();
@@ -222,10 +215,15 @@ var WWParallels = (function () {
 			model.sceneGraphBaseNode = pivot;
 
 			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl, model.sceneGraphBaseNode, streamMeshes
+				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl
 			);
+			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
+			runParams.setStreamMeshes( streamMeshes );
+			if ( model.modelName === 'WaltHead' ) {
+				runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
+			}
 
-			this.wwDirector.enqueueForRun( runParams, model.callbacks );
+			this.wwDirector.enqueueForRun( runParams );
 			this.allAssets.push( runParams );
 		}
 
