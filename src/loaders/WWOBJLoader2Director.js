@@ -10,6 +10,8 @@
  */
 THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;
 
@@ -67,7 +69,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
 	WWOBJLoader2Director.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
-		if ( Boolean( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
+		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
@@ -136,18 +138,18 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			if ( workerCallbacks.hasOwnProperty( key ) && globalCallbacks.hasOwnProperty( key ) ) {
 
 				selectedGlobalCallback = globalCallbacks[ key ];
-				if ( Boolean( selectedGlobalCallback ) ) workerCallbacks[ key ].push( selectedGlobalCallback );
+				if ( Validator.isValid( selectedGlobalCallback ) ) workerCallbacks[ key ].push( selectedGlobalCallback );
 
 			}
 
 		}
 		// register per object callbacks
 		var runCallbacks = runParams.callbacks;
-		if ( Boolean( runCallbacks ) ) {
+		if ( Validator.isValid( runCallbacks ) ) {
 
 			for ( key in runCallbacks ) {
 
-				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Boolean( runCallbacks[ key ] ) ) {
+				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Validator.isValid( runCallbacks[ key ] ) ) {
 
 					workerCallbacks[ key ].push( runCallbacks[ key ] );
 
@@ -164,7 +166,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 				var worker = scope.workerDescription.webWorkers[ instanceNo ];
 				var runParams = scope.instructionQueue[ 0 ];
-				if ( Boolean( runParams ) ) {
+				if ( Validator.isValid( runParams ) ) {
 
 					console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 					scope._kickWebWorkerRun( worker, runParams );
@@ -183,10 +185,10 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	WWOBJLoader2Director.prototype._buildWebWorker = function () {
 		var webWorker = Object.create( this.workerDescription.prototypeDef );
 		webWorker._init();
-		if ( Boolean( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
+		if ( Validator.isValid( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
 
 		// Ensure code string is built once and then it is just passed on to every new instance
-		if ( Boolean( this.workerDescription.codeBuffer ) ) {
+		if ( Validator.isValid( this.workerDescription.codeBuffer ) ) {
 
 			webWorker._buildWebWorkerCode( this.workerDescription.codeBuffer );
 

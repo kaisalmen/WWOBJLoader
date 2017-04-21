@@ -31,6 +31,8 @@ var WWParallels = (function () {
 
 		this.allAssets = [];
 		this.feedbackArray = null;
+
+		this.running = false;
 	}
 
 	WWParallels.prototype.initGL = function () {
@@ -106,6 +108,16 @@ var WWParallels = (function () {
 	};
 
 	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, streamMeshes ) {
+		if ( this.running ) {
+
+			return;
+
+		} else {
+
+			this.running = true;
+
+		}
+
 		var scope = this;
 		scope.wwDirector.objectsCompleted = 0;
 		scope.feedbackArray = new Array( maxWebWorkers );
@@ -123,6 +135,8 @@ var WWParallels = (function () {
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+
+			if ( scope.wwDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {

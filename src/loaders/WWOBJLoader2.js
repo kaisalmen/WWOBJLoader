@@ -1,6 +1,9 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 THREE.OBJLoader2.version = 'dev';
 
+THREE.OBJLoader2._self = new THREE.OBJLoader2();
+THREE.OBJLoader2._self._getValidator()._setVersion( THREE.OBJLoader2.version );
+
 /**
  * OBJ data will be loaded by dynamically created web worker.
  * First feed instructions with: prepareRun
@@ -9,7 +12,10 @@ THREE.OBJLoader2.version = 'dev';
  */
 THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	function WWOBJLoader2() {
+		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + Validator._getVersion() );
 		this._init();
 	}
 
@@ -79,7 +85,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Boolean( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
+		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
 	};
 
 	/**
@@ -89,7 +95,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Boolean( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
+		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
 	};
 
 	/**
@@ -99,7 +105,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( Boolean( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
+		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
 	};
 
 	/**
@@ -110,7 +116,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Boolean( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
+		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
 	};
 
 	/**
@@ -120,7 +126,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
 	WWOBJLoader2.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( Boolean( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
+		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
 	};
 
 	/**
@@ -144,12 +150,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {boolean} requestTerminate True or false
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = Boolean( requestTerminate );
+		this.requestTerminate = requestTerminate === true;
 	};
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		if ( ! Boolean( this.worker ) ) {
+		if ( ! Validator.isValid( this.worker ) ) {
 
 			this._buildWebWorkerCode();
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
@@ -171,9 +177,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.running = true;
 		this.requestTerminate = false;
 
-		this.fileLoader = Boolean( this.fileLoader ) ? this.fileLoader : new THREE.FileLoader( this.manager );
-		this.mtlLoader = Boolean( this.mtlLoader ) ? this.mtlLoader : new THREE.MTLLoader();
-		if ( Boolean( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
+		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );
+		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
 		this.dataAvailable = false;
 		this.fileObj = null;
@@ -251,7 +257,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
 			var materialNames = [];
-			if ( Boolean( materialCreator ) ) {
+			if ( Validator.isValid( materialCreator ) ) {
 
 				materialCreator.preload();
 				materialCreatorMaterials = materialCreator.materials;
@@ -278,7 +284,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
 				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
-				if ( Boolean( materialsFromCallback ) ) scope.materials = materialsFromCallback;
+				if ( Validator.isValid( materialsFromCallback ) ) scope.materials = materialsFromCallback;
 
 			}
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
@@ -337,11 +343,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlLoader.setPath( this.pathTexture );
 		if ( this.dataAvailable ) {
 
-			processLoadedMaterials( Boolean( this.mtlAsString ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
+			processLoadedMaterials( Validator.isValid( this.mtlAsString ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
 		} else {
 
-			if ( Boolean( this.fileMtl ) ) {
+			if ( Validator.isValid( this.fileMtl ) ) {
 
 				var onError = function ( event ) {
 					output = 'Error occurred while downloading "' + scope.fileMtl + '"';
@@ -372,7 +378,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				var bufferGeometry = new THREE.BufferGeometry();
 				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
-				if ( payload.normals !== null ) {
+				if ( Validator.isValid( payload.normals ) ) {
 
 					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.normals ), 3 ) );
 
@@ -381,7 +387,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					bufferGeometry.computeVertexNormals();
 
 				}
-				if ( payload.uvs !== null ) {
+				if ( Validator.isValid( payload.uvs ) ) {
 
 					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
 
@@ -447,7 +453,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
 					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
 
-					if ( Boolean( callbackMeshLoadedResult ) ) {
+					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
 
 						if ( callbackMeshLoadedResult.disregardMesh ) {
 
@@ -499,7 +505,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 				console.timeEnd( 'WWOBJLoader2' );
-				if ( Boolean( payload.msg ) ) {
+				if ( Validator.isValid( payload.msg ) ) {
 
 					this._announceProgress( payload.msg );
 
@@ -524,7 +530,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._terminate = function () {
-		if ( Boolean( this.worker ) ) {
+		if ( Validator.isValid( this.worker ) ) {
 
 			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
@@ -572,8 +578,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._announceProgress = function ( baseText, text ) {
-		var output = ( Boolean( baseText ) ) ? baseText: "";
-		output = ( Boolean( text ) ) ? output + " " + text : output;
+		var output = Validator.isValid( baseText ) ? baseText: "";
+		output = Validator.isValid( text ) ? output + " " + text : output;
 
 		var callbackProgress;
 		for ( var index in this.callbacks.progress ) {
@@ -587,8 +593,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {
-		if ( Boolean( existingWorkerCode ) ) this.workerCode = existingWorkerCode;
-		if ( ! Boolean( this.workerCode ) ) {
+		if ( Validator.isValid( existingWorkerCode ) ) this.workerCode = existingWorkerCode;
+		if ( ! Validator.isValid( this.workerCode ) ) {
 
 			console.time( 'buildWebWorkerCode' );
 			var wwDef = (function () {
@@ -683,11 +689,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 				WWMeshCreator.prototype.setMaterials = function ( materials ) {
-					this.materials = Boolean( materials ) ? materials : ( Boolean( this.materials ) ? this.materials : { materials: [] } );
+					this.materials = Validator.verifyInput( materials, this.materials );
+					this.materials = Validator.verifyInput( this.materials, { materials: [] } );
 				};
 
 				WWMeshCreator.prototype.setDebug = function ( debug ) {
-					this.debug = Boolean( debug ) ? debug : this.debug;
+					if ( debug === true || debug === false ) this.debug = debug;
 				};
 
 				WWMeshCreator.prototype.validate = function () {
@@ -916,8 +923,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.workerCode += '  */\n\n';
 
 			// parser re-construction
-			var objLoaderHelper = new THREE.OBJLoader2();
-			this.workerCode += objLoaderHelper._buildWebWorkerCode( buildObject, buildSingelton );
+			this.workerCode += THREE.OBJLoader2._self._buildWebWorkerCode( buildObject, buildSingelton );
 
 			// web worker construction
 			this.workerCode += buildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
@@ -948,6 +954,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
+
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	return {
 
 		/**
@@ -957,7 +966,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
 		 */
 		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
-			this.sceneGraphBaseNode = Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null;
+			this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
 		},
 
 		/**
@@ -967,7 +976,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		 * @param {boolean} streamMeshes=true Default is true
 		 */
 		setStreamMeshes: function ( streamMeshes ) {
-			this.streamMeshes = ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes;
+			this.streamMeshes = streamMeshes !== false;
 		},
 
 		/**
@@ -977,7 +986,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		 * @param {boolean} requestTerminate=false Default is false
 		 */
 		setRequestTerminate: function ( requestTerminate ) {
-			this.requestTerminate = Boolean( requestTerminate );
+			this.requestTerminate = requestTerminate === true;
 		},
 
 		/**
@@ -989,11 +998,11 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		getCallbacks: function () {
 			return this.callbacks;
 		},
-		modelName: Boolean( modelName ) ? modelName : 'none',
+		modelName: Validator.verifyInput( modelName, 'none' ),
 		dataAvailable: true,
-		objAsArrayBuffer: Boolean( objAsArrayBuffer ) ? objAsArrayBuffer : null,
-		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
-		mtlAsString: Boolean( mtlAsString ) ? mtlAsString : null,
+		objAsArrayBuffer: Validator.verifyInput( objAsArrayBuffer, null ),
+		pathTexture: Validator.verifyInput( pathTexture, null ),
+		mtlAsString: Validator.verifyInput( mtlAsString, null ),
 		sceneGraphBaseNode: null,
 		streamMeshes: true,
 		requestTerminate: false,
@@ -1014,6 +1023,9 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
+
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	return {
 
 		/**
@@ -1023,7 +1035,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
 		 */
 		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
-			this.sceneGraphBaseNode = Boolean( sceneGraphBaseNode ) ? sceneGraphBaseNode : null;
+			this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
 		},
 
 		/**
@@ -1033,7 +1045,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		 * @param {boolean} streamMeshes=true Default is true
 		 */
 		setStreamMeshes: function ( streamMeshes ) {
-			this.streamMeshes = ( streamMeshes === null || streamMeshes === undefined ) ? true : streamMeshes;
+			this.streamMeshes = streamMeshes !== false;
 		},
 
 		/**
@@ -1043,7 +1055,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		 * @param {boolean} requestTerminate=false Default is false
 		 */
 		setRequestTerminate: function ( requestTerminate ) {
-			this.requestTerminate = Boolean( requestTerminate );
+			this.requestTerminate = requestTerminate === true;
 		},
 
 		/**
@@ -1055,12 +1067,12 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		getCallbacks: function () {
 			return this.callbacks;
 		},
-		modelName: Boolean( modelName ) ? modelName : 'none',
+		modelName: Validator.verifyInput( modelName, 'none' ),
 		dataAvailable: false,
-		pathObj: Boolean( pathObj ) ? pathObj : null,
-		fileObj: Boolean( fileObj ) ? fileObj : null,
-		pathTexture: Boolean( pathTexture ) ? pathTexture : null,
-		fileMtl: Boolean( fileMtl ) ? fileMtl : null,
+		pathObj: Validator.verifyInput( pathObj, null ),
+		fileObj: Validator.verifyInput( fileObj, null ),
+		pathTexture: Validator.verifyInput( pathTexture, null ),
+		fileMtl: Validator.verifyInput( fileMtl, null ),
 		sceneGraphBaseNode: null,
 		streamMeshes: true,
 		requestTerminate: false,
@@ -1075,6 +1087,9 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
+
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	return {
 		/**
 		 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
@@ -1083,7 +1098,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackProgress Callback function for described functionality
 		 */
 		registerCallbackProgress: function ( callbackProgress ) {
-			if ( Boolean( callbackProgress ) ) this.progress = callbackProgress;
+			if ( Validator.isValid( callbackProgress ) ) this.progress = callbackProgress;
 		},
 
 		/**
@@ -1093,7 +1108,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackCompletedLoading Callback function for described functionality
 		 */
 		registerCallbackCompletedLoading: function ( callbackCompletedLoading ) {
-			if ( Boolean( callbackCompletedLoading ) ) this.completedLoading = callbackCompletedLoading;
+			if ( Validator.isValid( callbackCompletedLoading ) ) this.completedLoading = callbackCompletedLoading;
 		},
 
 		/**
@@ -1103,7 +1118,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 		 */
 		registerCallbackMaterialsLoaded: function ( callbackMaterialsLoaded ) {
-			if ( Boolean( callbackMaterialsLoaded ) ) this.materialsLoaded = callbackMaterialsLoaded;
+			if ( Validator.isValid( callbackMaterialsLoaded ) ) this.materialsLoaded = callbackMaterialsLoaded;
 		},
 
 		/**
@@ -1114,7 +1129,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackMeshLoaded Callback function for described functionality
 		 */
 		registerCallbackMeshLoaded: function ( callbackMeshLoaded ) {
-			if ( Boolean( callbackMeshLoaded ) ) this.meshLoaded = callbackMeshLoaded;
+			if ( Validator.isValid( callbackMeshLoaded ) ) this.meshLoaded = callbackMeshLoaded;
 		},
 
 		/**
@@ -1124,7 +1139,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 		 */
 		registerCallbackErrorWhileLoading: function ( callbackErrorWhileLoading ) {
-			if ( Boolean( callbackErrorWhileLoading ) ) this.errorWhileLoading = callbackErrorWhileLoading;
+			if ( Validator.isValid( callbackErrorWhileLoading ) ) this.errorWhileLoading = callbackErrorWhileLoading;
 		},
 
 		progress: null,
@@ -1147,11 +1162,14 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
  * @constructor
  */
 THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride = function ( disregardMesh, bufferGeometry, material ) {
+
+	var Validator = THREE.OBJLoader2._self._getValidator();
+
 	return {
-		disregardMesh: Boolean( disregardMesh ),
-		replaceBufferGeometry: Boolean( bufferGeometry ),
-		bufferGeometry: Boolean( bufferGeometry ) ? bufferGeometry : null,
-		replaceMaterial: Boolean( material ),
-		material: Boolean( material ) ? material : null
+		disregardMesh: disregardMesh === true,
+		replaceBufferGeometry: Validator.isValid( bufferGeometry ),
+		bufferGeometry: Validator.verifyInput( bufferGeometry, null ),
+		replaceMaterial: Validator.isValid( material ),
+		material: Validator.verifyInput( material, null )
 	};
 };
