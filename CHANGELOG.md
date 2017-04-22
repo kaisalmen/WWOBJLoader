@@ -2,11 +2,22 @@
 
 ## 1.2.1
 
-Requires three.js release 85
+#### Loader related changes
+
+##### All
+- Validator and its functions replace all Boolean calls. It is included in THREE.OBJLoader2.
+- Versions are now defined inside OBJLoader2 and WWOBJLoader2.
+- Static OBJLoader2._getValidator and OBJLoader2_buildWebWorkerCode are reached via prototype of OBJLoader2. Instance of OBJLoader2 is no longer created.
+- Requires three.js release 85 (now available)
+
+#### Example related changes
+ 
+##### webgl_loader_obj2_ww_parallels:
+- Fixed "Run Queue" started new run before first was completed.
 
 ## 1.2.0
 
-#### Code related changes
+#### Loader related changes
 
 ##### THREE.OBJLoader2.WWOBJLoader2
 - Function `_receiveWorkerMessage` now uses a meshDescription that allows to override material or bufferGeometry or to completely disregard the mesh. `THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride` was introduced for this.
@@ -28,7 +39,7 @@ Requires three.js release 85
 
 wwobjloader2 npm relase 1.1.0 did not set three.js dependency properly. That's why it was immediately succeeded by this version.
 
-#### Code related changes
+#### Loader related changes
 
 - Adjusted to removal of MultiMaterial in three.js release 85. Therefore not compatible with three.js < 0.85.0.
 
@@ -37,7 +48,7 @@ wwobjloader2 npm relase 1.1.0 did not set three.js dependency properly. That's w
 
 Improvements since initial release. This was the first npm release and the first release for three.js.
 
-#### Code related changes
+#### Loader related changes
 
 ##### THREE.OBJLoader2
 - Removed need for making Parser public. OBJLoader2 has a build function for web worker code.
@@ -66,7 +77,7 @@ Improvements since initial release. This was the first npm release and the first
 - Added GridHelper
 - Resources to load are now defined outside example classes
 
-##### Examples
+##### All Examples
 - Created one page examples and tuned naming
 - All examples now use dat.gui
 - Removed namespace "THREE.examples"
