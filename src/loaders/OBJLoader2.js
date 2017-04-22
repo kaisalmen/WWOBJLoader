@@ -1,35 +1,4 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
-THREE.OBJLoader2.version = 'dev';
-
-THREE.OBJLoader2.Validator = {
-	version: "unknown",
-	_setVersion: function( version ) {
-		this.version = version;
-	},
-	_getVersion: function() {
-		return this.version;
-	},
-	/**
-	 * If given input is null or undefined, false is returned otherwise true.
-	 *
-	 * @param input Anything
-	 * @returns {boolean}
-	 */
-	isValid: function( input ) {
-		return ( input !== null && input !== undefined );
-	},
-	/**
-	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
-	 *
-	 * @param input Anything
-	 * @param defaultValue Anything
-	 * @returns {*}
-	 */
-	verifyInput: function( input, defaultValue ) {
-		return ( input === null || input === undefined ) ? defaultValue : input;
-	}
-};
-THREE.OBJLoader2.Validator._setVersion( THREE.OBJLoader2.version );
 
 /**
  * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
@@ -39,10 +8,10 @@ THREE.OBJLoader2.Validator._setVersion( THREE.OBJLoader2.version );
  */
 THREE.OBJLoader2 = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var OBJLOADER2_VERSION = 'dev';
 
 	function OBJLoader2( manager ) {
-		console.log( "Using THREE.OBJLoader2 version: " + Validator._getVersion() );
+		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
 		this.path = '';
@@ -230,6 +199,28 @@ THREE.OBJLoader2 = (function () {
 		QUAD_INDICES_1: [ 1, 2, 3, 3, 4, 1 ],
 		QUAD_INDICES_2: [ 1, 3, 5, 5, 7, 1 ],
 		QUAD_INDICES_3: [ 1, 4, 7, 7, 10, 1 ]
+	};
+
+	var Validator = {
+		/**
+		 * If given input is null or undefined, false is returned otherwise true.
+		 *
+		 * @param input Anything
+		 * @returns {boolean}
+		 */
+		isValid: function( input ) {
+			return ( input !== null && input !== undefined );
+		},
+		/**
+		 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
+		 *
+		 * @param input Anything
+		 * @param defaultValue Anything
+		 * @returns {*}
+		 */
+		verifyInput: function( input, defaultValue ) {
+			return ( input === null || input === undefined ) ? defaultValue : input;
+		}
 	};
 
 	OBJLoader2.prototype._getValidator = function () {

@@ -69,13 +69,13 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 
 **This applies to NPM only**:<br>
 The following models need to be made available in directories below "resources/obj" otherwise the examples will not work:
-- female02
-- male02
-- female02
-- vive-controller
-- walt
+- female02 ([download here](https://github.com/mrdoob/three.js/blob/dev/examples/obj/female02))
+- male02 ([download here](https://github.com/mrdoob/three.js/blob/dev/examples/obj/male02))
+- cerberus ([download here](https://github.com/mrdoob/three.js/blob/dev/examples/models/obj/cerberus))
+- vive-controller ([download here](https://github.com/mrdoob/three.js/blob/dev/examples/models/obj/vive-controller))
+- walt ([download here](https://github.com/mrdoob/three.js/blob/dev/examples/obj/walt))
 
-Just download them from the [WWOBJLoader GitHub repository](https://github.com/kaisalmen/WWOBJLoader) or [three.js GitHub repository](https://github.com/mrdoob/three.js).<br>
+Download all files from the directories linked above.<br>
 
 **This applies to NPM and GitHub**:<br>
 Larger models not found in any GitHub repository which need to be made available in directories below "resources/obj" as well:

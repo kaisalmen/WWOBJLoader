@@ -1,8 +1,4 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
-THREE.OBJLoader2.version = 'dev';
-
-THREE.OBJLoader2._self = new THREE.OBJLoader2();
-THREE.OBJLoader2._self._getValidator()._setVersion( THREE.OBJLoader2.version );
 
 /**
  * OBJ data will be loaded by dynamically created web worker.
@@ -12,10 +8,12 @@ THREE.OBJLoader2._self._getValidator()._setVersion( THREE.OBJLoader2.version );
  */
 THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var WWOBJLOADER2_VERSION = 'dev';
+
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	function WWOBJLoader2() {
-		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + Validator._getVersion() );
+		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 		this._init();
 	}
 
@@ -923,7 +921,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.workerCode += '  */\n\n';
 
 			// parser re-construction
-			this.workerCode += THREE.OBJLoader2._self._buildWebWorkerCode( buildObject, buildSingelton );
+			this.workerCode += THREE.OBJLoader2.prototype._buildWebWorkerCode( buildObject, buildSingelton );
 
 			// web worker construction
 			this.workerCode += buildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
@@ -955,7 +953,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	return {
 
@@ -1024,7 +1022,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	return {
 
@@ -1088,7 +1086,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	return {
 		/**
@@ -1163,7 +1161,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride = function ( disregardMesh, bufferGeometry, material ) {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	return {
 		disregardMesh: disregardMesh === true,

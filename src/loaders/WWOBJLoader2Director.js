@@ -10,7 +10,7 @@
  */
 THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
-	var Validator = THREE.OBJLoader2._self._getValidator();
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;

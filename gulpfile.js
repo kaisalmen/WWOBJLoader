@@ -47,8 +47,8 @@ gulp.task( 'bundle-objloader2', function () {
 		.pipe( replace( {
 			patterns: [
 				{
-					match: /THREE\.OBJLoader2\.version.*/g,
-					replacement: "THREE.OBJLoader2.version = '"+ packageContent.version + "';"
+					match: /var OBJLOADER2_VERSION.*/g,
+					replacement: "var OBJLOADER2_VERSION = '"+ packageContent.version + "';"
 				}
 			]
 		} ) )
@@ -74,8 +74,8 @@ gulp.task( 'bundle-wwobjloader2', function () {
 		.pipe( replace( {
 			patterns: [
 				{
-					match: /THREE\.OBJLoader2\.version.*/g,
-					replacement: "THREE.OBJLoader2.version = '"+ packageContent.version + "';"
+					match: /var WWOBJLOADER2_VERSION.*/g,
+					replacement: "var WWOBJLOADER2_VERSION = '"+ packageContent.version + "';"
 				}
 			]
 		} ) )
