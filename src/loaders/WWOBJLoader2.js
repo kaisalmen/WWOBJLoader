@@ -13,11 +13,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	function WWOBJLoader2() {
-		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 		this._init();
 	}
 
 	WWOBJLoader2.prototype._init = function () {
+		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
