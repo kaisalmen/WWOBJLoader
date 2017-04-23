@@ -6,6 +6,8 @@
 
 var WWOBJLoader2Example = (function () {
 
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
+
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -97,7 +99,7 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Progress: ' + content );
 		};
 		var materialsLoaded = function ( materials ) {
-			var count = Boolean( materials ) ? materials.length : 0;
+			var count = Validator.isValid( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
 		var meshLoaded = function ( name, bufferGeometry, material ) {
@@ -138,7 +140,7 @@ var WWOBJLoader2Example = (function () {
 
 		}
 
-		if ( ! Boolean( fileObj ) ) {
+		if ( ! Validator.isValid( fileObj ) ) {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 

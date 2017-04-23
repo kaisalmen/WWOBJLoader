@@ -6,6 +6,8 @@
 
 var WWOBJLoader2Stage = (function () {
 
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
+
 	function WWOBJLoader2Stage( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -79,7 +81,7 @@ var WWOBJLoader2Stage = (function () {
 			scope.reloadAssets();
 		};
 		var materialsLoaded = function ( materials ) {
-			var count = Boolean( materials ) ? materials.length : 0;
+			var count = Validator.isValid( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
 		var meshLoaded = function ( meshName ) {
@@ -179,7 +181,7 @@ var WWOBJLoader2Stage = (function () {
 		this.loadCounter = 0;
 		this.processing = true;
 
-		if ( Boolean( objs ) ) {
+		if ( Validator.isValid( objs ) ) {
 
 			var obj2Load;
 			var pivot;
@@ -227,7 +229,7 @@ var WWOBJLoader2Stage = (function () {
 
 			scope.scene.add( obj2Load.pivot );
 
-			if ( Boolean( obj2Load.fileZip ) ) {
+			if ( Validator.isValid( obj2Load.fileZip ) ) {
 
 				var zipTools = new ZipTools( obj2Load.pathBase );
 				var mtlAsString = null;
@@ -249,7 +251,7 @@ var WWOBJLoader2Stage = (function () {
 				};
 
 				var doneUnzipping = function () {
-					if ( Boolean( obj2Load.fileMtl ) ) {
+					if ( Validator.isValid( obj2Load.fileMtl ) ) {
 
 						zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
 
@@ -325,7 +327,7 @@ var ZipTools = (function () {
 				refPercentComplete = percentComplete;
 				output = 'Download of "' + filename + '": ' + percentComplete + '%';
 				console.log( output );
-				if ( Boolean( callbacks.progress ) ) callbacks.progress( output );
+				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( output );
 
 			}
 		};
@@ -384,7 +386,7 @@ var WWOBJLoader2ObjDef = function ( name, pathBase, fileObj, fileMtl, pathTextur
 	this.pathTexture = pathTexture;
 	this.fileZip = fileZip;
 	this.pos = pos;
-	this.scale = ! Boolean( scale ) ? 1.0 : scale;
+	this.scale = ! Validator.isValid( scale ) ? 1.0 : scale;
 	this.pivot = null;
 };
 

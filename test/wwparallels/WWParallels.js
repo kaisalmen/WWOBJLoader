@@ -6,6 +6,8 @@
 
 var WWParallels = (function () {
 
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
+
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -142,7 +144,7 @@ var WWParallels = (function () {
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 			var materialOverride;
 
-			if ( Boolean( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
+			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
 
 				materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
@@ -222,7 +224,7 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random(),
 				distributionBase + distributionMax * Math.random()
 			);
-			if ( Boolean( model.scale ) ) pivot.scale.set( model.scale, model.scale, model.scale );
+			if ( Validator.isValid( model.scale ) ) pivot.scale.set( model.scale, model.scale, model.scale );
 
 			this.scene.add( pivot );
 
