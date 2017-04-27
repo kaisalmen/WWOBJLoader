@@ -32,7 +32,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
 		this.meshStore = null;
-		this.modelName = 'none';
+		this.modelName = '';
 		this.validated = false;
 		this.running = false;
 		this.requestTerminate = false;
@@ -171,7 +171,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
 		this.meshStore = [];
-		this.modelName = 'none';
+		this.modelName = '';
 		this.validated = true;
 		this.running = true;
 		this.requestTerminate = false;
@@ -806,7 +806,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					self.postMessage( {
 						cmd: 'objData',
-						meshName: rawObjectDescription.objectName,
+						meshName: rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName,
 						multiMaterial: createMultiMaterial,
 						materialDescriptions: materialDescriptions,
 						materialGroups: materialGroups,
@@ -997,7 +997,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
 		getCallbacks: function () {
 			return this.callbacks;
 		},
-		modelName: Validator.verifyInput( modelName, 'none' ),
+		modelName: Validator.verifyInput( modelName, '' ),
 		dataAvailable: true,
 		objAsArrayBuffer: Validator.verifyInput( objAsArrayBuffer, null ),
 		pathTexture: Validator.verifyInput( pathTexture, null ),
@@ -1066,7 +1066,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
 		getCallbacks: function () {
 			return this.callbacks;
 		},
-		modelName: Validator.verifyInput( modelName, 'none' ),
+		modelName: Validator.verifyInput( modelName, '' ),
 		dataAvailable: false,
 		pathObj: Validator.verifyInput( pathObj, null ),
 		fileObj: Validator.verifyInput( fileObj, null ),

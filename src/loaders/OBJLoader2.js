@@ -349,6 +349,7 @@ THREE.OBJLoader2 = (function () {
 			if ( bufferPointer < 1 ) return reachedFaces;
 
 			var bufferLength = bufferPointer - 1;
+			var concatBuffer;
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
 
@@ -431,28 +432,32 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					this.processCompletedGroup( buffer[ 1 ] );
+					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					this.processCompletedGroup( concatBuffer );
 					break;
 
 				case Consts.LINE_O:
+					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
 					if ( this.rawObject.vertices.length > 0 ) {
 
-						this.processCompletedObject( buffer[ 1 ], null );
+						this.processCompletedObject( concatBuffer, null );
 						reachedFaces = false;
 
 					} else {
 
-						this.rawObject.pushObject( buffer[ 1 ] );
+						this.rawObject.pushObject( concatBuffer );
 
 					}
 					break;
 
 				case Consts.LINE_MTLLIB:
-					this.rawObject.pushMtllib( buffer[ 1 ] );
+					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					this.rawObject.pushMtllib( concatBuffer );
 					break;
 
 				case Consts.LINE_USEMTL:
-					this.rawObject.pushUsemtl( buffer[ 1 ] );
+					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					this.rawObject.pushUsemtl( concatBuffer );
 					break;
 
 				default:
@@ -507,10 +512,10 @@ THREE.OBJLoader2 = (function () {
 			this.uvs = [];
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.mtllibName = Validator.verifyInput( mtllibName, 'none' );
-			this.objectName = Validator.verifyInput( objectName, 'none' );
-			this.groupName = Validator.verifyInput( groupName, 'none' );
-			this.activeMtlName = 'none';
+			this.mtllibName = Validator.verifyInput( mtllibName, '' );
+			this.objectName = Validator.verifyInput( objectName, '' );
+			this.groupName = Validator.verifyInput( groupName, '' );
+			this.activeMtlName = '';
 			this.activeSmoothingGroup = 1;
 
 			this.mtlCount = 0;
@@ -732,7 +737,6 @@ THREE.OBJLoader2 = (function () {
 				rawObjectDescription = temp[ name ];
 				if ( rawObjectDescription.vertices.length > 0 ) {
 
-					if ( rawObjectDescription.objectName === 'none' ) rawObjectDescription.objectName = rawObjectDescription.groupName;
 					this.rawObjectDescriptions[ index++ ] = rawObjectDescription;
 					absoluteVertexCount += rawObjectDescription.vertices.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
@@ -984,6 +988,7 @@ THREE.OBJLoader2 = (function () {
 
 			if ( createMultiMaterial ) material = materials;
 			var mesh = new THREE.Mesh( bufferGeometry, material );
+			mesh.name = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
 			this.sceneGraphBaseNode.add( mesh );
 
 			this.globalObjectCount++;

@@ -4,9 +4,9 @@
 
 'use strict';
 
-var WWOBJLoader2Stage = (function () {
+var Validator = THREE.OBJLoader2.prototype._getValidator();
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+var WWOBJLoader2Stage = (function () {
 
 	function WWOBJLoader2Stage( elementToBindTo ) {
 		this.renderer = null;
