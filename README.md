@@ -1,6 +1,9 @@
 OBJLoader2 and WWOBJLoader2 for three.js
 ===
 
+[![Latest NPM release](https://img.shields.io/npm/v/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/master/LICENSE)
+
 OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker (WWOBJLoader2).
 
 Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
@@ -88,4 +91,3 @@ Please download the following zip files and put them in the directories named ab
 Models by Cornelius Dämmrich [zomax.net](https://zomax.net/free-stuff/):<br>
 [Compressed Sink model](https://kaisalmen.de/resource/obj/zomax/zomax-net_haze-sink-scene.zip) (178MB)<br>
 [Compressed Oven model](https://kaisalmen.de/resource/obj/zomax/zomax-net_haze-oven-scene.zip) (150MB)<br>
-
