@@ -3,6 +3,7 @@
 
 /build
 /examples
+/node
 /node_modules
 
 /resource/obj/1701
