@@ -897,8 +897,6 @@ THREE.OBJLoader2 = (function () {
 
 			}
 
-			if ( this.debug ) console.log( 'Creating Multi-Material for object no.: ' + this.globalObjectCount );
-
 			var rawObjectDescription;
 			var material;
 			var materialName;
@@ -913,6 +911,10 @@ THREE.OBJLoader2 = (function () {
 			var vertexLength;
 			var normalOffset = 0;
 			var uvOffset = 0;
+
+			if ( this.debug ) {
+				console.log( createMultiMaterial ? 'Creating Multi-Material' : 'Creating Material' + ' for object no.: ' + this.globalObjectCount );
+			}
 
 			for ( var oodIndex in rawObjectDescriptions ) {
 				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
@@ -995,12 +997,13 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		MeshCreator.prototype.printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
+			var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n materialIndex: ' + selectedMaterialIndex : '';
 			console.log(
 				' Output Object no.: ' + this.globalObjectCount +
 				'\n objectName: ' + rawObjectDescription.objectName +
 				'\n groupName: ' + rawObjectDescription.groupName +
 				'\n materialName: ' + rawObjectDescription.materialName +
-				'\n materialIndex: ' + selectedMaterialIndex +
+				materialIndexLine +
 				'\n smoothingGroup: ' + rawObjectDescription.smoothingGroup +
 				'\n #vertices: ' + rawObjectDescription.vertices.length / 3 +
 				'\n #uvs: ' + rawObjectDescription.uvs.length / 2 +
