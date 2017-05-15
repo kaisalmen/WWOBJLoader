@@ -596,7 +596,10 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
-			var normalized = activeSmoothingGroup === 'off' ? 0 : activeSmoothingGroup;
+			var normalized = parseInt( activeSmoothingGroup );
+			if ( normalized === NaN ) {
+				normalized = activeSmoothingGroup === "off" ? 0 : 1;
+			}
 			if ( this.activeSmoothingGroup === normalized ) return;
 			this.activeSmoothingGroup = normalized;
 			this.smoothingGroupCount++;
