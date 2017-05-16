@@ -109,7 +109,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	/**
 	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * Use {@link THREE.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
@@ -372,7 +372,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		switch ( payload.cmd ) {
 			case 'objData':
 
-				this.counter++;
 				var meshName = payload.meshName;
 
 				var bufferGeometry = new THREE.BufferGeometry();
@@ -446,6 +445,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				var callbackMeshLoaded;
 				var callbackMeshLoadedResult;
+				var meshes = [];
 				var disregardMesh = false;
 				for ( var index in this.callbacks.meshLoaded ) {
 
@@ -454,35 +454,59 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
 
-						if ( callbackMeshLoadedResult.disregardMesh ) {
+						disregardMesh != callbackMeshLoadedResult.disregardMesh;
+						for ( var i in callbackMeshLoadedResult.meshes ) {
 
-							// if one callback disregards the mesh, then processing stops
-							disregardMesh = true;
-							break;
+							meshes.push( callbackMeshLoadedResult.meshes[ i ] );
 
 						}
-						if ( callbackMeshLoadedResult.replaceBufferGeometry ) bufferGeometry = callbackMeshLoadedResult.bufferGeometry;
-						if ( callbackMeshLoadedResult.replaceMaterial ) material = callbackMeshLoadedResult.material;
-
 					}
-
 				}
 
-				if ( !disregardMesh ) {
 
-					var mesh = new THREE.Mesh( bufferGeometry, material );
-					mesh.name = meshName;
+				if ( ! disregardMesh ) {
 
-					if ( this.streamMeshes ) {
+					var mesh;
+					if ( meshes.length > 0 ) {
 
-						this.sceneGraphBaseNode.add( mesh );
+						var count = 0;
+						for ( var i in meshes ) {
+
+							mesh = meshes[ i ];
+							if ( this.streamMeshes ) {
+
+								this.sceneGraphBaseNode.add( mesh );
+
+							} else {
+
+								this.meshStore.push( mesh );
+
+							}
+							this.counter++;
+							count++;
+
+						}
+
+						this._announceProgress( 'Adding multiple meshes (' + count + '|' + this.counter + ') from input mesh: ' + meshName );
 
 					} else {
 
-						this.meshStore.push( mesh );
+						mesh = new THREE.Mesh( bufferGeometry, material );
+						mesh.name = meshName;
+						if ( this.streamMeshes ) {
+
+							this.sceneGraphBaseNode.add( mesh );
+
+						} else {
+
+							this.meshStore.push( mesh );
+
+						}
+
+						this.counter++;
+						this._announceProgress( 'Adding mesh (' + this.counter + '):', meshName );
 
 					}
-					this._announceProgress( 'Adding mesh (' + this.counter + '):', meshName );
 
 				} else {
 
@@ -1122,7 +1146,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 
 		/**
 		 * Register callback function that is called every time a mesh was loaded.
-		 * Use {@link THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+		 * Use {@link THREE.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackMeshLoaded Callback function for described functionality
@@ -1146,29 +1170,5 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 		errorWhileLoading: null,
 		materialsLoaded: null,
 		meshLoaded: null
-	};
-};
-
-
-/**
- * Object to return by {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded. Used to adjust bufferGeometry or material or prevent complete loading of mesh
- *
- * @param {boolean} disregardMesh=false Tell WWOBJLoader2 to completely disregard this mesh
- * @param {THREE.BufferGeometry} bufferGeometry The {@link THREE.BufferGeometry} to be used
- * @param {THREE.Material} material The {@link THREE.Material} to be used
- *
- * @returns {{ disregardMesh: boolean, replaceBufferGeometry: boolean, bufferGeometry: THREE.BufferGeometry, replaceMaterial: boolean, material: THREE.Material}}
- * @constructor
- */
-THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride = function ( disregardMesh, bufferGeometry, material ) {
-
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
-
-	return {
-		disregardMesh: disregardMesh === true,
-		replaceBufferGeometry: Validator.isValid( bufferGeometry ),
-		bufferGeometry: Validator.verifyInput( bufferGeometry, null ),
-		replaceMaterial: Validator.isValid( material ),
-		material: Validator.verifyInput( material, null )
 	};
 };

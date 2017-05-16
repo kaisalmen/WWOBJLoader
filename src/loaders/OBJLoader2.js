@@ -16,9 +16,14 @@ THREE.OBJLoader2 = (function () {
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.clearAllCallbacks();
 
-		this.meshCreator = new MeshCreator();
-		this.parser = new Parser( this.meshCreator );
+		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
+		var scope = this;
+		var announceProgressScoped = function ( message ) {
+			scope._announceProgress( message );
+		};
+		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
 		this.validated = false;
 	}
@@ -66,6 +71,64 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
+	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
+	 *
+	 * @param {callback} callbackProgress Callback function for described functionality
+	 */
+	OBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
+		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
+	};
+
+	/**
+	 * Register callback function that is called once loading of the complete model is completed.
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
+	 *
+	 * @param {callback} callbackCompletedLoading Callback function for described functionality
+	 */
+	OBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
+		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
+	};
+
+	/**
+	 * Register callback function that is called every time a mesh was loaded.
+	 * Use {@link THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
+	 *
+	 * @param {callback} callbackMeshLoaded Callback function for described functionality
+	 */
+	OBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
+		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
+	};
+
+	/**
+	 * Clears all registered callbacks.
+	 * @memberOf THREE.OBJLoader2.OBJLoader2
+	 */
+	OBJLoader2.prototype.clearAllCallbacks = function () {
+		this.callbacks = {
+			progress: [],
+			completedLoading: [],
+			meshLoaded: []
+		};
+	};
+
+	OBJLoader2.prototype._announceProgress = function ( baseText, text ) {
+		var output = Validator.isValid( baseText ) ? baseText: "";
+		output = Validator.isValid( text ) ? output + " " + text : output;
+
+		var callbackProgress;
+		for ( var index in this.callbacks.progress ) {
+
+			callbackProgress = this.callbacks.progress[ index ];
+			callbackProgress( output );
+
+		}
+
+		if ( this.debug ) console.log( output );
+	};
+
+	/**
 	 * Use this convenient method to load an OBJ file at the given URL. Per default the fileLoader uses an arraybuffer
 	 * @memberOf THREE.OBJLoader2
 	 *
@@ -81,10 +144,19 @@ THREE.OBJLoader2 = (function () {
 		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
 
 		var scope = this;
+		if ( scope.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
 		scope.fileLoader.load( url, function ( content ) {
 
 			// only use parseText if useArrayBuffer is explicitly set to false
-			onLoad( useArrayBuffer !== false ? scope.parse( content ) : scope.parseText( content ) );
+			if ( useArrayBuffer !== false ) {
+
+				scope.parse( content );
+
+			} else {
+
+				scope.parseText( content );
+
+			}
 
 		}, onProgress, onError );
 	};
@@ -107,11 +179,9 @@ THREE.OBJLoader2 = (function () {
 
 		this._validate();
 		this.parser.parseArrayBuffer( arrayBuffer );
-		var sceneGraphAttach = this._finalize();
+		this._finalize();
 
 		console.timeEnd( 'parseArrayBuffer' );
-
-		return sceneGraphAttach;
 	};
 
 	/**
@@ -132,11 +202,9 @@ THREE.OBJLoader2 = (function () {
 
 		this._validate();
 		this.parser.parseText( text );
-		var sceneGraphBaseNode = this._finalize();
+		this._finalize();
 
 		console.timeEnd( 'parseText' );
-
-		return sceneGraphBaseNode;
 	};
 
 	OBJLoader2.prototype._validate = function () {
@@ -158,7 +226,13 @@ THREE.OBJLoader2 = (function () {
 		this.meshCreator.finalize();
 		this.validated = false;
 
-		return sceneGraphBaseNode;
+		var callback;
+		for ( var index in this.callbacks.completedLoading ) {
+
+			callback = this.callbacks.completedLoading[ index ];
+			callback( sceneGraphBaseNode );
+
+		}
 	};
 
 	/**
@@ -233,8 +307,9 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var Parser = (function () {
 
-		function Parser( meshCreator ) {
+		function Parser( meshCreator, progressCallback ) {
 			this.meshCreator = meshCreator;
+			this.progressCallback = progressCallback;
 			this.rawObject = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
@@ -467,16 +542,18 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
-			this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
 			this.inputObjectCount++;
+			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
+
 			this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
 		};
 
 		Parser.prototype.processCompletedGroup = function ( groupName ) {
-			var notEmpty = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
-			if ( notEmpty ) {
+			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+			if ( result.notEmpty ) {
 
-				this.inputObjectCount ++;
+				this.inputObjectCount++;
 				this.rawObject = this.rawObject.newInstanceFromGroup( groupName );
 
 			} else {
@@ -485,11 +562,13 @@ THREE.OBJLoader2 = (function () {
 				this.rawObject.pushGroup( groupName );
 
 			}
+			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
 		};
 
 		Parser.prototype.finalize = function () {
-			this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
 			this.inputObjectCount++;
+			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
 		};
 
 		return Parser;
@@ -517,6 +596,7 @@ THREE.OBJLoader2 = (function () {
 			this.groupName = Validator.verifyInput( groupName, '' );
 			this.activeMtlName = '';
 			this.activeSmoothingGroup = 1;
+			this.materialPerSmoothingGroup = false;
 
 			this.mtlCount = 0;
 			this.smoothingGroupCount = 0;
@@ -528,8 +608,13 @@ THREE.OBJLoader2 = (function () {
 			this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 		}
 
-		RawObject.prototype.buildIndex = function ( materialName, smoothingGroup) {
-			return materialName + '|' + smoothingGroup;
+		RawObject.prototype.buildIndex = function ( materialName, smoothingGroup ) {
+			var normalizedSmoothingGroup = this.materialPerSmoothingGroup ? smoothingGroup : ( smoothingGroup === 0 ) ? 0 : 1;
+			return materialName + '|' + normalizedSmoothingGroup;
+		};
+
+		RawObject.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 		};
 
 		RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
@@ -597,7 +682,7 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.pushSmoothingGroup = function ( activeSmoothingGroup ) {
 			var normalized = parseInt( activeSmoothingGroup );
-			if ( normalized === NaN ) {
+			if ( isNaN( normalized ) ) {
 				normalized = activeSmoothingGroup === "off" ? 0 : 1;
 			}
 			if ( this.activeSmoothingGroup === normalized ) return;
@@ -608,7 +693,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.verifyIndex = function () {
-			var index = this.buildIndex( this.activeMtlName, ( this.activeSmoothingGroup === 0 ) ? 0 : 1 );
+			var index = this.buildIndex( this.activeMtlName, this.activeSmoothingGroup );
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ];
 			if ( ! Validator.isValid( this.rawObjectDescriptionInUse ) ) {
 
@@ -753,17 +838,18 @@ THREE.OBJLoader2 = (function () {
 			if ( index > 0 ) {
 
 				if ( debug ) this.createReport( inputObjectCount, true );
-				meshCreator.buildMesh(
+				var message = meshCreator.buildMesh(
 					this.rawObjectDescriptions,
 					inputObjectCount,
 					absoluteVertexCount,
 					absoluteNormalCount,
 					absoluteUvCount
 				);
+
 				notEmpty = true;
 
 			}
-			return notEmpty;
+			return { message: message, notEmpty: notEmpty };
 		};
 
 		RawObject.prototype.createReport = function ( inputObjectCount, printDirectly ) {
@@ -827,13 +913,15 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator() {
+		function MeshCreator( callbacksMeshLoaded ) {
 			this.sceneGraphBaseNode = null;
 			this.materials = null;
 			this.debug = false;
 			this.globalObjectCount = 1;
 
 			this.validated = false;
+
+			this.callbacksMeshLoaded = callbacksMeshLoaded;
 		}
 
 		MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
@@ -929,7 +1017,7 @@ THREE.OBJLoader2 = (function () {
 					material = this.materials[ 'defaultMaterial' ];
 					if ( ! material ) {
 
-						material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF} );
+						material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 						material.name = 'defaultMaterial';
 						this.materials[ 'defaultMaterial' ] = material;
 
@@ -963,7 +1051,7 @@ THREE.OBJLoader2 = (function () {
 						selectedMaterialIndex = materialIndex;
 						materialIndexMapping[ materialName ] = materialIndex;
 						materials.push( material );
-						materialIndex++;
+						materialIndex ++;
 
 					}
 
@@ -992,11 +1080,64 @@ THREE.OBJLoader2 = (function () {
 			if ( ! normalBA ) bufferGeometry.computeVertexNormals();
 
 			if ( createMultiMaterial ) material = materials;
-			var mesh = new THREE.Mesh( bufferGeometry, material );
-			mesh.name = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
-			this.sceneGraphBaseNode.add( mesh );
 
-			this.globalObjectCount++;
+			var meshName = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
+			var callbackMeshLoaded;
+			var callbackMeshLoadedResult;
+			var meshes = [];
+			var disregardMesh = false;
+			for ( var index in this.callbacksMeshLoaded ) {
+
+				callbackMeshLoaded = this.callbacksMeshLoaded[ index ];
+				callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+
+				if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+
+					disregardMesh != callbackMeshLoadedResult.disregardMesh;
+					for ( var i in callbackMeshLoadedResult.meshes ) {
+
+						meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+
+					}
+				}
+			}
+
+			var message;
+			if ( ! disregardMesh ) {
+
+				var mesh;
+				if ( meshes.length > 0 ) {
+
+					var count = 0;
+					for ( var i in meshes ) {
+
+						mesh = meshes[ i ];
+						this.sceneGraphBaseNode.add( mesh );
+						this.globalObjectCount++;
+						count++;
+
+					}
+
+					message = 'Adding multiple meshes (' + count + '|' + this.globalObjectCount + ') from input mesh: ' + meshName;
+
+				} else {
+
+					mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+					this.sceneGraphBaseNode.add( mesh );
+
+					this.globalObjectCount++;
+					message = 'Adding mesh (' + this.globalObjectCount + '): ' + meshName;
+
+				}
+
+			} else {
+
+				message = 'Removing mesh: ' + meshName;
+
+			}
+
+			return message;
 		};
 
 		MeshCreator.prototype.printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
@@ -1029,3 +1170,23 @@ THREE.OBJLoader2 = (function () {
 
 	return OBJLoader2;
 })();
+
+/**
+ * Object to return by {@link THREE.OBJLoader2}.callbacks.meshLoaded and {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded.
+ * Used to disregard a certain mesh or to return one to many created meshes
+ *
+ * @param {boolean} disregardMesh=false Tell OBJLoader2 or WWOBJLoader2 to completely disregard this mesh
+  *
+ * @returns {{ disregardMesh: boolean, meshes: Array of {@link HREE.Material}}}
+ * @constructor
+ */
+THREE.OBJLoader2.LoadedMeshUserOverride = function ( disregardMesh ) {
+
+	return {
+		disregardMesh: disregardMesh === true,
+		meshes: [],
+		addMesh: function ( mesh ) {
+			this.meshes.push( mesh );
+		}
+	};
+};

@@ -142,16 +142,19 @@ var WWParallels = (function () {
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-			var materialOverride;
+			var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false );
 
-			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
+			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
-				materialOverride = material;
+				var materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
+				var mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.name = name;
+
+				override.addMesh( mesh );
 
 			}
-
-			return new THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride( false, undefined, materialOverride );
+			return override;
 		};
 
 		var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
