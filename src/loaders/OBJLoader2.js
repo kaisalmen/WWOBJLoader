@@ -544,7 +544,7 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
 			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
 			this.inputObjectCount++;
-			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
+			this.announceProgress( result.message );
 
 			this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
 		};
@@ -562,13 +562,17 @@ THREE.OBJLoader2 = (function () {
 				this.rawObject.pushGroup( groupName );
 
 			}
-			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
+			this.announceProgress( result.message );
 		};
 
 		Parser.prototype.finalize = function () {
 			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
 			this.inputObjectCount++;
-			if ( Validator.isValid( this.progressCallback) ) this.progressCallback( result.message );
+			this.announceProgress( result.message );
+		};
+
+		Parser.prototype.announceProgress = function ( text ) {
+			if ( Validator.isValid( text ) && Validator.isValid( this.progressCallback) ) this.progressCallback( text );
 		};
 
 		return Parser;
@@ -1085,7 +1089,7 @@ THREE.OBJLoader2 = (function () {
 			var callbackMeshLoaded;
 			var callbackMeshLoadedResult;
 			var meshes = [];
-			var disregardMesh = false;
+			var mesh;
 			for ( var index in this.callbacksMeshLoaded ) {
 
 				callbackMeshLoaded = this.callbacksMeshLoaded[ index ];
@@ -1093,47 +1097,51 @@ THREE.OBJLoader2 = (function () {
 
 				if ( Validator.isValid( callbackMeshLoadedResult ) ) {
 
-					disregardMesh != callbackMeshLoadedResult.disregardMesh;
-					for ( var i in callbackMeshLoadedResult.meshes ) {
+					if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
 
-						meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+					if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
 
-					}
-				}
-			}
+						for ( var i in callbackMeshLoadedResult.meshes ) {
 
-			var message;
-			if ( ! disregardMesh ) {
+							meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+						}
 
-				var mesh;
-				if ( meshes.length > 0 ) {
+					} else {
 
-					var count = 0;
-					for ( var i in meshes ) {
-
-						mesh = meshes[ i ];
-						this.sceneGraphBaseNode.add( mesh );
-						this.globalObjectCount++;
-						count++;
+						mesh = new THREE.Mesh( bufferGeometry, material );
+						mesh.name = meshName;
+						meshes.push( mesh );
 
 					}
-
-					message = 'Adding multiple meshes (' + count + '|' + this.globalObjectCount + ') from input mesh: ' + meshName;
 
 				} else {
 
 					mesh = new THREE.Mesh( bufferGeometry, material );
 					mesh.name = meshName;
-					this.sceneGraphBaseNode.add( mesh );
-
-					this.globalObjectCount++;
-					message = 'Adding mesh (' + this.globalObjectCount + '): ' + meshName;
+					meshes.push( mesh );
 
 				}
 
+			}
+
+			var message;
+			if ( meshes.length > 0 ) {
+
+				var addedMeshCount = 0;
+				for ( var i in meshes ) {
+
+					mesh = meshes[ i ];
+					this.sceneGraphBaseNode.add( mesh );
+					addedMeshCount++;
+
+				}
+
+				message = 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.globalObjectCount + '): ' + meshName;
+				this.globalObjectCount++;
+
 			} else {
 
-				message = 'Removing mesh: ' + meshName;
+				message = 'Not adding mesh: ' + meshName;
 
 			}
 
@@ -1173,20 +1181,48 @@ THREE.OBJLoader2 = (function () {
 
 /**
  * Object to return by {@link THREE.OBJLoader2}.callbacks.meshLoaded and {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded.
- * Used to disregard a certain mesh or to return one to many created meshes
+ * Used to disregard a certain mesh or to return one to many created meshes.
+ * @class
  *
  * @param {boolean} disregardMesh=false Tell OBJLoader2 or WWOBJLoader2 to completely disregard this mesh
-  *
- * @returns {{ disregardMesh: boolean, meshes: Array of {@link HREE.Material}}}
- * @constructor
  */
-THREE.OBJLoader2.LoadedMeshUserOverride = function ( disregardMesh ) {
+THREE.OBJLoader2.LoadedMeshUserOverride = (function () {
 
-	return {
-		disregardMesh: disregardMesh === true,
-		meshes: [],
-		addMesh: function ( mesh ) {
-			this.meshes.push( mesh );
-		}
+	function LoadedMeshUserOverride( disregardMesh, alteredMesh ) {
+		this.disregardMesh = disregardMesh === true;
+		this.alteredMesh = alteredMesh === true;
+		this.meshes = [];
+	}
+
+	/**
+	 * Add a mesh created within callback.
+	 *
+	 * @memberOf THREE.OBJLoader2.LoadedMeshUserOverride
+	 *
+	 * @param {THREE.Mesh} mesh
+	 */
+	LoadedMeshUserOverride.prototype.addMesh = function ( mesh ) {
+		this.meshes.push( mesh );
 	};
-};
+
+	/**
+	 * Answer if mesh shall be disregarded completely.
+	 *
+	 * @returns {boolean}
+	 */
+	LoadedMeshUserOverride.prototype.isDisregardMesh = function () {
+		return this.disregardMesh;
+	};
+
+	/**
+	 * Answer if new mesh(es) were created.
+	 *
+	 * @returns {boolean}
+	 */
+	LoadedMeshUserOverride.prototype.providesAlteredMeshes = function () {
+		return this.alteredMesh;
+	};
+
+	return LoadedMeshUserOverride;
+})();
+

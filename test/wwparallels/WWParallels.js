@@ -142,7 +142,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-			var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false );
+			var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, false );
 
 			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
@@ -152,6 +152,7 @@ var WWParallels = (function () {
 				mesh.name = name;
 
 				override.addMesh( mesh );
+				override.alteredMesh = true;
 
 			}
 			return override;

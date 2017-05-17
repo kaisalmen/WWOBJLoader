@@ -87,8 +87,13 @@ var OBJLoader2Example = (function () {
 			objLoader.setPath( objDef.path );
 			objLoader.setDebug( false, true );
 
+			var reportProgress = function ( content ) {
+				console.log( 'Progress: ' + content );
+			};
+			objLoader.registerCallbackProgress( reportProgress );
+
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false );
+				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
 
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				mesh.name = name;
@@ -105,7 +110,6 @@ var OBJLoader2Example = (function () {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 			};
 			objLoader.registerCallbackCompletedLoading( onSuccess );
-
 
 			var onProgress = function ( event ) {
 				if ( event.lengthComputable ) {

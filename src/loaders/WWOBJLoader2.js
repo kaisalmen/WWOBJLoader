@@ -446,7 +446,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var callbackMeshLoaded;
 				var callbackMeshLoadedResult;
 				var meshes = [];
-				var disregardMesh = false;
+				var mesh;
 				for ( var index in this.callbacks.meshLoaded ) {
 
 					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
@@ -454,45 +454,39 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
 
-						disregardMesh != callbackMeshLoadedResult.disregardMesh;
-						for ( var i in callbackMeshLoadedResult.meshes ) {
+						if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
 
-							meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+						if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
 
-						}
-					}
-				}
+							for ( var i in callbackMeshLoadedResult.meshes ) {
 
-
-				if ( ! disregardMesh ) {
-
-					var mesh;
-					if ( meshes.length > 0 ) {
-
-						var count = 0;
-						for ( var i in meshes ) {
-
-							mesh = meshes[ i ];
-							if ( this.streamMeshes ) {
-
-								this.sceneGraphBaseNode.add( mesh );
-
-							} else {
-
-								this.meshStore.push( mesh );
-
+								meshes.push( callbackMeshLoadedResult.meshes[ i ] );
 							}
-							this.counter++;
-							count++;
+
+						} else {
+
+							mesh = new THREE.Mesh( bufferGeometry, material );
+							mesh.name = meshName;
+							meshes.push( mesh );
 
 						}
-
-						this._announceProgress( 'Adding multiple meshes (' + count + '|' + this.counter + ') from input mesh: ' + meshName );
 
 					} else {
 
 						mesh = new THREE.Mesh( bufferGeometry, material );
 						mesh.name = meshName;
+						meshes.push( mesh );
+
+					}
+
+				}
+
+				if ( meshes.length > 0 ) {
+
+					var addedMeshCount = 0;
+					for ( var i in meshes ) {
+
+						mesh = meshes[ i ];
 						if ( this.streamMeshes ) {
 
 							this.sceneGraphBaseNode.add( mesh );
@@ -502,15 +496,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 							this.meshStore.push( mesh );
 
 						}
-
-						this.counter++;
-						this._announceProgress( 'Adding mesh (' + this.counter + '):', meshName );
+						addedMeshCount++;
 
 					}
 
+					this._announceProgress( 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.counter + '): ' + meshName );
+					this.counter++;
+
 				} else {
 
-					this._announceProgress( 'Removing mesh:', meshName );
+					this._announceProgress(  'Not adding mesh: ' + meshName );
 
 				}
 				break;
