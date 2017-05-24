@@ -1,6 +1,113 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 /**
+ * Global callback definition
+ * @class
+ */
+THREE.OBJLoader2.Callbacks = (function () {
+
+	//var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = {
+		/**
+		 * If given input is null or undefined, false is returned otherwise true.
+		 *
+		 * @param input Anything
+		 * @returns {boolean}
+		 */
+		isValid: function( input ) {
+			return ( input !== null && input !== undefined );
+		},
+		/**
+		 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
+		 *
+		 * @param input Anything
+		 * @param defaultValue Anything
+		 * @returns {*}
+		 */
+		verifyInput: function( input, defaultValue ) {
+			return ( input === null || input === undefined ) ? defaultValue : input;
+		}
+	};
+
+	function Callbacks() {
+		this.clearAllCallbacks();
+	}
+
+	/**
+	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 *
+	 * @param {callback} callbackProgress Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
+		var tester = this.getCallbacks();
+		if ( Validator.isValid( callbackProgress ) ) this.getCallbacks().progress.push( callbackProgress );
+	};
+
+	/**
+	 * Register callback function that is called once loading of the complete model is completed.
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 *
+	 * @param {callback} callbackCompletedLoading Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
+		if ( Validator.isValid( callbackCompletedLoading ) ) this.getCallbacks().completedLoading.push( callbackCompletedLoading );
+	};
+
+	/**
+	 * Register callback function that is called to report an error that prevented loading.
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 *
+	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
+		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.getCallbacks().errorWhileLoading.push( callbackErrorWhileLoading );
+	};
+
+	/**
+	 * Register callback function that is called every time a mesh was loaded.
+	 * Use {@link THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 *
+	 * @param {callback} callbackMeshLoaded Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
+		if ( Validator.isValid( callbackMeshLoaded ) ) this.getCallbacks().meshLoaded.push( callbackMeshLoaded );
+	};
+
+	/**
+	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 *
+	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.getCallbacks().materialsLoaded.push( callbackMaterialsLoaded );
+	};
+
+	/**
+	 * Clears all registered callbacks.
+	 * @memberOf THREE.OBJLoader2.Callbacks
+	 */
+	Callbacks.prototype.clearAllCallbacks = function () {
+		this.callbacks = {
+			progress: [],
+			completedLoading: [],
+			errorWhileLoading: [],
+			meshLoaded: [],
+			materialsLoaded: []
+		};
+	};
+
+	Callbacks.prototype.getCallbacks = function () {
+		return this.callbacks;
+	};
+
+	return Callbacks;
+})();
+
+
+/**
  * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
  * @class
  *
@@ -9,6 +116,16 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 THREE.OBJLoader2 = (function () {
 
 	var OBJLOADER2_VERSION = 'dev';
+
+	OBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype, {
+		constructor: {
+			configurable: true,
+			enumerable: true,
+			value: OBJLoader2,
+			writable: true
+		}
+	});
+
 
 	function OBJLoader2( manager ) {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
@@ -68,49 +185,6 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser.setDebug( parserDebug );
 		this.meshCreator.setDebug( meshCreatorDebug );
-	};
-
-	/**
-	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
-	 * @memberOf THREE.OBJLoader2.OBJLoader2
-	 *
-	 * @param {callback} callbackProgress Callback function for described functionality
-	 */
-	OBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
-	};
-
-	/**
-	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.OBJLoader2.OBJLoader2
-	 *
-	 * @param {callback} callbackCompletedLoading Callback function for described functionality
-	 */
-	OBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
-	};
-
-	/**
-	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.OBJLoader2.OBJLoader2
-	 *
-	 * @param {callback} callbackMeshLoaded Callback function for described functionality
-	 */
-	OBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
-	};
-
-	/**
-	 * Clears all registered callbacks.
-	 * @memberOf THREE.OBJLoader2.OBJLoader2
-	 */
-	OBJLoader2.prototype.clearAllCallbacks = function () {
-		this.callbacks = {
-			progress: [],
-			completedLoading: [],
-			meshLoaded: []
-		};
 	};
 
 	OBJLoader2.prototype._announceProgress = function ( baseText, text ) {
@@ -1179,6 +1253,7 @@ THREE.OBJLoader2 = (function () {
 	return OBJLoader2;
 })();
 
+
 /**
  * Object to return by {@link THREE.OBJLoader2}.callbacks.meshLoaded and {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded.
  * Used to disregard a certain mesh or to return one to many created meshes.
@@ -1225,4 +1300,3 @@ THREE.OBJLoader2.LoadedMeshUserOverride = (function () {
 
 	return LoadedMeshUserOverride;
 })();
-

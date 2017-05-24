@@ -12,6 +12,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
+	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype, {
+		constructor: {
+			configurable: true,
+			enumerable: true,
+			value: WWOBJLoader2,
+			writable: true
+		}
+	});
+
 	function WWOBJLoader2() {
 		this._init();
 	}
