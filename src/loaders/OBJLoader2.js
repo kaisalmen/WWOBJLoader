@@ -1,33 +1,40 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
+THREE.OBJLoader2.Validator = (function () {
+
+	function Validator() {
+	}
+
+	/**
+	 * If given input is null or undefined, false is returned otherwise true.
+	 *
+	 * @param input Anything
+	 * @returns {boolean}
+	 */
+	Validator.prototype.isValid = function ( input ) {
+		return ( input !== null && input !== undefined );
+	};
+	/**
+	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
+	 *
+	 * @param input Anything
+	 * @param defaultValue Anything
+	 * @returns {*}
+	 */
+	Validator.prototype.verifyInput = function ( input, defaultValue ) {
+		return ( input === null || input === undefined ) ? defaultValue : input;
+	};
+
+	return Validator;
+})();
+
 /**
  * Global callback definition
  * @class
  */
 THREE.OBJLoader2.Callbacks = (function () {
 
-	//var Validator = THREE.OBJLoader2.prototype._getValidator();
-	var Validator = {
-		/**
-		 * If given input is null or undefined, false is returned otherwise true.
-		 *
-		 * @param input Anything
-		 * @returns {boolean}
-		 */
-		isValid: function( input ) {
-			return ( input !== null && input !== undefined );
-		},
-		/**
-		 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
-		 *
-		 * @param input Anything
-		 * @param defaultValue Anything
-		 * @returns {*}
-		 */
-		verifyInput: function( input, defaultValue ) {
-			return ( input === null || input === undefined ) ? defaultValue : input;
-		}
-	};
+	var Validator = new THREE.OBJLoader2.Validator();
 
 	function Callbacks() {
 		this.clearAllCallbacks();
@@ -40,7 +47,6 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		var tester = this.getCallbacks();
 		if ( Validator.isValid( callbackProgress ) ) this.getCallbacks().progress.push( callbackProgress );
 	};
 
@@ -106,7 +112,6 @@ THREE.OBJLoader2.Callbacks = (function () {
 	return Callbacks;
 })();
 
-
 /**
  * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
  * @class
@@ -116,8 +121,11 @@ THREE.OBJLoader2.Callbacks = (function () {
 THREE.OBJLoader2 = (function () {
 
 	var OBJLOADER2_VERSION = 'dev';
+	var BindCallbacks = THREE.OBJLoader2.Callbacks;
+	var BindValidator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.OBJLoader2.Validator.prototype;
 
-	OBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype, {
+	OBJLoader2.prototype = Object.create( BindCallbacks.prototype, {
 		constructor: {
 			configurable: true,
 			enumerable: true,
@@ -126,14 +134,13 @@ THREE.OBJLoader2 = (function () {
 		}
 	});
 
-
 	function OBJLoader2( manager ) {
+		BindCallbacks.call(this);
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
-		this.clearAllCallbacks();
 
 		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
 		var scope = this;
@@ -144,6 +151,14 @@ THREE.OBJLoader2 = (function () {
 
 		this.validated = false;
 	}
+
+	OBJLoader2.prototype._getValidatorClass = function () {
+		return BindValidator;
+	};
+
+	OBJLoader2.prototype._getCallbacksClass = function () {
+		return BindCallbacks;
+	};
 
 	/**
 	 * Base path to use.
@@ -347,32 +362,6 @@ THREE.OBJLoader2 = (function () {
 		QUAD_INDICES_1: [ 1, 2, 3, 3, 4, 1 ],
 		QUAD_INDICES_2: [ 1, 3, 5, 5, 7, 1 ],
 		QUAD_INDICES_3: [ 1, 4, 7, 7, 10, 1 ]
-	};
-
-	var Validator = {
-		/**
-		 * If given input is null or undefined, false is returned otherwise true.
-		 *
-		 * @param input Anything
-		 * @returns {boolean}
-		 */
-		isValid: function( input ) {
-			return ( input !== null && input !== undefined );
-		},
-		/**
-		 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
-		 *
-		 * @param input Anything
-		 * @param defaultValue Anything
-		 * @returns {*}
-		 */
-		verifyInput: function( input, defaultValue ) {
-			return ( input === null || input === undefined ) ? defaultValue : input;
-		}
-	};
-
-	OBJLoader2.prototype._getValidator = function () {
-		return Validator;
 	};
 
 	/**
@@ -1253,6 +1242,8 @@ THREE.OBJLoader2 = (function () {
 	return OBJLoader2;
 })();
 
+THREE.OBJLoader2.Callbacks = THREE.OBJLoader2.prototype._getCallbacksClass();
+THREE.OBJLoader2.Validator = THREE.OBJLoader2.prototype._getValidatorClass();
 
 /**
  * Object to return by {@link THREE.OBJLoader2}.callbacks.meshLoaded and {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded.

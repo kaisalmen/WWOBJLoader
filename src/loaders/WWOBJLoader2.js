@@ -10,7 +10,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var WWOBJLOADER2_VERSION = 'dev';
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = THREE.OBJLoader2.Validator.prototype;
 
 	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype, {
 		constructor: {
@@ -22,6 +22,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	});
 
 	function WWOBJLoader2() {
+		THREE.OBJLoader2.Callbacks.call(this);
 		this._init();
 	}
 
@@ -45,8 +46,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.validated = false;
 		this.running = false;
 		this.requestTerminate = false;
-
-		this.clearAllCallbacks();
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
@@ -84,71 +83,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setCrossOrigin = function ( crossOrigin ) {
 		this.crossOrigin = crossOrigin;
-	};
-
-	/**
-	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {callback} callbackProgress Callback function for described functionality
-	 */
-	WWOBJLoader2.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
-	};
-
-	/**
-	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {callback} callbackCompletedLoading Callback function for described functionality
-	 */
-	WWOBJLoader2.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
-	};
-
-	/**
-	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
-	 */
-	WWOBJLoader2.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
-	};
-
-	/**
-	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {callback} callbackMeshLoaded Callback function for described functionality
-	 */
-	WWOBJLoader2.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
-	};
-
-	/**
-	 * Register callback function that is called to report an error that prevented loading.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
-	 */
-	WWOBJLoader2.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
-	};
-
-	/**
-	 * Clears all registered callbacks.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 */
-	WWOBJLoader2.prototype.clearAllCallbacks = function () {
-		this.callbacks = {
-			progress: [],
-			completedLoading: [],
-			errorWhileLoading: [],
-			materialsLoaded: [],
-			meshLoaded: []
-		};
 	};
 
 	/**
@@ -982,7 +916,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = THREE.OBJLoader2.Validator.prototype;
 
 	return {
 
@@ -1051,7 +985,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = THREE.OBJLoader2.Validator.prototype;
 
 	return {
 
@@ -1115,7 +1049,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = THREE.OBJLoader2.Validator.prototype;
 
 	return {
 		/**
