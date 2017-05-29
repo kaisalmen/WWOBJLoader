@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Validator = THREE.OBJLoader2.Validator.prototype;
+var Validator = THREE.OBJLoader2.Validator;
 
 var WWOBJLoader2Stage = (function () {
 

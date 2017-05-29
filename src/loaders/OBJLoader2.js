@@ -1,19 +1,15 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
-THREE.OBJLoader2.Validator = (function () {
-
-	function Validator() {
-	}
-
+THREE.OBJLoader2.Validator = {
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
 	 *
 	 * @param input Anything
 	 * @returns {boolean}
 	 */
-	Validator.prototype.isValid = function ( input ) {
+	isValid: function( input ) {
 		return ( input !== null && input !== undefined );
-	};
+	},
 	/**
 	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
 	 *
@@ -21,12 +17,10 @@ THREE.OBJLoader2.Validator = (function () {
 	 * @param defaultValue Anything
 	 * @returns {*}
 	 */
-	Validator.prototype.verifyInput = function ( input, defaultValue ) {
+	verifyInput: function( input, defaultValue ) {
 		return ( input === null || input === undefined ) ? defaultValue : input;
-	};
-
-	return Validator;
-})();
+	}
+};
 
 /**
  * Global callback definition
@@ -34,7 +28,7 @@ THREE.OBJLoader2.Validator = (function () {
  */
 THREE.OBJLoader2.Callbacks = (function () {
 
-	var Validator = new THREE.OBJLoader2.Validator();
+	var Validator = THREE.OBJLoader2.Validator;
 
 	function Callbacks() {
 		this.clearAllCallbacks();
@@ -47,7 +41,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Validator.isValid( callbackProgress ) ) this.getCallbacks().progress.push( callbackProgress );
+		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
 	};
 
 	/**
@@ -57,7 +51,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Validator.isValid( callbackCompletedLoading ) ) this.getCallbacks().completedLoading.push( callbackCompletedLoading );
+		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
 	};
 
 	/**
@@ -67,7 +61,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.getCallbacks().errorWhileLoading.push( callbackErrorWhileLoading );
+		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
 	};
 
 	/**
@@ -78,7 +72,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Validator.isValid( callbackMeshLoaded ) ) this.getCallbacks().meshLoaded.push( callbackMeshLoaded );
+		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
 	};
 
 	/**
@@ -88,7 +82,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
 	Callbacks.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.getCallbacks().materialsLoaded.push( callbackMaterialsLoaded );
+		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
 	};
 
 	/**
@@ -105,8 +99,46 @@ THREE.OBJLoader2.Callbacks = (function () {
 		};
 	};
 
-	Callbacks.prototype.getCallbacks = function () {
-		return this.callbacks;
+	Callbacks.prototype.processMeshLoaded = function ( callbacks, meshName, bufferGeometry, material ) {
+		var callbackMeshLoaded;
+		var callbackMeshLoadedResult;
+		var meshes = [];
+		var mesh;
+		for ( var index in callbacks ) {
+
+			callbackMeshLoaded = callbacks[ index ];
+			callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+
+			if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+
+				if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
+
+				if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
+
+					for ( var i in callbackMeshLoadedResult.meshes ) {
+
+						meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+					}
+
+				} else {
+
+					mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+					meshes.push( mesh );
+
+				}
+
+			} else {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.name = meshName;
+				meshes.push( mesh );
+
+			}
+
+		}
+
+		return meshes;
 	};
 
 	return Callbacks;
@@ -123,26 +155,20 @@ THREE.OBJLoader2 = (function () {
 	var OBJLOADER2_VERSION = 'dev';
 	var BindCallbacks = THREE.OBJLoader2.Callbacks;
 	var BindValidator = THREE.OBJLoader2.Validator;
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
-	OBJLoader2.prototype = Object.create( BindCallbacks.prototype, {
-		constructor: {
-			configurable: true,
-			enumerable: true,
-			value: OBJLoader2,
-			writable: true
-		}
-	});
+	OBJLoader2.prototype = Object.create( BindCallbacks.prototype );
+	OBJLoader2.prototype.constructor = OBJLoader2;
 
 	function OBJLoader2( manager ) {
-		BindCallbacks.call(this);
+		BindCallbacks.call( this );
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 
-		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
+		this.meshCreator = new MeshCreator( this.processMeshLoaded, this.callbacks.meshLoaded );
 		var scope = this;
 		var announceProgressScoped = function ( message ) {
 			scope._announceProgress( message );
@@ -980,7 +1006,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator( callbacksMeshLoaded ) {
+		function MeshCreator( callbackProcessMeshLoaded, callbacksMeshLoaded ) {
 			this.sceneGraphBaseNode = null;
 			this.materials = null;
 			this.debug = false;
@@ -988,6 +1014,7 @@ THREE.OBJLoader2 = (function () {
 
 			this.validated = false;
 
+			this.callbackProcessMeshLoaded = callbackProcessMeshLoaded;
 			this.callbacksMeshLoaded = callbacksMeshLoaded;
 		}
 
@@ -1149,44 +1176,8 @@ THREE.OBJLoader2 = (function () {
 			if ( createMultiMaterial ) material = materials;
 
 			var meshName = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
-			var callbackMeshLoaded;
-			var callbackMeshLoadedResult;
-			var meshes = [];
+			var meshes = this.callbackProcessMeshLoaded(this.callbacksMeshLoaded, meshName, bufferGeometry, material );
 			var mesh;
-			for ( var index in this.callbacksMeshLoaded ) {
-
-				callbackMeshLoaded = this.callbacksMeshLoaded[ index ];
-				callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
-
-				if ( Validator.isValid( callbackMeshLoadedResult ) ) {
-
-					if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
-
-					if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
-
-						for ( var i in callbackMeshLoadedResult.meshes ) {
-
-							meshes.push( callbackMeshLoadedResult.meshes[ i ] );
-						}
-
-					} else {
-
-						mesh = new THREE.Mesh( bufferGeometry, material );
-						mesh.name = meshName;
-						meshes.push( mesh );
-
-					}
-
-				} else {
-
-					mesh = new THREE.Mesh( bufferGeometry, material );
-					mesh.name = meshName;
-					meshes.push( mesh );
-
-				}
-
-			}
-
 			var message;
 			if ( meshes.length > 0 ) {
 

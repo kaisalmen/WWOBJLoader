@@ -6,7 +6,7 @@
 
 var WWParallels = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;

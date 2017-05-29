@@ -10,23 +10,17 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var WWOBJLOADER2_VERSION = 'dev';
 
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype, {
-		constructor: {
-			configurable: true,
-			enumerable: true,
-			value: WWOBJLoader2,
-			writable: true
-		}
-	});
+	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.Callbacks.prototype );
+	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		THREE.OBJLoader2.Callbacks.call(this);
 		this._init();
 	}
 
 	WWOBJLoader2.prototype._init = function () {
+		THREE.OBJLoader2.Callbacks.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
 		// check worker support first
@@ -386,44 +380,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				}
 
-				var callbackMeshLoaded;
-				var callbackMeshLoadedResult;
-				var meshes = [];
+				var meshes = this.processMeshLoaded( this.callbacks.meshLoaded, meshName, bufferGeometry, material );
 				var mesh;
-				for ( var index in this.callbacks.meshLoaded ) {
-
-					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
-					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
-
-					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
-
-						if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
-
-						if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
-
-							for ( var i in callbackMeshLoadedResult.meshes ) {
-
-								meshes.push( callbackMeshLoadedResult.meshes[ i ] );
-							}
-
-						} else {
-
-							mesh = new THREE.Mesh( bufferGeometry, material );
-							mesh.name = meshName;
-							meshes.push( mesh );
-
-						}
-
-					} else {
-
-						mesh = new THREE.Mesh( bufferGeometry, material );
-						mesh.name = meshName;
-						meshes.push( mesh );
-
-					}
-
-				}
-
 				if ( meshes.length > 0 ) {
 
 					var addedMeshCount = 0;
@@ -916,7 +874,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
 
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	return {
 
@@ -985,7 +943,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsA
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
 
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	return {
 
@@ -1049,7 +1007,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, file
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 
-	var Validator = THREE.OBJLoader2.Validator.prototype;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	return {
 		/**
