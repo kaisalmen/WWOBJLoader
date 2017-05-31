@@ -26,70 +26,70 @@ THREE.OBJLoader2.Validator = {
  * Global callback definition
  * @class
  */
-THREE.OBJLoader2.Callbacks = (function () {
+THREE.OBJLoader2.Commons = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	function Callbacks() {
+	function Commons() {
 		this.clearAllCallbacks();
 	}
 
 	/**
 	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 *
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
+	Commons.prototype.registerCallbackProgress = function ( callbackProgress ) {
 		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
 	};
 
 	/**
 	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 *
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
+	Commons.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
 		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
 	};
 
 	/**
 	 * Register callback function that is called to report an error that prevented loading.
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 *
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
+	Commons.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
 		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
 	};
 
 	/**
 	 * Register callback function that is called every time a mesh was loaded.
 	 * Use {@link THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 *
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
+	Commons.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
 		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
 	};
 
 	/**
 	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 *
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
+	Commons.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
 		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
 	};
 
 	/**
 	 * Clears all registered callbacks.
-	 * @memberOf THREE.OBJLoader2.Callbacks
+	 * @memberOf THREE.OBJLoader2.Commons
 	 */
-	Callbacks.prototype.clearAllCallbacks = function () {
+	Commons.prototype.clearAllCallbacks = function () {
 		this.callbacks = {
 			progress: [],
 			completedLoading: [],
@@ -99,7 +99,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 		};
 	};
 
-	Callbacks.prototype.processMeshLoaded = function ( callbacks, meshName, bufferGeometry, material ) {
+	Commons.prototype.processMeshLoaded = function ( callbacks, meshName, bufferGeometry, material ) {
 		var callbackMeshLoaded;
 		var callbackMeshLoadedResult;
 		var meshes = [];
@@ -141,7 +141,7 @@ THREE.OBJLoader2.Callbacks = (function () {
 		return meshes;
 	};
 
-	return Callbacks;
+	return Commons;
 })();
 
 /**
@@ -153,15 +153,15 @@ THREE.OBJLoader2.Callbacks = (function () {
 THREE.OBJLoader2 = (function () {
 
 	var OBJLOADER2_VERSION = 'dev';
-	var BindCallbacks = THREE.OBJLoader2.Callbacks;
+	var BindCommons = THREE.OBJLoader2.Commons;
 	var BindValidator = THREE.OBJLoader2.Validator;
 	var Validator = THREE.OBJLoader2.Validator;
 
-	OBJLoader2.prototype = Object.create( BindCallbacks.prototype );
+	OBJLoader2.prototype = Object.create( BindCommons.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
 
 	function OBJLoader2( manager ) {
-		BindCallbacks.call( this );
+		BindCommons.call( this );
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
@@ -182,8 +182,8 @@ THREE.OBJLoader2 = (function () {
 		return BindValidator;
 	};
 
-	OBJLoader2.prototype._getCallbacksClass = function () {
-		return BindCallbacks;
+	OBJLoader2.prototype._getCommonsClass = function () {
+		return BindCommons;
 	};
 
 	/**
@@ -1233,7 +1233,7 @@ THREE.OBJLoader2 = (function () {
 	return OBJLoader2;
 })();
 
-THREE.OBJLoader2.Callbacks = THREE.OBJLoader2.prototype._getCallbacksClass();
+THREE.OBJLoader2.Commons = THREE.OBJLoader2.prototype._getCommonsClass();
 THREE.OBJLoader2.Validator = THREE.OBJLoader2.prototype._getValidatorClass();
 
 /**
