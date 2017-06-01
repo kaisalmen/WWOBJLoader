@@ -33,7 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2Director.html">THREE.OBJLoader2.WWOBJLoader2Director</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
+					<li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.Commons.html">THREE.OBJLoader2.Commons</a></li><li><a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2Director.html">THREE.OBJLoader2.WWOBJLoader2Director</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
 				</ul>
 			</li>
 			
@@ -71,7 +71,7 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a><a href="THREE.OBJLoader2.WWOBJLoader2.html">.WWOBJLoader2</a>.</span>
+            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
         
         LoadedMeshUserOverride
         </h2>
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="LoadedMeshUserOverride"><span class="type-signature"></span>new LoadedMeshUserOverride(disregardMesh, bufferGeometry, material)</h4>
+    <h4 class="name" id="LoadedMeshUserOverride"><span class="type-signature"></span>new LoadedMeshUserOverride(disregardMesh)</h4>
     
     
 </dt>
@@ -94,7 +94,8 @@
 
     
     <div class="description">
-        <p>Object to return by <a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a>.callbacks.meshLoaded. Used to adjust bufferGeometry or material or prevent complete loading of mesh</p>
+        <p>Object to return by <a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a>.callbacks.meshLoaded and <a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a>.callbacks.meshLoaded.
+Used to disregard a certain mesh or to return one to many created meshes.</p>
     </div>
     
 
@@ -154,63 +155,7 @@
                 </td>
             
 
-            <td class="description last"><p>Tell WWOBJLoader2 to completely disregard this mesh</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>bufferGeometry</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">THREE.BufferGeometry</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The THREE.BufferGeometry to be used</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>material</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">THREE.Material</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>The THREE.Material to be used</p></td>
+            <td class="description last"><p>Tell OBJLoader2 or WWOBJLoader2 to completely disregard this mesh</p></td>
         </tr>
 
     
@@ -270,26 +215,6 @@
     
 
     
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
 
     
 </dd>
@@ -309,6 +234,138 @@
 
     
 
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="addMesh"><span class="type-signature">&lt;static> </span>LoadedMeshUserOverride#addMesh(mesh)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Add a mesh created within callback.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>mesh</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">THREE.Mesh</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
     
 
     
@@ -358,7 +415,7 @@
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a>
 	
-		on April 15th 2017, 11:16:42 pm
+		on June 1st 2017, 10:39:57 pm
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

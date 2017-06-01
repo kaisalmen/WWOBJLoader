@@ -85,11 +85,31 @@ var OBJLoader2Example = (function () {
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
-			objLoader.setDebug( false, false );
+			objLoader.setDebug( false, true );
+
+			var reportProgress = function ( content ) {
+				console.log( 'Progress: ' + content );
+			};
+			objLoader.registerCallbackProgress( reportProgress );
+
+			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
+
+				var mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.name = name;
+				var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+
+				override.addMesh( mesh );
+				override.addMesh( helper );
+
+				return override;
+			};
+			objLoader.registerCallbackMeshLoaded( callbackMeshLoaded );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 			};
+			objLoader.registerCallbackCompletedLoading( onSuccess );
 
 			var onProgress = function ( event ) {
 				if ( event.lengthComputable ) {
@@ -105,7 +125,7 @@ var OBJLoader2Example = (function () {
 				console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
 			};
 
-			objLoader.load( objDef.fileObj, onSuccess, onProgress, onError );
+			objLoader.load( objDef.fileObj, null, onProgress, onError );
 
 		});
 
