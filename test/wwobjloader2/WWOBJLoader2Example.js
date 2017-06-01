@@ -36,6 +36,8 @@ var WWOBJLoader2Example = (function () {
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
 		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
+		this.wwObjLoader2.setDebug( true );
+		this.wwObjLoader2.setMaterialPerSmoothingGroup( true );
 
 		// Check for the various File API support.
 		this.fileApiAvailable = true;

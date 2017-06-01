@@ -86,6 +86,7 @@ var OBJLoader2Example = (function () {
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
 			objLoader.setDebug( false, true );
+			objLoader.setMaterialPerSmoothingGroup( true );
 
 			var reportProgress = function ( content ) {
 				console.log( 'Progress: ' + content );

@@ -154,7 +154,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			this.worker.postMessage( {
 				cmd: 'init',
-				debug: this.debug
+				debug: this.debug,
+				materialPerSmoothingGroup: this.materialPerSmoothingGroup
 			} );
 
 			this.objAsArrayBuffer = params.objAsArrayBuffer;
@@ -169,7 +170,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			this.worker.postMessage( {
 				cmd: 'init',
-				debug: this.debug
+				debug: this.debug,
+				materialPerSmoothingGroup: this.materialPerSmoothingGroup
 			} );
 
 			this.fileObj = params.fileObj;
@@ -575,6 +577,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				WWOBJLoader.prototype.init = function ( payload ) {
 					this.cmdState = 'init';
 					this.setDebug( payload.debug, payload.debug );
+					this.parser.setMaterialPerSmoothingGroup( payload.materialPerSmoothingGroup );
 				};
 
 				WWOBJLoader.prototype.setMaterials = function ( payload ) {
@@ -736,6 +739,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					}, [ vertexFa.buffer ], normalFA !== null ? [ normalFA.buffer ] : null, uvFA !== null ? [ uvFA.buffer ] : null );
 
 					this.globalObjectCount++;
+				};
+
+				WWMeshCreator.prototype.printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
+					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n materialIndex: ' + selectedMaterialIndex : '';
+					console.log(
+						' Output Object no.: ' + this.globalObjectCount +
+						'\n objectName: ' + rawObjectDescription.objectName +
+						'\n groupName: ' + rawObjectDescription.groupName +
+						'\n materialName: ' + rawObjectDescription.materialName +
+						materialIndexLine +
+						'\n smoothingGroup: ' + rawObjectDescription.smoothingGroup +
+						'\n #vertices: ' + rawObjectDescription.vertices.length / 3 +
+						'\n #uvs: ' + rawObjectDescription.uvs.length / 2 +
+						'\n #normals: ' + rawObjectDescription.normals.length / 3
+					);
 				};
 
 				return WWMeshCreator;
