@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: PrepDataCallbacks</title>
+	<title>Documentation Class: Commons</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -65,15 +65,15 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: PrepDataCallbacks</h1>
+	<h1 class="page-title">Class: Commons</h1>
 <section>
 
 <header>
     
         <h2>
-            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a><a href="THREE.OBJLoader2.WWOBJLoader2.html">.WWOBJLoader2</a>.</span>
+            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
         
-        PrepDataCallbacks
+        Commons
         </h2>
         
     
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="PrepDataCallbacks"><span class="type-signature"></span>new PrepDataCallbacks()</h4>
+    <h4 class="name" id="Commons"><span class="type-signature"></span>new Commons()</h4>
     
     
 </dt>
@@ -94,7 +94,7 @@
 
     
     <div class="description">
-        <p>Callbacks utilized by functions working with <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a> or <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></p>
+        <p>Global callback definition</p>
     </div>
     
 
@@ -156,26 +156,6 @@
     
 
     
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
 
     
 </dd>
@@ -202,7 +182,85 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".registerCallbackCompletedLoading"><span class="type-signature">&lt;static> </span>registerCallbackCompletedLoading(callbackCompletedLoading)</h4>
+    <h4 class="name" id="clearAllCallbacks"><span class="type-signature">&lt;static> </span>Commons#clearAllCallbacks()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Clears all registered callbacks.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="registerCallbackCompletedLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackCompletedLoading(callbackCompletedLoading)</h4>
     
     
 </dt>
@@ -330,7 +388,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".registerCallbackErrorWhileLoading"><span class="type-signature">&lt;static> </span>registerCallbackErrorWhileLoading(callbackErrorWhileLoading)</h4>
+    <h4 class="name" id="registerCallbackErrorWhileLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackErrorWhileLoading(callbackErrorWhileLoading)</h4>
     
     
 </dt>
@@ -338,7 +396,7 @@
 
     
     <div class="description">
-        <p>Report if an error prevented loading.</p>
+        <p>Register callback function that is called to report an error that prevented loading.</p>
     </div>
     
 
@@ -458,7 +516,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".registerCallbackMaterialsLoaded"><span class="type-signature">&lt;static> </span>registerCallbackMaterialsLoaded(callbackMaterialsLoaded)</h4>
+    <h4 class="name" id="registerCallbackMaterialsLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMaterialsLoaded(callbackMaterialsLoaded)</h4>
     
     
 </dt>
@@ -586,7 +644,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id=".registerCallbackMeshLoaded"><span class="type-signature">&lt;static> </span>registerCallbackMeshLoaded(callbackMeshLoaded)</h4>
+    <h4 class="name" id="registerCallbackMeshLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMeshLoaded(callbackMeshLoaded)</h4>
     
     
 </dt>
@@ -595,7 +653,7 @@
     
     <div class="description">
         <p>Register callback function that is called every time a mesh was loaded.
-Use <a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.LoadedMeshUserOverride</a> for alteration instructions (geometry, material or disregard mesh).</p>
+Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructions (geometry, material or disregard mesh).</p>
     </div>
     
 
@@ -715,7 +773,7 @@ Use <a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.Load
             
 <hr>
 <dt>
-    <h4 class="name" id=".registerCallbackProgress"><span class="type-signature">&lt;static> </span>registerCallbackProgress(callbackProgress)</h4>
+    <h4 class="name" id="registerCallbackProgress"><span class="type-signature">&lt;static> </span>Commons#registerCallbackProgress(callbackProgress)</h4>
     
     
 </dt>
