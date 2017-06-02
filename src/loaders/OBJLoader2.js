@@ -99,6 +99,21 @@ THREE.OBJLoader2.Commons = (function () {
 		};
 	};
 
+	Commons.prototype._announceProgress = function ( baseText, text ) {
+		var output = Validator.isValid( baseText ) ? baseText: "";
+		output = Validator.isValid( text ) ? output + " " + text : output;
+
+		var callbackProgress;
+		for ( var index in this.callbacks.progress ) {
+
+			callbackProgress = this.callbacks.progress[ index ];
+			callbackProgress( output );
+
+		}
+
+		if ( this.debug ) console.log( output );
+	};
+
 	/**
 	 * Tells whether a material shall be created per smoothing group
 	 * @memberOf THREE.OBJLoader2.Commons
@@ -236,21 +251,6 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
 		this.parser.setDebug( parserDebug );
 		this.meshCreator.setDebug( meshCreatorDebug );
-	};
-
-	OBJLoader2.prototype._announceProgress = function ( baseText, text ) {
-		var output = Validator.isValid( baseText ) ? baseText: "";
-		output = Validator.isValid( text ) ? output + " " + text : output;
-
-		var callbackProgress;
-		for ( var index in this.callbacks.progress ) {
-
-			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output );
-
-		}
-
-		if ( this.debug ) console.log( output );
 	};
 
 	/**

@@ -509,21 +509,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoader2.prototype._announceProgress = function ( baseText, text ) {
-		var output = Validator.isValid( baseText ) ? baseText: "";
-		output = Validator.isValid( text ) ? output + " " + text : output;
-
-		var callbackProgress;
-		for ( var index in this.callbacks.progress ) {
-
-			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output );
-
-		}
-
-		if ( this.debug ) console.log( output );
-	};
-
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {
 		if ( Validator.isValid( existingWorkerCode ) ) this.workerCode = existingWorkerCode;
 		if ( ! Validator.isValid( this.workerCode ) ) {
