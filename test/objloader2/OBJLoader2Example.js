@@ -85,7 +85,9 @@ var OBJLoader2Example = (function () {
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
-			objLoader.setDebug( false, true );
+			// following settings are default, contained for easy play-around
+			objLoader.setDebug( false, false );
+			objLoader.setMaterialPerSmoothingGroup( false );
 
 			var reportProgress = function ( content ) {
 				console.log( 'Progress: ' + content );

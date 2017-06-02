@@ -99,6 +99,16 @@ THREE.OBJLoader2.Commons = (function () {
 		};
 	};
 
+	/**
+	 * Tells whether a material shall be created per smoothing group
+	 * @memberOf THREE.OBJLoader2.Commons
+	 *
+	 * @param {boolean} materialPerSmoothingGroup Create or not create a multi-material node per smoothing group
+	 */
+	Commons.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+	};
+
 	Commons.prototype.processMeshLoaded = function ( callbacks, meshName, bufferGeometry, material ) {
 		var callbackMeshLoaded;
 		var callbackMeshLoadedResult;
@@ -326,6 +336,7 @@ THREE.OBJLoader2 = (function () {
 		if ( this.validated ) return;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.validate();
 		this.meshCreator.validate();
 
@@ -402,14 +413,19 @@ THREE.OBJLoader2 = (function () {
 			this.rawObject = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
+			this.materialPerSmoothingGroup = false;
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
 			if ( debug === true || debug === false ) this.debug = debug;
 		};
 
+		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+		};
+
 		Parser.prototype.validate = function () {
-			this.rawObject = new RawObject();
+			this.rawObject = new RawObject( this.materialPerSmoothingGroup );
 			this.inputObjectCount = 1;
 		};
 
@@ -674,7 +690,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var RawObject = (function () {
 
-		function RawObject( objectName, groupName, mtllibName ) {
+		function RawObject( materialPerSmoothingGroup, objectName, groupName, mtllibName ) {
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
 			this.globalNormalOffset = 1;
@@ -689,7 +705,7 @@ THREE.OBJLoader2 = (function () {
 			this.groupName = Validator.verifyInput( groupName, '' );
 			this.activeMtlName = '';
 			this.activeSmoothingGroup = 1;
-			this.materialPerSmoothingGroup = false;
+			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 
 			this.mtlCount = 0;
 			this.smoothingGroupCount = 0;
@@ -706,12 +722,8 @@ THREE.OBJLoader2 = (function () {
 			return materialName + '|' + normalizedSmoothingGroup;
 		};
 
-		RawObject.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
-		};
-
 		RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
-			var newRawObject = new RawObject( objectName, groupName, this.mtllibName );
+			var newRawObject = new RawObject( this.materialPerSmoothingGroup, objectName, groupName, this.mtllibName );
 
 			// move indices forward
 			newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
@@ -722,7 +734,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.newInstanceFromGroup = function ( groupName ) {
-			var newRawObject = new RawObject( this.objectName, groupName, this.mtllibName );
+			var newRawObject = new RawObject( this.materialPerSmoothingGroup, this.objectName, groupName, this.mtllibName );
 
 			// keep current buffers and indices forward
 			newRawObject.vertices = this.vertices;
