@@ -85,7 +85,7 @@ var OBJLoader2Example = (function () {
 			objLoader.setSceneGraphBaseNode( scope.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
-			objLoader.setDebug( false, false );
+			objLoader.setDebug( true, true );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
