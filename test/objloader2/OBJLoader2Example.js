@@ -86,7 +86,7 @@ var OBJLoader2Example = (function () {
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
 			// following settings are default, contained for easy play-around
-			objLoader.setDebug( false, false );
+			objLoader.setDebug( true, true );
 			objLoader.setMaterialPerSmoothingGroup( false );
 
 			var reportProgress = function ( content ) {
@@ -97,12 +97,14 @@ var OBJLoader2Example = (function () {
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
 
+				material.side = THREE.DoubleSide;
 				var mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.scale.set( 20.0, 20.0, 20.0 );
 				mesh.name = name;
-				var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
-
 				override.addMesh( mesh );
-				override.addMesh( helper );
+
+//				var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+//				override.addMesh( helper );
 
 				return override;
 			};

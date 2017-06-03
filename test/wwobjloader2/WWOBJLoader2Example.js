@@ -106,7 +106,15 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Loaded #' + count + ' materials.' );
 		};
 		var meshLoaded = function ( name, bufferGeometry, material ) {
-			console.log( 'Loaded mesh: ' + name + ' Material name: ' + material.name );
+			var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
+
+			material.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh( bufferGeometry, material );
+			mesh.scale.set( 20.0, 20.0, 20.0 );
+			mesh.name = name;
+			override.addMesh( mesh );
+
+			return override;
 		};
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
