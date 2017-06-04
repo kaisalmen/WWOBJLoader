@@ -127,7 +127,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlAsString = null;
 
 		this.materials = [];
-		var defaultMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 		this.materials[ defaultMaterial.name ] = defaultMaterial;
 
@@ -347,6 +347,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					materialDescription = materialDescriptions[ key ];
 					material = this.materials[ materialDescription.name ];
+					if ( ! material ) material = this.materials[ 'defaultMaterial' ];
 
 					if ( materialDescription.default ) {
 
@@ -364,10 +365,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 							this.materials[ materialName ] = name;
 
 						}
-
-					} else if ( ! material ) {
-
-						material = this.materials[ 'defaultMaterial' ];
 
 					}
 

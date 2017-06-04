@@ -1075,6 +1075,15 @@ THREE.OBJLoader2 = (function () {
 		MeshCreator.prototype.setMaterials = function ( materials ) {
 			this.materials = Validator.verifyInput( materials, this.materials );
 			this.materials = Validator.verifyInput( this.materials, { materials: [] } );
+
+			var material = this.materials[ 'defaultMaterial' ];
+			if ( ! material ) {
+
+				material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+				material.name = 'defaultMaterial';
+				this.materials[ 'defaultMaterial' ] = material;
+
+			}
 		};
 
 		MeshCreator.prototype.setDebug = function ( debug ) {
@@ -1169,14 +1178,8 @@ THREE.OBJLoader2 = (function () {
 				if ( ! material ) {
 
 					material = this.materials[ 'defaultMaterial' ];
-					if ( ! material ) {
-
-						material = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-						material.name = 'defaultMaterial';
-						this.materials[ 'defaultMaterial' ] = material;
-
-					}
-					console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
+					if ( ! material ) console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName +
+													'" was defined without material! Assigning "defaultMaterial".' );
 
 				}
 				// clone material in case flat shading is needed due to smoothingGroup 0
