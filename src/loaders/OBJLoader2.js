@@ -1076,12 +1076,21 @@ THREE.OBJLoader2 = (function () {
 			this.materials = Validator.verifyInput( materials, this.materials );
 			this.materials = Validator.verifyInput( this.materials, { materials: [] } );
 
-			var material = this.materials[ 'defaultMaterial' ];
-			if ( ! material ) {
+			var defaultMaterial = this.materials[ 'defaultMaterial' ];
+			if ( ! defaultMaterial ) {
 
-				material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-				material.name = 'defaultMaterial';
-				this.materials[ 'defaultMaterial' ] = material;
+				defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+				defaultMaterial.name = 'defaultMaterial';
+				this.materials[ 'defaultMaterial' ] = defaultMaterial;
+
+			}
+			var vertexColorMaterial = this.materials[ 'vertexColorMaterial' ];
+			if ( ! vertexColorMaterial ) {
+
+				vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+				vertexColorMaterial.name = 'vertexColorMaterial';
+				vertexColorMaterial.vertexColors = THREE.VertexColors;
+				this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
 
 			}
 		};
@@ -1174,7 +1183,7 @@ THREE.OBJLoader2 = (function () {
 				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
 				materialName = rawObjectDescription.materialName;
-				material = this.materials[ materialName ];
+				material = colorBA ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialName ];
 				if ( ! material ) {
 
 					material = this.materials[ 'defaultMaterial' ];
@@ -1223,7 +1232,6 @@ THREE.OBJLoader2 = (function () {
 
 					colorBA.set( rawObjectDescription.colors, colorBAOffset );
 					colorBAOffset += rawObjectDescription.colors.length;
-					material.vertexColors = THREE.VertexColors;
 
 				}
 

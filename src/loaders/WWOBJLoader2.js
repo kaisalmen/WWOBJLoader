@@ -131,6 +131,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		defaultMaterial.name = 'defaultMaterial';
 		this.materials[ defaultMaterial.name ] = defaultMaterial;
 
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
+
 		this.counter = 0;
 	};
 
@@ -315,7 +320,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				var bufferGeometry = new THREE.BufferGeometry();
 				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
-				if ( Validator.isValid( payload.colors ) ) {
+				var haveVertexColors = Validator.isValid( payload.colors );
+				if ( haveVertexColors ) {
 
 					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.colors ), 3 ) );
 
@@ -347,6 +353,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					materialDescription = materialDescriptions[ key ];
 					material = this.materials[ materialDescription.name ];
+					material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
 					if ( ! material ) material = this.materials[ 'defaultMaterial' ];
 
 					if ( materialDescription.default ) {
