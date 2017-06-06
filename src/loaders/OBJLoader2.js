@@ -1300,7 +1300,7 @@ THREE.OBJLoader2 = (function () {
 		return MeshCreator;
 	})();
 
-	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
+	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
 		var workerCode = '';
 		workerCode += funcBuildObject( 'Consts', Consts );
 		workerCode += funcBuildObject( 'Validator', Validator );

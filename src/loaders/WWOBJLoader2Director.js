@@ -190,11 +190,12 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( Validator.isValid( this.workerDescription.codeBuffer ) ) {
 
-			webWorker._buildWebWorkerCode( this.workerDescription.codeBuffer );
+			webWorker.wwSupport.workerCode = webWorker._buildWebWorkerCode( webWorker.wwSupport.buildObject, webWorker.wwSupport.buildSingelton, this.workerDescription.codeBuffer );
 
 		} else {
 
-			this.workerDescription.codeBuffer = webWorker._buildWebWorkerCode();
+			webWorker.wwSupport.workerCode = webWorker._buildWebWorkerCode( webWorker.wwSupport.buildObject, webWorker.wwSupport.buildSingelton );
+			this.workerDescription.codeBuffer = webWorker.wwSupport.workerCode;
 
 		}
 

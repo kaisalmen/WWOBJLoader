@@ -1,5 +1,85 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
+THREE.OBJLoader2.WWSupport = (function () {
+
+	function WWSupport() {
+		// check worker support first
+		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
+		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
+		if ( ! typeof window.URL.createObjectURL === 'function'  ) throw "This browser does not support Object creation from URL!";
+
+		this.worker = null;
+		this.workerCode = null;
+	}
+
+	WWSupport.prototype.init = function () {
+
+	};
+
+	WWSupport.prototype.buildObject = function ( fullName, object ) {
+		var objectString = fullName + ' = {\n';
+		var part;
+		for ( var name in object ) {
+
+			part = object[ name ];
+			if ( typeof( part ) === 'string' || part instanceof String ) {
+
+				part = part.replace( '\n', '\\n' );
+				part = part.replace( '\r', '\\r' );
+				objectString += '\t' + name + ': "' + part + '",\n';
+
+			} else if ( part instanceof Array ) {
+
+				objectString += '\t' + name + ': [' + part + '],\n';
+
+			} else if ( Number.isInteger( part ) ) {
+
+				objectString += '\t' + name + ': ' + part + ',\n';
+
+			} else if ( typeof part === 'function' ) {
+
+				objectString += '\t' + name + ': ' + part + ',\n';
+
+			}
+
+		}
+		objectString += '}\n\n';
+
+		return objectString;
+	};
+
+	WWSupport.prototype.buildSingelton = function ( fullName, internalName, object ) {
+		var objectString = fullName + ' = (function () {\n\n';
+		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
+
+		var funcString;
+		var objectPart;
+		for ( var name in object.prototype ) {
+
+			objectPart = object.prototype[ name ];
+			if ( typeof objectPart === 'function' ) {
+
+				funcString = objectPart.toString();
+				objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+
+			}
+
+		}
+		objectString += '\treturn ' + internalName + ';\n';
+		objectString += '})();\n\n';
+
+		return objectString;
+	};
+
+	WWSupport.prototype.terminate = function () {
+		this.worker.terminate();
+		this.worker = null;
+		this.workerCode = null;
+	};
+
+	return WWSupport;
+})();
+
 /**
  * OBJ data will be loaded by dynamically created web worker.
  * First feed instructions with: prepareRun
@@ -23,14 +103,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		THREE.OBJLoader2.Commons.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		// check worker support first
-		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
-		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
-		if ( ! typeof window.URL.createObjectURL === 'function'  ) throw "This browser does not support Object creation from URL!";
+		this.wwSupport = new THREE.OBJLoader2.WWSupport();
 
 		this.instanceNo = 0;
-		this.worker = null;
-		this.workerCode = null;
 		this.debug = false;
 
 		this.sceneGraphBaseNode = null;
@@ -93,8 +168,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		if ( this.validated ) return;
 		if ( ! Validator.isValid( this.worker ) ) {
 
-			this._buildWebWorkerCode();
-			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
+			this.wwSupport.workerCode = this._buildWebWorkerCode( this.wwSupport.buildObject, this.wwSupport.buildSingelton );
+			var blob = new Blob( [ this.wwSupport.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
 
 			var scope = this;
@@ -466,9 +541,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
-			this.worker.terminate();
-			this.worker = null;
-			this.workerCode = null;
+			this.wwSupport.terminate();
 			this._finalize( 'terminate' );
 
 		}
@@ -509,9 +582,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoader2.prototype._buildWebWorkerCode = function ( existingWorkerCode ) {
-		if ( Validator.isValid( existingWorkerCode ) ) this.workerCode = existingWorkerCode;
-		if ( ! Validator.isValid( this.workerCode ) ) {
+	WWOBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
+		var workerCode = existingWorkerCode;
+		if ( ! Validator.isValid( workerCode ) ) {
 
 			console.time( 'buildWebWorkerCode' );
 			var wwDef = (function () {
@@ -819,80 +892,25 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				return WWOBJLoaderRunner;
 			})();
 
-			var buildObject = function ( fullName, object ) {
-				var objectString = fullName + ' = {\n';
-				var part;
-				for ( var name in object ) {
-
-					part = object[ name ];
-					if ( typeof( part ) === 'string' || part instanceof String ) {
-
-						part = part.replace( '\n', '\\n' );
-						part = part.replace( '\r', '\\r' );
-						objectString += '\t' + name + ': "' + part + '",\n';
-
-					} else if ( part instanceof Array ) {
-
-						objectString += '\t' + name + ': [' + part + '],\n';
-
-					} else if ( Number.isInteger( part ) ) {
-
-						objectString += '\t' + name + ': ' + part + ',\n';
-
-					} else if ( typeof part === 'function' ) {
-
-						objectString += '\t' + name + ': ' + part + ',\n';
-
-					}
-
-				}
-				objectString += '}\n\n';
-
-				return objectString;
-			};
-
-			var buildSingelton = function ( fullName, internalName, object ) {
-				var objectString = fullName + ' = (function () {\n\n';
-				objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
-
-				var funcString;
-				var objectPart;
-				for ( var name in object.prototype ) {
-
-					objectPart = object.prototype[ name ];
-					if ( typeof objectPart === 'function' ) {
-
-						funcString = objectPart.toString();
-						objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
-
-					}
-
-				}
-				objectString += '\treturn ' + internalName + ';\n';
-				objectString += '})();\n\n';
-
-				return objectString;
-			};
-
-			this.workerCode = '';
-			this.workerCode += '/**\n';
-			this.workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
-			this.workerCode += '  */\n\n';
+			workerCode = '';
+			workerCode += '/**\n';
+			workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
+			workerCode += '  */\n\n';
 
 			// parser re-construction
-			this.workerCode += THREE.OBJLoader2.prototype._buildWebWorkerCode( buildObject, buildSingelton );
+			workerCode += THREE.OBJLoader2.prototype._buildWebWorkerCode( funcBuildObject, funcBuildSingelton );
 
 			// web worker construction
-			this.workerCode += buildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
-			this.workerCode += buildSingelton( 'WWMeshCreator', 'WWMeshCreator', wwMeshCreatorDef );
-			this.workerCode += 'WWOBJLoaderRef = new WWOBJLoader();\n\n';
-			this.workerCode += buildSingelton( 'WWOBJLoaderRunner', 'WWOBJLoaderRunner', wwObjLoaderRunnerDef );
-			this.workerCode += 'new WWOBJLoaderRunner();\n\n';
+			workerCode += funcBuildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
+			workerCode += funcBuildSingelton( 'WWMeshCreator', 'WWMeshCreator', wwMeshCreatorDef );
+			workerCode += 'WWOBJLoaderRef = new WWOBJLoader();\n\n';
+			workerCode += funcBuildSingelton( 'WWOBJLoaderRunner', 'WWOBJLoaderRunner', wwObjLoaderRunnerDef );
+			workerCode += 'new WWOBJLoaderRunner();\n\n';
 
 			console.timeEnd( 'buildWebWorkerCode' );
 		}
 
-		return this.workerCode;
+		return workerCode;
 	};
 
 	return WWOBJLoader2;
