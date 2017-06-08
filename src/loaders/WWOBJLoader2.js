@@ -16,17 +16,53 @@ THREE.OBJLoader2.WWSupport = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
+
+		this.sceneGraphBaseNode = null;
+		this.streamMeshes = true;
+		this.meshStore = null;
+
+		this.materials = [];
+
+		this.callbacks = {
+			announceProgress: null,
+			processMeshLoaded: null,
+			meshLoaded: null,
+			complete: null
+		};
+
+		this.counter = 0;
 	};
 
-	WWSupport.prototype._validate = function ( functionCodeBuilder, functionReceiveWorkerMessage ) {
+	WWSupport.prototype._validate = function ( functionCodeBuilder ) {
 		if ( ! Validator.isValid( this.worker ) ) {
 
 			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton );
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-			this.worker.addEventListener( 'message', functionReceiveWorkerMessage, false );
+
+			var scope = this;
+			var scopeFunction = function ( e ) {
+				scope._receiveWorkerMessage( e );
+			};
+			this.worker.addEventListener( 'message', scopeFunction, false );
 
 		}
+
+		this.sceneGraphBaseNode = null;
+		this.streamMeshes = true;
+		this.meshStore = [];
+
+		this.materials = [];
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
+
+		this.counter = 0;
 	};
 
 	WWSupport.prototype.isValid = function () {
@@ -98,6 +134,166 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.worker.postMessage( messageObject );
 	};
 
+	WWSupport.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes, messageObject ) {
+		this.sceneGraphBaseNode = sceneGraphBaseNode;
+		this.streamMeshes = streamMeshes;
+
+		if ( ! this.streamMeshes ) this.meshStore = [];
+		this.worker.postMessage( messageObject );
+	};
+
+	WWSupport.prototype._receiveWorkerMessage = function ( event ) {
+		var payload = event.data;
+
+		switch ( payload.cmd ) {
+			case 'objData':
+
+				var meshName = payload.meshName;
+
+				var bufferGeometry = new THREE.BufferGeometry();
+				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
+				var haveVertexColors = Validator.isValid( payload.colors );
+				if ( haveVertexColors ) {
+
+					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.colors ), 3 ) );
+
+				}
+				if ( Validator.isValid( payload.normals ) ) {
+
+					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.normals ), 3 ) );
+
+				} else {
+
+					bufferGeometry.computeVertexNormals();
+
+				}
+				if ( Validator.isValid( payload.uvs ) ) {
+
+					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
+
+				}
+
+				var materialDescriptions = payload.materialDescriptions;
+				var materialDescription;
+				var material;
+				var materialName;
+				var createMultiMaterial = payload.multiMaterial;
+				var multiMaterials = [];
+
+				var key;
+				for ( key in materialDescriptions ) {
+
+					materialDescription = materialDescriptions[ key ];
+					material = this.materials[ materialDescription.name ];
+					material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
+					if ( ! material ) material = this.materials[ 'defaultMaterial' ];
+
+					if ( materialDescription.default ) {
+
+						material = this.materials[ 'defaultMaterial' ];
+
+					} else if ( materialDescription.flat ) {
+
+						materialName = material.name + '_flat';
+						var materialClone = this.materials[ materialName ];
+						if ( ! materialClone ) {
+
+							materialClone = material.clone();
+							materialClone.name = materialName;
+							materialClone.shading = THREE.FlatShading;
+							this.materials[ materialName ] = name;
+
+						}
+
+					}
+
+					if ( materialDescription.vertexColors ) material.vertexColors = THREE.VertexColors;
+					if ( createMultiMaterial ) multiMaterials.push( material );
+
+				}
+				if ( createMultiMaterial ) {
+
+					material = multiMaterials;
+					var materialGroups = payload.materialGroups;
+					var materialGroup;
+					for ( key in materialGroups ) {
+
+						materialGroup = materialGroups[ key ];
+						bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+
+					}
+
+				}
+
+
+				var meshes = this.callbacks.processMeshLoaded( this.callbacks.meshLoaded, meshName, bufferGeometry, material );
+				var mesh;
+				if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
+
+					var addedMeshCount = 0;
+					for ( var i in meshes ) {
+
+						mesh = meshes[ i ];
+						if ( this.streamMeshes ) {
+
+							this.sceneGraphBaseNode.add( mesh );
+
+						} else {
+
+							this.meshStore.push( mesh );
+
+						}
+						addedMeshCount++;
+
+					}
+
+					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.counter + '): ' + meshName );
+					this.counter++;
+
+				} else {
+
+					this.callbacks.announceProgress(  'Not adding mesh: ' + meshName );
+
+				}
+				break;
+
+			case 'complete':
+
+				if ( ! this.streamMeshes ) {
+
+					for ( var meshStoreKey in this.meshStore ) {
+
+						if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
+
+					}
+
+				}
+
+				console.timeEnd( 'WWOBJLoader2' );
+				if ( Validator.isValid( payload.msg ) ) {
+
+					this.callbacks.announceProgress( payload.msg );
+
+				} else {
+
+					this.callbacks.announceProgress( '' );
+
+				}
+
+				this.callbacks.complete( 'complete' );
+				break;
+
+			case 'report_progress':
+				this.callbacks.announceProgress( '', payload.output );
+				break;
+
+			default:
+				console.error( 'Received unknown command: ' + payload.cmd );
+				break;
+
+		}
+	};
+
 	return WWSupport;
 })();
 
@@ -126,12 +322,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.wwSupport = new THREE.OBJLoader2.WWSupport();
 
+		var scope = this;
+		this.wwSupport.callbacks.processMeshLoaded = this.processMeshLoaded;
+		this.wwSupport.callbacks.meshLoaded = this.callbacks.meshLoaded;
+		var scopeFuncComplete = function ( reason, requestTerminate ) {
+			scope._finalize( reason, requestTerminate );
+		};
+		this.wwSupport.callbacks.complete = scopeFuncComplete;
+		var scopeFuncAnnounce = function ( baseText, text ) {
+			scope._announceProgress( baseText, text );
+		};
+		this.wwSupport.callbacks.announceProgress = scopeFuncAnnounce;
+
 		this.instanceNo = 0;
 		this.debug = false;
 
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
-		this.meshStore = null;
 		this.modelName = '';
 		this.validated = false;
 		this.running = false;
@@ -152,7 +357,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.texturePath = null;
 
 		this.materials = [];
-		this.counter = 0;
 	};
 
 	/**
@@ -188,15 +392,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		var scope = this;
-		var scopeFunction = function ( e ) {
-			scope._receiveWorkerMessage( e );
-		};
-		this.wwSupport._validate( this._buildWebWorkerCode, scopeFunction );
+		this.wwSupport._validate( this._buildWebWorkerCode );
 
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
-		this.meshStore = [];
 		this.modelName = '';
 		this.validated = true;
 		this.running = true;
@@ -216,16 +413,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlAsString = null;
 
 		this.materials = [];
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		this.materials[ defaultMaterial.name ] = defaultMaterial;
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
-
-		this.counter = 0;
 	};
 
 	/**
@@ -239,6 +426,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.dataAvailable = params.dataAvailable;
 		this.modelName = params.modelName;
 		console.time( 'WWOBJLoader2' );
+
+		var messageObject;
 		if ( this.dataAvailable ) {
 
 			// fast-fail on bad type
@@ -246,12 +435,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				throw 'Provided input is not of type arraybuffer! Aborting...';
 			}
 
-			this.wwSupport.postMessage( {
+			messageObject = {
 				cmd: 'init',
 				debug: this.debug,
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
-			} );
-
+			};
 			this.objAsArrayBuffer = params.objAsArrayBuffer;
 			this.mtlAsString = params.mtlAsString;
 
@@ -262,12 +450,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				throw 'Provided file is not properly defined! Aborting...';
 			}
 
-			this.wwSupport.postMessage( {
+			messageObject = {
 				cmd: 'init',
 				debug: this.debug,
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
-			} );
-
+			};
 			this.fileObj = params.fileObj;
 			this.pathObj = params.pathObj;
 			this.fileMtl = params.fileMtl;
@@ -275,9 +462,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 		this.setRequestTerminate( params.requestTerminate );
 		this.pathTexture = params.pathTexture;
-		this.sceneGraphBaseNode = params.sceneGraphBaseNode;
-		this.streamMeshes = params.streamMeshes;
-		if ( ! this.streamMeshes ) this.meshStore = [];
+
+		this.wwSupport.prepareRun( params.sceneGraphBaseNode, params.streamMeshes, messageObject );
 	};
 
 	/**
@@ -305,6 +491,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 			}
+
+			scope.wwSupport.materials = scope.materials;
 			scope.wwSupport.postMessage(
 				{
 					cmd: 'setMaterials',
@@ -390,7 +578,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			if ( Validator.isValid( this.fileMtl ) ) {
 
 				var onError = function ( event ) {
-					output = 'Error occurred while downloading "' + scope.fileMtl + '"';
+					var output = 'Error occurred while downloading "' + scope.fileMtl + '"';
 					console.error( output + ': ' + event );
 					scope._announceProgress( output );
 					scope._finalize( 'error' );
@@ -403,157 +591,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				processLoadedMaterials();
 
 			}
-
-		}
-	};
-
-	WWOBJLoader2.prototype._receiveWorkerMessage = function ( event ) {
-		var payload = event.data;
-
-		switch ( payload.cmd ) {
-			case 'objData':
-
-				var meshName = payload.meshName;
-
-				var bufferGeometry = new THREE.BufferGeometry();
-				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
-				var haveVertexColors = Validator.isValid( payload.colors );
-				if ( haveVertexColors ) {
-
-					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.colors ), 3 ) );
-
-				}
-				if ( Validator.isValid( payload.normals ) ) {
-
-					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.normals ), 3 ) );
-
-				} else {
-
-					bufferGeometry.computeVertexNormals();
-
-				}
-				if ( Validator.isValid( payload.uvs ) ) {
-
-					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
-
-				}
-
-				var materialDescriptions = payload.materialDescriptions;
-				var materialDescription;
-				var material;
-				var materialName;
-				var createMultiMaterial = payload.multiMaterial;
-				var multiMaterials = [];
-
-				var key;
-				for ( key in materialDescriptions ) {
-
-					materialDescription = materialDescriptions[ key ];
-					material = this.materials[ materialDescription.name ];
-					material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
-					if ( ! material ) material = this.materials[ 'defaultMaterial' ];
-
-					if ( materialDescription.default ) {
-
-						material = this.materials[ 'defaultMaterial' ];
-
-					} else if ( materialDescription.flat ) {
-
-						materialName = material.name + '_flat';
-						var materialClone = this.materials[ materialName ];
-						if ( ! materialClone ) {
-
-							materialClone = material.clone();
-							materialClone.name = materialName;
-							materialClone.shading = THREE.FlatShading;
-							this.materials[ materialName ] = name;
-
-						}
-
-					}
-
-					if ( materialDescription.vertexColors ) material.vertexColors = THREE.VertexColors;
-					if ( createMultiMaterial ) multiMaterials.push( material );
-
-				}
-				if ( createMultiMaterial ) {
-
-					material = multiMaterials;
-					var materialGroups = payload.materialGroups;
-					var materialGroup;
-					for ( key in materialGroups ) {
-
-						materialGroup = materialGroups[ key ];
-						bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
-
-					}
-
-				}
-
-				var meshes = this.processMeshLoaded( this.callbacks.meshLoaded, meshName, bufferGeometry, material );
-				var mesh;
-				if ( meshes.length > 0 ) {
-
-					var addedMeshCount = 0;
-					for ( var i in meshes ) {
-
-						mesh = meshes[ i ];
-						if ( this.streamMeshes ) {
-
-							this.sceneGraphBaseNode.add( mesh );
-
-						} else {
-
-							this.meshStore.push( mesh );
-
-						}
-						addedMeshCount++;
-
-					}
-
-					this._announceProgress( 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.counter + '): ' + meshName );
-					this.counter++;
-
-				} else {
-
-					this._announceProgress(  'Not adding mesh: ' + meshName );
-
-				}
-				break;
-
-			case 'complete':
-
-				if ( ! this.streamMeshes ) {
-
-					for ( var meshStoreKey in this.meshStore ) {
-
-						if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
-
-					}
-
-				}
-
-				console.timeEnd( 'WWOBJLoader2' );
-				if ( Validator.isValid( payload.msg ) ) {
-
-					this._announceProgress( payload.msg );
-
-				} else {
-
-					this._announceProgress( '' );
-
-				}
-
-				this._finalize( 'complete' );
-				break;
-
-			case 'report_progress':
-				this._announceProgress( '', payload.output );
-				break;
-
-			default:
-				console.error( 'Received unknown command: ' + payload.cmd );
-				break;
 
 		}
 	};
