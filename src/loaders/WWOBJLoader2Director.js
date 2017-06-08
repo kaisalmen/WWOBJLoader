@@ -187,15 +187,16 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		webWorker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
 
+		var wwSupport = webWorker.wwSupport;
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( Validator.isValid( this.workerDescription.codeBuffer ) ) {
 
-			webWorker.wwSupport.workerCode = webWorker._buildWebWorkerCode( webWorker.wwSupport.buildObject, webWorker.wwSupport.buildSingelton, this.workerDescription.codeBuffer );
+			wwSupport.workerCode = webWorker._buildWebWorkerCode( wwSupport._buildObject, wwSupport._buildSingelton, this.workerDescription.codeBuffer );
 
 		} else {
 
-			webWorker.wwSupport.workerCode = webWorker._buildWebWorkerCode( webWorker.wwSupport.buildObject, webWorker.wwSupport.buildSingelton );
-			this.workerDescription.codeBuffer = webWorker.wwSupport.workerCode;
+			wwSupport.workerCode = webWorker._buildWebWorkerCode( wwSupport._buildObject, wwSupport._buildSingelton );
+			this.workerDescription.codeBuffer = wwSupport.workerCode;
 
 		}
 

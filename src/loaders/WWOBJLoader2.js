@@ -2,7 +2,13 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.WWSupport = (function () {
 
+	var Validator = THREE.OBJLoader2.Validator;
+
 	function WWSupport() {
+		this._init();
+	}
+
+	WWSupport.prototype._init = function () {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
@@ -10,13 +16,30 @@ THREE.OBJLoader2.WWSupport = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
-	}
-
-	WWSupport.prototype.init = function () {
-
 	};
 
-	WWSupport.prototype.buildObject = function ( fullName, object ) {
+	WWSupport.prototype._validate = function ( functionCodeBuilder, functionReceiveWorkerMessage ) {
+		if ( ! Validator.isValid( this.worker ) ) {
+
+			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton );
+			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
+			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+			this.worker.addEventListener( 'message', functionReceiveWorkerMessage, false );
+
+		}
+	};
+
+	WWSupport.prototype.isValid = function () {
+		return Validator.isValid( this.worker );
+	};
+
+	WWSupport.prototype._terminate = function () {
+		this.worker.terminate();
+		this.worker = null;
+		this.workerCode = null;
+	};
+
+	WWSupport.prototype._buildObject = function ( fullName, object ) {
 		var objectString = fullName + ' = {\n';
 		var part;
 		for ( var name in object ) {
@@ -48,7 +71,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		return objectString;
 	};
 
-	WWSupport.prototype.buildSingelton = function ( fullName, internalName, object ) {
+	WWSupport.prototype._buildSingelton = function ( fullName, internalName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
 
@@ -71,10 +94,8 @@ THREE.OBJLoader2.WWSupport = (function () {
 		return objectString;
 	};
 
-	WWSupport.prototype.terminate = function () {
-		this.worker.terminate();
-		this.worker = null;
-		this.workerCode = null;
+	WWSupport.prototype.postMessage = function ( messageObject ) {
+		this.worker.postMessage( messageObject );
 	};
 
 	return WWSupport;
@@ -166,19 +187,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		if ( ! Validator.isValid( this.worker ) ) {
 
-			this.wwSupport.workerCode = this._buildWebWorkerCode( this.wwSupport.buildObject, this.wwSupport.buildSingelton );
-			var blob = new Blob( [ this.wwSupport.workerCode ], { type: 'text/plain' } );
-			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-
-			var scope = this;
-			var scopeFunction = function ( e ) {
-				scope._receiveWorkerMessage( e );
-			};
-			this.worker.addEventListener( 'message', scopeFunction, false );
-
-		}
+		var scope = this;
+		var scopeFunction = function ( e ) {
+			scope._receiveWorkerMessage( e );
+		};
+		this.wwSupport._validate( this._buildWebWorkerCode, scopeFunction );
 
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
@@ -232,7 +246,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				throw 'Provided input is not of type arraybuffer! Aborting...';
 			}
 
-			this.worker.postMessage( {
+			this.wwSupport.postMessage( {
 				cmd: 'init',
 				debug: this.debug,
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
@@ -248,7 +262,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				throw 'Provided file is not properly defined! Aborting...';
 			}
 
-			this.worker.postMessage( {
+			this.wwSupport.postMessage( {
 				cmd: 'init',
 				debug: this.debug,
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
@@ -291,10 +305,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 
 			}
-			scope.worker.postMessage( {
-				cmd: 'setMaterials',
-				materialNames: materialNames
-			} );
+			scope.wwSupport.postMessage(
+				{
+					cmd: 'setMaterials',
+					materialNames: materialNames
+				}
+			);
 
 			var materialsFromCallback;
 			var callbackMaterialsLoaded;
@@ -307,10 +323,13 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			}
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
 
-				scope.worker.postMessage({
-					cmd: 'run',
-					objAsArrayBuffer: scope.objAsArrayBuffer
-				}, [ scope.objAsArrayBuffer.buffer ] );
+				scope.wwSupport.postMessage(
+					{
+						cmd: 'run',
+						objAsArrayBuffer: scope.objAsArrayBuffer
+					},
+					[ scope.objAsArrayBuffer.buffer ]
+				);
 
 			} else {
 
@@ -321,10 +340,13 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					scope._announceProgress( 'Running web worker!' );
 					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
-					scope.worker.postMessage( {
-						cmd: 'run',
-						objAsArrayBuffer: scope.objAsArrayBuffer
-					}, [ scope.objAsArrayBuffer.buffer ] );
+					scope.wwSupport.postMessage(
+						{
+							cmd: 'run',
+							objAsArrayBuffer: scope.objAsArrayBuffer
+						},
+						[ scope.objAsArrayBuffer.buffer ]
+					);
 
 				};
 
@@ -537,11 +559,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._terminate = function () {
-		if ( Validator.isValid( this.worker ) ) {
+		if ( this.wwSupport.isValid() ) {
 
 			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
-			this.wwSupport.terminate();
+			this.wwSupport._terminate();
 			this._finalize( 'terminate' );
 
 		}
