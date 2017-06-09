@@ -2,6 +2,8 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.WWMeshProvider = (function () {
 
+	var WW_MESH_PROVIDER_VERSION = '1.0.0';
+
 	var Validator = THREE.OBJLoader2.Validator;
 
 	function WWMeshProvider() {
@@ -9,6 +11,8 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 	}
 
 	WWMeshProvider.prototype._init = function () {
+		console.log( "Using THREE.OBJLoader2.WWMeshProvider version: " + WW_MESH_PROVIDER_VERSION );
+
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
@@ -33,10 +37,10 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		this.counter = 0;
 	};
 
-	WWMeshProvider.prototype._validate = function ( functionCodeBuilder ) {
+	WWMeshProvider.prototype._validate = function ( functionCodeBuilder, existingWorkerCode ) {
 		if ( ! Validator.isValid( this.worker ) ) {
 
-			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton );
+			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton, existingWorkerCode );
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
 
@@ -66,9 +70,9 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 	};
 
 	WWMeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
-		this.callbacks.announceProgress =Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( reason ) {};
+		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( baseText, text ) { console.log( baseText, text ); };
 		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
-		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( baseText, text ) {};
+		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( reason ) {};
 	};
 
 	WWMeshProvider.prototype._terminate = function () {
@@ -146,13 +150,12 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		this.worker.postMessage( messageObject );
 	};
 
-	WWMeshProvider.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes, messageObject ) {
+	WWMeshProvider.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes ) {
 		this.running = true;
 		this.sceneGraphBaseNode = sceneGraphBaseNode;
 		this.streamMeshes = streamMeshes;
 
 		if ( ! this.streamMeshes ) this.meshStore = [];
-		this.worker.postMessage( messageObject );
 	};
 
 	WWMeshProvider.prototype._receiveWorkerMessage = function ( event ) {
@@ -325,7 +328,6 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 
 				}
 
-				console.timeEnd( 'WWOBJLoader2' );
 				if ( Validator.isValid( payload.msg ) ) {
 
 					this.callbacks.announceProgress( payload.msg );
@@ -518,7 +520,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			scope._announceProgress( baseText, text );
 		};
 		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
-		this.wwMeshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes, messageObject );
+		this.wwMeshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
+		this.wwMeshProvider.postMessage( messageObject );
 	};
 
 	/**
@@ -684,7 +687,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.fileLoader = null;
 			this.mtlLoader = null;
 		}
+
 		this.validated = false;
+		console.timeEnd( 'WWOBJLoader2' );
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
