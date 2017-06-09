@@ -49,7 +49,8 @@ var MeshSpray = (function () {
 		this.wwMeshProvider.postMessage(
 			{
 				cmd: 'run',
-				quantity: 10
+				quantity: 1000,
+				dimension: 500
 			}
 		);
 	};
@@ -94,7 +95,7 @@ var MeshSpray = (function () {
 				this.cmdState = 'run';
 
 				for ( var i = 0; i < payload.quantity; i++ ) {
-					this.buildMesh();
+					this.buildMesh( payload.dimension );
 				}
 
 				this.cmdState = 'complete';
@@ -104,9 +105,7 @@ var MeshSpray = (function () {
 				} );
 			};
 
-			WWMeshSpray.prototype.buildMesh = function () {
-				if ( this.debug ) console.log( 'OBJLoader.buildMesh:\nInput object no.: ' + inputObjectCount );
-
+			WWMeshSpray.prototype.buildMesh = function ( dimension ) {
 				var absoluteVertexCount = 9;
 				var absoluteColorCount = 0;
 				var absoluteNormalCount = 0;
@@ -136,6 +135,9 @@ var MeshSpray = (function () {
 				materialDescriptions.push( materialDescription );
 
 				var vertices = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
+				for ( var i = 0; i < vertices.length; i++ ) {
+					vertices[ i ] = vertices[ i ] * Math.random() * dimension;
+				}
 				vertexFA.set( vertices, 0 );
 
 				if ( colorFA ) {
