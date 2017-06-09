@@ -188,16 +188,16 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		webWorker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
 
-		var wwSupport = webWorker.wwSupport;
+		var wwMeshProvider = webWorker.wwMeshProvider;
 		// Ensure code string is built once and then it is just passed on to every new instance
 		if ( Validator.isValid( this.workerDescription.codeBuffer ) ) {
 
-			wwSupport.workerCode = webWorker._buildWebWorkerCode( wwSupport._buildObject, wwSupport._buildSingelton, this.workerDescription.codeBuffer );
+			wwMeshProvider.workerCode = webWorker._buildWebWorkerCode( wwMeshProvider._buildObject, wwMeshProvider._buildSingelton, this.workerDescription.codeBuffer );
 
 		} else {
 
-			wwSupport.workerCode = webWorker._buildWebWorkerCode( wwSupport._buildObject, wwSupport._buildSingelton );
-			this.workerDescription.codeBuffer = wwSupport.workerCode;
+			wwMeshProvider.workerCode = webWorker._buildWebWorkerCode( wwMeshProvider._buildObject, wwMeshProvider._buildSingelton );
+			this.workerDescription.codeBuffer = wwMeshProvider.workerCode;
 
 		}
 
@@ -217,7 +217,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			webWorker = this.workerDescription.webWorkers[ i ];
 			webWorker.setRequestTerminate( true );
 
-			if ( ! webWorker.wwSupport.running ) {
+			if ( ! webWorker.wwMeshProvider.running ) {
 				console.log( 'Triggered finalize with "termiante" directly.' );
 				webWorker._finalize( 'terminate' );
 			}

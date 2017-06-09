@@ -1,14 +1,14 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
-THREE.OBJLoader2.WWSupport = (function () {
+THREE.OBJLoader2.WWMeshProvider = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	function WWSupport() {
+	function WWMeshProvider() {
 		this._init();
 	}
 
-	WWSupport.prototype._init = function () {
+	WWMeshProvider.prototype._init = function () {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
@@ -33,7 +33,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.counter = 0;
 	};
 
-	WWSupport.prototype._validate = function ( functionCodeBuilder ) {
+	WWMeshProvider.prototype._validate = function ( functionCodeBuilder ) {
 		if ( ! Validator.isValid( this.worker ) ) {
 
 			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton );
@@ -65,13 +65,13 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.counter = 0;
 	};
 
-	WWSupport.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
+	WWMeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
 		this.callbacks.announceProgress =Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( reason ) {};
 		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
 		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( baseText, text ) {};
 	};
 
-	WWSupport.prototype._terminate = function () {
+	WWMeshProvider.prototype._terminate = function () {
 		if ( Validator.isValid( this.worker ) ) {
 			this.worker.terminate();
 		}
@@ -79,7 +79,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.workerCode = null;
 	};
 
-	WWSupport.prototype.addMaterials = function ( materials ) {
+	WWMeshProvider.prototype.addMaterials = function ( materials ) {
 		if ( Validator.isValid( materials ) ) {
 			for ( var name in materials ) {
 				this.materials[ name ] = materials[ name ];
@@ -87,7 +87,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		}
 	};
 
-	WWSupport.prototype._buildObject = function ( fullName, object ) {
+	WWMeshProvider.prototype._buildObject = function ( fullName, object ) {
 		var objectString = fullName + ' = {\n';
 		var part;
 		for ( var name in object ) {
@@ -119,7 +119,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		return objectString;
 	};
 
-	WWSupport.prototype._buildSingelton = function ( fullName, internalName, object ) {
+	WWMeshProvider.prototype._buildSingelton = function ( fullName, internalName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
 
@@ -142,11 +142,11 @@ THREE.OBJLoader2.WWSupport = (function () {
 		return objectString;
 	};
 
-	WWSupport.prototype.postMessage = function ( messageObject ) {
+	WWMeshProvider.prototype.postMessage = function ( messageObject ) {
 		this.worker.postMessage( messageObject );
 	};
 
-	WWSupport.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes, messageObject ) {
+	WWMeshProvider.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes, messageObject ) {
 		this.running = true;
 		this.sceneGraphBaseNode = sceneGraphBaseNode;
 		this.streamMeshes = streamMeshes;
@@ -155,7 +155,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.worker.postMessage( messageObject );
 	};
 
-	WWSupport.prototype._receiveWorkerMessage = function ( event ) {
+	WWMeshProvider.prototype._receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -303,7 +303,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 
 					}
 
-					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.globalObjectCount + '): ' + meshName );
+					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
 					this.counter++;
 
 				} else {
@@ -350,12 +350,12 @@ THREE.OBJLoader2.WWSupport = (function () {
 		}
 	};
 
-	WWSupport.prototype._completedeRun = function () {
+	WWMeshProvider.prototype._completedeRun = function () {
 		this.running = false;
 		this.callbacks.completedLoading( 'complete' );
 	};
 
-	return WWSupport;
+	return WWMeshProvider;
 })();
 
 /**
@@ -381,7 +381,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		THREE.OBJLoader2.Commons.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		this.wwSupport = new THREE.OBJLoader2.WWSupport();
+		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
 
 		this.instanceNo = 0;
 		this.debug = false;
@@ -440,7 +440,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.wwSupport._validate( this._buildWebWorkerCode );
+		this.wwMeshProvider._validate( this._buildWebWorkerCode );
 
 		this.modelName = '';
 		this.validated = true;
@@ -517,8 +517,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope._announceProgress( baseText, text );
 		};
-		this.wwSupport.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
-		this.wwSupport.prepareRun( params.sceneGraphBaseNode, params.streamMeshes, messageObject );
+		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
+		this.wwMeshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes, messageObject );
 	};
 
 	/**
@@ -547,8 +547,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			}
 
-			scope.wwSupport.addMaterials( scope.materials );
-			scope.wwSupport.postMessage(
+			scope.wwMeshProvider.addMaterials( scope.materials );
+			scope.wwMeshProvider.postMessage(
 				{
 					cmd: 'setMaterials',
 					materialNames: materialNames
@@ -566,7 +566,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			}
 			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
 
-				scope.wwSupport.postMessage(
+				scope.wwMeshProvider.postMessage(
 					{
 						cmd: 'run',
 						objAsArrayBuffer: scope.objAsArrayBuffer
@@ -583,7 +583,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					scope._announceProgress( 'Running web worker!' );
 					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
-					scope.wwSupport.postMessage(
+					scope.wwMeshProvider.postMessage(
 						{
 							cmd: 'run',
 							objAsArrayBuffer: scope.objAsArrayBuffer
@@ -675,11 +675,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 		if ( reason === 'terminate' ) {
 
-			if ( this.wwSupport.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+			if ( this.wwMeshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
 			console.log( 'Finalize is complete. Terminating application on request!' );
 
-			this.wwSupport._terminate();
+			this.wwMeshProvider._terminate();
 
 			this.fileLoader = null;
 			this.mtlLoader = null;
