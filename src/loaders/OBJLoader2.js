@@ -124,48 +124,6 @@ THREE.OBJLoader2.Commons = (function () {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 	};
 
-	Commons.prototype.processMeshLoaded = function ( callbacks, meshName, bufferGeometry, material ) {
-		var callbackMeshLoaded;
-		var callbackMeshLoadedResult;
-		var meshes = [];
-		var mesh;
-		for ( var index in callbacks ) {
-
-			callbackMeshLoaded = callbacks[ index ];
-			callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
-
-			if ( Validator.isValid( callbackMeshLoadedResult ) ) {
-
-				if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
-
-				if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
-
-					for ( var i in callbackMeshLoadedResult.meshes ) {
-
-						meshes.push( callbackMeshLoadedResult.meshes[ i ] );
-					}
-
-				} else {
-
-					mesh = new THREE.Mesh( bufferGeometry, material );
-					mesh.name = meshName;
-					meshes.push( mesh );
-
-				}
-
-			} else {
-
-				mesh = new THREE.Mesh( bufferGeometry, material );
-				mesh.name = meshName;
-				meshes.push( mesh );
-
-			}
-
-		}
-
-		return meshes;
-	};
-
 	return Commons;
 })();
 
@@ -193,7 +151,7 @@ THREE.OBJLoader2 = (function () {
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 
-		this.meshCreator = new MeshCreator( this.processMeshLoaded, this.callbacks.meshLoaded );
+		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
 		var scope = this;
 		var announceProgressScoped = function ( message ) {
 			scope._announceProgress( message );
@@ -1055,7 +1013,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator( callbackProcessMeshLoaded, callbacksMeshLoaded ) {
+		function MeshCreator( callbacksMeshLoaded ) {
 			this.sceneGraphBaseNode = null;
 			this.materials = null;
 			this.debug = false;
@@ -1063,8 +1021,9 @@ THREE.OBJLoader2 = (function () {
 
 			this.validated = false;
 
-			this.callbackProcessMeshLoaded = callbackProcessMeshLoaded;
-			this.callbacksMeshLoaded = callbacksMeshLoaded;
+			this.callbacks = {
+				meshLoaded: callbacksMeshLoaded
+			};
 		}
 
 		MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
@@ -1255,21 +1214,67 @@ THREE.OBJLoader2 = (function () {
 			if ( createMultiMaterial ) material = materials;
 
 			var meshName = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
-			var meshes = this.callbackProcessMeshLoaded( this.callbacksMeshLoaded, meshName, bufferGeometry, material );
+			var meshes = [];
 			var mesh;
+			if ( this.callbacks.meshLoaded.length > 0 ) {
+
+				var callbackMeshLoaded;
+				var callbackMeshLoadedResult;
+				for ( var index in this.callbacks.meshLoaded ) {
+
+					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
+					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+
+					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+
+						if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
+
+						if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
+
+							for ( var i in callbackMeshLoadedResult.meshes ) {
+
+								meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+							}
+
+						} else {
+
+							mesh = new THREE.Mesh( bufferGeometry, material );
+							mesh.name = meshName;
+							meshes.push( mesh );
+
+						}
+
+					} else {
+
+						mesh = new THREE.Mesh( bufferGeometry, material );
+						mesh.name = meshName;
+						meshes.push( mesh );
+
+					}
+
+				}
+
+			} else {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.name = meshName;
+				meshes.push( mesh );
+
+			}
+
 			var message;
 			if ( meshes.length > 0 ) {
 
-				var addedMeshCount = 0;
+				var meshNames = [];
 				for ( var i in meshes ) {
 
 					mesh = meshes[ i ];
 					this.sceneGraphBaseNode.add( mesh );
-					addedMeshCount++;
+					meshNames[ i ] = mesh.name;
 
 				}
 
-				message = 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.globalObjectCount + '): ' + meshName;
+				message = 'Adding multiple mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.globalObjectCount + '): ' + meshName;
 				this.globalObjectCount++;
 
 			} else {
@@ -1301,7 +1306,7 @@ THREE.OBJLoader2 = (function () {
 	})();
 
 	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
-		var workerCode = '';
+		var workerCode = Validator.isValid( existingWorkerCode ) ? existingWorkerCode : '';
 		workerCode += funcBuildObject( 'Consts', Consts );
 		workerCode += funcBuildObject( 'Validator', Validator );
 		workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );

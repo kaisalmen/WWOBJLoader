@@ -24,12 +24,12 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.materials = [];
 
 		this.callbacks = {
-			announceProgress: null,
-			processMeshLoaded: null,
-			meshLoaded: null,
-			complete: null
+			announceProgress: function ( reason ) {},
+			meshLoaded: [],
+			completedLoading: function ( baseText, text ) {}
 		};
 
+		this.running = false;
 		this.counter = 0;
 	};
 
@@ -65,14 +65,26 @@ THREE.OBJLoader2.WWSupport = (function () {
 		this.counter = 0;
 	};
 
-	WWSupport.prototype.isValid = function () {
-		return Validator.isValid( this.worker );
+	WWSupport.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
+		this.callbacks.announceProgress =Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( reason ) {};
+		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
+		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( baseText, text ) {};
 	};
 
 	WWSupport.prototype._terminate = function () {
-		this.worker.terminate();
+		if ( Validator.isValid( this.worker ) ) {
+			this.worker.terminate();
+		}
 		this.worker = null;
 		this.workerCode = null;
+	};
+
+	WWSupport.prototype.addMaterials = function ( materials ) {
+		if ( Validator.isValid( materials ) ) {
+			for ( var name in materials ) {
+				this.materials[ name ] = materials[ name ];
+			}
+		}
 	};
 
 	WWSupport.prototype._buildObject = function ( fullName, object ) {
@@ -135,6 +147,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 	};
 
 	WWSupport.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes, messageObject ) {
+		this.running = true;
 		this.sceneGraphBaseNode = sceneGraphBaseNode;
 		this.streamMeshes = streamMeshes;
 
@@ -224,13 +237,56 @@ THREE.OBJLoader2.WWSupport = (function () {
 					}
 
 				}
-
-
-				var meshes = this.callbacks.processMeshLoaded( this.callbacks.meshLoaded, meshName, bufferGeometry, material );
+				var callbackMeshLoaded;
+				var callbackMeshLoadedResult;
+				var meshes = [];
 				var mesh;
+				if ( this.callbacks.meshLoaded.length > 0 ) {
+
+					for ( var index in this.callbacks.meshLoaded ) {
+
+						callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
+						callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+
+						if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+
+							if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
+
+							if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
+
+								for ( var i in callbackMeshLoadedResult.meshes ) {
+
+									meshes.push( callbackMeshLoadedResult.meshes[ i ] );
+								}
+
+							} else {
+
+								mesh = new THREE.Mesh( bufferGeometry, material );
+								mesh.name = meshName;
+								meshes.push( mesh );
+
+							}
+
+						} else {
+
+							mesh = new THREE.Mesh( bufferGeometry, material );
+							mesh.name = meshName;
+							meshes.push( mesh );
+
+						}
+
+					}
+
+				} else {
+
+					mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+					meshes.push( mesh );
+
+				}
 				if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
 
-					var addedMeshCount = 0;
+					var meshNames = [];
 					for ( var i in meshes ) {
 
 						mesh = meshes[ i ];
@@ -243,11 +299,11 @@ THREE.OBJLoader2.WWSupport = (function () {
 							this.meshStore.push( mesh );
 
 						}
-						addedMeshCount++;
+						meshNames[ i ] = mesh.name;
 
 					}
 
-					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + addedMeshCount + ') from input mesh (' + this.counter + '): ' + meshName );
+					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.globalObjectCount + '): ' + meshName );
 					this.counter++;
 
 				} else {
@@ -280,7 +336,7 @@ THREE.OBJLoader2.WWSupport = (function () {
 
 				}
 
-				this.callbacks.complete( 'complete' );
+				this._completedeRun();
 				break;
 
 			case 'report_progress':
@@ -292,6 +348,11 @@ THREE.OBJLoader2.WWSupport = (function () {
 				break;
 
 		}
+	};
+
+	WWSupport.prototype._completedeRun = function () {
+		this.running = false;
+		this.callbacks.completedLoading( 'complete' );
 	};
 
 	return WWSupport;
@@ -322,24 +383,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.wwSupport = new THREE.OBJLoader2.WWSupport();
 
-		var scope = this;
-		this.wwSupport.callbacks.processMeshLoaded = this.processMeshLoaded;
-		this.wwSupport.callbacks.meshLoaded = this.callbacks.meshLoaded;
-		var scopeFuncComplete = function ( reason, requestTerminate ) {
-			scope._finalize( reason, requestTerminate );
-		};
-		this.wwSupport.callbacks.complete = scopeFuncComplete;
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope._announceProgress( baseText, text );
-		};
-		this.wwSupport.callbacks.announceProgress = scopeFuncAnnounce;
-
 		this.instanceNo = 0;
 		this.debug = false;
 
 		this.modelName = '';
 		this.validated = false;
-		this.running = false;
 		this.requestTerminate = false;
 
 		this.manager = THREE.DefaultLoadingManager;
@@ -396,7 +444,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.modelName = '';
 		this.validated = true;
-		this.running = true;
 		this.requestTerminate = false;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
@@ -463,6 +510,14 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.setRequestTerminate( params.requestTerminate );
 		this.pathTexture = params.pathTexture;
 
+		var scope = this;
+		var scopeFuncComplete = function ( reason ) {
+			scope._finalize( reason );
+		};
+		var scopeFuncAnnounce = function ( baseText, text ) {
+			scope._announceProgress( baseText, text );
+		};
+		this.wwSupport.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
 		this.wwSupport.prepareRun( params.sceneGraphBaseNode, params.streamMeshes, messageObject );
 	};
 
@@ -492,7 +547,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			}
 
-			scope.wwSupport.materials = scope.materials;
+			scope.wwSupport.addMaterials( scope.materials );
 			scope.wwSupport.postMessage(
 				{
 					cmd: 'setMaterials',
@@ -595,21 +650,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 	};
 
-	WWOBJLoader2.prototype._terminate = function () {
-		if ( this.wwSupport.isValid() ) {
-
-			if ( this.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
-
-			this.wwSupport._terminate();
-			this._finalize( 'terminate' );
-
-		}
-		this.fileLoader = null;
-		this.mtlLoader = null;
-	};
-
-	WWOBJLoader2.prototype._finalize = function ( reason, requestTerminate ) {
-		this.running = false;
+	WWOBJLoader2.prototype._finalize = function ( reason ) {
 		var index;
 		var callback;
 
@@ -618,7 +659,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.completedLoading ) {
 
 				callback = this.callbacks.completedLoading[ index ];
-				callback( this.modelName, this.instanceNo, this.requestTerminate );
+				callback( this.modelName, this.instanceNo );
 
 			}
 
@@ -627,18 +668,23 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.errorWhileLoading ) {
 
 				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.modelName, this.instanceNo, this.requestTerminate );
+				callback( this.modelName, this.instanceNo );
 
 			}
 
 		}
-		this.validated = false;
+		if ( reason === 'terminate' ) {
 
-		this.setRequestTerminate( requestTerminate );
+			if ( this.wwSupport.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
-		if ( this.requestTerminate ) {
-			this._terminate();
+			console.log( 'Finalize is complete. Terminating application on request!' );
+
+			this.wwSupport._terminate();
+
+			this.fileLoader = null;
+			this.mtlLoader = null;
 		}
+		this.validated = false;
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {

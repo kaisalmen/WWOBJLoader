@@ -100,6 +100,7 @@ var OBJLoader2Example = (function () {
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				mesh.name = name;
 				var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+				helper.name = 'VertexNormalsHelper';
 
 				override.addMesh( mesh );
 				override.addMesh( helper );

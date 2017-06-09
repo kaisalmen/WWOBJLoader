@@ -288,6 +288,7 @@ var WWParallels = (function () {
 
 	WWParallels.prototype.terminateManager = function () {
 		this.wwDirector.deregister();
+		this.running = false;
 	};
 
 	return WWParallels;

@@ -160,19 +160,20 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		}
 
 		var scope = this;
-		var directorCompletedLoading = function ( modelName, instanceNo, requestTerminate ) {
+		var directorCompletedLoading = function ( modelName, instanceNo ) {
 			scope.objectsCompleted++;
-			if ( ! requestTerminate ) {
 
-				var worker = scope.workerDescription.webWorkers[ instanceNo ];
-				var runParams = scope.instructionQueue[ 0 ];
-				if ( Validator.isValid( runParams ) ) {
+			var worker = scope.workerDescription.webWorkers[ instanceNo ];
+			var runParams = scope.instructionQueue[ 0 ];
+			if ( Validator.isValid( runParams ) ) {
 
-					console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-					scope._kickWebWorkerRun( worker, runParams );
-					scope.instructionQueue.shift();
+				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
+				scope._kickWebWorkerRun( worker, runParams );
+				scope.instructionQueue.shift();
 
-				}
+			} else if ( scope.instructionQueue.length === 0 ) {
+
+				scope.deregister();
 
 			}
 		};
@@ -216,10 +217,16 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			webWorker = this.workerDescription.webWorkers[ i ];
 			webWorker.setRequestTerminate( true );
 
+			if ( ! webWorker.wwSupport.running ) {
+				console.log( 'Triggered finalize with "termiante" directly.' );
+				webWorker._finalize( 'terminate' );
+			}
+
 		}
 		this.workerDescription.globalCallbacks = {};
 		this.workerDescription.webWorkers = [];
 		this.workerDescription.codeBuffer = null;
+		this.instructionQueue = [];
 	};
 
 	return WWOBJLoader2Director;

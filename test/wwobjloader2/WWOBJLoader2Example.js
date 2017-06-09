@@ -121,7 +121,8 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
 		prepData.setSceneGraphBaseNode( this.pivot );
-		prepData.setStreamMeshes( this.streamMeshes );
+		prepData.setStreamMeshes( this.streamMeshes )
+		prepData.setRequestTerminate( true );
 		this.wwObjLoader2.prepareRun( prepData );
 		this.wwObjLoader2.run();
 	};
