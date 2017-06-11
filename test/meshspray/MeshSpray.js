@@ -49,8 +49,8 @@ var MeshSpray = (function () {
 		this.wwMeshProvider.postMessage(
 			{
 				cmd: 'run',
-				quantity: 1000,
-				dimension: 500
+				quantity: 50,
+				dimension: 10000
 			}
 		);
 	};
@@ -106,16 +106,6 @@ var MeshSpray = (function () {
 			};
 
 			WWMeshSpray.prototype.buildMesh = function ( dimension ) {
-				var absoluteVertexCount = 9;
-				var absoluteColorCount = 0;
-				var absoluteNormalCount = 0;
-				var absoluteUvCount = 0;
-
-				var vertexFA = new Float32Array( absoluteVertexCount );
-				var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
-				var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-				var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
-
 				var materialDescription;
 				var materialDescriptions = [];
 				var materialGroups = [];
@@ -134,27 +124,64 @@ var MeshSpray = (function () {
 				}
 				materialDescriptions.push( materialDescription );
 
-				var vertices = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
-				for ( var i = 0; i < vertices.length; i++ ) {
-					vertices[ i ] = vertices[ i ] * Math.random() * dimension;
+				var baseTriangle = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
+				var vertices = [];
+				var colors = [];
+				var normals = [];
+				var uvs = [];
+
+				var dimensionHalf = dimension / 2;
+				var fixedOffsetX;
+				var fixedOffsetY;
+				var fixedOffsetZ;
+				// complete triagle
+				var sizeVaring = 25 * Math.random();
+				// local coords offset
+				var localOffsetFactor = 25;
+
+				for ( var i = 0; i < 100000; i++ ) {
+					sizeVaring = 25 * Math.random();
+					fixedOffsetX = dimension * Math.random() - dimensionHalf;
+					fixedOffsetY = dimension * Math.random() - dimensionHalf;
+					fixedOffsetZ = dimension * Math.random() - dimensionHalf;
+					for ( var j = 0; j < baseTriangle.length; j += 3 ) {
+						vertices.push( baseTriangle[ j ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetX );
+						vertices.push( baseTriangle[ j + 1 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetY );
+						vertices.push( baseTriangle[ j + 2 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetZ );
+						colors.push( Math.random() );
+						colors.push( Math.random() );
+						colors.push( Math.random() );
+					}
 				}
+
+				var absoluteVertexCount = vertices.length;
+				var absoluteColorCount = colors.length;
+				var absoluteNormalCount = 0;
+				var absoluteUvCount = 0;
+
+				var vertexFA = new Float32Array( absoluteVertexCount );
+				var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
+				var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
+				var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+
 				vertexFA.set( vertices, 0 );
+				colorFA.set( colors, 0 );
 
 				if ( colorFA ) {
 
-					colorFA.set( rawObjectDescription.colors, 0 );
+					colorFA.set( colors, 0 );
 					materialDescription.vertexColors = true;
 
 				}
 
 				if ( normalFA ) {
 
-					normalFA.set( rawObjectDescription.normals, 0 );
+					normalFA.set( normals, 0 );
 
 				}
 				if ( uvFA ) {
 
-					uvFA.set( rawObjectDescription.uvs, 0 );
+					uvFA.set( uvs, 0 );
 
 				}
 
