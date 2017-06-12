@@ -37,7 +37,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		this.counter = 0;
 	};
 
-	WWMeshProvider.prototype._buildObject = function ( fullName, object ) {
+	var buildObject = function ( fullName, object ) {
 		var objectString = fullName + ' = {\n';
 		var part;
 		for ( var name in object ) {
@@ -69,7 +69,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		return objectString;
 	};
 
-	WWMeshProvider.prototype._buildSingelton = function ( fullName, internalName, object ) {
+	var buildSingelton = function ( fullName, internalName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
 
@@ -136,9 +136,9 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		if ( ! Validator.isValid( this.worker ) ) {
 
 			console.time( 'buildWebWorkerCode' );
-			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton, existingWorkerCode );
+			this.workerCode = functionCodeBuilder( buildObject, buildSingelton, existingWorkerCode );
 			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
-			this.workerCode += this._buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
+			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
 			this.workerCode += 'new WWRunner();\n\n';
 
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );

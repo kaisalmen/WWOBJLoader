@@ -23,8 +23,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		this.workerDescription = {
 			prototypeDef: THREE.OBJLoader2.WWOBJLoader2.prototype,
 			globalCallbacks: {},
-			webWorkers: [],
-			codeBuffer: null
+			webWorkers: []
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -188,19 +187,6 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		webWorker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
 
-		var wwMeshProvider = webWorker.wwMeshProvider;
-		// Ensure code string is built once and then it is just passed on to every new instance
-		if ( Validator.isValid( this.workerDescription.codeBuffer ) ) {
-
-			wwMeshProvider.workerCode = webWorker._buildWebWorkerCode( wwMeshProvider._buildObject, wwMeshProvider._buildSingelton, this.workerDescription.codeBuffer );
-
-		} else {
-
-			wwMeshProvider.workerCode = webWorker._buildWebWorkerCode( wwMeshProvider._buildObject, wwMeshProvider._buildSingelton );
-			this.workerDescription.codeBuffer = wwMeshProvider.workerCode;
-
-		}
-
 		webWorker.instanceNo = this.workerDescription.webWorkers.length;
 		this.workerDescription.webWorkers.push( webWorker );
 		return webWorker;
@@ -225,7 +211,6 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		}
 		this.workerDescription.globalCallbacks = {};
 		this.workerDescription.webWorkers = [];
-		this.workerDescription.codeBuffer = null;
 		this.instructionQueue = [];
 	};
 
