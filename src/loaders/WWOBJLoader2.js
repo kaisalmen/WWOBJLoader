@@ -2,7 +2,7 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.WWMeshProvider = (function () {
 
-	var WW_MESH_PROVIDER_VERSION = '1.0.0';
+	var WW_MESH_PROVIDER_VERSION = '1.0.0-dev';
 
 	var Validator = THREE.OBJLoader2.Validator;
 
@@ -35,60 +35,6 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 
 		this.running = false;
 		this.counter = 0;
-	};
-
-	WWMeshProvider.prototype._validate = function ( functionCodeBuilder, existingWorkerCode ) {
-		if ( ! Validator.isValid( this.worker ) ) {
-
-			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton, existingWorkerCode );
-			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
-			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-
-			var scope = this;
-			var scopeFunction = function ( e ) {
-				scope._receiveWorkerMessage( e );
-			};
-			this.worker.addEventListener( 'message', scopeFunction, false );
-
-		}
-
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
-		this.meshStore = [];
-
-		this.materials = [];
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		this.materials[ defaultMaterial.name ] = defaultMaterial;
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
-
-		this.counter = 0;
-	};
-
-	WWMeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
-		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( baseText, text ) { console.log( baseText, text ); };
-		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
-		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( reason ) {};
-	};
-
-	WWMeshProvider.prototype._terminate = function () {
-		if ( Validator.isValid( this.worker ) ) {
-			this.worker.terminate();
-		}
-		this.worker = null;
-		this.workerCode = null;
-	};
-
-	WWMeshProvider.prototype.addMaterials = function ( materials ) {
-		if ( Validator.isValid( materials ) ) {
-			for ( var name in materials ) {
-				this.materials[ name ] = materials[ name ];
-			}
-		}
 	};
 
 	WWMeshProvider.prototype._buildObject = function ( fullName, object ) {
@@ -144,6 +90,106 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		objectString += '})();\n\n';
 
 		return objectString;
+	};
+
+	var wwRunnerDef = (function () {
+
+		function WWRunner() {
+			self.addEventListener( 'message', this.runner, false );
+		}
+
+		WWRunner.prototype.runner = function ( event ) {
+			var payload = event.data;
+
+			console.log( 'Command state before: ' + WWImplRef.cmdState );
+
+			switch ( payload.cmd ) {
+				case 'init':
+
+					WWImplRef.init( payload );
+					break;
+
+				case 'setMaterials':
+
+					WWImplRef.setMaterials( payload );
+					break;
+
+				case 'run':
+
+					WWImplRef.run( payload );
+					break;
+
+				default:
+
+					console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
+					break;
+
+			}
+
+			console.log( 'Command state after: ' + WWImplRef.cmdState );
+		};
+
+		return WWRunner;
+	})();
+
+	WWMeshProvider.prototype._validate = function ( functionCodeBuilder, implClassName, existingWorkerCode ) {
+		if ( ! Validator.isValid( this.worker ) ) {
+
+			console.time( 'buildWebWorkerCode' );
+			this.workerCode = functionCodeBuilder( this._buildObject, this._buildSingelton, existingWorkerCode );
+			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
+			this.workerCode += this._buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
+			this.workerCode += 'new WWRunner();\n\n';
+
+			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
+			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+			console.timeEnd( 'buildWebWorkerCode' );
+
+			var scope = this;
+			var scopeFunction = function ( e ) {
+				scope._receiveWorkerMessage( e );
+			};
+			this.worker.addEventListener( 'message', scopeFunction, false );
+
+		}
+
+		this.sceneGraphBaseNode = null;
+		this.streamMeshes = true;
+		this.meshStore = [];
+
+		this.materials = [];
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
+
+		this.counter = 0;
+	};
+
+	WWMeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
+		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( baseText, text ) { console.log( baseText, text ); };
+		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
+		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( reason ) {};
+	};
+
+	WWMeshProvider.prototype._terminate = function () {
+		if ( Validator.isValid( this.worker ) ) {
+			this.worker.terminate();
+		}
+		this.worker = null;
+		this.workerCode = null;
+	};
+
+	WWMeshProvider.prototype.addMaterials = function ( materials ) {
+		if ( Validator.isValid( materials ) ) {
+			for ( var name in materials ) {
+				this.materials[ name ] = materials[ name ];
+			}
+		}
 	};
 
 	WWMeshProvider.prototype.postMessage = function ( messageObject ) {
@@ -442,7 +488,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.wwMeshProvider._validate( this._buildWebWorkerCode );
+		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
 		this.modelName = '';
 		this.validated = true;
@@ -696,7 +742,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var workerCode = existingWorkerCode;
 		if ( ! Validator.isValid( workerCode ) ) {
 
-			console.time( 'buildWebWorkerCode' );
 			var wwDef = (function () {
 
 				function WWOBJLoader() {
@@ -962,46 +1007,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				return WWMeshCreator;
 			})();
 
-			var wwObjLoaderRunnerDef = (function () {
-
-				function WWOBJLoaderRunner() {
-					self.addEventListener( 'message', this.runner, false );
-				}
-
-				WWOBJLoaderRunner.prototype.runner = function ( event ) {
-					var payload = event.data;
-
-					console.log( 'Command state before: ' + WWOBJLoaderRef.cmdState );
-
-					switch ( payload.cmd ) {
-						case 'init':
-
-							WWOBJLoaderRef.init( payload );
-							break;
-
-						case 'setMaterials':
-
-							WWOBJLoaderRef.setMaterials( payload );
-							break;
-
-						case 'run':
-
-							WWOBJLoaderRef.run( payload );
-							break;
-
-						default:
-
-							console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
-							break;
-
-					}
-
-					console.log( 'Command state after: ' + WWOBJLoaderRef.cmdState );
-				};
-
-				return WWOBJLoaderRunner;
-			})();
-
 			workerCode = '';
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
@@ -1013,11 +1018,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			// web worker construction
 			workerCode += funcBuildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
 			workerCode += funcBuildSingelton( 'WWMeshCreator', 'WWMeshCreator', wwMeshCreatorDef );
-			workerCode += 'WWOBJLoaderRef = new WWOBJLoader();\n\n';
-			workerCode += funcBuildSingelton( 'WWOBJLoaderRunner', 'WWOBJLoaderRunner', wwObjLoaderRunnerDef );
-			workerCode += 'new WWOBJLoaderRunner();\n\n';
 
-			console.timeEnd( 'buildWebWorkerCode' );
 		}
 
 		return workerCode;

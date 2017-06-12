@@ -14,7 +14,7 @@ var MeshSpray = (function () {
 	}
 
 	MeshSpray.prototype.prepareRun = function ( functionCodeBuilder, sceneGraphBaseNode, streamMeshes) {
-		this.wwMeshProvider._validate( functionCodeBuilder );
+		this.wwMeshProvider._validate( functionCodeBuilder, 'WWMeshSpray' );
 		console.time( 'MeshSpray' );
 
 		var scope = this;
@@ -64,7 +64,6 @@ var MeshSpray = (function () {
 		var workerCode = existingWorkerCode;
 		if ( Validator.isValid( workerCode ) ) return workerCode;
 
-		console.time( 'buildWebWorkerCode' );
 		var wwMeshSprayDef = (function () {
 
 			function WWMeshSpray() {
@@ -209,46 +208,6 @@ var MeshSpray = (function () {
 			return WWMeshSpray;
 		})();
 
-		var wwMeshSprayRunnerDef = (function () {
-
-			function WWMeshSprayRunner() {
-				self.addEventListener( 'message', this.runner, false );
-			}
-
-			WWMeshSprayRunner.prototype.runner = function ( event ) {
-				var payload = event.data;
-
-				console.log( 'Command state before: ' + WWMeshSprayRef.cmdState );
-
-				switch ( payload.cmd ) {
-					case 'init':
-
-						WWMeshSprayRef.init( payload );
-						break;
-
-					case 'setMaterials':
-
-						WWMeshSprayRef.setMaterials( payload );
-						break;
-
-					case 'run':
-
-						WWMeshSprayRef.run( payload );
-						break;
-
-					default:
-
-						console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
-						break;
-
-				}
-
-				console.log( 'Command state after: ' + WWMeshSprayRef.cmdState );
-			};
-
-			return WWMeshSprayRunner;
-		})();
-
 		workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by MeshSpray._buildWebWorkerCode\n';
@@ -257,11 +216,6 @@ var MeshSpray = (function () {
 		// web worker construction
 		workerCode += funcBuildObject( 'Validator', Validator );
 		workerCode += funcBuildSingelton( 'WWMeshSpray', 'WWMeshSpray', wwMeshSprayDef );
-		workerCode += 'WWMeshSprayRef = new WWMeshSpray();\n\n';
-		workerCode += funcBuildSingelton( 'WWMeshSprayRunner', 'WWMeshSprayRunner', wwMeshSprayRunnerDef );
-		workerCode += 'new WWMeshSprayRunner();\n\n';
-
-		console.timeEnd( 'buildWebWorkerCode' );
 
 		return workerCode;
 	};
