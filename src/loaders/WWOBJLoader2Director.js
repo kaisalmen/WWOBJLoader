@@ -15,15 +15,15 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 1024;
 
-	function WWOBJLoader2Director() {
+	function WWOBJLoader2Director( prototypeDef ) {
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
 		this.crossOrigin = null;
 
 		this.workerDescription = {
-			prototypeDef: THREE.OBJLoader2.WWOBJLoader2.prototype,
+			prototypeDef: Validator.verifyInput( prototypeDef, THREE.OBJLoader2.WWOBJLoader2.prototype ),
 			globalCallbacks: {},
-			webWorkers: []
+			workers: []
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -74,24 +74,25 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
 
-		var start = this.workerDescription.webWorkers.length;
+		var start = this.workerDescription.workers.length;
+		var worker;
+		var i;
 		if ( start < this.maxWebWorkers ) {
 
-			for ( i = start; i < this.maxWebWorkers; i ++ ) {
+			for ( i = start; i < this.maxWebWorkers; i++ ) {
 
-				webWorker = this._buildWebWorker();
-				this.workerDescription.webWorkers[ i ] = webWorker;
+				worker = this._buildWorker();
+				this.workerDescription.workers[ i ] = worker;
 
 			}
 
 		} else {
 
-			for ( var webWorker, i = start - 1; i >= this.maxWebWorkers; i-- ) {
+			for ( i = start - 1; i >= this.maxWebWorkers; i-- ) {
 
-				webWorker = this.workerDescription.webWorkers[ i ];
-				webWorker.setRequestTerminate( true );
-
-				this.workerDescription.webWorkers.pop();
+				worker = this.workerDescription.workers[ i ];
+				worker.setRequestTerminate( true );
+				this.workerDescription.workers.pop();
 
 			}
 
@@ -120,13 +121,13 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
 		for ( var i = 0; i < length; i++ ) {
 
-			this._kickWebWorkerRun( this.workerDescription.webWorkers[ i ], this.instructionQueue[ 0 ] );
+			this._kickWorkerRun( this.workerDescription.workers[ i ], this.instructionQueue[ 0 ] );
 			this.instructionQueue.shift();
 
 		}
 	};
 
-	WWOBJLoader2Director.prototype._kickWebWorkerRun = function( worker, runParams ) {
+	WWOBJLoader2Director.prototype._kickWorkerRun = function( worker, runParams ) {
 		worker.clearAllCallbacks();
 		var key;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
@@ -162,12 +163,12 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		var directorCompletedLoading = function ( modelName, instanceNo ) {
 			scope.objectsCompleted++;
 
-			var worker = scope.workerDescription.webWorkers[ instanceNo ];
+			var worker = scope.workerDescription.workers[ instanceNo ];
 			var runParams = scope.instructionQueue[ 0 ];
 			if ( Validator.isValid( runParams ) ) {
 
 				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-				scope._kickWebWorkerRun( worker, runParams );
+				scope._kickWorkerRun( worker, runParams );
 				scope.instructionQueue.shift();
 
 			} else if ( scope.instructionQueue.length === 0 ) {
@@ -182,14 +183,14 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		worker.run();
 	};
 
-	WWOBJLoader2Director.prototype._buildWebWorker = function () {
-		var webWorker = Object.create( this.workerDescription.prototypeDef );
-		webWorker._init();
-		if ( Validator.isValid( this.crossOrigin ) ) webWorker.setCrossOrigin( this.crossOrigin );
+	WWOBJLoader2Director.prototype._buildWorker = function () {
+		var worker = Object.create( this.workerDescription.prototypeDef );
+		worker._init();
+		if ( Validator.isValid( this.crossOrigin ) ) worker.setCrossOrigin( this.crossOrigin );
 
-		webWorker.instanceNo = this.workerDescription.webWorkers.length;
-		this.workerDescription.webWorkers.push( webWorker );
-		return webWorker;
+		worker.instanceNo = this.workerDescription.workers.length;
+		this.workerDescription.workers.push( worker );
+		return worker;
 	};
 
 	/**
@@ -198,19 +199,19 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	 */
 	WWOBJLoader2Director.prototype.deregister = function () {
 		console.log( 'WWOBJLoader2Director received the unregister call. Terminating all workers!' );
-		for ( var i = 0, webWorker, length = this.workerDescription.webWorkers.length; i < length; i++ ) {
+		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
 
-			webWorker = this.workerDescription.webWorkers[ i ];
-			webWorker.setRequestTerminate( true );
+			worker = this.workerDescription.workers[ i ];
+			worker.setRequestTerminate( true );
 
-			if ( ! webWorker.wwMeshProvider.running ) {
+			if ( ! worker.wwMeshProvider.running ) {
 				console.log( 'Triggered finalize with "termiante" directly.' );
-				webWorker._finalize( 'terminate' );
+				worker._finalize( 'terminate' );
 			}
 
 		}
 		this.workerDescription.globalCallbacks = {};
-		this.workerDescription.webWorkers = [];
+		this.workerDescription.workers = [];
 		this.instructionQueue = [];
 	};
 

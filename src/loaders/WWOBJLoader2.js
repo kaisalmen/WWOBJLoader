@@ -176,6 +176,10 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( reason ) {};
 	};
 
+	WWMeshProvider.prototype.clearAllCallbacks = function () {
+		this.setCallbacks();
+	};
+
 	WWMeshProvider.prototype._terminate = function () {
 		if ( Validator.isValid( this.worker ) ) {
 			this.worker.terminate();
@@ -1028,143 +1032,134 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 })();
 
+
+/**
+ * Base class for configuration of prepareRun when using {@link THREE.OBJLoader2.WWMeshProvider}.
+ * @class
+ */
+THREE.OBJLoader2.WWOBJLoader2.PrepDataBase = (function () {
+
+	var Validator = THREE.OBJLoader2.Validator;
+
+	function PrepDataBase() {
+		this.dataAvailable = false;
+		this.sceneGraphBaseNode = null;
+		this.streamMeshes = true;
+		this.materialPerSmoothingGroup = false;
+		this.requestTerminate = false;
+		this.callbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+	}
+
+	/**
+	 * {@link THREE.Object3D} where meshes will be attached.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataBase
+	 *
+	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
+	 */
+	PrepDataBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
+	};
+
+	/**
+	 * Singles meshes are directly integrated into scene when loaded or later.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} streamMeshes=true Default is true
+	 */
+	PrepDataBase.prototype.setStreamMeshes = function ( streamMeshes ) {
+		this.streamMeshes = streamMeshes !== false;
+	};
+
+	/**
+	 * Tells whether a material shall be created per smoothing group
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 */
+	PrepDataBase.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+	};
+
+	/**
+	 * Request termination of web worker and free local resources after execution.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} requestTerminate=false Default is false
+	 */
+	PrepDataBase.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataBase
+	 *
+	 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+	 */
+	PrepDataBase.prototype.getCallbacks = function () {
+		return this.callbacks;
+	};
+
+	return PrepDataBase;
+})();
+
 /**
  * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ from given ArrayBuffer and MTL from given String.
+ * @class
  *
  * @param {string} modelName Overall name of the model
  * @param {Uint8Array} objAsArrayBuffer OBJ file content as ArrayBuffer
  * @param {string} pathTexture Path to texture files
  * @param {string} mtlAsString MTL file content as string
- *
- * @returns {{modelName: string, dataAvailable: boolean, objAsArrayBuffer: null, pathTexture: null, mtlAsString: null, sceneGraphBaseNode: null, streamMeshes: boolean, requestTerminate: boolean}}
- * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = function ( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	return {
+	PrepDataArrayBuffer.prototype = Object.create( THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.prototype );
+	PrepDataArrayBuffer.prototype.constructor = PrepDataArrayBuffer;
 
-		/**
-		 * {@link THREE.Object3D} where meshes will be attached.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
-		 *
-		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
-		 */
-		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
-			this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
-		},
+	function PrepDataArrayBuffer( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
+		THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.call( this );
+		this.dataAvailable = true;
+		this.modelName = Validator.verifyInput( modelName, '' );
+		this.objAsArrayBuffer = Validator.verifyInput( objAsArrayBuffer, null );
+		this.pathTexture = Validator.verifyInput( pathTexture, null );
+		this.mtlAsString = Validator.verifyInput( mtlAsString, null );
+	}
 
-		/**
-		 * Singles meshes are directly integrated into scene when loaded or later.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
-		 *
-		 * @param {boolean} streamMeshes=true Default is true
-		 */
-		setStreamMeshes: function ( streamMeshes ) {
-			this.streamMeshes = streamMeshes !== false;
-		},
-
-		/**
-		 * Request termination of web worker and free local resources after execution.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
-		 *
-		 * @param {boolean} requestTerminate=false Default is false
-		 */
-		setRequestTerminate: function ( requestTerminate ) {
-			this.requestTerminate = requestTerminate === true;
-		},
-
-		/**
-		 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer
-		 *
-		 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
-		 */
-		getCallbacks: function () {
-			return this.callbacks;
-		},
-		modelName: Validator.verifyInput( modelName, '' ),
-		dataAvailable: true,
-		objAsArrayBuffer: Validator.verifyInput( objAsArrayBuffer, null ),
-		pathTexture: Validator.verifyInput( pathTexture, null ),
-		mtlAsString: Validator.verifyInput( mtlAsString, null ),
-		sceneGraphBaseNode: null,
-		streamMeshes: true,
-		requestTerminate: false,
-		callbacks: new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks()
-	};
-};
+	return PrepDataArrayBuffer;
+})();
 
 /**
  * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ and MTL from files.
+ * @class
  *
  * @param {string} modelName Overall name of the model
  * @param {string} pathObj Path to OBJ file
  * @param {string} fileObj OBJ file name
  * @param {string} pathTexture Path to texture files
  * @param {string} fileMtl MTL file name
- *
- * @returns {{modelName: string, dataAvailable: boolean, pathObj: null, fileObj: null, pathTexture: null, fileMtl: null, sceneGraphBaseNode: null, streamMeshes: boolean,  requestTerminate: boolean}}
- * @constructor
  */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = function ( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
+THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	return {
+	PrepDataFile.prototype = Object.create( THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.prototype );
+	PrepDataFile.prototype.constructor = PrepDataFile;
 
-		/**
-		 * {@link THREE.Object3D} where meshes will be attached.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
-		 *
-		 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
-		 */
-		setSceneGraphBaseNode: function ( sceneGraphBaseNode ) {
-			this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
-		},
+	function PrepDataFile( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
+		THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.call( this );
 
-		/**
-		 * Singles meshes are directly integrated into scene when loaded or later.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
-		 *
-		 * @param {boolean} streamMeshes=true Default is true
-		 */
-		setStreamMeshes: function ( streamMeshes ) {
-			this.streamMeshes = streamMeshes !== false;
-		},
+		this.modelName = Validator.verifyInput( modelName, '' );
+		this.pathObj = Validator.verifyInput( pathObj, null );
+		this.fileObj = Validator.verifyInput( fileObj, null );
+		this.pathTexture = Validator.verifyInput( pathTexture, null );
+		this.fileMtl = Validator.verifyInput( fileMtl, null );
+	}
 
-		/**
-		 * Request termination of web worker and free local resources after execution.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
-		 *
-		 * @param {boolean} requestTerminate=false Default is false
-		 */
-		setRequestTerminate: function ( requestTerminate ) {
-			this.requestTerminate = requestTerminate === true;
-		},
-
-		/**
-		 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataFile
-		 *
-		 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
-		 */
-		getCallbacks: function () {
-			return this.callbacks;
-		},
-		modelName: Validator.verifyInput( modelName, '' ),
-		dataAvailable: false,
-		pathObj: Validator.verifyInput( pathObj, null ),
-		fileObj: Validator.verifyInput( fileObj, null ),
-		pathTexture: Validator.verifyInput( pathTexture, null ),
-		fileMtl: Validator.verifyInput( fileMtl, null ),
-		sceneGraphBaseNode: null,
-		streamMeshes: true,
-		requestTerminate: false,
-		callbacks: new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks()
-	};
-};
+	return PrepDataFile;
+})();
 
 /**
  * Callbacks utilized by functions working with {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}

@@ -118,7 +118,7 @@ THREE.OBJLoader2.Commons = (function () {
 	 * Tells whether a material shall be created per smoothing group
 	 * @memberOf THREE.OBJLoader2.Commons
 	 *
-	 * @param {boolean} materialPerSmoothingGroup Create or not create a multi-material node per smoothing group
+	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
 	Commons.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;

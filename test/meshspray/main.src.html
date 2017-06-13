@@ -159,7 +159,10 @@
 			app.initPostGL();
 
 			var spray = new MeshSpray();
-			spray.prepareRun( spray._buildWebWorkerCode, app.pivot, true );
+			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataBase();
+			runParams.setSceneGraphBaseNode( app.pivot );
+			runParams.setStreamMeshes( true );
+			spray.prepareRun( runParams );
 			spray.run();
 
 			render();

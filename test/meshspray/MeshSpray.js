@@ -13,8 +13,8 @@ var MeshSpray = (function () {
 		this.materials = [];
 	}
 
-	MeshSpray.prototype.prepareRun = function ( functionCodeBuilder, sceneGraphBaseNode, streamMeshes) {
-		this.wwMeshProvider._validate( functionCodeBuilder, 'WWMeshSpray' );
+	MeshSpray.prototype.prepareRun = function ( runParams ) {
+		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 		console.time( 'MeshSpray' );
 
 		var scope = this;
@@ -25,7 +25,7 @@ var MeshSpray = (function () {
 			console.log( baseText, text );
 		};
 		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, undefined, scopeFuncComplete );
-		this.wwMeshProvider.prepareRun( sceneGraphBaseNode, streamMeshes );
+		this.wwMeshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
 		this.wwMeshProvider.postMessage( {
 			cmd: 'init',
 			debug: this.debug,
