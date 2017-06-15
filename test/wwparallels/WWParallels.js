@@ -132,7 +132,7 @@ var WWParallels = (function () {
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackCompletedLoading = function ( modelName, instanceNo ) {
+		var callbackCompletedLoading = function ( instanceNo, modelName ) {
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;

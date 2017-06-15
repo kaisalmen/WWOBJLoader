@@ -160,7 +160,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		}
 
 		var scope = this;
-		var directorCompletedLoading = function ( modelName, instanceNo ) {
+		var directorCompletedLoading = function ( instanceNo, modelName ) {
 			scope.objectsCompleted++;
 
 			var worker = scope.workerDescription.workers[ instanceNo ];
@@ -210,7 +210,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 			}
 
 		}
-		this.workerDescription.globalCallbacks = {};
+		if ( Validator.isValid( this.workerDescription.globalCallbacks.progress ) ) this.workerDescription.globalCallbacks.progress( '' );
 		this.workerDescription.workers = [];
 		this.instructionQueue = [];
 	};

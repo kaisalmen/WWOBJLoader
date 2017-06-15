@@ -378,15 +378,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 
 				}
 
-				if ( Validator.isValid( payload.msg ) ) {
-
-					this.callbacks.announceProgress( payload.msg );
-
-				} else {
-
-					this.callbacks.announceProgress( '' );
-
-				}
+				if ( Validator.isValid( payload.msg ) ) this.callbacks.announceProgress( payload.msg );
 
 				this._completedeRun();
 				break;
@@ -521,10 +513,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
 	WWOBJLoader2.prototype.prepareRun = function ( params ) {
+		console.time( 'WWOBJLoader2' );
 		this._validate();
 		this.dataAvailable = params.dataAvailable;
 		this.modelName = params.modelName;
-		console.time( 'WWOBJLoader2' );
 
 		var messageObject;
 		if ( this.dataAvailable ) {
@@ -712,7 +704,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.completedLoading ) {
 
 				callback = this.callbacks.completedLoading[ index ];
-				callback( this.modelName, this.instanceNo );
+				callback( this.instanceNo, this.modelName );
 
 			}
 
@@ -721,7 +713,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.errorWhileLoading ) {
 
 				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.modelName, this.instanceNo );
+				callback( this.instanceNo, this.modelName );
 
 			}
 

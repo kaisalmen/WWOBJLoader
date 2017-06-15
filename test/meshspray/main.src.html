@@ -27,6 +27,7 @@
 
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WWOBJLoader2.js"></script>
+		<script src="../../src/loaders/WWOBJLoader2Director.js"></script>
 		<script src="./MeshSpray.js"></script>
 		<script>
 
@@ -158,12 +159,35 @@
 			app.resizeDisplayGL();
 			app.initPostGL();
 
-			var spray = new MeshSpray();
-			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataBase();
-			runParams.setSceneGraphBaseNode( app.pivot );
-			runParams.setStreamMeshes( true );
-			spray.prepareRun( runParams );
-			spray.run();
+
+			var maxQueueSize = 2048;
+			var maxWebWorkers = 2;
+			this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director( MeshSpray.prototype );
+			this.wwDirector.setCrossOrigin( 'anonymous' );
+
+			var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+			var scope = this;
+			var callbackCompletedLoading = function ( instanceNo ) {
+				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
+				console.log( msg );
+			};
+			var reportProgress = function( text ) {
+				document.getElementById( 'feedback' ).innerHTML = text;
+			};
+			globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+			globalCallbacks.registerCallbackProgress( reportProgress );
+			this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
+
+			var runParams;
+			for ( var i = 0; i < maxQueueSize; i++ ) {
+				runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataBase();
+				runParams.setSceneGraphBaseNode( app.pivot );
+				runParams.setStreamMeshes( true );
+				runParams.quantity = 1024;
+				this.wwDirector.enqueueForRun( runParams );
+			}
+			this.wwDirector.processQueue();
+
 
 			render();
 

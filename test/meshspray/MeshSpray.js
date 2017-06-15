@@ -8,33 +8,67 @@ var MeshSpray = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
+	MeshSpray.prototype = Object.create( THREE.OBJLoader2.Commons.prototype );
+	MeshSpray.prototype.constructor = MeshSpray;
+
 	function MeshSpray() {
-		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
-		this.materials = [];
+		this._init();
 	}
 
-	MeshSpray.prototype.prepareRun = function ( runParams ) {
+	MeshSpray.prototype._init = function () {
+		THREE.OBJLoader2.Commons.call( this );
+		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
+		this.materials = [];
+		this.crossOrigin = null;
+		this.requestTerminate = false;
+		this.instanceNo = 0;
+
+	};
+
+	MeshSpray.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
+	};
+
+	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
+	MeshSpray.prototype._validate = function () {
 		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWMeshSpray' );
+		this.requestTerminate = false;
+	};
+
+	MeshSpray.prototype.prepareRun = function ( runParams ) {
 		console.time( 'MeshSpray' );
+		this._validate();
 
 		var scope = this;
 		var scopeFuncComplete = function ( reason ) {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			console.log( baseText, text );
+			scope._announceProgress( baseText, text );
 		};
 		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, undefined, scopeFuncComplete );
 		this.wwMeshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
 		this.wwMeshProvider.postMessage( {
 			cmd: 'init',
 			debug: this.debug,
-			materialPerSmoothingGroup: false
+			materialPerSmoothingGroup: false,
+			quantity: Validator.verifyInput( runParams.quantity, 1 )
 		} );
 	};
 
 	MeshSpray.prototype.run = function () {
 		var materialNames = [];
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( {
+			color: 0xDCF1FF,
+			side: THREE.DoubleSide,
+			vertexColors: THREE.VertexColors,
+			name: 'vertexColorMaterial'
+		} );
+		this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+
 		for ( var materialName in this.materials ) {
 			materialNames.push( materialName );
 		}
@@ -49,14 +83,42 @@ var MeshSpray = (function () {
 		this.wwMeshProvider.postMessage(
 			{
 				cmd: 'run',
-				quantity: 50,
-				dimension: 10000
+				dimension: 200
 			}
 		);
 	};
 
-	MeshSpray.prototype._finalize = function () {
-		this.wwMeshProvider._terminate();
+	MeshSpray.prototype._finalize = function ( reason ) {
+		var index;
+		var callback;
+
+		if ( reason === 'complete' ) {
+
+			for ( index in this.callbacks.completedLoading ) {
+
+				callback = this.callbacks.completedLoading[ index ];
+				callback( this.instanceNo );
+
+			}
+
+		} else if ( reason === 'error' ) {
+
+			for ( index in this.callbacks.errorWhileLoading ) {
+
+				callback = this.callbacks.errorWhileLoading[ index ];
+				callback( this.instanceNo );
+
+			}
+
+		}
+		if ( reason === 'terminate' ) {
+
+			if ( this.wwMeshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+
+			console.log( 'Finalize is complete. Terminating application on request!' );
+
+			this.wwMeshProvider._terminate();
+		}
 		console.timeEnd( 'MeshSpray' );
 	};
 
@@ -72,6 +134,10 @@ var MeshSpray = (function () {
 				this.materialPerSmoothingGroup = false;
 				this.materials = null;
 				this.globalObjectCount = 0;
+				this.quantity = 1;
+
+				this.sizeFactor = 0.5;
+				this.localOffsetFactor = 1.0;
 			}
 
 			WWMeshSpray.prototype._finalize = function () {
@@ -82,6 +148,7 @@ var MeshSpray = (function () {
 				this.cmdState = 'init';
 				this.debug = payload.debug;
 				this.materialPerSmoothingGroup = payload.materialPerSmoothingGroup;
+				this.quantity = payload.quantity
 			};
 
 			WWMeshSpray.prototype.setMaterials = function ( payload ) {
@@ -93,9 +160,7 @@ var MeshSpray = (function () {
 			WWMeshSpray.prototype.run = function ( payload ) {
 				this.cmdState = 'run';
 
-				for ( var i = 0; i < payload.quantity; i++ ) {
-					this.buildMesh( payload.dimension );
-				}
+				this.buildMesh( payload.dimension );
 
 				this.cmdState = 'complete';
 				self.postMessage( {
@@ -134,12 +199,12 @@ var MeshSpray = (function () {
 				var fixedOffsetY;
 				var fixedOffsetZ;
 				// complete triagle
-				var sizeVaring = 25 * Math.random();
+				var sizeVaring = this.sizeFactor * Math.random();
 				// local coords offset
-				var localOffsetFactor = 25;
+				var localOffsetFactor = this.localOffsetFactor;
 
-				for ( var i = 0; i < 100000; i++ ) {
-					sizeVaring = 25 * Math.random();
+				for ( var i = 0; i < this.quantity; i++ ) {
+					sizeVaring = this.sizeFactor * Math.random();
 					fixedOffsetX = dimension * Math.random() - dimensionHalf;
 					fixedOffsetY = dimension * Math.random() - dimensionHalf;
 					fixedOffsetZ = dimension * Math.random() - dimensionHalf;

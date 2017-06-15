@@ -82,6 +82,7 @@ var WWOBJLoader2Stage = (function () {
 
 		var reloadAssetsProxy = function () {
 			scope.reloadAssets();
+			scope.reportProgress();
 		};
 		var materialsLoaded = function ( materials ) {
 			var count = Validator.isValid( materials ) ? materials.length : 0;
@@ -218,7 +219,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype.reportProgress = function( text ) {
-		document.getElementById( 'feedback' ).innerHTML = text;
+		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( text ) ? text : '';
 	};
 
 	WWOBJLoader2Stage.prototype.reloadAssets = function () {
