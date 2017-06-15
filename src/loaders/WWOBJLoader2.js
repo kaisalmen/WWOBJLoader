@@ -356,7 +356,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 
 					}
 
-					this.callbacks.announceProgress( 'Adding multiple mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
+					this.callbacks.announceProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
 					this.counter++;
 
 				} else {

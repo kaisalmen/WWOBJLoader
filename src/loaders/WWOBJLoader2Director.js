@@ -13,7 +13,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	var Validator = THREE.OBJLoader2.Validator;
 
 	var MAX_WEB_WORKER = 16;
-	var MAX_QUEUE_SIZE = 1024;
+	var MAX_QUEUE_SIZE = 8192;
 
 	function WWOBJLoader2Director( prototypeDef ) {
 		this.maxQueueSize = MAX_QUEUE_SIZE ;

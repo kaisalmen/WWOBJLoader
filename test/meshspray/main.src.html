@@ -41,7 +41,7 @@
 
 					this.scene = null;
 					this.cameraDefaults = {
-						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCamera: new THREE.Vector3( 500.0, 500.0, 1000.0 ),
 						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
 						near: 0.1,
 						far: 10000,
@@ -160,8 +160,9 @@
 			app.initPostGL();
 
 
-			var maxQueueSize = 2048;
-			var maxWebWorkers = 2;
+			var maxQueueSize = 512;
+			var maxWebWorkers = 1;
+			var radius = 500;
 			this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director( MeshSpray.prototype );
 			this.wwDirector.setCrossOrigin( 'anonymous' );
 
@@ -174,6 +175,24 @@
 			var reportProgress = function( text ) {
 				document.getElementById( 'feedback' ).innerHTML = text;
 			};
+			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
+
+				var mesh = new THREE.Mesh( bufferGeometry, material );
+				material.side = THREE.DoubleSide;
+
+				var s = 2 * Math.PI * Math.random();
+				var t = Math.PI * Math.random();
+				var r = radius * Math.random();
+				var x = r * Math.cos( s ) * Math.sin( t );
+				var y = r * Math.sin( s ) * Math.sin( t );
+				var z = r * Math.cos( t );
+				mesh.position.set( x, y, z );
+				mesh.name = name;
+				override.addMesh( mesh );
+
+				return override;
+			};
 			globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
 			globalCallbacks.registerCallbackProgress( reportProgress );
 			this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
@@ -183,7 +202,10 @@
 				runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataBase();
 				runParams.setSceneGraphBaseNode( app.pivot );
 				runParams.setStreamMeshes( true );
-				runParams.quantity = 1024;
+				runParams.quantity = 8192;
+				runParams.dimension = Math.max( Math.random() * 500, 100 );
+				runParams.getCallbacks().registerCallbackMeshLoaded( callbackMeshLoaded );
+
 				this.wwDirector.enqueueForRun( runParams );
 			}
 			this.wwDirector.processQueue();
