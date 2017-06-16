@@ -403,6 +403,93 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 })();
 
 /**
+ * Common to all web worker based loaders that can be directed
+ * @class
+ */
+THREE.OBJLoader2.DirectableLoader = (function () {
+
+	DirectableLoader.prototype = Object.create( THREE.OBJLoader2.Commons.prototype );
+	DirectableLoader.prototype.constructor = DirectableLoader;
+
+	function DirectableLoader() {
+		THREE.OBJLoader2.Commons.call( this );
+		this._init();
+	}
+
+	/**
+	 * Call from implementation
+	 * @private
+	 */
+	DirectableLoader.prototype._init = function () {
+		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
+		this.validated = false;
+		this.materials = [];
+		this.crossOrigin = null;
+		this.requestTerminate = false;
+		this.instanceNo = 0;
+	};
+
+	/**
+	 * Sets the CORS string to be used.
+	 * @memberOf THREE.OBJLoader2.DirectableLoader
+	 *
+	 * @param {string} crossOrigin CORS value
+	 */
+	DirectableLoader.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
+	};
+
+	/**
+	 * Call requestTerminate to terminate the web worker and free local resource after execution.
+	 * @memberOf THREE.OBJLoader2.DirectableLoader
+	 *
+	 * @param {boolean} requestTerminate True or false
+	 */
+	DirectableLoader.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Call from implementation
+	 * @private
+	 */
+	DirectableLoader.prototype._validate = function () {
+		this.requestTerminate = false;
+		this.materials = [];
+		this.validated = true;
+	};
+
+	/**
+	 * Set all parameters for required for execution of "run". This needs to be overridden.
+	 * @memberOf THREE.OBJLoader2.DirectableLoader
+	 *
+	 * @param {Object} params {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataBase} or extension
+	 */
+	DirectableLoader.prototype.prepareRun = function ( runParams ) {
+
+	};
+
+	/**
+	 * Run the loader according the preparation instruction provided in "prepareRun". This needs to be overridden.
+	 * @memberOf THREE.OBJLoader2.DirectableLoader
+	 */
+	DirectableLoader.prototype.run = function () {
+
+	};
+
+	/**
+	 * Call from implementation
+	 * @param reason
+	 * @private
+	 */
+	DirectableLoader.prototype._finalize = function ( reason ) {
+		this.validated = false;
+	};
+
+	return DirectableLoader;
+})();
+
+/**
  * OBJ data will be loaded by dynamically created web worker.
  * First feed instructions with: prepareRun
  * Then: Execute with: run
@@ -414,30 +501,23 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.Commons.prototype );
+	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.DirectableLoader.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		this._init();
+		THREE.OBJLoader2.DirectableLoader.call( this );
 	}
 
 	WWOBJLoader2.prototype._init = function () {
-		THREE.OBJLoader2.Commons.call( this );
+		THREE.OBJLoader2.DirectableLoader.prototype._init.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
-
-		this.instanceNo = 0;
 		this.debug = false;
 
 		this.modelName = '';
-		this.validated = false;
-		this.requestTerminate = false;
-
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.mtlLoader = null;
-		this.crossOrigin = null;
 
 		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
@@ -447,8 +527,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.fileMtl = null;
 		this.mtlAsString = null;
 		this.texturePath = null;
-
-		this.materials = [];
 	};
 
 	/**
@@ -483,11 +561,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
+		THREE.OBJLoader2.DirectableLoader.prototype._validate.call( this );
 
 		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
 		this.modelName = '';
-		this.validated = true;
 		this.requestTerminate = false;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
@@ -502,8 +580,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.objAsArrayBuffer = null;
 		this.mtlAsString = null;
-
-		this.materials = [];
 	};
 
 	/**
@@ -696,6 +772,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
+		THREE.OBJLoader2.DirectableLoader.prototype._finalize.call( this, reason );
 		var index;
 		var callback;
 
@@ -730,7 +807,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.mtlLoader = null;
 		}
 
-		this.validated = false;
 		console.timeEnd( 'WWOBJLoader2' );
 	};
 

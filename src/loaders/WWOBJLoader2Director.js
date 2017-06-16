@@ -15,13 +15,13 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
-	function WWOBJLoader2Director( prototypeDef ) {
+	function WWOBJLoader2Director( classDef ) {
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
 		this.crossOrigin = null;
 
 		this.workerDescription = {
-			prototypeDef: Validator.verifyInput( prototypeDef, THREE.OBJLoader2.WWOBJLoader2.prototype ),
+			classDef: Validator.verifyInput( classDef, THREE.OBJLoader2.WWOBJLoader2 ),
 			globalCallbacks: {},
 			workers: []
 		};
@@ -184,7 +184,8 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 	};
 
 	WWOBJLoader2Director.prototype._buildWorker = function () {
-		var worker = Object.create( this.workerDescription.prototypeDef );
+		var worker = Object.create( this.workerDescription.classDef.prototype );
+		this.workerDescription.classDef.call( worker );
 		worker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) worker.setCrossOrigin( this.crossOrigin );
 
