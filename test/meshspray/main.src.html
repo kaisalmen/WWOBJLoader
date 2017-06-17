@@ -25,6 +25,7 @@
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
+		<script src="../../src/loaders/LoaderCommons.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WWLoaderCommons.js"></script>
 		<script src="../../src/loaders/WWLoaderDirector.js"></script>
@@ -91,7 +92,7 @@
 
 			var runParams;
 			for ( var i = 0; i < maxQueueSize; i++ ) {
-				runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataBase();
+				runParams = new THREE.OBJLoader2.PrepDataBase();
 				runParams.setSceneGraphBaseNode( app.pivot );
 				runParams.setStreamMeshes( true );
 				runParams.quantity = 8192;

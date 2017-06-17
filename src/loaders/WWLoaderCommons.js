@@ -403,6 +403,76 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 })();
 
 /**
+ * Base class for configuration of prepareRun when using {@link THREE.OBJLoader2.WWMeshProvider}.
+ * @class
+ */
+THREE.OBJLoader2.PrepDataBase = (function () {
+
+	var Validator = THREE.OBJLoader2.Validator;
+
+	function PrepDataBase() {
+		this.dataAvailable = false;
+		this.sceneGraphBaseNode = null;
+		this.streamMeshes = true;
+		this.materialPerSmoothingGroup = false;
+		this.requestTerminate = false;
+		this.callbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+	}
+
+	/**
+	 * {@link THREE.Object3D} where meshes will be attached.
+	 * @memberOf THREE.OBJLoader2.PrepDataBase
+	 *
+	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
+	 */
+	PrepDataBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
+	};
+
+	/**
+	 * Singles meshes are directly integrated into scene when loaded or later.
+	 * @memberOf THREE.OBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} streamMeshes=true Default is true
+	 */
+	PrepDataBase.prototype.setStreamMeshes = function ( streamMeshes ) {
+		this.streamMeshes = streamMeshes !== false;
+	};
+
+	/**
+	 * Tells whether a material shall be created per smoothing group
+	 * @memberOf THREE.OBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 */
+	PrepDataBase.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+	};
+
+	/**
+	 * Request termination of web worker and free local resources after execution.
+	 * @memberOf THREE.OBJLoader2.PrepDataBase
+	 *
+	 * @param {boolean} requestTerminate=false Default is false
+	 */
+	PrepDataBase.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Returns all callbacks as {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+	 * @memberOf THREE.OBJLoader2.PrepDataBase
+	 *
+	 * @returns {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks}
+	 */
+	PrepDataBase.prototype.getCallbacks = function () {
+		return this.callbacks;
+	};
+
+	return PrepDataBase;
+})();
+
+/**
  * Common to all web worker based loaders that can be directed
  * @class
  */
@@ -463,7 +533,7 @@ THREE.OBJLoader2.WWLoaderDirectable = (function () {
 	 * Set all parameters for required for execution of "run". This needs to be overridden.
 	 * @memberOf THREE.OBJLoader2.WWLoaderDirectable
 	 *
-	 * @param {Object} params {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataBase} or extension
+	 * @param {Object} params {@link THREE.OBJLoader2.PrepDataBase} or extension
 	 */
 	WWLoaderDirectable.prototype.prepareRun = function ( runParams ) {
 

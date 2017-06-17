@@ -39,6 +39,7 @@ gulp.task( 'bundle-objloader2', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 			[
+				'src/loaders/LoaderCommons.js',
 				'src/loaders/OBJLoader2.js'
 			]
 		)
@@ -103,6 +104,7 @@ gulp.task( 'create-docs', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
+				'src/loaders/LoaderCommons.js',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/WWLoaderCommons.js',
 				'src/loaders/WWLoaderDirector.js',
@@ -208,7 +210,8 @@ gulp.task( 'create-obj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -250,7 +253,8 @@ gulp.task( 'create-wwobj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
@@ -295,7 +299,8 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
@@ -341,7 +346,8 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
@@ -386,7 +392,8 @@ gulp.task( 'create-meshspray-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
