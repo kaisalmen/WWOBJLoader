@@ -8,20 +8,20 @@ var MeshSpray = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
-	MeshSpray.prototype = Object.create( THREE.OBJLoader2.DirectableLoader.prototype );
+	MeshSpray.prototype = Object.create( THREE.OBJLoader2.WWLoaderDirectable.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray() {
-		THREE.OBJLoader2.DirectableLoader.call( this );
+		THREE.OBJLoader2.WWLoaderDirectable.call( this );
 	}
 
 	MeshSpray.prototype._init = function () {
-		THREE.OBJLoader2.DirectableLoader.prototype._init.call( this );
+		THREE.OBJLoader2.WWLoaderDirectable.prototype._init.call( this );
 	};
 
 	MeshSpray.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.OBJLoader2.DirectableLoader.prototype._validate.call( this );
+		THREE.OBJLoader2.WWLoaderDirectable.prototype._validate.call( this );
 		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
@@ -69,7 +69,7 @@ var MeshSpray = (function () {
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {
-		THREE.OBJLoader2.DirectableLoader.prototype._finalize.call( this, reason );
+		THREE.OBJLoader2.WWLoaderDirectable.prototype._finalize.call( this, reason );
 		var index;
 		var callback;
 
@@ -239,7 +239,7 @@ var MeshSpray = (function () {
 
 				self.postMessage(
 					{
-						cmd: 'objData',
+						cmd: 'meshData',
 						meshName: 'Gen' + this.globalObjectCount,
 						multiMaterial: false,
 						materialDescriptions: materialDescriptions,

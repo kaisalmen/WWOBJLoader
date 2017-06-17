@@ -8,20 +8,22 @@
  *
  * @class
  */
-THREE.OBJLoader2.WWOBJLoader2Director = (function () {
+THREE.OBJLoader2.WWLoaderDirector = (function () {
 
 	var Validator = THREE.OBJLoader2.Validator;
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
-	function WWOBJLoader2Director( classDef ) {
+	function WWLoaderDirector( classDef ) {
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
 		this.crossOrigin = null;
 
+		if ( ! Validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
+
 		this.workerDescription = {
-			classDef: Validator.verifyInput( classDef, THREE.OBJLoader2.WWOBJLoader2 ),
+			classDef: classDef,
 			globalCallbacks: {},
 			workers: []
 		};
@@ -31,43 +33,43 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 *
 	 * @returns {number}
 	 */
-	WWOBJLoader2Director.prototype.getMaxQueueSize = function () {
+	WWLoaderDirector.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
 	};
 
 	/**
 	 * Returns the maximum number of workers.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 *
 	 * @returns {number}
 	 */
-	WWOBJLoader2Director.prototype.getMaxWebWorkers = function () {
+	WWLoaderDirector.prototype.getMaxWebWorkers = function () {
 		return this.maxWebWorkers;
 	};
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
-	WWOBJLoader2Director.prototype.setCrossOrigin = function ( crossOrigin ) {
+	WWLoaderDirector.prototype.setCrossOrigin = function ( crossOrigin ) {
 		this.crossOrigin = crossOrigin;
 	};
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 *
 	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
-	WWOBJLoader2Director.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
+	WWLoaderDirector.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
 		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
@@ -101,11 +103,11 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Store run instructions in internal instructionQueue.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 *
 	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
-	WWOBJLoader2Director.prototype.enqueueForRun = function ( runParams ) {
+	WWLoaderDirector.prototype.enqueueForRun = function ( runParams ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
 			this.instructionQueue.push( runParams );
 		}
@@ -113,9 +115,9 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Process the instructionQueue until it is depleted.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 */
-	WWOBJLoader2Director.prototype.processQueue = function () {
+	WWLoaderDirector.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
 
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
@@ -127,7 +129,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		}
 	};
 
-	WWOBJLoader2Director.prototype._kickWorkerRun = function( worker, runParams ) {
+	WWLoaderDirector.prototype._kickWorkerRun = function( worker, runParams ) {
 		worker.clearAllCallbacks();
 		var key;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
@@ -183,7 +185,7 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		worker.run();
 	};
 
-	WWOBJLoader2Director.prototype._buildWorker = function () {
+	WWLoaderDirector.prototype._buildWorker = function () {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 		worker._init();
@@ -196,10 +198,10 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 
 	/**
 	 * Terminate all workers.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2Director
+	 * @memberOf THREE.OBJLoader2.WWLoaderDirector
 	 */
-	WWOBJLoader2Director.prototype.deregister = function () {
-		console.log( 'WWOBJLoader2Director received the unregister call. Terminating all workers!' );
+	WWLoaderDirector.prototype.deregister = function () {
+		console.log( 'WWLoaderDirector received the unregister call. Terminating all workers!' );
 		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
 
 			worker = this.workerDescription.workers[ i ];
@@ -216,6 +218,6 @@ THREE.OBJLoader2.WWOBJLoader2Director = (function () {
 		this.instructionQueue = [];
 	};
 
-	return WWOBJLoader2Director;
+	return WWLoaderDirector;
 
 })();

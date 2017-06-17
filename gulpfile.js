@@ -65,8 +65,9 @@ gulp.task( 'bundle-wwobjloader2', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 			[
-				'src/loaders/WWOBJLoader2.js',
-				'src/loaders/WWOBJLoader2Director.js'
+				'src/loaders/WWLoaders.js',
+				'src/loaders/WWLoaderDirector.js',
+				'src/loaders/WWOBJLoader2.js'
 			]
 		)
 		.pipe( concat( 'WWOBJLoader2.js' ) )
@@ -99,8 +100,9 @@ gulp.task( 'create-docs', function ( cb ) {
 			[
 				'README.md',
 				'src/loaders/OBJLoader2.js',
-				'src/loaders/WWOBJLoader2.js',
-				'src/loaders/WWOBJLoader2Director.js'
+				'src/loaders/WWLoaders.js',
+				'src/loaders/WWLoaderDirector.js',
+				'src/loaders/WWOBJLoader2.js'
 			],
 			{
 				read: false
@@ -238,6 +240,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -283,8 +286,9 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2Director.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -328,8 +332,8 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2Director.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
