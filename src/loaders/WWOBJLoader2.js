@@ -8,7 +8,7 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  */
 THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
-	var WWOBJLOADER2_VERSION = '1.3.0-dev';
+	var WWOBJLOADER2_VERSION = '2.0.0';
 
 	var Validator = THREE.OBJLoader2.Validator;
 

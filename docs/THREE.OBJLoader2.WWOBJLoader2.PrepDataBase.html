@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: WWOBJLoader2Director</title>
+	<title>Documentation Class: PrepDataBase</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -33,7 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.Commons.html">THREE.OBJLoader2.Commons</a></li><li><a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2Director.html">THREE.OBJLoader2.WWOBJLoader2Director</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
+					<li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.Commons.html">THREE.OBJLoader2.Commons</a></li><li><a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirectable.html">THREE.OBJLoader2.WWLoaderDirectable</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirector.html">THREE.OBJLoader2.WWLoaderDirector</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataBase</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
 				</ul>
 			</li>
 			
@@ -65,15 +65,15 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: WWOBJLoader2Director</h1>
+	<h1 class="page-title">Class: PrepDataBase</h1>
 <section>
 
 <header>
     
         <h2>
-            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
+            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a><a href="THREE.OBJLoader2.WWOBJLoader2.html">.WWOBJLoader2</a>.</span>
         
-        WWOBJLoader2Director
+        PrepDataBase
         </h2>
         
     
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="WWOBJLoader2Director"><span class="type-signature"></span>new WWOBJLoader2Director()</h4>
+    <h4 class="name" id="PrepDataBase"><span class="type-signature"></span>new PrepDataBase()</h4>
     
     
 </dt>
@@ -94,12 +94,7 @@
 
     
     <div class="description">
-        <p>Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
-Workflow:
-  prepareWorkers
-  enqueueForRun
-  processQueue
-  deregister</p>
+        <p>Base class for configuration of prepareRun when using THREE.OBJLoader2.WWMeshProvider.</p>
     </div>
     
 
@@ -187,7 +182,7 @@ Workflow:
             
 <hr>
 <dt>
-    <h4 class="name" id="deregister"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#deregister()</h4>
+    <h4 class="name" id="getCallbacks"><span class="type-signature">&lt;static> </span>PrepDataBase#getCallbacks()</h4>
     
     
 </dt>
@@ -195,213 +190,7 @@ Workflow:
 
     
     <div class="description">
-        <p>Terminate all workers.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="enqueueForRun"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#enqueueForRun(runParams)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Store run instructions in internal instructionQueue.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>runParams</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Either <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a> or <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="getMaxQueueSize"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#getMaxQueueSize()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Returns the maximum length of the instruction queue.</p>
+        <p>Returns all callbacks as <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></p>
     </div>
     
 
@@ -474,195 +263,75 @@ Workflow:
     </dt>
     <dd>
         
-<span class="param-type">number</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="getMaxWebWorkers"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#getMaxWebWorkers()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Returns the maximum number of workers.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">number</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="prepareWorkers"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#prepareWorkers(globalCallbacks, maxQueueSize, maxWebWorkers)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>globalCallbacks</code></td>
-            
-
-            <td class="type">
-            
-                
 <span class="param-type"><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></span>
 
 
 
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
             
-            </td>
+<hr>
+<dt>
+    <h4 class="name" id="setMaterialPerSmoothingGroup"><span class="type-signature">&lt;static> </span>PrepDataBase#setMaterialPerSmoothingGroup(materialPerSmoothingGroup)</h4>
+    
+    
+</dt>
+<dd>
 
-            
+    
+    <div class="description">
+        <p>Tells whether a material shall be created per smoothing group</p>
+    </div>
+    
 
-            
+    
 
-            <td class="description last"><p>Register global callbacks used by all web workers</p></td>
-        </tr>
+    
 
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
     
 
         <tr>
             
-                <td class="name"><code>maxQueueSize</code></td>
+                <td class="name"><code>materialPerSmoothingGroup</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">boolean</span>
 
 
 
@@ -672,32 +341,14 @@ Workflow:
             
 
             
-
-            <td class="description last"><p>Set the maximum size of the instruction queue (1-1024)</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>maxWebWorkers</code></td>
-            
-
-            <td class="type">
-            
+                <td class="default">
                 
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
+                    false
+                
+                </td>
             
 
-            
-
-            <td class="description last"><p>Set the maximum amount of workers (1-16)</p></td>
+            <td class="description last"><p>Default is false</p></td>
         </tr>
 
     
@@ -765,7 +416,7 @@ Workflow:
             
 <hr>
 <dt>
-    <h4 class="name" id="processQueue"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#processQueue()</h4>
+    <h4 class="name" id="setRequestTerminate"><span class="type-signature">&lt;static> </span>PrepDataBase#setRequestTerminate(requestTerminate)</h4>
     
     
 </dt>
@@ -773,7 +424,7 @@ Workflow:
 
     
     <div class="description">
-        <p>Process the instructionQueue until it is depleted.</p>
+        <p>Request termination of web worker and free local resources after execution.</p>
     </div>
     
 
@@ -782,6 +433,64 @@ Workflow:
     
 
     
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>requestTerminate</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>Default is false</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
     
 
     
@@ -843,7 +552,7 @@ Workflow:
             
 <hr>
 <dt>
-    <h4 class="name" id="setCrossOrigin"><span class="type-signature">&lt;static> </span>WWOBJLoader2Director#setCrossOrigin(crossOrigin)</h4>
+    <h4 class="name" id="setSceneGraphBaseNode"><span class="type-signature">&lt;static> </span>PrepDataBase#setSceneGraphBaseNode(sceneGraphBaseNode)</h4>
     
     
 </dt>
@@ -851,7 +560,7 @@ Workflow:
 
     
     <div class="description">
-        <p>Sets the CORS string to be used.</p>
+        <p>THREE.Object3D where meshes will be attached.</p>
     </div>
     
 
@@ -886,13 +595,13 @@ Workflow:
 
         <tr>
             
-                <td class="name"><code>crossOrigin</code></td>
+                <td class="name"><code>sceneGraphBaseNode</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">THREE.Object3D</span>
 
 
 
@@ -903,7 +612,143 @@ Workflow:
 
             
 
-            <td class="description last"><p>CORS value</p></td>
+            <td class="description last"><p>Scene graph object</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setStreamMeshes"><span class="type-signature">&lt;static> </span>PrepDataBase#setStreamMeshes(streamMeshes)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Singles meshes are directly integrated into scene when loaded or later.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>streamMeshes</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>Default is true</p></td>
         </tr>
 
     
@@ -1017,7 +862,7 @@ Workflow:
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a>
 	
-		on June 1st 2017, 10:39:57 pm
+		on June 17th 2017, 10:33:56 pm
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

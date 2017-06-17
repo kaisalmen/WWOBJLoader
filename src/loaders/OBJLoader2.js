@@ -135,7 +135,7 @@ THREE.OBJLoader2.Commons = (function () {
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '1.3.0-dev';
+	var OBJLOADER2_VERSION = '2.0.0';
 	var BindCommons = THREE.OBJLoader2.Commons;
 	var BindValidator = THREE.OBJLoader2.Validator;
 	var Validator = THREE.OBJLoader2.Validator;

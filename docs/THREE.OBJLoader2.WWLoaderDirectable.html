@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: Commons</title>
+	<title>Documentation Class: WWLoaderDirectable</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -65,7 +65,7 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Commons</h1>
+	<h1 class="page-title">Class: WWLoaderDirectable</h1>
 <section>
 
 <header>
@@ -73,7 +73,7 @@
         <h2>
             <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
         
-        Commons
+        WWLoaderDirectable
         </h2>
         
     
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="Commons"><span class="type-signature"></span>new Commons()</h4>
+    <h4 class="name" id="WWLoaderDirectable"><span class="type-signature"></span>new WWLoaderDirectable()</h4>
     
     
 </dt>
@@ -94,7 +94,7 @@
 
     
     <div class="description">
-        <p>Global callback definition</p>
+        <p>Common to all web worker based loaders that can be directed</p>
     </div>
     
 
@@ -182,7 +182,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="clearAllCallbacks"><span class="type-signature">&lt;static> </span>Commons#clearAllCallbacks()</h4>
+    <h4 class="name" id="prepareRun"><span class="type-signature">&lt;static> </span>WWLoaderDirectable#prepareRun(params)</h4>
     
     
 </dt>
@@ -190,85 +190,7 @@
 
     
     <div class="description">
-        <p>Clears all registered callbacks.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="registerCallbackCompletedLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackCompletedLoading(callbackCompletedLoading)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Register callback function that is called once loading of the complete model is completed.</p>
+        <p>Set all parameters for required for execution of &quot;run&quot;. This needs to be overridden.</p>
     </div>
     
 
@@ -303,13 +225,13 @@
 
         <tr>
             
-                <td class="name"><code>callbackCompletedLoading</code></td>
+                <td class="name"><code>params</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">callback</span>
+<span class="param-type">Object</span>
 
 
 
@@ -320,7 +242,7 @@
 
             
 
-            <td class="description last"><p>Callback function for described functionality</p></td>
+            <td class="description last"><p><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataBase.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataBase</a> or extension</p></td>
         </tr>
 
     
@@ -388,7 +310,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackErrorWhileLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackErrorWhileLoading(callbackErrorWhileLoading)</h4>
+    <h4 class="name" id="run"><span class="type-signature">&lt;static> </span>WWLoaderDirectable#run()</h4>
     
     
 </dt>
@@ -396,7 +318,85 @@
 
     
     <div class="description">
-        <p>Register callback function that is called to report an error that prevented loading.</p>
+        <p>Run the loader according the preparation instruction provided in &quot;prepareRun&quot;. This needs to be overridden.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setCrossOrigin"><span class="type-signature">&lt;static> </span>WWLoaderDirectable#setCrossOrigin(crossOrigin)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Sets the CORS string to be used.</p>
     </div>
     
 
@@ -431,13 +431,13 @@
 
         <tr>
             
-                <td class="name"><code>callbackErrorWhileLoading</code></td>
+                <td class="name"><code>crossOrigin</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">callback</span>
+<span class="param-type">string</span>
 
 
 
@@ -448,7 +448,7 @@
 
             
 
-            <td class="description last"><p>Callback function for described functionality</p></td>
+            <td class="description last"><p>CORS value</p></td>
         </tr>
 
     
@@ -516,7 +516,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackMaterialsLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMaterialsLoaded(callbackMaterialsLoaded)</h4>
+    <h4 class="name" id="setRequestTerminate"><span class="type-signature">&lt;static> </span>WWLoaderDirectable#setRequestTerminate(requestTerminate)</h4>
     
     
 </dt>
@@ -524,7 +524,7 @@
 
     
     <div class="description">
-        <p>Register callback function that is called once materials have been loaded. It allows to alter and return materials.</p>
+        <p>Call requestTerminate to terminate the web worker and free local resource after execution.</p>
     </div>
     
 
@@ -559,394 +559,7 @@
 
         <tr>
             
-                <td class="name"><code>callbackMaterialsLoaded</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">callback</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="registerCallbackMeshLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMeshLoaded(callbackMeshLoaded)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Register callback function that is called every time a mesh was loaded.
-Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructions (geometry, material or disregard mesh).</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>callbackMeshLoaded</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">callback</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="registerCallbackProgress"><span class="type-signature">&lt;static> </span>Commons#registerCallbackProgress(callbackProgress)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Register callback function that is invoked by internal function &quot;_announceProgress&quot; to print feedback.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>callbackProgress</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">callback</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setMaterialPerSmoothingGroup"><span class="type-signature">&lt;static> </span>Commons#setMaterialPerSmoothingGroup(materialPerSmoothingGroup)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Tells whether a material shall be created per smoothing group</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>materialPerSmoothingGroup</code></td>
+                <td class="name"><code>requestTerminate</code></td>
             
 
             <td class="type">
@@ -962,14 +575,8 @@ Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructio
             
 
             
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
 
-            <td class="description last"><p>Default is false</p></td>
+            <td class="description last"><p>True or false</p></td>
         </tr>
 
     

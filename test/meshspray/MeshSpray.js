@@ -276,3 +276,112 @@ var MeshSpray = (function () {
 	return MeshSpray;
 
 })();
+
+var MeshSprayApp = (function () {
+
+	function MeshSprayApp( elementToBindTo ) {
+		this.renderer = null;
+		this.canvas = elementToBindTo;
+		this.aspectRatio = 1;
+		this.recalcAspectRatio();
+
+		this.scene = null;
+		this.cameraDefaults = {
+			posCamera: new THREE.Vector3( 500.0, 500.0, 1000.0 ),
+			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+			near: 0.1,
+			far: 10000,
+			fov: 45
+		};
+		this.camera = null;
+		this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+		this.controls = null;
+
+		this.cube = null;
+		this.pivot = null;
+	}
+
+	MeshSprayApp.prototype.initGL = function () {
+		this.renderer = new THREE.WebGLRenderer( {
+			canvas: this.canvas,
+			antialias: true,
+			autoClear: true
+		} );
+		this.renderer.setClearColor( 0x050505 );
+
+		this.scene = new THREE.Scene();
+
+		this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+		this.resetCamera();
+		this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+
+		var ambientLight = new THREE.AmbientLight( 0x404040 );
+		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+		directionalLight1.position.set( -100, -50, 100 );
+		directionalLight2.position.set( 100, 50, -100 );
+
+		this.scene.add( directionalLight1 );
+		this.scene.add( directionalLight2 );
+		this.scene.add( ambientLight );
+
+		var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+		this.scene.add( helper );
+
+		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+		var material = new THREE.MeshNormalMaterial();
+		this.cube = new THREE.Mesh( geometry, material );
+		this.cube.position.set( 0, 0, 0 );
+		this.scene.add( this.cube );
+
+		this.pivot = new THREE.Object3D();
+		this.pivot.name = 'Pivot';
+		this.scene.add( this.pivot );
+	};
+
+	MeshSprayApp.prototype.initPostGL = function () {
+		return true;
+	};
+
+	MeshSprayApp.prototype.resizeDisplayGL = function () {
+		this.controls.handleResize();
+
+		this.recalcAspectRatio();
+		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+		this.updateCamera();
+	};
+
+	MeshSprayApp.prototype.recalcAspectRatio = function () {
+		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	};
+
+	MeshSprayApp.prototype.resetCamera = function () {
+		this.camera.position.copy( this.cameraDefaults.posCamera );
+		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+		this.updateCamera();
+	};
+
+	MeshSprayApp.prototype.updateCamera = function () {
+		this.camera.aspect = this.aspectRatio;
+		this.camera.lookAt( this.cameraTarget );
+		this.camera.updateProjectionMatrix();
+	};
+
+	MeshSprayApp.prototype.render = function () {
+		if ( ! this.renderer.autoClear ) this.renderer.clear();
+
+		this.controls.update();
+
+		this.cube.rotation.x += 0.05;
+		this.cube.rotation.y += 0.05;
+
+		this.renderer.render( this.scene, this.camera );
+	};
+
+	return MeshSprayApp;
+
+})();

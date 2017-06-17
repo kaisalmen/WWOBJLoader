@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: Commons</title>
+	<title>Documentation Class: WWLoaderDirector</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -65,7 +65,7 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Commons</h1>
+	<h1 class="page-title">Class: WWLoaderDirector</h1>
 <section>
 
 <header>
@@ -73,7 +73,7 @@
         <h2>
             <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
         
-        Commons
+        WWLoaderDirector
         </h2>
         
     
@@ -86,7 +86,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="Commons"><span class="type-signature"></span>new Commons()</h4>
+    <h4 class="name" id="WWLoaderDirector"><span class="type-signature"></span>new WWLoaderDirector()</h4>
     
     
 </dt>
@@ -94,7 +94,12 @@
 
     
     <div class="description">
-        <p>Global callback definition</p>
+        <p>Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
+Workflow:
+  prepareWorkers
+  enqueueForRun
+  processQueue
+  deregister</p>
     </div>
     
 
@@ -182,7 +187,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="clearAllCallbacks"><span class="type-signature">&lt;static> </span>Commons#clearAllCallbacks()</h4>
+    <h4 class="name" id="deregister"><span class="type-signature">&lt;static> </span>WWLoaderDirector#deregister()</h4>
     
     
 </dt>
@@ -190,7 +195,7 @@
 
     
     <div class="description">
-        <p>Clears all registered callbacks.</p>
+        <p>Terminate all workers.</p>
     </div>
     
 
@@ -260,7 +265,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackCompletedLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackCompletedLoading(callbackCompletedLoading)</h4>
+    <h4 class="name" id="enqueueForRun"><span class="type-signature">&lt;static> </span>WWLoaderDirector#enqueueForRun(runParams)</h4>
     
     
 </dt>
@@ -268,7 +273,7 @@
 
     
     <div class="description">
-        <p>Register callback function that is called once loading of the complete model is completed.</p>
+        <p>Store run instructions in internal instructionQueue.</p>
     </div>
     
 
@@ -303,13 +308,13 @@
 
         <tr>
             
-                <td class="name"><code>callbackCompletedLoading</code></td>
+                <td class="name"><code>runParams</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">callback</span>
+<span class="param-type">Object</span>
 
 
 
@@ -320,7 +325,7 @@
 
             
 
-            <td class="description last"><p>Callback function for described functionality</p></td>
+            <td class="description last"><p>Either <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a> or <a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></p></td>
         </tr>
 
     
@@ -388,7 +393,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackErrorWhileLoading"><span class="type-signature">&lt;static> </span>Commons#registerCallbackErrorWhileLoading(callbackErrorWhileLoading)</h4>
+    <h4 class="name" id="getMaxQueueSize"><span class="type-signature">&lt;static> </span>WWLoaderDirector#getMaxQueueSize()</h4>
     
     
 </dt>
@@ -396,7 +401,203 @@
 
     
     <div class="description">
-        <p>Register callback function that is called to report an error that prevented loading.</p>
+        <p>Returns the maximum length of the instruction queue.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getMaxWebWorkers"><span class="type-signature">&lt;static> </span>WWLoaderDirector#getMaxWebWorkers()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Returns the maximum number of workers.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">number</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="prepareWorkers"><span class="type-signature">&lt;static> </span>WWLoaderDirector#prepareWorkers(globalCallbacks, maxQueueSize, maxWebWorkers)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.</p>
     </div>
     
 
@@ -431,13 +632,13 @@
 
         <tr>
             
-                <td class="name"><code>callbackErrorWhileLoading</code></td>
+                <td class="name"><code>globalCallbacks</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">callback</span>
+<span class="param-type"><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></span>
 
 
 
@@ -448,7 +649,55 @@
 
             
 
-            <td class="description last"><p>Callback function for described functionality</p></td>
+            <td class="description last"><p>Register global callbacks used by all web workers</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>maxQueueSize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Set the maximum size of the instruction queue (1-1024)</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>maxWebWorkers</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Set the maximum amount of workers (1-16)</p></td>
         </tr>
 
     
@@ -516,7 +765,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackMaterialsLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMaterialsLoaded(callbackMaterialsLoaded)</h4>
+    <h4 class="name" id="processQueue"><span class="type-signature">&lt;static> </span>WWLoaderDirector#processQueue()</h4>
     
     
 </dt>
@@ -524,7 +773,7 @@
 
     
     <div class="description">
-        <p>Register callback function that is called once materials have been loaded. It allows to alter and return materials.</p>
+        <p>Process the instructionQueue until it is depleted.</p>
     </div>
     
 
@@ -533,56 +782,6 @@
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>callbackMaterialsLoaded</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">callback</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -644,7 +843,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="registerCallbackMeshLoaded"><span class="type-signature">&lt;static> </span>Commons#registerCallbackMeshLoaded(callbackMeshLoaded)</h4>
+    <h4 class="name" id="setCrossOrigin"><span class="type-signature">&lt;static> </span>WWLoaderDirector#setCrossOrigin(crossOrigin)</h4>
     
     
 </dt>
@@ -652,8 +851,7 @@
 
     
     <div class="description">
-        <p>Register callback function that is called every time a mesh was loaded.
-Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructions (geometry, material or disregard mesh).</p>
+        <p>Sets the CORS string to be used.</p>
     </div>
     
 
@@ -688,13 +886,13 @@ Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructio
 
         <tr>
             
-                <td class="name"><code>callbackMeshLoaded</code></td>
+                <td class="name"><code>crossOrigin</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">callback</span>
+<span class="param-type">string</span>
 
 
 
@@ -705,271 +903,7 @@ Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructio
 
             
 
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="registerCallbackProgress"><span class="type-signature">&lt;static> </span>Commons#registerCallbackProgress(callbackProgress)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Register callback function that is invoked by internal function &quot;_announceProgress&quot; to print feedback.</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>callbackProgress</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">callback</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Callback function for described functionality</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="setMaterialPerSmoothingGroup"><span class="type-signature">&lt;static> </span>Commons#setMaterialPerSmoothingGroup(materialPerSmoothingGroup)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        <p>Tells whether a material shall be created per smoothing group</p>
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>materialPerSmoothingGroup</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last"><p>Default is false</p></td>
+            <td class="description last"><p>CORS value</p></td>
         </tr>
 
     

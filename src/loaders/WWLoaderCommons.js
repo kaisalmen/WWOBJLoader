@@ -2,7 +2,7 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.WWMeshProvider = (function () {
 
-	var WW_MESH_PROVIDER_VERSION = '1.0.0-dev';
+	var WW_MESH_PROVIDER_VERSION = '1.0.0';
 
 	var Validator = THREE.OBJLoader2.Validator;
 
