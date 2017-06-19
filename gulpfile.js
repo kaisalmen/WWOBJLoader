@@ -67,8 +67,8 @@ gulp.task( 'bundle-wwobjloader2', function () {
 	gulp.src(
 			[
 				'src/loaders/WWLoaderCommons.js',
-				'src/loaders/WWLoaderDirector.js',
-				'src/loaders/WWOBJLoader2.js'
+				'src/loaders/WWOBJLoader2.js',
+				'src/loaders/WWLoaderDirector.js'
 			]
 		)
 		.pipe( concat( 'WWOBJLoader2.js' ) )
@@ -107,8 +107,8 @@ gulp.task( 'create-docs', function ( cb ) {
 				'src/loaders/LoaderCommons.js',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/WWLoaderCommons.js',
-				'src/loaders/WWLoaderDirector.js',
-				'src/loaders/WWOBJLoader2.js'
+				'src/loaders/WWOBJLoader2.js',
+				'src/loaders/WWLoaderDirector.js'
 			],
 			{
 				read: false
