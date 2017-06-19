@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0
+
+#### Loader related changes
+- SmoothingGroups: activeSmoothingGroup is ensured to be a number (integer). "0" instead of "off" did not lead to detection of flat shading.
+- Issue 9: Fixed debug logging in MeshCreator related to Multi-Material creation.
+- Issue 8: OBJLoader2 sets the mesh name properly. Mesh name is taken from group name (g) if exists or object name (o). Fixed cut-off names (o, g, mtllib, usemtl)
+
+#### Example related changes
+- Replaced Boolean with own Validator function
+
 ## 1.2.1
 
 #### Loader related changes
