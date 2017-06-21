@@ -265,37 +265,58 @@ THREE.OBJLoader2 = (function () {
 			var reachedFaces = false;
 			var code;
 			var word = '';
+
+			var overall = '';
+			var output = '';
 			for ( var i = 0; i < length; i++ ) {
 
 				code = arrayBufferView[ i ];
+
 				switch ( code ) {
 					case Consts.CODE_SPACE:
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
+						output += String.fromCharCode( code );
 						break;
 
 					case Consts.CODE_SLASH:
 						slashes[ slashesPointer++ ] = i;
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
+						output += String.fromCharCode( code );
 						break;
 
 					case Consts.CODE_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
 						reachedFaces = this.processLine( buffer, bufferPointer, slashes, slashesPointer, reachedFaces );
+						if ( buffer[ 0 ] === Consts.LINE_V ) {
+
+							var ranR = (Math.random()).toFixed(6);
+							var ranG = (Math.random()).toFixed(6);
+							var ranB = (Math.random()).toFixed(6);
+							overall += output + ' ' + ranR + ' ' + ranG + ' ' + ranB + '\n';
+
+						} else {
+
+							overall += output + '\n';
+
+						}
 						slashesPointer = 0;
 						bufferPointer = 0;
+						output = '';
 						break;
 
 					case Consts.CODE_CR:
 						break;
 
 					default:
+						output += String.fromCharCode( code );
 						word += String.fromCharCode( code );
 						break;
 				}
 			}
+			console.log( overall );
 		};
 
 		/**
@@ -313,6 +334,7 @@ THREE.OBJLoader2 = (function () {
 			var reachedFaces = false;
 			var char;
 			var word = '';
+
 			for ( var i = 0; i < length; i++ ) {
 
 				char = text[ i ];
