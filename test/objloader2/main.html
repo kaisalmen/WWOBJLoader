@@ -77,11 +77,26 @@
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-			app.initPostGL( {
+			app.initPostGL();
+
+			var pivotA = new THREE.Object3D();
+			pivotA.name = 'PivotA';
+			pivotA.position.set( -50, 0, 0 );
+			app.loadObj( {
+				path: '../../resource/obj/female02/',
+				fileObj: 'female02_vertex_colors.obj',
+				pivot: pivotA
+			} );
+
+			var pivotB = new THREE.Object3D();
+			pivotB.name = 'PivotB';
+			pivotB.position.set( 50, 0, 0 );
+			app.loadObj( {
 				path: '../../resource/obj/female02/',
 				fileObj: 'female02.obj',
 				texturePath: '../../resource/obj/female02/',
-				fileMtl: 'female02.mtl'
+				fileMtl: 'female02.mtl',
+				pivot: pivotB
 			} );
 
 			render();

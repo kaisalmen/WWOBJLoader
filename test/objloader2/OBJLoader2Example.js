@@ -29,7 +29,6 @@ var OBJLoader2Example = (function () {
 		this.doubleSide = false;
 
 		this.cube = null;
-		this.pivot = null;
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -65,14 +64,14 @@ var OBJLoader2Example = (function () {
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
-
-		this.pivot = new THREE.Object3D();
-		this.pivot.name = 'Pivot';
-		this.scene.add( this.pivot );
 	};
 
-	OBJLoader2Example.prototype.initPostGL = function ( objDef ) {
-		var scope = this;
+	OBJLoader2Example.prototype.initPostGL = function () {
+		return true;
+	};
+
+	OBJLoader2Example.prototype.loadObj = function ( objDef ) {
+		this.scene.add( objDef.pivot );
 
 		var mtlLoader = new THREE.MTLLoader();
 		mtlLoader.setPath( objDef.texturePath );
@@ -82,10 +81,10 @@ var OBJLoader2Example = (function () {
 			materials.preload();
 
 			var objLoader = new THREE.OBJLoader2();
-			objLoader.setSceneGraphBaseNode( scope.pivot );
+			objLoader.setSceneGraphBaseNode( objDef.pivot );
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
-			objLoader.setDebug( true, true );
+			objLoader.setDebug( false, false );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
@@ -108,8 +107,6 @@ var OBJLoader2Example = (function () {
 			objLoader.load( objDef.fileObj, onSuccess, onProgress, onError );
 
 		});
-
-		return true;
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {
