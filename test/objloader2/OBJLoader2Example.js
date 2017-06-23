@@ -29,6 +29,7 @@ var OBJLoader2Example = (function () {
 		this.doubleSide = false;
 
 		this.cube = null;
+		this.pivot = null;
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -64,6 +65,10 @@ var OBJLoader2Example = (function () {
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
+
+		this.pivot = new THREE.Object3D();
+		this.pivot.name = 'Pivot';
+		this.scene.add( this.pivot );
 	};
 
 	OBJLoader2Example.prototype.initPostGL = function () {
@@ -72,6 +77,7 @@ var OBJLoader2Example = (function () {
 
 	OBJLoader2Example.prototype.loadObj = function ( objDef ) {
 		this.scene.add( objDef.pivot );
+		var scope = this;
 
 		var mtlLoader = new THREE.MTLLoader();
 		mtlLoader.setPath( objDef.texturePath );
@@ -80,6 +86,7 @@ var OBJLoader2Example = (function () {
 
 			materials.preload();
 
+			scope.pivot.add( objDef.pivot );
 			var objLoader = new THREE.OBJLoader2();
 			objLoader.setSceneGraphBaseNode( objDef.pivot );
 			objLoader.setMaterials( materials.materials );
