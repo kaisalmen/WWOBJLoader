@@ -30,6 +30,8 @@ var OBJLoader2Example = (function () {
 
 		this.cube = null;
 		this.pivot = null;
+
+		this.feedbackArray = [];
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -78,6 +80,7 @@ var OBJLoader2Example = (function () {
 	OBJLoader2Example.prototype.loadObj = function ( objDef ) {
 		this.scene.add( objDef.pivot );
 		var scope = this;
+		scope._reportProgress( 'Loading: ' + objDef.fileObj, objDef.instanceNo );
 
 		var mtlLoader = new THREE.MTLLoader();
 		mtlLoader.setPath( objDef.texturePath );
@@ -95,6 +98,7 @@ var OBJLoader2Example = (function () {
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
+				scope._reportProgress( '', objDef.instanceNo );
 			};
 
 			var onProgress = function ( event ) {
@@ -102,18 +106,25 @@ var OBJLoader2Example = (function () {
 
 					var percentComplete = event.loaded / event.total * 100;
 					var output = 'Download of "' + objDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
-					console.log(output);
-
+					scope._reportProgress( output, objDef.instanceNo );
 				}
 			};
 
 			var onError = function ( event ) {
-				console.error( 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src );
+				var output = 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src;
+				scope._reportProgress( output, objDef.instanceNo );
 			};
 
 			objLoader.load( objDef.fileObj, onSuccess, onProgress, onError );
 
 		});
+	};
+
+	OBJLoader2Example.prototype._reportProgress = function( text, instanceNo ) {
+		this.feedbackArray[ instanceNo ] = text;
+		console.log( 'Progress: ' + text );
+
+		document.getElementById( 'feedback' ).innerHTML = this.feedbackArray.join( '\<br\>' );
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {

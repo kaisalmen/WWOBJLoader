@@ -7,6 +7,7 @@
 - Issue 8: OBJLoader2 sets the mesh name properly. Mesh name is taken from group name (g) if exists or object name (o). Fixed cut-off names (o, g, mtllib, usemtl)
 - Issue 9: Fixed debug logging in MeshCreator related to Multi-Material creation.
 - three.js issue 11422: OBJLoader2 and WWOBJLoader2 are able to load vertexColors when defined as: v x y z r g b
+- Added download/progress feedback in all examples
 
 #### Example related changes
 - Replaced Boolean with own Validator function

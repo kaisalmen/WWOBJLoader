@@ -122,23 +122,37 @@ var WWParallels = (function () {
 
 		var scope = this;
 		scope.wwDirector.objectsCompleted = 0;
-		scope.feedbackArray = new Array( maxWebWorkers );
+		scope.feedbackArray = [];
+		scope.reportDonwload = [];
 
 		var i;
 		for ( i = 0; i < maxWebWorkers; i++ ) {
 
 			scope.feedbackArray[ i ] = 'Worker #' + i + ': Awaiting feedback';
+			scope.reportDonwload[ i ] = true;
 
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
 		var callbackCompletedLoading = function ( modelName, instanceNo ) {
+			scope.reportDonwload[ instanceNo ] = false;
+
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
 			if ( scope.wwDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
+		};
+
+		var callbackReportProgress = function ( content, instanceNo ) {
+			if ( scope.reportDonwload[ instanceNo ] ) {
+				var msg = 'Worker #' + instanceNo + ': ' + content;
+				console.log( msg );
+
+				scope.feedbackArray[ instanceNo ] = msg;
+				scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+			}
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
@@ -155,6 +169,7 @@ var WWParallels = (function () {
 		};
 
 		var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
+		globalCallbacks.registerCallbackProgress( callbackReportProgress );
 		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
 		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
