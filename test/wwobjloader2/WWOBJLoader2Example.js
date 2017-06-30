@@ -98,9 +98,6 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
-		var reportProgress = function ( content ) {
-			console.log( 'Progress: ' + content );
-		};
 		var materialsLoaded = function ( materials ) {
 			var count = Validator.isValid( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
@@ -111,12 +108,17 @@ var WWOBJLoader2Example = (function () {
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
 		};
-		this.wwObjLoader2.registerCallbackProgress( reportProgress );
+		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
 		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
 		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;
+	};
+
+	WWOBJLoader2Example.prototype._reportProgress = function( text ) {
+		console.log( 'Progress: ' + text );
+		document.getElementById( 'feedback' ).innerHTML = text;
 	};
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {

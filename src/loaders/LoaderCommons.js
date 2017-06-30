@@ -31,6 +31,7 @@ THREE.OBJLoader2.Commons = (function () {
 	var Validator = THREE.OBJLoader2.Validator;
 
 	function Commons() {
+		this.instanceNo = 0;
 		this.clearAllCallbacks();
 	}
 
@@ -107,7 +108,7 @@ THREE.OBJLoader2.Commons = (function () {
 		for ( var index in this.callbacks.progress ) {
 
 			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output );
+			callbackProgress( output, this.instanceNo );
 
 		}
 

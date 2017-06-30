@@ -210,7 +210,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				var refPercentComplete = 0;
 				var percentComplete = 0;
-				var output;
 				var onLoad = function ( objAsArrayBuffer ) {
 
 					scope._announceProgress( 'Running web worker!' );
@@ -232,7 +231,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					if ( percentComplete > refPercentComplete ) {
 
 						refPercentComplete = percentComplete;
-						output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
+						var output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
 						scope._announceProgress( output );
 
@@ -240,7 +239,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				};
 
 				var onError = function ( event ) {
-					output = 'Error occurred while downloading "' + scope.fileObj + '"';
+					var output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
 					scope._announceProgress( output );
 					scope._finalize( 'error' );

@@ -16,7 +16,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
-		if ( ! typeof window.URL.createObjectURL === 'function'  ) throw "This browser does not support Object creation from URL!";
+		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
 
 		this.worker = null;
 		this.workerCode = null;
@@ -496,7 +496,6 @@ THREE.OBJLoader2.WWLoaderDirectable = (function () {
 		this.materials = [];
 		this.crossOrigin = null;
 		this.requestTerminate = false;
-		this.instanceNo = 0;
 	};
 
 	/**
