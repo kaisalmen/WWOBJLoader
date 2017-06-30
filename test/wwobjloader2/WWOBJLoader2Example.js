@@ -95,6 +95,7 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
+		var scope = this;
 		var materialsLoaded = function ( materials ) {
 			var count = Validator.isValid( materials ) ? materials.length : 0;
 			console.log( 'Loaded #' + count + ' materials.' );
@@ -104,6 +105,7 @@ var WWOBJLoader2Example = (function () {
 		};
 		var completedLoading = function () {
 			console.log( 'Loading complete!' );
+			scope._reportProgress( '' );
 		};
 		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
 		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
@@ -115,7 +117,7 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype._reportProgress = function( text ) {
 		console.log( 'Progress: ' + text );
-		document.getElementById( 'feedback' ).innerHTML = text;
+		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( text ) ? text : '';
 	};
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {

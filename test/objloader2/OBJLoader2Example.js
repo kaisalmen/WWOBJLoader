@@ -6,6 +6,8 @@
 
 var OBJLoader2Example = (function () {
 
+	var Validator = THREE.OBJLoader2.Validator;
+
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -124,7 +126,7 @@ var OBJLoader2Example = (function () {
 		this.feedbackArray[ instanceNo ] = text;
 		console.log( 'Progress: ' + text );
 
-		document.getElementById( 'feedback' ).innerHTML = this.feedbackArray.join( '\<br\>' );
+		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( this.feedbackArray ) && this.feedbackArray.length > 0 ? this.feedbackArray.join( '\<br\>' ) : '';
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {
