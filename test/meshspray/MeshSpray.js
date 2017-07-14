@@ -22,7 +22,7 @@ var MeshSpray = (function () {
 	MeshSpray.prototype._validate = function () {
 		if ( this.validated ) return;
 		THREE.OBJLoader2.WWLoaderDirectable.prototype._validate.call( this );
-		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWMeshSpray' );
+		this.wwMeshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
 	MeshSpray.prototype.prepareRun = function ( runParams ) {

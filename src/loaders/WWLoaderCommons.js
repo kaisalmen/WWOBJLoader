@@ -132,7 +132,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
 		return WWRunner;
 	})();
 
-	WWMeshProvider.prototype._validate = function ( functionCodeBuilder, implClassName, existingWorkerCode ) {
+	WWMeshProvider.prototype.validate = function ( functionCodeBuilder, implClassName, existingWorkerCode ) {
 		if ( ! Validator.isValid( this.worker ) ) {
 
 			console.time( 'buildWebWorkerCode' );
@@ -526,6 +526,14 @@ THREE.OBJLoader2.WWLoaderDirectable = (function () {
 		this.requestTerminate = false;
 		this.materials = [];
 		this.validated = true;
+	};
+
+	/**
+	 * Function is called by {@link THREE.OBJLoader2.WWMeshProvider} when worker is constructed.
+	 * @private
+	 */
+	WWLoaderDirectable.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
+
 	};
 
 	/**

@@ -74,7 +74,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		if ( this.validated ) return;
 		THREE.OBJLoader2.WWLoaderDirectable.prototype._validate.call( this );
 
-		this.wwMeshProvider._validate( this._buildWebWorkerCode, 'WWOBJLoader' );
+		this.wwMeshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
 		this.modelName = '';
 		this.requestTerminate = false;
