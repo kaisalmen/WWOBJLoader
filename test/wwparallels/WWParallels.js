@@ -6,7 +6,7 @@
 
 var WWParallels = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;
@@ -156,7 +156,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-			var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, false );
+			var override = new THREE.Loaders.LoadedMeshUserOverride( false, false );
 
 			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 

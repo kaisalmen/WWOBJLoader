@@ -2,9 +2,9 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 THREE.OBJLoader2.WWMeshProvider = (function () {
 
-	var WW_MESH_PROVIDER_VERSION = '1.0.0';
+	var WW_MESH_PROVIDER_VERSION = '1.0.0-dev';
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	function WWMeshProvider() {
 		this._init();
@@ -408,7 +408,7 @@ THREE.OBJLoader2.WWMeshProvider = (function () {
  */
 THREE.OBJLoader2.PrepDataBase = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	function PrepDataBase() {
 		this.dataAvailable = false;
@@ -478,11 +478,7 @@ THREE.OBJLoader2.PrepDataBase = (function () {
  */
 THREE.OBJLoader2.WWLoaderDirectable = (function () {
 
-	WWLoaderDirectable.prototype = Object.create( THREE.OBJLoader2.Commons.prototype );
-	WWLoaderDirectable.prototype.constructor = WWLoaderDirectable;
-
 	function WWLoaderDirectable() {
-		THREE.OBJLoader2.Commons.call( this );
 		this._init();
 	}
 
@@ -491,6 +487,7 @@ THREE.OBJLoader2.WWLoaderDirectable = (function () {
 	 * @private
 	 */
 	WWLoaderDirectable.prototype._init = function () {
+		this.commons = new THREE.Loaders.Commons();
 		this.wwMeshProvider = new THREE.OBJLoader2.WWMeshProvider();
 		this.validated = false;
 		this.materials = [];

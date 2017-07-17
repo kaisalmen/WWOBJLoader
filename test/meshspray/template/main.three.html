@@ -64,7 +64,7 @@
 				document.getElementById( 'feedback' ).innerHTML = text;
 			};
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-				var override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, true );
+				var override = new THREE.Loaders.LoadedMeshUserOverride( false, true );
 
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				material.side = THREE.DoubleSide;

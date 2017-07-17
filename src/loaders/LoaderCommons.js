@@ -1,6 +1,6 @@
-if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+if ( THREE.Loaders === undefined ) { THREE.Loaders = {} }
 
-THREE.OBJLoader2.Validator = {
+THREE.Loaders.Validator = {
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
 	 *
@@ -26,18 +26,38 @@ THREE.OBJLoader2.Validator = {
  * Global callback definition
  * @class
  */
-THREE.OBJLoader2.Commons = (function () {
+THREE.Loaders.Commons = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	function Commons() {
 		this.instanceNo = 0;
+		this.debug = false;
 		this.clearAllCallbacks();
 	}
 
 	/**
+	 * Allows to set debug mode.
+	 * @memberOf THREE.Loaders.Commons
+	 *
+	 * @param {boolean} enabled
+	 */
+	Commons.prototype.setDebug = function ( enabled ) {
+		this.debug = enabled;
+	};
+
+	/**
+	 * Answers whether debug is set.
+	 *
+	 * @returns {boolean}
+	 */
+	Commons.prototype.getDebug = function () {
+		return this.debug;
+	};
+
+	/**
 	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
@@ -47,7 +67,7 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
@@ -57,7 +77,7 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Register callback function that is called to report an error that prevented loading.
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
@@ -67,8 +87,8 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * Use {@link THREE.Loaders.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
@@ -78,7 +98,7 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
@@ -88,7 +108,7 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Clears all registered callbacks.
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 */
 	Commons.prototype.clearAllCallbacks = function () {
 		this.callbacks = {
@@ -100,7 +120,13 @@ THREE.OBJLoader2.Commons = (function () {
 		};
 	};
 
-	Commons.prototype._announceProgress = function ( baseText, text ) {
+	/**
+	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
+	 * @memberOf THREE.Loaders.Commons
+	 * @param baseText
+	 * @param text
+	 */
+	Commons.prototype.announceProgress = function ( baseText, text ) {
 		var output = Validator.isValid( baseText ) ? baseText: "";
 		output = Validator.isValid( text ) ? output + " " + text : output;
 
@@ -117,7 +143,7 @@ THREE.OBJLoader2.Commons = (function () {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.OBJLoader2.Commons
+	 * @memberOf THREE.Loaders.Commons
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
@@ -126,4 +152,51 @@ THREE.OBJLoader2.Commons = (function () {
 	};
 
 	return Commons;
+})();
+
+/**
+ * Object to return by {@link THREE.Loaders.Commons}.callbacks.meshLoaded.
+ * Used to disregard a certain mesh or to return one to many created meshes.
+ * @class
+ *
+ * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
+ */
+THREE.Loaders.LoadedMeshUserOverride = (function () {
+
+	function LoadedMeshUserOverride( disregardMesh, alteredMesh ) {
+		this.disregardMesh = disregardMesh === true;
+		this.alteredMesh = alteredMesh === true;
+		this.meshes = [];
+	}
+
+	/**
+	 * Add a mesh created within callback.
+	 *
+	 * @memberOf THREE.OBJLoader2.LoadedMeshUserOverride
+	 *
+	 * @param {THREE.Mesh} mesh
+	 */
+	LoadedMeshUserOverride.prototype.addMesh = function ( mesh ) {
+		this.meshes.push( mesh );
+	};
+
+	/**
+	 * Answers if mesh shall be disregarded completely.
+	 *
+	 * @returns {boolean}
+	 */
+	LoadedMeshUserOverride.prototype.isDisregardMesh = function () {
+		return this.disregardMesh;
+	};
+
+	/**
+	 * Answers if new mesh(es) were created.
+	 *
+	 * @returns {boolean}
+	 */
+	LoadedMeshUserOverride.prototype.providesAlteredMeshes = function () {
+		return this.alteredMesh;
+	};
+
+	return LoadedMeshUserOverride;
 })();

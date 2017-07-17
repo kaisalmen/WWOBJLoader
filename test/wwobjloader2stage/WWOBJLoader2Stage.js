@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Validator = THREE.OBJLoader2.Validator;
+var Validator = THREE.Loaders.Validator;
 
 var WWOBJLoader2Stage = (function () {
 
@@ -29,7 +29,7 @@ var WWOBJLoader2Stage = (function () {
 		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
 		// following settings are default, contained for easy play-around
 		this.wwObjLoader2.setDebug( false );
-		this.wwObjLoader2.setMaterialPerSmoothingGroup( false );
+		this.wwObjLoader2.commons.setMaterialPerSmoothingGroup( false );
 
 		this.controls = null;
 
@@ -94,11 +94,12 @@ var WWOBJLoader2Stage = (function () {
 		var errorWhileLoading = function () {
 			// just for demonstration...
 		};
-		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
-		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
-		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
-		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
-		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
+		var commons = this.wwObjLoader2.commons;
+		commons.registerCallbackMaterialsLoaded( materialsLoaded );
+		commons.registerCallbackMeshLoaded( meshLoaded );
+		commons.registerCallbackCompletedLoading( reloadAssetsProxy );
+		commons.registerCallbackProgress( this.reportProgress );
+		commons.registerCallbackErrorWhileLoading( errorWhileLoading );
 
 		this.reloadAssets();
 
@@ -244,6 +245,7 @@ var WWOBJLoader2Stage = (function () {
 						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
 					);
 					prepData.setSceneGraphBaseNode( obj2Load.pivot );
+					prepData.setStreamMeshes( false );
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
@@ -279,6 +281,7 @@ var WWOBJLoader2Stage = (function () {
 					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
 				);
 				prepData.setSceneGraphBaseNode( obj2Load.pivot );
+				prepData.setStreamMeshes( false );
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 

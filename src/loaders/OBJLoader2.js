@@ -8,39 +8,27 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.0.0';
-	var BindCommons = THREE.OBJLoader2.Commons;
-	var BindValidator = THREE.OBJLoader2.Validator;
-	var Validator = THREE.OBJLoader2.Validator;
-
-	OBJLoader2.prototype = Object.create( BindCommons.prototype );
-	OBJLoader2.prototype.constructor = OBJLoader2;
+	var OBJLOADER2_VERSION = '2.0.0-dev';
+	var Validator = THREE.Loaders.Validator;
+	var Commons = THREE.Loaders.Commons;
 
 	function OBJLoader2( manager ) {
-		BindCommons.call( this );
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		this.commons = new Commons();
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 
-		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
+		this.meshCreator = new MeshCreator( this.commons.callbacks.meshLoaded );
 		var scope = this;
 		var announceProgressScoped = function ( message ) {
-			scope._announceProgress( message );
+			scope.commons.announceProgress( message );
 		};
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
 		this.validated = false;
 	}
-
-	OBJLoader2.prototype._getValidatorClass = function () {
-		return BindValidator;
-	};
-
-	OBJLoader2.prototype._getCommonsClass = function () {
-		return BindCommons;
-	};
 
 	/**
 	 * Base path to use.
@@ -80,6 +68,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} meshCreatorDebug Internal MeshCreator will produce debug output
 	 */
 	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
+		this.commons.setDebug( parserDebug );
 		this.parser.setDebug( parserDebug );
 		this.meshCreator.setDebug( meshCreatorDebug );
 	};
@@ -100,7 +89,7 @@ THREE.OBJLoader2 = (function () {
 		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
 
 		var scope = this;
-		if ( scope.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
+		if ( scope.commons.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
 		scope.fileLoader.load( url, function ( content ) {
 
 			// only use parseText if useArrayBuffer is explicitly set to false
@@ -184,9 +173,9 @@ THREE.OBJLoader2 = (function () {
 		this.validated = false;
 
 		var callback;
-		for ( var index in this.callbacks.completedLoading ) {
+		for ( var index in this.commons.callbacks.completedLoading ) {
 
-			callback = this.callbacks.completedLoading[ index ];
+			callback = this.commons.callbacks.completedLoading[ index ];
 			callback( sceneGraphBaseNode );
 
 		}
@@ -886,7 +875,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator( callbacksMeshLoaded ) {
+		function MeshCreator( callbackMeshLoaded ) {
 			this.sceneGraphBaseNode = null;
 			this.materials = null;
 			this.debug = false;
@@ -894,9 +883,7 @@ THREE.OBJLoader2 = (function () {
 
 			this.validated = false;
 
-			this.callbacks = {
-				meshLoaded: callbacksMeshLoaded
-			};
+			this.callbackMeshLoaded = callbackMeshLoaded;
 		}
 
 		MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
@@ -1089,13 +1076,13 @@ THREE.OBJLoader2 = (function () {
 			var meshName = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
 			var meshes = [];
 			var mesh;
-			if ( this.callbacks.meshLoaded.length > 0 ) {
+			if ( this.callbackMeshLoaded.length > 0 ) {
 
 				var callbackMeshLoaded;
 				var callbackMeshLoadedResult;
-				for ( var index in this.callbacks.meshLoaded ) {
+				for ( var index in this.callbackMeshLoaded ) {
 
-					callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
+					callbackMeshLoaded = this.callbackMeshLoaded[ index ];
 					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
 
 					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
@@ -1180,6 +1167,7 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
 		var workerCode = Validator.isValid( existingWorkerCode ) ? existingWorkerCode : '';
+		workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
 		workerCode += funcBuildObject( 'Consts', Consts );
 		workerCode += funcBuildObject( 'Validator', Validator );
 		workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
@@ -1189,54 +1177,4 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	return OBJLoader2;
-})();
-
-THREE.OBJLoader2.Commons = THREE.OBJLoader2.prototype._getCommonsClass();
-THREE.OBJLoader2.Validator = THREE.OBJLoader2.prototype._getValidatorClass();
-
-/**
- * Object to return by {@link THREE.OBJLoader2}.callbacks.meshLoaded and {@link THREE.OBJLoader2.WWOBJLoader2}.callbacks.meshLoaded.
- * Used to disregard a certain mesh or to return one to many created meshes.
- * @class
- *
- * @param {boolean} disregardMesh=false Tell OBJLoader2 or WWOBJLoader2 to completely disregard this mesh
- */
-THREE.OBJLoader2.LoadedMeshUserOverride = (function () {
-
-	function LoadedMeshUserOverride( disregardMesh, alteredMesh ) {
-		this.disregardMesh = disregardMesh === true;
-		this.alteredMesh = alteredMesh === true;
-		this.meshes = [];
-	}
-
-	/**
-	 * Add a mesh created within callback.
-	 *
-	 * @memberOf THREE.OBJLoader2.LoadedMeshUserOverride
-	 *
-	 * @param {THREE.Mesh} mesh
-	 */
-	LoadedMeshUserOverride.prototype.addMesh = function ( mesh ) {
-		this.meshes.push( mesh );
-	};
-
-	/**
-	 * Answer if mesh shall be disregarded completely.
-	 *
-	 * @returns {boolean}
-	 */
-	LoadedMeshUserOverride.prototype.isDisregardMesh = function () {
-		return this.disregardMesh;
-	};
-
-	/**
-	 * Answer if new mesh(es) were created.
-	 *
-	 * @returns {boolean}
-	 */
-	LoadedMeshUserOverride.prototype.providesAlteredMeshes = function () {
-		return this.alteredMesh;
-	};
-
-	return LoadedMeshUserOverride;
 })();

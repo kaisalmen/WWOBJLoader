@@ -10,12 +10,16 @@
  */
 THREE.OBJLoader2.WWLoaderDirector = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var WW_LOADER_DIRECTOR_VERSION = '1.0.0-dev';
+
+	var Validator = THREE.Loaders.Validator;
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
 	function WWLoaderDirector( classDef ) {
+		console.log( "Using THREE.OBJLoader2.WWLoaderDirector version: " + WW_LOADER_DIRECTOR_VERSION );
+
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
 		this.crossOrigin = null;
@@ -130,10 +134,10 @@ THREE.OBJLoader2.WWLoaderDirector = (function () {
 	};
 
 	WWLoaderDirector.prototype._kickWorkerRun = function( worker, runParams ) {
-		worker.clearAllCallbacks();
+		worker.commons.clearAllCallbacks();
 		var key;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
-		var workerCallbacks = worker.callbacks;
+		var workerCallbacks = worker.commons.callbacks;
 		var selectedGlobalCallback;
 		for ( key in globalCallbacks ) {
 
@@ -179,7 +183,7 @@ THREE.OBJLoader2.WWLoaderDirector = (function () {
 
 			}
 		};
-		worker.registerCallbackCompletedLoading( directorCompletedLoading );
+		worker.commons.registerCallbackCompletedLoading( directorCompletedLoading );
 
 		worker.prepareRun( runParams );
 		worker.run();

@@ -6,7 +6,7 @@
 
 var WWOBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -38,7 +38,7 @@ var WWOBJLoader2Example = (function () {
 		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
 		// following settings are default, contained for easy play-around
 		this.wwObjLoader2.setDebug( false );
-		this.wwObjLoader2.setMaterialPerSmoothingGroup( false );
+		this.wwObjLoader2.commons.setMaterialPerSmoothingGroup( false );
 
 		// Check for the various File API support.
 		this.fileApiAvailable = true;
@@ -110,10 +110,11 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Loading complete!' );
 			scope._reportProgress( '' );
 		};
-		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
-		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
-		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
-		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
+		var commons = this.wwObjLoader2.commons;
+		commons.registerCallbackProgress( this._reportProgress );
+		commons.registerCallbackCompletedLoading( completedLoading );
+		commons.registerCallbackMaterialsLoaded( materialsLoaded );
+		commons.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;
 	};

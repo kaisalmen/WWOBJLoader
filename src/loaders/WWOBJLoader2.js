@@ -8,9 +8,9 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  */
 THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
-	var WWOBJLOADER2_VERSION = '2.0.0';
+	var WWOBJLOADER2_VERSION = '2.0.0-dev';
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.WWLoaderDirectable.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
@@ -23,7 +23,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		THREE.OBJLoader2.WWLoaderDirectable.prototype._init.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		this.debug = false;
+		this.commons = new THREE.Loaders.Commons();
 
 		this.modelName = '';
 		this.manager = THREE.DefaultLoadingManager;
@@ -47,7 +47,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {boolean} enabled True or false
 	 */
 	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
-		this.debug = enabled;
+		this.commons.setDebug( enabled );
 	};
 
 	/**
@@ -115,7 +115,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			messageObject = {
 				cmd: 'init',
-				debug: this.debug,
+				debug: this.commons.getDebug(),
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
 			};
 			this.objAsArrayBuffer = params.objAsArrayBuffer;
@@ -130,7 +130,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			messageObject = {
 				cmd: 'init',
-				debug: this.debug,
+				debug: this.commons.getDebug(),
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup
 			};
 			this.fileObj = params.fileObj;
@@ -146,9 +146,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope._announceProgress( baseText, text );
+			scope.commons.announceProgress( baseText, text );
 		};
-		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
+		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, this.commons.callbacks.meshLoaded, scopeFuncComplete );
 		this.wwMeshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
 		this.wwMeshProvider.postMessage( messageObject );
 	};
@@ -189,9 +189,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			var materialsFromCallback;
 			var callbackMaterialsLoaded;
-			for ( var index in scope.callbacks.materialsLoaded ) {
+			for ( var index in scope.commons.callbacks.materialsLoaded ) {
 
-				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
+				callbackMaterialsLoaded = scope.commons.callbacks.materialsLoaded[ index ];
 				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
 				if ( Validator.isValid( materialsFromCallback ) ) scope.materials = materialsFromCallback;
 
@@ -212,7 +212,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var percentComplete = 0;
 				var onLoad = function ( objAsArrayBuffer ) {
 
-					scope._announceProgress( 'Running web worker!' );
+					scope.commons.announceProgress( 'Running web worker!' );
 					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
 					scope.wwMeshProvider.postMessage(
 						{
@@ -233,7 +233,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 						refPercentComplete = percentComplete;
 						var output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
-						scope._announceProgress( output );
+						scope.commons.announceProgress( output );
 
 					}
 				};
@@ -241,7 +241,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
-					scope._announceProgress( output );
+					scope.commons.announceProgress( output );
 					scope._finalize( 'error' );
 
 				};
@@ -266,7 +266,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + scope.fileMtl + '"';
 					console.error( output + ': ' + event );
-					scope._announceProgress( output );
+					scope.commons.announceProgress( output );
 					scope._finalize( 'error' );
 				};
 
@@ -288,18 +288,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		if ( reason === 'complete' ) {
 
-			for ( index in this.callbacks.completedLoading ) {
+			for ( index in this.commons.callbacks.completedLoading ) {
 
-				callback = this.callbacks.completedLoading[ index ];
+				callback = this.commons.callbacks.completedLoading[ index ];
 				callback( this.instanceNo, this.modelName );
 
 			}
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.callbacks.errorWhileLoading ) {
+			for ( index in this.commons.callbacks.errorWhileLoading ) {
 
-				callback = this.callbacks.errorWhileLoading[ index ];
+				callback = this.commons.callbacks.errorWhileLoading[ index ];
 				callback( this.instanceNo, this.modelName );
 
 			}
@@ -327,6 +327,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			var wwDef = (function () {
 
 				function WWOBJLoader() {
+					// classes initialised here are defined in existingWorkerCode
+					this.commons = new Commons();
 					this.wwMeshCreator = new WWMeshCreator();
 					this.parser = new Parser( this.wwMeshCreator );
 					this.validated = false;
@@ -342,6 +344,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				 * @param meshCreatorDebug
 				 */
 				WWOBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
+					this.commons.setDebug( parserDebug );
 					this.parser.setDebug( parserDebug );
 					this.wwMeshCreator.setDebug( meshCreatorDebug );
 				};
@@ -622,7 +625,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	PrepDataArrayBuffer.prototype = Object.create( THREE.OBJLoader2.PrepDataBase.prototype );
 	PrepDataArrayBuffer.prototype.constructor = PrepDataArrayBuffer;
@@ -651,7 +654,7 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	PrepDataFile.prototype = Object.create( THREE.OBJLoader2.PrepDataBase.prototype );
 	PrepDataFile.prototype.constructor = PrepDataFile;
@@ -677,11 +680,11 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	return {
 		/**
-		 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
+		 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
 		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackProgress Callback function for described functionality

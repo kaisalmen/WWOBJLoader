@@ -6,7 +6,7 @@
 
 var MeshSpray = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.Loaders.Validator;
 
 	MeshSpray.prototype = Object.create( THREE.OBJLoader2.WWLoaderDirectable.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
@@ -34,7 +34,7 @@ var MeshSpray = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope._announceProgress( baseText, text );
+			scope.commons.announceProgress( baseText, text );
 		};
 		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, [ runParams.getCallbacks().meshLoaded ], scopeFuncComplete );
 		this.wwMeshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
@@ -75,18 +75,18 @@ var MeshSpray = (function () {
 
 		if ( reason === 'complete' ) {
 
-			for ( index in this.callbacks.completedLoading ) {
+			for ( index in this.commons.callbacks.completedLoading ) {
 
-				callback = this.callbacks.completedLoading[ index ];
+				callback = this.commons.callbacks.completedLoading[ index ];
 				callback( this.instanceNo );
 
 			}
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.callbacks.errorWhileLoading ) {
+			for ( index in this.commons.callbacks.errorWhileLoading ) {
 
-				callback = this.callbacks.errorWhileLoading[ index ];
+				callback = this.commons.callbacks.errorWhileLoading[ index ];
 				callback( this.instanceNo );
 
 			}
