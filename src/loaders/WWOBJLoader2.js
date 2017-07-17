@@ -12,15 +12,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var Validator = THREE.Loaders.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.WWLoaderDirectable.prototype );
+	WWOBJLoader2.prototype = Object.create( THREE.WWLoaders.WWLoaderDirectable.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		THREE.OBJLoader2.WWLoaderDirectable.call( this );
+		THREE.WWLoaders.WWLoaderDirectable.call( this );
 	}
 
 	WWOBJLoader2.prototype._init = function () {
-		THREE.OBJLoader2.WWLoaderDirectable.prototype._init.call( this );
+		THREE.WWLoaders.WWLoaderDirectable.prototype._init.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
 		this.commons = new THREE.Loaders.Commons();
@@ -72,7 +72,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.OBJLoader2.WWLoaderDirectable.prototype._validate.call( this );
+		THREE.WWLoaders.WWLoaderDirectable.prototype._validate.call( this );
 
 		this.wwMeshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
@@ -282,7 +282,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
-		THREE.OBJLoader2.WWLoaderDirectable.prototype._finalize.call( this, reason );
+		THREE.WWLoaders.WWLoaderDirectable.prototype._finalize.call( this, reason );
 		var index;
 		var callback;
 
@@ -627,11 +627,11 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
 
 	var Validator = THREE.Loaders.Validator;
 
-	PrepDataArrayBuffer.prototype = Object.create( THREE.OBJLoader2.PrepDataBase.prototype );
+	PrepDataArrayBuffer.prototype = Object.create( THREE.WWLoaders.PrepDataBase.prototype );
 	PrepDataArrayBuffer.prototype.constructor = PrepDataArrayBuffer;
 
 	function PrepDataArrayBuffer( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
-		THREE.OBJLoader2.PrepDataBase.call( this );
+		THREE.WWLoaders.PrepDataBase.call( this );
 		this.dataAvailable = true;
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.objAsArrayBuffer = Validator.verifyInput( objAsArrayBuffer, null );
@@ -656,11 +656,11 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
 
 	var Validator = THREE.Loaders.Validator;
 
-	PrepDataFile.prototype = Object.create( THREE.OBJLoader2.PrepDataBase.prototype );
+	PrepDataFile.prototype = Object.create( THREE.WWLoaders.PrepDataBase.prototype );
 	PrepDataFile.prototype.constructor = PrepDataFile;
 
 	function PrepDataFile( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
-		THREE.OBJLoader2.PrepDataBase.call( this );
+		THREE.WWLoaders.PrepDataBase.call( this );
 
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.pathObj = Validator.verifyInput( pathObj, null );
@@ -671,73 +671,3 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
 
 	return PrepDataFile;
 })();
-
-/**
- * Callbacks utilized by functions working with {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
- *
- * @returns {{registerCallbackProgress: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackProgress, registerCallbackCompletedLoading: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackCompletedLoading, registerCallbackMaterialsLoaded: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackMaterialsLoaded, registerCallbackMeshLoaded: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackMeshLoaded, registerCallbackErrorWhileLoading: THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.registerCallbackErrorWhileLoading, progress: null, completedLoading: null, errorWhileLoading: null, materialsLoaded: null, meshLoaded: null}}
- * @constructor
- */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks = function () {
-
-	var Validator = THREE.Loaders.Validator;
-
-	return {
-		/**
-		 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackProgress Callback function for described functionality
-		 */
-		registerCallbackProgress: function ( callbackProgress ) {
-			if ( Validator.isValid( callbackProgress ) ) this.progress = callbackProgress;
-		},
-
-		/**
-		 * Register callback function that is called once loading of the complete model is completed.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackCompletedLoading Callback function for described functionality
-		 */
-		registerCallbackCompletedLoading: function ( callbackCompletedLoading ) {
-			if ( Validator.isValid( callbackCompletedLoading ) ) this.completedLoading = callbackCompletedLoading;
-		},
-
-		/**
-		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
-		 */
-		registerCallbackMaterialsLoaded: function ( callbackMaterialsLoaded ) {
-			if ( Validator.isValid( callbackMaterialsLoaded ) ) this.materialsLoaded = callbackMaterialsLoaded;
-		},
-
-		/**
-		 * Register callback function that is called every time a mesh was loaded.
-		 * Use {@link THREE.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackMeshLoaded Callback function for described functionality
-		 */
-		registerCallbackMeshLoaded: function ( callbackMeshLoaded ) {
-			if ( Validator.isValid( callbackMeshLoaded ) ) this.meshLoaded = callbackMeshLoaded;
-		},
-
-		/**
-		 * Report if an error prevented loading.
-		 * @memberOf THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
-		 */
-		registerCallbackErrorWhileLoading: function ( callbackErrorWhileLoading ) {
-			if ( Validator.isValid( callbackErrorWhileLoading ) ) this.errorWhileLoading = callbackErrorWhileLoading;
-		},
-
-		progress: null,
-		completedLoading: null,
-		errorWhileLoading: null,
-		materialsLoaded: null,
-		meshLoaded: null
-	};
-};
