@@ -49,7 +49,7 @@ gulp.task( 'bundle-objloader2', function () {
 			patterns: [
 				{
 					match: /var OBJLOADER2_VERSION.*/g,
-					replacement: "var OBJLOADER2_VERSION = '"+ packageContent.version + "';"
+					replacement: "var OBJLOADER2_VERSION = '"+ packageContent.versions.loader_obj + "';"
 				}
 			]
 		} ) )
@@ -77,11 +77,15 @@ gulp.task( 'bundle-wwobjloader2', function () {
 			patterns: [
 				{
 					match: /var WWOBJLOADER2_VERSION.*/g,
-					replacement: "var WWOBJLOADER2_VERSION = '"+ packageContent.version + "';"
+					replacement: "var WWOBJLOADER2_VERSION = '"+ packageContent.versions.loader_ww_obj + "';"
 				},
 				{
 					match: /var WW_MESH_PROVIDER_VERSION.*/g,
-					replacement: "var WW_MESH_PROVIDER_VERSION = '"+ packageContent.version + "';"
+					replacement: "var WW_MESH_PROVIDER_VERSION = '"+ packageContent.versions.mesh_provider + "';"
+				},
+				{
+					match: /var WW_LOADER_DIRECTOR_VERSION.*/g,
+					replacement: "var WW_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_director + "';"
 				}
 			]
 		} ) )

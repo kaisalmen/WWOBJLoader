@@ -33,7 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.Commons.html">THREE.OBJLoader2.Commons</a></li><li><a href="THREE.OBJLoader2.LoadedMeshUserOverride.html">THREE.OBJLoader2.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.PrepDataBase.html">THREE.OBJLoader2.PrepDataBase</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirectable.html">THREE.OBJLoader2.WWLoaderDirectable</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirector.html">THREE.OBJLoader2.WWLoaderDirector</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
+					<li><a href="THREE.Loaders.Commons.html">THREE.Loaders.Commons</a></li><li><a href="THREE.Loaders.LoadedMeshUserOverride.html">THREE.Loaders.LoadedMeshUserOverride</a></li><li><a href="THREE.OBJLoader2.html">THREE.OBJLoader2</a></li><li><a href="THREE.OBJLoader2.PrepDataBase.html">THREE.OBJLoader2.PrepDataBase</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirectable.html">THREE.OBJLoader2.WWLoaderDirectable</a></li><li><a href="THREE.OBJLoader2.WWLoaderDirector.html">THREE.OBJLoader2.WWLoaderDirector</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.html">THREE.OBJLoader2.WWOBJLoader2</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks</a></li><li><a href="THREE.OBJLoader2.WWOBJLoader2.PrepDataFile.html">THREE.OBJLoader2.WWOBJLoader2.PrepDataFile</a></li>
 				</ul>
 			</li>
 			
@@ -71,8 +71,6 @@
 <header>
     
         <h2>
-            <span class="ancestors"><a href="THREE.OBJLoader2.html">.OBJLoader2</a>.</span>
-        
         Commons
         </h2>
         
@@ -179,6 +177,146 @@
         <h3 class="subsection-title">Methods</h3>
 
         <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="announceProgress"><span class="type-signature">&lt;static> </span>Commons#announceProgress(baseText, text)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Announce feedback which is give to the registered callbacks and logged if debug is enabled</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>baseText</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>text</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
             
 <hr>
 <dt>
@@ -653,7 +791,7 @@
     
     <div class="description">
         <p>Register callback function that is called every time a mesh was loaded.
-Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructions (geometry, material or disregard mesh).</p>
+Use THREE.Loaders.OBJLoader2.LoadedMeshUserOverride for alteration instructions (geometry, material or disregard mesh).</p>
     </div>
     
 
@@ -834,6 +972,134 @@ Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructio
             
 
             <td class="description last"><p>Callback function for described functionality</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setDebug"><span class="type-signature">&lt;static> </span>Commons#setDebug(enabled)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Allows to set debug mode.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>enabled</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
         </tr>
 
     
@@ -1083,7 +1349,7 @@ Use THREE.OBJLoader2.OBJLoader2.LoadedMeshUserOverride for alteration instructio
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a>
 	
-		on June 30th 2017, 2:23:00 pm
+		on July 17th 2017, 12:08:24 pm
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
