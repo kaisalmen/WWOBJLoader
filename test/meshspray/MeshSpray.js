@@ -8,21 +8,21 @@ var MeshSpray = (function () {
 
 	var Validator = THREE.Loaders.Validator;
 
-	MeshSpray.prototype = Object.create( THREE.WWLoaders.WWLoaderDirectable.prototype );
+	MeshSpray.prototype = Object.create( THREE.Loaders.WW.DirectableLoader.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray() {
-		THREE.WWLoaders.WWLoaderDirectable.call( this );
+		THREE.Loaders.WW.DirectableLoader.call( this );
 	}
 
 	MeshSpray.prototype._init = function () {
-		THREE.WWLoaders.WWLoaderDirectable.prototype._init.call( this );
+		THREE.Loaders.WW.DirectableLoader.prototype._init.call( this );
 	};
 
 	MeshSpray.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.WWLoaders.WWLoaderDirectable.prototype._validate.call( this );
-		this.wwMeshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
+		THREE.Loaders.WW.DirectableLoader.prototype._validate.call( this );
+		this.meshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
 	MeshSpray.prototype.prepareRun = function ( runParams ) {
@@ -36,9 +36,9 @@ var MeshSpray = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.commons.announceProgress( baseText, text );
 		};
-		this.wwMeshProvider.setCallbacks( scopeFuncAnnounce, [ runParams.getCallbacks().meshLoaded ], scopeFuncComplete );
-		this.wwMeshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
-		this.wwMeshProvider.postMessage( {
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, [ runParams.getCallbacks().meshLoaded ], scopeFuncComplete );
+		this.meshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
+		this.meshProvider.postMessage( {
 			cmd: 'init',
 			debug: this.debug,
 			materialPerSmoothingGroup: false,
@@ -52,15 +52,15 @@ var MeshSpray = (function () {
 		for ( var materialName in this.materials ) {
 			materialNames.push( materialName );
 		}
-		this.wwMeshProvider.addMaterials( this.materials );
-		this.wwMeshProvider.postMessage(
+		this.meshProvider.addMaterials( this.materials );
+		this.meshProvider.postMessage(
 			{
 				cmd: 'setMaterials',
 				materialNames: materialNames
 			}
 		);
 
-		this.wwMeshProvider.postMessage(
+		this.meshProvider.postMessage(
 			{
 				cmd: 'run',
 				dimension: 200
@@ -69,7 +69,7 @@ var MeshSpray = (function () {
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {
-		THREE.WWLoaders.WWLoaderDirectable.prototype._finalize.call( this, reason );
+		THREE.Loaders.WW.DirectableLoader.prototype._finalize.call( this, reason );
 		var index;
 		var callback;
 
@@ -94,11 +94,11 @@ var MeshSpray = (function () {
 		}
 		if ( reason === 'terminate' ) {
 
-			if ( this.wwMeshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+			if ( this.meshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 
 			console.log( 'Finalize is complete. Terminating application on request!' );
 
-			this.wwMeshProvider._terminate();
+			this.meshProvider._terminate();
 		}
 		console.timeEnd( 'MeshSpray' );
 	};

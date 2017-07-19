@@ -25,7 +25,7 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwDirector = new THREE.OBJLoader2.WWLoaderDirector( THREE.OBJLoader2.WWOBJLoader2 );
+		this.wwDirector = new THREE.Loaders.WW.LoaderDirector( THREE.OBJLoader2.WWOBJLoader2 );
 		this.wwDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
@@ -172,7 +172,7 @@ var WWParallels = (function () {
 			return override;
 		};
 
-		var globalCallbacks = new THREE.WWLoaders.PrepDataCallbacks();
+		var globalCallbacks = new THREE.Loaders.WW.PrepDataCallbacks();
 		globalCallbacks.registerCallbackProgress( callbackReportProgress );
 		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
 		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
