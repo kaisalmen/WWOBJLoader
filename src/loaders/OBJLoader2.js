@@ -442,11 +442,13 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_S:
 					this.rawObject.pushSmoothingGroup( buffer[ 1 ] );
+					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_G:
 					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
 					this.processCompletedGroup( concatBuffer );
+					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
@@ -461,22 +463,31 @@ THREE.OBJLoader2 = (function () {
 						this.rawObject.pushObject( concatBuffer );
 
 					}
+					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_MTLLIB:
 					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
 					this.rawObject.pushMtllib( concatBuffer );
+					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_USEMTL:
 					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
 					this.rawObject.pushUsemtl( concatBuffer );
+					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				default:
 					break;
 			}
 			return reachedFaces;
+		};
+
+		Parser.prototype.flushStringBuffer = function ( buffer, bufferLength ) {
+			for ( var i = 0; i < bufferLength; i++ ) {
+				buffer[ i ] = '';
+			}
 		};
 
 		Parser.prototype.processCompletedObject = function ( objectName, groupName ) {

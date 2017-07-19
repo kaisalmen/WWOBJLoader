@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+#### Loader related changes
+- three.js issue 11707: Whenever strings are parsed (s, g, o, mtllib or usemtl) the buffer content is reset afterwards
+
 ## 1.3.0
 
 #### Loader related changes
@@ -23,7 +28,7 @@
 - Requires three.js release 85 (now available)
 
 #### Example related changes
- 
+
 ##### webgl_loader_obj2_ww_parallels:
 - Fixed "Run Queue" started new run before first was completed.
 
@@ -38,7 +43,7 @@
 
 ##### THREE.OBJLoader2.WWOBJLoader2Director
 - Added per queue object callbacks
-- Global callbacks in `prepareWorkers` will be specified with new object `OBJLoader2.WWOBJLoader2.PrepDataCallbacks`. This object is also used in both PrepData objects for defining extra per model callbacks in addition to the global ones  
+- Global callbacks in `prepareWorkers` will be specified with new object `OBJLoader2.WWOBJLoader2.PrepDataCallbacks`. This object is also used in both PrepData objects for defining extra per model callbacks in addition to the global ones
 - Callbacks will be reset and reassigned for every run
 
 ##### All
@@ -78,7 +83,7 @@ Improvements since initial release. This was the first npm release and the first
 - Library headers now carry references to development repository
 
 #### Example related changes
- 
+
 ##### webgl_loader_obj
 - Added GridHelper
 - Resources to load are now defined outside example classes
