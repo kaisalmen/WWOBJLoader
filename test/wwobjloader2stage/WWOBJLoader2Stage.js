@@ -245,7 +245,7 @@ var WWOBJLoader2Stage = (function () {
 						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
 					);
 					prepData.setSceneGraphBaseNode( obj2Load.pivot );
-					prepData.setStreamMeshes( false );
+					prepData.setStreamMeshes( true );
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
@@ -281,7 +281,7 @@ var WWOBJLoader2Stage = (function () {
 					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
 				);
 				prepData.setSceneGraphBaseNode( obj2Load.pivot );
-				prepData.setStreamMeshes( false );
+				prepData.setStreamMeshes( true );
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 
