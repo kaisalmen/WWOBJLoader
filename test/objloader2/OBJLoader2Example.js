@@ -6,7 +6,7 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.OBJLoader2.prototype._getValidator();
 
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
