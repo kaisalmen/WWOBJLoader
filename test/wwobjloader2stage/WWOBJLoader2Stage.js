@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Validator = THREE.Loaders.Validator;
+var Validator = THREE.LoaderSupport.Validator;
 
 var WWOBJLoader2Stage = (function () {
 

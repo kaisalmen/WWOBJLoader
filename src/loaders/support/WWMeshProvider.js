@@ -1,17 +1,17 @@
-if ( THREE.Loaders.WW === undefined ) { THREE.Loaders.WW = {} }
+if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
 
-THREE.Loaders.WW.MeshProvider = (function () {
+THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 	var WW_MESH_PROVIDER_VERSION = '1.0.0-dev';
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function MeshProvider() {
 		this._init();
 	}
 
 	MeshProvider.prototype._init = function () {
-		console.log( "Using THREE.Loaders.WW.MeshProvider version: " + WW_MESH_PROVIDER_VERSION );
+		console.log( "Using THREE.LoaderSupport.WW.MeshProvider version: " + WW_MESH_PROVIDER_VERSION );
 
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";

@@ -10,20 +10,20 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var WWOBJLOADER2_VERSION = '2.0.0-dev';
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.Loaders.WW.DirectableLoader.prototype );
+	WWOBJLoader2.prototype = Object.create( THREE.LoaderSupport.WW.DirectableLoader.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		THREE.Loaders.WW.DirectableLoader.call( this );
+		THREE.LoaderSupport.WW.DirectableLoader.call( this );
 	}
 
 	WWOBJLoader2.prototype._init = function () {
-		THREE.Loaders.WW.DirectableLoader.prototype._init.call( this );
+		THREE.LoaderSupport.WW.DirectableLoader.prototype._init.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		this.commons = new THREE.Loaders.Commons();
+		this.commons = new THREE.LoaderSupport.Commons();
 
 		this.modelName = '';
 		this.manager = THREE.DefaultLoadingManager;
@@ -72,7 +72,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.Loaders.WW.DirectableLoader.prototype._validate.call( this );
+		THREE.LoaderSupport.WW.DirectableLoader.prototype._validate.call( this );
 
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
@@ -282,7 +282,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
-		THREE.Loaders.WW.DirectableLoader.prototype._finalize.call( this, reason );
+		THREE.LoaderSupport.WW.DirectableLoader.prototype._finalize.call( this, reason );
 		var index;
 		var callback;
 
@@ -625,13 +625,13 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
-	PrepDataArrayBuffer.prototype = Object.create( THREE.Loaders.WW.PrepDataBase.prototype );
+	PrepDataArrayBuffer.prototype = Object.create( THREE.LoaderSupport.WW.PrepDataBase.prototype );
 	PrepDataArrayBuffer.prototype.constructor = PrepDataArrayBuffer;
 
 	function PrepDataArrayBuffer( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
-		THREE.Loaders.WW.PrepDataBase.call( this );
+		THREE.LoaderSupport.WW.PrepDataBase.call( this );
 		this.dataAvailable = true;
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.objAsArrayBuffer = Validator.verifyInput( objAsArrayBuffer, null );
@@ -654,13 +654,13 @@ THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
  */
 THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
-	PrepDataFile.prototype = Object.create( THREE.Loaders.WW.PrepDataBase.prototype );
+	PrepDataFile.prototype = Object.create( THREE.LoaderSupport.WW.PrepDataBase.prototype );
 	PrepDataFile.prototype.constructor = PrepDataFile;
 
 	function PrepDataFile( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
-		THREE.Loaders.WW.PrepDataBase.call( this );
+		THREE.LoaderSupport.WW.PrepDataBase.call( this );
 
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.pathObj = Validator.verifyInput( pathObj, null );

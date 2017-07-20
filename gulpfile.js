@@ -38,9 +38,25 @@ gulp.task( 'bundle-loader-support', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
-			'src/loaders/WWMeshProvider.js',
-			'src/loaders/WWLoaderCommons.js',
-			'src/loaders/WWLoaderDirector.js'
+			'src/loaders/support/LoaderCommons.js'
+		]
+	)
+	.pipe( concat( 'LoaderSupport.js' ) )
+	.pipe( header( builtHeader ) )
+	.pipe( gulp.dest( DIR.BUILD ) )
+
+	.pipe( uglify( { mangle: false } ) )
+	.pipe( rename( { basename: 'LoaderSupport.min' } ) )
+	.pipe( gulp.dest( DIR.BUILD ) );
+} );
+
+gulp.task( 'bundle-wwloader-support', function () {
+	var builtHeader = buildHeader();
+	gulp.src(
+		[
+			'src/loaders/support/WWMeshProvider.js',
+			'src/loaders/support/WWLoaderCommons.js',
+			'src/loaders/support/WWLoaderDirector.js'
 		]
 	)
 	.pipe( concat( 'WWLoaderSupport.js' ) )
@@ -59,7 +75,6 @@ gulp.task( 'bundle-loader-support', function () {
 	} ) )
 	.pipe( gulp.dest( DIR.BUILD ) )
 
-	// create minified version
 	.pipe( uglify( { mangle: false } ) )
 	.pipe( rename( { basename: 'WWLoaderSupport.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
@@ -70,7 +85,6 @@ gulp.task( 'bundle-objloader2', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 			[
-				'src/loaders/LoaderCommons.js',
 				'src/loaders/OBJLoader2.js'
 			]
 		)
@@ -86,7 +100,6 @@ gulp.task( 'bundle-objloader2', function () {
 		} ) )
 		.pipe( gulp.dest( DIR.BUILD ) )
 
-		// create minified version
 		.pipe( uglify( { mangle: false } ) )
 		.pipe( rename( { basename: 'OBJLoader2.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
@@ -112,7 +125,6 @@ gulp.task( 'bundle-wwobjloader2', function () {
 		} ) )
 		.pipe( gulp.dest( DIR.BUILD ) )
 
-		// create minified version
 		.pipe( uglify( { mangle: false } ) )
 		.pipe( rename( { basename: 'WWOBJLoader2.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
@@ -129,10 +141,10 @@ gulp.task( 'create-docs', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
-				'src/loaders/LoaderCommons.js',
-				'src/loaders/WWLoaderCommons.js',
-				'src/loaders/WWMeshProvider.js',
-				'src/loaders/WWLoaderDirector.js',
+				'src/loaders/support/LoaderCommons.js',
+				'src/loaders/support/WWLoaderCommons.js',
+				'src/loaders/support/WWMeshProvider.js',
+				'src/loaders/support/WWLoaderDirector.js',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/WWOBJLoader2.js'
 			],
@@ -222,21 +234,26 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.style_tabs = "";
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
-	exampleDef.js.ext_code = "\<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Example.js\"\>\</script\>";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
 	exampleDef.file.out = 'main';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
-	exampleDef.js.ext_code = "\<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "\<script src=\"./OBJLoader2Example.js\"\>\</script\>";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -250,7 +267,9 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Example.js', 'utf8' );
@@ -264,7 +283,9 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.style_tabs = "";
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
@@ -274,7 +295,9 @@ gulp.task( 'create-wwobj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
@@ -282,10 +305,11 @@ gulp.task( 'create-wwobj2-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -300,7 +324,9 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwparallels/WWParallels.js', 'utf8' );
@@ -314,7 +340,9 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.css.style_tabs = "";
 	exampleDef.css.link_all = exampleDef.css.link_all_ref;
 	exampleDef.css.link_tabs = "\t\t";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
@@ -324,7 +352,9 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
@@ -332,11 +362,12 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderDirector.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -351,7 +382,9 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2stage/WWOBJLoader2Stage.js', 'utf8' );
@@ -365,7 +398,9 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.css.style_tabs = "";
 	exampleDef.css.link_all = exampleDef.css.link_all_ref;
 	exampleDef.css.link_tabs = "\t\t";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
@@ -375,7 +410,9 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
@@ -383,10 +420,11 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -401,7 +439,9 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/meshspray/MeshSpray.js', 'utf8' );
@@ -415,7 +455,9 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.style_tabs = "";
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
@@ -425,7 +467,9 @@ gulp.task( 'create-meshspray-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWLoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WWOBJLoader2.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
@@ -433,11 +477,12 @@ gulp.task( 'create-meshspray-examples', function () {
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
-	exampleDef.js.ext_code = "<script src=\"../../src/loaders/LoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWLoaderDirector.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -555,6 +600,7 @@ gulp.task(
 	[
 		'clean-build',
 		'bundle-loader-support',
+		'bundle-wwloader-support',
 		'bundle-objloader2',
 		'bundle-wwobjloader2',
 		'create-docs',

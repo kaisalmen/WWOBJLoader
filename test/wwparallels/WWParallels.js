@@ -6,7 +6,7 @@
 
 var WWParallels = (function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;
@@ -25,7 +25,7 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwDirector = new THREE.Loaders.WW.LoaderDirector( THREE.OBJLoader2.WWOBJLoader2 );
+		this.wwDirector = new THREE.LoaderSupport.WW.LoaderDirector( THREE.OBJLoader2.WWOBJLoader2 );
 		this.wwDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
@@ -156,7 +156,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-			var override = new THREE.Loaders.LoadedMeshUserOverride( false, false );
+			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
 			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
@@ -172,7 +172,7 @@ var WWParallels = (function () {
 			return override;
 		};
 
-		var globalCallbacks = new THREE.Loaders.WW.PrepDataCallbacks();
+		var globalCallbacks = new THREE.LoaderSupport.WW.PrepDataCallbacks();
 		globalCallbacks.registerCallbackProgress( callbackReportProgress );
 		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
 		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );

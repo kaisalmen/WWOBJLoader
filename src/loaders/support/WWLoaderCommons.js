@@ -1,12 +1,10 @@
-if ( THREE.Loaders.WW === undefined ) { THREE.Loaders.WW = {} }
-
 /**
- * Base class for configuration of prepareRun when using {@link THREE.Loaders.WW.MeshProvider}.
+ * Base class for configuration of prepareRun when using {@link THREE.LoaderSupport.WW.MeshProvider}.
  * @class
  */
-THREE.Loaders.WW.PrepDataBase = (function () {
+THREE.LoaderSupport.WW.PrepDataBase = (function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function PrepDataBase() {
 		this.dataAvailable = false;
@@ -14,12 +12,12 @@ THREE.Loaders.WW.PrepDataBase = (function () {
 		this.streamMeshes = true;
 		this.materialPerSmoothingGroup = false;
 		this.requestTerminate = false;
-		this.callbacks = new THREE.Loaders.WW.PrepDataCallbacks();
+		this.callbacks = new THREE.LoaderSupport.WW.PrepDataCallbacks();
 	}
 
 	/**
 	 * {@link THREE.Object3D} where meshes will be attached.
-	 * @memberOf THREE.Loaders.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
 	 *
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
 	 */
@@ -29,7 +27,7 @@ THREE.Loaders.WW.PrepDataBase = (function () {
 
 	/**
 	 * Singles meshes are directly integrated into scene when loaded or later.
-	 * @memberOf THREE.Loaders.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
 	 *
 	 * @param {boolean} streamMeshes=true Default is true
 	 */
@@ -39,7 +37,7 @@ THREE.Loaders.WW.PrepDataBase = (function () {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.Loaders.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
@@ -49,7 +47,7 @@ THREE.Loaders.WW.PrepDataBase = (function () {
 
 	/**
 	 * Request termination of web worker and free local resources after execution.
-	 * @memberOf THREE.Loaders.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
 	 *
 	 * @param {boolean} requestTerminate=false Default is false
 	 */
@@ -58,10 +56,10 @@ THREE.Loaders.WW.PrepDataBase = (function () {
 	};
 
 	/**
-	 * Returns all callbacks as {@link THREE.Loaders.WW.PrepDataCallbacks}
-	 * @memberOf THREE.Loaders.WW.PrepDataBase
+	 * Returns all callbacks as {@link THREE.LoaderSupport.WW.PrepDataCallbacks}
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
 	 *
-	 * @returns {THREE.Loaders.WW.PrepDataCallbacks}
+	 * @returns {THREE.LoaderSupport.WW.PrepDataCallbacks}
 	 */
 	PrepDataBase.prototype.getCallbacks = function () {
 		return this.callbacks;
@@ -76,11 +74,11 @@ THREE.Loaders.WW.PrepDataBase = (function () {
  *
  * @returns {
  *  {
- * 	 registerCallbackProgress: THREE.Loaders.WW.PrepDataCallbacks.registerCallbackProgress,
- * 	 registerCallbackCompletedLoading: THREE.Loaders.WW.PrepDataCallbacks.registerCallbackCompletedLoading,
- * 	 registerCallbackMaterialsLoaded: THREE.Loaders.WW.PrepDataCallbacks.registerCallbackMaterialsLoaded,
- * 	 registerCallbackMeshLoaded: THREE.Loaders.WW.PrepDataCallbacks.registerCallbackMeshLoaded,
- * 	 registerCallbackErrorWhileLoading: THREE.Loaders.WW.PrepDataCallbacks.registerCallbackErrorWhileLoading,
+ * 	 registerCallbackProgress: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackProgress,
+ * 	 registerCallbackCompletedLoading: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackCompletedLoading,
+ * 	 registerCallbackMaterialsLoaded: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackMaterialsLoaded,
+ * 	 registerCallbackMeshLoaded: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackMeshLoaded,
+ * 	 registerCallbackErrorWhileLoading: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackErrorWhileLoading,
  * 	 progress: null,
  * 	 completedLoading: null,
  * 	 errorWhileLoading: null,
@@ -90,14 +88,14 @@ THREE.Loaders.WW.PrepDataBase = (function () {
  * }
  * @constructor
  */
-THREE.Loaders.WW.PrepDataCallbacks = function () {
+THREE.LoaderSupport.WW.PrepDataCallbacks = function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	return {
 		/**
 		 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
-		 * @memberOf THREE.Loaders.WW.PrepDataCallbacks
+		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackProgress Callback function for described functionality
 		 */
@@ -107,7 +105,7 @@ THREE.Loaders.WW.PrepDataCallbacks = function () {
 
 		/**
 		 * Register callback function that is called once loading of the complete model is completed.
-		 * @memberOf THREE.Loaders.WW.PrepDataCallbacks
+		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackCompletedLoading Callback function for described functionality
 		 */
@@ -117,7 +115,7 @@ THREE.Loaders.WW.PrepDataCallbacks = function () {
 
 		/**
 		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-		 * @memberOf THREE.Loaders.WW.PrepDataCallbacks
+		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 		 */
@@ -127,8 +125,8 @@ THREE.Loaders.WW.PrepDataCallbacks = function () {
 
 		/**
 		 * Register callback function that is called every time a mesh was loaded.
-		 * Use {@link THREE.Loaders.WW.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-		 * @memberOf THREE.Loaders.WW.PrepDataCallbacks
+		 * Use {@link THREE.LoaderSupport.WW.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackMeshLoaded Callback function for described functionality
 		 */
@@ -138,7 +136,7 @@ THREE.Loaders.WW.PrepDataCallbacks = function () {
 
 		/**
 		 * Report if an error prevented loading.
-		 * @memberOf THREE.Loaders.WW.PrepDataCallbacks
+		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
 		 *
 		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 		 */
@@ -158,7 +156,7 @@ THREE.Loaders.WW.PrepDataCallbacks = function () {
  * Common to all web worker based loaders that can be directed
  * @class
  */
-THREE.Loaders.WW.DirectableLoader = (function () {
+THREE.LoaderSupport.WW.DirectableLoader = (function () {
 
 	function DirectableLoader() {
 		this._init();
@@ -169,8 +167,8 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 	 * @private
 	 */
 	DirectableLoader.prototype._init = function () {
-		this.commons = new THREE.Loaders.Commons();
-		this.meshProvider = new THREE.Loaders.WW.MeshProvider();
+		this.commons = new THREE.LoaderSupport.Commons();
+		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.validated = false;
 		this.materials = [];
 		this.crossOrigin = null;
@@ -179,7 +177,7 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.Loaders.WW.DirectableLoader
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
@@ -189,7 +187,7 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 
 	/**
 	 * Call requestTerminate to terminate the web worker and free local resource after execution.
-	 * @memberOf THREE.Loaders.WW.DirectableLoader
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 *
 	 * @param {boolean} requestTerminate True or false
 	 */
@@ -208,7 +206,7 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 	};
 
 	/**
-	 * Function is called by {@link THREE.Loaders.WW.MeshProvider} when worker is constructed.
+	 * Function is called by {@link THREE.LoaderSupport.WW.MeshProvider} when worker is constructed.
 	 * @private
 	 */
 	DirectableLoader.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
@@ -217,9 +215,9 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 
 	/**
 	 * Set all parameters for required for execution of "run". This needs to be overridden.
-	 * @memberOf THREE.Loaders.WW.DirectableLoader
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 *
-	 * @param {Object} params {@link THREE.Loaders.WW.PrepDataBase} or extension
+	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepDataBase} or extension
 	 */
 	DirectableLoader.prototype.prepareRun = function ( runParams ) {
 
@@ -227,7 +225,7 @@ THREE.Loaders.WW.DirectableLoader = (function () {
 
 	/**
 	 * Run the loader according the preparation instruction provided in "prepareRun". This needs to be overridden.
-	 * @memberOf THREE.Loaders.WW.DirectableLoader
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 */
 	DirectableLoader.prototype.run = function () {
 

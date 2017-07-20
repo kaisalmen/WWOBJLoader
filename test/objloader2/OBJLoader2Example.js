@@ -6,7 +6,7 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -107,7 +107,7 @@ var OBJLoader2Example = (function () {
 			commons.registerCallbackProgress( reportProgress );
 
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-				var override = new THREE.Loaders.LoadedMeshUserOverride( false, true );
+				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				mesh.name = name;

@@ -51,10 +51,10 @@
 			var maxQueueSize = 512;
 			var maxWebWorkers = 1;
 			var radius = 500;
-			this.wwDirector = new THREE.Loaders.WW.LoaderDirector( MeshSpray );
+			this.wwDirector = new THREE.LoaderSupport.WW.LoaderDirector( MeshSpray );
 			this.wwDirector.setCrossOrigin( 'anonymous' );
 
-			var globalCallbacks = new THREE.Loaders.WW.PrepDataCallbacks();
+			var globalCallbacks = new THREE.LoaderSupport.WW.PrepDataCallbacks();
 			var scope = this;
 			var callbackCompletedLoading = function ( instanceNo ) {
 				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
@@ -64,7 +64,7 @@
 				document.getElementById( 'feedback' ).innerHTML = text;
 			};
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-				var override = new THREE.Loaders.LoadedMeshUserOverride( false, true );
+				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
 				var mesh = new THREE.Mesh( bufferGeometry, material );
 				material.side = THREE.DoubleSide;
@@ -87,7 +87,7 @@
 
 			var runParams;
 			for ( var i = 0; i < maxQueueSize; i++ ) {
-				runParams = new THREE.Loaders.WW.PrepDataBase();
+				runParams = new THREE.LoaderSupport.WW.PrepDataBase();
 				runParams.setSceneGraphBaseNode( app.pivot );
 				runParams.setStreamMeshes( true );
 				runParams.quantity = 8192;

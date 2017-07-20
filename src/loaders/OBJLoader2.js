@@ -9,8 +9,8 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 THREE.OBJLoader2 = (function () {
 
 	var OBJLOADER2_VERSION = '2.0.0-dev';
-	var Validator = THREE.Loaders.Validator;
-	var Commons = THREE.Loaders.Commons;
+	var Validator = THREE.LoaderSupport.Validator;
+	var Commons = THREE.LoaderSupport.Commons;
 
 	function OBJLoader2( manager ) {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );

@@ -8,17 +8,17 @@
  *
  * @class
  */
-THREE.Loaders.WW.LoaderDirector = (function () {
+THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	var WW_LOADER_DIRECTOR_VERSION = '1.0.0-dev';
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
 	function LoaderDirector( classDef ) {
-		console.log( "Using THREE.Loaders.WW.LoaderDirector version: " + WW_LOADER_DIRECTOR_VERSION );
+		console.log( "Using THREE.LoaderSupport.WW.LoaderDirector version: " + WW_LOADER_DIRECTOR_VERSION );
 
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
@@ -37,7 +37,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
 	 * @returns {number}
 	 */
@@ -47,7 +47,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Returns the maximum number of workers.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
 	 * @returns {number}
 	 */
@@ -57,7 +57,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
@@ -67,7 +67,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
 	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
@@ -107,7 +107,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Store run instructions in internal instructionQueue.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
 	 * @param {Object} runParams Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
 	 */
@@ -119,7 +119,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Process the instructionQueue until it is depleted.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 */
 	LoaderDirector.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
@@ -202,7 +202,7 @@ THREE.Loaders.WW.LoaderDirector = (function () {
 
 	/**
 	 * Terminate all workers.
-	 * @memberOf THREE.Loaders.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 */
 	LoaderDirector.prototype.deregister = function () {
 		console.log( 'LoaderDirector received the unregister call. Terminating all workers!' );

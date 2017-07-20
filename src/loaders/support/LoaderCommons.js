@@ -1,6 +1,6 @@
-if ( THREE.Loaders === undefined ) { THREE.Loaders = {} }
+if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
 
-THREE.Loaders.Validator = {
+THREE.LoaderSupport.Validator = {
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
 	 *
@@ -26,9 +26,9 @@ THREE.Loaders.Validator = {
  * Global callback definition
  * @class
  */
-THREE.Loaders.Commons = (function () {
+THREE.LoaderSupport.Commons = (function () {
 
-	var Validator = THREE.Loaders.Validator;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function Commons() {
 		this.instanceNo = 0;
@@ -38,7 +38,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Allows to set debug mode.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {boolean} enabled
 	 */
@@ -57,7 +57,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {callback} callbackProgress Callback function for described functionality
 	 */
@@ -67,7 +67,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {callback} callbackCompletedLoading Callback function for described functionality
 	 */
@@ -77,7 +77,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Register callback function that is called to report an error that prevented loading.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
 	 */
@@ -87,8 +87,8 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.Loaders.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.Loaders.Commons
+	 * Use {@link THREE.LoaderSupport.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {callback} callbackMeshLoaded Callback function for described functionality
 	 */
@@ -98,7 +98,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
 	 */
@@ -108,7 +108,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Clears all registered callbacks.
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 */
 	Commons.prototype.clearAllCallbacks = function () {
 		this.callbacks = {
@@ -122,7 +122,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 * @param baseText
 	 * @param text
 	 */
@@ -143,7 +143,7 @@ THREE.Loaders.Commons = (function () {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.Loaders.Commons
+	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
@@ -155,13 +155,13 @@ THREE.Loaders.Commons = (function () {
 })();
 
 /**
- * Object to return by {@link THREE.Loaders.Commons}.callbacks.meshLoaded.
+ * Object to return by {@link THREE.LoaderSupport.Commons}.callbacks.meshLoaded.
  * Used to disregard a certain mesh or to return one to many created meshes.
  * @class
  *
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  */
-THREE.Loaders.LoadedMeshUserOverride = (function () {
+THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
 
 	function LoadedMeshUserOverride( disregardMesh, alteredMesh ) {
 		this.disregardMesh = disregardMesh === true;
