@@ -2,12 +2,13 @@
  * Base class for configuration of prepareRun when using {@link THREE.LoaderSupport.WW.MeshProvider}.
  * @class
  */
-THREE.LoaderSupport.WW.PrepDataBase = (function () {
+THREE.LoaderSupport.WW.PrepData = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function PrepDataBase() {
-		this.dataAvailable = false;
+	function PrepData( modelName ) {
+		this.modelName = Validator.verifyInput( modelName, '' );
+		this.resources = [];
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
 		this.materialPerSmoothingGroup = false;
@@ -17,55 +18,100 @@ THREE.LoaderSupport.WW.PrepDataBase = (function () {
 
 	/**
 	 * {@link THREE.Object3D} where meshes will be attached.
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
 	 */
-	PrepDataBase.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+	PrepData.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
 	};
 
 	/**
 	 * Singles meshes are directly integrated into scene when loaded or later.
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
 	 * @param {boolean} streamMeshes=true Default is true
 	 */
-	PrepDataBase.prototype.setStreamMeshes = function ( streamMeshes ) {
+	PrepData.prototype.setStreamMeshes = function ( streamMeshes ) {
 		this.streamMeshes = streamMeshes !== false;
 	};
 
 	/**
 	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
-	PrepDataBase.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 	};
 
 	/**
 	 * Request termination of web worker and free local resources after execution.
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
 	 * @param {boolean} requestTerminate=false Default is false
 	 */
-	PrepDataBase.prototype.setRequestTerminate = function ( requestTerminate ) {
+	PrepData.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = requestTerminate === true;
 	};
 
 	/**
 	 * Returns all callbacks as {@link THREE.LoaderSupport.WW.PrepDataCallbacks}
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataBase
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
 	 * @returns {THREE.LoaderSupport.WW.PrepDataCallbacks}
 	 */
-	PrepDataBase.prototype.getCallbacks = function () {
+	PrepData.prototype.getCallbacks = function () {
 		return this.callbacks;
 	};
 
-	return PrepDataBase;
+	/**
+	 * Add a resource description
+	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 *
+	 * @param {THREE.LoaderSupport.WW.PrepDataResource} The resource description
+	 */
+	PrepData.prototype.addResource = function ( resource ) {
+		this.resources.push( resource );
+	};
+
+	return PrepData;
+})();
+
+/**
+ * Define a resource used by {@link THREE.LoaderSupport.WW.PrepData}.
+ * @class
+ *
+ * @param {string} path Path to the file
+ * @param {string} name Name of the file
+ * @param {string} extension The file extension (type)
+ * @param {Object} [content] The file content as binary or text representation
+ */
+THREE.LoaderSupport.WW.PrepDataResource = (function () {
+
+	var Validator = THREE.LoaderSupport.Validator;
+
+	function PrepDataResource( path, name, extension, content ) {
+		this.path = Validator.verifyInput( path, null );
+		this.name = Validator.verifyInput( name, null );
+		this.extension = Validator.verifyInput( extension, null );
+		this.content = Validator.verifyInput( content, null );
+		this.dataAvailable = Validator.isValid( this.content );
+	}
+
+	/**
+	 * Set the content (e.g. Uint8Array or String) of this resource
+	 * @memberOf THREE.LoaderSupport.WW.PrepDataResource
+	 *
+	 * @param {Object} content the file content
+	 */
+	PrepDataResource.prototype.setContent = function ( content ) {
+		this.content = Validator.verifyInput( content, null );
+		this.dataAvailable = Validator.isValid( this.content );
+	};
+
+	return PrepDataResource;
 })();
 
 
@@ -196,13 +242,21 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	};
 
 	/**
+	 * Enable or disable debug logging.
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
+	 *
+	 * @param {boolean} enabled True or false
+	 */
+	DirectableLoader.prototype.setDebug = function ( enabled ) {
+		this.commons.setDebug( enabled );
+	};
+
+	/**
 	 * Call from implementation
 	 * @private
 	 */
 	DirectableLoader.prototype._validate = function () {
-		this.requestTerminate = false;
-		this.materials = [];
-		this.validated = true;
+		console.warn( 'DirectableLoader.prototype._validate was not overridden.' );
 	};
 
 	/**
@@ -210,17 +264,21 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	 * @private
 	 */
 	DirectableLoader.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
-
+		console.warn( 'DirectableLoader.prototype._buildWebWorkerCode was not overridden.' );
+		console.log( 'Value of "funcBuildObject": ' + funcBuildObject );
+		console.log( 'Value of "funcBuildSingelton": ' + funcBuildSingelton );
+		console.log( 'Value of "existingWorkerCode": ' + existingWorkerCode );
 	};
 
 	/**
 	 * Set all parameters for required for execution of "run". This needs to be overridden.
 	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 *
-	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepDataBase} or extension
+	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
 	 */
 	DirectableLoader.prototype.prepareRun = function ( runParams ) {
-
+		console.warn( 'DirectableLoader.prototype.prepareRun was not overridden.' );
+		console.log( 'Value of "runParams": ' + runParams );
 	};
 
 	/**
@@ -228,7 +286,7 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 */
 	DirectableLoader.prototype.run = function () {
-
+		console.warn( 'DirectableLoader.prototype.run was not overridden.' );
 	};
 
 	/**
@@ -237,7 +295,8 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	 * @private
 	 */
 	DirectableLoader.prototype._finalize = function ( reason ) {
-		this.validated = false;
+		console.warn( 'DirectableLoader.prototype._finalize was not overridden.' );
+		console.log( 'Value of "reason": ' + reason );
 	};
 
 	return DirectableLoader;

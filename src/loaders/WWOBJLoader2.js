@@ -30,49 +30,19 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.mtlLoader = null;
 
-		this.dataAvailable = false;
 		this.objAsArrayBuffer = null;
 		this.fileObj = null;
 		this.pathObj = null;
 
 		this.fileMtl = null;
 		this.mtlAsString = null;
-		this.texturePath = null;
-	};
-
-	/**
-	 * Enable or disable debug logging.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {boolean} enabled True or false
-	 */
-	WWOBJLoader2.prototype.setDebug = function ( enabled ) {
-		this.commons.setDebug( enabled );
-	};
-
-	/**
-	 * Sets the CORS string to be used.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {string} crossOrigin CORS value
-	 */
-	WWOBJLoader2.prototype.setCrossOrigin = function ( crossOrigin ) {
-		this.crossOrigin = crossOrigin;
-	};
-
-	/**
-	 * Call requestTerminate to terminate the web worker and free local resource after execution.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {boolean} requestTerminate True or false
-	 */
-	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = requestTerminate === true;
 	};
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._validate.call( this );
+		this.requestTerminate = false;
+		this.materials = [];
+		this.validated = true;
 
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
 
@@ -83,11 +53,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );
 		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
-		this.dataAvailable = false;
 		this.fileObj = null;
 		this.pathObj = null;
 		this.fileMtl = null;
-		this.texturePath = null;
 
 		this.objAsArrayBuffer = null;
 		this.mtlAsString = null;
@@ -102,44 +70,48 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype.prepareRun = function ( params ) {
 		console.time( 'WWOBJLoader2' );
 		this._validate();
-		this.dataAvailable = params.dataAvailable;
-		this.modelName = params.modelName;
+ 		this.modelName = params.modelName;
 
-		var messageObject;
-		if ( this.dataAvailable ) {
+ 		var resources = params.resources;
+		var resource;
+		for ( var index in resources ) {
 
-			// fast-fail on bad type
-			if ( ! ( params.objAsArrayBuffer instanceof Uint8Array ) ) {
-				throw 'Provided input is not of type arraybuffer! Aborting...';
+			resource = resources[ index ];
+			if ( ! Validator.isValid( resource.name ) ) continue;
+			if ( resource.dataAvailable ) {
+
+				if ( resource.extension === 'OBJ' ) {
+
+					// fast-fail on bad type
+					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+					this.objAsArrayBuffer = resource.content;
+
+				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
+
+					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
+					this.mtlLoader.setPath( resource.path );
+					this.mtlAsString = resource.content;
+
+				}
+
+			} else {
+
+				// fast-fail on bad type
+				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+				if ( resource.extension === 'OBJ' ) {
+
+					this.pathObj = resource.path;
+					this.fileObj = resource.name;
+
+				} else if ( resource.extension === 'MTL' ) {
+
+					this.mtlLoader.setPath( resource.path );
+					this.fileMtl = resource.name;
+
+				}
 			}
-
-			messageObject = {
-				cmd: 'init',
-				debug: this.commons.getDebug(),
-				materialPerSmoothingGroup: this.materialPerSmoothingGroup
-			};
-			this.objAsArrayBuffer = params.objAsArrayBuffer;
-			this.mtlAsString = params.mtlAsString;
-
-		} else {
-
-			// fast-fail on bad type
-			if ( ! ( typeof( params.fileObj ) === 'string' || params.fileObj instanceof String ) ) {
-				throw 'Provided file is not properly defined! Aborting...';
-			}
-
-			messageObject = {
-				cmd: 'init',
-				debug: this.commons.getDebug(),
-				materialPerSmoothingGroup: this.materialPerSmoothingGroup
-			};
-			this.fileObj = params.fileObj;
-			this.pathObj = params.pathObj;
-			this.fileMtl = params.fileMtl;
-
 		}
 		this.setRequestTerminate( params.requestTerminate );
-		this.pathTexture = params.pathTexture;
 
 		var scope = this;
 		var scopeFuncComplete = function ( reason ) {
@@ -150,6 +122,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		};
 		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.commons.callbacks.meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
+
+		var messageObject = {
+			cmd: 'init',
+			debug: this.commons.getDebug(),
+			materialPerSmoothingGroup: this.materialPerSmoothingGroup
+		};
 		this.meshProvider.postMessage( messageObject );
 	};
 
@@ -253,9 +231,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			console.timeEnd( 'Loading MTL textures' );
 		};
 
-
-		this.mtlLoader.setPath( this.pathTexture );
-		if ( this.dataAvailable ) {
+		if ( Validator.isValid( this.mtlAsString ) ) {
 
 			processLoadedMaterials( Validator.isValid( this.mtlAsString ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
 
@@ -282,7 +258,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._finalize.call( this, reason );
+		this.validated = false;
 		var index;
 		var callback;
 
@@ -611,63 +587,4 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	return WWOBJLoader2;
 
-})();
-
-
-/**
- * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ from given ArrayBuffer and MTL from given String.
- * @class
- *
- * @param {string} modelName Overall name of the model
- * @param {Uint8Array} objAsArrayBuffer OBJ file content as ArrayBuffer
- * @param {string} pathTexture Path to texture files
- * @param {string} mtlAsString MTL file content as string
- */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer = ( function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	PrepDataArrayBuffer.prototype = Object.create( THREE.LoaderSupport.WW.PrepDataBase.prototype );
-	PrepDataArrayBuffer.prototype.constructor = PrepDataArrayBuffer;
-
-	function PrepDataArrayBuffer( modelName, objAsArrayBuffer, pathTexture, mtlAsString ) {
-		THREE.LoaderSupport.WW.PrepDataBase.call( this );
-		this.dataAvailable = true;
-		this.modelName = Validator.verifyInput( modelName, '' );
-		this.objAsArrayBuffer = Validator.verifyInput( objAsArrayBuffer, null );
-		this.pathTexture = Validator.verifyInput( pathTexture, null );
-		this.mtlAsString = Validator.verifyInput( mtlAsString, null );
-	}
-
-	return PrepDataArrayBuffer;
-})();
-
-/**
- * Instruction to configure {@link THREE.OBJLoader2.WWOBJLoader2}.prepareRun to load OBJ and MTL from files.
- * @class
- *
- * @param {string} modelName Overall name of the model
- * @param {string} pathObj Path to OBJ file
- * @param {string} fileObj OBJ file name
- * @param {string} pathTexture Path to texture files
- * @param {string} fileMtl MTL file name
- */
-THREE.OBJLoader2.WWOBJLoader2.PrepDataFile = ( function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	PrepDataFile.prototype = Object.create( THREE.LoaderSupport.WW.PrepDataBase.prototype );
-	PrepDataFile.prototype.constructor = PrepDataFile;
-
-	function PrepDataFile( modelName, pathObj, fileObj, pathTexture, fileMtl ) {
-		THREE.LoaderSupport.WW.PrepDataBase.call( this );
-
-		this.modelName = Validator.verifyInput( modelName, '' );
-		this.pathObj = Validator.verifyInput( pathObj, null );
-		this.fileObj = Validator.verifyInput( fileObj, null );
-		this.pathTexture = Validator.verifyInput( pathTexture, null );
-		this.fileMtl = Validator.verifyInput( fileMtl, null );
-	}
-
-	return PrepDataFile;
 })();

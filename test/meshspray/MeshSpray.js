@@ -21,7 +21,9 @@ var MeshSpray = (function () {
 
 	MeshSpray.prototype._validate = function () {
 		if ( this.validated ) return;
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._validate.call( this );
+		this.requestTerminate = false;
+		this.materials = [];
+		this.validated = true;
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
@@ -69,7 +71,7 @@ var MeshSpray = (function () {
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._finalize.call( this, reason );
+		this.validated = false;
 		var index;
 		var callback;
 

@@ -229,29 +229,28 @@ var WWOBJLoader2Stage = (function () {
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
 			var obj2Load = scope.objs2Load[ scope.loadCounter ];
-			var prepData;
-			scope.loadCounter ++;
+			var prepData = new THREE.LoaderSupport.WW.PrepData( obj2Load.name );
+			prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( obj2Load.pathBase, obj2Load.fileObj, 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( obj2Load.pathTexture, obj2Load.fileMtl, 'MTL' ) );
+			prepData.setSceneGraphBaseNode( obj2Load.pivot );
+			prepData.setStreamMeshes( true );
 
+			scope.loadCounter++;
 			scope.scene.add( obj2Load.pivot );
 
 			if ( Validator.isValid( obj2Load.fileZip ) ) {
 
 				var zipTools = new ZipTools( obj2Load.pathBase );
-				var mtlAsString = null;
-
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
-					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
-					);
-					prepData.setSceneGraphBaseNode( obj2Load.pivot );
-					prepData.setStreamMeshes( true );
+					prepData.resources[ 0 ].content = data;
+
 					scope.wwObjLoader2.prepareRun( prepData );
 					scope.wwObjLoader2.run();
 				};
 
 				var setMtlAsString = function ( data ) {
-					mtlAsString = data;
+					if ( prepData.resources.length > 1 ) prepData.resources[ 1 ].content = data;
 					scope.reportProgress( 'Unzipping: ' + obj2Load.fileObj );
 					zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
 				};
@@ -277,11 +276,6 @@ var WWOBJLoader2Stage = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
-				);
-				prepData.setSceneGraphBaseNode( obj2Load.pivot );
-				prepData.setStreamMeshes( true );
 				scope.wwObjLoader2.prepareRun( prepData );
 				scope.wwObjLoader2.run();
 
