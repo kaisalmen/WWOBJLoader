@@ -110,11 +110,10 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Loading complete!' );
 			scope._reportProgress( '' );
 		};
-		var commons = this.wwObjLoader2.commons;
-		commons.registerCallbackProgress( this._reportProgress );
-		commons.registerCallbackCompletedLoading( completedLoading );
-		commons.registerCallbackMaterialsLoaded( materialsLoaded );
-		commons.registerCallbackMeshLoaded( meshLoaded );
+		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
+		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
+		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
+		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;
 	};
@@ -128,8 +127,7 @@ var WWOBJLoader2Example = (function () {
 		prepData.setSceneGraphBaseNode( this.pivot );
 		prepData.setStreamMeshes( this.streamMeshes )
 		prepData.setRequestTerminate( true );
-		this.wwObjLoader2.prepareRun( prepData );
-		this.wwObjLoader2.run();
+		this.wwObjLoader2.run( prepData );
 	};
 
 	WWOBJLoader2Example.prototype._handleFileSelect = function ( event, pathTexture ) {
@@ -187,13 +185,13 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.loadFilesUser = function ( objDef ) {
-		var prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-			objDef.name, objDef.objAsArrayBuffer, objDef.pathTexture, objDef.mtlAsString
-		);
+		var prepData = new THREE.LoaderSupport.WW.PrepData( objDef.name );
+		prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( objDef.pathTexture, 'userObj.obj', 'OBJ', objDef.objAsArrayBuffer ) );
+		prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( objDef.pathTexture, 'userObj.mtl', 'MTL', objDef.mtlAsString ) );
+
 		prepData.setSceneGraphBaseNode( this.pivot );
 		prepData.setStreamMeshes( this.streamMeshes );
-		this.wwObjLoader2.prepareRun( prepData );
-		this.wwObjLoader2.run();
+		this.wwObjLoader2.run( prepData );
 	};
 
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {

@@ -204,6 +204,9 @@ THREE.LoaderSupport.WW.PrepDataCallbacks = function () {
  */
 THREE.LoaderSupport.WW.DirectableLoader = (function () {
 
+	DirectableLoader.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
+	DirectableLoader.prototype.constructor = DirectableLoader;
+
 	function DirectableLoader() {
 		this._init();
 	}
@@ -213,22 +216,11 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	 * @private
 	 */
 	DirectableLoader.prototype._init = function () {
-		this.commons = new THREE.LoaderSupport.Commons();
+		THREE.LoaderSupport.Commons.call( this );
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.validated = false;
 		this.materials = [];
-		this.crossOrigin = null;
 		this.requestTerminate = false;
-	};
-
-	/**
-	 * Sets the CORS string to be used.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 *
-	 * @param {string} crossOrigin CORS value
-	 */
-	DirectableLoader.prototype.setCrossOrigin = function ( crossOrigin ) {
-		this.crossOrigin = crossOrigin;
 	};
 
 	/**
@@ -239,16 +231,6 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	 */
 	DirectableLoader.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = requestTerminate === true;
-	};
-
-	/**
-	 * Enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 *
-	 * @param {boolean} enabled True or false
-	 */
-	DirectableLoader.prototype.setDebug = function ( enabled ) {
-		this.commons.setDebug( enabled );
 	};
 
 	/**
@@ -271,22 +253,14 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	};
 
 	/**
-	 * Set all parameters for required for execution of "run". This needs to be overridden.
+	 * Run the loader according the instruction provided. This needs to be overridden.
 	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
 	 *
 	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
 	 */
-	DirectableLoader.prototype.prepareRun = function ( runParams ) {
-		console.warn( 'DirectableLoader.prototype.prepareRun was not overridden.' );
-		console.log( 'Value of "runParams": ' + runParams );
-	};
-
-	/**
-	 * Run the loader according the preparation instruction provided in "prepareRun". This needs to be overridden.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 */
-	DirectableLoader.prototype.run = function () {
+	DirectableLoader.prototype.run = function ( runParams ) {
 		console.warn( 'DirectableLoader.prototype.run was not overridden.' );
+		console.log( 'Value of "runParams": ' + runParams );
 	};
 
 	/**

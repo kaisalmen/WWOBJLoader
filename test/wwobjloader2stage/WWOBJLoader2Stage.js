@@ -94,12 +94,11 @@ var WWOBJLoader2Stage = (function () {
 		var errorWhileLoading = function () {
 			// just for demonstration...
 		};
-		var commons = this.wwObjLoader2.commons;
-		commons.registerCallbackMaterialsLoaded( materialsLoaded );
-		commons.registerCallbackMeshLoaded( meshLoaded );
-		commons.registerCallbackCompletedLoading( reloadAssetsProxy );
-		commons.registerCallbackProgress( this.reportProgress );
-		commons.registerCallbackErrorWhileLoading( errorWhileLoading );
+		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
+		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
+		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
+		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
+		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
 
 		this.reloadAssets();
 
@@ -245,8 +244,7 @@ var WWOBJLoader2Stage = (function () {
 					scope.reportProgress( '' );
 					prepData.resources[ 0 ].content = data;
 
-					scope.wwObjLoader2.prepareRun( prepData );
-					scope.wwObjLoader2.run();
+					scope.wwObjLoader2.run( prepData );
 				};
 
 				var setMtlAsString = function ( data ) {
@@ -276,8 +274,7 @@ var WWOBJLoader2Stage = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				scope.wwObjLoader2.prepareRun( prepData );
-				scope.wwObjLoader2.run();
+				scope.wwObjLoader2.run( prepData );
 
 			}
 		} else {

@@ -37,6 +37,7 @@ THREE.LoaderSupport.Commons = (function () {
 	function Commons() {
 		this.instanceNo = 0;
 		this.debug = false;
+		this.crossOrigin = null;
 		this.clearAllCallbacks();
 	}
 
@@ -57,6 +58,16 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.getDebug = function () {
 		return this.debug;
+	};
+
+	/**
+	 * Sets the CORS string to be used.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {string} crossOrigin CORS value
+	 */
+	Commons.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
 	};
 
 	/**

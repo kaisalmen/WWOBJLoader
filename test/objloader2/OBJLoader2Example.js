@@ -97,14 +97,13 @@ var OBJLoader2Example = (function () {
 			objLoader.setMaterials( materials.materials );
 			objLoader.setPath( objDef.path );
 			// following settings are default, contained for easy play-around
-			objLoader.setDebug( false, false );
+			objLoader.setDebug( false );
 			objLoader.setMaterialPerSmoothingGroup( false );
 
-			var commons = objLoader.commons;
 			var reportProgress = function ( content ) {
 				console.log( 'Progress: ' + content );
 			};
-			commons.registerCallbackProgress( reportProgress );
+			objLoader.registerCallbackProgress( reportProgress );
 
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
@@ -119,13 +118,13 @@ var OBJLoader2Example = (function () {
 
 				return override;
 			};
-			commons.registerCallbackMeshLoaded( callbackMeshLoaded );
+			objLoader.registerCallbackMeshLoaded( callbackMeshLoaded );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 				scope._reportProgress( '', objDef.instanceNo );
 			};
-			commons.registerCallbackCompletedLoading( onSuccess );
+			objLoader.registerCallbackCompletedLoading( onSuccess );
 
 			var onProgress = function ( event ) {
 				if ( event.lengthComputable ) {

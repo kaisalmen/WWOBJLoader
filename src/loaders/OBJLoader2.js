@@ -12,18 +12,22 @@ THREE.OBJLoader2 = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 	var Commons = THREE.LoaderSupport.Commons;
 
+	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
+	OBJLoader2.prototype.constructor = OBJLoader2;
+
 	function OBJLoader2( manager ) {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
+		THREE.LoaderSupport.Commons.call( this );
+
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
-		this.commons = new Commons();
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 
-		this.meshCreator = new MeshCreator( this.commons.callbacks.meshLoaded );
+		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
 		var scope = this;
 		var announceProgressScoped = function ( message ) {
-			scope.commons.announceProgress( message );
+			scope.announceProgress( message );
 		};
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
@@ -57,7 +61,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
 	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+		this.parser.setMaterialPerSmoothingGroup( materialPerSmoothingGroup );
 	};
 
 	/**
@@ -69,18 +73,15 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		this.meshCreator.setMaterials( materials );
 	};
-
 	/**
-	 * Allows to set debug mode for the parser and the meshCreator.
+	 * Sets debug mode for the parser and the meshCreator.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {boolean} parserDebug Internal Parser will produce debug output
-	 * @param {boolean} meshCreatorDebug Internal MeshCreator will produce debug output
+	 * @param {boolean} enabled
 	 */
-	OBJLoader2.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
-		this.commons.setDebug( parserDebug );
-		this.parser.setDebug( parserDebug );
-		this.meshCreator.setDebug( meshCreatorDebug );
+	OBJLoader2.prototype.setDebug = function ( enabled ) {
+		this.parser.setDebug( enabled );
+		this.meshCreator.setDebug( enabled );
 	};
 
 	/**
@@ -99,7 +100,7 @@ THREE.OBJLoader2 = (function () {
 		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
 
 		var scope = this;
-		if ( scope.commons.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
+		if ( scope.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
 		scope.fileLoader.load( url, function ( content ) {
 
 			// only use parseText if useArrayBuffer is explicitly set to false
@@ -182,9 +183,9 @@ THREE.OBJLoader2 = (function () {
 		this.validated = false;
 
 		var callback;
-		for ( var index in this.commons.callbacks.completedLoading ) {
+		for ( var index in this.callbacks.completedLoading ) {
 
-			callback = this.commons.callbacks.completedLoading[ index ];
+			callback = this.callbacks.completedLoading[ index ];
 			callback( sceneGraphBaseNode );
 
 		}

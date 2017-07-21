@@ -27,7 +27,7 @@ var MeshSpray = (function () {
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
-	MeshSpray.prototype.prepareRun = function ( runParams ) {
+	MeshSpray.prototype.run = function ( runParams ) {
 		console.time( 'MeshSpray' );
 		this._validate();
 
@@ -36,7 +36,7 @@ var MeshSpray = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.commons.announceProgress( baseText, text );
+			scope.announceProgress( baseText, text );
 		};
 		this.meshProvider.setCallbacks( scopeFuncAnnounce, [ runParams.getCallbacks().meshLoaded ], scopeFuncComplete );
 		this.meshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
@@ -47,9 +47,8 @@ var MeshSpray = (function () {
 			dimension: runParams.dimension,
 			quantity: runParams.quantity
 		} );
-	};
 
-	MeshSpray.prototype.run = function () {
+
 		var materialNames = [];
 		for ( var materialName in this.materials ) {
 			materialNames.push( materialName );
@@ -77,18 +76,18 @@ var MeshSpray = (function () {
 
 		if ( reason === 'complete' ) {
 
-			for ( index in this.commons.callbacks.completedLoading ) {
+			for ( index in this.callbacks.completedLoading ) {
 
-				callback = this.commons.callbacks.completedLoading[ index ];
+				callback = this.callbacks.completedLoading[ index ];
 				callback( this.instanceNo );
 
 			}
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.commons.callbacks.errorWhileLoading ) {
+			for ( index in this.callbacks.errorWhileLoading ) {
 
-				callback = this.commons.callbacks.errorWhileLoading[ index ];
+				callback = this.callbacks.errorWhileLoading[ index ];
 				callback( this.instanceNo );
 
 			}

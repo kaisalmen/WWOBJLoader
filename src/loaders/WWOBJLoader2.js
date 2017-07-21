@@ -74,15 +74,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set all parameters for required for execution of "run".
+	 * Run the loader according the provided instructions.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param {Object} params Either {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer} or {@link THREE.OBJLoader2.WWOBJLoader2.PrepDataFile}
+	 * @param {Object} params Either {@link THREE.LoaderSupport.WW.PrepData}
 	 */
-	WWOBJLoader2.prototype.prepareRun = function ( params ) {
+	WWOBJLoader2.prototype.run = function ( params ) {
 		console.time( 'WWOBJLoader2' );
 		this._validate();
- 		this.modelName = params.modelName;
+		this.modelName = params.modelName;
 
  		var resources = params.resources;
 		var resource;
@@ -130,25 +130,20 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.commons.announceProgress( baseText, text );
+			scope.announceProgress( baseText, text );
 		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.commons.callbacks.meshLoaded, scopeFuncComplete );
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
 
 		var messageObject = {
 			cmd: 'init',
-			debug: this.commons.getDebug(),
+			debug: this.getDebug(),
 			materialPerSmoothingGroup: this.materialPerSmoothingGroup
 		};
 		this.meshProvider.postMessage( messageObject );
-	};
 
-	/**
-	 * Run the loader according the preparation instruction provided in "prepareRun".
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 */
-	WWOBJLoader2.prototype.run = function () {
-		var scope = this;
+
+		// run
 		var processLoadedMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
 			var materialNames = [];
@@ -179,14 +174,14 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			var materialsFromCallback;
 			var callbackMaterialsLoaded;
-			for ( var index in scope.commons.callbacks.materialsLoaded ) {
+			for ( var index in scope.callbacks.materialsLoaded ) {
 
-				callbackMaterialsLoaded = scope.commons.callbacks.materialsLoaded[ index ];
+				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
 				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
 				if ( Validator.isValid( materialsFromCallback ) ) scope.materials = materialsFromCallback;
 
 			}
-			if ( scope.dataAvailable && scope.objAsArrayBuffer ) {
+			if ( scope.objAsArrayBuffer ) {
 
 				scope.meshProvider.postMessage(
 					{
@@ -202,7 +197,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var percentComplete = 0;
 				var onLoad = function ( objAsArrayBuffer ) {
 
-					scope.commons.announceProgress( 'Running web worker!' );
+					scope.announceProgress( 'Running web worker!' );
 					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
 					scope.meshProvider.postMessage(
 						{
@@ -223,7 +218,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 						refPercentComplete = percentComplete;
 						var output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
 						console.log( output );
-						scope.commons.announceProgress( output );
+						scope.announceProgress( output );
 
 					}
 				};
@@ -231,7 +226,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + scope.fileObj + '"';
 					console.error( output + ': ' + event );
-					scope.commons.announceProgress( output );
+					scope.announceProgress( output );
 					scope._finalize( 'error' );
 
 				};
@@ -254,7 +249,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + scope.fileMtl + '"';
 					console.error( output + ': ' + event );
-					scope.commons.announceProgress( output );
+					scope.announceProgress( output );
 					scope._finalize( 'error' );
 				};
 
@@ -276,18 +271,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		if ( reason === 'complete' ) {
 
-			for ( index in this.commons.callbacks.completedLoading ) {
+			for ( index in this.callbacks.completedLoading ) {
 
-				callback = this.commons.callbacks.completedLoading[ index ];
+				callback = this.callbacks.completedLoading[ index ];
 				callback( this.instanceNo, this.modelName );
 
 			}
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.commons.callbacks.errorWhileLoading ) {
+			for ( index in this.callbacks.errorWhileLoading ) {
 
-				callback = this.commons.callbacks.errorWhileLoading[ index ];
+				callback = this.callbacks.errorWhileLoading[ index ];
 				callback( this.instanceNo, this.modelName );
 
 			}
@@ -316,7 +311,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				function WWOBJLoader() {
 					// classes initialised here are defined in existingWorkerCode
-					this.commons = new Commons();
 					this.wwMeshCreator = new WWMeshCreator();
 					this.parser = new Parser( this.wwMeshCreator );
 					this.validated = false;
@@ -328,13 +322,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				/**
 				 * Allows to set debug mode for the parser and the meshCreatorDebug
 				 *
-				 * @param parserDebug
-				 * @param meshCreatorDebug
+				 * @param enabled
 				 */
-				WWOBJLoader.prototype.setDebug = function ( parserDebug, meshCreatorDebug ) {
-					this.commons.setDebug( parserDebug );
-					this.parser.setDebug( parserDebug );
-					this.wwMeshCreator.setDebug( meshCreatorDebug );
+				WWOBJLoader.prototype.setDebug = function ( enabled ) {
+					this.parser.setDebug( enabled );
+					this.wwMeshCreator.setDebug( enabled );
 				};
 
 				/**
@@ -373,7 +365,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				WWOBJLoader.prototype.init = function ( payload ) {
 					this.cmdState = 'init';
-					this.setDebug( payload.debug, payload.debug );
+					this.setDebug( payload.debug );
 					this.parser.setMaterialPerSmoothingGroup( payload.materialPerSmoothingGroup );
 				};
 

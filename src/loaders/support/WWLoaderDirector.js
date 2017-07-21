@@ -134,10 +134,10 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	};
 
 	LoaderDirector.prototype._kickWorkerRun = function( worker, runParams ) {
-		worker.commons.clearAllCallbacks();
+		worker.clearAllCallbacks();
 		var key;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
-		var workerCallbacks = worker.commons.callbacks;
+		var workerCallbacks = worker.callbacks;
 		var selectedGlobalCallback;
 		for ( key in globalCallbacks ) {
 
@@ -183,10 +183,9 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 			}
 		};
-		worker.commons.registerCallbackCompletedLoading( directorCompletedLoading );
+		worker.registerCallbackCompletedLoading( directorCompletedLoading );
 
-		worker.prepareRun( runParams );
-		worker.run();
+		worker.run( runParams );
 	};
 
 	LoaderDirector.prototype._buildWorker = function () {
