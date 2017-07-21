@@ -23,9 +23,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		THREE.LoaderSupport.WW.DirectableLoader.prototype._init.call( this );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
-		this.commons = new THREE.LoaderSupport.Commons();
-
 		this.modelName = '';
+		this.requestTerminate = false;
+		this.materialPerSmoothingGroup = false;
+
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.mtlLoader = null;
@@ -38,6 +39,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.mtlAsString = null;
 	};
 
+	/**
+	 * Tells whether a material shall be created per smoothing group
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 */
+	WWOBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+	};
+
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 		this.requestTerminate = false;
@@ -48,6 +59,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.modelName = '';
 		this.requestTerminate = false;
+		this.materialPerSmoothingGroup = false;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );

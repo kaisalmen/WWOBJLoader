@@ -98,9 +98,9 @@ var OBJLoader2Example = (function () {
 			objLoader.setPath( objDef.path );
 			// following settings are default, contained for easy play-around
 			objLoader.setDebug( false, false );
-			var commons = objLoader.commons;
-			commons.setMaterialPerSmoothingGroup( false );
+			objLoader.setMaterialPerSmoothingGroup( false );
 
+			var commons = objLoader.commons;
 			var reportProgress = function ( content ) {
 				console.log( 'Progress: ' + content );
 			};

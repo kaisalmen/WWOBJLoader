@@ -1,5 +1,9 @@
 if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
 
+/**
+ * Validation functions
+ * @class
+ */
 THREE.LoaderSupport.Validator = {
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -139,16 +143,6 @@ THREE.LoaderSupport.Commons = (function () {
 		}
 
 		if ( this.debug ) console.log( output );
-	};
-
-	/**
-	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {boolean} materialPerSmoothingGroup=false Default is false
-	 */
-	Commons.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 	};
 
 	return Commons;

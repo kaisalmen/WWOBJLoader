@@ -29,7 +29,7 @@ var WWOBJLoader2Stage = (function () {
 		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
 		// following settings are default, contained for easy play-around
 		this.wwObjLoader2.setDebug( false );
-		this.wwObjLoader2.commons.setMaterialPerSmoothingGroup( false );
+		this.wwObjLoader2.setMaterialPerSmoothingGroup( false );
 
 		this.controls = null;
 

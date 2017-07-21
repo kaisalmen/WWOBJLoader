@@ -51,6 +51,16 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
+	 * Tells whether a material shall be created per smoothing group
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 */
+	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+	};
+
+	/**
 	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.OBJLoader2
 	 *
@@ -156,7 +166,6 @@ THREE.OBJLoader2 = (function () {
 		if ( this.validated ) return;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
-		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.validate();
 		this.meshCreator.validate();
 
