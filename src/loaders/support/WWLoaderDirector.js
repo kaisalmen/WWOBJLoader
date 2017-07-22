@@ -208,34 +208,44 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	LoaderDirector.prototype._kickWorkerRun = function( worker, runParams ) {
 		worker.clearAllCallbacks();
-		var key;
+		var key, i;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var workerCallbacks = worker.callbacks;
 		var selectedGlobalCallback;
+		var selectedGlobalCallbacks;
 		for ( key in globalCallbacks ) {
 
 			if ( workerCallbacks.hasOwnProperty( key ) && globalCallbacks.hasOwnProperty( key ) ) {
 
-				selectedGlobalCallback = globalCallbacks[ key ];
-				if ( Validator.isValid( selectedGlobalCallback ) ) workerCallbacks[ key ].push( selectedGlobalCallback );
+				selectedGlobalCallbacks = globalCallbacks[ key ];
+				for ( i = 0; i < selectedGlobalCallbacks.length; i++ ) {
 
+					selectedGlobalCallback = selectedGlobalCallbacks[ i ];
+					if ( Validator.isValid( selectedGlobalCallback ) ) workerCallbacks[ key ].push( selectedGlobalCallback );
+
+				}
 			}
-
 		}
+
 		// register per object callbacks
 		var runCallbacks = runParams.callbacks;
+		var selectedRunCallback;
+		var selectedRunCallbacks;
 		if ( Validator.isValid( runCallbacks ) ) {
 
 			for ( key in runCallbacks ) {
 
-				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Validator.isValid( runCallbacks[ key ] ) ) {
+				selectedRunCallbacks = runCallbacks[ key ];
+				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Validator.isValid( selectedRunCallbacks ) ) {
 
-					workerCallbacks[ key ].push( runCallbacks[ key ] );
+					for ( i = 0; i < selectedRunCallbacks.length; i++ ) {
 
+						selectedRunCallback = selectedRunCallbacks[ i ];
+						workerCallbacks[ key ].push( selectedGlobalCallback );
+
+					}
 				}
-
 			}
-
 		}
 
 		var scope = this;
@@ -256,7 +266,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 			}
 		};
-		worker.registerCallbackCompletedLoading( directorCompletedLoading );
+		worker.getCallbacks().registerCallbackCompletedLoading( directorCompletedLoading );
 
 		worker.run( runParams );
 	};
@@ -286,8 +296,9 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 */
 	LoaderDirector.prototype.deregister = function () {
-		console.log( 'LoaderDirector received the unregister call. Terminating all workers!' );
-		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
+		console.log( 'LoaderDirector received the deregister call. Terminating all workers!' );
+		var i, worker, length;
+		for ( i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
 
 			worker = this.workerDescription.workers[ i ];
 			worker.setRequestTerminate( true );
@@ -298,7 +309,14 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			}
 
 		}
-		if ( Validator.isValid( this.workerDescription.globalCallbacks.progress ) ) this.workerDescription.globalCallbacks.progress( '' );
+		if ( Validator.isValid( this.workerDescription.globalCallbacks.progress ) ) {
+
+			var progressCallbacks = this.workerDescription.globalCallbacks.progress;
+			for ( i = 0; i < progressCallbacks.length; i++ ) {
+				progressCallbacks[ i ]( '' );
+			}
+
+		}
 		this.workerDescription.workers = [];
 		this.instructionQueue = [];
 	};

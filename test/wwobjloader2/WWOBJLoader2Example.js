@@ -106,9 +106,10 @@ var WWOBJLoader2Example = (function () {
 			console.log( 'Loading complete!' );
 			scope._reportProgress( '' );
 		};
-		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
-		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
-		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
+		var callbacks = this.wwObjLoader2.getCallbacks();
+		callbacks.registerCallbackProgress( this._reportProgress );
+		callbacks.registerCallbackCompletedLoading( completedLoading );
+		callbacks.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;
 	};

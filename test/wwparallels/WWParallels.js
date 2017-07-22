@@ -172,7 +172,7 @@ var WWParallels = (function () {
 			return override;
 		};
 
-		var globalCallbacks = new THREE.LoaderSupport.WW.PrepDataCallbacks();
+		var globalCallbacks = new THREE.LoaderSupport.Callbacks();
 		globalCallbacks.registerCallbackProgress( callbackReportProgress );
 		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
 		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );

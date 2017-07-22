@@ -103,7 +103,8 @@ var OBJLoader2Example = (function () {
 			var reportProgress = function ( content ) {
 				console.log( 'Progress: ' + content );
 			};
-			objLoader.registerCallbackProgress( reportProgress );
+			var callbacks = objLoader.getCallbacks();
+			callbacks.registerCallbackProgress( reportProgress );
 
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
@@ -118,13 +119,13 @@ var OBJLoader2Example = (function () {
 
 				return override;
 			};
-			objLoader.registerCallbackMeshLoaded( callbackMeshLoaded );
+			callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 				scope._reportProgress( '', objDef.instanceNo );
 			};
-			objLoader.registerCallbackCompletedLoading( onSuccess );
+			callbacks.registerCallbackCompletedLoading( onSuccess );
 
 			var onProgress = function ( event ) {
 				if ( event.lengthComputable ) {

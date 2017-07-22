@@ -26,6 +26,91 @@ THREE.LoaderSupport.Validator = {
 	}
 };
 
+
+/**
+ * Callbacks utilized by functions working with WWLoader implementations
+ *
+ * @returns {
+ *  {
+ * 	 registerCallbackProgress: THREE.LoaderSupport.Callbacks.registerCallbackProgress,
+ * 	 registerCallbackCompletedLoading: THREE.LoaderSupport.Callbacks.registerCallbackCompletedLoading,
+ * 	 registerCallbackMeshLoaded: THREE.LoaderSupport.Callbacks.registerCallbackMeshLoaded,
+ * 	 registerCallbackErrorWhileLoading: THREE.LoaderSupport.Callbacks.registerCallbackErrorWhileLoading,
+ * 	 progress: null,
+ * 	 completedLoading: null,
+ * 	 errorWhileLoading: null,
+ * 	 meshLoaded: null
+ *  }
+ * }
+ * @constructor
+ */
+THREE.LoaderSupport.Callbacks = (function () {
+
+	var Validator = THREE.LoaderSupport.Validator;
+
+	function Callbacks() {
+		this.progress = [];
+		this.completedLoading = [];
+		this.errorWhileLoading = [];
+		this.meshLoaded = [];
+	}
+
+	/**
+	 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackProgress Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
+		if ( Validator.isValid( callbackProgress ) ) this.progress.push( callbackProgress );
+	};
+
+	/**
+	 * Register callback function that is called once loading of the complete model is completed.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackCompletedLoading Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
+		if ( Validator.isValid( callbackCompletedLoading ) ) this.completedLoading.push( callbackCompletedLoading );
+	};
+
+	/**
+	 * Register callback function that is called every time a mesh was loaded.
+	 * Use {@link THREE.LoaderSupport.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackMeshLoaded Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
+		if ( Validator.isValid( callbackMeshLoaded ) ) this.meshLoaded.push( callbackMeshLoaded );
+	};
+
+	/**
+	 * Report if an error prevented loading.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
+	 */
+	Callbacks.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
+		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.errorWhileLoading.push( callbackErrorWhileLoading );
+	};
+
+	/**
+	 * Clears all registered callbacks.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 */
+	Callbacks.prototype.clearAllCallbacks = function () {
+		this.progress = [];
+		this.completedLoading = [];
+		this.errorWhileLoading = [];
+		this.meshLoaded = [];
+	};
+
+	return Callbacks;
+})();
+
+
 /**
  * Global callback definition
  * @class
@@ -39,7 +124,7 @@ THREE.LoaderSupport.Commons = (function () {
 		this.debug = false;
 		this.crossOrigin = null;
 		this.materials = [];
-		this.clearAllCallbacks();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
 
 	/**
@@ -72,44 +157,23 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Register callback function that is invoked by internal function "_announceProgress" to print feedback.
+	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {callback} callbackProgress Callback function for described functionality
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
 	 */
-	Commons.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Validator.isValid( callbackProgress ) ) this.callbacks.progress.push( callbackProgress );
+	Commons.prototype.setMaterials = function ( materials ) {
+		this.materials = materials;
 	};
 
 	/**
-	 * Register callback function that is called once loading of the complete model is completed.
+	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {callback} callbackCompletedLoading Callback function for described functionality
+	 * @returns {THREE.LoaderSupport.Callbacks}
 	 */
-	Commons.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Validator.isValid( callbackCompletedLoading ) ) this.callbacks.completedLoading.push( callbackCompletedLoading );
-	};
-
-	/**
-	 * Register callback function that is called to report an error that prevented loading.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
-	 */
-	Commons.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.callbacks.errorWhileLoading.push( callbackErrorWhileLoading );
-	};
-
-	/**
-	 * Register callback function that is called every time a mesh was loaded.
-	 * Use {@link THREE.LoaderSupport.OBJLoader2.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {callback} callbackMeshLoaded Callback function for described functionality
-	 */
-	Commons.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Validator.isValid( callbackMeshLoaded ) ) this.callbacks.meshLoaded.push( callbackMeshLoaded );
+	Commons.prototype.getCallbacks = function () {
+		return this.callbacks;
 	};
 
 	/**
@@ -117,13 +181,7 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @memberOf THREE.LoaderSupport.Commons
 	 */
 	Commons.prototype.clearAllCallbacks = function () {
-		this.callbacks = {
-			progress: [],
-			completedLoading: [],
-			errorWhileLoading: [],
-			meshLoaded: [],
-			materialsLoaded: []
-		};
+		this.callbacks.clearAllCallbacks();
 	};
 
 	/**
@@ -146,16 +204,6 @@ THREE.LoaderSupport.Commons = (function () {
 		}
 
 		if ( this.debug ) console.log( output );
-	};
-
-	/**
-	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
-	 */
-	Commons.prototype.setMaterials = function ( materials ) {
-		this.materials = materials;
 	};
 
 	return Commons;

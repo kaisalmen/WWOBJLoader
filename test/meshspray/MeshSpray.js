@@ -53,7 +53,7 @@ var MeshSpray = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.announceProgress( baseText, text );
 		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, [ runParams.getCallbacks().meshLoaded ], scopeFuncComplete );
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, runParams.getCallbacks().meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
 		this.meshProvider.postMessage( {
 			cmd: 'init',

@@ -90,10 +90,11 @@ var WWOBJLoader2Stage = (function () {
 		var errorWhileLoading = function () {
 			// just for demonstration...
 		};
-		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
-		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
-		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
-		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
+		var callbacks = this.wwObjLoader2.getCallbacks();
+		callbacks.registerCallbackMeshLoaded( meshLoaded );
+		callbacks.registerCallbackCompletedLoading( reloadAssetsProxy );
+		callbacks.registerCallbackProgress( this.reportProgress );
+		callbacks.registerCallbackErrorWhileLoading( errorWhileLoading );
 
 		this.reloadAssets();
 

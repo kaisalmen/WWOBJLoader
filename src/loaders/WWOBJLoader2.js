@@ -153,7 +153,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.announceProgress( baseText, text );
 		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.getCallbacks().meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
 
 		var messageObject = {

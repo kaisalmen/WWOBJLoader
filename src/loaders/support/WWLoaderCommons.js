@@ -13,7 +13,7 @@ THREE.LoaderSupport.WW.PrepData = (function () {
 		this.streamMeshes = true;
 		this.materialPerSmoothingGroup = false;
 		this.requestTerminate = false;
-		this.callbacks = new THREE.LoaderSupport.WW.PrepDataCallbacks();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
 
 	/**
@@ -57,10 +57,10 @@ THREE.LoaderSupport.WW.PrepData = (function () {
 	};
 
 	/**
-	 * Returns all callbacks as {@link THREE.LoaderSupport.WW.PrepDataCallbacks}
+	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
 	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
-	 * @returns {THREE.LoaderSupport.WW.PrepDataCallbacks}
+	 * @returns {THREE.LoaderSupport.Callbacks}
 	 */
 	PrepData.prototype.getCallbacks = function () {
 		return this.callbacks;
@@ -113,77 +113,3 @@ THREE.LoaderSupport.WW.PrepDataResource = (function () {
 
 	return PrepDataResource;
 })();
-
-
-/**
- * Callbacks utilized by functions working with WWLoader implementations
- *
- * @returns {
- *  {
- * 	 registerCallbackProgress: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackProgress,
- * 	 registerCallbackCompletedLoading: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackCompletedLoading,
- * 	 registerCallbackMaterialsLoaded: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackMaterialsLoaded,
- * 	 registerCallbackMeshLoaded: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackMeshLoaded,
- * 	 registerCallbackErrorWhileLoading: THREE.LoaderSupport.WW.PrepDataCallbacks.registerCallbackErrorWhileLoading,
- * 	 progress: null,
- * 	 completedLoading: null,
- * 	 errorWhileLoading: null,
- * 	 materialsLoaded: null,
- * 	 meshLoaded: null
- *  }
- * }
- * @constructor
- */
-THREE.LoaderSupport.WW.PrepDataCallbacks = function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	return {
-		/**
-		 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
-		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackProgress Callback function for described functionality
-		 */
-		registerCallbackProgress: function ( callbackProgress ) {
-			if ( Validator.isValid( callbackProgress ) ) this.progress = callbackProgress;
-		},
-
-		/**
-		 * Register callback function that is called once loading of the complete model is completed.
-		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackCompletedLoading Callback function for described functionality
-		 */
-		registerCallbackCompletedLoading: function ( callbackCompletedLoading ) {
-			if ( Validator.isValid( callbackCompletedLoading ) ) this.completedLoading = callbackCompletedLoading;
-		},
-
-		/**
-		 * Register callback function that is called every time a mesh was loaded.
-		 * Use {@link THREE.LoaderSupport.WW.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
-		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackMeshLoaded Callback function for described functionality
-		 */
-		registerCallbackMeshLoaded: function ( callbackMeshLoaded ) {
-			if ( Validator.isValid( callbackMeshLoaded ) ) this.meshLoaded = callbackMeshLoaded;
-		},
-
-		/**
-		 * Report if an error prevented loading.
-		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
-		 */
-		registerCallbackErrorWhileLoading: function ( callbackErrorWhileLoading ) {
-			if ( Validator.isValid( callbackErrorWhileLoading ) ) this.errorWhileLoading = callbackErrorWhileLoading;
-		},
-
-		progress: null,
-		completedLoading: null,
-		errorWhileLoading: null,
-		materialsLoaded: null,
-		meshLoaded: null
-	};
-};
