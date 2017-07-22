@@ -31,6 +31,8 @@ THREE.OBJLoader2 = (function () {
 		};
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
+		this.mtlLoader = null;
+
 		this.validated = false;
 	}
 
@@ -101,6 +103,10 @@ THREE.OBJLoader2 = (function () {
 		this._validate();
 		this.fileLoader.setPath( this.path );
 		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
+
+		this.callbacks.registerCallbackCompletedLoading( onLoad );
+		this.callbacks.registerCallbackErrorWhileLoading( onError );
+		this.callbacks.registerCallbackProgress( onProgress );
 
 		var scope = this;
 		if ( scope.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
@@ -1198,6 +1204,43 @@ THREE.OBJLoader2 = (function () {
 		workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
 		workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
 		return workerCode;
+	};
+
+	/**
+	 *
+	 * @param {THREE.LoaderSupport.ResourceDescriptor} resource
+	 * @param {function} callback
+	 */
+	OBJLoader2.prototype.loadMtl = function ( resource, callback ) {
+
+		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );
+		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
+
+		// fast-fail
+		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.name ) ) ) {
+
+			callback();
+			return;
+
+		}
+		this.mtlLoader.setPath( resource.path );
+
+		if ( Validator.isValid( resource.content ) ) {
+
+			callback( Validator.isValid( resource.content ) ? this.mtlLoader.parse( resource.content ) : null );
+
+		} else if ( Validator.isValid( resource.name ) ) {
+
+			var onError = function ( event ) {
+				var output = 'Error occurred while downloading "' + resource.path + '/' + resource.name + '"';
+				console.error( output + ': ' + event );
+				scope.announceProgress( output );
+				scope._finalize( 'error' );
+			};
+
+			this.mtlLoader.load( resource.name, callback, undefined, onError );
+
+		}
 	};
 
 	return OBJLoader2;

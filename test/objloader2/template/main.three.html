@@ -83,8 +83,7 @@
 			pivotA.name = 'PivotA';
 			pivotA.position.set( -50, 0, 0 );
 			app.loadObj( {
-				path: '../../resource/obj/female02/',
-				fileObj: 'female02_vertex_colors.obj',
+				resourceOBJ: new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/', 'female02_vertex_colors.obj', 'OBJ' ),
 				pivot: pivotA,
 				instanceNo: 0
 			} );
@@ -93,10 +92,8 @@
 			pivotB.name = 'PivotB';
 			pivotB.position.set( 50, 0, 0 );
 			app.loadObj( {
-				path: '../../resource/obj/female02/',
-				fileObj: 'female02.obj',
-				texturePath: '../../resource/obj/female02/',
-				fileMtl: 'female02.mtl',
+				resourceOBJ: new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/', 'female02.obj', 'OBJ' ),
+				resourceMTL: new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/', 'female02.mtl', 'OBJ' ),
 				pivot: pivotB,
 				instanceNo: 1
 			} );

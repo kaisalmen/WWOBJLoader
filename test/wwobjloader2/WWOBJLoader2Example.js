@@ -182,8 +182,8 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.loadFilesUser = function ( objDef ) {
 		var prepData = new THREE.LoaderSupport.WW.PrepData( objDef.name );
-		prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( objDef.pathTexture, 'userObj.obj', 'OBJ', objDef.objAsArrayBuffer ) );
-		prepData.addResource( new THREE.LoaderSupport.WW.PrepDataResource( objDef.pathTexture, 'userObj.mtl', 'MTL', objDef.mtlAsString ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( objDef.pathTexture, 'userObj.obj', 'OBJ', objDef.objAsArrayBuffer ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( objDef.pathTexture, 'userObj.mtl', 'MTL', objDef.mtlAsString ) );
 
 		prepData.setSceneGraphBaseNode( this.pivot );
 		prepData.setStreamMeshes( this.streamMeshes );

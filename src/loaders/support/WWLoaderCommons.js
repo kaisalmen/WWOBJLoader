@@ -78,38 +78,3 @@ THREE.LoaderSupport.WW.PrepData = (function () {
 
 	return PrepData;
 })();
-
-/**
- * Define a resource used by {@link THREE.LoaderSupport.WW.PrepData}.
- * @class
- *
- * @param {string} path Path to the file
- * @param {string} name Name of the file
- * @param {string} extension The file extension (type)
- * @param {Object} [content] The file content as binary or text representation
- */
-THREE.LoaderSupport.WW.PrepDataResource = (function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	function PrepDataResource( path, name, extension, content ) {
-		this.path = Validator.verifyInput( path, null );
-		this.name = Validator.verifyInput( name, null );
-		this.extension = Validator.verifyInput( extension, null );
-		this.content = Validator.verifyInput( content, null );
-		this.dataAvailable = Validator.isValid( this.content );
-	}
-
-	/**
-	 * Set the content (e.g. Uint8Array or String) of this resource
-	 * @memberOf THREE.LoaderSupport.WW.PrepDataResource
-	 *
-	 * @param {Object} content the file content
-	 */
-	PrepDataResource.prototype.setContent = function ( content ) {
-		this.content = Validator.verifyInput( content, null );
-		this.dataAvailable = Validator.isValid( this.content );
-	};
-
-	return PrepDataResource;
-})();

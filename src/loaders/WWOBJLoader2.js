@@ -72,6 +72,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
+
 		this.requestTerminate = false;
 		this.materials = [];
 		this.validated = true;
@@ -98,7 +99,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * Run the loader according the provided instructions.
 	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
 	 *
-	 * @param {Object} params Either {@link THREE.LoaderSupport.WW.PrepData}
+	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
 	 */
 	WWOBJLoader2.prototype.run = function ( params ) {
 		console.time( 'WWOBJLoader2' );

@@ -80,31 +80,24 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype.loadObj = function ( objDef ) {
-		this.scene.add( objDef.pivot );
+		this._reportProgress( 'Loading: ' + objDef.resourceOBJ.name, objDef.instanceNo );
+		this.pivot.add( objDef.pivot );
+
+		var objLoader = new THREE.OBJLoader2();
+		objLoader.setSceneGraphBaseNode( objDef.pivot );
+		objLoader.setPath( objDef.resourceOBJ.path );
+		// following settings are default, contained for easy play-around
+		objLoader.setDebug( false );
+		objLoader.setMaterialPerSmoothingGroup( false );
+
+
 		var scope = this;
-		scope._reportProgress( 'Loading: ' + objDef.fileObj, objDef.instanceNo );
+		var onLoadMtl = function( materials ) {
 
-		var mtlLoader = new THREE.MTLLoader();
-		mtlLoader.setPath( objDef.texturePath );
-		mtlLoader.setCrossOrigin( 'anonymous' );
-		mtlLoader.load( objDef.fileMtl, function( materials ) {
-
-			materials.preload();
-
-			scope.pivot.add( objDef.pivot );
-			var objLoader = new THREE.OBJLoader2();
-			objLoader.setSceneGraphBaseNode( objDef.pivot );
-			objLoader.setMaterials( materials.materials );
-			objLoader.setPath( objDef.path );
-			// following settings are default, contained for easy play-around
-			objLoader.setDebug( false );
-			objLoader.setMaterialPerSmoothingGroup( false );
-
-			var reportProgress = function ( content ) {
-				console.log( 'Progress: ' + content );
-			};
-			var callbacks = objLoader.getCallbacks();
-			callbacks.registerCallbackProgress( reportProgress );
+			if ( Validator.isValid( materials ) ) {
+				materials.preload();
+				objLoader.setMaterials( materials.materials );
+			}
 
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
@@ -119,19 +112,18 @@ var OBJLoader2Example = (function () {
 
 				return override;
 			};
-			callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
+			objLoader.getCallbacks().registerCallbackMeshLoaded( callbackMeshLoaded );
 
 			var onSuccess = function ( object3d ) {
 				console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
 				scope._reportProgress( '', objDef.instanceNo );
 			};
-			callbacks.registerCallbackCompletedLoading( onSuccess );
 
 			var onProgress = function ( event ) {
 				if ( event.lengthComputable ) {
 
 					var percentComplete = event.loaded / event.total * 100;
-					var output = 'Download of "' + objDef.fileObj + '": ' + Math.round( percentComplete ) + '%';
+					var output = 'Download of "' + objDef.resourceOBJ.name + '": ' + Math.round( percentComplete ) + '%';
 					scope._reportProgress( output, objDef.instanceNo );
 				}
 			};
@@ -141,9 +133,10 @@ var OBJLoader2Example = (function () {
 				scope._reportProgress( output, objDef.instanceNo );
 			};
 
-			objLoader.load( objDef.fileObj, null, onProgress, onError );
+			objLoader.load( objDef.resourceOBJ.name, onSuccess, onProgress, onError );
+		};
 
-		});
+		objLoader.loadMtl( objDef.resourceMTL, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( text, instanceNo ) {

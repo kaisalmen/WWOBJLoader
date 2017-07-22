@@ -250,8 +250,8 @@ var WWParallels = (function () {
 			model.sceneGraphBaseNode = pivot;
 
 			var runParams = new THREE.LoaderSupport.WW.PrepData( model.modelName );
-			runParams.addResource( new THREE.LoaderSupport.WW.PrepDataResource( model.pathObj, model.fileObj, 'OBJ' ) );
-			runParams.addResource( new THREE.LoaderSupport.WW.PrepDataResource( model.pathTexture, model.fileMtl, 'MTL' ) );
+			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathObj, model.fileObj, 'OBJ' ) );
+			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathTexture, model.fileMtl, 'MTL' ) );
 			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
 			runParams.setStreamMeshes( streamMeshes );
 			if ( model.modelName === 'WaltHead' ) {
