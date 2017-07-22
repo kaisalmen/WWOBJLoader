@@ -1,3 +1,76 @@
+
+/**
+ * Template class for all web worker based loaders that shall be directed.
+ * {@link THREE.LoaderSupport.WW.LoaderDirector} checks for available methods
+ *
+ * @class
+ */
+THREE.LoaderSupport.WW.DirectableLoader = (function () {
+
+	function DirectableLoader() {
+	}
+
+	/**
+	 * Call requestTerminate to terminate the web worker and free local resource after execution.
+	 *
+	 * @param {boolean} requestTerminate True or false
+	 * @private
+	 */
+	DirectableLoader.prototype.setRequestTerminate = function ( requestTerminate ) {
+	};
+
+	/**
+	 * Initialise object
+	 * @private
+	 */
+	DirectableLoader.prototype._init = function () {
+	};
+
+	/**
+	 * Validate status
+	 * @private
+	 */
+	DirectableLoader.prototype._validate = function () {
+	};
+
+	/**
+	 * Function is called by {@link THREE.LoaderSupport.WW.MeshProvider} when worker is constructed.
+	 *
+	 * @param {string} funcBuildObject
+	 * @param {string} funcBuildSingelton
+	 * @param {string} existingWorkerCode
+	 * @private
+	 */
+	DirectableLoader.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
+		console.log( 'Value of "funcBuildObject": ' + funcBuildObject );
+		console.log( 'Value of "funcBuildSingelton": ' + funcBuildSingelton );
+		console.log( 'Value of "existingWorkerCode": ' + existingWorkerCode );
+	};
+
+	/**
+	 * Run the loader according the instruction provided. This needs to be overridden.
+	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
+	 *
+	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
+	 * @private
+	 */
+	DirectableLoader.prototype.run = function ( runParams ) {
+		console.log( 'Value of "runParams": ' + runParams );
+	};
+
+	/**
+	 * Finalize run
+	 *
+	 * @param {string} reason
+	 * @private
+	 */
+	DirectableLoader.prototype._finalize = function ( reason ) {
+		console.log( 'Value of "reason": ' + reason );
+	};
+
+	return DirectableLoader;
+})();
+
 /**
  * Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
  * Workflow:
@@ -191,6 +264,15 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	LoaderDirector.prototype._buildWorker = function () {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
+
+		// verify that all required functions defined by "THREE.LoaderSupport.WW.DirectableLoader" are implemented
+		if ( worker.hasOwnProperty( 'setRequestTerminate' ) && typeof worker.setRequestTerminate !== 'function'  ) throw classDef + ' has no function "setRequestTerminate".';
+		if ( worker.hasOwnProperty( '_init' ) && typeof worker._init !== 'function'  ) throw classDef + ' has no function "_init".';
+		if ( worker.hasOwnProperty( '_validate' ) && typeof worker._validate !== 'function'  ) throw classDef + ' has no function "_validate".';
+		if ( worker.hasOwnProperty( '_buildWebWorkerCode' ) && typeof worker._buildWebWorkerCode !== 'function'  ) throw classDef + ' has no function "_buildWebWorkerCode".';
+		if ( worker.hasOwnProperty( 'run' ) && typeof worker.run !== 'function'  ) throw classDef + ' has no function "run".';
+		if ( worker.hasOwnProperty( '_finalize' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "_finalize".';
+
 		worker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) worker.setCrossOrigin( this.crossOrigin );
 

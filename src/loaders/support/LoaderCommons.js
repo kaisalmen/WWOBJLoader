@@ -38,6 +38,7 @@ THREE.LoaderSupport.Commons = (function () {
 		this.instanceNo = 0;
 		this.debug = false;
 		this.crossOrigin = null;
+		this.materials = [];
 		this.clearAllCallbacks();
 	}
 
@@ -112,16 +113,6 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
-	 */
-	Commons.prototype.registerCallbackMaterialsLoaded = function ( callbackMaterialsLoaded ) {
-		if ( Validator.isValid( callbackMaterialsLoaded ) ) this.callbacks.materialsLoaded.push( callbackMaterialsLoaded );
-	};
-
-	/**
 	 * Clears all registered callbacks.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 */
@@ -138,6 +129,7 @@ THREE.LoaderSupport.Commons = (function () {
 	/**
 	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
 	 * @memberOf THREE.LoaderSupport.Commons
+	 *
 	 * @param baseText
 	 * @param text
 	 */
@@ -154,6 +146,16 @@ THREE.LoaderSupport.Commons = (function () {
 		}
 
 		if ( this.debug ) console.log( output );
+	};
+
+	/**
+	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
+	 */
+	Commons.prototype.setMaterials = function ( materials ) {
+		this.materials = materials;
 	};
 
 	return Commons;

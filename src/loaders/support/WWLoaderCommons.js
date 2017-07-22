@@ -160,16 +160,6 @@ THREE.LoaderSupport.WW.PrepDataCallbacks = function () {
 		},
 
 		/**
-		 * Register callback function that is called once materials have been loaded. It allows to alter and return materials.
-		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
-		 *
-		 * @param {callback} callbackMaterialsLoaded Callback function for described functionality
-		 */
-		registerCallbackMaterialsLoaded: function ( callbackMaterialsLoaded ) {
-			if ( Validator.isValid( callbackMaterialsLoaded ) ) this.materialsLoaded = callbackMaterialsLoaded;
-		},
-
-		/**
 		 * Register callback function that is called every time a mesh was loaded.
 		 * Use {@link THREE.LoaderSupport.WW.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 		 * @memberOf THREE.LoaderSupport.WW.PrepDataCallbacks
@@ -197,81 +187,3 @@ THREE.LoaderSupport.WW.PrepDataCallbacks = function () {
 		meshLoaded: null
 	};
 };
-
-/**
- * Common to all web worker based loaders that can be directed
- * @class
- */
-THREE.LoaderSupport.WW.DirectableLoader = (function () {
-
-	DirectableLoader.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
-	DirectableLoader.prototype.constructor = DirectableLoader;
-
-	function DirectableLoader() {
-		this._init();
-	}
-
-	/**
-	 * Call from implementation
-	 * @private
-	 */
-	DirectableLoader.prototype._init = function () {
-		THREE.LoaderSupport.Commons.call( this );
-		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
-		this.validated = false;
-		this.materials = [];
-		this.requestTerminate = false;
-	};
-
-	/**
-	 * Call requestTerminate to terminate the web worker and free local resource after execution.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 *
-	 * @param {boolean} requestTerminate True or false
-	 */
-	DirectableLoader.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = requestTerminate === true;
-	};
-
-	/**
-	 * Call from implementation
-	 * @private
-	 */
-	DirectableLoader.prototype._validate = function () {
-		console.warn( 'DirectableLoader.prototype._validate was not overridden.' );
-	};
-
-	/**
-	 * Function is called by {@link THREE.LoaderSupport.WW.MeshProvider} when worker is constructed.
-	 * @private
-	 */
-	DirectableLoader.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
-		console.warn( 'DirectableLoader.prototype._buildWebWorkerCode was not overridden.' );
-		console.log( 'Value of "funcBuildObject": ' + funcBuildObject );
-		console.log( 'Value of "funcBuildSingelton": ' + funcBuildSingelton );
-		console.log( 'Value of "existingWorkerCode": ' + existingWorkerCode );
-	};
-
-	/**
-	 * Run the loader according the instruction provided. This needs to be overridden.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 *
-	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
-	 */
-	DirectableLoader.prototype.run = function ( runParams ) {
-		console.warn( 'DirectableLoader.prototype.run was not overridden.' );
-		console.log( 'Value of "runParams": ' + runParams );
-	};
-
-	/**
-	 * Call from implementation
-	 * @param reason
-	 * @private
-	 */
-	DirectableLoader.prototype._finalize = function ( reason ) {
-		console.warn( 'DirectableLoader.prototype._finalize was not overridden.' );
-		console.log( 'Value of "reason": ' + reason );
-	};
-
-	return DirectableLoader;
-})();

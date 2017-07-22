@@ -99,10 +99,6 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
 		var scope = this;
-		var materialsLoaded = function ( materials ) {
-			var count = Validator.isValid( materials ) ? materials.length : 0;
-			console.log( 'Loaded #' + count + ' materials.' );
-		};
 		var meshLoaded = function ( name, bufferGeometry, material ) {
 			console.log( 'Loaded mesh: ' + name + ' Material name: ' + material.name );
 		};
@@ -112,7 +108,6 @@ var WWOBJLoader2Example = (function () {
 		};
 		this.wwObjLoader2.registerCallbackProgress( this._reportProgress );
 		this.wwObjLoader2.registerCallbackCompletedLoading( completedLoading );
-		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 
 		return true;

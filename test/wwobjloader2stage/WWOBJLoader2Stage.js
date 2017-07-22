@@ -84,17 +84,12 @@ var WWOBJLoader2Stage = (function () {
 			scope.reloadAssets();
 			scope.reportProgress();
 		};
-		var materialsLoaded = function ( materials ) {
-			var count = Validator.isValid( materials ) ? materials.length : 0;
-			console.log( 'Loaded #' + count + ' materials.' );
-		};
 		var meshLoaded = function ( meshName ) {
 			// just for demonstration...
 		};
 		var errorWhileLoading = function () {
 			// just for demonstration...
 		};
-		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
 		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
 		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
 		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );

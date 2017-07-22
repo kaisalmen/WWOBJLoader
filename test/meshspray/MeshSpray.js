@@ -8,22 +8,37 @@ var MeshSpray = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	MeshSpray.prototype = Object.create( THREE.LoaderSupport.WW.DirectableLoader.prototype );
+	MeshSpray.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray() {
-		THREE.LoaderSupport.WW.DirectableLoader.call( this );
+		THREE.LoaderSupport.Commons.call( this );
+		this.initialized = false;
+		this._init();
 	}
 
+	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
 	MeshSpray.prototype._init = function () {
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._init.call( this );
+		if ( this.initialized ) return;
+
+		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
+
+		this.materials = [];
+		this.validated = false;
+		this.requestTerminate = false;
+
+		this.initialized = true;
 	};
 
 	MeshSpray.prototype._validate = function () {
 		if ( this.validated ) return;
-		this.requestTerminate = false;
+
 		this.materials = [];
 		this.validated = true;
+		this.requestTerminate = false;
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 

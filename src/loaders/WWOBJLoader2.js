@@ -12,16 +12,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.LoaderSupport.WW.DirectableLoader.prototype );
+	WWOBJLoader2.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		THREE.LoaderSupport.WW.DirectableLoader.call( this );
+		THREE.LoaderSupport.Commons.call( this );
+		this.initialized = false;
+		this._init();
 	}
 
 	WWOBJLoader2.prototype._init = function () {
-		THREE.LoaderSupport.WW.DirectableLoader.prototype._init.call( this );
+		if ( this.initialized ) return;
+
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+
+		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 
 		this.modelName = '';
 		this.requestTerminate = false;
@@ -37,6 +42,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.fileMtl = null;
 		this.mtlAsString = null;
+
+		this.validated = false;
+		this.materials = [];
+		this.requestTerminate = false;
+
+		this.initialized = true;
 	};
 
 	/**
@@ -46,7 +57,17 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
 	WWOBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
+	};
+
+	/**
+	 * Call requestTerminate to terminate the web worker and free local resource after execution.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {boolean} requestTerminate True or false
+	 */
+	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
 	};
 
 	WWOBJLoader2.prototype._validate = function () {

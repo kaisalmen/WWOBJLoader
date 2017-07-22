@@ -71,8 +71,10 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
-		this.meshCreator.setMaterials( materials );
+		THREE.LoaderSupport.Commons.prototype.setMaterials.call( this, materials );
+		this.meshCreator.setMaterials( this.materials );
 	};
+
 	/**
 	 * Sets debug mode for the parser and the meshCreator.
 	 * @memberOf THREE.OBJLoader2
@@ -80,8 +82,9 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} enabled
 	 */
 	OBJLoader2.prototype.setDebug = function ( enabled ) {
-		this.parser.setDebug( enabled );
-		this.meshCreator.setDebug( enabled );
+		THREE.LoaderSupport.Commons.prototype.setDebug.call( this, enabled );
+		this.parser.setDebug( this.debug );
+		this.meshCreator.setDebug( this.debug );
 	};
 
 	/**
