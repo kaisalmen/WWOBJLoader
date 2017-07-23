@@ -123,7 +123,10 @@ THREE.LoaderSupport.Commons = (function () {
 		this.instanceNo = 0;
 		this.debug = false;
 		this.crossOrigin = null;
+
 		this.materials = [];
+		this.materialNames = [];
+
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
 
@@ -135,15 +138,6 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
-	};
-
-	/**
-	 * Answers whether debug is set.
-	 *
-	 * @returns {boolean}
-	 */
-	Commons.prototype.getDebug = function () {
-		return this.debug;
 	};
 
 	/**

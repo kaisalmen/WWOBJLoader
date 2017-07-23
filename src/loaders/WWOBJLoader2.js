@@ -12,11 +12,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	WWOBJLoader2.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
+	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
 	function WWOBJLoader2() {
-		THREE.LoaderSupport.Commons.call( this );
+		THREE.OBJLoader2.call( this );
 		this.initialized = false;
 		this._init();
 	}
@@ -34,14 +34,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.manager = THREE.DefaultLoadingManager;
 		this.fileLoader = new THREE.FileLoader( this.manager );
-		this.mtlLoader = null;
-
-		this.objAsArrayBuffer = null;
-		this.fileObj = null;
-		this.pathObj = null;
-
-		this.fileMtl = null;
-		this.mtlAsString = null;
 
 		this.validated = false;
 		this.materials = [];
@@ -84,15 +76,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.materialPerSmoothingGroup = false;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
-		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );
-		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
-
-		this.fileObj = null;
-		this.pathObj = null;
-		this.fileMtl = null;
-
-		this.objAsArrayBuffer = null;
-		this.mtlAsString = null;
 	};
 
 	/**
@@ -108,6 +91,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
  		var resources = params.resources;
 		var resource;
+		var resourceMtl;
+		var resourceObj;
 		for ( var index in resources ) {
 
 			resource = resources[ index ];
@@ -118,14 +103,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					// fast-fail on bad type
 					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
-					this.objAsArrayBuffer = resource.content;
+					resourceObj = resource;
 
 				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
 
 					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
-					this.mtlLoader.setPath( resource.path );
-					this.mtlAsString = resource.content;
-
+					resourceMtl = resource;
 				}
 
 			} else {
@@ -134,13 +117,11 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
 				if ( resource.extension === 'OBJ' ) {
 
-					this.pathObj = resource.path;
-					this.fileObj = resource.name;
+					resourceObj = resource;
 
 				} else if ( resource.extension === 'MTL' ) {
 
-					this.mtlLoader.setPath( resource.path );
-					this.fileMtl = resource.name;
+					resourceMtl = resource;
 
 				}
 			}
@@ -154,39 +135,24 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.announceProgress( baseText, text );
 		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.getCallbacks().meshLoaded, scopeFuncComplete );
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
 
 		var messageObject = {
 			cmd: 'init',
-			debug: this.getDebug(),
+			debug: scope.debug,
 			materialPerSmoothingGroup: this.materialPerSmoothingGroup
 		};
 		this.meshProvider.postMessage( messageObject );
 
 
-		// run
-		var processLoadedMaterials = function ( materialCreator ) {
-			var materialCreatorMaterials = [];
-			var materialNames = [];
-			if ( Validator.isValid( materialCreator ) ) {
-
-				materialCreator.preload();
-				materialCreatorMaterials = materialCreator.materials;
-				for ( var materialName in materialCreatorMaterials ) {
-
-					if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
-
-						materialNames.push( materialName );
-						scope.materials[ materialName ] = materialCreatorMaterials[ materialName ];
-
-					}
-
-				}
-
-			}
-
-			scope.meshProvider.addMaterials( scope.materials );
+		/**
+		 *
+		 * @param {Array} materials
+		 * @param {Array} materialNames
+		 */
+		var processLoadedMaterials = function ( materials, materialNames ) {
+			scope.meshProvider.addMaterials( materials );
 			scope.meshProvider.postMessage(
 				{
 					cmd: 'setMaterials',
@@ -194,39 +160,30 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				}
 			);
 
-			var materialsFromCallback;
-			var callbackMaterialsLoaded;
-			for ( var index in scope.callbacks.materialsLoaded ) {
-
-				callbackMaterialsLoaded = scope.callbacks.materialsLoaded[ index ];
-				materialsFromCallback = callbackMaterialsLoaded( scope.materials );
-				if ( Validator.isValid( materialsFromCallback ) ) scope.materials = materialsFromCallback;
-
-			}
-			if ( scope.objAsArrayBuffer ) {
+			if ( Validator.isValid( resourceObj.content ) ) {
 
 				scope.meshProvider.postMessage(
 					{
 						cmd: 'run',
-						objAsArrayBuffer: scope.objAsArrayBuffer
+						objAsArrayBuffer: resourceObj.content
 					},
-					[ scope.objAsArrayBuffer.buffer ]
+					[ resourceObj.content.buffer ]
 				);
 
 			} else {
 
 				var refPercentComplete = 0;
 				var percentComplete = 0;
-				var onLoad = function ( objAsArrayBuffer ) {
+				var onLoad = function ( arrayBuffer ) {
 
 					scope.announceProgress( 'Running web worker!' );
-					scope.objAsArrayBuffer = new Uint8Array( objAsArrayBuffer );
+					resourceObj.content = new Uint8Array( arrayBuffer );
 					scope.meshProvider.postMessage(
 						{
 							cmd: 'run',
-							objAsArrayBuffer: scope.objAsArrayBuffer
+							objAsArrayBuffer: resourceObj.content
 						},
-						[ scope.objAsArrayBuffer.buffer ]
+						[ resourceObj.content.buffer ]
 					);
 
 				};
@@ -238,7 +195,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					if ( percentComplete > refPercentComplete ) {
 
 						refPercentComplete = percentComplete;
-						var output = 'Download of "' + scope.fileObj + '": ' + percentComplete + '%';
+						var output = 'Download of "' + resourceObj.name + '": ' + percentComplete + '%';
 						console.log( output );
 						scope.announceProgress( output );
 
@@ -246,44 +203,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				};
 
 				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + scope.fileObj + '"';
+					var output = 'Error occurred while downloading "' + resourceObj.name + '"';
 					console.error( output + ': ' + event );
 					scope.announceProgress( output );
 					scope._finalize( 'error' );
 
 				};
 
-				scope.fileLoader.setPath( scope.pathObj );
+				scope.fileLoader.setPath( resourceObj.path );
 				scope.fileLoader.setResponseType( 'arraybuffer' );
-				scope.fileLoader.load( scope.fileObj, onLoad, onProgress, onError );
+				scope.fileLoader.load( resourceObj.name, onLoad, onProgress, onError );
 			}
 			console.timeEnd( 'Loading MTL textures' );
 		};
 
-		if ( Validator.isValid( this.mtlAsString ) ) {
-
-			processLoadedMaterials( Validator.isValid( this.mtlAsString ) ? this.mtlLoader.parse( this.mtlAsString ) : null );
-
-		} else {
-
-			if ( Validator.isValid( this.fileMtl ) ) {
-
-				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + scope.fileMtl + '"';
-					console.error( output + ': ' + event );
-					scope.announceProgress( output );
-					scope._finalize( 'error' );
-				};
-
-				this.mtlLoader.load( this.fileMtl, processLoadedMaterials, undefined, onError );
-
-			} else {
-
-				processLoadedMaterials();
-
-			}
-
-		}
+		this.loadMtl( resourceMtl, processLoadedMaterials );
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
@@ -319,7 +253,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			this.meshProvider._terminate();
 
 			this.fileLoader = null;
-			this.mtlLoader = null;
 		}
 
 		console.timeEnd( 'WWOBJLoader2' );

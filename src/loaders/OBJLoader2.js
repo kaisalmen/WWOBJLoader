@@ -1209,9 +1209,31 @@ THREE.OBJLoader2 = (function () {
 	/**
 	 *
 	 * @param {THREE.LoaderSupport.ResourceDescriptor} resource
-	 * @param {function} callback
+	 * @param {function} callbackOnLoad
 	 */
-	OBJLoader2.prototype.loadMtl = function ( resource, callback ) {
+	OBJLoader2.prototype.loadMtl = function ( resource, callbackOnLoad ) {
+
+		var scope = this;
+		var processMaterials = function ( materialCreator ) {
+			var materialCreatorMaterials = [];
+			if ( Validator.isValid( materialCreator ) ) {
+
+				materialCreator.preload();
+				materialCreatorMaterials = materialCreator.materials;
+				for ( var materialName in materialCreatorMaterials ) {
+
+					if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
+
+						scope.materialNames.push( materialName );
+						scope.materials[ materialName ] = materialCreatorMaterials[ materialName ];
+
+					}
+				}
+			}
+
+			callbackOnLoad( scope.materials, scope.materialNames );
+		};
+
 
 		this.mtlLoader = Validator.verifyInput( this.mtlLoader, new THREE.MTLLoader() );
 		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
@@ -1219,27 +1241,27 @@ THREE.OBJLoader2 = (function () {
 		// fast-fail
 		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.name ) ) ) {
 
-			callback();
-			return;
+			processMaterials();
 
-		}
-		this.mtlLoader.setPath( resource.path );
+		} else {
 
-		if ( Validator.isValid( resource.content ) ) {
+			this.mtlLoader.setPath( resource.path );
+			if ( Validator.isValid( resource.content ) ) {
 
-			callback( Validator.isValid( resource.content ) ? this.mtlLoader.parse( resource.content ) : null );
+				processMaterials( Validator.isValid( resource.content ) ? this.mtlLoader.parse( resource.content ) : null );
 
-		} else if ( Validator.isValid( resource.name ) ) {
+			} else if ( Validator.isValid( resource.name ) ) {
 
-			var onError = function ( event ) {
-				var output = 'Error occurred while downloading "' + resource.path + '/' + resource.name + '"';
-				console.error( output + ': ' + event );
-				scope.announceProgress( output );
-				scope._finalize( 'error' );
-			};
+				var onError = function ( event ) {
+					var output = 'Error occurred while downloading "' + resource.path + '/' + resource.name + '"';
+					console.error( output + ': ' + event );
+					scope.announceProgress( output );
+					scope._finalize( 'error' );
+				};
 
-			this.mtlLoader.load( resource.name, callback, undefined, onError );
+				this.mtlLoader.load( resource.name, processMaterials, undefined, onError );
 
+			}
 		}
 	};
 
