@@ -224,9 +224,11 @@ var WWOBJLoader2Stage = (function () {
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
 			var obj2Load = scope.objs2Load[ scope.loadCounter ];
-			var prepData = new THREE.LoaderSupport.WW.PrepData( obj2Load.name );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathBase, obj2Load.fileObj, 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathTexture, obj2Load.fileMtl, 'MTL' ) );
+			var prepData = new THREE.LoaderSupport.PrepData( obj2Load.name );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathBase + '/' + obj2Load.fileObj, 'OBJ' ) );
+			if ( Validator.isValid( obj2Load.fileMtl ) ) {
+				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathTexture + '/' + obj2Load.fileMtl, 'MTL' ) );
+			}
 			prepData.setSceneGraphBaseNode( obj2Load.pivot );
 			prepData.setStreamMeshes( true );
 

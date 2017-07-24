@@ -33,6 +33,7 @@ THREE.OBJLoader2 = (function () {
 
 		this.mtlLoader = null;
 
+		this.prepData = null;
 		this.validated = false;
 	}
 
@@ -100,82 +101,184 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
-		this._validate();
-		this.fileLoader.setPath( this.path );
-		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
+		if ( ! Validator.isValid( this.prepData ) ) {
 
-		this.callbacks.registerCallbackCompletedLoading( onLoad );
-		this.callbacks.registerCallbackErrorWhileLoading( onError );
-		this.callbacks.registerCallbackProgress( onProgress );
+			prepData = new THREE.LoaderSupport.PrepData( 'default' );
+			var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
+
+			prepData.addResource( resource );
+			prepData.callbacks.registerCallbackCompletedLoading( onLoad );
+			prepData.callbacks.registerCallbackErrorWhileLoading( onError );
+			prepData.callbacks.registerCallbackProgress( onProgress );
+
+		}
+
+		this.run( prepData );
+	};
+
+	/**
+	 * Run the loader according the provided instructions.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
+	 */
+	OBJLoader2.prototype.run = function ( prepData ) {
+		this.prepData = prepData;
+		var resources = this.prepData.resources;
+
+		this.callbacks.registerCallbackCompletedLoading( prepData.callbacks.completedLoading[ 0 ] );
+		this.callbacks.registerCallbackErrorWhileLoading( prepData.callbacks.errorWhileLoading[ 0 ] );
+		this.callbacks.registerCallbackProgress( prepData.callbacks.progress[ 0 ] );
+
+		var available = this._checkFiles( prepData.resources );
+
+		this._validate( prepData, available.obj);
+
 
 		var scope = this;
-		if ( scope.callbacks.completedLoading.length === 0 ) scope.registerCallbackCompletedLoading( onLoad );
-		scope.fileLoader.load( url, function ( content ) {
+		var processLoadedMaterials = function ( materials, materialNames ) {
 
-			// only use parseText if useArrayBuffer is explicitly set to false
-			if ( useArrayBuffer !== false ) {
+			if ( Validator.isValid( available.obj.content ) ) {
 
-				scope.parse( content );
+				scope.parse( available.obj.content );
 
 			} else {
 
-				scope.parseText( content );
+				var refPercentComplete = 0;
+				var percentComplete = 0;
+				var onLoad = function ( arrayBuffer ) {
+
+					available.obj.content = new Uint8Array( arrayBuffer );
+					scope.parse( available.obj.content );
+
+				};
+
+				var onProgress = function ( event ) {
+					if ( ! event.lengthComputable ) return;
+
+					percentComplete = Math.round( event.loaded / event.total * 100 );
+					if ( percentComplete > refPercentComplete ) {
+
+						refPercentComplete = percentComplete;
+						var output = 'Download of "' + available.obj.url + '": ' + percentComplete + '%';
+						console.log( output );
+						scope.announceProgress( output );
+
+					}
+				};
+
+				var onError = function ( event ) {
+					var output = 'Error occurred while downloading "' + available.obj.url + '"';
+					console.error( output + ': ' + event );
+					scope.announceProgress( output );
+					scope._finalize( 'error' );
+
+				};
+
+				scope.fileLoader.setPath( available.obj.path );
+				scope.fileLoader.setResponseType( available.obj.useArrayBuffer !== false ? 'arraybuffer' : 'text' );
+				scope.fileLoader.load( available.obj.name, onLoad, onProgress, onError );
 
 			}
+		};
 
-		}, onProgress, onError );
+		this.loadMtl( available.mtl, processLoadedMaterials );
+	};
+
+	OBJLoader2.prototype._checkFiles = function ( resources ) {
+		var resource;
+		var result = {
+			mtl: null,
+			obj: null
+		};
+		for ( var index in resources ) {
+
+			resource = resources[ index ];
+			if ( ! Validator.isValid( resource.name ) ) continue;
+			if ( Validator.isValid( resource.content ) ) {
+
+				if ( resource.extension === 'OBJ' ) {
+
+					// fast-fail on bad type
+					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+					result.obj = resource;
+
+				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
+
+					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
+					result.mtl = resource;
+				}
+
+			} else {
+
+				// fast-fail on bad type
+				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+				if ( resource.extension === 'OBJ' ) {
+
+					result.obj = resource;
+
+				} else if ( resource.extension === 'MTL' ) {
+
+					result.mtl = resource;
+
+				}
+			}
+		}
+
+		return result;
 	};
 
 	/**
-	 * Default parse function: Parses OBJ file content stored in arrayBuffer and returns the sceneGraphBaseNode
+	 * Parses OBJ file according instructions in resource descriptor
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
+	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
-	OBJLoader2.prototype.parse = function ( arrayBuffer ) {
-		// fast-fail on bad type
-		if ( ! ( arrayBuffer instanceof ArrayBuffer || arrayBuffer instanceof Uint8Array ) ) {
+	OBJLoader2.prototype.parse = function ( content ) {
 
-			throw 'Provided input is not of type arraybuffer! Aborting...';
+		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
+
+			console.log( 'Parsing arrayBuffer...' );
+			console.time( 'parseArrayBuffer' );
+
+			this._validate();
+			this.parser.parseArrayBuffer( content );
+			this._finalize();
+
+			console.timeEnd( 'parseArrayBuffer' );
+
+		} else if ( typeof( content ) === 'string' || content instanceof String ) {
+
+
+			console.log( 'Parsing text...' );
+			console.time( 'parseText' );
+
+			this._validate();
+			this.parser.parseText( content );
+			this._finalize();
+
+			console.timeEnd( 'parseText' );
+
+		} else {
+
+			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
-		console.log( 'Parsing arrayBuffer...' );
-		console.time( 'parseArrayBuffer' );
-
-		this._validate();
-		this.parser.parseArrayBuffer( arrayBuffer );
-		this._finalize();
-
-		console.timeEnd( 'parseArrayBuffer' );
 	};
 
-	/**
-	 * Legacy parse function: Parses OBJ file content stored in string and returns the sceneGraphBaseNode
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {string} text OBJ data as string
-	 */
-	OBJLoader2.prototype.parseText = function ( text ) {
-		// fast-fail on bad type
-		if ( ! ( typeof( text ) === 'string' || text instanceof String ) ) {
-
-			throw 'Provided input is not of type String! Aborting...';
-
-		}
-		console.log( 'Parsing text...' );
-		console.time( 'parseText' );
-
-		this._validate();
-		this.parser.parseText( text );
-		this._finalize();
-
-		console.timeEnd( 'parseText' );
-	};
-
-	OBJLoader2.prototype._validate = function () {
+	OBJLoader2.prototype._validate = function ( prepData, selectedResource ) {
 		if ( this.validated ) return;
 
+		var path = Validator.isValid( selectedResource ) ? selectedResource.path : null;
+		var sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : null;
+		var materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : null;
+		this.path = Validator.verifyInput( path, this.path );
+		this.meshCreator.setSceneGraphBaseNode( Validator.verifyInput( sceneGraphBaseNode, this.meshCreator.sceneGraphBaseNode ) );
+		this.meshCreator.setMaterials( this.materials );
+		this.parser.setMaterialPerSmoothingGroup( Validator.verifyInput( materialPerSmoothingGroup, this.parser.materialPerSmoothingGroup ) );
+
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+
 		this.parser.validate();
 		this.meshCreator.validate();
 
@@ -534,7 +637,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.finalize = function () {
-			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
+			var result = Validator.isValid( this.rawObject ) ? this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug ) : '';
 			this.inputObjectCount++;
 			this.announceProgress( result.message );
 		};
@@ -951,9 +1054,6 @@ THREE.OBJLoader2 = (function () {
 		MeshCreator.prototype.validate = function () {
 			if ( this.validated ) return;
 
-			this.setSceneGraphBaseNode( null );
-			this.setMaterials( null );
-			this.setDebug( null );
 			this.globalObjectCount = 1;
 		};
 
@@ -1213,6 +1313,8 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.loadMtl = function ( resource, callbackOnLoad ) {
 
+		if ( Validator.isValid( resource ) ) console.time( 'Loading MTL: ' + resource.name );
+
 		var scope = this;
 		var processMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -1231,6 +1333,7 @@ THREE.OBJLoader2 = (function () {
 				}
 			}
 
+			if ( Validator.isValid( resource ) ) console.timeEnd( 'Loading MTL: ' + resource.name );
 			callbackOnLoad( scope.materials, scope.materialNames );
 		};
 
@@ -1239,7 +1342,7 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( this.crossOrigin ) ) this.mtlLoader.setCrossOrigin( this.crossOrigin );
 
 		// fast-fail
-		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.name ) ) ) {
+		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.url ) ) ) {
 
 			processMaterials();
 
@@ -1250,10 +1353,10 @@ THREE.OBJLoader2 = (function () {
 
 				processMaterials( Validator.isValid( resource.content ) ? this.mtlLoader.parse( resource.content ) : null );
 
-			} else if ( Validator.isValid( resource.name ) ) {
+			} else if ( Validator.isValid( resource.url ) ) {
 
 				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + resource.path + '/' + resource.name + '"';
+					var output = 'Error occurred while downloading "' + resource.url + '"';
 					console.error( output + ': ' + event );
 					scope.announceProgress( output );
 					scope._finalize( 'error' );

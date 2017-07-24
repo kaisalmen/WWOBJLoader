@@ -249,9 +249,11 @@ var WWParallels = (function () {
 
 			model.sceneGraphBaseNode = pivot;
 
-			var runParams = new THREE.LoaderSupport.WW.PrepData( model.modelName );
-			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathObj, model.fileObj, 'OBJ' ) );
-			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathTexture, model.fileMtl, 'MTL' ) );
+			var runParams = new THREE.LoaderSupport.PrepData( model.modelName );
+			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathObj + '/' + model.fileObj, 'OBJ' ) );
+			if ( Validator.isValid( model.fileMtl ) ) {
+				runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathTexture + '/' + model.fileMtl, 'MTL' ) );
+			}
 			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
 			runParams.setStreamMeshes( streamMeshes );
 			if ( model.modelName === 'WaltHead' ) {

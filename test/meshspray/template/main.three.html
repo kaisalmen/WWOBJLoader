@@ -87,7 +87,7 @@
 
 			var runParams;
 			for ( var i = 0; i < maxQueueSize; i++ ) {
-				runParams = new THREE.LoaderSupport.WW.PrepData( 'Triangles_' + i );
+				runParams = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
 				runParams.setSceneGraphBaseNode( app.pivot );
 				runParams.setStreamMeshes( true );
 				runParams.quantity = 8192;

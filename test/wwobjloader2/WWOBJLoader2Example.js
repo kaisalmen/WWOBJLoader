@@ -147,29 +147,31 @@ var WWOBJLoader2Example = (function () {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 
+		var scope = this;
 		var fileReader = new FileReader();
 		fileReader.onload = function( fileDataObj ) {
 
 			var uint8Array = new Uint8Array( fileDataObj.target.result );
 			if ( fileMtl === null ) {
 
-				app.loadFilesUser({
-					name: 'userObj',
-					objAsArrayBuffer: uint8Array,
-					pathTexture: pathTexture,
-					mtlAsString: null
-				})
+				var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
+				var resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.obj', 'OBJ' );
+				resource.setBinaryContent( uint8Array );
+				prepData.addResource( resource );
+				scope.run( prepData );
 
 			} else {
 
 				fileReader.onload = function( fileDataMtl ) {
 
-					app.loadFilesUser({
-						name: 'userObj',
-						objAsArrayBuffer: uint8Array,
-						pathTexture: pathTexture,
-						mtlAsString: fileDataMtl.target.result
-					})
+					var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
+					var resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.obj', 'OBJ' );
+					resource.setBinaryContent( uint8Array );
+					prepData.addResource( resource );
+					resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.mtl', 'MTL' );
+					resource.setTextContent( fileDataMtl.target.result );
+					prepData.addResource( resource );
+					scope.run( prepData );
 				};
 				fileReader.readAsText( fileMtl );
 
@@ -178,16 +180,6 @@ var WWOBJLoader2Example = (function () {
 		};
 		fileReader.readAsArrayBuffer( fileObj );
 
-	};
-
-	WWOBJLoader2Example.prototype.loadFilesUser = function ( objDef ) {
-		var prepData = new THREE.LoaderSupport.WW.PrepData( objDef.name );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( objDef.pathTexture, 'userObj.obj', 'OBJ', objDef.objAsArrayBuffer ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( objDef.pathTexture, 'userObj.mtl', 'MTL', objDef.mtlAsString ) );
-
-		prepData.setSceneGraphBaseNode( this.pivot );
-		prepData.setStreamMeshes( this.streamMeshes );
-		this.wwObjLoader2.run( prepData );
 	};
 
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {

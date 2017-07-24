@@ -62,6 +62,110 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.requestTerminate = requestTerminate === true;
 	};
 
+	/**
+	 * Run the loader according the provided instructions.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
+	 */
+	WWOBJLoader2.prototype.run = function ( prepData ) {
+		console.time( 'WWOBJLoader2' );
+
+
+		var available = this._checkFiles( prepData.resources );
+
+		this._validate();
+
+		this.modelName = prepData.modelName;
+		this.setRequestTerminate( prepData.requestTerminate );
+
+
+		var scope = this;
+		var scopeFuncComplete = function ( reason ) {
+			scope._finalize( reason );
+		};
+		var scopeFuncAnnounce = function ( baseText, text ) {
+			scope.announceProgress( baseText, text );
+		};
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
+		this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+
+		var messageObject = {
+			cmd: 'init',
+			debug: scope.debug,
+			materialPerSmoothingGroup: this.materialPerSmoothingGroup
+		};
+		this.meshProvider.postMessage( messageObject );
+
+
+		var processLoadedMaterials = function ( materials, materialNames ) {
+			scope.meshProvider.addMaterials( materials );
+			scope.meshProvider.postMessage(
+				{
+					cmd: 'setMaterials',
+					materialNames: materialNames
+				}
+			);
+
+			if ( Validator.isValid( available.obj.content ) ) {
+
+				scope.meshProvider.postMessage(
+					{
+						cmd: 'run',
+						objAsArrayBuffer: available.obj.content
+					},
+					[ available.obj.content.buffer ]
+				);
+
+			} else {
+
+				var refPercentComplete = 0;
+				var percentComplete = 0;
+				var onLoad = function ( arrayBuffer ) {
+
+					scope.announceProgress( 'Running web worker!' );
+					available.obj.content = new Uint8Array( arrayBuffer );
+					scope.meshProvider.postMessage(
+						{
+							cmd: 'run',
+							objAsArrayBuffer: available.obj.content
+						},
+						[ available.obj.content.buffer ]
+					);
+
+				};
+
+				var onProgress = function ( event ) {
+					if ( ! event.lengthComputable ) return;
+
+					percentComplete = Math.round( event.loaded / event.total * 100 );
+					if ( percentComplete > refPercentComplete ) {
+
+						refPercentComplete = percentComplete;
+						var output = 'Download of "' + available.obj.url + '": ' + percentComplete + '%';
+						console.log( output );
+						scope.announceProgress( output );
+
+					}
+				};
+
+				var onError = function ( event ) {
+					var output = 'Error occurred while downloading "' + available.obj.url + '"';
+					console.error( output + ': ' + event );
+					scope.announceProgress( output );
+					scope._finalize( 'error' );
+
+				};
+
+				scope.fileLoader.setPath( available.obj.path );
+				scope.fileLoader.setResponseType( 'arraybuffer' );
+				scope.fileLoader.load( available.obj.name, onLoad, onProgress, onError );
+			}
+		};
+
+		this.loadMtl( available.mtl, processLoadedMaterials );
+	};
+
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
 
@@ -76,148 +180,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.materialPerSmoothingGroup = false;
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
-	};
-
-	/**
-	 * Run the loader according the provided instructions.
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
-	 */
-	WWOBJLoader2.prototype.run = function ( params ) {
-		console.time( 'WWOBJLoader2' );
-		this._validate();
-		this.modelName = params.modelName;
-
- 		var resources = params.resources;
-		var resource;
-		var resourceMtl;
-		var resourceObj;
-		for ( var index in resources ) {
-
-			resource = resources[ index ];
-			if ( ! Validator.isValid( resource.name ) ) continue;
-			if ( resource.dataAvailable ) {
-
-				if ( resource.extension === 'OBJ' ) {
-
-					// fast-fail on bad type
-					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
-					resourceObj = resource;
-
-				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
-
-					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
-					resourceMtl = resource;
-				}
-
-			} else {
-
-				// fast-fail on bad type
-				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
-				if ( resource.extension === 'OBJ' ) {
-
-					resourceObj = resource;
-
-				} else if ( resource.extension === 'MTL' ) {
-
-					resourceMtl = resource;
-
-				}
-			}
-		}
-		this.setRequestTerminate( params.requestTerminate );
-
-		var scope = this;
-		var scopeFuncComplete = function ( reason ) {
-			scope._finalize( reason );
-		};
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.announceProgress( baseText, text );
-		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
-		this.meshProvider.prepareRun( params.sceneGraphBaseNode, params.streamMeshes );
-
-		var messageObject = {
-			cmd: 'init',
-			debug: scope.debug,
-			materialPerSmoothingGroup: this.materialPerSmoothingGroup
-		};
-		this.meshProvider.postMessage( messageObject );
-
-
-		/**
-		 *
-		 * @param {Array} materials
-		 * @param {Array} materialNames
-		 */
-		var processLoadedMaterials = function ( materials, materialNames ) {
-			scope.meshProvider.addMaterials( materials );
-			scope.meshProvider.postMessage(
-				{
-					cmd: 'setMaterials',
-					materialNames: materialNames
-				}
-			);
-
-			if ( Validator.isValid( resourceObj.content ) ) {
-
-				scope.meshProvider.postMessage(
-					{
-						cmd: 'run',
-						objAsArrayBuffer: resourceObj.content
-					},
-					[ resourceObj.content.buffer ]
-				);
-
-			} else {
-
-				var refPercentComplete = 0;
-				var percentComplete = 0;
-				var onLoad = function ( arrayBuffer ) {
-
-					scope.announceProgress( 'Running web worker!' );
-					resourceObj.content = new Uint8Array( arrayBuffer );
-					scope.meshProvider.postMessage(
-						{
-							cmd: 'run',
-							objAsArrayBuffer: resourceObj.content
-						},
-						[ resourceObj.content.buffer ]
-					);
-
-				};
-
-				var onProgress = function ( event ) {
-					if ( ! event.lengthComputable ) return;
-
-					percentComplete = Math.round( event.loaded / event.total * 100 );
-					if ( percentComplete > refPercentComplete ) {
-
-						refPercentComplete = percentComplete;
-						var output = 'Download of "' + resourceObj.name + '": ' + percentComplete + '%';
-						console.log( output );
-						scope.announceProgress( output );
-
-					}
-				};
-
-				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + resourceObj.name + '"';
-					console.error( output + ': ' + event );
-					scope.announceProgress( output );
-					scope._finalize( 'error' );
-
-				};
-
-				scope.fileLoader.setPath( resourceObj.path );
-				scope.fileLoader.setResponseType( 'arraybuffer' );
-				scope.fileLoader.load( resourceObj.name, onLoad, onProgress, onError );
-			}
-			console.timeEnd( 'Loading MTL textures' );
-		};
-
-		this.loadMtl( resourceMtl, processLoadedMaterials );
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
