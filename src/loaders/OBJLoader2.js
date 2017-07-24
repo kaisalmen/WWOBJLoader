@@ -33,7 +33,6 @@ THREE.OBJLoader2 = (function () {
 
 		this.mtlLoader = null;
 
-		this.prepData = null;
 		this.validated = false;
 	}
 
@@ -101,17 +100,13 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
-		if ( ! Validator.isValid( this.prepData ) ) {
+		prepData = new THREE.LoaderSupport.PrepData( 'default' );
+		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
 
-			prepData = new THREE.LoaderSupport.PrepData( 'default' );
-			var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
-
-			prepData.addResource( resource );
-			prepData.callbacks.registerCallbackCompletedLoading( onLoad );
-			prepData.callbacks.registerCallbackErrorWhileLoading( onError );
-			prepData.callbacks.registerCallbackProgress( onProgress );
-
-		}
+		prepData.addResource( resource );
+		prepData.callbacks.registerCallbackCompletedLoading( onLoad );
+		prepData.callbacks.registerCallbackErrorWhileLoading( onError );
+		prepData.callbacks.registerCallbackProgress( onProgress );
 
 		this.run( prepData );
 	};
@@ -123,9 +118,6 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
 	 */
 	OBJLoader2.prototype.run = function ( prepData ) {
-		this.prepData = prepData;
-		var resources = this.prepData.resources;
-
 		this.callbacks.registerCallbackCompletedLoading( prepData.callbacks.completedLoading[ 0 ] );
 		this.callbacks.registerCallbackErrorWhileLoading( prepData.callbacks.errorWhileLoading[ 0 ] );
 		this.callbacks.registerCallbackProgress( prepData.callbacks.progress[ 0 ] );

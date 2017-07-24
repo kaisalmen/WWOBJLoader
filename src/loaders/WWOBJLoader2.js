@@ -71,6 +71,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype.run = function ( prepData ) {
 		console.time( 'WWOBJLoader2' );
 
+		this.callbacks.registerCallbackCompletedLoading( prepData.callbacks.completedLoading[ 0 ] );
+		this.callbacks.registerCallbackErrorWhileLoading( prepData.callbacks.errorWhileLoading[ 0 ] );
+		this.callbacks.registerCallbackProgress( prepData.callbacks.progress[ 0 ] );
 
 		var available = this._checkFiles( prepData.resources );
 
@@ -109,13 +112,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
-				scope.meshProvider.postMessage(
-					{
-						cmd: 'run',
-						objAsArrayBuffer: available.obj.content
-					},
-					[ available.obj.content.buffer ]
-				);
+				scope.parse( available.obj.content );
 
 			} else {
 
@@ -125,14 +122,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 					scope.announceProgress( 'Running web worker!' );
 					available.obj.content = new Uint8Array( arrayBuffer );
-					scope.meshProvider.postMessage(
-						{
-							cmd: 'run',
-							objAsArrayBuffer: available.obj.content
-						},
-						[ available.obj.content.buffer ]
-					);
 
+					scope.parse( available.obj.content );
 				};
 
 				var onProgress = function ( event ) {
@@ -164,6 +155,16 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		};
 
 		this.loadMtl( available.mtl, processLoadedMaterials );
+	};
+
+	WWOBJLoader2.prototype.parse = function ( content ) {
+		this.meshProvider.postMessage(
+			{
+				cmd: 'run',
+				objAsArrayBuffer: content
+			},
+			[ content.buffer ]
+		);
 	};
 
 	WWOBJLoader2.prototype._validate = function () {
