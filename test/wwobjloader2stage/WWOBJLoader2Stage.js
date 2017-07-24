@@ -147,7 +147,7 @@ var WWOBJLoader2Stage = (function () {
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.pivot ) return;
+				if ( object3d === ref.sceneGraphBaseNode ) return;
 
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
@@ -168,40 +168,35 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			scope.scene.remove( ref.pivot );
-			ref.pivot.traverse( remover );
-			ref.pivot = null;
+			scope.scene.remove( ref.sceneGraphBaseNode );
+			ref.sceneGraphBaseNode.traverse( remover );
+			ref.sceneGraphBaseNode = null;
 		}
 		this.loadCounter = 0;
 		this.allAssets = [];
 	};
 
-	WWOBJLoader2Stage.prototype.updateAssets = function ( objs ) {
+	WWOBJLoader2Stage.prototype.updateAssets = function ( prepDatas ) {
 		this.objs2Load = [];
 		this.loadCounter = 0;
 		this.processing = true;
 
-		if ( Validator.isValid( objs ) ) {
+		if ( Validator.isValid( prepDatas ) ) {
 
-			var obj2Load;
-			var pivot;
+			var prepData;
 			var errors = '';
 
-			for ( var i = 0; i < objs.length; i ++ ) {
+			for ( var i = 0; i < prepDatas.length; i++ ) {
 
-				obj2Load = objs[i];
-				if ( ! this.allAssets.hasOwnProperty( obj2Load.name ) ) {
+				prepData = prepDatas[ i ];
+				if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
-					pivot = new THREE.Object3D();
-					pivot.position.set( obj2Load.pos.x, obj2Load.pos.y, obj2Load.pos.z );
-					pivot.scale.set( obj2Load.scale, obj2Load.scale, obj2Load.scale );
-					obj2Load.pivot = pivot;
-					this.objs2Load.push( obj2Load );
-					this.allAssets[obj2Load.name] = obj2Load;
+					this.objs2Load.push( prepData );
+					this.allAssets[ prepData.modelName ] = prepData;
 
 				} else {
 
-					errors += obj2Load.name + ' ';
+					errors += prepData.modelName + ' ';
 
 				}
 
@@ -223,38 +218,37 @@ var WWOBJLoader2Stage = (function () {
 
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
-			var obj2Load = scope.objs2Load[ scope.loadCounter ];
-			var prepData = new THREE.LoaderSupport.PrepData( obj2Load.name );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathBase + '/' + obj2Load.fileObj, 'OBJ' ) );
-			if ( Validator.isValid( obj2Load.fileMtl ) ) {
-				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( obj2Load.pathTexture + '/' + obj2Load.fileMtl, 'MTL' ) );
-			}
-			prepData.setSceneGraphBaseNode( obj2Load.pivot );
+			var prepData = scope.objs2Load[ scope.loadCounter ];
 			prepData.setStreamMeshes( true );
 
 			scope.loadCounter++;
-			scope.scene.add( obj2Load.pivot );
+			scope.scene.add( prepData.sceneGraphBaseNode );
 
-			if ( Validator.isValid( obj2Load.fileZip ) ) {
+			var first = prepData.resources[ 0 ];
+			if ( first.extension === 'ZIP' ) {
+				var resourceObj = prepData.resources[ 1 ];
+				var resourceMtl = prepData.length === 3 ? prepData.resources[ 2 ] : null;
 
-				var zipTools = new ZipTools( obj2Load.pathBase );
+				var zipTools = new ZipTools( first.pathBase );
 				var setObjAsArrayBuffer = function ( data ) {
 					scope.reportProgress( '' );
-					prepData.resources[ 0 ].content = data;
+					prepData.resources[ 1 ].content = data;
 
 					scope.wwObjLoader2.run( prepData );
 				};
 
 				var setMtlAsString = function ( data ) {
-					if ( prepData.resources.length > 1 ) prepData.resources[ 1 ].content = data;
-					scope.reportProgress( 'Unzipping: ' + obj2Load.fileObj );
-					zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
+
+					if ( prepData.resources.length > 1 ) resourceObj.content = data;
+					scope.reportProgress( 'Unzipping: ' + resourceObj.name );
+					zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
 				};
 
 				var doneUnzipping = function () {
-					if ( Validator.isValid( obj2Load.fileMtl ) ) {
 
-						zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
+					if ( Validator.isValid( resourceMtl ) ) {
+
+						zipTools.unpackAsString( resourceMtl.name, setMtlAsString );
 
 					} else {
 
@@ -267,7 +261,7 @@ var WWOBJLoader2Stage = (function () {
 					scope.reportProgress( text );
 					scope.processing = false;
 				};
-				zipTools.load( obj2Load.fileZip, { success: doneUnzipping, progress: scope.reportProgress, error: errorCase } );
+				zipTools.load( first.url, { success: doneUnzipping, progress: scope.reportProgress, error: errorCase } );
 
 			} else {
 
@@ -374,38 +368,76 @@ var ZipTools = (function () {
 
 })();
 
-var WWOBJLoader2ObjDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos, scale ) {
-	this.name = name;
-	this.pathBase = pathBase;
-	this.fileObj = fileObj;
-	this.fileMtl = fileMtl;
-	this.pathTexture = pathTexture;
-	this.fileZip = fileZip;
-	this.pos = pos;
-	this.scale = ! Validator.isValid( scale ) ? 1.0 : scale;
-	this.pivot = null;
-};
-
 var objsFemaleMale = [];
-objsFemaleMale.push( new WWOBJLoader2ObjDef( 'male02', '../../resource/obj/male02/', 'male02.obj', 'male02.mtl', '../../resource/obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
-objsFemaleMale.push( new WWOBJLoader2ObjDef( 'female02', '../../resource/obj/female02/', 'female02.obj', 'female02.mtl', '../../resource/obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
+var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+var pivot = new THREE.Object3D();
+pivot.position.set( 100, 0, -75 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+objsFemaleMale.push( prepData );
+
+prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+pivot = new THREE.Object3D();
+pivot.position.set( -100, 0, 75 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+objsFemaleMale.push( prepData );
+
+var objsCerberus = [];
+prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
+pivot = new THREE.Object3D();
+pivot.position.set( 0, -100, 0 );
+pivot.scale.set( 50.0, 50.0, 50.0 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+objsCerberus.push( prepData );
+
+var objsWaltHead = [];
+prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+pivot = new THREE.Object3D();
+pivot.position.set( 0, 0, -200 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+objsWaltHead.push( prepData );
+
+var objsVive = [];
+prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
+pivot = new THREE.Object3D();
+pivot.position.set( 0, 0, 200 );
+pivot.scale.set( 400.0, 400.0, 400.0 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+objsVive.push( prepData );
+
+var objsPtv1Zip = [];
+prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
+pivot = new THREE.Object3D();
+pivot.position.set( -250, 0, -200 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
+objsPtv1Zip.push( prepData );
 
 // https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 // https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 var objsZomaxOven = [];
-objsZomaxOven.push( new WWOBJLoader2ObjDef( 'oven', '../../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
+prepData = new THREE.LoaderSupport.PrepData( 'oven' );
+pivot = new THREE.Object3D();
+pivot.position.set( 0, 0, -75 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
+objsZomaxOven.push( prepData );
 
 var objsZomaxSink = [];
-objsZomaxSink.push( new WWOBJLoader2ObjDef( 'sink', '../../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
-
-var objsPtv1Zip = [];
-objsPtv1Zip.push( new WWOBJLoader2ObjDef( 'PTV1', '../../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../../resource/obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
-
-var objsCerberus = [];
-objsCerberus.push( new WWOBJLoader2ObjDef( 'cerberus', '../../resource/obj/cerberus/', 'Cerberus.obj', null, '../../resource/obj/cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
-
-var objsWaltHead = [];
-objsWaltHead.push( new WWOBJLoader2ObjDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
-
-var objsVive = [];
-objsVive.push( new WWOBJLoader2ObjDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../../resource/obj/vive-controller/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );
+prepData = new THREE.LoaderSupport.PrepData( 'sink' );
+pivot = new THREE.Object3D();
+pivot.position.set( 0, 0, 75 );
+prepData.setSceneGraphBaseNode( pivot );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
+prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
+objsZomaxSink.push( prepData );

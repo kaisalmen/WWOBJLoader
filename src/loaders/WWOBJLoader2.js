@@ -15,7 +15,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
-	function WWOBJLoader2( manager) {
+	function WWOBJLoader2( manager ) {
 		THREE.OBJLoader2.call( this, manager );
 		this._init( manager );
 	}
@@ -71,7 +71,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		var available = this._checkFiles( prepData.resources );
 
-		this._validate();
+		this._validate( prepData );
 
 		this.modelName = prepData.modelName;
 		this.setRequestTerminate( prepData.requestTerminate );
@@ -154,9 +154,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		);
 	};
 
-	WWOBJLoader2.prototype._validate = function () {
+	WWOBJLoader2.prototype._validate = function ( prepData ) {
 		if ( this.validated ) return;
-		THREE.OBJLoader2.prototype._validate.call( this );
+		THREE.OBJLoader2.prototype._validate.call( this, prepData );
 
 		this.requestTerminate = false;
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );

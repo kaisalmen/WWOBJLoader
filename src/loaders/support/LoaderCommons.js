@@ -145,7 +145,6 @@ THREE.LoaderSupport.Commons = (function () {
 	Commons.prototype._validate = function () {
 		if ( this.validated ) return;
 
-		this.clearAllCallbacks();
 		this.modelName = '';
 		this.materials = [];
 		this.materialNames = [];

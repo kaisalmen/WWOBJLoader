@@ -25,7 +25,6 @@ THREE.OBJLoader2 = (function () {
 		if ( this.initialized ) return;
 		THREE.LoaderSupport.Commons.prototype._init.call( this, manager );
 
-		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.materialPerSmoothingGroup = false;
 
@@ -37,16 +36,6 @@ THREE.OBJLoader2 = (function () {
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
 		this.mtlLoader = null;
-	};
-
-	/**
-	 * Base path to use.
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {string} path The basepath
-	 */
-	OBJLoader2.prototype.setPath = function ( path ) {
-		this.path = Validator.verifyInput( path, this.path );
 	};
 
 	/**
@@ -127,8 +116,7 @@ THREE.OBJLoader2 = (function () {
 		this.callbacks.registerCallbackProgress( prepData.callbacks.progress[ 0 ] );
 
 		var available = this._checkFiles( prepData.resources );
-
-		this._validate( prepData, available.obj);
+		this._validate( prepData );
 
 
 		var scope = this;
@@ -261,14 +249,12 @@ THREE.OBJLoader2 = (function () {
 		}
 	};
 
-	OBJLoader2.prototype._validate = function ( prepData, selectedResource ) {
+	OBJLoader2.prototype._validate = function ( prepData ) {
 		if ( this.validated ) return;
 		THREE.LoaderSupport.Commons.prototype._validate.call( this );
 
-		var path = Validator.isValid( selectedResource ) ? selectedResource.path : null;
 		var sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : null;
 		this.materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : false;
-		this.path = Validator.verifyInput( path, this.path );
 
 		this.meshCreator.setSceneGraphBaseNode( Validator.verifyInput( sceneGraphBaseNode, this.meshCreator.sceneGraphBaseNode ) );
 		this.meshCreator.setMaterials( this.materials );
