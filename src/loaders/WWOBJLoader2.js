@@ -15,41 +15,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
 	WWOBJLoader2.prototype.constructor = WWOBJLoader2;
 
-	function WWOBJLoader2() {
-		THREE.OBJLoader2.call( this );
-		this.initialized = false;
-		this._init();
+	function WWOBJLoader2( manager) {
+		THREE.OBJLoader2.call( this, manager );
+		this._init( manager );
 	}
 
-	WWOBJLoader2.prototype._init = function () {
+	WWOBJLoader2.prototype._init = function ( manager ) {
 		if ( this.initialized ) return;
-
+		THREE.OBJLoader2.prototype._init.call( this, manager );
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
-
-		this.modelName = '';
 		this.requestTerminate = false;
-		this.materialPerSmoothingGroup = false;
-
-		this.manager = THREE.DefaultLoadingManager;
-		this.fileLoader = new THREE.FileLoader( this.manager );
-
-		this.validated = false;
-		this.materials = [];
-		this.requestTerminate = false;
-
-		this.initialized = true;
-	};
-
-	/**
-	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
-	 *
-	 * @param {boolean} materialPerSmoothingGroup=false Default is false
-	 */
-	WWOBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
 	};
 
 	/**
@@ -60,6 +37,23 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.OBJLoader2.WWOBJLoader2
+	 *
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material}
+	 */
+	WWOBJLoader2.prototype.setMaterials = function ( materials ) {
+		THREE.OBJLoader2.prototype.setMaterials.call( this, materials );
+		this.meshProvider.addMaterials( this.materials );
+		this.meshProvider.postMessage(
+			{
+				cmd: 'setMaterials',
+				materialNames: this.materialNames
+			}
+		);
 	};
 
 	/**
@@ -101,14 +95,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.meshProvider.postMessage( messageObject );
 
 
-		var processLoadedMaterials = function ( materials, materialNames ) {
-			scope.meshProvider.addMaterials( materials );
-			scope.meshProvider.postMessage(
-				{
-					cmd: 'setMaterials',
-					materialNames: materialNames
-				}
-			);
+		var onMaterialsLoaded = function () {
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
@@ -154,7 +141,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			}
 		};
 
-		this.loadMtl( available.mtl, processLoadedMaterials );
+		this.loadMtl( available.mtl, onMaterialsLoaded );
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
@@ -169,18 +156,10 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype._validate = function () {
 		if ( this.validated ) return;
+		THREE.OBJLoader2.prototype._validate.call( this );
 
 		this.requestTerminate = false;
-		this.materials = [];
-		this.validated = true;
-
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
-
-		this.modelName = '';
-		this.requestTerminate = false;
-		this.materialPerSmoothingGroup = false;
-
-		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {

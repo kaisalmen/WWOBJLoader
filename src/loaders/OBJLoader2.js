@@ -18,11 +18,16 @@ THREE.OBJLoader2 = (function () {
 	function OBJLoader2( manager ) {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 		THREE.LoaderSupport.Commons.call( this );
+		this._init( manager );
+	}
 
-		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	OBJLoader2.prototype._init = function ( manager ) {
+		if ( this.initialized ) return;
+		THREE.LoaderSupport.Commons.prototype._init.call( this, manager );
 
 		this.path = '';
 		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.materialPerSmoothingGroup = false;
 
 		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
 		var scope = this;
@@ -32,9 +37,7 @@ THREE.OBJLoader2 = (function () {
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 
 		this.mtlLoader = null;
-
-		this.validated = false;
-	}
+	};
 
 	/**
 	 * Base path to use.
@@ -63,6 +66,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
 	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+		this.materialPerSmoothingGroup = true;
 		this.parser.setMaterialPerSmoothingGroup( materialPerSmoothingGroup );
 	};
 
@@ -70,7 +74,7 @@ THREE.OBJLoader2 = (function () {
 	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material}
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		THREE.LoaderSupport.Commons.prototype.setMaterials.call( this, materials );
@@ -128,7 +132,7 @@ THREE.OBJLoader2 = (function () {
 
 
 		var scope = this;
-		var processLoadedMaterials = function ( materials, materialNames ) {
+		var onMaterialsLoaded = function () {
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
@@ -174,7 +178,7 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		this.loadMtl( available.mtl, processLoadedMaterials );
+		this.loadMtl( available.mtl, onMaterialsLoaded );
 	};
 
 	OBJLoader2.prototype._checkFiles = function ( resources ) {
@@ -241,7 +245,6 @@ THREE.OBJLoader2 = (function () {
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
-
 			console.log( 'Parsing text...' );
 			console.time( 'parseText' );
 
@@ -260,21 +263,21 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype._validate = function ( prepData, selectedResource ) {
 		if ( this.validated ) return;
+		THREE.LoaderSupport.Commons.prototype._validate.call( this );
 
 		var path = Validator.isValid( selectedResource ) ? selectedResource.path : null;
 		var sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : null;
-		var materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : null;
+		this.materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : false;
 		this.path = Validator.verifyInput( path, this.path );
+
 		this.meshCreator.setSceneGraphBaseNode( Validator.verifyInput( sceneGraphBaseNode, this.meshCreator.sceneGraphBaseNode ) );
 		this.meshCreator.setMaterials( this.materials );
-		this.parser.setMaterialPerSmoothingGroup( Validator.verifyInput( materialPerSmoothingGroup, this.parser.materialPerSmoothingGroup ) );
+		this.parser.setMaterialPerSmoothingGroup( Validator.verifyInput( this.materialPerSmoothingGroup, this.parser.materialPerSmoothingGroup ) );
 
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 
 		this.parser.validate();
 		this.meshCreator.validate();
-
-		this.validated = true;
 	};
 
 	OBJLoader2.prototype._finalize = function () {
@@ -1306,7 +1309,10 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.loadMtl = function ( resource, callbackOnLoad ) {
 
 		if ( Validator.isValid( resource ) ) console.time( 'Loading MTL: ' + resource.name );
+		this._validate();
 
+		var materials = [];
+		var materialNames = [];
 		var scope = this;
 		var processMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -1318,15 +1324,17 @@ THREE.OBJLoader2 = (function () {
 
 					if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
 
-						scope.materialNames.push( materialName );
-						scope.materials[ materialName ] = materialCreatorMaterials[ materialName ];
+						materialNames.push( materialName );
+						materials[ materialName ] = materialCreatorMaterials[ materialName ];
 
 					}
 				}
+
+				scope.setMaterials( materials );
 			}
 
 			if ( Validator.isValid( resource ) ) console.timeEnd( 'Loading MTL: ' + resource.name );
-			callbackOnLoad( scope.materials, scope.materialNames );
+			callbackOnLoad( materials, materialNames );
 		};
 
 

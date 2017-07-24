@@ -143,7 +143,7 @@ var OBJLoader2Example = (function () {
 			var resourceObj = prepData.resources[ 0 ];
 			var resourceMtl = prepData.resources[ 1 ];
 
-			var onLoadMtl = function ( materials, materialNames ) {
+			var onLoadMtl = function () {
 
 				scope.pivot.add( prepData.sceneGraphBaseNode );
 				objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );

@@ -119,16 +119,39 @@ THREE.LoaderSupport.Commons = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function Commons() {
-		this.instanceNo = 0;
+	function Commons( manager ) {
+		this.initialized = false;
+		this._init( manager );
+	}
+
+	Commons.prototype._init = function ( manager ) {
+		if ( this.initialized ) return;
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+
+		this.modelName = '';
+
 		this.debug = false;
 		this.crossOrigin = null;
-
 		this.materials = [];
 		this.materialNames = [];
 
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-	}
+
+		this.validated = false;
+		this.initialized = true;
+	};
+
+
+	Commons.prototype._validate = function () {
+		if ( this.validated ) return;
+
+		this.clearAllCallbacks();
+		this.modelName = '';
+		this.materials = [];
+		this.materialNames = [];
+
+		this.validated = true;
+	};
 
 	/**
 	 * Allows to set debug mode.
@@ -158,6 +181,10 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setMaterials = function ( materials ) {
 		this.materials = materials;
+		this.materialNames = [];
+		for ( var materialName in materials ) {
+			this.materialNames.push( materialName );
+		}
 	};
 
 	/**
@@ -193,7 +220,7 @@ THREE.LoaderSupport.Commons = (function () {
 		for ( var index in this.callbacks.progress ) {
 
 			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output, this.instanceNo );
+			callbackProgress( output, this.modelName );
 
 		}
 
