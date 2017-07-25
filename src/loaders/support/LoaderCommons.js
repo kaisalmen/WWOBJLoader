@@ -131,6 +131,7 @@ THREE.LoaderSupport.Commons = (function () {
 		this.modelName = '';
 
 		this.debug = false;
+		this.sceneGraphBaseNode = null;
 		this.crossOrigin = null;
 		this.materials = [];
 		this.materialNames = [];
@@ -145,6 +146,7 @@ THREE.LoaderSupport.Commons = (function () {
 	Commons.prototype._validate = function () {
 		if ( this.validated ) return;
 
+		this.sceneGraphBaseNode = null;
 		this.modelName = '';
 		this.materials = [];
 		this.materialNames = [];
@@ -160,6 +162,16 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setDebug = function ( enabled ) {
 		this.debug = enabled;
+	};
+
+	/**
+	 * Set the node where the loaded objects will be attached.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {THREE.Object3D} sceneGraphBaseNode scenegraph object where meshes will be attached
+	 */
+	Commons.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, this.sceneGraphBaseNode );
 	};
 
 	/**
@@ -306,7 +318,8 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 			this.url = url;
 
 		}
-		this.extension = Validator.verifyInput( extension, null );
+		this.extension = Validator.verifyInput( extension, "default" );
+		this.extension = this.extension.trim();
 		this.content = null;
 		this.useArrayBuffer = useArrayBuffer !== false;
 	}
@@ -413,6 +426,18 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.addResource = function ( resource ) {
 		this.resources.push( resource );
+	};
+
+
+	PrepData.prototype.clone = function () {
+		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
+		clone.resources = this.resources;
+		clone.sceneGraphBaseNode = this.sceneGraphBaseNode;
+		clone.streamMeshes = this.streamMeshes;
+		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
+		clone.requestTerminate = this.requestTerminate;
+		clone.callbacks = this.callbacks;
+		return clone;
 	};
 
 	return PrepData;

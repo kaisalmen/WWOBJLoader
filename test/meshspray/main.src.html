@@ -62,12 +62,12 @@
 
 			var globalCallbacks = new THREE.LoaderSupport.Callbacks();
 			var scope = this;
-			var callbackCompletedLoading = function ( instanceNo ) {
+			var callbackCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
 				console.log( msg );
 			};
-			var reportProgress = function( text ) {
-				document.getElementById( 'feedback' ).innerHTML = text;
+			var reportProgress = function( content, modelName, instanceNo ) {
+				document.getElementById( 'feedback' ).innerHTML = content;
 			};
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );

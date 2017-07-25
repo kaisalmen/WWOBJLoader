@@ -45,7 +45,8 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scenegraph object where meshes will be attached
 	 */
 	OBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.meshCreator.setSceneGraphBaseNode( sceneGraphBaseNode );
+		THREE.LoaderSupport.Commons.prototype.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
+		this.meshCreator.setSceneGraphBaseNode( this.sceneGraphBaseNode );
 	};
 
 	/**
@@ -191,6 +192,14 @@ THREE.OBJLoader2 = (function () {
 
 					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
 					result.mtl = resource;
+
+				} else if ( resource.extension === "ZIP" ) {
+					// ignore
+
+				} else {
+
+					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
 				}
 
 			} else {
@@ -204,6 +213,13 @@ THREE.OBJLoader2 = (function () {
 				} else if ( resource.extension === 'MTL' ) {
 
 					result.mtl = resource;
+
+				} else if ( resource.extension === "ZIP" ) {
+					// ignore
+
+				} else {
+
+					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
 
 				}
 			}
@@ -253,10 +269,10 @@ THREE.OBJLoader2 = (function () {
 		if ( this.validated ) return;
 		THREE.LoaderSupport.Commons.prototype._validate.call( this );
 
-		var sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : null;
+		this.sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : this.sceneGraphBaseNode;
 		this.materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : false;
 
-		this.meshCreator.setSceneGraphBaseNode( Validator.verifyInput( sceneGraphBaseNode, this.meshCreator.sceneGraphBaseNode ) );
+		this.meshCreator.setSceneGraphBaseNode( this.sceneGraphBaseNode );
 		this.meshCreator.setMaterials( this.materials );
 		this.parser.setMaterialPerSmoothingGroup( Validator.verifyInput( this.materialPerSmoothingGroup, this.parser.materialPerSmoothingGroup ) );
 
@@ -271,7 +287,6 @@ THREE.OBJLoader2 = (function () {
 
 		this.parser.finalize();
 		this.fileLoader = null;
-		var sceneGraphBaseNode = this.meshCreator.sceneGraphBaseNode;
 		this.meshCreator.finalize();
 		this.validated = false;
 
@@ -279,7 +294,7 @@ THREE.OBJLoader2 = (function () {
 		for ( var index in this.callbacks.completedLoading ) {
 
 			callback = this.callbacks.completedLoading[ index ];
-			callback( sceneGraphBaseNode );
+			callback( sceneGraphBaseNode, this.modelName );
 
 		}
 	};

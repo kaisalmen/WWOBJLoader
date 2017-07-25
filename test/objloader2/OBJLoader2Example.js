@@ -111,17 +111,17 @@ var OBJLoader2Example = (function () {
 
 
 		var scope = this;
-		var onLoad = function ( object3d ) {
-			console.log( 'Loading complete. Meshes were attached to: ' + object3d.name );
-			scope._reportProgress( '', prepData.modelName );
+		var onLoad = function ( sceneGraphBaseNode, modelName ) {
+			console.log( 'Loading complete. Meshes were attached to: ' + sceneGraphBaseNode.name );
+			scope._reportProgress( '', modelName );
 		};
 
-		var onProgress = function ( event ) {
+		var onProgress = function ( event, modelName ) {
 			if ( event.lengthComputable ) {
 
 				var percentComplete = event.loaded / event.total * 100;
 				var output = 'Download of "' + resourceObj.url + '": ' + Math.round( percentComplete ) + '%';
-				scope._reportProgress( output, prepData.modelName );
+				scope._reportProgress( output, modelName );
 			}
 		};
 

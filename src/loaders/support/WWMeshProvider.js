@@ -28,9 +28,9 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.materials = [];
 
 		this.callbacks = {
-			announceProgress: function ( reason ) {},
+			announceProgress: function ( baseText, text ) {},
 			meshLoaded: [],
-			completedLoading: function ( baseText, text ) {}
+			completedLoading: function ( reason ) {}
 		};
 
 		this.running = false;
@@ -166,8 +166,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		vertexColorMaterial.name = 'vertexColorMaterial';
 		vertexColorMaterial.vertexColors = THREE.VertexColors;
 		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
-
-		this.counter = 0;
 	};
 
 	MeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {

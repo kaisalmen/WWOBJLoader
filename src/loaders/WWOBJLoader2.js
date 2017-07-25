@@ -27,6 +27,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.requestTerminate = false;
+		this.instanceNo = 0;
 	};
 
 	/**
@@ -37,6 +38,24 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Set the worker instanceNo
+	 *
+	 * @param {number} instanceNo
+	 */
+	WWOBJLoader2.prototype.setInstanceNo = function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+	};
+
+	/**
+	 * Get the worker instanceNo
+	 *
+	 * @returns {number|*}
+	 */
+	WWOBJLoader2.prototype.getInstanceNo = function () {
+		return this.instanceNo;
 	};
 
 	/**
@@ -172,7 +191,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.completedLoading ) {
 
 				callback = this.callbacks.completedLoading[ index ];
-				callback( this.instanceNo, this.modelName );
+				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 			}
 
@@ -181,7 +200,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			for ( index in this.callbacks.errorWhileLoading ) {
 
 				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.instanceNo, this.modelName );
+				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 			}
 
@@ -198,6 +217,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 
 		console.timeEnd( 'WWOBJLoader2' );
+	};
+
+	WWOBJLoader2.prototype.announceProgress = function ( baseText, text ) {
+		var output = Validator.isValid( baseText ) ? baseText: "";
+		output = Validator.isValid( text ) ? output + " " + text : output;
+
+		var callbackProgress;
+		for ( var index in this.callbacks.progress ) {
+
+			callbackProgress = this.callbacks.progress[ index ];
+			callbackProgress( output, this.modelName, this.instanceNo );
+
+		}
+
+		if ( this.debug ) console.log( output );
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {

@@ -102,7 +102,7 @@ var WWOBJLoader2Example = (function () {
 		var meshLoaded = function ( name, bufferGeometry, material ) {
 			console.log( 'Loaded mesh: ' + name + ' Material name: ' + material.name );
 		};
-		var completedLoading = function () {
+		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			console.log( 'Loading complete!' );
 			scope._reportProgress( '' );
 		};
@@ -110,13 +110,11 @@ var WWOBJLoader2Example = (function () {
 		callbacks.registerCallbackProgress( this._reportProgress );
 		callbacks.registerCallbackCompletedLoading( completedLoading );
 		callbacks.registerCallbackMeshLoaded( meshLoaded );
-
-		return true;
 	};
 
-	WWOBJLoader2Example.prototype._reportProgress = function( text ) {
-		console.log( 'Progress: ' + text );
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( text ) ? text : '';
+	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
+		console.log( 'Progress: ' + content );
+		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
 	};
 
 	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
@@ -267,7 +265,6 @@ var WWOBJLoader2Example = (function () {
 			this.traversalFunction( object3d.material );
 
 		}
-
 	};
 
 	WWOBJLoader2Example.prototype.clearAllAssests = function () {

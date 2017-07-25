@@ -13,13 +13,8 @@ var MeshSpray = (function () {
 
 	function MeshSpray( manager ) {
 		THREE.LoaderSupport.Commons.call( this );
-		this.initialized = false;
 		this._init( manager );
 	}
-
-	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = requestTerminate === true;
-	};
 
 	MeshSpray.prototype._init = function ( manager ) {
 		if ( this.initialized ) return;
@@ -27,6 +22,19 @@ var MeshSpray = (function () {
 
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.requestTerminate = false;
+		this.instanceNo = 0;
+	};
+
+	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
+		this.requestTerminate = requestTerminate === true;
+	};
+
+	MeshSpray.prototype.setInstanceNo = function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+	};
+
+	MeshSpray.prototype.getInstanceNo = function () {
+		return this.instanceNo;
 	};
 
 	MeshSpray.prototype._validate = function () {
@@ -89,7 +97,7 @@ var MeshSpray = (function () {
 			for ( index in this.callbacks.completedLoading ) {
 
 				callback = this.callbacks.completedLoading[ index ];
-				callback( this.instanceNo );
+				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 			}
 
@@ -98,7 +106,7 @@ var MeshSpray = (function () {
 			for ( index in this.callbacks.errorWhileLoading ) {
 
 				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.instanceNo );
+				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 			}
 

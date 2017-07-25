@@ -134,8 +134,9 @@ var WWParallels = (function () {
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackCompletedLoading = function ( instanceNo, modelName ) {
+		var callbackCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
+			scope.scene.add( sceneGraphBaseNode );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 			console.log( msg );
@@ -145,7 +146,7 @@ var WWParallels = (function () {
 			if ( scope.wwDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
-		var callbackReportProgress = function ( content, instanceNo ) {
+		var callbackReportProgress = function ( content, modelName, instanceNo ) {
 			if ( scope.reportDonwload[ instanceNo ] ) {
 				var msg = 'Worker #' + instanceNo + ': ' + content;
 				console.log( msg );
@@ -179,63 +180,46 @@ var WWParallels = (function () {
 		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
-		var callbackCompletedLoadingWalt = function () {
-			console.log( 'Callback check: WALT was loaded (#' + scope.wwDirector.objectsCompleted + ')' );
-		};
+		var modelPrepDatas = [];
+		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
-		var models = [];
-		models.push( {
-			modelName: 'male02',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/male02/',
-			fileObj: 'male02.obj',
-			pathTexture: '../../resource/obj/male02/',
-			fileMtl: 'male02.mtl'
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'female02',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/female02/',
-			fileObj: 'female02.obj',
-			pathTexture: '../../resource/obj/female02/',
-			fileMtl: 'female02.mtl'
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+		prepData.scale = 400.0;
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'viveController',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/vive-controller/',
-			fileObj: 'vr_controller_vive_1_5.obj',
-			scale: 400.0
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+		prepData.scale = 50.0;
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'cerberus',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/cerberus/',
-			fileObj: 'Cerberus.obj',
-			scale: 50.0
-		} );
-		models.push( {
-			modelName: 'WaltHead',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/walt/',
-			fileObj: 'WaltHead.obj',
-			pathTexture: '../../resource/obj/walt/',
-			fileMtl: 'WaltHead.mtl'
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
 		var pivot;
 		var distributionBase = -500;
 		var distributionMax = 1000;
-		var modelIndex = 0;
-		var model;
-		var runParams;
+		var modelPrepDataIndex = 0;
+		var modelPrepData;
+		var prepData;
+		var scale;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
-			modelIndex = Math.floor( Math.random() * models.length );
-			model = models[ modelIndex ];
+			modelPrepDataIndex = Math.floor( Math.random() * modelPrepDatas.length );
+
+			modelPrepData = modelPrepDatas[ modelPrepDataIndex ];
+			scale = Validator.verifyInput( modelPrepData.scale, 0 );
+			modelPrepData = modelPrepData.clone();
 
 			pivot = new THREE.Object3D();
 			pivot.position.set(
@@ -243,40 +227,28 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random(),
 				distributionBase + distributionMax * Math.random()
 			);
-			if ( Validator.isValid( model.scale ) ) pivot.scale.set( model.scale, model.scale, model.scale );
+			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 
-			this.scene.add( pivot );
+			modelPrepData.setSceneGraphBaseNode( pivot );
+			modelPrepData.setStreamMeshes( streamMeshes );
 
-			model.sceneGraphBaseNode = pivot;
-
-			var runParams = new THREE.LoaderSupport.PrepData( model.modelName );
-			runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathObj + '/' + model.fileObj, 'OBJ' ) );
-			if ( Validator.isValid( model.fileMtl ) ) {
-				runParams.addResource( new THREE.LoaderSupport.ResourceDescriptor( model.pathTexture + '/' + model.fileMtl, 'MTL' ) );
-			}
-			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
-			runParams.setStreamMeshes( streamMeshes );
-			if ( model.modelName === 'WaltHead' ) {
-				runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
-			}
-
-			this.wwDirector.enqueueForRun( runParams );
-			this.allAssets.push( runParams );
+			this.wwDirector.enqueueForRun( modelPrepData );
+			this.allAssets.push( modelPrepData );
 		}
 
 		this.wwDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
-		var ref;
+		var prepData;
 		var scope = this;
 
 		for ( var asset in this.allAssets ) {
-			ref = this.allAssets[ asset ];
+			prepData = this.allAssets[ asset ];
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.sceneGraphBaseNode ) return;
+				if ( object3d === prepData.sceneGraphBaseNode ) return;
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
@@ -296,9 +268,9 @@ var WWParallels = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
 			};
-			scope.scene.remove( ref.sceneGraphBaseNode );
-			ref.sceneGraphBaseNode.traverse( remover );
-			ref.sceneGraphBaseNode = null;
+			scope.scene.remove( prepData.sceneGraphBaseNode );
+			prepData.sceneGraphBaseNode.traverse( remover );
+			prepData.sceneGraphBaseNode = null;
 		}
 		this.allAssets = [];
 	};

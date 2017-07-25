@@ -160,7 +160,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 			for ( i = start; i < this.maxWebWorkers; i++ ) {
 
-				worker = this._buildWorker();
+				worker = this._buildWorker( i );
 				this.workerDescription.workers[ i ] = worker;
 
 			}
@@ -249,7 +249,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		}
 
 		var scope = this;
-		var directorCompletedLoading = function ( instanceNo, modelName ) {
+		var directorCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo) {
 			scope.objectsCompleted++;
 
 			var worker = scope.workerDescription.workers[ instanceNo ];
@@ -271,12 +271,14 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		worker.run( runParams );
 	};
 
-	LoaderDirector.prototype._buildWorker = function () {
+	LoaderDirector.prototype._buildWorker = function ( instanceNo ) {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 
 		// verify that all required functions defined by "THREE.LoaderSupport.WW.DirectableLoader" are implemented
 		if ( worker.hasOwnProperty( 'setRequestTerminate' ) && typeof worker.setRequestTerminate !== 'function'  ) throw classDef + ' has no function "setRequestTerminate".';
+		if ( worker.hasOwnProperty( 'setInstanceNo' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "setInstanceNo".';
+		if ( worker.hasOwnProperty( 'getInstanceNo' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "getInstanceNo".';
 		if ( worker.hasOwnProperty( '_init' ) && typeof worker._init !== 'function'  ) throw classDef + ' has no function "_init".';
 		if ( worker.hasOwnProperty( '_validate' ) && typeof worker._validate !== 'function'  ) throw classDef + ' has no function "_validate".';
 		if ( worker.hasOwnProperty( '_buildWebWorkerCode' ) && typeof worker._buildWebWorkerCode !== 'function'  ) throw classDef + ' has no function "_buildWebWorkerCode".';
@@ -286,7 +288,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		worker._init();
 		if ( Validator.isValid( this.crossOrigin ) ) worker.setCrossOrigin( this.crossOrigin );
 
-		worker.instanceNo = this.workerDescription.workers.length;
+		worker.setInstanceNo( instanceNo );
 		this.workerDescription.workers.push( worker );
 		return worker;
 	};

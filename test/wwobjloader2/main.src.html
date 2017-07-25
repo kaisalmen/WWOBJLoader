@@ -120,18 +120,8 @@
 			app.initPostGL();
 
 			var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
-			prepData.addResource(
-				new THREE.LoaderSupport.ResourceDescriptor(
-					'../../resource/obj/male02/male02.obj',
-					'OBJ'
-				)
-			);
-			prepData.addResource(
-				new THREE.LoaderSupport.ResourceDescriptor(
-					'../../resource/obj/male02/male02.mtl',
-					'MTL'
-				)
-			);
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
 			app.loadFiles( prepData );
 
 			// kick render loop
