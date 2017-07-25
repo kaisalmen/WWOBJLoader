@@ -143,13 +143,12 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 
-	Commons.prototype._validate = function () {
+	Commons.prototype._validate = function ( prepData ) {
 		if ( this.validated ) return;
 
-		this.sceneGraphBaseNode = null;
-		this.modelName = '';
-		this.materials = [];
-		this.materialNames = [];
+		this.modelName = Validator.verifyInput( Validator.isValid( prepData ) ? prepData.modelName : null, this.modelName );
+		var materials = Validator.isValid( prepData ) ? ( prepData.materials.length > 0 ? prepData.materials : null ) : null;
+		setMaterials( this, materials );
 
 		this.validated = true;
 	};
@@ -184,6 +183,16 @@ THREE.LoaderSupport.Commons = (function () {
 		this.crossOrigin = crossOrigin;
 	};
 
+	var setMaterials = function ( scope, materials ) {
+		if ( Validator.isValid( materials ) ) {
+			scope.materials = materials;
+			scope.materialNames = [];
+			for ( var materialName in materials ) {
+				scope.materialNames.push( materialName );
+			}
+		}
+	};
+
 	/**
 	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
 	 * @memberOf THREE.LoaderSupport.Commons
@@ -191,11 +200,7 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
 	 */
 	Commons.prototype.setMaterials = function ( materials ) {
-		this.materials = materials;
-		this.materialNames = [];
-		for ( var materialName in materials ) {
-			this.materialNames.push( materialName );
-		}
+		setMaterials( this, materials );
 	};
 
 	/**
@@ -365,6 +370,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.streamMeshes = true;
 		this.materialPerSmoothingGroup = false;
 		this.requestTerminate = false;
+		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
 
@@ -406,6 +412,16 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.setRequestTerminate = function ( requestTerminate ) {
 		this.requestTerminate = requestTerminate === true;
+	};
+
+	/**
+	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.LoaderSupport.PrepData
+	 *
+	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
+	 */
+	PrepData.prototype.setMaterials = function ( materials ) {
+		if ( Validator.isValid( materials ) ) this.materials = materials;
 	};
 
 	/**

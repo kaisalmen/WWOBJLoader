@@ -115,9 +115,34 @@
 			app.initPostGL();
 
 			var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+			var pivot = new THREE.Object3D();
+			pivot.position.set( 0, 0, 0 );
+			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-			app.loadFiles( prepData );
+			prepData.manual = false;
+			app.addToLoadList( prepData );
+
+			prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( -100, 0, 0 );
+			prepData.setSceneGraphBaseNode( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+			prepData.manual = true;
+			app.addToLoadList( prepData );
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Cerberus' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( 100, 0, 0 );
+			var scale = 50.0;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setSceneGraphBaseNode( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+			prepData.manual = true;
+			app.addToLoadList( prepData );
+
+			app.processLoadList();
 
 			// kick render loop
 			render();

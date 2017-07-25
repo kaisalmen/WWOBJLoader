@@ -26,6 +26,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
 
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
+
+		var scope = this;
+		var scopeFuncComplete = function ( reason ) {
+			scope._finalize( reason );
+		};
+		var scopeFuncAnnounce = function ( baseText, text ) {
+			scope.announceProgress( baseText, text );
+		};
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, null, scopeFuncComplete );
 		this.requestTerminate = false;
 		this.instanceNo = 0;
 	};
@@ -56,6 +65,17 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.getInstanceNo = function () {
 		return this.instanceNo;
+	};
+
+	/**
+	 * Set the node where the loaded objects will be attached.
+	 * @memberOf THREE..WWOBJLoader2
+	 *
+	 * @param {THREE.Object3D} sceneGraphBaseNode Scenegraph object where meshes will be attached
+	 */
+	WWOBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
+		THREE.OBJLoader2.prototype.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
+		this.meshProvider.prepareRun( this.sceneGraphBaseNode );
 	};
 
 	/**
@@ -97,14 +117,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 
 		var scope = this;
-		var scopeFuncComplete = function ( reason ) {
-			scope._finalize( reason );
-		};
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.announceProgress( baseText, text );
-		};
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, this.callbacks.meshLoaded, scopeFuncComplete );
-		this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+		this.meshProvider.setCallbacks( null, this.callbacks.meshLoaded, null );
 
 		var messageObject = {
 			cmd: 'init',
@@ -164,6 +177,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
+		this._validate();
 		this.meshProvider.postMessage(
 			{
 				cmd: 'run',
@@ -179,6 +193,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this.requestTerminate = false;
 		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
+		if ( Validator.isValid( prepData ) ) {
+
+			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+
+		} else {
+
+			this.meshProvider.prepareRun( this.sceneGraphBaseNode, this.streamMeshes );
+
+		}
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {

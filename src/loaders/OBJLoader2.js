@@ -94,7 +94,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
-		prepData = new THREE.LoaderSupport.PrepData( 'default' );
+		prepData = new THREE.LoaderSupport.PrepData( 'default' )
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
 
 		prepData.addResource( resource );
@@ -267,7 +267,7 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype._validate = function ( prepData ) {
 		if ( this.validated ) return;
-		THREE.LoaderSupport.Commons.prototype._validate.call( this );
+		THREE.LoaderSupport.Commons.prototype._validate.call( this, prepData );
 
 		this.sceneGraphBaseNode = Validator.isValid( prepData ) ? prepData.sceneGraphBaseNode : this.sceneGraphBaseNode;
 		this.materialPerSmoothingGroup = Validator.isValid( prepData ) ? prepData.materialPerSmoothingGroup : false;

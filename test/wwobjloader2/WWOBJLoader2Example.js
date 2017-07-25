@@ -88,28 +88,21 @@ var WWOBJLoader2Example = (function () {
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
 
-		this.createPivot();
-	};
-
-	WWOBJLoader2Example.prototype.createPivot = function () {
-		this.pivot = new THREE.Object3D();
-		this.pivot.name = 'Pivot';
-		this.scene.add( this.pivot );
+		this.loadList = [];
 	};
 
 	WWOBJLoader2Example.prototype.initPostGL = function () {
 		var scope = this;
-		var meshLoaded = function ( name, bufferGeometry, material ) {
-			console.log( 'Loaded mesh: ' + name + ' Material name: ' + material.name );
-		};
 		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			console.log( 'Loading complete!' );
+			scope.scene.add( sceneGraphBaseNode );
+			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
+
+			scope.processLoadList();
 		};
 		var callbacks = this.wwObjLoader2.getCallbacks();
 		callbacks.registerCallbackProgress( this._reportProgress );
 		callbacks.registerCallbackCompletedLoading( completedLoading );
-		callbacks.registerCallbackMeshLoaded( meshLoaded );
 	};
 
 	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
@@ -117,12 +110,54 @@ var WWOBJLoader2Example = (function () {
 		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
 	};
 
-	WWOBJLoader2Example.prototype.loadFiles = function ( prepData ) {
-		prepData.setSceneGraphBaseNode( this.pivot );
-		prepData.setStreamMeshes( this.streamMeshes )
-		prepData.setRequestTerminate( true );
-		this.wwObjLoader2.run( prepData );
+	WWOBJLoader2Example.prototype.addToLoadList = function ( prepData ) {
+		this.loadList.push( prepData );
 	};
+
+	WWOBJLoader2Example.prototype.processLoadList = function () {
+		var prepData = this.loadList.pop();
+		if ( !Validator.isValid( prepData ) ) return;
+		if ( prepData.manual ) {
+
+			this.loadFilesManual( prepData );
+
+		} else {
+
+			this.wwObjLoader2.run( prepData );
+
+		}
+	};
+
+	WWOBJLoader2Example.prototype.loadFilesManual = function ( prepData ) {
+		var fileLoader = new THREE.FileLoader();
+		var available = this.wwObjLoader2._checkFiles( prepData.resources );
+
+		var scope = this;
+		var onLoadObj = function( arrayBuffer ) {
+
+			var uint8Array = new Uint8Array( arrayBuffer );
+			scope.wwObjLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+
+			var onLoadMtl = function ( materials ) {
+				scope.wwObjLoader2.setMaterials( materials );
+				scope.wwObjLoader2.parse( uint8Array );
+			};
+
+			if ( ! Validator.isValid( available.mtl ) ) {
+
+				onLoadMtl( null );
+
+			} else {
+
+				scope.wwObjLoader2.loadMtl( available.mtl, onLoadMtl );
+
+			}
+		};
+
+		fileLoader.setResponseType( 'arraybuffer' );
+		fileLoader.load( available.obj.url, onLoadObj );
+	};
+
 
 	WWOBJLoader2Example.prototype._handleFileSelect = function ( event, pathTexture ) {
 		var fileObj = null;
@@ -150,26 +185,31 @@ var WWOBJLoader2Example = (function () {
 		fileReader.onload = function( fileDataObj ) {
 
 			var uint8Array = new Uint8Array( fileDataObj.target.result );
+
+			var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
+			var resourceOBJ = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileObj.name, 'OBJ' );
+			var pivot = new THREE.Object3D();
+			pivot.position.set(
+				-100 + 200 * Math.random(),
+				-100 + 200 * Math.random(),
+				-100 + 200 * Math.random()
+			);
+			prepData.setSceneGraphBaseNode( pivot );
+			resourceOBJ.setBinaryContent( uint8Array );
+			prepData.addResource( resourceOBJ );
+
 			if ( fileMtl === null ) {
 
-				var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
-				var resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.obj', 'OBJ' );
-				resource.setBinaryContent( uint8Array );
-				prepData.addResource( resource );
-				scope.run( prepData );
+				scope.wwObjLoader2.run( prepData );
 
 			} else {
 
 				fileReader.onload = function( fileDataMtl ) {
 
-					var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
-					var resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.obj', 'OBJ' );
-					resource.setBinaryContent( uint8Array );
-					prepData.addResource( resource );
-					resource = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/userObj.mtl', 'MTL' );
-					resource.setTextContent( fileDataMtl.target.result );
-					prepData.addResource( resource );
-					scope.run( prepData );
+					var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
+					resourceMTL.setTextContent( fileDataMtl.target.result );
+					prepData.addResource( resourceMTL );
+					scope.wwObjLoader2.run( prepData );
 				};
 				fileReader.readAsText( fileMtl );
 
@@ -300,7 +340,6 @@ var WWOBJLoader2Example = (function () {
 
 		scope.scene.remove( scope.pivot );
 		scope.pivot.traverse( remover );
-		scope.createPivot();
 	};
 
 	return WWOBJLoader2Example;

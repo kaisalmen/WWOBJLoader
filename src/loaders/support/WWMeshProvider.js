@@ -28,7 +28,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.materials = [];
 
 		this.callbacks = {
-			announceProgress: function ( baseText, text ) {},
+			announceProgress: function ( baseText, text ) { console.log( baseText, text ); },
 			meshLoaded: [],
 			completedLoading: function ( reason ) {}
 		};
@@ -169,9 +169,9 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 	};
 
 	MeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
-		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : function ( baseText, text ) { console.log( baseText, text ); };
-		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : [];
-		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : function ( reason ) {};
+		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : this.callbacks.announceProgress;
+		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : this.callbacks.meshLoaded;
+		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : this.callbacks.completedLoading;
 	};
 
 	MeshProvider.prototype.clearAllCallbacks = function () {
@@ -195,13 +195,15 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 	};
 
 	MeshProvider.prototype.postMessage = function ( messageObject ) {
-		this.worker.postMessage( messageObject );
+		if ( Validator.isValid( this.worker ) ) {
+			this.worker.postMessage( messageObject );
+		}
 	};
 
 	MeshProvider.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes ) {
 		this.running = true;
 		this.sceneGraphBaseNode = sceneGraphBaseNode;
-		this.streamMeshes = streamMeshes;
+		this.streamMeshes = streamMeshes !== false;
 
 		if ( ! this.streamMeshes ) this.meshStore = [];
 	};
