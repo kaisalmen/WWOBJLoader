@@ -33,7 +33,8 @@ var OBJLoader2Example = (function () {
 		this.cube = null;
 		this.pivot = null;
 
-		this.feedbackArray = [];
+		this.objLoader = new THREE.OBJLoader2();
+		this.loadList = [];
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -73,27 +74,28 @@ var OBJLoader2Example = (function () {
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
 		this.scene.add( this.pivot );
-
-
 	};
 
-	OBJLoader2Example.prototype.initPostGL = function () {
-		return true;
+	OBJLoader2Example.prototype.addToLoadList = function ( prepData ) {
+		this.loadList.push( prepData );
 	};
 
-	/**
-	 *
-	 * @param {THREE.LoaderSupport.PrepData prepData
-	 */
-	OBJLoader2Example.prototype.loadObj = function ( prepData, automatedRun ) {
-		var objLoader = new THREE.OBJLoader2();
-		// following settings are default, contained for easy play-around
-		objLoader.setDebug( false );
+	OBJLoader2Example.prototype.processLoadList = function () {
+		var prepData = this.loadList.pop();
+		if ( !Validator.isValid( prepData ) ) return;
 
-		if ( ! Validator.isValid( prepData ) ) return;
+		this.loadObj( prepData );
+	};
 
-		this._reportProgress( 'Loading: ' + prepData.modelName );
+	OBJLoader2Example.prototype.registerCallbacks = function () {
+		var scope = this;
+		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			scope.scene.add( sceneGraphBaseNode );
+			console.log( 'Loading complete: ' + modelName );
+			scope._reportProgress( '' );
 
+			scope.processLoadList();
+		};
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
@@ -107,13 +109,26 @@ var OBJLoader2Example = (function () {
 
 			return override;
 		};
-		objLoader.getCallbacks().registerCallbackMeshLoaded( callbackMeshLoaded );
+		var callbacks = this.objLoader.getCallbacks();
+		callbacks.registerCallbackProgress( this._reportProgress );
+		callbacks.registerCallbackCompletedLoading( completedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
+	};
 
+	/**
+	 *
+	 * @param {THREE.LoaderSupport.PrepData prepData
+	 */
+	OBJLoader2Example.prototype.loadObj = function ( prepData ) {
+		if ( ! Validator.isValid( prepData ) ) return;
+
+		var modelName = prepData.modelName;
+		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
 		var onLoad = function ( sceneGraphBaseNode, modelName ) {
 			console.log( 'Loading complete. Meshes were attached to: ' + sceneGraphBaseNode.name );
-			scope._reportProgress( '', modelName );
+			scope._reportProgress( '' );
 		};
 
 		var onProgress = function ( event, modelName ) {
@@ -121,45 +136,51 @@ var OBJLoader2Example = (function () {
 
 				var percentComplete = event.loaded / event.total * 100;
 				var output = 'Download of "' + resourceObj.url + '": ' + Math.round( percentComplete ) + '%';
-				scope._reportProgress( output, modelName );
+				scope._reportProgress( output );
 			}
 		};
 
 		var onError = function ( event ) {
 			var output = 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src;
-			scope._reportProgress( output, prepData.modelName );
+			scope._reportProgress( output );
 		};
 
-		if ( automatedRun ) {
+		if ( prepData.automatedRun ) {
 
 			scope.pivot.add( prepData.sceneGraphBaseNode );
-			prepData.callbacks.registerCallbackCompletedLoading( onLoad );
-			prepData.callbacks.registerCallbackErrorWhileLoading( onError );
-			prepData.callbacks.registerCallbackProgress( onProgress );
-			objLoader.run( prepData );
+
+			scope.objLoader.init();
+			var callbacks = prepData.getCallbacks();
+			callbacks.registerCallbackCompletedLoading( onLoad );
+			callbacks.registerCallbackErrorWhileLoading( onError );
+			callbacks.registerCallbackProgress( onProgress );
+			scope.registerCallbacks();
+			scope.objLoader.run( prepData );
 
 		} else {
 
 			var resourceObj = prepData.resources[ 0 ];
 			var resourceMtl = prepData.resources[ 1 ];
 
-			var onLoadMtl = function () {
+			var onLoadMtl = function ( materials ) {
 
 				scope.pivot.add( prepData.sceneGraphBaseNode );
-				objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-				objLoader.load( resourceObj.url, onLoad, onProgress, onError );
+
+				scope.objLoader.init();
+				scope.objLoader.setMaterials( materials );
+				scope.registerCallbacks();
+				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+				scope.objLoader.load( resourceObj.url, onLoad, onProgress, onError );
 			};
 
-			objLoader.loadMtl( resourceMtl, onLoadMtl );
+			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );
 
 		}
 	};
 
-	OBJLoader2Example.prototype._reportProgress = function( text, instanceNo ) {
-		this.feedbackArray[ instanceNo ] = text;
-		console.log( 'Progress: ' + text );
-
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( this.feedbackArray ) && this.feedbackArray.length > 0 ? this.feedbackArray.join( '\<br\>' ) : '';
+	OBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
+		console.log( 'Progress: ' + content );
+		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {

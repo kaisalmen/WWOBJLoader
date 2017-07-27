@@ -120,37 +120,28 @@ THREE.LoaderSupport.Commons = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function Commons( manager ) {
-		this.initialized = false;
-		this._init( manager );
+		this.init( manager );
 	}
 
-	Commons.prototype._init = function ( manager ) {
-		if ( this.initialized ) return;
-		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	Commons.prototype.init = function ( manager ) {
+		this.manager = Validator.verifyInput( manager, this.manager );
+		this.manager = Validator.verifyInput( this.manager, THREE.DefaultLoadingManager );
 
 		this.modelName = '';
 
 		this.debug = false;
 		this.sceneGraphBaseNode = null;
-		this.crossOrigin = null;
 		this.materials = [];
 		this.materialNames = [];
 
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-
-		this.validated = false;
-		this.initialized = true;
 	};
 
 
-	Commons.prototype._validate = function ( prepData ) {
-		if ( this.validated ) return;
-
+	Commons.prototype._applyPrepData = function ( prepData ) {
 		this.modelName = Validator.verifyInput( Validator.isValid( prepData ) ? prepData.modelName : null, this.modelName );
 		var materials = Validator.isValid( prepData ) ? ( prepData.materials.length > 0 ? prepData.materials : null ) : null;
 		setMaterials( this, materials );
-
-		this.validated = true;
 	};
 
 	/**
@@ -171,20 +162,11 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, this.sceneGraphBaseNode );
-	};
-
-	/**
-	 * Sets the CORS string to be used.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {string} crossOrigin CORS value
-	 */
-	Commons.prototype.setCrossOrigin = function ( crossOrigin ) {
-		this.crossOrigin = crossOrigin;
+		this.sceneGraphBaseNode = Validator.verifyInput( this.sceneGraphBaseNode, new THREE.Group() );
 	};
 
 	var setMaterials = function ( scope, materials ) {
-		if ( Validator.isValid( materials ) ) {
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 			scope.materials = materials;
 			scope.materialNames = [];
 			for ( var materialName in materials ) {
@@ -372,6 +354,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.requestTerminate = false;
 		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
+		this.crossOrigin;
 	}
 
 	/**
@@ -435,6 +418,16 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
+	 * Sets the CORS string to be used.
+	 * @memberOf THREE.LoaderSupport.PrepData
+	 *
+	 * @param {string} crossOrigin CORS value
+	 */
+	PrepData.prototype.setCrossOrigin = function ( crossOrigin ) {
+		this.crossOrigin = crossOrigin;
+	};
+
+	/**
 	 * Add a resource description
 	 * @memberOf THREE.LoaderSupport.WW.PrepData
 	 *
@@ -453,6 +446,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
 		clone.requestTerminate = this.requestTerminate;
 		clone.callbacks = this.callbacks;
+		clone.crossOrigin = this.crossOrigin;
 		return clone;
 	};
 

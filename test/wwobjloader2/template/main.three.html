@@ -109,10 +109,10 @@
 
 			window.addEventListener( 'resize', resizeWindow, false );
 
+
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-			app.initPostGL();
 
 			var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 			var pivot = new THREE.Object3D();
@@ -121,6 +121,7 @@
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
 			prepData.manual = false;
+			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 
 			prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
@@ -130,6 +131,7 @@
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
 			prepData.manual = true;
+			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 
 			prepData = new THREE.LoaderSupport.PrepData( 'Cerberus' );
@@ -140,6 +142,7 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
 			prepData.manual = true;
+			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 
 			app.processLoadList();

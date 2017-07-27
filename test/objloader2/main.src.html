@@ -79,7 +79,6 @@
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-			app.initPostGL();
 
 			var pivotA = new THREE.Object3D();
 			pivotA.name = 'PivotA';
@@ -87,7 +86,8 @@
 			var prepData = new THREE.LoaderSupport.PrepData( 'female02_vertex' );
 			prepData.setSceneGraphBaseNode( pivotA );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02_vertex_colors.obj', 'OBJ' ) );
-			app.loadObj( prepData, true );
+			prepData.automatedRun = true;
+			app.addToLoadList( prepData );
 
 			var pivotB = new THREE.Object3D();
 			pivotB.name = 'PivotB';
@@ -96,7 +96,10 @@
 			prepData.setSceneGraphBaseNode( pivotB );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
-			app.loadObj( prepData, false );
+			prepData.automatedRun = false;
+			app.addToLoadList( prepData );
+
+			app.processLoadList();
 
 			render();
 

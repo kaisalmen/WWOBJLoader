@@ -17,15 +17,15 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	function WWOBJLoader2( manager ) {
 		THREE.OBJLoader2.call( this, manager );
-		this._init( manager );
+		this.init( manager );
 	}
 
-	WWOBJLoader2.prototype._init = function ( manager ) {
-		if ( this.initialized ) return;
-		THREE.OBJLoader2.prototype._init.call( this, manager );
-		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+	WWOBJLoader2.prototype.init = function ( manager ) {
+		THREE.OBJLoader2.prototype.init.call( this, manager );
 
-		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
+		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+		this.requestTerminate = false;
+		this.instanceNo = 0;
 
 		var scope = this;
 		var scopeFuncComplete = function ( reason ) {
@@ -34,9 +34,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.announceProgress( baseText, text );
 		};
+		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
+		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
 		this.meshProvider.setCallbacks( scopeFuncAnnounce, null, scopeFuncComplete );
-		this.requestTerminate = false;
-		this.instanceNo = 0;
 	};
 
 	/**
@@ -104,16 +104,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype.run = function ( prepData ) {
 		console.time( 'WWOBJLoader2' );
 
-		this.callbacks.registerCallbackCompletedLoading( prepData.callbacks.completedLoading[ 0 ] );
-		this.callbacks.registerCallbackErrorWhileLoading( prepData.callbacks.errorWhileLoading[ 0 ] );
-		this.callbacks.registerCallbackProgress( prepData.callbacks.progress[ 0 ] );
-
+		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-
-		this._validate( prepData );
-
-		this.modelName = prepData.modelName;
-		this.setRequestTerminate( prepData.requestTerminate );
 
 
 		var scope = this;
@@ -127,7 +119,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		this.meshProvider.postMessage( messageObject );
 
 
-		var onMaterialsLoaded = function () {
+		var onMaterialsLoaded = function ( materials ) {
+			scope.setMaterials( materials );
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
@@ -173,11 +166,19 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			}
 		};
 
-		this.loadMtl( available.mtl, onMaterialsLoaded );
+		this.loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin );
+	};
+
+	WWOBJLoader2.prototype._applyPrepData = function ( prepData ) {
+		THREE.OBJLoader2.prototype._applyPrepData.call( this, prepData );
+
+		this.modelName = prepData.modelName;
+		this.setRequestTerminate( prepData.requestTerminate );
+
+		if ( Validator.isValid( prepData ) ) this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
-		this._validate();
 		this.meshProvider.postMessage(
 			{
 				cmd: 'run',
@@ -187,25 +188,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		);
 	};
 
-	WWOBJLoader2.prototype._validate = function ( prepData ) {
-		if ( this.validated ) return;
-		THREE.OBJLoader2.prototype._validate.call( this, prepData );
-
-		this.requestTerminate = false;
-		this.meshProvider.validate( this._buildWebWorkerCode, 'WWOBJLoader' );
-		if ( Validator.isValid( prepData ) ) {
-
-			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
-
-		} else {
-
-			this.meshProvider.prepareRun( this.sceneGraphBaseNode, this.streamMeshes );
-
-		}
-	};
-
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
-		this.validated = false;
 		var index;
 		var callback;
 
@@ -264,62 +247,20 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			var wwDef = (function () {
 
 				function WWOBJLoader() {
-					// classes initialised here are defined in existingWorkerCode
-					this.wwMeshCreator = new WWMeshCreator();
-					this.parser = new Parser( this.wwMeshCreator );
-					this.validated = false;
-					this.cmdState = 'created';
-
-					this.debug = false;
+					this.created = 'init';
+					this.init( { debug: false, materialPerSmoothingGroup: false })
 				}
 
-				/**
-				 * Allows to set debug mode for the parser and the meshCreatorDebug
-				 *
-				 * @param enabled
-				 */
-				WWOBJLoader.prototype.setDebug = function ( enabled ) {
-					this.parser.setDebug( enabled );
-					this.wwMeshCreator.setDebug( enabled );
-				};
-
-				/**
-				 * Validate status, then parse arrayBuffer, finalize and return objGroup
-				 *
-				 * @param arrayBuffer
-				 */
-				WWOBJLoader.prototype.parse = function ( arrayBuffer ) {
-					console.log( 'Parsing arrayBuffer...' );
-					console.time( 'parseArrayBuffer' );
-
-					this.validate();
-					this.parser.parseArrayBuffer( arrayBuffer );
-					var objGroup = this._finalize();
-
-					console.timeEnd( 'parseArrayBuffer' );
-
-					return objGroup;
-				};
-
-				WWOBJLoader.prototype.validate = function () {
-					if ( this.validated ) return;
-
-					this.parser.validate();
-					this.wwMeshCreator.validate();
-
-					this.validated = true;
-				};
-
-				WWOBJLoader.prototype._finalize = function () {
-					console.log( 'Global output object count: ' + this.wwMeshCreator.globalObjectCount );
-					this.parser.finalize();
-					this.wwMeshCreator.finalize();
-					this.validated = false;
-				};
-
 				WWOBJLoader.prototype.init = function ( payload ) {
+					// classes initialised here are defined in existingWorkerCode
 					this.cmdState = 'init';
-					this.setDebug( payload.debug );
+					this.debug = payload.debug;
+
+					this.wwMeshCreator = new WWMeshCreator();
+					this.wwMeshCreator.setDebug( this.debug );
+
+					this.parser = new Parser( this.wwMeshCreator );
+					this.parser.setDebug( this.debug );
 					this.parser.setMaterialPerSmoothingGroup( payload.materialPerSmoothingGroup );
 				};
 
@@ -331,7 +272,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				WWOBJLoader.prototype.run = function ( payload ) {
 					this.cmdState = 'run';
 
-					this.parse( payload.objAsArrayBuffer );
+					this._parse( payload.objAsArrayBuffer );
 					console.log( 'OBJ loading complete!' );
 
 					this.cmdState = 'complete';
@@ -339,6 +280,28 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 						cmd: this.cmdState,
 						msg: null
 					} );
+				};
+
+				/**
+				 * Parse arrayBuffer, finalize and return objGroup
+				 *
+				 * @param arrayBuffer
+				 */
+				WWOBJLoader.prototype._parse = function ( arrayBuffer ) {
+					console.log( 'Parsing arrayBuffer...' );
+					console.time( 'parseArrayBuffer' );
+
+					this.parser.parseArrayBuffer( arrayBuffer );
+					var objGroup = this._finalize();
+
+					console.timeEnd( 'parseArrayBuffer' );
+
+					return objGroup;
+				};
+
+				WWOBJLoader.prototype._finalize = function () {
+					console.log( 'Global output object count: ' + this.wwMeshCreator.globalObjectCount );
+					this.parser.finalize();
 				};
 
 				return WWOBJLoader;
@@ -350,7 +313,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					this.materials = null;
 					this.debug = false;
 					this.globalObjectCount = 1;
-					this.validated = false;
 				}
 
 				WWMeshCreator.prototype.setMaterials = function ( materials ) {
@@ -360,19 +322,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 				WWMeshCreator.prototype.setDebug = function ( debug ) {
 					if ( debug === true || debug === false ) this.debug = debug;
-				};
-
-				WWMeshCreator.prototype.validate = function () {
-					if ( this.validated ) return;
-
-					this.setMaterials( null );
-					this.setDebug( null );
-					this.globalObjectCount = 1;
-				};
-
-				WWMeshCreator.prototype.finalize = function () {
-					this.materials = null;
-					this.validated = false;
 				};
 
 				/**

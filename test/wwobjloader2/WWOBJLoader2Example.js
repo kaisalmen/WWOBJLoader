@@ -35,10 +35,6 @@ var WWOBJLoader2Example = (function () {
 		this.pivot = null;
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
-		// following settings are default, contained for easy play-around
-		this.wwObjLoader2.setDebug( false );
-		this.wwObjLoader2.setMaterialPerSmoothingGroup( false );
 
 		// Check for the various File API support.
 		this.fileApiAvailable = true;
@@ -52,6 +48,7 @@ var WWOBJLoader2Example = (function () {
 			console.warn( 'File API is not supported! Disabling file loading.' );
 
 		}
+		this.loadList = [];
 	}
 
 	WWOBJLoader2Example.prototype.initGL = function () {
@@ -87,11 +84,9 @@ var WWOBJLoader2Example = (function () {
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
-
-		this.loadList = [];
 	};
 
-	WWOBJLoader2Example.prototype.initPostGL = function () {
+	WWOBJLoader2Example.prototype.registerCallbacks = function () {
 		var scope = this;
 		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.scene.add( sceneGraphBaseNode );
@@ -123,6 +118,8 @@ var WWOBJLoader2Example = (function () {
 
 		} else {
 
+			this.wwObjLoader2.init();
+			this.registerCallbacks();
 			this.wwObjLoader2.run( prepData );
 
 		}
@@ -130,14 +127,15 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.loadFilesManual = function ( prepData ) {
 		var fileLoader = new THREE.FileLoader();
+		this.wwObjLoader2.init();
+		this.wwObjLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+		this.registerCallbacks();
 		var available = this.wwObjLoader2._checkFiles( prepData.resources );
 
 		var scope = this;
 		var onLoadObj = function( arrayBuffer ) {
 
 			var uint8Array = new Uint8Array( arrayBuffer );
-			scope.wwObjLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-
 			var onLoadMtl = function ( materials ) {
 				scope.wwObjLoader2.setMaterials( materials );
 				scope.wwObjLoader2.parse( uint8Array );
@@ -149,7 +147,7 @@ var WWOBJLoader2Example = (function () {
 
 			} else {
 
-				scope.wwObjLoader2.loadMtl( available.mtl, onLoadMtl );
+				scope.wwObjLoader2.loadMtl( available.mtl, onLoadMtl, 'anonymous' );
 
 			}
 		};

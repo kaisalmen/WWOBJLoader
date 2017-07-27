@@ -1,4 +1,3 @@
-
 /**
  * Template class for all web worker based loaders that shall be directed.
  * {@link THREE.LoaderSupport.WW.LoaderDirector} checks for available methods
@@ -20,17 +19,34 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	};
 
 	/**
-	 * Initialise object
+	 * Set the worker instanceNo
+	 *
+	 * @param {number} instanceNo
 	 * @private
 	 */
-	DirectableLoader.prototype._init = function () {
+	DirectableLoader.prototype.setInstanceNo = function ( instanceNo ) {
+		console.log( 'Value of "instanceNo": ' + instanceNo );
 	};
 
 	/**
-	 * Validate status
+	 * Get the worker instanceNo
+	 *
+	 * @returns {number|*}
 	 * @private
 	 */
-	DirectableLoader.prototype._validate = function () {
+	DirectableLoader.prototype.getInstanceNo = function () {
+	};
+
+	/**
+	 * Initialise object
+	 *
+	 * @param {boolean} reInit
+	 * @param {THREE.LoadingManager} manager
+	 * @private
+	 */
+	DirectableLoader.prototype.init = function ( reInit, manager) {
+		console.log( 'Value of "reInit": ' + reInit );
+		console.log( 'Value of "manager": ' + manager );
 	};
 
 	/**
@@ -207,7 +223,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	};
 
 	LoaderDirector.prototype._kickWorkerRun = function( worker, runParams ) {
-		worker.clearAllCallbacks();
+		worker.init( true );
 		var key, i;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var workerCallbacks = worker.callbacks;
@@ -277,16 +293,14 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 		// verify that all required functions defined by "THREE.LoaderSupport.WW.DirectableLoader" are implemented
 		if ( worker.hasOwnProperty( 'setRequestTerminate' ) && typeof worker.setRequestTerminate !== 'function'  ) throw classDef + ' has no function "setRequestTerminate".';
-		if ( worker.hasOwnProperty( 'setInstanceNo' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "setInstanceNo".';
-		if ( worker.hasOwnProperty( 'getInstanceNo' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "getInstanceNo".';
-		if ( worker.hasOwnProperty( '_init' ) && typeof worker._init !== 'function'  ) throw classDef + ' has no function "_init".';
-		if ( worker.hasOwnProperty( '_validate' ) && typeof worker._validate !== 'function'  ) throw classDef + ' has no function "_validate".';
+		if ( worker.hasOwnProperty( 'setInstanceNo' ) && typeof worker.setInstanceNo !== 'function'  ) throw classDef + ' has no function "_setInstanceNo".';
+		if ( worker.hasOwnProperty( 'getInstanceNo' ) && typeof worker.getInstanceNo !== 'function'  ) throw classDef + ' has no function "_getInstanceNo".';
+		if ( worker.hasOwnProperty( 'init' ) && typeof worker.init !== 'function'  ) throw classDef + ' has no function "init".';
 		if ( worker.hasOwnProperty( '_buildWebWorkerCode' ) && typeof worker._buildWebWorkerCode !== 'function'  ) throw classDef + ' has no function "_buildWebWorkerCode".';
 		if ( worker.hasOwnProperty( 'run' ) && typeof worker.run !== 'function'  ) throw classDef + ' has no function "run".';
 		if ( worker.hasOwnProperty( '_finalize' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "_finalize".';
 
-		worker._init();
-		if ( Validator.isValid( this.crossOrigin ) ) worker.setCrossOrigin( this.crossOrigin );
+		worker.init();
 
 		worker.setInstanceNo( instanceNo );
 		this.workerDescription.workers.push( worker );

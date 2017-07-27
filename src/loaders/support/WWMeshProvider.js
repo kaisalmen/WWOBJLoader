@@ -7,10 +7,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function MeshProvider() {
-		this._init();
-	}
-
-	MeshProvider.prototype._init = function () {
 		console.log( "Using THREE.LoaderSupport.WW.MeshProvider version: " + WW_MESH_PROVIDER_VERSION );
 
 		// check worker support first
@@ -20,21 +16,52 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
+	}
 
+	MeshProvider.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
-		this.meshStore = null;
-
-		this.materials = [];
-
-		this.callbacks = {
-			announceProgress: function ( baseText, text ) { console.log( baseText, text ); },
-			meshLoaded: [],
-			completedLoading: function ( reason ) {}
-		};
+		this.meshStore = [];
 
 		this.running = false;
 		this.counter = 0;
+
+		this.materials = [];
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		this.materials[ defaultMaterial.name ] = defaultMaterial;
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+
+		this.callbacks = {
+			announceProgress: null,
+			meshLoaded: [],
+			completedLoading: null
+		};
+
+		if ( ! Validator.isValid( this.worker ) || forceWorkerReload ) {
+
+			console.log( 'Building worker code...' );
+			console.time( 'buildWebWorkerCode' );
+			this.workerCode = functionCodeBuilder( buildObject, buildSingelton, existingWorkerCode );
+			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
+			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
+			this.workerCode += 'new WWRunner();\n\n';
+
+			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
+			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+			console.timeEnd( 'buildWebWorkerCode' );
+
+			var scope = this;
+			var scopeFunction = function ( e ) {
+				scope._receiveWorkerMessage( e );
+			};
+			this.worker.addEventListener( 'message', scopeFunction, false );
+
+		}
 	};
 
 	var buildObject = function ( fullName, object ) {
@@ -131,42 +158,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 		return WWRunner;
 	})();
-
-	MeshProvider.prototype.validate = function ( functionCodeBuilder, implClassName, existingWorkerCode ) {
-		if ( ! Validator.isValid( this.worker ) ) {
-
-			console.time( 'buildWebWorkerCode' );
-			this.workerCode = functionCodeBuilder( buildObject, buildSingelton, existingWorkerCode );
-			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
-			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
-			this.workerCode += 'new WWRunner();\n\n';
-
-			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
-			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-			console.timeEnd( 'buildWebWorkerCode' );
-
-			var scope = this;
-			var scopeFunction = function ( e ) {
-				scope._receiveWorkerMessage( e );
-			};
-			this.worker.addEventListener( 'message', scopeFunction, false );
-
-		}
-
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
-		this.meshStore = [];
-
-		this.materials = [];
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		this.materials[ defaultMaterial.name ] = defaultMaterial;
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		this.materials[ 'vertexColorMaterial' ] = vertexColorMaterial;
-	};
 
 	MeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
 		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : this.callbacks.announceProgress;

@@ -13,12 +13,11 @@ var MeshSpray = (function () {
 
 	function MeshSpray( manager ) {
 		THREE.LoaderSupport.Commons.call( this );
-		this._init( manager );
+		this.init( manager );
 	}
 
-	MeshSpray.prototype._init = function ( manager ) {
-		if ( this.initialized ) return;
-		THREE.LoaderSupport.Commons.prototype._init.call( this, manager );
+	MeshSpray.prototype.init = function ( manager ) {
+		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
 		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.requestTerminate = false;
@@ -37,17 +36,8 @@ var MeshSpray = (function () {
 		return this.instanceNo;
 	};
 
-	MeshSpray.prototype._validate = function () {
-		if ( this.validated ) return;
-		THREE.LoaderSupport.Commons.prototype._validate.call( this );
-
-		this.requestTerminate = false;
-		this.meshProvider.validate( this._buildWebWorkerCode, 'WWMeshSpray' );
-	};
-
 	MeshSpray.prototype.run = function ( runParams ) {
 		console.time( 'MeshSpray' );
-		this._validate();
 
 		var scope = this;
 		var scopeFuncComplete = function ( reason ) {
@@ -56,6 +46,7 @@ var MeshSpray = (function () {
 		var scopeFuncAnnounce = function ( baseText, text ) {
 			scope.announceProgress( baseText, text );
 		};
+		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
 		this.meshProvider.setCallbacks( scopeFuncAnnounce, runParams.getCallbacks().meshLoaded, scopeFuncComplete );
 		this.meshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
 		this.meshProvider.postMessage( {
@@ -129,28 +120,19 @@ var MeshSpray = (function () {
 		var wwMeshSprayDef = (function () {
 
 			function WWMeshSpray() {
-				this.cmdState = 'created';
-				this.debug = false;
-				this.materialPerSmoothingGroup = false;
-				this.materials = null;
-				this.globalObjectCount = 0;
-				this.quantity = 1;
-				this.dimension = 200;
-
-				this.sizeFactor = 0.5;
-				this.localOffsetFactor = 1.0;
 			}
-
-			WWMeshSpray.prototype._finalize = function () {
-				console.log( 'Global output object count: ' + this.globalObjectCount );
-			};
 
 			WWMeshSpray.prototype.init = function ( payload ) {
 				this.cmdState = 'init';
 				this.debug = payload.debug;
+				this.materials = null;
+				this.globalObjectCount = 0;
+
 				this.materialPerSmoothingGroup = payload.materialPerSmoothingGroup;
 				this.dimension = Validator.verifyInput( payload.dimension, 200 );
 				this.quantity = Validator.verifyInput( payload.quantity, 1 );
+				this.sizeFactor = 0.5;
+				this.localOffsetFactor = 1.0;
 			};
 
 			WWMeshSpray.prototype.setMaterials = function ( payload ) {
@@ -162,7 +144,7 @@ var MeshSpray = (function () {
 			WWMeshSpray.prototype.run = function ( payload ) {
 				this.cmdState = 'run';
 
-				this.buildMesh();
+				this._buildMesh();
 
 				this.cmdState = 'complete';
 				self.postMessage( {
@@ -171,7 +153,7 @@ var MeshSpray = (function () {
 				} );
 			};
 
-			WWMeshSpray.prototype.buildMesh = function () {
+			WWMeshSpray.prototype._buildMesh = function () {
 				var materialDescription;
 				var materialDescriptions = [];
 				var materialGroups = [];
@@ -275,6 +257,10 @@ var MeshSpray = (function () {
 				);
 
 				this.globalObjectCount++;
+			};
+
+			WWMeshSpray.prototype._finalize = function () {
+				console.log( 'Global output object count: ' + this.globalObjectCount );
 			};
 
 			return WWMeshSpray;
