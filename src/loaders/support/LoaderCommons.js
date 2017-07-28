@@ -120,7 +120,7 @@ THREE.LoaderSupport.Commons = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function Commons( manager ) {
-		this.init( manager );
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	}
 
 	Commons.prototype.init = function ( manager ) {
@@ -140,6 +140,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
 		this.modelName = Validator.verifyInput( Validator.isValid( prepData ) ? prepData.modelName : null, this.modelName );
+		this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 		var materials = Validator.isValid( prepData ) ? ( prepData.materials.length > 0 ? prepData.materials : null ) : null;
 		setMaterials( this, materials );
 	};

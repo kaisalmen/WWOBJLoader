@@ -17,7 +17,6 @@ THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
 		THREE.LoaderSupport.Commons.call( this, manager );
-		this.init( manager );
 	}
 
 	OBJLoader2.prototype.init = function ( manager ) {
@@ -182,7 +181,6 @@ THREE.OBJLoader2 = (function () {
 			for ( name in callbacks.meshLoaded ) {
 				this.callbacks.registerCallbackMeshLoaded( callbacks.meshLoaded[ name ] );
 			}
-			this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
 		}
 	};

@@ -16,6 +16,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
+		this.counter = 0;
 	}
 
 	MeshProvider.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
@@ -24,7 +25,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.meshStore = [];
 
 		this.running = false;
-		this.counter = 0;
 
 		this.materials = [];
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
@@ -42,7 +42,13 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 			completedLoading: null
 		};
 
-		if ( ! Validator.isValid( this.worker ) || forceWorkerReload ) {
+		if ( forceWorkerReload ) {
+			this.worker = null;
+			this.workerCode = null;
+			this.counter = 0;
+		}
+
+		if ( ! Validator.isValid( this.worker ) ) {
 
 			console.log( 'Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
@@ -131,18 +137,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 			console.log( 'Command state before: ' + WWImplRef.cmdState );
 
 			switch ( payload.cmd ) {
-				case 'init':
-
-					WWImplRef.init( payload );
-					break;
-
-				case 'setMaterials':
-
-					WWImplRef.setMaterials( payload );
-					break;
-
 				case 'run':
-
 					WWImplRef.run( payload );
 					break;
 
@@ -205,36 +200,36 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		switch ( payload.cmd ) {
 			case 'meshData':
 
-				var meshName = payload.meshName;
+				var meshName = payload.params.meshName;
 
 				var bufferGeometry = new THREE.BufferGeometry();
-				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.vertices ), 3 ) );
-				var haveVertexColors = Validator.isValid( payload.colors );
+				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.buffers.vertices ), 3 ) );
+				var haveVertexColors = Validator.isValid( payload.buffers.colors );
 				if ( haveVertexColors ) {
 
-					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.colors ), 3 ) );
+					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.buffers.colors ), 3 ) );
 
 				}
-				if ( Validator.isValid( payload.normals ) ) {
+				if ( Validator.isValid( payload.buffers.normals ) ) {
 
-					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.normals ), 3 ) );
+					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.buffers.normals ), 3 ) );
 
 				} else {
 
 					bufferGeometry.computeVertexNormals();
 
 				}
-				if ( Validator.isValid( payload.uvs ) ) {
+				if ( Validator.isValid( payload.buffers.uvs ) ) {
 
-					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.uvs ), 2 ) );
+					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.buffers.uvs ), 2 ) );
 
 				}
 
-				var materialDescriptions = payload.materialDescriptions;
+				var materialDescriptions = payload.materials.materialDescriptions;
 				var materialDescription;
 				var material;
 				var materialName;
-				var createMultiMaterial = payload.multiMaterial;
+				var createMultiMaterial = payload.materials.multiMaterial;
 				var multiMaterials = [];
 
 				var key;
@@ -271,7 +266,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 				if ( createMultiMaterial ) {
 
 					material = multiMaterials;
-					var materialGroups = payload.materialGroups;
+					var materialGroups = payload.materials.materialGroups;
 					var materialGroup;
 					for ( key in materialGroups ) {
 
@@ -372,10 +367,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 				if ( Validator.isValid( payload.msg ) ) this.callbacks.announceProgress( payload.msg );
 
 				this._completedeRun();
-				break;
-
-			case 'report_progress':
-				this.callbacks.announceProgress( '', payload.output );
 				break;
 
 			default:

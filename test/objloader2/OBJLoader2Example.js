@@ -168,8 +168,8 @@ var OBJLoader2Example = (function () {
 
 				scope.objLoader.init();
 				scope.objLoader.setMaterials( materials );
-				scope.registerCallbacks();
 				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+				scope.registerCallbacks();
 				scope.objLoader.load( resourceObj.url, onLoad, onProgress, onError );
 			};
 

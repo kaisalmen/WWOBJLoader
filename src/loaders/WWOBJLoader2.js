@@ -17,7 +17,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	function WWOBJLoader2( manager ) {
 		THREE.OBJLoader2.call( this, manager );
-		this.init( manager );
 	}
 
 	WWOBJLoader2.prototype.init = function ( manager ) {
@@ -87,12 +86,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype.setMaterials = function ( materials ) {
 		THREE.OBJLoader2.prototype.setMaterials.call( this, materials );
 		this.meshProvider.addMaterials( this.materials );
-		this.meshProvider.postMessage(
-			{
-				cmd: 'setMaterials',
-				materialNames: this.materialNames
-			}
-		);
 	};
 
 	/**
@@ -106,19 +99,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-
-
-		var scope = this;
 		this.meshProvider.setCallbacks( null, this.callbacks.meshLoaded, null );
 
-		var messageObject = {
-			cmd: 'init',
-			debug: scope.debug,
-			materialPerSmoothingGroup: this.materialPerSmoothingGroup
-		};
-		this.meshProvider.postMessage( messageObject );
-
-
+		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
 			scope.setMaterials( materials );
 
@@ -172,17 +155,29 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	WWOBJLoader2.prototype._applyPrepData = function ( prepData ) {
 		THREE.OBJLoader2.prototype._applyPrepData.call( this, prepData );
 
-		this.modelName = prepData.modelName;
-		this.setRequestTerminate( prepData.requestTerminate );
+		if ( Validator.isValid( prepData ) ) {
 
-		if ( Validator.isValid( prepData ) ) this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+			this.modelName = prepData.modelName;
+			this.setRequestTerminate( prepData.requestTerminate );
+			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+
+		}
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
 		this.meshProvider.postMessage(
 			{
 				cmd: 'run',
-				objAsArrayBuffer: content
+				params: {
+					debug: this.debug,
+					materialPerSmoothingGroup: this.materialPerSmoothingGroup
+				},
+				materials: {
+					materialNames: this.materialNames
+				},
+				buffers: {
+					objAsArrayBuffer: content
+				}
 			},
 			[ content.buffer ]
 		);
@@ -247,32 +242,22 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			var wwDef = (function () {
 
 				function WWOBJLoader() {
-					this.created = 'init';
-					this.init( { debug: false, materialPerSmoothingGroup: false })
 				}
-
-				WWOBJLoader.prototype.init = function ( payload ) {
-					// classes initialised here are defined in existingWorkerCode
-					this.cmdState = 'init';
-					this.debug = payload.debug;
-
-					this.wwMeshCreator = new WWMeshCreator();
-					this.wwMeshCreator.setDebug( this.debug );
-
-					this.parser = new Parser( this.wwMeshCreator );
-					this.parser.setDebug( this.debug );
-					this.parser.setMaterialPerSmoothingGroup( payload.materialPerSmoothingGroup );
-				};
-
-				WWOBJLoader.prototype.setMaterials = function ( payload ) {
-					this.cmdState = 'setMaterials';
-					this.wwMeshCreator.setMaterials( payload.materialNames );
-				};
 
 				WWOBJLoader.prototype.run = function ( payload ) {
 					this.cmdState = 'run';
 
-					this._parse( payload.objAsArrayBuffer );
+					this.debug = payload.params.debug;
+
+					this.wwMeshCreator = new WWMeshCreator();
+					this.wwMeshCreator.setDebug( this.debug );
+					this.wwMeshCreator.setMaterials( payload.materials.materialNames );
+
+					this.parser = new Parser( this.wwMeshCreator );
+					this.parser.setDebug( this.debug );
+					this.parser.setMaterialPerSmoothingGroup( payload.params.materialPerSmoothingGroup );
+
+					this._parse( payload.buffers.objAsArrayBuffer );
 					console.log( 'OBJ loading complete!' );
 
 					this.cmdState = 'complete';
@@ -438,14 +423,20 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 					self.postMessage(
 						{
 							cmd: 'meshData',
-							meshName: rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName,
-							multiMaterial: createMultiMaterial,
-							materialDescriptions: materialDescriptions,
-							materialGroups: materialGroups,
-							vertices: vertexFA,
-							colors: colorFA,
-							normals: normalFA,
-							uvs: uvFA
+							params: {
+								meshName: rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName,
+							},
+							materials: {
+								multiMaterial: createMultiMaterial,
+								materialDescriptions: materialDescriptions,
+								materialGroups: materialGroups
+							},
+							buffers: {
+								vertices: vertexFA,
+								colors: colorFA,
+								normals: normalFA,
+								uvs: uvFA
+							}
 						},
 						[ vertexFA.buffer ],
 						colorFA !== null ? [ colorFA.buffer ] : null,

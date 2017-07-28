@@ -173,37 +173,55 @@ var WWParallels = (function () {
 			return override;
 		};
 
-		var globalCallbacks = new THREE.LoaderSupport.Callbacks();
-		globalCallbacks.registerCallbackProgress( callbackReportProgress );
-		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
-		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
-		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
+		var callbacks;
+		this.wwDirector.prepareWorkers( maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
 
 		var modelPrepDatas = [];
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+
+		callbacks = prepData.getCallbacks();
+		callbacks.registerCallbackProgress( callbackReportProgress );
+		callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		callbacks = prepData.getCallbacks();
+		callbacks.registerCallbackProgress( callbackReportProgress );
+		callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
 		prepData.scale = 400.0;
+		callbacks = prepData.getCallbacks();
+		callbacks.registerCallbackProgress( callbackReportProgress );
+		callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
 		prepData.scale = 50.0;
+		callbacks = prepData.getCallbacks();
+		callbacks.registerCallbackProgress( callbackReportProgress );
+		callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		callbacks = prepData.getCallbacks();
+		callbacks.registerCallbackProgress( callbackReportProgress );
+		callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
+		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
 		modelPrepDatas.push( prepData );
 
 		var pivot;

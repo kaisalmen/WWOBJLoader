@@ -12,16 +12,25 @@ var MeshSpray = (function () {
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray( manager ) {
-		THREE.LoaderSupport.Commons.call( this );
-		this.init( manager );
+		THREE.LoaderSupport.Commons.call( this, manager );
 	}
 
 	MeshSpray.prototype.init = function ( manager ) {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
-		this.meshProvider = new THREE.LoaderSupport.WW.MeshProvider();
 		this.requestTerminate = false;
 		this.instanceNo = 0;
+
+		var scope = this;
+		var scopeFuncComplete = function ( reason ) {
+			scope._finalize( reason );
+		};
+		var scopeFuncAnnounce = function ( baseText, text ) {
+			scope.announceProgress( baseText, text );
+		};
+		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
+		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
+		this.meshProvider.setCallbacks( scopeFuncAnnounce, null, scopeFuncComplete );
 	};
 
 	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
@@ -36,27 +45,11 @@ var MeshSpray = (function () {
 		return this.instanceNo;
 	};
 
-	MeshSpray.prototype.run = function ( runParams ) {
+	MeshSpray.prototype.run = function ( prepData ) {
 		console.time( 'MeshSpray' );
 
-		var scope = this;
-		var scopeFuncComplete = function ( reason ) {
-			scope._finalize( reason );
-		};
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.announceProgress( baseText, text );
-		};
-		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, runParams.getCallbacks().meshLoaded, scopeFuncComplete );
-		this.meshProvider.prepareRun( runParams.sceneGraphBaseNode, runParams.streamMeshes );
-		this.meshProvider.postMessage( {
-			cmd: 'init',
-			debug: this.debug,
-			materialPerSmoothingGroup: false,
-			dimension: runParams.dimension,
-			quantity: runParams.quantity
-		} );
-
+		this._applyPrepData( prepData );
+		this.meshProvider.setCallbacks( null, this.callbacks.meshLoaded, null );
 
 		var materialNames = [];
 		for ( var materialName in this.materials ) {
@@ -65,17 +58,29 @@ var MeshSpray = (function () {
 		this.meshProvider.addMaterials( this.materials );
 		this.meshProvider.postMessage(
 			{
-				cmd: 'setMaterials',
-				materialNames: materialNames
-			}
-		);
-
-		this.meshProvider.postMessage(
-			{
 				cmd: 'run',
-				dimension: 200
+				params: {
+					debug: this.debug,
+					dimension: prepData.dimension,
+					quantity: prepData.quantity
+				},
+				materials: {
+					materialNames: materialNames
+				}
 			}
 		);
+	};
+
+	MeshSpray.prototype._applyPrepData = function ( prepData ) {
+		THREE.LoaderSupport.Commons.prototype._applyPrepData.call( this, prepData );
+
+		if ( Validator.isValid( prepData ) ) {
+
+			this.modelName = prepData.modelName;
+			this.setRequestTerminate( prepData.requestTerminate );
+			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
+
+		}
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {
@@ -122,27 +127,16 @@ var MeshSpray = (function () {
 			function WWMeshSpray() {
 			}
 
-			WWMeshSpray.prototype.init = function ( payload ) {
-				this.cmdState = 'init';
-				this.debug = payload.debug;
-				this.materials = null;
-				this.globalObjectCount = 0;
-
-				this.materialPerSmoothingGroup = payload.materialPerSmoothingGroup;
-				this.dimension = Validator.verifyInput( payload.dimension, 200 );
-				this.quantity = Validator.verifyInput( payload.quantity, 1 );
-				this.sizeFactor = 0.5;
-				this.localOffsetFactor = 1.0;
-			};
-
-			WWMeshSpray.prototype.setMaterials = function ( payload ) {
-				this.cmdState = 'setMaterials';
-				this.materials = Validator.verifyInput( payload.materialNames, this.materials );
-				this.materials = Validator.verifyInput( this.materials, { materials: [] } );
-			};
-
 			WWMeshSpray.prototype.run = function ( payload ) {
 				this.cmdState = 'run';
+				this.sizeFactor = 0.5;
+				this.localOffsetFactor = 1.0;
+				this.globalObjectCount = 0;
+				this.debug = payload.params.debug;
+				this.dimension = Validator.verifyInput( payload.params.dimension, 200 );
+				this.quantity = Validator.verifyInput( payload.params.quantity, 1 );
+				this.materials = Validator.verifyInput( payload.materials.materialNames, this.materials );
+				this.materials = Validator.verifyInput( this.materials, { materials: [] } );
 
 				this._buildMesh();
 
@@ -241,14 +235,20 @@ var MeshSpray = (function () {
 				self.postMessage(
 					{
 						cmd: 'meshData',
-						meshName: 'Gen' + this.globalObjectCount,
-						multiMaterial: false,
-						materialDescriptions: materialDescriptions,
-						materialGroups: materialGroups,
-						vertices: vertexFA,
-						colors: colorFA,
-						normals: normalFA,
-						uvs: uvFA
+						params: {
+							meshName: 'Gen' + this.globalObjectCount,
+						},
+						materials: {
+							multiMaterial: false,
+							materialDescriptions: materialDescriptions,
+							materialGroups: materialGroups,
+						},
+						buffers: {
+							vertices: vertexFA,
+							colors: colorFA,
+							normals: normalFA,
+							uvs: uvFA
+						}
 					},
 					[ vertexFA.buffer ],
 					colorFA !== null ? [ colorFA.buffer ] : null,
