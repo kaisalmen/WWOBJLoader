@@ -88,7 +88,7 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.registerCallbacks = function () {
 		var scope = this;
-		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.scene.add( sceneGraphBaseNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
@@ -96,8 +96,8 @@ var WWOBJLoader2Example = (function () {
 			scope.processLoadList();
 		};
 		var callbacks = this.wwObjLoader2.getCallbacks();
-		callbacks.registerCallbackProgress( this._reportProgress );
-		callbacks.registerCallbackCompletedLoading( completedLoading );
+		callbacks.setCallbackOnProgress( this._reportProgress );
+		callbacks.setCallbackOnLoad( callbackOnLoad );
 	};
 
 	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
@@ -110,18 +110,23 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.processLoadList = function () {
-		var prepData = this.loadList.pop();
-		if ( !Validator.isValid( prepData ) ) return;
-		if ( prepData.manual ) {
+		if ( this.loadList.length > 0 ) {
 
-			this.loadFilesManual( prepData );
+			var prepData = this.loadList[ 0 ];
+			if ( ! Validator.isValid( prepData ) ) return;
+			this.loadList.shift();
 
-		} else {
+			if ( prepData.manual ) {
 
-			this.wwObjLoader2.init();
-			this.registerCallbacks();
-			this.wwObjLoader2.run( prepData );
+				this.loadFilesManual( prepData );
 
+			} else {
+
+				this.wwObjLoader2.init();
+				this.registerCallbacks();
+				this.wwObjLoader2.run( prepData );
+
+			}
 		}
 	};
 
@@ -188,27 +193,18 @@ var WWOBJLoader2Example = (function () {
 			resourceOBJ.setBinaryContent( uint8Array );
 			prepData.addResource( resourceOBJ );
 
-			if ( fileMtl === null ) {
+			fileReader.onload = function( fileDataMtl ) {
+
+				var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
+				resourceMTL.setTextContent( fileDataMtl.target.result );
+				prepData.addResource( resourceMTL );
 
 				scope.wwObjLoader2.init();
 				scope.registerCallbacks();
 				scope.wwObjLoader2.run( prepData );
 
-			} else {
-
-				fileReader.onload = function( fileDataMtl ) {
-
-					var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
-					resourceMTL.setTextContent( fileDataMtl.target.result );
-					prepData.addResource( resourceMTL );
-
-					scope.wwObjLoader2.init();
-					scope.registerCallbacks();
-					scope.wwObjLoader2.run( prepData );
-				};
-				fileReader.readAsText( fileMtl );
-
-			}
+			};
+			fileReader.readAsText( fileMtl );
 
 		};
 		fileReader.readAsArrayBuffer( fileObj );

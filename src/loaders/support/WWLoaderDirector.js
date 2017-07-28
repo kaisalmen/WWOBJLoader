@@ -117,6 +117,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 		this.workerDescription = {
 			classDef: classDef,
+			globalCallbacks: {},
 			workers: []
 		};
 		this.objectsCompleted = 0;
@@ -157,10 +158,12 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
 	 *
+	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
-	LoaderDirector.prototype.prepareWorkers = function ( maxQueueSize, maxWebWorkers ) {
+	LoaderDirector.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
+		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.objectsCompleted = 0;
@@ -187,7 +190,6 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 				this.workerDescription.workers.pop();
 
 			}
-
 		}
 	};
 
@@ -219,34 +221,15 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		}
 	};
 
-	LoaderDirector.prototype._kickWorkerRun = function( worker, prepDapa ) {
+	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData ) {
 		worker.init();
 
-		// register per object callbacks
-		var workerCallbacks = worker.callbacks;
-		var runCallbacks = prepDapa.callbacks;
-		var selectedRunCallback;
-		var selectedRunCallbacks;
-		if ( Validator.isValid( runCallbacks ) ) {
-
-			var key;
-			for ( key in runCallbacks ) {
-
-				selectedRunCallbacks = runCallbacks[ key ];
-				if ( workerCallbacks.hasOwnProperty( key ) && runCallbacks.hasOwnProperty( key ) && Validator.isValid( selectedRunCallbacks ) ) {
-
-					for ( var i = 0; i < selectedRunCallbacks.length; i++ ) {
-
-						selectedRunCallback = selectedRunCallbacks[ i ];
-						workerCallbacks[ key ].push( selectedRunCallback );
-
-					}
-				}
-			}
-		}
-
 		var scope = this;
-		var directorCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo) {
+		var workerCallbacks = worker.getCallbacks();
+		var prepDataCallbacks = prepData.getCallbacks();
+		var globalCallbacks = this.workerDescription.globalCallbacks;
+
+		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.objectsCompleted++;
 
 			var worker = scope.workerDescription.workers[ instanceNo ];
@@ -263,9 +246,67 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 			}
 		};
-		worker.getCallbacks().registerCallbackCompletedLoading( directorCompletedLoading );
 
-		worker.run( prepDapa );
+		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			if ( Validator.isValid( globalCallbacks.onLoad ) ) {
+
+				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
+
+			}
+
+			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) {
+
+				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
+
+			}
+			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo );
+		};
+
+		var wrapperOnError = function ( event ) {
+			if ( Validator.isValid( globalCallbacks.onError ) ) {
+
+				globalCallbacks.onError( event );
+			}
+
+			if ( Validator.isValid( prepDataCallbacks.onError ) ) {
+
+				prepDataCallbacks.onError( event );
+
+			}
+		};
+
+		var wrapperOnProgress = function ( content, modelName, instanceNo ) {
+			if ( Validator.isValid( globalCallbacks.onProgress ) ) {
+
+				globalCallbacks.onProgress( content, modelName, instanceNo );
+			}
+
+			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) {
+
+				prepDataCallbacks.onProgress( content, modelName, instanceNo );
+
+			}
+		};
+
+		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material ) {
+			if ( Validator.isValid( globalCallbacks.onMeshLoaded ) ) {
+
+				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+			}
+
+			if ( Validator.isValid( prepDataCallbacks.onMeshLoaded ) ) {
+
+				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+
+			}
+		};
+
+		workerCallbacks.setCallbackOnLoad( wrapperOnLoad );
+		workerCallbacks.setCallbackOnError( wrapperOnError );
+		workerCallbacks.setCallbackOnProgress( wrapperOnProgress );
+		workerCallbacks.setCallbackOnMeshLoaded( wrapperOnMeshLoaded );
+
+		worker.run( prepData );
 	};
 
 	LoaderDirector.prototype._buildWorker = function ( instanceNo ) {
@@ -305,14 +346,9 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 				worker._finalize( 'terminate' );
 			}
 
-			if ( Validator.isValid( worker.callbacks.progress ) ) {
+			var workerCallbacks = worker.getCallbacks();
+			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );
 
-				var progressCallbacks = worker.callbacks.progress;
-				for ( i = 0; i < progressCallbacks.length; i++ ) {
-					progressCallbacks[ i ]( '' );
-				}
-
-			}
 		}
 
 		this.workerDescription.workers = [];

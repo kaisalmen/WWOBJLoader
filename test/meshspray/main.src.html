@@ -61,7 +61,7 @@
 			this.wwDirector.setCrossOrigin( 'anonymous' );
 
 			var scope = this;
-			var callbackCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 				scope.app.scene.add( sceneGraphBaseNode );
 				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
 				console.log( msg );
@@ -88,21 +88,21 @@
 				return override;
 			};
 
-			this.wwDirector.prepareWorkers( maxQueueSize, maxWebWorkers );
+
+			var callbacks = new THREE.LoaderSupport.Callbacks();
+			callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
+			callbacks.setCallbackOnLoad( callbackOnLoad );
+			callbacks.setCallbackOnProgress( reportProgress );
+			this.wwDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 
 			var prepData;
-			var callbacks;
+
 			for ( var i = 0; i < maxQueueSize; i++ ) {
 				prepData = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
 				prepData.setSceneGraphBaseNode( new THREE.Object3D );
 				prepData.setStreamMeshes( true );
 				prepData.quantity = 8192;
 				prepData.dimension = Math.max( Math.random() * 500, 100 );
-
-				callbacks = prepData.getCallbacks();
-				callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
-				callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
-				callbacks.registerCallbackProgress( reportProgress );
 
 				this.wwDirector.enqueueForRun( prepData );
 			}

@@ -81,15 +81,18 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype.processLoadList = function () {
-		var prepData = this.loadList.pop();
-		if ( !Validator.isValid( prepData ) ) return;
+		if ( this.loadList.length > 0 ) {
+			var prepData = this.loadList[ 0 ];
+			if ( ! Validator.isValid( prepData ) ) return;
 
-		this.loadObj( prepData );
+			this.loadList.shift();
+			this.loadObj( prepData );
+		}
 	};
 
-	OBJLoader2Example.prototype.registerCallbacks = function () {
+	OBJLoader2Example.prototype.registerCallbacks = function ( applyHere ) {
 		var scope = this;
-		var completedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.scene.add( sceneGraphBaseNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
@@ -109,10 +112,9 @@ var OBJLoader2Example = (function () {
 
 			return override;
 		};
-		var callbacks = this.objLoader.getCallbacks();
-		callbacks.registerCallbackProgress( this._reportProgress );
-		callbacks.registerCallbackCompletedLoading( completedLoading );
-		callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
+		applyHere.setCallbackOnProgress( this._reportProgress );
+		applyHere.setCallbackOnLoad( callbackOnLoad );
+		applyHere.setCallbackOnMeshLoaded( callbackMeshLoaded );
 	};
 
 	/**
@@ -126,35 +128,12 @@ var OBJLoader2Example = (function () {
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
-		var onLoad = function ( sceneGraphBaseNode, modelName ) {
-			console.log( 'Loading complete. Meshes were attached to: ' + sceneGraphBaseNode.name );
-			scope._reportProgress( '' );
-		};
-
-		var onProgress = function ( event, modelName ) {
-			if ( event.lengthComputable ) {
-
-				var percentComplete = event.loaded / event.total * 100;
-				var output = 'Download of "' + resourceObj.url + '": ' + Math.round( percentComplete ) + '%';
-				scope._reportProgress( output );
-			}
-		};
-
-		var onError = function ( event ) {
-			var output = 'Error of type "' + event.type + '" occurred when trying to load: ' + event.src;
-			scope._reportProgress( output );
-		};
-
 		if ( prepData.automatedRun ) {
 
 			scope.pivot.add( prepData.sceneGraphBaseNode );
 
 			scope.objLoader.init();
-			var callbacks = prepData.getCallbacks();
-			callbacks.registerCallbackCompletedLoading( onLoad );
-			callbacks.registerCallbackErrorWhileLoading( onError );
-			callbacks.registerCallbackProgress( onProgress );
-			scope.registerCallbacks();
+			scope.registerCallbacks( prepData.getCallbacks() );
 			scope.objLoader.run( prepData );
 
 		} else {
@@ -169,8 +148,8 @@ var OBJLoader2Example = (function () {
 				scope.objLoader.init();
 				scope.objLoader.setMaterials( materials );
 				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-				scope.registerCallbacks();
-				scope.objLoader.load( resourceObj.url, onLoad, onProgress, onError );
+				scope.registerCallbacks( scope.objLoader.getCallbacks() );
+				scope.objLoader.load( resourceObj.url );
 			};
 
 			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );

@@ -26,7 +26,7 @@ var MeshSpray = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.announceProgress( baseText, text );
+			scope.onProgress( baseText, text );
 		};
 		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
 		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
@@ -49,7 +49,7 @@ var MeshSpray = (function () {
 		console.time( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
-		this.meshProvider.setCallbacks( null, this.callbacks.meshLoaded, null );
+		this.meshProvider.setCallbacks( null, this.callbacks.onMeshLoaded, null );
 
 		var materialNames = [];
 		for ( var materialName in this.materials ) {
@@ -84,36 +84,24 @@ var MeshSpray = (function () {
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {
-		this.validated = false;
-		var index;
 		var callback;
-
 		if ( reason === 'complete' ) {
 
-			for ( index in this.callbacks.completedLoading ) {
-
-				callback = this.callbacks.completedLoading[ index ];
-				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-
-			}
+			callback = this.callbacks.onLoad;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.callbacks.errorWhileLoading ) {
-
-				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-
-			}
+			callback = this.callbacks.onError;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 		}
 		if ( reason === 'terminate' ) {
 
 			if ( this.meshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
-
 			console.log( 'Finalize is complete. Terminating application on request!' );
-
 			this.meshProvider._terminate();
+
 		}
 		console.timeEnd( 'MeshSpray' );
 	};

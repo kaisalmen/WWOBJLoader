@@ -85,8 +85,8 @@ var WWOBJLoader2Stage = (function () {
 			scope.reportProgress();
 		};
 		var callbacks = this.wwObjLoader2.getCallbacks();
-		callbacks.registerCallbackCompletedLoading( reloadAssetsProxy );
-		callbacks.registerCallbackProgress( this.reportProgress );
+		callbacks.setCallbackOnLoad( reloadAssetsProxy );
+		callbacks.setCallbackOnProgress( this.reportProgress );
 	};
 
 	WWOBJLoader2Stage.prototype.resizeDisplayGL = function () {

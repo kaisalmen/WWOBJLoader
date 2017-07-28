@@ -29,50 +29,33 @@ THREE.LoaderSupport.Validator = {
 
 /**
  * Callbacks utilized by functions working with WWLoader implementations
- *
- * @returns {
- *  {
- * 	 registerCallbackProgress: THREE.LoaderSupport.Callbacks.registerCallbackProgress,
- * 	 registerCallbackCompletedLoading: THREE.LoaderSupport.Callbacks.registerCallbackCompletedLoading,
- * 	 registerCallbackMeshLoaded: THREE.LoaderSupport.Callbacks.registerCallbackMeshLoaded,
- * 	 registerCallbackErrorWhileLoading: THREE.LoaderSupport.Callbacks.registerCallbackErrorWhileLoading,
- * 	 progress: null,
- * 	 completedLoading: null,
- * 	 errorWhileLoading: null,
- * 	 meshLoaded: null
- *  }
- * }
- * @constructor
+ * @class
  */
 THREE.LoaderSupport.Callbacks = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function Callbacks() {
-		this.progress = [];
-		this.completedLoading = [];
-		this.errorWhileLoading = [];
-		this.meshLoaded = [];
 	}
 
 	/**
 	 * Register callback function that is invoked by internal function "announceProgress" to print feedback.
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackProgress Callback function for described functionality
+	 * @param {callback} callbackOnProgress Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackProgress = function ( callbackProgress ) {
-		if ( Validator.isValid( callbackProgress ) ) this.progress.push( callbackProgress );
+	Callbacks.prototype.setCallbackOnProgress = function ( callbackOnProgress ) {
+		this.onProgress = Validator.verifyInput( callbackOnProgress, this.onProgress );
 	};
 
 	/**
 	 * Register callback function that is called once loading of the complete model is completed.
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackCompletedLoading Callback function for described functionality
+	 * @param {callback} callbackOnLoad Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackCompletedLoading = function ( callbackCompletedLoading ) {
-		if ( Validator.isValid( callbackCompletedLoading ) ) this.completedLoading.push( callbackCompletedLoading );
+	Callbacks.prototype.setCallbackOnLoad = function ( callbackOnLoad ) {
+		this.onLoad = Validator.verifyInput( callbackOnLoad, this.onLoad );
 	};
 
 	/**
@@ -80,20 +63,20 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 * Use {@link THREE.LoaderSupport.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackMeshLoaded Callback function for described functionality
+	 * @param {callback} callbackOnMeshLoaded Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackMeshLoaded = function ( callbackMeshLoaded ) {
-		if ( Validator.isValid( callbackMeshLoaded ) ) this.meshLoaded.push( callbackMeshLoaded );
+	Callbacks.prototype.setCallbackOnMeshLoaded = function ( callbackOnMeshLoaded ) {
+		this.onMeshLoaded = Validator.verifyInput( callbackOnMeshLoaded, this.onMeshLoaded );
 	};
 
 	/**
 	 * Report if an error prevented loading.
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackErrorWhileLoading Callback function for described functionality
+	 * @param {callback} callbackOnError Callback function for described functionality
 	 */
-	Callbacks.prototype.registerCallbackErrorWhileLoading = function ( callbackErrorWhileLoading ) {
-		if ( Validator.isValid( callbackErrorWhileLoading ) ) this.errorWhileLoading.push( callbackErrorWhileLoading );
+	Callbacks.prototype.setCallbackOnError = function ( callbackOnError ) {
+		this.onError = Validator.verifyInput( callbackOnError, this.onError );
 	};
 
 	/**
@@ -101,10 +84,10 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 */
 	Callbacks.prototype.clearAllCallbacks = function () {
-		this.progress = [];
-		this.completedLoading = [];
-		this.errorWhileLoading = [];
-		this.meshLoaded = [];
+		this.onProgress = null;
+		this.onLoad = null;
+		this.onError = null;
+		this.onMeshLoaded = null;
 	};
 
 	return Callbacks;
@@ -211,19 +194,14 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param baseText
 	 * @param text
 	 */
-	Commons.prototype.announceProgress = function ( baseText, text ) {
-		var output = Validator.isValid( baseText ) ? baseText: "";
-		output = Validator.isValid( text ) ? output + " " + text : output;
+	Commons.prototype.onProgress = function ( baseText, text ) {
+		var content = Validator.isValid( baseText ) ? baseText: '';
+		content = Validator.isValid( text ) ? content + ' ' + text : content;
 
-		var callbackProgress;
-		for ( var index in this.callbacks.progress ) {
+		var callbackOnProgress = this.callbacks.onProgress;
+		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName );
 
-			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output, this.modelName );
-
-		}
-
-		if ( this.debug ) console.log( output );
+		if ( this.debug ) console.log( content );
 	};
 
 	return Commons;

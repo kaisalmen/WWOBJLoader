@@ -31,7 +31,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 			scope._finalize( reason );
 		};
 		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.announceProgress( baseText, text );
+			scope.onProgress( baseText, text );
 		};
 		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
 		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
@@ -99,7 +99,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-		this.meshProvider.setCallbacks( null, this.callbacks.meshLoaded, null );
+		this.meshProvider.setCallbacks( null, this.callbacks.onMeshLoaded, null );
 
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
@@ -115,7 +115,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var percentComplete = 0;
 				var onLoad = function ( arrayBuffer ) {
 
-					scope.announceProgress( 'Running web worker!' );
+					scope.onProgress( 'Running web worker!' );
 					available.obj.content = new Uint8Array( arrayBuffer );
 
 					scope.parse( available.obj.content );
@@ -130,7 +130,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 						refPercentComplete = percentComplete;
 						var output = 'Download of "' + available.obj.url + '": ' + percentComplete + '%';
 						console.log( output );
-						scope.announceProgress( output );
+						scope.onProgress( output );
 
 					}
 				};
@@ -138,7 +138,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + available.obj.url + '"';
 					console.error( output + ': ' + event );
-					scope.announceProgress( output );
+					scope.onProgress( output );
 					scope._finalize( 'error' );
 
 				};
@@ -184,55 +184,37 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype._finalize = function ( reason ) {
-		var index;
 		var callback;
-
 		if ( reason === 'complete' ) {
 
-			for ( index in this.callbacks.completedLoading ) {
-
-				callback = this.callbacks.completedLoading[ index ];
-				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-
-			}
+			callback = this.callbacks.onLoad;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 		} else if ( reason === 'error' ) {
 
-			for ( index in this.callbacks.errorWhileLoading ) {
-
-				callback = this.callbacks.errorWhileLoading[ index ];
-				callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-
-			}
+			callback = this.callbacks.onError;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
 
 		}
 		if ( reason === 'terminate' ) {
 
 			if ( this.meshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
-
 			console.log( 'Finalize is complete. Terminating application on request!' );
-
 			this.meshProvider._terminate();
 
-			this.fileLoader = null;
 		}
 
 		console.timeEnd( 'WWOBJLoader2' );
 	};
 
-	WWOBJLoader2.prototype.announceProgress = function ( baseText, text ) {
-		var output = Validator.isValid( baseText ) ? baseText: "";
-		output = Validator.isValid( text ) ? output + " " + text : output;
+	WWOBJLoader2.prototype.onProgress = function ( baseText, text ) {
+		var content = Validator.isValid( baseText ) ? baseText: "";
+		content = Validator.isValid( text ) ? content + " " + text : content;
 
-		var callbackProgress;
-		for ( var index in this.callbacks.progress ) {
+		var callbackOnProgress = this.callbacks.onProgress;
+		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName, this.instanceNo  );
 
-			callbackProgress = this.callbacks.progress[ index ];
-			callbackProgress( output, this.modelName, this.instanceNo );
-
-		}
-
-		if ( this.debug ) console.log( output );
+		if ( this.debug ) console.log( content );
 	};
 
 	WWOBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {

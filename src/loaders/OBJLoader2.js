@@ -26,10 +26,10 @@ THREE.OBJLoader2 = (function () {
 		this.materialPerSmoothingGroup = false;
 
 		this.fileLoader = new THREE.FileLoader( this.manager );
-		this.meshCreator = new MeshCreator( this.callbacks.meshLoaded );
+		this.meshCreator = new MeshCreator();
 		var scope = this;
 		var announceProgressScoped = function ( message ) {
-			scope.announceProgress( message );
+			scope.onProgress( message );
 		};
 		this.parser = new Parser( this.meshCreator, announceProgressScoped );
 	};
@@ -94,9 +94,9 @@ THREE.OBJLoader2 = (function () {
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
 
 		prepData.addResource( resource );
-		prepData.callbacks.registerCallbackCompletedLoading( onLoad );
-		prepData.callbacks.registerCallbackErrorWhileLoading( onError );
-		prepData.callbacks.registerCallbackProgress( onProgress );
+		prepData.callbacks.setCallbackOnLoad( onLoad );
+		prepData.callbacks.setCallbackOnError( onError );
+		prepData.callbacks.setCallbackOnProgress( onProgress );
 
 		this.run( prepData );
 	};
@@ -110,7 +110,6 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.run = function ( prepData ) {
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-
 
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
@@ -140,7 +139,7 @@ THREE.OBJLoader2 = (function () {
 						refPercentComplete = percentComplete;
 						var output = 'Download of "' + available.obj.url + '": ' + percentComplete + '%';
 						console.log( output );
-						scope.announceProgress( output );
+						scope.onProgress( output );
 
 					}
 				};
@@ -148,7 +147,7 @@ THREE.OBJLoader2 = (function () {
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + available.obj.url + '"';
 					console.error( output + ': ' + event );
-					scope.announceProgress( output );
+					scope.onProgress( output );
 					scope._finalize( 'error' );
 
 				};
@@ -167,21 +166,15 @@ THREE.OBJLoader2 = (function () {
 		THREE.LoaderSupport.Commons.prototype._applyPrepData.call( this, prepData );
 
 		if ( Validator.isValid( prepData ) ) {
-			var name;
-			var callbacks = prepData.callbacks;
-			for ( name in callbacks.completedLoading ) {
-				this.callbacks.registerCallbackCompletedLoading( callbacks.completedLoading[ name ] );
-			}
-			for ( name in callbacks.errorWhileLoading ) {
-				this.callbacks.registerCallbackErrorWhileLoading( callbacks.errorWhileLoading[ name ] );
-			}
-			for ( name in callbacks.progress ) {
-				this.callbacks.registerCallbackProgress( callbacks.progress[ name ] );
-			}
-			for ( name in callbacks.meshLoaded ) {
-				this.callbacks.registerCallbackMeshLoaded( callbacks.meshLoaded[ name ] );
-			}
+
+			var callbacks = prepData.getCallbacks();
+			this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+			this.callbacks.setCallbackOnError( callbacks.onError );
+			this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+			this.callbacks.setCallbackOnMeshLoaded( callbacks.onMeshLoaded );
+
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
+
 		}
 	};
 
@@ -251,6 +244,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
 
+		this.meshCreator.setCallbackOnMeshLoaded( this.callbacks.onMeshLoaded );
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
@@ -283,13 +277,9 @@ THREE.OBJLoader2 = (function () {
 
 		this.parser.finalize();
 
-		var callback;
-		for ( var index in this.callbacks.completedLoading ) {
+		var callback = this.callbacks.onLoad;
+		if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName );
 
-			callback = this.callbacks.completedLoading[ index ];
-			callback( this.sceneGraphBaseNode, this.modelName );
-
-		}
 	};
 
 	/**
@@ -600,7 +590,7 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
 			var result = this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug );
 			this.inputObjectCount++;
-			this.announceProgress( result.message );
+			this.onProgress( result.message );
 
 			this.rawObject = this.rawObject.newInstanceFromObject( objectName, groupName );
 		};
@@ -618,16 +608,16 @@ THREE.OBJLoader2 = (function () {
 				this.rawObject.pushGroup( groupName );
 
 			}
-			this.announceProgress( result.message );
+			this.onProgress( result.message );
 		};
 
 		Parser.prototype.finalize = function () {
 			var result = Validator.isValid( this.rawObject ) ? this.rawObject.finalize( this.meshCreator, this.inputObjectCount, this.debug ) : '';
 			this.inputObjectCount++;
-			this.announceProgress( result.message );
+			this.onProgress( result.message );
 		};
 
-		Parser.prototype.announceProgress = function ( text ) {
+		Parser.prototype.onProgress = function ( text ) {
 			if ( Validator.isValid( text ) && Validator.isValid( this.progressCallback) ) this.progressCallback( text );
 		};
 
@@ -997,13 +987,17 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator( callbackMeshLoaded ) {
+		function MeshCreator() {
 			this.sceneGraphBaseNode = null;
 			this.setMaterials();
 			this.debug = false;
 			this.globalObjectCount = 1;
-			this.callbackMeshLoaded = callbackMeshLoaded;
+			this.callbackOnMeshLoaded = null;
 		}
+
+		MeshCreator.prototype.setCallbackOnMeshLoaded = function ( callbackOnMeshLoaded ) {
+			this.callbackOnMeshLoaded = callbackOnMeshLoaded;
+		};
 
 		MeshCreator.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 			this.sceneGraphBaseNode = sceneGraphBaseNode;
@@ -1179,31 +1173,17 @@ THREE.OBJLoader2 = (function () {
 			var meshName = rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName;
 			var meshes = [];
 			var mesh;
-			if ( this.callbackMeshLoaded.length > 0 ) {
+			var callbackOnMeshLoadedResult;
+			if ( Validator.isValid( this.callbackOnMeshLoaded ) ) {
 
-				var callbackMeshLoaded;
-				var callbackMeshLoadedResult;
-				for ( var index in this.callbackMeshLoaded ) {
+				callbackOnMeshLoadedResult = this.callbackOnMeshLoaded( meshName, bufferGeometry, material );
+				if ( Validator.isValid( callbackOnMeshLoadedResult ) && ! callbackOnMeshLoadedResult.isDisregardMesh() ) {
 
-					callbackMeshLoaded = this.callbackMeshLoaded[ index ];
-					callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+					if ( callbackOnMeshLoadedResult.providesAlteredMeshes() ) {
 
-					if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+						for ( var i in callbackOnMeshLoadedResult.meshes ) {
 
-						if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
-
-						if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
-
-							for ( var i in callbackMeshLoadedResult.meshes ) {
-
-								meshes.push( callbackMeshLoadedResult.meshes[ i ] );
-							}
-
-						} else {
-
-							mesh = new THREE.Mesh( bufferGeometry, material );
-							mesh.name = meshName;
-							meshes.push( mesh );
+							meshes.push( callbackOnMeshLoadedResult.meshes[ i ] );
 
 						}
 
@@ -1214,6 +1194,12 @@ THREE.OBJLoader2 = (function () {
 						meshes.push( mesh );
 
 					}
+
+				} else {
+
+					mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+					meshes.push( mesh );
 
 				}
 

@@ -55,7 +55,7 @@
 			this.wwDirector.setCrossOrigin( 'anonymous' );
 
 			var scope = this;
-			var callbackCompletedLoading = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 				scope.app.scene.add( sceneGraphBaseNode );
 				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
 				console.log( msg );
@@ -94,9 +94,9 @@
 				prepData.dimension = Math.max( Math.random() * 500, 100 );
 
 				callbacks = prepData.getCallbacks();
-				callbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
-				callbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
-				callbacks.registerCallbackProgress( reportProgress );
+				callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
+				callbacks.setCallbackOnLoad( callbackOnLoad );
+				callbacks.setCallbackOnProgress( reportProgress );
 
 				this.wwDirector.enqueueForRun( prepData );
 			}

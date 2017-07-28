@@ -37,9 +37,9 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
 
 		this.callbacks = {
-			announceProgress: null,
-			meshLoaded: [],
-			completedLoading: null
+			onProgress: null,
+			onMeshLoaded: null,
+			onLoad: null
 		};
 
 		if ( forceWorkerReload ) {
@@ -154,10 +154,10 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		return WWRunner;
 	})();
 
-	MeshProvider.prototype.setCallbacks = function ( callbackAnnounceProgress, callbacksMeshLoaded, callbackCompletedLoading  ) {
-		this.callbacks.announceProgress = Validator.isValid( callbackAnnounceProgress ) ? callbackAnnounceProgress : this.callbacks.announceProgress;
-		this.callbacks.meshLoaded = Validator.isValid( callbacksMeshLoaded ) ? callbacksMeshLoaded : this.callbacks.meshLoaded;
-		this.callbacks.completedLoading = Validator.isValid( callbackCompletedLoading ) ? callbackCompletedLoading : this.callbacks.completedLoading;
+	MeshProvider.prototype.setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad  ) {
+		this.callbacks.onProgress = Validator.isValid( callbackOnProgress ) ? callbackOnProgress : this.callbacks.onProgress;
+		this.callbacks.onMeshLoaded = Validator.isValid( callbackOnMeshLoaded ) ? callbackOnMeshLoaded : this.callbacks.meshLoaded;
+		this.callbacks.onLoad = Validator.isValid( callbackOnLoad ) ? callbackOnLoad : this.callbacks.onLoad;
 	};
 
 	MeshProvider.prototype.clearAllCallbacks = function () {
@@ -276,33 +276,21 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 					}
 
 				}
-				var callbackMeshLoaded;
-				var callbackMeshLoadedResult;
+
 				var meshes = [];
 				var mesh;
-				if ( this.callbacks.meshLoaded.length > 0 ) {
+				var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
+				var callbackOnMeshLoadedResult;
+				if ( Validator.isValid( callbackOnMeshLoaded ) ) {
 
-					for ( var index in this.callbacks.meshLoaded ) {
+					callbackOnMeshLoadedResult = callbackOnMeshLoaded( meshName, bufferGeometry, material );
+					if ( Validator.isValid( callbackOnMeshLoadedResult ) && ! callbackOnMeshLoadedResult.isDisregardMesh() ) {
 
-						callbackMeshLoaded = this.callbacks.meshLoaded[ index ];
-						callbackMeshLoadedResult = callbackMeshLoaded( meshName, bufferGeometry, material );
+						if ( callbackOnMeshLoadedResult.providesAlteredMeshes() ) {
 
-						if ( Validator.isValid( callbackMeshLoadedResult ) ) {
+							for ( var i in callbackOnMeshLoadedResult.meshes ) {
 
-							if ( callbackMeshLoadedResult.isDisregardMesh() ) continue;
-
-							if ( callbackMeshLoadedResult.providesAlteredMeshes() ) {
-
-								for ( var i in callbackMeshLoadedResult.meshes ) {
-
-									meshes.push( callbackMeshLoadedResult.meshes[ i ] );
-								}
-
-							} else {
-
-								mesh = new THREE.Mesh( bufferGeometry, material );
-								mesh.name = meshName;
-								meshes.push( mesh );
+								meshes.push( callbackOnMeshLoadedResult.meshes[ i ] );
 
 							}
 
@@ -313,6 +301,12 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 							meshes.push( mesh );
 
 						}
+
+					} else {
+
+						mesh = new THREE.Mesh( bufferGeometry, material );
+						mesh.name = meshName;
+						meshes.push( mesh );
 
 					}
 
@@ -342,12 +336,12 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 					}
 
-					this.callbacks.announceProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
+					this.callbacks.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
 					this.counter++;
 
 				} else {
 
-					this.callbacks.announceProgress(  'Not adding mesh: ' + meshName );
+					this.callbacks.onProgress(  'Not adding mesh: ' + meshName );
 
 				}
 				break;
@@ -364,7 +358,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 				}
 
-				if ( Validator.isValid( payload.msg ) ) this.callbacks.announceProgress( payload.msg );
+				if ( Validator.isValid( payload.msg ) ) this.callbacks.onProgress( payload.msg );
 
 				this._completedeRun();
 				break;
@@ -378,7 +372,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 	MeshProvider.prototype._completedeRun = function () {
 		this.running = false;
-		this.callbacks.completedLoading( 'complete' );
+		this.callbacks.onLoad( 'complete' );
 	};
 
 	return MeshProvider;
