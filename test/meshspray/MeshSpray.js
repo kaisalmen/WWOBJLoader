@@ -123,8 +123,7 @@ var MeshSpray = (function () {
 				this.debug = payload.params.debug;
 				this.dimension = Validator.verifyInput( payload.params.dimension, 200 );
 				this.quantity = Validator.verifyInput( payload.params.quantity, 1 );
-				this.materials = Validator.verifyInput( payload.materials.materialNames, this.materials );
-				this.materials = Validator.verifyInput( this.materials, { materials: [] } );
+				this.materialNames = Validator.verifyInput( payload.materials.materialNames, [] );
 
 				this._buildMesh();
 
@@ -146,7 +145,7 @@ var MeshSpray = (function () {
 					vertexColors: false,
 					default: false
 				};
-				if ( this.materials[ materialDescription.name ] === null ) {
+				if ( this.materialNames[ materialDescription.name ] === null ) {
 
 					materialDescription.default = true;
 					console.warn( 'object_group "' + materialDescription.name + '" was defined without material! Assigning "defaultMaterial".' );

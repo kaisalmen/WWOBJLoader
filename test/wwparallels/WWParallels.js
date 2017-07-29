@@ -136,7 +136,6 @@ var WWParallels = (function () {
 
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
-			scope.scene.add( sceneGraphBaseNode );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
 			console.log( msg );
@@ -185,8 +184,6 @@ var WWParallels = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-
-		callbacks = prepData.getCallbacks();
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
@@ -197,7 +194,6 @@ var WWParallels = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
 		prepData.scale = 400.0;
-
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
@@ -232,7 +228,7 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random()
 			);
 			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
-
+			this.scene.add( pivot );
 			modelPrepData.setSceneGraphBaseNode( pivot );
 			modelPrepData.setStreamMeshes( streamMeshes );
 

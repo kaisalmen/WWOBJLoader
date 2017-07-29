@@ -215,14 +215,15 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
 		for ( var i = 0; i < length; i++ ) {
 
-			this._kickWorkerRun( this.workerDescription.workers[ i ], this.instructionQueue[ 0 ] );
+			this._kickWorkerRun( this.workerDescription.workers[ i ], this.instructionQueue[ 0 ], i );
 			this.instructionQueue.shift();
 
 		}
 	};
 
-	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData ) {
+	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
 		worker.init();
+		worker.setInstanceNo( instanceNo );
 
 		var scope = this;
 		var workerCallbacks = worker.getCallbacks();
@@ -237,7 +238,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			if ( Validator.isValid( nextPrepData ) ) {
 
 				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-				scope._kickWorkerRun( worker, nextPrepData );
+				scope._kickWorkerRun( worker, nextPrepData, worker.getInstanceNo() );
 				scope.instructionQueue.shift();
 
 			} else if ( scope.instructionQueue.length === 0 ) {
@@ -309,7 +310,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		worker.run( prepData );
 	};
 
-	LoaderDirector.prototype._buildWorker = function ( instanceNo ) {
+	LoaderDirector.prototype._buildWorker = function () {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 
@@ -322,9 +323,6 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		if ( worker.hasOwnProperty( 'run' ) && typeof worker.run !== 'function'  ) throw classDef + ' has no function "run".';
 		if ( worker.hasOwnProperty( '_finalize' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "_finalize".';
 
-		worker.init();
-
-		worker.setInstanceNo( instanceNo );
 		this.workerDescription.workers.push( worker );
 		return worker;
 	};

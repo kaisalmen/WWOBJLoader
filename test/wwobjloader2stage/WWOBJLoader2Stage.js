@@ -26,13 +26,7 @@ var WWOBJLoader2Stage = (function () {
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
-		// following settings are default, contained for easy play-around
-		this.wwObjLoader2.setDebug( false );
-		this.wwObjLoader2.setMaterialPerSmoothingGroup( false );
-
 		this.controls = null;
-
 		this.cube = null;
 
 		this.loadCounter = 0;
@@ -77,18 +71,6 @@ var WWOBJLoader2Stage = (function () {
 		this.scene.add( this.cube );
 	};
 
-	WWOBJLoader2Stage.prototype.initPostGL = function () {
-		var scope = this;
-
-		var reloadAssetsProxy = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			scope.reloadAssets();
-			scope.reportProgress();
-		};
-		var callbacks = this.wwObjLoader2.getCallbacks();
-		callbacks.setCallbackOnLoad( reloadAssetsProxy );
-		callbacks.setCallbackOnProgress( this.reportProgress );
-	};
-
 	WWOBJLoader2Stage.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 
@@ -124,6 +106,17 @@ var WWOBJLoader2Stage = (function () {
 		this.cube.rotation.y += 0.05;
 
 		this.renderer.render( this.scene, this.camera );
+	};
+
+	WWOBJLoader2Stage.prototype.registerCallbacks = function () {
+		var scope = this;
+		var reloadAssetsProxy = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			scope.reloadAssets();
+			scope.reportProgress();
+		};
+		var callbacks = this.wwObjLoader2.getCallbacks();
+		callbacks.setCallbackOnLoad( reloadAssetsProxy );
+		callbacks.setCallbackOnProgress( this.reportProgress );
 	};
 
 	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
@@ -222,6 +215,8 @@ var WWOBJLoader2Stage = (function () {
 					scope.reportProgress( '' );
 					prepData.resources[ 1 ].content = data;
 
+					scope.wwObjLoader2.init();
+					scope.registerCallbacks();
 					scope.wwObjLoader2.run( prepData );
 				};
 
@@ -254,6 +249,8 @@ var WWOBJLoader2Stage = (function () {
 			} else {
 
 				scope.reportProgress( '' );
+				scope.wwObjLoader2.init();
+				scope.registerCallbacks();
 				scope.wwObjLoader2.run( prepData );
 
 			}

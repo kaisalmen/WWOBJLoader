@@ -257,7 +257,7 @@ THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
 
 
 /**
- * A resource description used by {@link THREE.LoaderSupport.WW.PrepData} and others.
+ * A resource description used by {@link THREE.LoaderSupport.PrepData} and others.
  * @class
  *
  * @param {string} url URL to the file
@@ -338,7 +338,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * {@link THREE.Object3D} where meshes will be attached.
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
 	 */
@@ -348,7 +348,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Singles meshes are directly integrated into scene when loaded or later.
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @param {boolean} streamMeshes=true Default is true
 	 */
@@ -358,7 +358,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false Default is false
 	 */
@@ -368,7 +368,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Request termination of web worker and free local resources after execution.
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @param {boolean} requestTerminate=false Default is false
 	 */
@@ -388,7 +388,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @returns {THREE.LoaderSupport.Callbacks}
 	 */
@@ -408,9 +408,9 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Add a resource description
-	 * @memberOf THREE.LoaderSupport.WW.PrepData
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {THREE.LoaderSupport.WW.PrepDataResource} The resource description
+	 * @param {THREE.LoaderSupport.ResourceDescriptor} The resource description
 	 */
 	PrepData.prototype.addResource = function ( resource ) {
 		this.resources.push( resource );
