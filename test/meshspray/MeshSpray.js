@@ -29,8 +29,8 @@ var MeshSpray = (function () {
 		var scopeFuncComplete = function ( reason ) {
 			scope._finalize( reason );
 		};
-		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider( scopeBuilderFunc, scopeFuncComplete ) );
-		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( scopeBuilderFunc, scopeFuncComplete ) );
+		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
 	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
@@ -51,7 +51,7 @@ var MeshSpray = (function () {
 		this._applyPrepData( prepData );
 		this.setMaterials( this.materials );
 
-		this.meshProvider.run(
+		this.workerSupport.run(
 			{
 				cmd: 'run',
 				params: {
@@ -93,9 +93,9 @@ var MeshSpray = (function () {
 		}
 		if ( reason === 'terminate' ) {
 
-			if ( this.meshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+			if ( this.workerSupport.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 			console.log( 'Finalize is complete. Terminating application on request!' );
-			this.meshProvider._terminate();
+			this.workerSupport._terminate();
 
 		}
 		console.timeEnd( 'MeshSpray' );

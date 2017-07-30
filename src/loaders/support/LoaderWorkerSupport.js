@@ -1,13 +1,13 @@
-if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
+if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
 
-THREE.LoaderSupport.WW.MeshProvider = (function () {
+THREE.LoaderSupport.WorkerSupport = (function () {
 
-	var WW_MESH_PROVIDER_VERSION = '1.0.0-dev';
+	var WORKER_SUPPORT_VERSION = '1.0.0-dev';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function MeshProvider( builderFunction, onLoad ) {
-		console.log( "Using THREE.LoaderSupport.WW.MeshProvider version: " + WW_MESH_PROVIDER_VERSION );
+	function WorkerSupport( builderFunction, onLoad ) {
+		console.log( "Using THREE.LoaderSupport.WorkerSupport version: " + WORKER_SUPPORT_VERSION );
 
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
@@ -23,7 +23,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		};
 	}
 
-	MeshProvider.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
+	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
 		this.running = false;
 
 		if ( forceWorkerReload ) {
@@ -139,7 +139,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		return WWRunner;
 	})();
 
-	MeshProvider.prototype._terminate = function () {
+	WorkerSupport.prototype._terminate = function () {
 		if ( Validator.isValid( this.worker ) ) {
 			this.worker.terminate();
 		}
@@ -147,15 +147,14 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.workerCode = null;
 	};
 
-	MeshProvider.prototype.run = function ( messageObject ) {
+	WorkerSupport.prototype.run = function ( messageObject ) {
 		if ( Validator.isValid( this.worker ) ) {
 			this.running = true;
 			this.worker.postMessage( messageObject );
 		}
 	};
 
-
-	MeshProvider.prototype._receiveWorkerMessage = function ( event ) {
+	WorkerSupport.prototype._receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
@@ -175,5 +174,5 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		}
 	};
 
-	return MeshProvider;
+	return WorkerSupport;
 })();

@@ -499,7 +499,7 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 
 
 /**
- * Base class for configuration of prepareRun when using {@link THREE.LoaderSupport.WW.MeshProvider}.
+ * Base class for configuration of prepareRun when using {@link THREE.LoaderSupport.WorkerSupport}.
  * @class
  */
 THREE.LoaderSupport.PrepData = (function () {

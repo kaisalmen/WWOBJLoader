@@ -54,8 +54,7 @@ gulp.task( 'bundle-wwloader-support', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
-			'src/loaders/support/WWMeshProvider.js',
-			'src/loaders/support/WWLoaderCommons.js',
+			'src/loaders/support/LoaderWorkerSupport.js',
 			'src/loaders/support/WWLoaderDirector.js'
 		]
 	)
@@ -64,8 +63,8 @@ gulp.task( 'bundle-wwloader-support', function () {
 	.pipe( replace( {
 		patterns: [
 			{
-				match: /var WW_MESH_PROVIDER_VERSION.*/g,
-				replacement: "var WW_MESH_PROVIDER_VERSION = '"+ packageContent.versions.mesh_provider + "';"
+				match: /var WORKER_SUPPORT_VERSION.*/g,
+				replacement: "var WORKER_SUPPORT_VERSION = '"+ packageContent.versions.mesh_provider + "';"
 			},
 			{
 				match: /var WW_LOADER_DIRECTOR_VERSION.*/g,
@@ -142,8 +141,7 @@ gulp.task( 'create-docs', function ( cb ) {
 			[
 				'README.md',
 				'src/loaders/support/LoaderCommons.js',
-				'src/loaders/support/WWLoaderCommons.js',
-				'src/loaders/support/WWMeshProvider.js',
+				'src/loaders/support/LoaderWorkerSupport.js',
 				'src/loaders/support/WWLoaderDirector.js',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/WWOBJLoader2.js'
@@ -308,8 +306,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -365,8 +362,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
@@ -423,8 +419,7 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -480,8 +475,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWMeshProvider.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderCommons.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/WWLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WWOBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";

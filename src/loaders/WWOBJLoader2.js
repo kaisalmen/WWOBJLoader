@@ -34,8 +34,8 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		var scopeFuncComplete = function ( reason ) {
 			scope._finalize( reason );
 		};
-		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider( scopeBuilderFunc, scopeFuncComplete ) );
-		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( scopeBuilderFunc, scopeFuncComplete ) );
+		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
 	};
 
 	/**
@@ -161,7 +161,7 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
-		this.meshProvider.run(
+		this.workerSupport.run(
 			{
 				cmd: 'run',
 				params: {
@@ -195,9 +195,9 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		}
 		if ( reason === 'terminate' ) {
 
-			if ( this.meshProvider.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
+			if ( this.workerSupport.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
 			console.log( 'Finalize is complete. Terminating application on request!' );
-			this.meshProvider._terminate();
+			this.workerSupport._terminate();
 
 		}
 

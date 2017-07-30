@@ -1,3 +1,5 @@
+if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
+
 /**
  * Template class for all web worker based loaders that shall be directed.
  * {@link THREE.LoaderSupport.WW.LoaderDirector} checks for available methods
@@ -50,7 +52,7 @@ THREE.LoaderSupport.WW.DirectableLoader = (function () {
 	};
 
 	/**
-	 * Function is called by {@link THREE.LoaderSupport.WW.MeshProvider} when worker is constructed.
+	 * Function is called by {@link THREE.LoaderSupport.WorkerSupport} when worker is constructed.
 	 *
 	 * @param {string} funcBuildObject
 	 * @param {string} funcBuildSingelton
@@ -339,7 +341,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			worker = this.workerDescription.workers[ i ];
 			worker.setRequestTerminate( true );
 
-			if ( ! worker.meshProvider.running ) {
+			if ( ! worker.workerSupport.running ) {
 				console.log( 'Triggered finalize with "termiante" directly.' );
 				worker._finalize( 'terminate' );
 			}
