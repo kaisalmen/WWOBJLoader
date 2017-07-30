@@ -21,10 +21,9 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype.init = function ( manager ) {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
-
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
-		this.materialPerSmoothingGroup = false;
 
+		this.materialPerSmoothingGroup = false;
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.meshCreator = new MeshCreator();
 		var scope = this;
@@ -272,11 +271,12 @@ THREE.OBJLoader2 = (function () {
 		}
 	};
 
-	OBJLoader2.prototype._finalize = function () {
+	OBJLoader2.prototype._finalize = function ( reason, message ) {
 		console.log( 'Global output object count: ' + this.meshCreator.globalObjectCount );
 
 		this.parser.finalize();
 
+		this.builderComplete( message );
 		var callback = this.callbacks.onLoad;
 		if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName );
 

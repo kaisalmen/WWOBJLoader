@@ -6,7 +6,7 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function MeshProvider() {
+	function MeshProvider( builderFunction, onLoad ) {
 		console.log( "Using THREE.LoaderSupport.WW.MeshProvider version: " + WW_MESH_PROVIDER_VERSION );
 
 		// check worker support first
@@ -16,36 +16,21 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
-		this.counter = 0;
+
+		this.callbacks = {
+			builder: builderFunction,
+			onLoad: onLoad
+		};
 	}
 
 	MeshProvider.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
-		this.meshStore = [];
-
 		this.running = false;
-
-		this.materials = [];
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		this.materials[ defaultMaterial.name ] = defaultMaterial;
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
-
-		this.callbacks = {
-			onProgress: null,
-			onMeshLoaded: null,
-			onLoad: null
-		};
 
 		if ( forceWorkerReload ) {
 			this.worker = null;
 			this.workerCode = null;
-			this.counter = 0;
+			this.callbacks.builder = null;
+			this.callbacks.onLoad = null;
 		}
 
 		if ( ! Validator.isValid( this.worker ) ) {
@@ -154,16 +139,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		return WWRunner;
 	})();
 
-	MeshProvider.prototype.setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad  ) {
-		this.callbacks.onProgress = Validator.isValid( callbackOnProgress ) ? callbackOnProgress : this.callbacks.onProgress;
-		this.callbacks.onMeshLoaded = Validator.isValid( callbackOnMeshLoaded ) ? callbackOnMeshLoaded : this.callbacks.meshLoaded;
-		this.callbacks.onLoad = Validator.isValid( callbackOnLoad ) ? callbackOnLoad : this.callbacks.onLoad;
-	};
-
-	MeshProvider.prototype.clearAllCallbacks = function () {
-		this.setCallbacks();
-	};
-
 	MeshProvider.prototype._terminate = function () {
 		if ( Validator.isValid( this.worker ) ) {
 			this.worker.terminate();
@@ -172,195 +147,25 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 		this.workerCode = null;
 	};
 
-	MeshProvider.prototype.addMaterials = function ( materials ) {
-		if ( Validator.isValid( materials ) ) {
-			for ( var name in materials ) {
-				this.materials[ name ] = materials[ name ];
-			}
-		}
-	};
-
-	MeshProvider.prototype.postMessage = function ( messageObject ) {
+	MeshProvider.prototype.run = function ( messageObject ) {
 		if ( Validator.isValid( this.worker ) ) {
+			this.running = true;
 			this.worker.postMessage( messageObject );
 		}
 	};
 
-	MeshProvider.prototype.prepareRun = function ( sceneGraphBaseNode, streamMeshes ) {
-		this.running = true;
-		this.sceneGraphBaseNode = sceneGraphBaseNode;
-		this.streamMeshes = streamMeshes !== false;
-
-		if ( ! this.streamMeshes ) this.meshStore = [];
-	};
 
 	MeshProvider.prototype._receiveWorkerMessage = function ( event ) {
 		var payload = event.data;
 
 		switch ( payload.cmd ) {
 			case 'meshData':
-
-				var meshName = payload.params.meshName;
-
-				var bufferGeometry = new THREE.BufferGeometry();
-				bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.buffers.vertices ), 3 ) );
-				var haveVertexColors = Validator.isValid( payload.buffers.colors );
-				if ( haveVertexColors ) {
-
-					bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.buffers.colors ), 3 ) );
-
-				}
-				if ( Validator.isValid( payload.buffers.normals ) ) {
-
-					bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.buffers.normals ), 3 ) );
-
-				} else {
-
-					bufferGeometry.computeVertexNormals();
-
-				}
-				if ( Validator.isValid( payload.buffers.uvs ) ) {
-
-					bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.buffers.uvs ), 2 ) );
-
-				}
-
-				var materialDescriptions = payload.materials.materialDescriptions;
-				var materialDescription;
-				var material;
-				var materialName;
-				var createMultiMaterial = payload.materials.multiMaterial;
-				var multiMaterials = [];
-
-				var key;
-				for ( key in materialDescriptions ) {
-
-					materialDescription = materialDescriptions[ key ];
-					material = this.materials[ materialDescription.name ];
-					material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
-					if ( ! material ) material = this.materials[ 'defaultMaterial' ];
-
-					if ( materialDescription.default ) {
-
-						material = this.materials[ 'defaultMaterial' ];
-
-					} else if ( materialDescription.flat ) {
-
-						materialName = material.name + '_flat';
-						var materialClone = this.materials[ materialName ];
-						if ( ! materialClone ) {
-
-							materialClone = material.clone();
-							materialClone.name = materialName;
-							materialClone.shading = THREE.FlatShading;
-							this.materials[ materialName ] = name;
-
-						}
-
-					}
-
-					if ( materialDescription.vertexColors ) material.vertexColors = THREE.VertexColors;
-					if ( createMultiMaterial ) multiMaterials.push( material );
-
-				}
-				if ( createMultiMaterial ) {
-
-					material = multiMaterials;
-					var materialGroups = payload.materials.materialGroups;
-					var materialGroup;
-					for ( key in materialGroups ) {
-
-						materialGroup = materialGroups[ key ];
-						bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
-
-					}
-
-				}
-
-				var meshes = [];
-				var mesh;
-				var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
-				var callbackOnMeshLoadedResult;
-				if ( Validator.isValid( callbackOnMeshLoaded ) ) {
-
-					callbackOnMeshLoadedResult = callbackOnMeshLoaded( meshName, bufferGeometry, material );
-					if ( Validator.isValid( callbackOnMeshLoadedResult ) && ! callbackOnMeshLoadedResult.isDisregardMesh() ) {
-
-						if ( callbackOnMeshLoadedResult.providesAlteredMeshes() ) {
-
-							for ( var i in callbackOnMeshLoadedResult.meshes ) {
-
-								meshes.push( callbackOnMeshLoadedResult.meshes[ i ] );
-
-							}
-
-						} else {
-
-							mesh = new THREE.Mesh( bufferGeometry, material );
-							mesh.name = meshName;
-							meshes.push( mesh );
-
-						}
-
-					} else {
-
-						mesh = new THREE.Mesh( bufferGeometry, material );
-						mesh.name = meshName;
-						meshes.push( mesh );
-
-					}
-
-				} else {
-
-					mesh = new THREE.Mesh( bufferGeometry, material );
-					mesh.name = meshName;
-					meshes.push( mesh );
-
-				}
-				if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
-
-					var meshNames = [];
-					for ( var i in meshes ) {
-
-						mesh = meshes[ i ];
-						if ( this.streamMeshes ) {
-
-							this.sceneGraphBaseNode.add( mesh );
-
-						} else {
-
-							this.meshStore.push( mesh );
-
-						}
-						meshNames[ i ] = mesh.name;
-
-					}
-
-					this.callbacks.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh (' + this.counter + '): ' + meshName );
-					this.counter++;
-
-				} else {
-
-					this.callbacks.onProgress(  'Not adding mesh: ' + meshName );
-
-				}
+				this.callbacks.builder( payload );
 				break;
 
 			case 'complete':
-
-				if ( ! this.streamMeshes ) {
-
-					for ( var meshStoreKey in this.meshStore ) {
-
-						if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
-
-					}
-
-				}
-
-				if ( Validator.isValid( payload.msg ) ) this.callbacks.onProgress( payload.msg );
-
-				this._completedeRun();
+				this.callbacks.onLoad( 'complete', payload.msg );
+				this.running = false;
 				break;
 
 			default:
@@ -368,11 +173,6 @@ THREE.LoaderSupport.WW.MeshProvider = (function () {
 				break;
 
 		}
-	};
-
-	MeshProvider.prototype._completedeRun = function () {
-		this.running = false;
-		this.callbacks.onLoad( 'complete' );
 	};
 
 	return MeshProvider;

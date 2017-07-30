@@ -21,21 +21,21 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 	WWOBJLoader2.prototype.init = function ( manager ) {
 		THREE.OBJLoader2.prototype.init.call( this, manager );
-
 		console.log( "Using THREE.OBJLoader2.WWOBJLoader2 version: " + WWOBJLOADER2_VERSION );
+
+		this.setStreamMeshes( true );
 		this.requestTerminate = false;
 		this.instanceNo = 0;
 
 		var scope = this;
+		var scopeBuilderFunc = function ( payload ) {
+			scope.builder( payload );
+		};
 		var scopeFuncComplete = function ( reason ) {
 			scope._finalize( reason );
 		};
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.onProgress( baseText, text );
-		};
-		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
+		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider( scopeBuilderFunc, scopeFuncComplete ) );
 		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, null, scopeFuncComplete );
 	};
 
 	/**
@@ -74,7 +74,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
 		THREE.OBJLoader2.prototype.setSceneGraphBaseNode.call( this, sceneGraphBaseNode );
-		this.meshProvider.prepareRun( this.sceneGraphBaseNode );
 	};
 
 	/**
@@ -85,7 +84,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 	 */
 	WWOBJLoader2.prototype.setMaterials = function ( materials ) {
 		THREE.OBJLoader2.prototype.setMaterials.call( this, materials );
-		this.meshProvider.addMaterials( this.materials );
 	};
 
 	/**
@@ -99,7 +97,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-		this.meshProvider.setCallbacks( null, this.callbacks.onMeshLoaded, null );
 
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
@@ -159,13 +156,12 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			this.modelName = prepData.modelName;
 			this.setRequestTerminate( prepData.requestTerminate );
-			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
 
 		}
 	};
 
 	WWOBJLoader2.prototype.parse = function ( content ) {
-		this.meshProvider.postMessage(
+		this.meshProvider.run(
 			{
 				cmd: 'run',
 				params: {
@@ -183,17 +179,18 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 		);
 	};
 
-	WWOBJLoader2.prototype._finalize = function ( reason ) {
+	WWOBJLoader2.prototype._finalize = function ( reason, message ) {
 		var callback;
 		if ( reason === 'complete' ) {
 
+			this.builderComplete( message );
 			callback = this.callbacks.onLoad;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
 
 		} else if ( reason === 'error' ) {
 
 			callback = this.callbacks.onError;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
 
 		}
 		if ( reason === 'terminate' ) {

@@ -117,6 +117,9 @@ THREE.LoaderSupport.Commons = (function () {
 		this.materials = [];
 		this.materialNames = [];
 
+		this.streamMeshes = false;
+		this.meshStore = [];
+
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
 
@@ -149,14 +152,35 @@ THREE.LoaderSupport.Commons = (function () {
 		this.sceneGraphBaseNode = Validator.verifyInput( this.sceneGraphBaseNode, new THREE.Group() );
 	};
 
+	Commons.prototype.setStreamMeshes = function ( streamMeshes ) {
+		this.streamMeshes = streamMeshes !== false;
+		if ( ! this.streamMeshes ) this.meshStore = [];
+	};
+
 	var setMaterials = function ( scope, materials ) {
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 			scope.materials = materials;
+
 			scope.materialNames = [];
 			for ( var materialName in materials ) {
 				scope.materialNames.push( materialName );
 			}
 		}
+
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		if ( ! Validator.isValid( scope.materials[ defaultMaterial ] ) ) {
+			scope.materials[ defaultMaterial.name ] = defaultMaterial;
+		}
+		scope.materialNames.push( defaultMaterial.name );
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		if ( ! Validator.isValid( scope.materials[ vertexColorMaterial.name ] ) ) {
+			scope.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+		}
+		scope.materialNames.push( vertexColorMaterial.name );
 	};
 
 	/**
@@ -202,6 +226,164 @@ THREE.LoaderSupport.Commons = (function () {
 		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName );
 
 		if ( this.debug ) console.log( content );
+	};
+
+	Commons.prototype.builder = function ( payload ) {
+		var meshName = payload.params.meshName;
+
+		var bufferGeometry = new THREE.BufferGeometry();
+		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.buffers.vertices ), 3 ) );
+		var haveVertexColors = Validator.isValid( payload.buffers.colors );
+		if ( haveVertexColors ) {
+
+			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.buffers.colors ), 3 ) );
+
+		}
+		if ( Validator.isValid( payload.buffers.normals ) ) {
+
+			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.buffers.normals ), 3 ) );
+
+		} else {
+
+			bufferGeometry.computeVertexNormals();
+
+		}
+		if ( Validator.isValid( payload.buffers.uvs ) ) {
+
+			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.buffers.uvs ), 2 ) );
+
+		}
+
+		var materialDescriptions = payload.materials.materialDescriptions;
+		var materialDescription;
+		var material;
+		var materialName;
+		var createMultiMaterial = payload.materials.multiMaterial;
+		var multiMaterials = [];
+
+		var key;
+		for ( key in materialDescriptions ) {
+
+			materialDescription = materialDescriptions[ key ];
+			material = this.materials[ materialDescription.name ];
+			material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
+			if ( ! material ) material = this.materials[ 'defaultMaterial' ];
+
+			if ( materialDescription.default ) {
+
+				material = this.materials[ 'defaultMaterial' ];
+
+			} else if ( materialDescription.flat ) {
+
+				materialName = material.name + '_flat';
+				var materialClone = this.materials[ materialName ];
+				if ( ! materialClone ) {
+
+					materialClone = material.clone();
+					materialClone.name = materialName;
+					materialClone.shading = THREE.FlatShading;
+					this.materials[ materialName ] = name;
+
+				}
+
+			}
+
+			if ( materialDescription.vertexColors ) material.vertexColors = THREE.VertexColors;
+			if ( createMultiMaterial ) multiMaterials.push( material );
+
+		}
+		if ( createMultiMaterial ) {
+
+			material = multiMaterials;
+			var materialGroups = payload.materials.materialGroups;
+			var materialGroup;
+			for ( key in materialGroups ) {
+
+				materialGroup = materialGroups[ key ];
+				bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+
+			}
+
+		}
+
+		var meshes = [];
+		var mesh;
+		var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
+		var callbackOnMeshLoadedResult;
+		if ( Validator.isValid( callbackOnMeshLoaded ) ) {
+
+			callbackOnMeshLoadedResult = callbackOnMeshLoaded( meshName, bufferGeometry, material );
+			if ( Validator.isValid( callbackOnMeshLoadedResult ) && ! callbackOnMeshLoadedResult.isDisregardMesh() ) {
+
+				if ( callbackOnMeshLoadedResult.providesAlteredMeshes() ) {
+
+					for ( var i in callbackOnMeshLoadedResult.meshes ) {
+
+						meshes.push( callbackOnMeshLoadedResult.meshes[ i ] );
+
+					}
+
+				} else {
+
+					mesh = new THREE.Mesh( bufferGeometry, material );
+					mesh.name = meshName;
+					meshes.push( mesh );
+
+				}
+
+			} else {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh.name = meshName;
+				meshes.push( mesh );
+
+			}
+
+		} else {
+
+			mesh = new THREE.Mesh( bufferGeometry, material );
+			mesh.name = meshName;
+			meshes.push( mesh );
+
+		}
+		if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
+
+			var meshNames = [];
+			for ( var i in meshes ) {
+
+				mesh = meshes[ i ];
+				if ( this.streamMeshes ) {
+
+					this.sceneGraphBaseNode.add( mesh );
+
+				} else {
+
+					this.meshStore.push( mesh );
+
+				}
+				meshNames[ i ] = mesh.name;
+
+			}
+			this.callbacks.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName );
+
+		} else {
+
+			this.callbacks.onProgress(  'Not adding mesh: ' + meshName );
+
+		}
+	};
+
+	Commons.prototype.builderComplete = function ( message ) {
+		if ( ! this.streamMeshes ) {
+
+			for ( var meshStoreKey in this.meshStore ) {
+
+				if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
+
+			}
+
+		}
+		if ( Validator.isValid( message ) ) this.callbacks.onProgress( message );
 	};
 
 	return Commons;

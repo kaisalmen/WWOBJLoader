@@ -83,6 +83,7 @@
 			var prepData;
 			var pivot;
 			var s, t, r, x, y, z;
+			var counter = 0;
 			for ( var i = 0; i < maxQueueSize; i++ ) {
 				prepData = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
 
@@ -101,6 +102,8 @@
 				prepData.setStreamMeshes( true );
 				prepData.quantity = 8192;
 				prepData.dimension = Math.max( Math.random() * 500, 100 );
+				prepData.counter = counter;
+				counter++;
 
 				this.wwDirector.enqueueForRun( prepData );
 			}

@@ -289,15 +289,15 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			}
 		};
 
-		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material ) {
+		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material, message ) {
 			if ( Validator.isValid( globalCallbacks.onMeshLoaded ) ) {
 
-				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material, message );
 			}
 
 			if ( Validator.isValid( prepDataCallbacks.onMeshLoaded ) ) {
 
-				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material, message );
 
 			}
 		};

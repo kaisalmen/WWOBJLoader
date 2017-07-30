@@ -18,19 +18,19 @@ var MeshSpray = (function () {
 	MeshSpray.prototype.init = function ( manager ) {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
+		this.setStreamMeshes( true );
 		this.requestTerminate = false;
 		this.instanceNo = 0;
 
 		var scope = this;
+		var scopeBuilderFunc = function ( payload ) {
+			scope.builder( payload );
+		};
 		var scopeFuncComplete = function ( reason ) {
 			scope._finalize( reason );
 		};
-		var scopeFuncAnnounce = function ( baseText, text ) {
-			scope.onProgress( baseText, text );
-		};
-		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider() );
+		this.meshProvider = Validator.verifyInput( this.meshProvider, new THREE.LoaderSupport.WW.MeshProvider( scopeBuilderFunc, scopeFuncComplete ) );
 		this.meshProvider.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
-		this.meshProvider.setCallbacks( scopeFuncAnnounce, null, scopeFuncComplete );
 	};
 
 	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
@@ -49,23 +49,19 @@ var MeshSpray = (function () {
 		console.time( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
-		this.meshProvider.setCallbacks( null, this.callbacks.onMeshLoaded, null );
+		this.setMaterials( this.materials );
 
-		var materialNames = [];
-		for ( var materialName in this.materials ) {
-			materialNames.push( materialName );
-		}
-		this.meshProvider.addMaterials( this.materials );
-		this.meshProvider.postMessage(
+		this.meshProvider.run(
 			{
 				cmd: 'run',
 				params: {
 					debug: this.debug,
 					dimension: prepData.dimension,
-					quantity: prepData.quantity
+					quantity: prepData.quantity,
+					counter: prepData.counter
 				},
 				materials: {
-					materialNames: materialNames
+					materialNames: this.materialNames
 				}
 			}
 		);
@@ -78,7 +74,6 @@ var MeshSpray = (function () {
 
 			this.modelName = prepData.modelName;
 			this.setRequestTerminate( prepData.requestTerminate );
-			this.meshProvider.prepareRun( prepData.sceneGraphBaseNode, prepData.streamMeshes );
 
 		}
 	};
@@ -119,7 +114,7 @@ var MeshSpray = (function () {
 				this.cmdState = 'run';
 				this.sizeFactor = 0.5;
 				this.localOffsetFactor = 1.0;
-				this.globalObjectCount = 0;
+				this.globalObjectCount = Validator.verifyInput( payload.params.counter, 0 );
 				this.debug = payload.params.debug;
 				this.dimension = Validator.verifyInput( payload.params.dimension, 200 );
 				this.quantity = Validator.verifyInput( payload.params.quantity, 1 );
