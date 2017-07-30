@@ -123,11 +123,17 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			switch ( payload.cmd ) {
 				case 'run':
-					WWImplRef.run( payload );
+
+					var postMessageCallback = function ( payload ) {
+						self.postMessage( payload );
+					};
+					var onProgressCallback = function ( message ) {
+						console.log( 'Worker progress: ' + message );
+					};
+					WWImplRef.run( payload, postMessageCallback, onProgressCallback );
 					break;
 
 				default:
-
 					console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
 					break;
 

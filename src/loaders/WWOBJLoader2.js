@@ -223,226 +223,31 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 				function WWOBJLoader() {
 				}
 
-				WWOBJLoader.prototype.run = function ( payload ) {
+				WWOBJLoader.prototype.run = function ( payload, postMessageCallback, onProgressCallback ) {
 					this.cmdState = 'run';
 
-					this.debug = payload.params.debug;
-
-					this.wwMeshCreator = new WWMeshCreator();
-					this.wwMeshCreator.setDebug( this.debug );
-					this.wwMeshCreator.setMaterials( payload.materials.materialNames );
-
-					this.parser = new Parser( this.wwMeshCreator );
-					this.parser.setDebug( this.debug );
+					this.parser = new Parser( postMessageCallback, onProgressCallback );
+					this.parser.setDebug( payload.params.debug );
+					this.parser.setMaterialNames( payload.materials.materialNames );
 					this.parser.setMaterialPerSmoothingGroup( payload.params.materialPerSmoothingGroup );
 
-					this._parse( payload.buffers.objAsArrayBuffer );
+					console.log( 'Parsing arrayBuffer...' );
+					console.time( 'parseArrayBuffer' );
+
+					this.parser.parseArrayBuffer( payload.buffers.objAsArrayBuffer );
+					this.parser.finalize();
+
+					console.timeEnd( 'parseArrayBuffer' );
 					console.log( 'OBJ loading complete!' );
 
 					this.cmdState = 'complete';
-					self.postMessage( {
+					postMessageCallback( {
 						cmd: this.cmdState,
 						msg: null
 					} );
 				};
 
-				/**
-				 * Parse arrayBuffer, finalize and return objGroup
-				 *
-				 * @param arrayBuffer
-				 */
-				WWOBJLoader.prototype._parse = function ( arrayBuffer ) {
-					console.log( 'Parsing arrayBuffer...' );
-					console.time( 'parseArrayBuffer' );
-
-					this.parser.parseArrayBuffer( arrayBuffer );
-					var objGroup = this._finalize();
-
-					console.timeEnd( 'parseArrayBuffer' );
-
-					return objGroup;
-				};
-
-				WWOBJLoader.prototype._finalize = function () {
-					console.log( 'Global output object count: ' + this.wwMeshCreator.globalObjectCount );
-					this.parser.finalize();
-				};
-
 				return WWOBJLoader;
-			})();
-
-			var wwMeshCreatorDef = (function () {
-
-				function WWMeshCreator() {
-					this.materials = null;
-					this.debug = false;
-					this.globalObjectCount = 1;
-				}
-
-				WWMeshCreator.prototype.setMaterials = function ( materials ) {
-					this.materials = Validator.verifyInput( materials, this.materials );
-					this.materials = Validator.verifyInput( this.materials, { materials: [] } );
-				};
-
-				WWMeshCreator.prototype.setDebug = function ( debug ) {
-					if ( debug === true || debug === false ) this.debug = debug;
-				};
-
-				/**
-				 * RawObjectDescriptions are transformed to THREE.Mesh.
-				 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check).
-				 *
-				 * @param rawObjectDescriptions
-				 * @param inputObjectCount
-				 * @param absoluteVertexCount
-				 * @param absoluteNormalCount
-				 * @param absoluteUvCount
-				 */
-				WWMeshCreator.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount,
-															   absoluteColorCount, absoluteNormalCount, absoluteUvCount ) {
-					if ( this.debug ) console.log( 'OBJLoader.buildMesh:\nInput object no.: ' + inputObjectCount );
-
-					var vertexFA = new Float32Array( absoluteVertexCount );
-					var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
-					var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-					var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
-
-					var rawObjectDescription;
-					var materialDescription;
-					var materialDescriptions = [];
-
-					var createMultiMaterial = ( rawObjectDescriptions.length > 1 );
-					var materialIndex = 0;
-					var materialIndexMapping = [];
-					var selectedMaterialIndex;
-					var materialGroup;
-					var materialGroups = [];
-
-					var vertexFAOffset = 0;
-					var vertexGroupOffset = 0;
-					var vertexLength;
-					var colorFAOffset = 0;
-					var normalFAOffset = 0;
-					var uvFAOffset = 0;
-
-					for ( var oodIndex in rawObjectDescriptions ) {
-						if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
-						rawObjectDescription = rawObjectDescriptions[ oodIndex ];
-
-						materialDescription = {
-							name: rawObjectDescription.materialName,
-							flat: false,
-							vertexColors: false,
-							default: false
-						};
-						if ( this.materials[ materialDescription.name ] === null ) {
-
-							materialDescription.default = true;
-							console.warn( 'object_group "' + rawObjectDescription.objectName + '_' + rawObjectDescription.groupName + '" was defined without material! Assigning "defaultMaterial".' );
-
-						}
-						// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-						if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
-
-						vertexLength = rawObjectDescription.vertices.length;
-						if ( createMultiMaterial ) {
-
-							// re-use material if already used before. Reduces materials array size and eliminates duplicates
-
-							selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
-							if ( ! selectedMaterialIndex ) {
-
-								selectedMaterialIndex = materialIndex;
-								materialIndexMapping[ materialDescription.name ] = materialIndex;
-								materialDescriptions.push( materialDescription );
-								materialIndex++;
-
-							}
-							materialGroup = {
-								start: vertexGroupOffset,
-								count: vertexLength / 3,
-								index: selectedMaterialIndex
-							};
-							materialGroups.push( materialGroup );
-							vertexGroupOffset += vertexLength / 3;
-
-						} else {
-
-							materialDescriptions.push( materialDescription );
-
-						}
-
-						vertexFA.set( rawObjectDescription.vertices, vertexFAOffset );
-						vertexFAOffset += vertexLength;
-
-						if ( colorFA ) {
-
-							colorFA.set( rawObjectDescription.colors, colorFAOffset );
-							colorFAOffset += rawObjectDescription.colors.length;
-							materialDescription.vertexColors = true;
-
-						}
-
-						if ( normalFA ) {
-
-							normalFA.set( rawObjectDescription.normals, normalFAOffset );
-							normalFAOffset += rawObjectDescription.normals.length;
-
-						}
-						if ( uvFA ) {
-
-							uvFA.set( rawObjectDescription.uvs, uvFAOffset );
-							uvFAOffset += rawObjectDescription.uvs.length;
-
-						}
-						if ( this.debug ) this.printReport( rawObjectDescription, selectedMaterialIndex );
-
-					}
-
-					self.postMessage(
-						{
-							cmd: 'meshData',
-							params: {
-								meshName: rawObjectDescription.groupName !== '' ? rawObjectDescription.groupName : rawObjectDescription.objectName,
-							},
-							materials: {
-								multiMaterial: createMultiMaterial,
-								materialDescriptions: materialDescriptions,
-								materialGroups: materialGroups
-							},
-							buffers: {
-								vertices: vertexFA,
-								colors: colorFA,
-								normals: normalFA,
-								uvs: uvFA
-							}
-						},
-						[ vertexFA.buffer ],
-						colorFA !== null ? [ colorFA.buffer ] : null,
-						normalFA !== null ? [ normalFA.buffer ] : null,
-						uvFA !== null ? [ uvFA.buffer ] : null
-					);
-
-					this.globalObjectCount++;
-				};
-
-				WWMeshCreator.prototype.printReport = function ( rawObjectDescription, selectedMaterialIndex ) {
-					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n materialIndex: ' + selectedMaterialIndex : '';
-					console.log(
-						' Output Object no.: ' + this.globalObjectCount +
-						'\n objectName: ' + rawObjectDescription.objectName +
-						'\n groupName: ' + rawObjectDescription.groupName +
-						'\n materialName: ' + rawObjectDescription.materialName +
-						materialIndexLine +
-						'\n smoothingGroup: ' + rawObjectDescription.smoothingGroup +
-						'\n #vertices: ' + rawObjectDescription.vertices.length / 3 +
-						'\n #colors: ' + rawObjectDescription.colors.length / 3 +
-						'\n #uvs: ' + rawObjectDescription.uvs.length / 2 +
-						'\n #normals: ' + rawObjectDescription.normals.length / 3
-					);
-				};
-
-				return WWMeshCreator;
 			})();
 
 			workerCode = '';
@@ -455,7 +260,6 @@ THREE.OBJLoader2.WWOBJLoader2 = (function () {
 
 			// web worker construction
 			workerCode += funcBuildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
-			workerCode += funcBuildSingelton( 'WWMeshCreator', 'WWMeshCreator', wwMeshCreatorDef );
 
 		}
 
