@@ -16,6 +16,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
+		this.running = false;
+		this.terminateRequested = false;
 
 		this.callbacks = {
 			builder: builderFunction,
@@ -23,8 +25,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
-	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName, existingWorkerCode ) {
+	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName ) {
 		this.running = false;
+		this.terminateRequested = false;
 
 		if ( forceWorkerReload ) {
 			this.worker = null;
@@ -37,7 +40,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			console.log( 'Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
-			this.workerCode = functionCodeBuilder( buildObject, buildSingelton, existingWorkerCode );
+			this.workerCode = functionCodeBuilder( buildObject, buildSingelton );
 			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
 			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
 			this.workerCode += 'new WWRunner();\n\n';
@@ -145,12 +148,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return WWRunner;
 	})();
 
-	WorkerSupport.prototype._terminate = function () {
-		if ( Validator.isValid( this.worker ) ) {
-			this.worker.terminate();
-		}
-		this.worker = null;
-		this.workerCode = null;
+	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
+		this.terminateRequested = terminateRequested === true;
 	};
 
 	WorkerSupport.prototype.run = function ( messageObject ) {
@@ -171,6 +170,15 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			case 'complete':
 				this.callbacks.onLoad( 'complete', payload.msg );
 				this.running = false;
+
+				if ( this.terminateRequested ) {
+					console.log( 'Run is complete. Terminating application on request!' );
+					if ( Validator.isValid( this.worker ) ) {
+						this.worker.terminate();
+					}
+					this.worker = null;
+					this.workerCode = null;
+				}
 				break;
 
 			default:

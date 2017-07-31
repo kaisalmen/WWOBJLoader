@@ -512,10 +512,10 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.sceneGraphBaseNode = null;
 		this.streamMeshes = true;
 		this.materialPerSmoothingGroup = false;
-		this.requestTerminate = false;
 		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
+		this.useAsync = true;
 	}
 
 	/**
@@ -546,16 +546,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
-	};
-
-	/**
-	 * Request termination of web worker and free local resources after execution.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} requestTerminate=false Default is false
-	 */
-	PrepData.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = requestTerminate === true;
 	};
 
 	/**
@@ -598,6 +588,9 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.resources.push( resource );
 	};
 
+	PrepData.prototype.setUseAsync = function ( useAsync ) {
+		this.useAsync = useAsync === true;
+	};
 
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
@@ -605,9 +598,9 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.sceneGraphBaseNode = this.sceneGraphBaseNode;
 		clone.streamMeshes = this.streamMeshes;
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
-		clone.requestTerminate = this.requestTerminate;
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;
+		clone.useAsync = this.useAsync;
 		return clone;
 	};
 

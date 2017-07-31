@@ -1,95 +1,6 @@
 if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
 
 /**
- * Template class for all web worker based loaders that shall be directed.
- * {@link THREE.LoaderSupport.WW.LoaderDirector} checks for available methods
- *
- * @class
- */
-THREE.LoaderSupport.WW.DirectableLoader = (function () {
-
-	function DirectableLoader() {
-	}
-
-	/**
-	 * Call requestTerminate to terminate the web worker and free local resource after execution.
-	 *
-	 * @param {boolean} requestTerminate True or false
-	 * @private
-	 */
-	DirectableLoader.prototype.setRequestTerminate = function ( requestTerminate ) {
-	};
-
-	/**
-	 * Set the worker instanceNo
-	 *
-	 * @param {number} instanceNo
-	 * @private
-	 */
-	DirectableLoader.prototype.setInstanceNo = function ( instanceNo ) {
-		console.log( 'Value of "instanceNo": ' + instanceNo );
-	};
-
-	/**
-	 * Get the worker instanceNo
-	 *
-	 * @returns {number|*}
-	 * @private
-	 */
-	DirectableLoader.prototype.getInstanceNo = function () {
-	};
-
-	/**
-	 * Initialise object
-	 *
-	 * @param {boolean} reInit
-	 * @param {THREE.LoadingManager} manager
-	 * @private
-	 */
-	DirectableLoader.prototype.init = function ( reInit, manager) {
-		console.log( 'Value of "reInit": ' + reInit );
-		console.log( 'Value of "manager": ' + manager );
-	};
-
-	/**
-	 * Function is called by {@link THREE.LoaderSupport.WorkerSupport} when worker is constructed.
-	 *
-	 * @param {string} funcBuildObject
-	 * @param {string} funcBuildSingelton
-	 * @param {string} existingWorkerCode
-	 * @private
-	 */
-	DirectableLoader.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
-		console.log( 'Value of "funcBuildObject": ' + funcBuildObject );
-		console.log( 'Value of "funcBuildSingelton": ' + funcBuildSingelton );
-		console.log( 'Value of "existingWorkerCode": ' + existingWorkerCode );
-	};
-
-	/**
-	 * Run the loader according the instruction provided. This needs to be overridden.
-	 * @memberOf THREE.LoaderSupport.WW.DirectableLoader
-	 *
-	 * @param {Object} params {@link THREE.LoaderSupport.WW.PrepData}
-	 * @private
-	 */
-	DirectableLoader.prototype.run = function ( prepData ) {
-		console.log( 'Value of "prepData": ' + prepData );
-	};
-
-	/**
-	 * Finalize run
-	 *
-	 * @param {string} reason
-	 * @private
-	 */
-	DirectableLoader.prototype._finalize = function ( reason ) {
-		console.log( 'Value of "reason": ' + reason );
-	};
-
-	return DirectableLoader;
-})();
-
-/**
  * Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
  * Workflow:
  *   prepareWorkers
@@ -226,6 +137,8 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
 		worker.init();
 		worker.setInstanceNo( instanceNo );
+		// enforce async parsing
+		prepData.setUseAsync( true );
 
 		var scope = this;
 		var workerCallbacks = worker.getCallbacks();
@@ -316,8 +229,8 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 
-		// verify that all required functions defined by "THREE.LoaderSupport.WW.DirectableLoader" are implemented
-		if ( worker.hasOwnProperty( 'setRequestTerminate' ) && typeof worker.setRequestTerminate !== 'function'  ) throw classDef + ' has no function "setRequestTerminate".';
+		// verify that all required functions are implemented
+		if ( worker.hasOwnProperty( 'setTerminateRequested' ) && typeof worker.setTerminateRequested !== 'function'  ) throw classDef + ' has no function "setTerminateRequested".';
 		if ( worker.hasOwnProperty( 'setInstanceNo' ) && typeof worker.setInstanceNo !== 'function'  ) throw classDef + ' has no function "_setInstanceNo".';
 		if ( worker.hasOwnProperty( 'getInstanceNo' ) && typeof worker.getInstanceNo !== 'function'  ) throw classDef + ' has no function "_getInstanceNo".';
 		if ( worker.hasOwnProperty( 'init' ) && typeof worker.init !== 'function'  ) throw classDef + ' has no function "init".';
@@ -339,12 +252,8 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
 
 			worker = this.workerDescription.workers[ i ];
-			worker.setRequestTerminate( true );
-
-			if ( ! worker.workerSupport.running ) {
-				console.log( 'Triggered finalize with "termiante" directly.' );
-				worker._finalize( 'terminate' );
-			}
+			console.log( 'Requested termination of worker.' );
+			worker.setTerminateRequested( true );
 
 			var workerCallbacks = worker.getCallbacks();
 			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );

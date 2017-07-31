@@ -19,7 +19,6 @@ var MeshSpray = (function () {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
 		this.setStreamMeshes( true );
-		this.requestTerminate = false;
 		this.instanceNo = 0;
 
 		var scope = this;
@@ -33,8 +32,8 @@ var MeshSpray = (function () {
 		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
-	MeshSpray.prototype.setRequestTerminate = function ( requestTerminate ) {
-		this.requestTerminate = requestTerminate === true;
+	MeshSpray.prototype.setTerminateRequested = function ( terminateRequested ) {
+		this.workerSupport.setTerminateRequested( terminateRequested );
 	};
 
 	MeshSpray.prototype.setInstanceNo = function ( instanceNo ) {
@@ -65,17 +64,6 @@ var MeshSpray = (function () {
 				}
 			}
 		);
-	};
-
-	MeshSpray.prototype._applyPrepData = function ( prepData ) {
-		THREE.LoaderSupport.Commons.prototype._applyPrepData.call( this, prepData );
-
-		if ( Validator.isValid( prepData ) ) {
-
-			this.modelName = prepData.modelName;
-			this.setRequestTerminate( prepData.requestTerminate );
-
-		}
 	};
 
 	MeshSpray.prototype._finalize = function ( reason ) {

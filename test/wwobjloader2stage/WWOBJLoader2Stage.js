@@ -25,7 +25,7 @@ var WWOBJLoader2Stage = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
+		this.objLoader2 = new THREE.OBJLoader2();
 		this.controls = null;
 		this.cube = null;
 
@@ -114,7 +114,7 @@ var WWOBJLoader2Stage = (function () {
 			scope.reloadAssets();
 			scope.reportProgress();
 		};
-		var callbacks = this.wwObjLoader2.getCallbacks();
+		var callbacks = this.objLoader2.getCallbacks();
 		callbacks.setCallbackOnLoad( reloadAssetsProxy );
 		callbacks.setCallbackOnProgress( this.reportProgress );
 	};
@@ -215,9 +215,10 @@ var WWOBJLoader2Stage = (function () {
 					scope.reportProgress( '' );
 					prepData.resources[ 1 ].content = data;
 
-					scope.wwObjLoader2.init();
+					scope.objLoader2.init();
+					scope.objLoader2.setUseAsync( true );
 					scope.registerCallbacks();
-					scope.wwObjLoader2.run( prepData );
+					scope.objLoader2.run( prepData );
 				};
 
 				var setMtlAsString = function ( data ) {
@@ -249,9 +250,10 @@ var WWOBJLoader2Stage = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				scope.wwObjLoader2.init();
+				scope.objLoader2.init();
+				scope.objLoader2.setUseAsync( true );
 				scope.registerCallbacks();
-				scope.wwObjLoader2.run( prepData );
+				scope.objLoader2.run( prepData );
 
 			}
 		} else {

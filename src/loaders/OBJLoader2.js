@@ -24,7 +24,9 @@ THREE.OBJLoader2 = (function () {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
-		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.instanceNo = 0;
+		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+		this.useAsync = false;
 
 		var scope = this;
 		var builderScoped = function ( payload ) {
@@ -33,7 +35,13 @@ THREE.OBJLoader2 = (function () {
 		var onProgressScoped = function ( message ) {
 			scope.onProgress( message );
 		};
+		var scopeFuncComplete = function ( reason ) {
+			scope._finalize( reason );
+		};
 		this.parser = new Parser( builderScoped, onProgressScoped );
+
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( builderScoped, scopeFuncComplete ) );
+		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
 	};
 
 	/**
@@ -44,7 +52,6 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
-		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 	};
 
 	/**
@@ -55,7 +62,6 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
 		THREE.LoaderSupport.Commons.prototype.setMaterials.call( this, materials );
-		this.parser.setMaterialNames( this.setMaterialNames );
 	};
 
 	/**
@@ -66,7 +72,34 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.setDebug = function ( enabled ) {
 		THREE.LoaderSupport.Commons.prototype.setDebug.call( this, enabled );
-		this.parser.setDebug( this.debug );
+	};
+
+	/**
+	 * Set the instance number
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {number} instanceNo
+	 */
+	OBJLoader2.prototype.setInstanceNo = function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+	};
+
+	/**
+	 * Get the instance number
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @returns {number|*}
+	 */
+	OBJLoader2.prototype.getInstanceNo = function () {
+		return this.instanceNo;
+	};
+
+	OBJLoader2.prototype.setTerminateRequested = function ( terminateRequested ) {
+		this.workerSupport.setTerminateRequested( terminateRequested );
+	};
+
+	OBJLoader2.prototype.setUseAsync = function ( useAsync ) {
+		this.useAsync = useAsync === true;
 	};
 
 	/**
@@ -107,8 +140,15 @@ THREE.OBJLoader2 = (function () {
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
-				scope.parse( available.obj.content );
+				if ( scope.useAsync ) {
 
+					scope.parseAsync(available.obj.content );
+
+				} else {
+
+					scope.parse( available.obj.content );
+
+				}
 			} else {
 
 				var refPercentComplete = 0;
@@ -116,8 +156,15 @@ THREE.OBJLoader2 = (function () {
 				var onLoad = function ( arrayBuffer ) {
 
 					available.obj.content = new Uint8Array( arrayBuffer );
-					scope.parse( available.obj.content );
+					if ( scope.useAsync ) {
 
+						scope.parseAsync(available.obj.content );
+
+					} else {
+
+						scope.parse( available.obj.content );
+
+					}
 				};
 
 				var onProgress = function ( event ) {
@@ -168,64 +215,6 @@ THREE.OBJLoader2 = (function () {
 		}
 	};
 
-	OBJLoader2.prototype._checkFiles = function ( resources ) {
-		var resource;
-		var result = {
-			mtl: null,
-			obj: null
-		};
-		for ( var index in resources ) {
-
-			resource = resources[ index ];
-			if ( ! Validator.isValid( resource.name ) ) continue;
-			if ( Validator.isValid( resource.content ) ) {
-
-				if ( resource.extension === 'OBJ' ) {
-
-					// fast-fail on bad type
-					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
-					result.obj = resource;
-
-				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
-
-					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
-					result.mtl = resource;
-
-				} else if ( resource.extension === "ZIP" ) {
-					// ignore
-
-				} else {
-
-					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-				}
-
-			} else {
-
-				// fast-fail on bad type
-				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
-				if ( resource.extension === 'OBJ' ) {
-
-					result.obj = resource;
-
-				} else if ( resource.extension === 'MTL' ) {
-
-					result.mtl = resource;
-
-				} else if ( resource.extension === "ZIP" ) {
-					// ignore
-
-				} else {
-
-					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-				}
-			}
-		}
-
-		return result;
-	};
-
 	/**
 	 * Parses OBJ file according instructions in resource descriptor
 	 * @memberOf THREE.OBJLoader2
@@ -233,25 +222,22 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
+		console.time( '(WW)OBJLoader2' );
+		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+		this.parser.setMaterialNames( this.materialNames );
+		this.parser.setDebug( this.debug );
+
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
-			console.time( 'parseArrayBuffer' );
-
 			this.parser.parseArrayBuffer( content );
-			this._finalize();
-
-			console.timeEnd( 'parseArrayBuffer' );
+			this._finalize( 'complete' );
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
 			console.log( 'Parsing text...' );
-			console.time( 'parseText' );
-
 			this.parser.parseText( content );
-			this._finalize();
-
-			console.timeEnd( 'parseText' );
+			this._finalize( 'complete' );
 
 		} else {
 
@@ -260,13 +246,55 @@ THREE.OBJLoader2 = (function () {
 		}
 	};
 
+	OBJLoader2.prototype.parseAsync = function ( content ) {
+		console.time( '(WW)OBJLoader2' );
+
+		this.workerSupport.run(
+			{
+				cmd: 'run',
+				params: {
+					debug: this.debug,
+					materialPerSmoothingGroup: this.materialPerSmoothingGroup
+				},
+				materials: {
+					materialNames: this.materialNames
+				},
+				buffers: {
+					objAsArrayBuffer: content
+				}
+			},
+			[ content.buffer ]
+		);
+	};
+
 	OBJLoader2.prototype._finalize = function ( reason, message ) {
 		this.parser.finalize();
 
-		this.builderComplete( message );
-		var callback = this.callbacks.onLoad;
-		if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName );
+		var callback;
+		if ( reason === 'complete' ) {
 
+			this.builderComplete( message );
+			callback = this.callbacks.onLoad;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
+
+		} else if ( reason === 'error' ) {
+
+			callback = this.callbacks.onError;
+			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
+
+		}
+
+		console.timeEnd( '(WW)OBJLoader2' );
+	};
+
+	OBJLoader2.prototype.onProgress = function ( baseText, text ) {
+		var content = Validator.isValid( baseText ) ? baseText: "";
+		content = Validator.isValid( text ) ? content + " " + text : content;
+
+		var callbackOnProgress = this.callbacks.onProgress;
+		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName, this.instanceNo );
+
+		if ( this.debug ) console.log( content );
 	};
 
 	/**
@@ -1157,8 +1185,43 @@ THREE.OBJLoader2 = (function () {
 		return MeshCreator;
 	})();
 
-	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {
-		var workerCode = Validator.isValid( existingWorkerCode ) ? existingWorkerCode : '';
+	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
+		var wwDef = (function () {
+
+			function WWOBJLoader() {
+			}
+
+			WWOBJLoader.prototype.run = function ( payload, postMessageCallback, onProgressCallback ) {
+				this.cmdState = 'run';
+
+				this.parser = new Parser( postMessageCallback, onProgressCallback );
+				this.parser.setDebug( payload.params.debug );
+				this.parser.setMaterialNames( payload.materials.materialNames );
+				this.parser.setMaterialPerSmoothingGroup( payload.params.materialPerSmoothingGroup );
+
+				console.log( 'Parsing arrayBuffer...' );
+				console.time( 'parseArrayBuffer' );
+
+				this.parser.parseArrayBuffer( payload.buffers.objAsArrayBuffer );
+				this.parser.finalize();
+
+				console.timeEnd( 'parseArrayBuffer' );
+				console.log( 'OBJ loading complete!' );
+
+				this.cmdState = 'complete';
+				postMessageCallback( {
+					cmd: this.cmdState,
+					msg: null
+				} );
+			};
+
+			return WWOBJLoader;
+		})();
+
+		var workerCode = '';
+		workerCode += '/**\n';
+		workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
+		workerCode += '  */\n\n';
 		workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
 		workerCode += funcBuildObject( 'Consts', Consts );
 		workerCode += funcBuildObject( 'Validator', Validator );
@@ -1166,7 +1229,69 @@ THREE.OBJLoader2 = (function () {
 		workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
 		workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
 		workerCode += funcBuildSingelton( 'MeshCreator', 'MeshCreator', MeshCreator );
+
+		// web worker construction
+		workerCode += funcBuildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
+
 		return workerCode;
+	};
+
+	OBJLoader2.prototype._checkFiles = function ( resources ) {
+		var resource;
+		var result = {
+			mtl: null,
+			obj: null
+		};
+		for ( var index in resources ) {
+
+			resource = resources[ index ];
+			if ( ! Validator.isValid( resource.name ) ) continue;
+			if ( Validator.isValid( resource.content ) ) {
+
+				if ( resource.extension === 'OBJ' ) {
+
+					// fast-fail on bad type
+					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+					result.obj = resource;
+
+				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
+
+					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
+					result.mtl = resource;
+
+				} else if ( resource.extension === "ZIP" ) {
+					// ignore
+
+				} else {
+
+					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
+				}
+
+			} else {
+
+				// fast-fail on bad type
+				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+				if ( resource.extension === 'OBJ' ) {
+
+					result.obj = resource;
+
+				} else if ( resource.extension === 'MTL' ) {
+
+					result.mtl = resource;
+
+				} else if ( resource.extension === "ZIP" ) {
+					// ignore
+
+				} else {
+
+					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
+				}
+			}
+		}
+
+		return result;
 	};
 
 	/**

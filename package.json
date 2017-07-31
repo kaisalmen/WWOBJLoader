@@ -3,7 +3,6 @@
   "version": "2.0.0-dev",
   "versions": {
     "loader_obj": "2.0.0-dev",
-    "loader_ww_obj": "2.0.0-dev",
     "loader_director": "1.0.0-dev",
     "mesh_provider": "1.0.0-dev"
   },

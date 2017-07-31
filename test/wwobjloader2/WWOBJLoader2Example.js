@@ -34,7 +34,7 @@ var WWOBJLoader2Example = (function () {
 		this.cube = null;
 		this.pivot = null;
 
-		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
+		this.objLoader2 = new THREE.OBJLoader2();
 
 		// Check for the various File API support.
 		this.fileApiAvailable = true;
@@ -95,7 +95,7 @@ var WWOBJLoader2Example = (function () {
 
 			scope.processLoadList();
 		};
-		var callbacks = this.wwObjLoader2.getCallbacks();
+		var callbacks = this.objLoader2.getCallbacks();
 		callbacks.setCallbackOnProgress( this._reportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 	};
@@ -122,9 +122,10 @@ var WWOBJLoader2Example = (function () {
 
 			} else {
 
-				this.wwObjLoader2.init();
+				this.objLoader2.init();
+				this.objLoader2.setUseAsync( true );
 				this.registerCallbacks();
-				this.wwObjLoader2.run( prepData );
+				this.objLoader2.run( prepData );
 
 			}
 		}
@@ -132,21 +133,22 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.loadFilesManual = function ( prepData ) {
 		var fileLoader = new THREE.FileLoader();
-		var available = this.wwObjLoader2._checkFiles( prepData.resources );
+		var available = this.objLoader2._checkFiles( prepData.resources );
 
 		var scope = this;
 		var onLoadObj = function( arrayBuffer ) {
 
 			var uint8Array = new Uint8Array( arrayBuffer );
 			var onLoadMtl = function ( materials ) {
-				scope.wwObjLoader2.init();
-				scope.wwObjLoader2.setMaterials( materials );
-				scope.wwObjLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+				scope.objLoader2.init();
+				scope.objLoader2.setUseAsync( true );
+				scope.objLoader2.setMaterials( materials );
+				scope.objLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 				scope.registerCallbacks();
-				scope.wwObjLoader2.parse( uint8Array );
+				scope.objLoader2.parse( uint8Array );
 			};
 
-			scope.wwObjLoader2.loadMtl( available.mtl, onLoadMtl, 'anonymous' );
+			scope.objLoader2.loadMtl( available.mtl, onLoadMtl, 'anonymous' );
 		};
 
 		fileLoader.setResponseType( 'arraybuffer' );
@@ -199,9 +201,10 @@ var WWOBJLoader2Example = (function () {
 				resourceMTL.setTextContent( fileDataMtl.target.result );
 				prepData.addResource( resourceMTL );
 
-				scope.wwObjLoader2.init();
+				scope.objLoader2.init();
+				scope.objLoader2.setUseAsync( true );
 				scope.registerCallbacks();
-				scope.wwObjLoader2.run( prepData );
+				scope.objLoader2.run( prepData );
 
 			};
 			fileReader.readAsText( fileMtl );
