@@ -27,7 +27,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName ) {
 		this.running = false;
-		this.terminateRequested = false;
 
 		if ( forceWorkerReload ) {
 			this.worker = null;
@@ -168,6 +167,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				break;
 
 			case 'complete':
+				this.callbacks.onLoad( 'parsed' );
 				this.callbacks.onLoad( 'complete', payload.msg );
 				this.running = false;
 

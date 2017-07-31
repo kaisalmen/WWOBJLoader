@@ -137,24 +137,22 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
 		worker.init();
 		worker.setInstanceNo( instanceNo );
-		// enforce async parsing
-		prepData.setUseAsync( true );
 
 		var scope = this;
 		var workerCallbacks = worker.getCallbacks();
 		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 
-		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
 			scope.objectsCompleted++;
 
 			var worker = scope.workerDescription.workers[ instanceNo ];
 			var nextPrepData = scope.instructionQueue[ 0 ];
 			if ( Validator.isValid( nextPrepData ) ) {
 
+				scope.instructionQueue.shift();
 				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 				scope._kickWorkerRun( worker, nextPrepData, worker.getInstanceNo() );
-				scope.instructionQueue.shift();
 
 			} else if ( scope.instructionQueue.length === 0 ) {
 
@@ -163,19 +161,19 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			}
 		};
 
-		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
 			if ( Validator.isValid( globalCallbacks.onLoad ) ) {
 
-				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
+				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo, message );
 
 			}
 
 			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) {
 
-				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
+				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo, message );
 
 			}
-			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo );
+			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo, message );
 		};
 
 		var wrapperOnError = function ( event ) {
@@ -204,15 +202,15 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 			}
 		};
 
-		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material, message ) {
+		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material ) {
 			if ( Validator.isValid( globalCallbacks.onMeshLoaded ) ) {
 
-				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material, message );
+				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
 			}
 
 			if ( Validator.isValid( prepDataCallbacks.onMeshLoaded ) ) {
 
-				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material, message );
+				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
 
 			}
 		};

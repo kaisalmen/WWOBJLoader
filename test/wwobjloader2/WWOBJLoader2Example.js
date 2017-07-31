@@ -141,11 +141,10 @@ var WWOBJLoader2Example = (function () {
 			var uint8Array = new Uint8Array( arrayBuffer );
 			var onLoadMtl = function ( materials ) {
 				scope.objLoader2.init();
-				scope.objLoader2.setUseAsync( true );
 				scope.objLoader2.setMaterials( materials );
 				scope.objLoader2.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 				scope.registerCallbacks();
-				scope.objLoader2.parse( uint8Array );
+				scope.objLoader2.parseAsync( uint8Array );
 			};
 
 			scope.objLoader2.loadMtl( available.mtl, onLoadMtl, 'anonymous' );

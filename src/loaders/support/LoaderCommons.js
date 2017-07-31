@@ -125,10 +125,24 @@ THREE.LoaderSupport.Commons = (function () {
 
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
-		this.modelName = Validator.verifyInput( Validator.isValid( prepData ) ? prepData.modelName : null, this.modelName );
-		this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-		var materials = Validator.isValid( prepData ) ? ( prepData.materials.length > 0 ? prepData.materials : null ) : null;
-		setMaterials( this, materials );
+		if ( Validator.isValid( prepData ) ) {
+			this.setModelName( prepData.modelName );
+			this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
+			this.setStreamMeshes( prepData.streamMeshes );
+			var materials = prepData.materials.length > 0 ? prepData.materials : null;
+			setMaterials( this, materials );
+
+			var callbacks = prepData.getCallbacks();
+			this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+			this.callbacks.setCallbackOnError( callbacks.onError );
+			this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+			this.callbacks.setCallbackOnMeshLoaded( callbacks.onMeshLoaded );
+
+		}
+	};
+
+	Commons.prototype.setModelName = function ( modelName ) {
+		this.modelName = Validator.verifyInput( modelName, this.modelName );
 	};
 
 	/**

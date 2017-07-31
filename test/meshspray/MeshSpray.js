@@ -72,21 +72,15 @@ var MeshSpray = (function () {
 
 			callback = this.callbacks.onLoad;
 			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
+			console.timeEnd( 'MeshSpray' );
 
 		} else if ( reason === 'error' ) {
 
 			callback = this.callbacks.onError;
 			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
+			console.timeEnd( 'MeshSpray' );
 
 		}
-		if ( reason === 'terminate' ) {
-
-			if ( this.workerSupport.running ) throw 'Unable to gracefully terminate worker as it is currently running!';
-			console.log( 'Finalize is complete. Terminating application on request!' );
-			this.workerSupport._terminate();
-
-		}
-		console.timeEnd( 'MeshSpray' );
 	};
 
 	MeshSpray.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {

@@ -216,7 +216,6 @@ var WWOBJLoader2Stage = (function () {
 					prepData.resources[ 1 ].content = data;
 
 					scope.objLoader2.init();
-					scope.objLoader2.setUseAsync( true );
 					scope.registerCallbacks();
 					scope.objLoader2.run( prepData );
 				};
@@ -251,7 +250,6 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				scope.objLoader2.init();
-				scope.objLoader2.setUseAsync( true );
 				scope.registerCallbacks();
 				scope.objLoader2.run( prepData );
 

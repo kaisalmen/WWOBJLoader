@@ -146,6 +146,7 @@ var OBJLoader2Example = (function () {
 				scope.pivot.add( prepData.sceneGraphBaseNode );
 
 				scope.objLoader.init();
+				scope.objLoader.setModelName( prepData.modelName );
 				scope.objLoader.setMaterials( materials );
 				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 				scope.registerCallbacks( scope.objLoader.getCallbacks() );

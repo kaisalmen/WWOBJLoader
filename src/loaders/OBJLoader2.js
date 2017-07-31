@@ -147,6 +147,7 @@ THREE.OBJLoader2 = (function () {
 				} else {
 
 					scope.parse( available.obj.content );
+					scope._finalize( 'complete' );
 
 				}
 			} else {
@@ -163,6 +164,7 @@ THREE.OBJLoader2 = (function () {
 					} else {
 
 						scope.parse( available.obj.content );
+						scope._finalize( 'complete' );
 
 					}
 				};
@@ -204,13 +206,8 @@ THREE.OBJLoader2 = (function () {
 
 		if ( Validator.isValid( prepData ) ) {
 
-			var callbacks = prepData.getCallbacks();
-			this.callbacks.setCallbackOnLoad( callbacks.onLoad );
-			this.callbacks.setCallbackOnError( callbacks.onError );
-			this.callbacks.setCallbackOnProgress( callbacks.onProgress );
-			this.callbacks.setCallbackOnMeshLoaded( callbacks.onMeshLoaded );
-
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
+			this.setUseAsync( prepData.useAsync );
 
 		}
 	};
@@ -222,7 +219,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
-		console.time( '(WW)OBJLoader2' );
+		console.time( 'OBJLoader2: ' + this.modelName );
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.setMaterialNames( this.materialNames );
 		this.parser.setDebug( this.debug );
@@ -231,23 +228,25 @@ THREE.OBJLoader2 = (function () {
 
 			console.log( 'Parsing arrayBuffer...' );
 			this.parser.parseArrayBuffer( content );
-			this._finalize( 'complete' );
+			this._finalize( 'parsed' );
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
 			console.log( 'Parsing text...' );
 			this.parser.parseText( content );
-			this._finalize( 'complete' );
+			this._finalize( 'parsed' );
 
 		} else {
 
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
+
+		return this.sceneGraphBaseNode;
 	};
 
 	OBJLoader2.prototype.parseAsync = function ( content ) {
-		console.time( '(WW)OBJLoader2' );
+		console.time( 'OBJLoader2: ' + this.modelName);
 
 		this.workerSupport.run(
 			{
@@ -268,23 +267,26 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	OBJLoader2.prototype._finalize = function ( reason, message ) {
-		this.parser.finalize();
-
 		var callback;
+		if ( reason === 'parsed' ) {
+
+			this.parser.finalize();
+			this.builderComplete( message );
+
+		}
 		if ( reason === 'complete' ) {
 
-			this.builderComplete( message );
 			callback = this.callbacks.onLoad;
 			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
+			console.timeEnd( 'OBJLoader2: ' + this.modelName );
 
 		} else if ( reason === 'error' ) {
 
 			callback = this.callbacks.onError;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
+			if ( Validator.isValid( callback ) ) callback( message );
+			console.timeEnd( 'OBJLoader2: ' + this.modelName );
 
 		}
-
-		console.timeEnd( '(WW)OBJLoader2' );
 	};
 
 	OBJLoader2.prototype.onProgress = function ( baseText, text ) {

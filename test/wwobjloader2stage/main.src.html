@@ -100,6 +100,8 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsFemaleMale.push( prepData );
 
 			prepData = new THREE.LoaderSupport.PrepData( 'female02' );
@@ -108,6 +110,8 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsFemaleMale.push( prepData );
 
 			var objsCerberus = [];
@@ -117,6 +121,8 @@
 			pivot.scale.set( 50.0, 50.0, 50.0 );
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsCerberus.push( prepData );
 
 			var objsWaltHead = [];
@@ -126,6 +132,8 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsWaltHead.push( prepData );
 
 			var objsVive = [];
@@ -135,6 +143,8 @@
 			pivot.scale.set( 400.0, 400.0, 400.0 );
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsVive.push( prepData );
 
 			var objsPtv1Zip = [];
@@ -145,6 +155,8 @@
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsPtv1Zip.push( prepData );
 
 			// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
@@ -156,6 +168,8 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsZomaxOven.push( prepData );
 
 			var objsZomaxSink = [];
@@ -165,6 +179,8 @@
 			prepData.setSceneGraphBaseNode( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
+			prepData.setUseAsync( true );
+			prepData.setStreamMeshes( true );
 			objsZomaxSink.push( prepData );
 
 			app.updateAssets( objsFemaleMale );
