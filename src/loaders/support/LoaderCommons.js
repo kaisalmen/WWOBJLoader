@@ -111,6 +111,7 @@ THREE.LoaderSupport.Commons = (function () {
 		this.manager = Validator.verifyInput( this.manager, THREE.DefaultLoadingManager );
 
 		this.modelName = '';
+		this.instanceNo = 0;
 
 		this.debug = false;
 		this.sceneGraphBaseNode = null;
@@ -120,29 +121,51 @@ THREE.LoaderSupport.Commons = (function () {
 		this.streamMeshes = false;
 		this.meshStore = [];
 
-		this.callbacks = new THREE.LoaderSupport.Callbacks();
+		this.callbackOnProgress = null;
+		this.callbackOnMeshLoaded = null;
+		this.callbackOnComplete = null;
 	};
 
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {
+
 			this.setModelName( prepData.modelName );
 			this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
 			this.setStreamMeshes( prepData.streamMeshes );
 			var materials = prepData.materials.length > 0 ? prepData.materials : null;
 			setMaterials( this, materials );
 
-			var callbacks = prepData.getCallbacks();
-			this.callbacks.setCallbackOnLoad( callbacks.onLoad );
-			this.callbacks.setCallbackOnError( callbacks.onError );
-			this.callbacks.setCallbackOnProgress( callbacks.onProgress );
-			this.callbacks.setCallbackOnMeshLoaded( callbacks.onMeshLoaded );
+			this.callbackOnProgress = prepData.getCallbacks().onProgress;
+			this.callbackOnMeshLoaded = prepData.getCallbacks().onMeshLoaded;
+			this.callbackOnComplete = prepData.getCallbacks().onLoad;
 
 		}
 	};
 
 	Commons.prototype.setModelName = function ( modelName ) {
 		this.modelName = Validator.verifyInput( modelName, this.modelName );
+	};
+
+
+	/**
+	 * Set the instance number
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {number} instanceNo
+	 */
+	Commons.prototype.setInstanceNo = function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+	};
+
+	/**
+	 * Get the instance number
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @returns {number|*}
+	 */
+	Commons.prototype.getInstanceNo = function () {
+		return this.instanceNo;
 	};
 
 	/**
@@ -208,24 +231,6 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @returns {THREE.LoaderSupport.Callbacks}
-	 */
-	Commons.prototype.getCallbacks = function () {
-		return this.callbacks;
-	};
-
-	/**
-	 * Clears all registered callbacks.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 */
-	Commons.prototype.clearAllCallbacks = function () {
-		this.callbacks.clearAllCallbacks();
-	};
-
-	/**
 	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
@@ -236,8 +241,7 @@ THREE.LoaderSupport.Commons = (function () {
 		var content = Validator.isValid( baseText ) ? baseText: '';
 		content = Validator.isValid( text ) ? content + ' ' + text : content;
 
-		var callbackOnProgress = this.callbacks.onProgress;
-		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName );
+		if ( Validator.isValid( this.callbackOnProgress ) ) this.callbackOnProgress( content, this.modelName, this.instanceNo );
 
 		if ( this.debug ) console.log( content );
 	};
@@ -322,7 +326,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 		var meshes = [];
 		var mesh;
-		var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
+		var callbackOnMeshLoaded = this.callbackOnMeshLoaded;
 		var callbackOnMeshLoadedResult;
 		if ( Validator.isValid( callbackOnMeshLoaded ) ) {
 
@@ -378,16 +382,16 @@ THREE.LoaderSupport.Commons = (function () {
 				meshNames[ i ] = mesh.name;
 
 			}
-			this.callbacks.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName );
+			this.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName );
 
 		} else {
 
-			this.callbacks.onProgress(  'Not adding mesh: ' + meshName );
+			this.onProgress(  'Not adding mesh: ' + meshName );
 
 		}
 	};
 
-	Commons.prototype.builderComplete = function ( message ) {
+	Commons.prototype.builderComplete = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
 		if ( ! this.streamMeshes ) {
 
 			for ( var meshStoreKey in this.meshStore ) {
@@ -397,7 +401,7 @@ THREE.LoaderSupport.Commons = (function () {
 			}
 
 		}
-		if ( Validator.isValid( message ) ) this.callbacks.onProgress( message );
+		this.callbackOnComplete( sceneGraphBaseNode, modelName, instanceNo, message );
 	};
 
 	return Commons;
@@ -529,7 +533,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
-		this.useAsync = true;
+		this.useAsync = false;
 	}
 
 	/**

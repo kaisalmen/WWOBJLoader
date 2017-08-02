@@ -90,7 +90,16 @@ var OBJLoader2Example = (function () {
 		}
 	};
 
-	OBJLoader2Example.prototype.registerCallbacks = function ( applyHere ) {
+	/**
+	 *
+	 * @param {THREE.LoaderSupport.PrepData prepData
+	 */
+	OBJLoader2Example.prototype.loadObj = function ( prepData ) {
+		if ( ! Validator.isValid( prepData ) ) return;
+
+		var modelName = prepData.modelName;
+		this._reportProgress( 'Loading: ' + modelName );
+
 		var scope = this;
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.scene.add( sceneGraphBaseNode );
@@ -99,6 +108,7 @@ var OBJLoader2Example = (function () {
 
 			scope.processLoadList();
 		};
+
 		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
@@ -112,28 +122,15 @@ var OBJLoader2Example = (function () {
 
 			return override;
 		};
-		applyHere.setCallbackOnProgress( this._reportProgress );
-		applyHere.setCallbackOnLoad( callbackOnLoad );
-		applyHere.setCallbackOnMeshLoaded( callbackMeshLoaded );
-	};
 
-	/**
-	 *
-	 * @param {THREE.LoaderSupport.PrepData prepData
-	 */
-	OBJLoader2Example.prototype.loadObj = function ( prepData ) {
-		if ( ! Validator.isValid( prepData ) ) return;
-
-		var modelName = prepData.modelName;
-		this._reportProgress( 'Loading: ' + modelName );
-
-		var scope = this;
 		if ( prepData.automatedRun ) {
 
 			scope.pivot.add( prepData.sceneGraphBaseNode );
 
 			scope.objLoader.init();
-			scope.registerCallbacks( prepData.getCallbacks() );
+			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );
+			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
+			prepData.getCallbacks().setCallbackOnMeshLoaded( callbackMeshLoaded );
 			scope.objLoader.run( prepData );
 
 		} else {
@@ -148,9 +145,9 @@ var OBJLoader2Example = (function () {
 				scope.objLoader.init();
 				scope.objLoader.setModelName( prepData.modelName );
 				scope.objLoader.setMaterials( materials );
+				scope.objLoader.setUseAsync( false );
 				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-				scope.registerCallbacks( scope.objLoader.getCallbacks() );
-				scope.objLoader.load( resourceObj.url );
+				scope.objLoader.load( resourceObj.url, callbackOnLoad );
 			};
 
 			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );

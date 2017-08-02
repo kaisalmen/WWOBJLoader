@@ -24,23 +24,16 @@ THREE.OBJLoader2 = (function () {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
-		this.instanceNo = 0;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 		this.useAsync = false;
 
 		var scope = this;
-		var builderScoped = function ( payload ) {
-			scope.builder( payload );
-		};
 		var onProgressScoped = function ( message ) {
 			scope.onProgress( message );
 		};
-		var scopeFuncComplete = function ( reason ) {
-			scope._finalize( reason );
-		};
-		this.parser = new Parser( builderScoped, onProgressScoped );
+		this.parser = new Parser( onProgressScoped );
 
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( builderScoped, scopeFuncComplete ) );
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
 	};
 
@@ -74,32 +67,16 @@ THREE.OBJLoader2 = (function () {
 		THREE.LoaderSupport.Commons.prototype.setDebug.call( this, enabled );
 	};
 
-	/**
-	 * Set the instance number
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {number} instanceNo
-	 */
-	OBJLoader2.prototype.setInstanceNo = function ( instanceNo ) {
-		this.instanceNo = instanceNo;
-	};
-
-	/**
-	 * Get the instance number
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @returns {number|*}
-	 */
-	OBJLoader2.prototype.getInstanceNo = function () {
-		return this.instanceNo;
-	};
-
 	OBJLoader2.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.workerSupport.setTerminateRequested( terminateRequested );
 	};
 
 	OBJLoader2.prototype.setUseAsync = function ( useAsync ) {
 		this.useAsync = useAsync === true;
+	};
+
+	OBJLoader2.prototype.setPath = function ( path ) {
+		this.path = Validator.verifyInput( path, '' );
 	};
 
 	/**
@@ -113,15 +90,48 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, useArrayBuffer ) {
-		var prepData = new THREE.LoaderSupport.PrepData( 'default' );
-		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ', useArrayBuffer !== false );
+		var scope = this;
+		if ( ! Validator.isValid( onProgress ) ) {
+			var refPercentComplete = 0;
+			var percentComplete = 0;
+			onProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
 
-		prepData.addResource( resource );
-		prepData.callbacks.setCallbackOnLoad( onLoad );
-		prepData.callbacks.setCallbackOnError( onError );
-		prepData.callbacks.setCallbackOnProgress( onProgress );
+				percentComplete = Math.round( event.loaded / event.total * 100 );
+				if ( percentComplete > refPercentComplete ) {
 
-		this.run( prepData );
+					refPercentComplete = percentComplete;
+					var output = 'Download of "' + url + '": ' + percentComplete + '%';
+					console.log( output );
+					scope.onProgress( output );
+
+				}
+			};
+		}
+
+		if ( ! Validator.isValid( onError ) ) {
+			onError = function ( event ) {
+				var output = 'Error occurred while downloading "' + available.obj.url + '"';
+				console.error( output + ': ' + event );
+				scope.onProgress( output );
+			};
+		}
+
+		this.fileLoader.setPath( this.path );
+		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
+		this.fileLoader.load( url, function ( content ) {
+			if ( scope.useAsync ) {
+
+				scope.parseAsync( content, scope.builder, scope.builderComplete );
+
+			} else {
+
+				onLoad( scope.parse( content ) );
+
+			}
+
+		}, onProgress, onError );
+
 	};
 
 	/**
@@ -142,58 +152,31 @@ THREE.OBJLoader2 = (function () {
 
 				if ( scope.useAsync ) {
 
-					scope.parseAsync(available.obj.content );
+					scope.parseAsync( available.obj.content );
 
 				} else {
 
 					scope.parse( available.obj.content );
-					scope._finalize( 'complete' );
 
 				}
 			} else {
 
-				var refPercentComplete = 0;
-				var percentComplete = 0;
 				var onLoad = function ( arrayBuffer ) {
 
 					available.obj.content = new Uint8Array( arrayBuffer );
 					if ( scope.useAsync ) {
 
-						scope.parseAsync(available.obj.content );
+						scope.parseAsync( available.obj.content, scope.builder, scope.builderComplete );
 
 					} else {
 
 						scope.parse( available.obj.content );
-						scope._finalize( 'complete' );
 
 					}
 				};
 
-				var onProgress = function ( event ) {
-					if ( ! event.lengthComputable ) return;
-
-					percentComplete = Math.round( event.loaded / event.total * 100 );
-					if ( percentComplete > refPercentComplete ) {
-
-						refPercentComplete = percentComplete;
-						var output = 'Download of "' + available.obj.url + '": ' + percentComplete + '%';
-						console.log( output );
-						scope.onProgress( output );
-
-					}
-				};
-
-				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + available.obj.url + '"';
-					console.error( output + ': ' + event );
-					scope.onProgress( output );
-					scope._finalize( 'error' );
-
-				};
-
-				scope.fileLoader.setPath( available.obj.path );
-				scope.fileLoader.setResponseType( available.obj.useArrayBuffer !== false ? 'arraybuffer' : 'text' );
-				scope.fileLoader.load( available.obj.name, onLoad, onProgress, onError );
+				scope.setPath( available.obj.path );
+				scope.load( available.obj.name, onLoad, null, null, available.obj.useArrayBuffer );
 
 			}
 		};
@@ -218,36 +201,52 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
-	OBJLoader2.prototype.parse = function ( content ) {
+	OBJLoader2.prototype.parse = function ( content, onMeshLoaded ) {
 		console.time( 'OBJLoader2: ' + this.modelName );
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.setMaterialNames( this.materialNames );
 		this.parser.setDebug( this.debug );
 
+		if ( ! Validator.isValid( onMeshLoaded ) ) {
+			var scope = this;
+			onMeshLoaded = function ( payload ) {
+				scope.builder( payload );
+			};
+		}
+		this.parser.setCallbackBuilder( onMeshLoaded );
+
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
 			this.parser.parseArrayBuffer( content );
-			this._finalize( 'parsed' );
+			this.parser.finalize();
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
 			console.log( 'Parsing text...' );
 			this.parser.parseText( content );
-			this._finalize( 'parsed' );
+			this.parser.finalize();
 
 		} else {
 
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
+		console.timeEnd( 'OBJLoader2: ' + this.modelName );
 
 		return this.sceneGraphBaseNode;
 	};
 
-	OBJLoader2.prototype.parseAsync = function ( content ) {
+	OBJLoader2.prototype.parseAsync = function ( content, onMeshLoaded, onLoad ) {
 		console.time( 'OBJLoader2: ' + this.modelName);
 
+		var scope = this;
+		var scopedOnLoad = function ( message ) {
+			onLoad( scope.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
+			console.timeEnd( 'OBJLoader2: ' + this.modelName );
+		};
+
+		this.workerSupport.setCallbacks( onMeshLoaded, scopedOnLoad );
 		this.workerSupport.run(
 			{
 				cmd: 'run',
@@ -264,39 +263,6 @@ THREE.OBJLoader2 = (function () {
 			},
 			[ content.buffer ]
 		);
-	};
-
-	OBJLoader2.prototype._finalize = function ( reason, message ) {
-		var callback;
-		if ( reason === 'parsed' ) {
-
-			this.parser.finalize();
-			this.builderComplete( message );
-
-		}
-		if ( reason === 'complete' ) {
-
-			callback = this.callbacks.onLoad;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo, message );
-			console.timeEnd( 'OBJLoader2: ' + this.modelName );
-
-		} else if ( reason === 'error' ) {
-
-			callback = this.callbacks.onError;
-			if ( Validator.isValid( callback ) ) callback( message );
-			console.timeEnd( 'OBJLoader2: ' + this.modelName );
-
-		}
-	};
-
-	OBJLoader2.prototype.onProgress = function ( baseText, text ) {
-		var content = Validator.isValid( baseText ) ? baseText: "";
-		content = Validator.isValid( text ) ? content + " " + text : content;
-
-		var callbackOnProgress = this.callbacks.onProgress;
-		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( content, this.modelName, this.instanceNo );
-
-		if ( this.debug ) console.log( content );
 	};
 
 	/**
@@ -345,8 +311,8 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var Parser = (function () {
 
-		function Parser( builder, onProgress ) {
-			this.meshCreator = new MeshCreator( builder );
+		function Parser( onProgress ) {
+			this.meshCreator = new MeshCreator();
 			this.onProgressCallback = onProgress;
 			this.inputObjectCount = 1;
 			this.debug = false;
@@ -366,6 +332,10 @@ THREE.OBJLoader2 = (function () {
 
 		Parser.prototype.setMaterialNames = function ( materialNames ) {
 			this.meshCreator.setMaterialNames( materialNames );
+		};
+
+		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
+			this.meshCreator.setCallbackBuilder( callbackBuilder );
 		};
 
 		/**
@@ -1010,18 +980,21 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var MeshCreator = (function () {
 
-		function MeshCreator( builder ) {
+		function MeshCreator() {
 			this.materialNames = [];
 			this.debug = false;
 			this.globalObjectCount = 1;
-			this.callbacks = {
-				builder: builder
-			};
+			this.callbackBuilder = null;
 		}
 
 		MeshCreator.prototype.setMaterialNames = function ( materialNames ) {
 			this.materialNames = Validator.verifyInput( materialNames, this.materialNames );
 			this.materialNames = Validator.verifyInput( this.materialNames, [] );
+		};
+
+		MeshCreator.prototype.setCallbackBuilder = function ( callbackBuilder ) {
+			this.callbackBuilder = callbackBuilder;
+			if ( ! Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 		};
 
 		MeshCreator.prototype.setDebug = function ( debug ) {
@@ -1143,7 +1116,7 @@ THREE.OBJLoader2 = (function () {
 			}
 
 			this.globalObjectCount++;
-			this.callbacks.builder(
+			this.callbackBuilder(
 				{
 					cmd: 'meshData',
 					params: {

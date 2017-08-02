@@ -4,7 +4,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function WorkerSupport( builderFunction, onLoad ) {
+	function WorkerSupport() {
 		console.log( "Using THREE.LoaderSupport.WorkerSupport version: " + WORKER_SUPPORT_VERSION );
 
 		// check worker support first
@@ -18,8 +18,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		this.terminateRequested = false;
 
 		this.callbacks = {
-			builder: builderFunction,
-			onLoad: onLoad
+			onMeshLoaded: null,
+			onLoad: null
 		};
 	}
 
@@ -53,6 +53,13 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.worker.addEventListener( 'message', scopeFunction, false );
 
 		}
+	};
+
+	WorkerSupport.prototype.setCallbacks = function ( onMeshLoaded, onLoad ) {
+		this.callbacks = {
+			onMeshLoaded: onMeshLoaded,
+			onLoad: onLoad
+		};
 	};
 
 	var buildObject = function ( fullName, object ) {
@@ -150,6 +157,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	WorkerSupport.prototype.run = function ( messageObject ) {
+		if ( ! Validator.isValid( this.callbacks.onMeshLoaded ) ) throw 'Unable to run as no "onMeshLoaded" callback is set.';
+		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( Validator.isValid( this.worker ) ) {
 			this.running = true;
 			this.worker.postMessage( messageObject );
@@ -161,12 +170,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		switch ( payload.cmd ) {
 			case 'meshData':
-				this.callbacks.builder( payload );
+				this.callbacks.onMeshLoaded( payload );
 				break;
 
 			case 'complete':
-				this.callbacks.onLoad( 'parsed' );
-				this.callbacks.onLoad( 'complete', payload.msg );
+				this.callbacks.onLoad( payload.msg );
 				this.running = false;
 
 				if ( this.terminateRequested ) {
