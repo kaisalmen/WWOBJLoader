@@ -1,5 +1,3 @@
-if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
-
 /**
  * Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
  * Workflow:
@@ -10,17 +8,17 @@ if ( THREE.LoaderSupport.WW === undefined ) { THREE.LoaderSupport.WW = {} }
  *
  * @class
  */
-THREE.LoaderSupport.WW.LoaderDirector = (function () {
+THREE.LoaderSupport.WorkerDirector = (function () {
 
-	var WW_LOADER_DIRECTOR_VERSION = '1.0.0-dev';
+	var LOADER_WORKER_DIRECTOR_VERSION = '1.0.0-dev';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
-	function LoaderDirector( classDef ) {
-		console.log( "Using THREE.LoaderSupport.WW.LoaderDirector version: " + WW_LOADER_DIRECTOR_VERSION );
+	function WorkerDirector( classDef ) {
+		console.log( "Using THREE.LoaderSupport.WorkerDirector version: " + LOADER_WORKER_DIRECTOR_VERSION );
 
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
@@ -39,43 +37,43 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
 	 * @returns {number}
 	 */
-	LoaderDirector.prototype.getMaxQueueSize = function () {
+	WorkerDirector.prototype.getMaxQueueSize = function () {
 		return this.maxQueueSize;
 	};
 
 	/**
 	 * Returns the maximum number of workers.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
 	 * @returns {number}
 	 */
-	LoaderDirector.prototype.getMaxWebWorkers = function () {
+	WorkerDirector.prototype.getMaxWebWorkers = function () {
 		return this.maxWebWorkers;
 	};
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
-	LoaderDirector.prototype.setCrossOrigin = function ( crossOrigin ) {
+	WorkerDirector.prototype.setCrossOrigin = function ( crossOrigin ) {
 		this.crossOrigin = crossOrigin;
 	};
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
 	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
-	LoaderDirector.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
+	WorkerDirector.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
 		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
@@ -108,11 +106,11 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	/**
 	 * Store run instructions in internal instructionQueue.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
 	 * @param {Object} prepData Either {@link THREE.LoaderSupport.PrepData}
 	 */
-	LoaderDirector.prototype.enqueueForRun = function ( prepData ) {
+	WorkerDirector.prototype.enqueueForRun = function ( prepData ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
 			this.instructionQueue.push( prepData );
 		}
@@ -120,9 +118,9 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	/**
 	 * Process the instructionQueue until it is depleted.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 */
-	LoaderDirector.prototype.processQueue = function () {
+	WorkerDirector.prototype.processQueue = function () {
 		if ( this.instructionQueue.length === 0 ) return;
 
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
@@ -134,7 +132,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		}
 	};
 
-	LoaderDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
+	WorkerDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
 		worker.init();
 		worker.setInstanceNo( instanceNo );
 
@@ -223,7 +221,7 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		worker.run( prepData );
 	};
 
-	LoaderDirector.prototype._buildWorker = function () {
+	WorkerDirector.prototype._buildWorker = function () {
 		var worker = Object.create( this.workerDescription.classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 
@@ -242,10 +240,10 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 
 	/**
 	 * Terminate all workers.
-	 * @memberOf THREE.LoaderSupport.WW.LoaderDirector
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 */
-	LoaderDirector.prototype.deregister = function () {
-		console.log( 'LoaderDirector received the deregister call. Terminating all workers!' );
+	WorkerDirector.prototype.deregister = function () {
+		console.log( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
 		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
 
@@ -262,6 +260,6 @@ THREE.LoaderSupport.WW.LoaderDirector = (function () {
 		this.instructionQueue = [];
 	};
 
-	return LoaderDirector;
+	return WorkerDirector;
 
 })();

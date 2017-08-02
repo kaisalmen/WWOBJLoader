@@ -51,12 +51,12 @@
 			var maxQueueSize = 512;
 			var maxWebWorkers = 1;
 			var radius = 500;
-			this.wwDirector = new THREE.LoaderSupport.WW.LoaderDirector( MeshSpray );
-			this.wwDirector.setCrossOrigin( 'anonymous' );
+			this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
+			this.workerDirector.setCrossOrigin( 'anonymous' );
 
 			var scope = this;
 			var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.wwDirector.objectsCompleted + ')';
+				var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')';
 				console.log( msg );
 			};
 			var reportProgress = function( content, modelName, instanceNo ) {
@@ -78,7 +78,7 @@
 			callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
 			callbacks.setCallbackOnLoad( callbackOnLoad );
 			callbacks.setCallbackOnProgress( reportProgress );
-			this.wwDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+			this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 
 			var prepData;
 			var pivot;
@@ -105,9 +105,9 @@
 				prepData.counter = counter;
 				counter++;
 
-				this.wwDirector.enqueueForRun( prepData );
+				this.workerDirector.enqueueForRun( prepData );
 			}
-			this.wwDirector.processQueue();
+			this.workerDirector.processQueue();
 
 			render();
 

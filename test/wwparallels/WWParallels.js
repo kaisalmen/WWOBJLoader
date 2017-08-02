@@ -25,8 +25,8 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwDirector = new THREE.LoaderSupport.WW.LoaderDirector( THREE.OBJLoader2 );
-		this.wwDirector.setCrossOrigin( 'anonymous' );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2 );
+		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
 		this.cube = null;
@@ -121,7 +121,7 @@ var WWParallels = (function () {
 		}
 
 		var scope = this;
-		scope.wwDirector.objectsCompleted = 0;
+		scope.workerDirector.objectsCompleted = 0;
 		scope.feedbackArray = [];
 		scope.reportDonwload = [];
 
@@ -137,12 +137,12 @@ var WWParallels = (function () {
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
 
-			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
+			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-			if ( scope.wwDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
+			if ( scope.workerDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
 		var callbackReportProgress = function ( content, modelName, instanceNo ) {
@@ -177,8 +177,8 @@ var WWParallels = (function () {
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
 
-		this.wwDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
-		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
+		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+		console.log( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
 
 		var modelPrepDatas = [];
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
@@ -232,11 +232,11 @@ var WWParallels = (function () {
 			modelPrepData.setSceneGraphBaseNode( pivot );
 			modelPrepData.setStreamMeshes( streamMeshes );
 
-			this.wwDirector.enqueueForRun( modelPrepData );
+			this.workerDirector.enqueueForRun( modelPrepData );
 			this.allAssets.push( modelPrepData );
 		}
 
-		this.wwDirector.processQueue();
+		this.workerDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
@@ -276,7 +276,7 @@ var WWParallels = (function () {
 	};
 
 	WWParallels.prototype.terminateManager = function () {
-		this.wwDirector.deregister();
+		this.workerDirector.deregister();
 		this.running = false;
 	};
 

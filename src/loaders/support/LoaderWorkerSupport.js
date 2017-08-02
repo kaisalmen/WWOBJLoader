@@ -1,5 +1,3 @@
-if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
-
 THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var WORKER_SUPPORT_VERSION = '1.0.0-dev';
