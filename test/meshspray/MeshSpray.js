@@ -18,7 +18,6 @@ var MeshSpray = (function () {
 	MeshSpray.prototype.init = function ( manager ) {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
-		this.setStreamMeshes( true );
 		this.instanceNo = 0;
 
 		var scope = this;

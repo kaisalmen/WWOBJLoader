@@ -36,6 +36,9 @@ THREE.LoaderSupport.Callbacks = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function Callbacks() {
+		this.onProgress = null;
+		this.onMeshLoaded = null;
+		this.onLoad = null;
 	}
 
 	/**
@@ -46,16 +49,6 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 */
 	Callbacks.prototype.setCallbackOnProgress = function ( callbackOnProgress ) {
 		this.onProgress = Validator.verifyInput( callbackOnProgress, this.onProgress );
-	};
-
-	/**
-	 * Register callback function that is called once loading of the complete model is completed.
-	 * @memberOf THREE.LoaderSupport.Callbacks
-	 *
-	 * @param {callback} callbackOnLoad Callback function for described functionality
-	 */
-	Callbacks.prototype.setCallbackOnLoad = function ( callbackOnLoad ) {
-		this.onLoad = Validator.verifyInput( callbackOnLoad, this.onLoad );
 	};
 
 	/**
@@ -70,24 +63,13 @@ THREE.LoaderSupport.Callbacks = (function () {
 	};
 
 	/**
-	 * Report if an error prevented loading.
+	 * Register callback function that is called once loading of the complete model is completed.
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackOnError Callback function for described functionality
+	 * @param {callback} callbackOnLoad Callback function for described functionality
 	 */
-	Callbacks.prototype.setCallbackOnError = function ( callbackOnError ) {
-		this.onError = Validator.verifyInput( callbackOnError, this.onError );
-	};
-
-	/**
-	 * Clears all registered callbacks.
-	 * @memberOf THREE.LoaderSupport.Callbacks
-	 */
-	Callbacks.prototype.clearAllCallbacks = function () {
-		this.onProgress = null;
-		this.onLoad = null;
-		this.onError = null;
-		this.onMeshLoaded = null;
+	Callbacks.prototype.setCallbackOnLoad = function ( callbackOnLoad ) {
+		this.onLoad = Validator.verifyInput( callbackOnLoad, this.onLoad );
 	};
 
 	return Callbacks;
@@ -114,16 +96,13 @@ THREE.LoaderSupport.Commons = (function () {
 		this.instanceNo = 0;
 
 		this.debug = false;
-		this.sceneGraphBaseNode = null;
 		this.materials = [];
 		this.materialNames = [];
 
-		this.streamMeshes = false;
-		this.meshStore = [];
+		this.loaderRootNode = new THREE.Group();
 
-		this.callbackOnProgress = null;
 		this.callbackOnMeshLoaded = null;
-		this.callbackOnComplete = null;
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
 
 
@@ -131,15 +110,13 @@ THREE.LoaderSupport.Commons = (function () {
 		if ( Validator.isValid( prepData ) ) {
 
 			this.setModelName( prepData.modelName );
-			this.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-			this.setStreamMeshes( prepData.streamMeshes );
+			this.setStreamMeshesTo( prepData.streamMeshesTo );
 			var materials = prepData.materials.length > 0 ? prepData.materials : null;
 			setMaterials( this, materials );
 
-			this.callbackOnProgress = prepData.getCallbacks().onProgress;
-			this.callbackOnMeshLoaded = prepData.getCallbacks().onMeshLoaded;
-			this.callbackOnComplete = prepData.getCallbacks().onLoad;
-
+			this.callbacks.setCallbackOnProgress( prepData.getCallbacks().onProgress );
+			this.callbacks.setCallbackOnMeshLoaded( prepData.getCallbacks().onMeshLoaded );
+			this.callbacks.setCallbackOnLoad( prepData.getCallbacks().onLoad );
 		}
 	};
 
@@ -179,19 +156,13 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Set the node where the loaded objects will be attached.
+	 * Set the node where the loaded objects will be attached directly.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {THREE.Object3D} sceneGraphBaseNode scenegraph object where meshes will be attached
+	 * @param {THREE.Object3D} streamMeshesTo Attached scenegraph object where meshes will be attached live
 	 */
-	Commons.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, this.sceneGraphBaseNode );
-		this.sceneGraphBaseNode = Validator.verifyInput( this.sceneGraphBaseNode, new THREE.Group() );
-	};
-
-	Commons.prototype.setStreamMeshes = function ( streamMeshes ) {
-		this.streamMeshes = streamMeshes !== false;
-		if ( ! this.streamMeshes ) this.meshStore = [];
+	Commons.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
 	};
 
 	var setMaterials = function ( scope, materials ) {
@@ -241,7 +212,7 @@ THREE.LoaderSupport.Commons = (function () {
 		var content = Validator.isValid( baseText ) ? baseText: '';
 		content = Validator.isValid( text ) ? content + ' ' + text : content;
 
-		if ( Validator.isValid( this.callbackOnProgress ) ) this.callbackOnProgress( content, this.modelName, this.instanceNo );
+		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
 
 		if ( this.debug ) console.log( content );
 	};
@@ -326,7 +297,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 		var meshes = [];
 		var mesh;
-		var callbackOnMeshLoaded = this.callbackOnMeshLoaded;
+		var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
 		var callbackOnMeshLoadedResult;
 		if ( Validator.isValid( callbackOnMeshLoaded ) ) {
 
@@ -370,15 +341,7 @@ THREE.LoaderSupport.Commons = (function () {
 			for ( var i in meshes ) {
 
 				mesh = meshes[ i ];
-				if ( this.streamMeshes ) {
-
-					this.sceneGraphBaseNode.add( mesh );
-
-				} else {
-
-					this.meshStore.push( mesh );
-
-				}
+				this.loaderRootNode.add( mesh );
 				meshNames[ i ] = mesh.name;
 
 			}
@@ -389,19 +352,6 @@ THREE.LoaderSupport.Commons = (function () {
 			this.onProgress(  'Not adding mesh: ' + meshName );
 
 		}
-	};
-
-	Commons.prototype.builderComplete = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
-		if ( ! this.streamMeshes ) {
-
-			for ( var meshStoreKey in this.meshStore ) {
-
-				if ( this.meshStore.hasOwnProperty( meshStoreKey ) ) this.sceneGraphBaseNode.add( this.meshStore[ meshStoreKey ] );
-
-			}
-
-		}
-		this.callbackOnComplete( sceneGraphBaseNode, modelName, instanceNo, message );
 	};
 
 	return Commons;
@@ -527,8 +477,7 @@ THREE.LoaderSupport.PrepData = (function () {
 	function PrepData( modelName ) {
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.resources = [];
-		this.sceneGraphBaseNode = null;
-		this.streamMeshes = true;
+		this.streamMeshesTo = null;
 		this.materialPerSmoothingGroup = false;
 		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
@@ -540,20 +489,10 @@ THREE.LoaderSupport.PrepData = (function () {
 	 * {@link THREE.Object3D} where meshes will be attached.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {THREE.Object3D} sceneGraphBaseNode Scene graph object
+	 * @param {THREE.Object3D} streamMeshesTo Scene graph object
 	 */
-	PrepData.prototype.setSceneGraphBaseNode = function ( sceneGraphBaseNode ) {
-		this.sceneGraphBaseNode = Validator.verifyInput( sceneGraphBaseNode, null );
-	};
-
-	/**
-	 * Singles meshes are directly integrated into scene when loaded or later.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} streamMeshes=true Default is true
-	 */
-	PrepData.prototype.setStreamMeshes = function ( streamMeshes ) {
-		this.streamMeshes = streamMeshes !== false;
+	PrepData.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.streamMeshesTo = Validator.verifyInput( streamMeshesTo, null );
 	};
 
 	/**
@@ -613,8 +552,7 @@ THREE.LoaderSupport.PrepData = (function () {
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
 		clone.resources = this.resources;
-		clone.sceneGraphBaseNode = this.sceneGraphBaseNode;
-		clone.streamMeshes = this.streamMeshes;
+		clone.streamMeshesTo = this.streamMeshesTo;
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;

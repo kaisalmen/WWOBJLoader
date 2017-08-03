@@ -137,11 +137,11 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		worker.setInstanceNo( instanceNo );
 
 		var scope = this;
-		var workerCallbacks = worker.getCallbacks();
+		var workerCallbacks = worker.callbacks;
 		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 
-		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
+		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.objectsCompleted++;
 
 			var worker = scope.workerDescription.workers[ instanceNo ];
@@ -159,32 +159,19 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
-		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo, message ) {
+		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			if ( Validator.isValid( globalCallbacks.onLoad ) ) {
 
-				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo, message );
+				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
 
 			}
 
 			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) {
 
-				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo, message );
+				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
 
 			}
-			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo, message );
-		};
-
-		var wrapperOnError = function ( event ) {
-			if ( Validator.isValid( globalCallbacks.onError ) ) {
-
-				globalCallbacks.onError( event );
-			}
-
-			if ( Validator.isValid( prepDataCallbacks.onError ) ) {
-
-				prepDataCallbacks.onError( event );
-
-			}
+			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo );
 		};
 
 		var wrapperOnProgress = function ( content, modelName, instanceNo ) {
@@ -214,7 +201,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		};
 
 		workerCallbacks.setCallbackOnLoad( wrapperOnLoad );
-		workerCallbacks.setCallbackOnError( wrapperOnError );
 		workerCallbacks.setCallbackOnProgress( wrapperOnProgress );
 		workerCallbacks.setCallbackOnMeshLoaded( wrapperOnMeshLoaded );
 

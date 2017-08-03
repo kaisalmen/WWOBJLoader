@@ -100,10 +100,8 @@
 				z = r * Math.cos( t );
 				pivot.position.set( x, y, z );
 				this.app.scene.add( pivot );
-				prepData.setSceneGraphBaseNode( pivot );
+				prepData.setStreamMeshesTo( pivot );
 
-
-				prepData.setStreamMeshes( true );
 				prepData.quantity = 8192;
 				prepData.dimension = Math.max( Math.random() * 500, 100 );
 				prepData.counter = counter;

@@ -82,16 +82,17 @@
 			pivotA.name = 'PivotA';
 			pivotA.position.set( -50, 0, 0 );
 			var prepData = new THREE.LoaderSupport.PrepData( 'female02_vertex' );
-			prepData.setSceneGraphBaseNode( pivotA );
+			prepData.setStreamMeshesTo( pivotA );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02_vertex_colors.obj', 'OBJ' ) );
 			prepData.automatedRun = true;
+
 			app.addToLoadList( prepData );
 
 			var pivotB = new THREE.Object3D();
 			pivotB.name = 'PivotB';
 			pivotB.position.set( 50, 0, 0 );
 			prepData = new THREE.LoaderSupport.PrepData( 'female02' );
-			prepData.setSceneGraphBaseNode( pivotB );
+			prepData.setStreamMeshesTo( pivotB );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
 			prepData.automatedRun = false;

@@ -35,6 +35,8 @@ var OBJLoader2Example = (function () {
 
 		this.objLoader = new THREE.OBJLoader2();
 		this.loadList = [];
+		this.loadListNames = {};
+		this.streamMeshes = false;
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -78,6 +80,7 @@ var OBJLoader2Example = (function () {
 
 	OBJLoader2Example.prototype.addToLoadList = function ( prepData ) {
 		this.loadList.push( prepData );
+		this.loadListNames[ prepData.modelName ] = prepData;
 	};
 
 	OBJLoader2Example.prototype.processLoadList = function () {
@@ -101,15 +104,25 @@ var OBJLoader2Example = (function () {
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
-		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			scope.scene.add( sceneGraphBaseNode );
+		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+			var foundPrepData = scope.loadListNames[ modelName ];
+			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.automatedRun ) {
+
+				scope.pivot.add( foundPrepData.streamMeshesTo );
+				foundPrepData.streamMeshesTo.add( loaderRootNode );
+
+			} else {
+
+				scope.pivot.add( loaderRootNode );
+
+			}
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
 
 			scope.processLoadList();
 		};
 
-		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+		var callbackOnMeshLoaded = function ( name, bufferGeometry, material ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
 			var mesh = new THREE.Mesh( bufferGeometry, material );
@@ -125,12 +138,10 @@ var OBJLoader2Example = (function () {
 
 		if ( prepData.automatedRun ) {
 
-			scope.pivot.add( prepData.sceneGraphBaseNode );
-
 			scope.objLoader.init();
 			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );
 			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
-			prepData.getCallbacks().setCallbackOnMeshLoaded( callbackMeshLoaded );
+			prepData.getCallbacks().setCallbackOnMeshLoaded( callbackOnMeshLoaded );
 			scope.objLoader.run( prepData );
 
 		} else {
@@ -140,14 +151,15 @@ var OBJLoader2Example = (function () {
 
 			var onLoadMtl = function ( materials ) {
 
-				scope.pivot.add( prepData.sceneGraphBaseNode );
-
 				scope.objLoader.init();
 				scope.objLoader.setModelName( prepData.modelName );
 				scope.objLoader.setMaterials( materials );
+
+				scope.pivot.add( prepData.streamMeshesTo );
+				if ( scope.streamMeshes ) scope.objLoader.setStreamMeshesTo( prepData.streamMeshesTo );
+
 				scope.objLoader.setUseAsync( false );
-				scope.objLoader.setSceneGraphBaseNode( prepData.sceneGraphBaseNode );
-				scope.objLoader.load( resourceObj.url, callbackOnLoad );
+				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackOnMeshLoaded );
 			};
 
 			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );
