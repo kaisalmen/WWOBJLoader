@@ -158,8 +158,7 @@ var OBJLoader2Example = (function () {
 				scope.pivot.add( prepData.streamMeshesTo );
 				if ( scope.streamMeshes ) scope.objLoader.setStreamMeshesTo( prepData.streamMeshesTo );
 
-				scope.objLoader.setUseAsync( false );
-				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackOnMeshLoaded );
+				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackOnMeshLoaded, false );
 			};
 
 			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );

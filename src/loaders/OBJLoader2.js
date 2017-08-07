@@ -25,7 +25,6 @@ THREE.OBJLoader2 = (function () {
 
 		this.materialPerSmoothingGroup = false;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
-		this.useAsync = false;
 		this.path = '';
 
 		var scope = this;
@@ -72,10 +71,6 @@ THREE.OBJLoader2 = (function () {
 		this.workerSupport.setTerminateRequested( terminateRequested );
 	};
 
-	OBJLoader2.prototype.setUseAsync = function ( useAsync ) {
-		this.useAsync = useAsync === true;
-	};
-
 	OBJLoader2.prototype.setPath = function ( path ) {
 		this.path = Validator.verifyInput( path, this.path );
 	};
@@ -89,9 +84,9 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} onProgress Called to report progress of loading. The argument will be the XMLHttpRequest instance, which contains {integer total} and {integer loaded} bytes.
 	 * @param {callback} onError Called after an error occurred during loading
 	 * @param {callback} onMeshLoaded Called after a new mesh becomes available
-	 * @param {boolean} [useArrayBuffer=true] Set this to false to force string based parsing
+	 * @param {boolean} useAsync Set this to use async loading
 	 */
-	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshLoaded, useArrayBuffer ) {
+	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshLoaded, useAsync ) {
 		var scope = this;
 		if ( ! Validator.isValid( onProgress ) ) {
 			var refPercentComplete = 0;
@@ -120,11 +115,11 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		this.fileLoader.setPath( this.path );
-		this.fileLoader.setResponseType( useArrayBuffer !== false ? 'arraybuffer' : 'text' );
+		this.fileLoader.setResponseType( 'arraybuffer' );
 		this.fileLoader.load( url, function ( content ) {
-			if ( scope.useAsync ) {
+			if ( useAsync ) {
 
-				scope.parseAsync( content, scope.builder, scope.builderComplete );
+				scope.parseAsync( content, onLoad );
 
 			} else {
 
@@ -153,9 +148,9 @@ THREE.OBJLoader2 = (function () {
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
-				if ( scope.useAsync ) {
+				if ( prepData.useAsync ) {
 
-					scope.parseAsync( available.obj.content );
+					scope.parseAsync( available.obj.content, scope.callbacks.onLoad );
 
 				} else {
 
@@ -164,13 +159,8 @@ THREE.OBJLoader2 = (function () {
 				}
 			} else {
 
-				var onLoad = function ( object3d, meshName, instanceNo ) {
-
-					scope.callbacks.onLoad( object3d, meshName, instanceNo );
-
-				};
 				scope.setPath( available.obj.path );
-				scope.load( available.obj.name, onLoad, null, null, scope.callbacks.onMeshLoaded, available.obj.useArrayBuffer );
+				scope.load( available.obj.name, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshLoaded, prepData.useAsync );
 
 			}
 		};
@@ -184,7 +174,6 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( prepData ) ) {
 
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
-			this.setUseAsync( prepData.useAsync );
 
 		}
 	};
@@ -195,18 +184,16 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
-	OBJLoader2.prototype.parse = function ( content, onMeshLoaded ) {
+	OBJLoader2.prototype.parse = function ( content ) {
 		console.time( 'OBJLoader2: ' + this.modelName );
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.setMaterialNames( this.materialNames );
 		this.parser.setDebug( this.debug );
 
-		if ( ! Validator.isValid( onMeshLoaded ) ) {
-			var scope = this;
-			onMeshLoaded = function ( payload ) {
-				scope.builder( payload );
-			};
-		}
+		var scope = this;
+		var onMeshLoaded = function ( payload ) {
+			scope.builder( payload );
+		};
 		this.parser.setCallbackBuilder( onMeshLoaded );
 
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
@@ -231,7 +218,7 @@ THREE.OBJLoader2 = (function () {
 		return this.loaderRootNode;
 	};
 
-	OBJLoader2.prototype.parseAsync = function ( content, onMeshLoaded, onLoad ) {
+	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
 		console.time( 'OBJLoader2: ' + this.modelName);
 
 		var scope = this;
@@ -239,8 +226,11 @@ THREE.OBJLoader2 = (function () {
 			onLoad( scope.loaderRootNode, this.modelName, this.instanceNo, message );
 			console.timeEnd( 'OBJLoader2: ' + this.modelName );
 		};
+		var scopedOnMeshLoaded = function ( payload ) {
+			scope.builder( payload );
+		};
 
-		this.workerSupport.setCallbacks( onMeshLoaded, scopedOnLoad );
+		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
 		this.workerSupport.run(
 			{
 				cmd: 'run',
@@ -1148,12 +1138,11 @@ THREE.OBJLoader2 = (function () {
 			}
 
 			WWOBJLoader.prototype.run = function ( payload, postMessageCallback, onProgressCallback ) {
-				this.cmdState = 'run';
-
-				this.parser = new Parser( postMessageCallback, onProgressCallback );
+				this.parser = new Parser( onProgressCallback );
 				this.parser.setDebug( payload.params.debug );
 				this.parser.setMaterialNames( payload.materials.materialNames );
 				this.parser.setMaterialPerSmoothingGroup( payload.params.materialPerSmoothingGroup );
+				this.parser.setCallbackBuilder( postMessageCallback );
 
 				console.log( 'Parsing arrayBuffer...' );
 				console.time( 'parseArrayBuffer' );
@@ -1163,12 +1152,6 @@ THREE.OBJLoader2 = (function () {
 
 				console.timeEnd( 'parseArrayBuffer' );
 				console.log( 'OBJ loading complete!' );
-
-				this.cmdState = 'complete';
-				postMessageCallback( {
-					cmd: this.cmdState,
-					msg: null
-				} );
 			};
 
 			return WWOBJLoader;

@@ -18,7 +18,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		this.terminateRequested = false;
 
 		this.callbacks = {
-			onMeshLoaded: null,
+			builder: null,
 			onLoad: null
 		};
 	}
@@ -47,17 +47,42 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			console.timeEnd( 'buildWebWorkerCode' );
 
 			var scope = this;
-			var scopeFunction = function ( e ) {
-				scope._receiveWorkerMessage( e );
+			var receiveWorkerMessage = function ( e ) {
+				var payload = e.data;
+
+				switch ( payload.cmd ) {
+					case 'meshData':
+						scope.callbacks.builder( payload );
+						break;
+
+					case 'complete':
+						scope.callbacks.onLoad( payload.msg );
+						scope.running = false;
+
+						if ( scope.terminateRequested ) {
+							console.log( 'Run is complete. Terminating application on request!' );
+							if ( Validator.isValid( scope.worker ) ) {
+								scope.worker.terminate();
+							}
+							scope.worker = null;
+							scope.workerCode = null;
+						}
+						break;
+
+					default:
+						console.error( 'Received unknown command: ' + payload.cmd );
+						break;
+
+				}
 			};
-			this.worker.addEventListener( 'message', scopeFunction, false );
+			this.worker.addEventListener( 'message', receiveWorkerMessage, false );
 
 		}
 	};
 
-	WorkerSupport.prototype.setCallbacks = function ( onMeshLoaded, onLoad ) {
+	WorkerSupport.prototype.setCallbacks = function ( builder, onLoad ) {
 		this.callbacks = {
-			onMeshLoaded: onMeshLoaded,
+			builder: builder,
 			onLoad: onLoad
 		};
 	};
@@ -126,8 +151,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		WWRunner.prototype.runner = function ( event ) {
 			var payload = event.data;
 
-			console.log( 'Command state before: ' + WWImplRef.cmdState );
-
 			switch ( payload.cmd ) {
 				case 'run':
 
@@ -138,6 +161,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 						console.log( 'Worker progress: ' + message );
 					};
 					WWImplRef.run( payload, postMessageCallback, onProgressCallback );
+
+					// final is not implementation specific
+					postMessageCallback( {
+						cmd: 'complete',
+						msg: null
+					} );
 					break;
 
 				default:
@@ -145,8 +174,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 					break;
 
 			}
-
-			console.log( 'Command state after: ' + WWImplRef.cmdState );
 		};
 
 		return WWRunner;
@@ -157,40 +184,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	WorkerSupport.prototype.run = function ( messageObject ) {
-		if ( ! Validator.isValid( this.callbacks.onMeshLoaded ) ) throw 'Unable to run as no "onMeshLoaded" callback is set.';
+		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( Validator.isValid( this.worker ) ) {
 			this.running = true;
 			this.worker.postMessage( messageObject );
-		}
-	};
-
-	WorkerSupport.prototype._receiveWorkerMessage = function ( event ) {
-		var payload = event.data;
-
-		switch ( payload.cmd ) {
-			case 'meshData':
-				this.callbacks.onMeshLoaded( payload );
-				break;
-
-			case 'complete':
-				this.callbacks.onLoad( payload.msg );
-				this.running = false;
-
-				if ( this.terminateRequested ) {
-					console.log( 'Run is complete. Terminating application on request!' );
-					if ( Validator.isValid( this.worker ) ) {
-						this.worker.terminate();
-					}
-					this.worker = null;
-					this.workerCode = null;
-				}
-				break;
-
-			default:
-				console.error( 'Received unknown command: ' + payload.cmd );
-				break;
-
 		}
 	};
 

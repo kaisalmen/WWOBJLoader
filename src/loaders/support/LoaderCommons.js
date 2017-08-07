@@ -412,13 +412,12 @@ THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
  *
  * @param {string} url URL to the file
  * @param {string} extension The file extension (type)
- * @param {boolean} useArrayBuffer Whether content is arraybuffer or text
  */
 THREE.LoaderSupport.ResourceDescriptor = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function ResourceDescriptor( url, extension, useArrayBuffer ) {
+	function ResourceDescriptor( url, extension ) {
 		var urlParts = url.split( '/' );
 
 		if ( urlParts.length < 2 ) {
@@ -437,7 +436,6 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 		this.extension = Validator.verifyInput( extension, "default" );
 		this.extension = this.extension.trim();
 		this.content = null;
-		this.useArrayBuffer = useArrayBuffer !== false;
 	}
 
 	/**
@@ -448,7 +446,6 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 	 */
 	ResourceDescriptor.prototype.setTextContent = function ( content ) {
 		this.content = Validator.verifyInput( content, null );
-		this.useArrayBuffer = false;
 	};
 
 	/**
@@ -459,7 +456,6 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 	 */
 	ResourceDescriptor.prototype.setBinaryContent = function ( content ) {
 		this.content = Validator.verifyInput( content, null );
-		this.useArrayBuffer = true;
 	};
 
 	return ResourceDescriptor;
