@@ -39,7 +39,6 @@ var MeshSpray = (function () {
 		console.time( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
-		this.setMaterials( this.materials );
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {

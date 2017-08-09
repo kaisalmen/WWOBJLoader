@@ -186,15 +186,15 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
-		var wrapperOnMeshLoaded = function ( meshName, bufferGeometry, material ) {
-			if ( Validator.isValid( globalCallbacks.onMeshLoaded ) ) {
+		var wrapperOnMeshAlter = function ( meshName, bufferGeometry, material ) {
+			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) {
 
-				globalCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+				globalCallbacks.onMeshAlter( meshName, bufferGeometry, material );
 			}
 
-			if ( Validator.isValid( prepDataCallbacks.onMeshLoaded ) ) {
+			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) {
 
-				prepDataCallbacks.onMeshLoaded( meshName, bufferGeometry, material );
+				prepDataCallbacks.onMeshAlter( meshName, bufferGeometry, material );
 
 			}
 		};
@@ -202,7 +202,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
 		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
-		updatedCallbacks.setCallbackOnMeshLoaded( wrapperOnMeshLoaded );
+		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
 		worker.run( prepData );

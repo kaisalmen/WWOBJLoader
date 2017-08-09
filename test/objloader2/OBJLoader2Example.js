@@ -122,7 +122,7 @@ var OBJLoader2Example = (function () {
 			scope.processLoadList();
 		};
 
-		var callbackOnMeshLoaded = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
 			var mesh = new THREE.Mesh( bufferGeometry, material );
@@ -141,7 +141,7 @@ var OBJLoader2Example = (function () {
 			scope.objLoader.init();
 			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );
 			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
-			prepData.getCallbacks().setCallbackOnMeshLoaded( callbackOnMeshLoaded );
+			prepData.getCallbacks().setCallbackOnMeshAlter( callbackMeshAlter );
 			scope.objLoader.run( prepData );
 
 		} else {
@@ -158,7 +158,7 @@ var OBJLoader2Example = (function () {
 				scope.pivot.add( prepData.streamMeshesTo );
 				if ( scope.streamMeshes ) scope.objLoader.setStreamMeshesTo( prepData.streamMeshesTo );
 
-				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackOnMeshLoaded, false );
+				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackMeshAlter, false );
 			};
 
 			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );

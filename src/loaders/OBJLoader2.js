@@ -48,16 +48,6 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material}
-	 */
-	OBJLoader2.prototype.setMaterials = function ( materials ) {
-		THREE.LoaderSupport.Commons.prototype.setMaterials.call( this, materials );
-	};
-
-	/**
 	 * Sets debug mode for the parser
 	 * @memberOf THREE.OBJLoader2
 	 *
@@ -83,10 +73,10 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} onLoad Called after loading was successfully completed
 	 * @param {callback} onProgress Called to report progress of loading. The argument will be the XMLHttpRequest instance, which contains {integer total} and {integer loaded} bytes.
 	 * @param {callback} onError Called after an error occurred during loading
-	 * @param {callback} onMeshLoaded Called after a new mesh becomes available
+	 * @param {callback} onMeshAlter Called after a new mesh raw data becomes available
 	 * @param {boolean} useAsync Set this to use async loading
 	 */
-	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshLoaded, useAsync ) {
+	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
 		var scope = this;
 		if ( ! Validator.isValid( onProgress ) ) {
 			var refPercentComplete = 0;
@@ -123,7 +113,7 @@ THREE.OBJLoader2 = (function () {
 
 			} else {
 
-				scope._setCallbacks( null, onMeshLoaded, null );
+				scope._setCallbacks( null, onMeshAlter, null );
 				onLoad( scope.parse( content ), scope.modelName, scope.instanceNo );
 
 			}
@@ -160,7 +150,7 @@ THREE.OBJLoader2 = (function () {
 			} else {
 
 				scope.setPath( available.obj.path );
-				scope.load( available.obj.name, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshLoaded, prepData.useAsync );
+				scope.load( available.obj.name, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
 
 			}
 		};

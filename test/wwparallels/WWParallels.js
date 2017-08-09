@@ -155,7 +155,7 @@ var WWParallels = (function () {
 			}
 		};
 
-		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
 			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
@@ -175,7 +175,7 @@ var WWParallels = (function () {
 		var callbacks = new THREE.LoaderSupport.Callbacks();
 		callbacks.setCallbackOnProgress( callbackReportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
-		callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
+		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 
 		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 		console.log( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );

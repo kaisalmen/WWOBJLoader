@@ -63,7 +63,7 @@
 				document.getElementById( 'feedback' ).innerHTML = content;
 				console.log( content );
 			};
-			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
+			var callbackMeshAlter = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
 				var mesh = new THREE.Mesh( bufferGeometry, material );
@@ -76,7 +76,7 @@
 
 
 			var callbacks = new THREE.LoaderSupport.Callbacks();
-			callbacks.setCallbackOnMeshLoaded( callbackMeshLoaded );
+			callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 			callbacks.setCallbackOnLoad( callbackOnLoad );
 			callbacks.setCallbackOnProgress( reportProgress );
 			this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );

@@ -37,7 +37,7 @@ THREE.LoaderSupport.Callbacks = (function () {
 
 	function Callbacks() {
 		this.onProgress = null;
-		this.onMeshLoaded = null;
+		this.onMeshAlter = null;
 		this.onLoad = null;
 	}
 
@@ -56,10 +56,10 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 * Use {@link THREE.LoaderSupport.LoadedMeshUserOverride} for alteration instructions (geometry, material or disregard mesh).
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
-	 * @param {callback} callbackOnMeshLoaded Callback function for described functionality
+	 * @param {callback} callbackOnMeshAlter Callback function for described functionality
 	 */
-	Callbacks.prototype.setCallbackOnMeshLoaded = function ( callbackOnMeshLoaded ) {
-		this.onMeshLoaded = Validator.verifyInput( callbackOnMeshLoaded, this.onMeshLoaded );
+	Callbacks.prototype.setCallbackOnMeshAlter = function ( callbackOnMeshAlter ) {
+		this.onMeshAlter = Validator.verifyInput( callbackOnMeshAlter, this.onMeshAlter );
 	};
 
 	/**
@@ -95,9 +95,9 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 	};
 
-	Builder.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad ) {
+	Builder.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad ) {
 		this.callbacks.setCallbackOnProgress( callbackOnProgress );
-		this.callbacks.setCallbackOnMeshLoaded( callbackOnMeshLoaded );
+		this.callbacks.setCallbackOnMeshAlter( callbackOnMeshAlter );
 		this.callbacks.setCallbackOnLoad( callbackOnLoad );
 	};
 
@@ -181,18 +181,18 @@ THREE.LoaderSupport.Builder = (function () {
 
 		var meshes = [];
 		var mesh;
-		var callbackOnMeshLoaded = this.callbacks.onMeshLoaded;
-		var callbackOnMeshLoadedResult;
-		if ( Validator.isValid( callbackOnMeshLoaded ) ) {
+		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
+		var callbackOnMeshAlterResult;
+		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
-			callbackOnMeshLoadedResult = callbackOnMeshLoaded( meshName, bufferGeometry, material );
-			if ( Validator.isValid( callbackOnMeshLoadedResult ) && ! callbackOnMeshLoadedResult.isDisregardMesh() ) {
+			callbackOnMeshAlterResult = callbackOnMeshAlter( meshName, bufferGeometry, material );
+			if ( Validator.isValid( callbackOnMeshAlterResult ) && ! callbackOnMeshAlterResult.isDisregardMesh() ) {
 
-				if ( callbackOnMeshLoadedResult.providesAlteredMeshes() ) {
+				if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
 
-					for ( var i in callbackOnMeshLoadedResult.meshes ) {
+					for ( var i in callbackOnMeshAlterResult.meshes ) {
 
-						meshes.push( callbackOnMeshLoadedResult.meshes[ i ] );
+						meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
 
 					}
 
@@ -281,19 +281,18 @@ THREE.LoaderSupport.Commons = (function () {
 
 			this.setModelName( prepData.modelName );
 			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			var materials = prepData.materials.length > 0 ? prepData.materials : null;
-			this.setMaterials( materials );
+			this.setMaterials( prepData.materials );
 
-			this._setCallbacks( prepData.getCallbacks().onProgress, prepData.getCallbacks().onMeshLoaded, prepData.getCallbacks().onLoad );
+			this._setCallbacks( prepData.getCallbacks().onProgress, prepData.getCallbacks().onMeshAlter, prepData.getCallbacks().onLoad );
 		}
 	};
 
-	Commons.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad ) {
+	Commons.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad ) {
 		this.callbacks.setCallbackOnProgress( callbackOnProgress );
-		this.callbacks.setCallbackOnMeshLoaded( callbackOnMeshLoaded );
+		this.callbacks.setCallbackOnMeshAlter( callbackOnMeshAlter );
 		this.callbacks.setCallbackOnLoad( callbackOnLoad );
 
-		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad );
+		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad );
 	};
 
 	Commons.prototype.setModelName = function ( modelName ) {
@@ -340,6 +339,12 @@ THREE.LoaderSupport.Commons = (function () {
 		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
 	};
 
+	/**
+	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 */
 	Commons.prototype.setMaterials = function ( materials ) {
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 			this.materials = materials;
@@ -505,7 +510,6 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.resources = [];
 		this.streamMeshesTo = null;
 		this.materialPerSmoothingGroup = false;
-		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
 		this.useAsync = false;
@@ -530,16 +534,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
-	};
-
-	/**
-	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
-	 */
-	PrepData.prototype.setMaterials = function ( materials ) {
-		if ( Validator.isValid( materials ) ) this.materials = materials;
 	};
 
 	/**
@@ -580,10 +574,18 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.useAsync = useAsync === true;
 	};
 
+	/**
+	 *
+	 * @param {boolean} automated
+	 */
 	PrepData.prototype.setAutomated = function ( automated ) {
 		this.automated = automated === true;
 	};
 
+	/**
+	 *
+	 * @returns {boolean|*}
+	 */
 	PrepData.prototype.isAutomated = function () {
 		return this.automated;
 	};
