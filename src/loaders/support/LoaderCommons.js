@@ -101,7 +101,6 @@ THREE.LoaderSupport.Commons = (function () {
 
 		this.loaderRootNode = new THREE.Group();
 
-		this.callbackOnMeshLoaded = null;
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
 
@@ -479,6 +478,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
 		this.useAsync = false;
+		this.automated = false;
 	}
 
 	/**
@@ -541,8 +541,20 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.resources.push( resource );
 	};
 
+	/**
+	 *
+	 * @param {boolean} useAsync
+	 */
 	PrepData.prototype.setUseAsync = function ( useAsync ) {
 		this.useAsync = useAsync === true;
+	};
+
+	PrepData.prototype.setAutomated = function ( automated ) {
+		this.automated = automated === true;
+	};
+
+	PrepData.prototype.isAutomated = function () {
+		return this.automated;
 	};
 
 	PrepData.prototype.clone = function () {

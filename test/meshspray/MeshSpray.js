@@ -19,15 +19,7 @@ var MeshSpray = (function () {
 		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 
 		this.instanceNo = 0;
-
-		var scope = this;
-		var scopeBuilderFunc = function ( payload ) {
-			scope.builder( payload );
-		};
-		var scopeFuncComplete = function ( reason ) {
-			scope._finalize( reason );
-		};
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( scopeBuilderFunc, scopeFuncComplete ) );
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWMeshSpray' );
 	};
 
@@ -49,6 +41,16 @@ var MeshSpray = (function () {
 		this._applyPrepData( prepData );
 		this.setMaterials( this.materials );
 
+		var scope = this;
+		var scopeBuilderFunc = function ( payload ) {
+			scope.builder( payload );
+		};
+		var scopeFuncComplete = function ( message ) {
+			var callback = scope.callbacks.onLoad;
+			if ( Validator.isValid( callback ) ) callback( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+			console.timeEnd( 'MeshSpray' );
+		};
+		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
 				cmd: 'run',
@@ -63,23 +65,6 @@ var MeshSpray = (function () {
 				}
 			}
 		);
-	};
-
-	MeshSpray.prototype._finalize = function ( reason ) {
-		var callback;
-		if ( reason === 'complete' ) {
-
-			callback = this.callbacks.onLoad;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-			console.timeEnd( 'MeshSpray' );
-
-		} else if ( reason === 'error' ) {
-
-			callback = this.callbacks.onError;
-			if ( Validator.isValid( callback ) ) callback( this.sceneGraphBaseNode, this.modelName, this.instanceNo );
-			console.timeEnd( 'MeshSpray' );
-
-		}
 	};
 
 	MeshSpray.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton, existingWorkerCode ) {

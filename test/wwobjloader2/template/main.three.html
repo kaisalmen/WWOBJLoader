@@ -120,7 +120,7 @@
 			prepData.setStreamMeshesTo( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-			prepData.automatedRun = true;
+			prepData.setAutomated( true );
 			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 
@@ -130,7 +130,6 @@
 			prepData.setStreamMeshesTo( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
-			prepData.automatedRun = false;
 			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 
@@ -141,7 +140,6 @@
 			pivot.scale.set( scale, scale, scale );
 			prepData.setStreamMeshesTo( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-			prepData.automatedRun = false;
 			prepData.crossOrigin = 'anonymous';
 			app.addToLoadList( prepData );
 

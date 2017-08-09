@@ -229,8 +229,7 @@ var WWParallels = (function () {
 			);
 			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 			this.scene.add( pivot );
-			modelPrepData.setSceneGraphBaseNode( pivot );
-			modelPrepData.setStreamMeshes( streamMeshes );
+			modelPrepData.setStreamMeshesTo( pivot );
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 			this.allAssets.push( modelPrepData );

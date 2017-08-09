@@ -108,17 +108,6 @@ var WWOBJLoader2Stage = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
-	WWOBJLoader2Stage.prototype.registerCallbacks = function () {
-		var scope = this;
-		var reloadAssetsProxy = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			scope.reloadAssets();
-			scope.reportProgress();
-		};
-		var callbacks = this.objLoader2.getCallbacks();
-		callbacks.setCallbackOnLoad( reloadAssetsProxy );
-		callbacks.setCallbackOnProgress( this.reportProgress );
-	};
-
 	WWOBJLoader2Stage.prototype.initPostGL = function (  ) {
 		this.assetsDef = {
 			objsFemaleMale: [],
@@ -133,62 +122,56 @@ var WWOBJLoader2Stage = (function () {
 		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		var pivot = new THREE.Object3D();
 		pivot.position.set( 100, 0, -75 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsFemaleMale.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -100, 0, 75 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsFemaleMale.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, -100, 0 );
 		pivot.scale.set( 50.0, 50.0, 50.0 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsCerberus.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, -200 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
-		this.assetsDef.objsWaltHead.push( prepData );
+	this.assetsDef.objsWaltHead.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 200 );
 		pivot.scale.set( 400.0, 400.0, 400.0 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsVive.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -250, 0, -200 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsPtv1Zip.push( prepData );
 
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
@@ -196,21 +179,19 @@ var WWOBJLoader2Stage = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'oven' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, -75 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsZomaxOven.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'sink' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 75 );
-		prepData.setSceneGraphBaseNode( pivot );
+		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
-		prepData.setStreamMeshes( true );
 		this.assetsDef.objsZomaxSink.push( prepData );
 	};
 
@@ -223,7 +204,7 @@ var WWOBJLoader2Stage = (function () {
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.sceneGraphBaseNode ) return;
+				if ( object3d === ref.streamMeshesTo ) return;
 
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
@@ -244,9 +225,9 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			scope.scene.remove( ref.sceneGraphBaseNode );
-			ref.sceneGraphBaseNode.traverse( remover );
-			ref.sceneGraphBaseNode = null;
+			scope.scene.remove( ref.streamMeshesTo );
+			ref.streamMeshesTo.traverse( remover );
+			ref.streamMeshesTo = null;
 		}
 		this.loadCounter = 0;
 		this.allAssets = [];
@@ -295,10 +276,16 @@ var WWOBJLoader2Stage = (function () {
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
 			var prepData = scope.objs2Load[ scope.loadCounter ];
-			prepData.setStreamMeshes( true );
-
 			scope.loadCounter++;
-			scope.scene.add( prepData.sceneGraphBaseNode );
+			scope.scene.add( prepData.streamMeshesTo );
+
+			var reloadAssetsProxy = function ( object3d, modelName, instanceNo ) {
+				scope.reloadAssets();
+				scope.reportProgress();
+			};
+			var callbacks = prepData.getCallbacks();
+			callbacks.setCallbackOnLoad( reloadAssetsProxy );
+			callbacks.setCallbackOnProgress( scope.reportProgress );
 
 			var first = prepData.resources[ 0 ];
 			if ( first.extension === 'ZIP' ) {
@@ -311,7 +298,6 @@ var WWOBJLoader2Stage = (function () {
 					prepData.resources[ 1 ].content = data;
 
 					scope.objLoader2.init();
-					scope.registerCallbacks();
 					scope.objLoader2.run( prepData );
 				};
 
@@ -345,7 +331,6 @@ var WWOBJLoader2Stage = (function () {
 
 				scope.reportProgress( '' );
 				scope.objLoader2.init();
-				scope.registerCallbacks();
 				scope.objLoader2.run( prepData );
 
 			}

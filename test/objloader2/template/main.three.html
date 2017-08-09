@@ -84,7 +84,7 @@
 			var prepData = new THREE.LoaderSupport.PrepData( 'female02_vertex' );
 			prepData.setStreamMeshesTo( pivotA );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02_vertex_colors.obj', 'OBJ' ) );
-			prepData.automatedRun = true;
+			prepData.setAutomated( true );
 
 			app.addToLoadList( prepData );
 
@@ -95,7 +95,6 @@
 			prepData.setStreamMeshesTo( pivotB );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
-			prepData.automatedRun = false;
 			app.addToLoadList( prepData );
 
 			app.processLoadList();

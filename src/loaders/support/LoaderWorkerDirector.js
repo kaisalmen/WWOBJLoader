@@ -237,7 +237,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			console.log( 'Requested termination of worker.' );
 			worker.setTerminateRequested( true );
 
-			var workerCallbacks = worker.getCallbacks();
+			var workerCallbacks = worker.callbacks;
 			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );
 
 		}

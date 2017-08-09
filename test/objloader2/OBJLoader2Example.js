@@ -106,7 +106,7 @@ var OBJLoader2Example = (function () {
 		var scope = this;
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			var foundPrepData = scope.loadListNames[ modelName ];
-			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.automatedRun ) {
+			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.isAutomated() ) {
 
 				scope.pivot.add( foundPrepData.streamMeshesTo );
 				foundPrepData.streamMeshesTo.add( loaderRootNode );
@@ -136,7 +136,7 @@ var OBJLoader2Example = (function () {
 			return override;
 		};
 
-		if ( prepData.automatedRun ) {
+		if ( prepData.isAutomated() ) {
 
 			scope.objLoader.init();
 			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );

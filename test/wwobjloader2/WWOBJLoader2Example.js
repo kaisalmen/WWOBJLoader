@@ -109,7 +109,7 @@ var WWOBJLoader2Example = (function () {
 		var scope = this;
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			var foundPrepData = scope.loadListNames[ modelName ];
-			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.automatedRun ) {
+			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.isAutomated() ) {
 
 				scope.pivot.add( foundPrepData.streamMeshesTo );
 				foundPrepData.streamMeshesTo.add( loaderRootNode );
@@ -125,11 +125,12 @@ var WWOBJLoader2Example = (function () {
 			scope.processLoadList();
 		};
 
-		if ( prepData.automatedRun ) {
+		if ( prepData.isAutomated() ) {
 
 			this.objLoader.init();
-			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );
-			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
+			var callbacks = prepData.getCallbacks();
+			callbacks.setCallbackOnProgress( this._reportProgress );
+			callbacks.setCallbackOnLoad( callbackOnLoad );
 			prepData.setUseAsync( true );
 			scope.pivot.add( prepData.streamMeshesTo );
 			this.objLoader.run( prepData );
@@ -210,8 +211,9 @@ var WWOBJLoader2Example = (function () {
 			resourceOBJ.setBinaryContent( uint8Array );
 			prepData.addResource( resourceOBJ );
 			prepData.setUseAsync( true );
-			prepData.getCallbacks().setCallbackOnProgress( scope._reportProgress );
-			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
+			var callbacks = prepData.getCallbacks();
+			callbacks.setCallbackOnProgress( scope._reportProgress );
+			callbacks.setCallbackOnLoad( callbackOnLoad );
 
 			fileReader.onload = function( fileDataMtl ) {
 

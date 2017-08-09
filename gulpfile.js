@@ -151,23 +151,18 @@ gulp.task( 'prepare-examples', function () {
 gulp.task( 'clean-examples', function () {
 	del.sync( DIR.TEST + 'objloader2/' + 'main.html' );
 	del.sync( DIR.TEST + 'objloader2/' + 'main.min.html' );
-	del.sync( DIR.TEST + 'objloader2/' + 'main.src.html' );
 	del.sync( DIR.TEST + 'objloader2/' + 'webgl_loader*.html' );
 	del.sync( DIR.TEST + 'wwobjloader2/' + 'main.html' );
 	del.sync( DIR.TEST + 'wwobjloader2/' + 'main.min.html' );
-	del.sync( DIR.TEST + 'wwobjloader2/' + 'main.src.html' );
 	del.sync( DIR.TEST + 'wwobjloader2/' + 'webgl_loader*.html' );
 	del.sync( DIR.TEST + 'wwobjloader2stage/' + 'main.html' );
 	del.sync( DIR.TEST + 'wwobjloader2stage/' + 'main.min.html' );
-	del.sync( DIR.TEST + 'wwobjloader2stage/' + 'main.src.html' );
 	del.sync( DIR.TEST + 'wwobjloader2stage/' + 'webgl_loader*.html' );
 	del.sync( DIR.TEST + 'wwparallels/' + 'main.html' );
 	del.sync( DIR.TEST + 'wwparallels/' + 'main.min.html' );
-	del.sync( DIR.TEST + 'wwparallels/' + 'main.src.html' );
 	del.sync( DIR.TEST + 'wwparallels/' + 'webgl_loader*.html' );
 	del.sync( DIR.TEST + 'meshspray/' + 'main.html' );
 	del.sync( DIR.TEST + 'meshspray/' + 'main.min.html' );
-	del.sync( DIR.TEST + 'meshspray/' + 'main.src.html' );
 	del.sync( DIR.TEST + 'meshspray/' + 'webgl_loader*.html' );
 });
 

@@ -223,8 +223,8 @@ THREE.OBJLoader2 = (function () {
 
 		var scope = this;
 		var scopedOnLoad = function ( message ) {
-			onLoad( scope.loaderRootNode, this.modelName, this.instanceNo, message );
-			console.timeEnd( 'OBJLoader2: ' + this.modelName );
+			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+			console.timeEnd( 'OBJLoader2: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
 			scope.builder( payload );
