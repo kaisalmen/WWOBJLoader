@@ -131,7 +131,6 @@ var WWOBJLoader2Example = (function () {
 			var callbacks = prepData.getCallbacks();
 			callbacks.setCallbackOnProgress( this._reportProgress );
 			callbacks.setCallbackOnLoad( callbackOnLoad );
-			prepData.setUseAsync( true );
 			scope.pivot.add( prepData.streamMeshesTo );
 			this.objLoader.run( prepData );
 

@@ -80,143 +80,28 @@ THREE.LoaderSupport.Callbacks = (function () {
  * Global callback definition
  * @class
  */
-THREE.LoaderSupport.Commons = (function () {
+THREE.LoaderSupport.Builder = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function Commons( manager ) {
-		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	function Builder() {
+		this.materials = [];
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
 
-	Commons.prototype.init = function ( manager ) {
-		this.manager = Validator.verifyInput( manager, this.manager );
-		this.manager = Validator.verifyInput( this.manager, THREE.DefaultLoadingManager );
-
-		this.modelName = '';
-		this.instanceNo = 0;
-
-		this.debug = false;
-		this.materials = [];
-		this.materialNames = [];
-
-		this.loaderRootNode = new THREE.Group();
-
-		this.callbacks = new THREE.LoaderSupport.Callbacks();
-	};
-
-
-	Commons.prototype._applyPrepData = function ( prepData ) {
-		if ( Validator.isValid( prepData ) ) {
-
-			this.setModelName( prepData.modelName );
-			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			var materials = prepData.materials.length > 0 ? prepData.materials : null;
-			setMaterials( this, materials );
-
-			this.callbacks.setCallbackOnProgress( prepData.getCallbacks().onProgress );
-			this.callbacks.setCallbackOnMeshLoaded( prepData.getCallbacks().onMeshLoaded );
-			this.callbacks.setCallbackOnLoad( prepData.getCallbacks().onLoad );
-		}
-	};
-
-	Commons.prototype.setModelName = function ( modelName ) {
-		this.modelName = Validator.verifyInput( modelName, this.modelName );
-	};
-
-
-	/**
-	 * Set the instance number
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {number} instanceNo
-	 */
-	Commons.prototype.setInstanceNo = function ( instanceNo ) {
-		this.instanceNo = instanceNo;
-	};
-
-	/**
-	 * Get the instance number
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @returns {number|*}
-	 */
-	Commons.prototype.getInstanceNo = function () {
-		return this.instanceNo;
-	};
-
-	/**
-	 * Allows to set debug mode.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {boolean} enabled
-	 */
-	Commons.prototype.setDebug = function ( enabled ) {
-		this.debug = enabled;
-	};
-
-	/**
-	 * Set the node where the loaded objects will be attached directly.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {THREE.Object3D} streamMeshesTo Attached scenegraph object where meshes will be attached live
-	 */
-	Commons.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
-		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
-	};
-
-	var setMaterials = function ( scope, materials ) {
+	Builder.prototype.setMaterials = function ( materials ) {
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
-			scope.materials = materials;
-
-			scope.materialNames = [];
-			for ( var materialName in materials ) {
-				scope.materialNames.push( materialName );
-			}
+			this.materials = materials;
 		}
-
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		if ( ! Validator.isValid( scope.materials[ defaultMaterial ] ) ) {
-			scope.materials[ defaultMaterial.name ] = defaultMaterial;
-		}
-		scope.materialNames.push( defaultMaterial.name );
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		if ( ! Validator.isValid( scope.materials[ vertexColorMaterial.name ] ) ) {
-			scope.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
-		}
-		scope.materialNames.push( vertexColorMaterial.name );
 	};
 
-	/**
-	 * Set materials loaded by any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {THREE.Material[]} materials  Array of {@link THREE.Material} from MTLLoader
-	 */
-	Commons.prototype.setMaterials = function ( materials ) {
-		setMaterials( this, materials );
+	Builder.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad ) {
+		this.callbacks.setCallbackOnProgress( callbackOnProgress );
+		this.callbacks.setCallbackOnMeshLoaded( callbackOnMeshLoaded );
+		this.callbacks.setCallbackOnLoad( callbackOnLoad );
 	};
 
-	/**
-	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param baseText
-	 * @param text
-	 */
-	Commons.prototype.onProgress = function ( baseText, text ) {
-		var content = Validator.isValid( baseText ) ? baseText: '';
-		content = Validator.isValid( text ) ? content + ' ' + text : content;
-
-		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
-
-		if ( this.debug ) console.log( content );
-	};
-
-	Commons.prototype.builder = function ( payload ) {
+	Builder.prototype.buildMeshes = function ( payload ) {
 		var meshName = payload.params.meshName;
 
 		var bufferGeometry = new THREE.BufferGeometry();
@@ -334,23 +219,169 @@ THREE.LoaderSupport.Commons = (function () {
 			meshes.push( mesh );
 
 		}
+		var progressMessage;
 		if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
 
 			var meshNames = [];
 			for ( var i in meshes ) {
 
 				mesh = meshes[ i ];
-				this.loaderRootNode.add( mesh );
 				meshNames[ i ] = mesh.name;
 
 			}
-			this.onProgress( 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName );
+			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
 
 		} else {
 
-			this.onProgress(  'Not adding mesh: ' + meshName );
+			progressMessage = 'Not adding mesh: ' + meshName;
 
 		}
+		var callbackOnProgress = this.callbacks.onProgress;
+		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( progressMessage );
+
+		return meshes;
+	};
+
+	return Builder;
+})();
+
+
+/**
+ * Global callback definition
+ * @class
+ */
+THREE.LoaderSupport.Commons = (function () {
+
+	var Validator = THREE.LoaderSupport.Validator;
+
+	function Commons( manager ) {
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	}
+
+	Commons.prototype.init = function ( manager ) {
+		this.manager = Validator.verifyInput( manager, this.manager );
+		this.manager = Validator.verifyInput( this.manager, THREE.DefaultLoadingManager );
+
+		this.modelName = '';
+		this.instanceNo = 0;
+
+		this.debug = false;
+		this.materials = [];
+		this.materialNames = [];
+
+		this.loaderRootNode = new THREE.Group();
+
+		this.builder = new THREE.LoaderSupport.Builder();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
+	};
+
+
+	Commons.prototype._applyPrepData = function ( prepData ) {
+		if ( Validator.isValid( prepData ) ) {
+
+			this.setModelName( prepData.modelName );
+			this.setStreamMeshesTo( prepData.streamMeshesTo );
+			var materials = prepData.materials.length > 0 ? prepData.materials : null;
+			this.setMaterials( materials );
+
+			this._setCallbacks( prepData.getCallbacks().onProgress, prepData.getCallbacks().onMeshLoaded, prepData.getCallbacks().onLoad );
+		}
+	};
+
+	Commons.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad ) {
+		this.callbacks.setCallbackOnProgress( callbackOnProgress );
+		this.callbacks.setCallbackOnMeshLoaded( callbackOnMeshLoaded );
+		this.callbacks.setCallbackOnLoad( callbackOnLoad );
+
+		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshLoaded, callbackOnLoad );
+	};
+
+	Commons.prototype.setModelName = function ( modelName ) {
+		this.modelName = Validator.verifyInput( modelName, this.modelName );
+	};
+
+	/**
+	 * Set the instance number
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {number} instanceNo
+	 */
+	Commons.prototype.setInstanceNo = function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+	};
+
+	/**
+	 * Get the instance number
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @returns {number|*}
+	 */
+	Commons.prototype.getInstanceNo = function () {
+		return this.instanceNo;
+	};
+
+	/**
+	 * Allows to set debug mode.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {boolean} enabled
+	 */
+	Commons.prototype.setDebug = function ( enabled ) {
+		this.debug = enabled;
+	};
+
+	/**
+	 * Set the node where the loaded objects will be attached directly.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {THREE.Object3D} streamMeshesTo Attached scenegraph object where meshes will be attached live
+	 */
+	Commons.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
+	};
+
+	Commons.prototype.setMaterials = function ( materials ) {
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+			this.materials = materials;
+
+			this.materialNames = [];
+			for ( var materialName in materials ) {
+				this.materialNames.push( materialName );
+			}
+		}
+
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
+			this.materials[ defaultMaterial.name ] = defaultMaterial;
+		}
+		this.materialNames.push( defaultMaterial.name );
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
+			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+		}
+		this.materialNames.push( vertexColorMaterial.name );
+
+		this.builder.setMaterials( this.materials );
+	};
+
+	/**
+	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param baseText
+	 * @param text
+	 */
+	Commons.prototype.onProgress = function ( baseText, text ) {
+		var content = Validator.isValid( baseText ) ? baseText: '';
+		content = Validator.isValid( text ) ? content + ' ' + text : content;
+
+		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
+
+		if ( this.debug ) console.log( content );
 	};
 
 	return Commons;

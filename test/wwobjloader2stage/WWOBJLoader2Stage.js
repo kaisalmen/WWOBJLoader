@@ -153,7 +153,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
 		prepData.setUseAsync( true );
-	this.assetsDef.objsWaltHead.push( prepData );
+		this.assetsDef.objsWaltHead.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
 		pivot = new THREE.Object3D();

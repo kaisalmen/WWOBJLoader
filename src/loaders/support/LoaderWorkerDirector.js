@@ -137,7 +137,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		worker.setInstanceNo( instanceNo );
 
 		var scope = this;
-		var workerCallbacks = worker.callbacks;
 		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 
@@ -200,9 +199,11 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
-		workerCallbacks.setCallbackOnLoad( wrapperOnLoad );
-		workerCallbacks.setCallbackOnProgress( wrapperOnProgress );
-		workerCallbacks.setCallbackOnMeshLoaded( wrapperOnMeshLoaded );
+		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
+		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
+		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
+		updatedCallbacks.setCallbackOnMeshLoaded( wrapperOnMeshLoaded );
+		prepData.callbacks = updatedCallbacks;
 
 		worker.run( prepData );
 	};

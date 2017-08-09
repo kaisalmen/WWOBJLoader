@@ -123,7 +123,7 @@ THREE.OBJLoader2 = (function () {
 
 			} else {
 
-				scope.callbacks.setCallbackOnMeshLoaded( onMeshLoaded );
+				scope._setCallbacks( null, onMeshLoaded, null );
 				onLoad( scope.parse( content ), scope.modelName, scope.instanceNo );
 
 			}
@@ -192,7 +192,12 @@ THREE.OBJLoader2 = (function () {
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
-			scope.builder( payload );
+			var meshes = scope.builder.buildMeshes( payload );
+			var mesh;
+			for ( var i in meshes ) {
+				mesh = meshes[ i ];
+				scope.loaderRootNode.add( mesh );
+			}
 		};
 		this.parser.setCallbackBuilder( onMeshLoaded );
 
@@ -227,7 +232,12 @@ THREE.OBJLoader2 = (function () {
 			console.timeEnd( 'OBJLoader2: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
-			scope.builder( payload );
+			var meshes = scope.builder.buildMeshes( payload );
+			var mesh;
+			for ( var i in meshes ) {
+				mesh = meshes[ i ];
+				scope.loaderRootNode.add( mesh );
+			}
 		};
 
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );

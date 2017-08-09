@@ -43,7 +43,12 @@ var MeshSpray = (function () {
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {
-			scope.builder( payload );
+			var meshes = scope.builder.buildMeshes( payload );
+			var mesh;
+			for ( var i in meshes ) {
+				mesh = meshes[ i ];
+				scope.loaderRootNode.add( mesh );
+			}
 		};
 		var scopeFuncComplete = function ( message ) {
 			var callback = scope.callbacks.onLoad;

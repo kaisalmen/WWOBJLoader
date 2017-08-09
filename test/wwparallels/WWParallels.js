@@ -230,6 +230,7 @@ var WWParallels = (function () {
 			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 			this.scene.add( pivot );
 			modelPrepData.setStreamMeshesTo( pivot );
+			modelPrepData.setUseAsync( true );
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 			this.allAssets.push( modelPrepData );

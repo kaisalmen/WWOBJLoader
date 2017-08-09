@@ -48,9 +48,9 @@
 			app.initPostGL();
 
 
-			var maxQueueSize = 512;
-			var maxWebWorkers = 1;
-			var radius = 500;
+			var maxQueueSize = 1024;
+			var maxWebWorkers = 2;
+			var radius = 640;
 			this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
 			this.workerDirector.setCrossOrigin( 'anonymous' );
 
@@ -61,6 +61,7 @@
 			};
 			var reportProgress = function( content, modelName, instanceNo ) {
 				document.getElementById( 'feedback' ).innerHTML = content;
+				console.log( content );
 			};
 			var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
 				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
