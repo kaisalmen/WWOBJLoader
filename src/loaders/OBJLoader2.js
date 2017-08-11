@@ -238,7 +238,6 @@ THREE.OBJLoader2 = (function () {
 			this.rawObject = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
-			this.facesBuffer = new Array( 32 );
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
@@ -259,9 +258,9 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
 			var arrayBufferView = new Uint8Array( arrayBuffer );
 			var length = arrayBufferView.byteLength;
-			var buffer = new Array( 32 );
+			var buffer = new Array( 128 );
 			var bufferPointer = 0;
-			var slashes = new Array( 32 );
+			var slashes = new Array( 128 );
 			var slashesPointer = 0;
 			var reachedFaces = false;
 			var code;
@@ -307,9 +306,9 @@ THREE.OBJLoader2 = (function () {
 		 */
 		Parser.prototype.parseText = function ( text ) {
 			var length = text.length;
-			var buffer = new Array( 32 );
+			var buffer = new Array( 128 );
 			var bufferPointer = 0;
-			var slashes = new Array( 32 );
+			var slashes = new Array( 128 );
 			var slashesPointer = 0;
 			var reachedFaces = false;
 			var char;
@@ -387,98 +386,14 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_F:
 					reachedFaces = true;
-/*
-					for ( var i = 1; i < bufferLength; i++) {
-						this.facesBuffer[ i ] = parseInt( buffer[ i + 1 ] );
-					}
-*/
 					/*
 					 * 0: "f vertex/uv/normal ..."
 					 * 1: "f vertex/uv ..."
 					 * 2: "f vertex//normal ..."
 					 * 3: "f vertex ..."
 					 */
-					if ( slashesPointer > 1 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) {
-
-						for ( var i = 1; i < 7; i += 2 ) {
-							this.rawObject.attachFaceV_( buffer[ i ] );
-							this.rawObject.attachFaceVn( buffer[ i + 1 ] );
-						}
-
-						if ( bufferLength > 6 ) {
-
-							for ( var i = 5; i < bufferLength - 1; i += 2 ) {
-								this.rawObject.attachFaceV_( buffer[ 1 ] );
-								this.rawObject.attachFaceVn( buffer[ 2 ] );
-								this.rawObject.attachFaceV_( buffer[ i ] );
-								this.rawObject.attachFaceVn( buffer[ i + 1 ] );
-								this.rawObject.attachFaceV_( buffer[ i + 2 ] );
-								this.rawObject.attachFaceVn( buffer[ i + 3 ] );
-							}
-
-						}
-
-					} else if ( bufferLength === slashesPointer * 2 ) {
-
-						for ( var i = 1; i < 7; i += 2 ) {
-							this.rawObject.attachFaceV_( buffer[ i ] );
-							this.rawObject.attachFaceVt( buffer[ i + 1 ] );
-						}
-
-						if ( bufferLength > 6 ) {
-
-							for ( var i = 5; i < bufferLength - 1; i += 2 ) {
-								this.rawObject.attachFaceV_( buffer[ 1 ] );
-								this.rawObject.attachFaceVt( buffer[ 2 ] );
-								this.rawObject.attachFaceV_( buffer[ i ] );
-								this.rawObject.attachFaceVt( buffer[ i + 1 ] );
-								this.rawObject.attachFaceV_( buffer[ i + 2 ] );
-								this.rawObject.attachFaceVt( buffer[ i + 3 ] );
-							}
-
-						}
-
-					} else if ( bufferLength * 2 === slashesPointer * 3 ) {
-
-						for ( var i = 1; i < 10; i += 3 ) {
-							this.rawObject.attachFaceV_( buffer[ i ] );
-							this.rawObject.attachFaceVt( buffer[ i + 1 ] );
-							this.rawObject.attachFaceVn( buffer[ i + 2 ] );
-						}
-
-						if ( bufferLength > 9 ) {
-
-							for ( var i = 7; i < bufferLength - 1; i += 3 ) {
-								this.rawObject.attachFaceV_( buffer[ 1 ] );
-								this.rawObject.attachFaceVt( buffer[ 2 ] );
-								this.rawObject.attachFaceVn( buffer[ 3 ] );
-								this.rawObject.attachFaceV_( buffer[ i ] );
-								this.rawObject.attachFaceVt( buffer[ i + 1 ] );
-								this.rawObject.attachFaceVn( buffer[ i + 2 ] );
-								this.rawObject.attachFaceV_( buffer[ i + 3 ] );
-								this.rawObject.attachFaceVt( buffer[ i + 4 ] );
-								this.rawObject.attachFaceVn( buffer[ i + 5 ] );
-							}
-
-						}
-
-					} else {
-
-						for ( var i = 1; i < 4; i ++ ) {
-							this.rawObject.attachFaceV_( buffer[ i ] );
-						}
-
-						if ( bufferLength > 3 ) {
-
-							for ( var i = 3; i < bufferLength - 1; i ++ ) {
-								this.rawObject.attachFaceV_( buffer[ 1 ] );
-								this.rawObject.attachFaceV_( buffer[ i ] );
-								this.rawObject.attachFaceV_( buffer[ i + 1 ] );
-							}
-
-						}
-
-					}
+					var faceDescType = ( slashesPointer > 1 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) ? 2 : ( bufferLength === slashesPointer * 2 ) ? 1 : ( bufferLength * 2 === slashesPointer * 3 ) ? 0 : 3;
+					this.rawObject.processFaces( buffer, bufferPointer, faceDescType );
 					break;
 
 				case Consts.LINE_L:
@@ -604,6 +519,8 @@ THREE.OBJLoader2 = (function () {
 			var index = this.buildIndex( this.activeMtlName, this.activeSmoothingGroup );
 			this.rawObjectDescriptionInUse = new RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 			this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
+
+			this.facesBuffer = new Array( 128 );
 		}
 
 		RawObject.prototype.buildIndex = function ( materialName, smoothingGroup) {
@@ -706,42 +623,96 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		RawObject.prototype.attachFaceV_ = function ( faceIndex ) {
-			var faceIndexInt = parseInt( faceIndex );
-			var index = ( faceIndexInt - this.globalVertexOffset ) * 3;
+		RawObject.prototype.processFaces = function ( buffer, bufferPointer, faceDescType ) {
+			var bufferLength = bufferPointer - 1;
+			var facesBuffer = this.facesBuffer;
+			var i;
+			for ( i = 1; i < bufferLength + 1; i++) {
+				facesBuffer[ i ] = parseInt( buffer[ i ] );
+			}
 
-			var rodiu = this.rawObjectDescriptionInUse;
-			rodiu.vertices.push( this.vertices[ index++ ] );
-			rodiu.vertices.push( this.vertices[ index++ ] );
-			rodiu.vertices.push( this.vertices[ index ] );
+			/*
+			 * 0: "f vertex/uv/normal ..."
+			 * 1: "f vertex/uv ..."
+			 * 2: "f vertex//normal ..."
+			 * 3: "f vertex ..."
+			 */
+			if ( faceDescType === 0 ) {
 
-			if ( this.colors.length > 0 ) {
+				for ( i = 4; i < bufferLength - 3; i += 3 ) {
 
-				index -= 2;
-				rodiu.colors.push( this.colors[ index++ ] );
-				rodiu.colors.push( this.colors[ index++ ] );
-				rodiu.colors.push( this.colors[ index ] );
+					this.attachFace( facesBuffer[ 1     ], facesBuffer[ 2     ], facesBuffer[ 3     ] );
+					this.attachFace( facesBuffer[ i     ], facesBuffer[ i + 1 ], facesBuffer[ i + 2 ] );
+					this.attachFace( facesBuffer[ i + 3 ], facesBuffer[ i + 4 ], facesBuffer[ i + 5 ] );
+
+				}
+
+			} else if ( faceDescType === 1 ) {
+
+				for ( i = 3; i < bufferLength - 2; i += 2 ) {
+
+					this.attachFace( facesBuffer[ 1     ], facesBuffer[ 2     ], -1 );
+					this.attachFace( facesBuffer[ i     ], facesBuffer[ i + 1 ], -1 );
+					this.attachFace( facesBuffer[ i + 2 ], facesBuffer[ i + 3 ], -1 );
+
+				}
+
+			} else if ( faceDescType === 2 ) {
+
+				for ( i = 3; i < bufferLength - 2; i += 2 ) {
+
+					this.attachFace( facesBuffer[ 1     ], -1, facesBuffer[ 2     ] );
+					this.attachFace( facesBuffer[ i     ], -1, facesBuffer[ i + 1 ] );
+					this.attachFace( facesBuffer[ i + 2 ], -1, facesBuffer[ i + 3 ] );
+
+				}
+
+			} else {
+
+				for ( i = 2; i < bufferLength - 1; i ++ ) {
+
+					this.attachFace( facesBuffer[ 1     ], -1, -1 );
+					this.attachFace( facesBuffer[ i     ], -1, -1 );
+					this.attachFace( facesBuffer[ i + 1 ], -1, -1 );
+
+				}
 
 			}
 		};
 
-		RawObject.prototype.attachFaceVt = function ( faceIndex ) {
-			var faceIndexInt = parseInt( faceIndex );
-			var index = ( faceIndexInt - this.globalUvOffset ) * 2;
+		RawObject.prototype.attachFace = function ( faceIndexV, faceIndexVt, faceIndexVn ) {
+			var indexV = ( faceIndexV - this.globalVertexOffset ) * 3;
+			var vertices = this.rawObjectDescriptionInUse.vertices;
+			vertices.push( this.vertices[ indexV++ ] );
+			vertices.push( this.vertices[ indexV++ ] );
+			vertices.push( this.vertices[ indexV ] );
 
-			var rodiu = this.rawObjectDescriptionInUse;
-			rodiu.uvs.push( this.uvs[ index++ ] );
-			rodiu.uvs.push( this.uvs[ index ] );
-		};
+			if ( this.colors.length > 0 ) {
 
-		RawObject.prototype.attachFaceVn = function ( faceIndex ) {
-			var faceIndexInt = parseInt( faceIndex );
-			var index = ( faceIndexInt - this.globalNormalOffset ) * 3;
+				indexV -= 2;
+				var colors = this.rawObjectDescriptionInUse.colors;
+				colors.push( this.colors[ indexV++ ] );
+				colors.push( this.colors[ indexV++ ] );
+				colors.push( this.colors[ indexV ] );
 
-			var rodiu = this.rawObjectDescriptionInUse;
-			rodiu.normals.push( this.normals[ index++ ] );
-			rodiu.normals.push( this.normals[ index++ ] );
-			rodiu.normals.push( this.normals[ index ] );
+			}
+			if ( faceIndexVt > -1 ) {
+
+				var indexVt = ( faceIndexVt - this.globalUvOffset ) * 2;
+				var uvs = this.rawObjectDescriptionInUse.uvs;
+				uvs.push( this.uvs[ indexVt++ ] );
+				uvs.push( this.uvs[ indexVt ] );
+
+			}
+			if ( faceIndexVn > -1 ) {
+
+				var indexVn = ( faceIndexVn - this.globalNormalOffset ) * 3;
+				var normals = this.rawObjectDescriptionInUse.normals;
+				normals.push( this.normals[ indexVn ++ ] );
+				normals.push( this.normals[ indexVn ++ ] );
+				normals.push( this.normals[ indexVn ] );
+
+			}
 		};
 
 		/*
