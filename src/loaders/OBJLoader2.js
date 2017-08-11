@@ -238,6 +238,7 @@ THREE.OBJLoader2 = (function () {
 			this.rawObject = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
+			this.facesBuffer = new Array( 32 );
 		}
 
 		Parser.prototype.setDebug = function ( debug ) {
@@ -386,43 +387,95 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_F:
 					reachedFaces = true;
+/*
+					for ( var i = 1; i < bufferLength; i++) {
+						this.facesBuffer[ i ] = parseInt( buffer[ i + 1 ] );
+					}
+*/
 					/*
 					 * 0: "f vertex/uv/normal ..."
 					 * 1: "f vertex/uv ..."
 					 * 2: "f vertex//normal ..."
 					 * 3: "f vertex ..."
 					 */
-					var haveQuad = bufferLength % 4 === 0;
 					if ( slashesPointer > 1 && ( slashes[ 1 ] - slashes[ 0 ] ) === 1 ) {
 
-						if ( haveQuad ) {
-							this.rawObject.buildQuadVVn( buffer );
-						} else {
-							this.rawObject.buildFaceVVn( buffer );
+						for ( var i = 1; i < 7; i += 2 ) {
+							this.rawObject.attachFaceV_( buffer[ i ] );
+							this.rawObject.attachFaceVn( buffer[ i + 1 ] );
+						}
+
+						if ( bufferLength > 6 ) {
+
+							for ( var i = 5; i < bufferLength - 1; i += 2 ) {
+								this.rawObject.attachFaceV_( buffer[ 1 ] );
+								this.rawObject.attachFaceVn( buffer[ 2 ] );
+								this.rawObject.attachFaceV_( buffer[ i ] );
+								this.rawObject.attachFaceVn( buffer[ i + 1 ] );
+								this.rawObject.attachFaceV_( buffer[ i + 2 ] );
+								this.rawObject.attachFaceVn( buffer[ i + 3 ] );
+							}
+
 						}
 
 					} else if ( bufferLength === slashesPointer * 2 ) {
 
-						if ( haveQuad ) {
-							this.rawObject.buildQuadVVt( buffer );
-						} else {
-							this.rawObject.buildFaceVVt( buffer );
+						for ( var i = 1; i < 7; i += 2 ) {
+							this.rawObject.attachFaceV_( buffer[ i ] );
+							this.rawObject.attachFaceVt( buffer[ i + 1 ] );
+						}
+
+						if ( bufferLength > 6 ) {
+
+							for ( var i = 5; i < bufferLength - 1; i += 2 ) {
+								this.rawObject.attachFaceV_( buffer[ 1 ] );
+								this.rawObject.attachFaceVt( buffer[ 2 ] );
+								this.rawObject.attachFaceV_( buffer[ i ] );
+								this.rawObject.attachFaceVt( buffer[ i + 1 ] );
+								this.rawObject.attachFaceV_( buffer[ i + 2 ] );
+								this.rawObject.attachFaceVt( buffer[ i + 3 ] );
+							}
+
 						}
 
 					} else if ( bufferLength * 2 === slashesPointer * 3 ) {
 
-						if ( haveQuad ) {
-							this.rawObject.buildQuadVVtVn( buffer );
-						} else {
-							this.rawObject.buildFaceVVtVn( buffer );
+						for ( var i = 1; i < 10; i += 3 ) {
+							this.rawObject.attachFaceV_( buffer[ i ] );
+							this.rawObject.attachFaceVt( buffer[ i + 1 ] );
+							this.rawObject.attachFaceVn( buffer[ i + 2 ] );
+						}
+
+						if ( bufferLength > 9 ) {
+
+							for ( var i = 7; i < bufferLength - 1; i += 3 ) {
+								this.rawObject.attachFaceV_( buffer[ 1 ] );
+								this.rawObject.attachFaceVt( buffer[ 2 ] );
+								this.rawObject.attachFaceVn( buffer[ 3 ] );
+								this.rawObject.attachFaceV_( buffer[ i ] );
+								this.rawObject.attachFaceVt( buffer[ i + 1 ] );
+								this.rawObject.attachFaceVn( buffer[ i + 2 ] );
+								this.rawObject.attachFaceV_( buffer[ i + 3 ] );
+								this.rawObject.attachFaceVt( buffer[ i + 4 ] );
+								this.rawObject.attachFaceVn( buffer[ i + 5 ] );
+							}
+
 						}
 
 					} else {
 
-						if ( haveQuad ) {
-							this.rawObject.buildQuadV( buffer );
-						} else {
-							this.rawObject.buildFaceV( buffer );
+						for ( var i = 1; i < 4; i ++ ) {
+							this.rawObject.attachFaceV_( buffer[ i ] );
+						}
+
+						if ( bufferLength > 3 ) {
+
+							for ( var i = 3; i < bufferLength - 1; i ++ ) {
+								this.rawObject.attachFaceV_( buffer[ 1 ] );
+								this.rawObject.attachFaceV_( buffer[ i ] );
+								this.rawObject.attachFaceV_( buffer[ i + 1 ] );
+							}
+
 						}
 
 					}
@@ -650,62 +703,6 @@ THREE.OBJLoader2 = (function () {
 				this.rawObjectDescriptionInUse = new RawObjectDescription( this.objectName, this.groupName, this.activeMtlName, this.activeSmoothingGroup );
 				this.rawObjectDescriptions[ index ] = this.rawObjectDescriptionInUse;
 
-			}
-		};
-
-		RawObject.prototype.buildQuadVVtVn = function ( indexArray ) {
-			for ( var i = 0; i < 6; i ++ ) {
-				this.attachFaceV_( indexArray[ Consts.QUAD_INDICES_3[ i ] ] );
-				this.attachFaceVt( indexArray[ Consts.QUAD_INDICES_3[ i ] + 1 ] );
-				this.attachFaceVn( indexArray[ Consts.QUAD_INDICES_3[ i ] + 2 ] );
-			}
-		};
-
-		RawObject.prototype.buildQuadVVt = function ( indexArray ) {
-			for ( var i = 0; i < 6; i ++ ) {
-				this.attachFaceV_( indexArray[ Consts.QUAD_INDICES_2[ i ] ] );
-				this.attachFaceVt( indexArray[ Consts.QUAD_INDICES_2[ i ] + 1 ] );
-			}
-		};
-
-		RawObject.prototype.buildQuadVVn = function ( indexArray ) {
-			for ( var i = 0; i < 6; i ++ ) {
-				this.attachFaceV_( indexArray[ Consts.QUAD_INDICES_2[ i ] ] );
-				this.attachFaceVn( indexArray[ Consts.QUAD_INDICES_2[ i ] + 1 ] );
-			}
-		};
-
-		RawObject.prototype.buildQuadV = function ( indexArray ) {
-			for ( var i = 0; i < 6; i ++ ) {
-				this.attachFaceV_( indexArray[ Consts.QUAD_INDICES_1[ i ] ] );
-			}
-		};
-
-		RawObject.prototype.buildFaceVVtVn = function ( indexArray ) {
-			for ( var i = 1; i < 10; i += 3 ) {
-				this.attachFaceV_( indexArray[ i ] );
-				this.attachFaceVt( indexArray[ i + 1 ] );
-				this.attachFaceVn( indexArray[ i + 2 ] );
-			}
-		};
-
-		RawObject.prototype.buildFaceVVt = function ( indexArray ) {
-			for ( var i = 1; i < 7; i += 2 ) {
-				this.attachFaceV_( indexArray[ i ] );
-				this.attachFaceVt( indexArray[ i + 1 ] );
-			}
-		};
-
-		RawObject.prototype.buildFaceVVn = function ( indexArray ) {
-			for ( var i = 1; i < 7; i += 2 ) {
-				this.attachFaceV_( indexArray[ i ] );
-				this.attachFaceVn( indexArray[ i + 1 ] );
-			}
-		};
-
-		RawObject.prototype.buildFaceV = function ( indexArray ) {
-			for ( var i = 1; i < 4; i ++ ) {
-				this.attachFaceV_( indexArray[ i ] );
 			}
 		};
 
