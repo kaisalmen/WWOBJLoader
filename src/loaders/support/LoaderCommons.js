@@ -256,6 +256,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 	function Commons( manager ) {
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		this.init( manager );
 	}
 
 	Commons.prototype.init = function ( manager ) {

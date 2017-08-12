@@ -1,7 +1,7 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
 /**
- * Use this class to load OBJ data from files or to parse OBJ data from arraybuffer or text
+ * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
@@ -27,14 +27,10 @@ THREE.OBJLoader2 = (function () {
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 		this.path = '';
 
-		var scope = this;
-		var onProgressScoped = function ( message ) {
-			scope.onProgress( message );
-		};
-		this.parser = new Parser( onProgressScoped );
+		this.parser = new Parser();
 
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'WWOBJLoader' );
+		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'Parser' );
 	};
 
 	/**
@@ -176,6 +172,8 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
 		console.time( 'OBJLoader2: ' + this.modelName );
+
+		this.parser.init();
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.setMaterialNames( this.materialNames );
 		this.parser.setDebug( this.debug );
@@ -190,24 +188,21 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 		this.parser.setCallbackBuilder( onMeshLoaded );
+		var onProgressScoped = function ( message ) {
+			scope.onProgress( message );
+		};
+		this.parser.setCallbackProgress( onProgressScoped );
 
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
-			this.parser.parseArrayBuffer( content );
-
-		} else if ( typeof( content ) === 'string' || content instanceof String ) {
-
-			console.log( 'Parsing text...' );
-			this.parser.parseText( content );
+			this.parser.parse( content );
 
 		} else {
 
-			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
+			throw 'Provided content was nor Uint8Array! Aborting...';
 
 		}
-		this.parser.finalize();
-
 		console.timeEnd( 'OBJLoader2: ' + this.modelName );
 
 		return this.loaderRootNode;
@@ -270,23 +265,7 @@ THREE.OBJLoader2 = (function () {
 		LINE_VT: 'vt',
 		LINE_VN: 'vn',
 		LINE_MTLLIB: 'mtllib',
-		LINE_USEMTL: 'usemtl',
-		/*
-		 * Build Face/Quad: first element in indexArray is the line identification, therefore offset of one needs to be taken into account
-		 * N-Gons are not supported
-		 * Quad Faces: FaceA: 0, 1, 2  FaceB: 2, 3, 0
-		 *
-		 * 0: "f vertex/uv/normal	vertex/uv/normal	vertex/uv/normal	(vertex/uv/normal)"
-		 * 1: "f vertex/uv		  	vertex/uv		   	vertex/uv		   	(vertex/uv		 )"
-		 * 2: "f vertex//normal	 	vertex//normal	  	vertex//normal	  	(vertex//normal  )"
-		 * 3: "f vertex			 	vertex			  	vertex			  	(vertex		  	 )"
-		 *
-		 * @param indexArray
-		 * @param faceType
-		 */
-		QUAD_INDICES_1: [ 1, 2, 3, 3, 4, 1 ],
-		QUAD_INDICES_2: [ 1, 3, 5, 5, 7, 1 ],
-		QUAD_INDICES_3: [ 1, 4, 7, 7, 10, 1 ]
+		LINE_USEMTL: 'usemtl'
 	};
 
 	/**
@@ -295,8 +274,11 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var Parser = (function () {
 
-		function Parser( onProgress ) {
-			this.onProgressCallback = onProgress;
+		function Parser() {
+		}
+
+		Parser.prototype.init = function () {
+			this.callbackProgress = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
 			this.materialPerSmoothingGroup = false;
@@ -306,7 +288,7 @@ THREE.OBJLoader2 = (function () {
 			this.callbackBuilder = null;
 			this.materialNames = [];
 			this.outputObjectCount = 1;
-		}
+		};
 
 		Parser.prototype.setDebug = function ( debug ) {
 			if ( debug === true || debug === false ) this.debug = debug;
@@ -327,13 +309,18 @@ THREE.OBJLoader2 = (function () {
 			if ( ! Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 		};
 
+		Parser.prototype.setCallbackProgress = function ( callbackProgress ) {
+			this.callbackProgress = callbackProgress;
+		};
+
 		/**
 		 * Parse the provided arraybuffer
 		 * @memberOf Parser
 		 *
 		 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 		 */
-		Parser.prototype.parseArrayBuffer = function ( arrayBuffer ) {
+		Parser.prototype.parse = function ( arrayBuffer ) {
+			console.time( 'OBJLoader2.Parser.parse' );
 			var arrayBufferView = new Uint8Array( arrayBuffer );
 			var length = arrayBufferView.byteLength;
 			var buffer = new Array( 128 );
@@ -392,69 +379,8 @@ THREE.OBJLoader2 = (function () {
 						break;
 				}
 			}
-		};
-
-		/**
-		 * Parse the provided text
-		 * @memberOf Parser
-		 *
-		 * @param {string} text OBJ data as string
-		 */
-		Parser.prototype.parseText = function ( text ) {
-			var length = text.length;
-			var buffer = new Array( 128 );
-			var bufferPointer = 0;
-			var slashesLast = 0;
-			var slashesDistance = 0;
-			var slashesCount = 0;
-			var faceDescType = -1;
-			var reachedFaces = false;
-			var char;
-			var word = '';
-			for ( var i = 0; i < length; i++ ) {
-
-				char = text[ i ];
-				switch ( char ) {
-					case Consts.STRING_SPACE:
-						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-
-						//Whenever space is reached after first block (f v/vn" ") and no face type has been calculated, it will be performed once
-						if ( faceDescType === -1 && bufferPointer > 1 ) {
-							faceDescType = ( slashesCount === 0 ) ? 3 : ( slashesCount === 1 ) ? 1 : ( slashesCount === 2 && slashesDistance === 1 ) ? 2 : 0;
-						}
-						word = '';
-						break;
-
-					case Consts.STRING_SLASH:
-						if ( faceDescType === -1 ) {
-
-							slashesCount++;
-							slashesDistance = i - slashesLast;
-							slashesLast = i;
-
-						}
-						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						word = '';
-						break;
-
-					case Consts.STRING_LF:
-						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, faceDescType, reachedFaces );
-						bufferPointer = 0;
-						slashesLast = 0;
-						slashesDistance = 0;
-						slashesCount = 0;
-						faceDescType = -1;
-						break;
-
-					case Consts.STRING_CR:
-						break;
-
-					default:
-						word += char;
-				}
-			}
+			this.finalize();
+			console.timeEnd( 'OBJLoader2.Parser.parse' );
 		};
 
 		Parser.prototype.processLine = function ( buffer, bufferPointer, faceDescType, reachedFaces ) {
@@ -611,7 +537,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.onProgress = function ( text ) {
-			if ( Validator.isValid( text ) && Validator.isValid( this.onProgressCallback) ) this.onProgressCallback( text );
+			if ( Validator.isValid( text ) && Validator.isValid( this.callbackProgress) ) this.callbackProgress( text );
 		};
 
 
@@ -1125,31 +1051,6 @@ THREE.OBJLoader2 = (function () {
 	})();
 
 	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
-		var wwDef = (function () {
-
-			function WWOBJLoader() {
-			}
-
-			WWOBJLoader.prototype.run = function ( payload, postMessageCallback, onProgressCallback ) {
-				this.parser = new Parser( onProgressCallback );
-				this.parser.setDebug( payload.params.debug );
-				this.parser.setMaterialNames( payload.materials.materialNames );
-				this.parser.setMaterialPerSmoothingGroup( payload.params.materialPerSmoothingGroup );
-				this.parser.setCallbackBuilder( postMessageCallback );
-
-				console.log( 'Parsing arrayBuffer...' );
-				console.time( 'parseArrayBuffer' );
-
-				this.parser.parseArrayBuffer( payload.buffers.objAsArrayBuffer );
-				this.parser.finalize();
-
-				console.timeEnd( 'parseArrayBuffer' );
-				console.log( 'OBJ loading complete!' );
-			};
-
-			return WWOBJLoader;
-		})();
-
 		var workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
@@ -1160,9 +1061,6 @@ THREE.OBJLoader2 = (function () {
 		workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 		workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
 		workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
-
-		// web worker construction
-		workerCode += funcBuildSingelton( 'WWOBJLoader', 'WWOBJLoader', wwDef );
 
 		return workerCode;
 	};

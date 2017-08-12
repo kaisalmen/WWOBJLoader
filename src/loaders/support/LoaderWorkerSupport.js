@@ -23,7 +23,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
-	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, implClassName ) {
+	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, parserClassName ) {
 		this.running = false;
 
 		if ( forceWorkerReload ) {
@@ -38,7 +38,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			console.log( 'Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
 			this.workerCode = functionCodeBuilder( buildObject, buildSingelton );
-			this.workerCode += 'WWImplRef = new ' + implClassName + '();\n\n';
+			this.workerCode += 'WorkerParser = new ' + parserClassName + '();\n\n';
 			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
 			this.workerCode += 'new WWRunner();\n\n';
 
@@ -144,26 +144,45 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var wwRunnerDef = (function () {
 
-		function WWRunner() {
+		function WWRunner( parserClassName ) {
 			self.addEventListener( 'message', this.runner, false );
 		}
 
 		WWRunner.prototype.runner = function ( event ) {
 			var payload = event.data;
 
+			var applyProperties = function ( params ) {
+				var property;
+				for ( property in params ) {
+					if ( WorkerParser.hasOwnProperty( property ) ) {
+						WorkerParser[ property ] = params[ property ] ;
+					}
+				}
+			};
+
 			switch ( payload.cmd ) {
 				case 'run':
+					console.log( 'Worker: Parsing...' );
 
-					var postMessageCallback = function ( payload ) {
-						self.postMessage( payload );
+					var callbacks = {
+						callbackBuilder: function ( payload ) {
+							self.postMessage( payload );
+						},
+						callbackProgress: function ( message ) {
+							console.log( 'Worker progress: ' + message );
+						}
 					};
-					var onProgressCallback = function ( message ) {
-						console.log( 'Worker progress: ' + message );
-					};
-					WWImplRef.run( payload, postMessageCallback, onProgressCallback );
+
+					WorkerParser.init();
+					applyProperties( payload.params );
+					applyProperties( payload.materials );
+					applyProperties( callbacks );
+					WorkerParser.parse( payload.buffers.objAsArrayBuffer );
+
+					console.log( 'Worker: Parsing complete!' );
 
 					// final is not implementation specific
-					postMessageCallback( {
+					callbacks.callbackBuilder( {
 						cmd: 'complete',
 						msg: null
 					} );
