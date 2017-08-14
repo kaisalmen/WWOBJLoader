@@ -3,7 +3,7 @@
 ## 1.4.0
 
 #### Loader related changes
-- Issue12, three.js issue #11804, #11871: Added n-gon support
+- Issue #12, three.js issue #11804, #11871, PR #11928: Added n-gon support
 
 ## 1.3.1
 

@@ -50,7 +50,7 @@ As `Parser` is independent of any other code piece of [three.js](https://threejs
 ##### Parser POIs
 The parser and mesh creation functions have reached full feature parity with the existing OBJ loader. These are some interesting POIs:
 - Per default `OBJLoader2` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
-- Face N-Gons are not supported identically to the old parser
+- Face N-Gons **are supported with V1.4.0+**
 - Direct re-usage of all involved classes is fully supported. I took care in resource clean-up and re-validation of status on all involved objects
 - "o name" (object), "g name" (group) and new vertex definition without any other declaration lead to new object creation
 - Multi-Materials are created when needed
