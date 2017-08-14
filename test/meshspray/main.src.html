@@ -53,7 +53,7 @@
 
 
 			var maxQueueSize = 1024;
-			var maxWebWorkers = 2;
+			var maxWebWorkers = 4;
 			var radius = 640;
 			this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
 			this.workerDirector.setCrossOrigin( 'anonymous' );
@@ -88,7 +88,7 @@
 			var prepData;
 			var pivot;
 			var s, t, r, x, y, z;
-			var counter = 0;
+			var globalObjectCount = 0;
 			for ( var i = 0; i < maxQueueSize; i++ ) {
 				prepData = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
 
@@ -105,8 +105,7 @@
 
 				prepData.quantity = 8192;
 				prepData.dimension = Math.max( Math.random() * 500, 100 );
-				prepData.counter = counter;
-				counter++;
+				prepData.globalObjectCount = globalObjectCount++;
 
 				this.workerDirector.enqueueForRun( prepData );
 			}

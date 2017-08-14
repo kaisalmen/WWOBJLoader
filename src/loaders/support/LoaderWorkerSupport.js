@@ -23,7 +23,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
-	WorkerSupport.prototype.reInit = function ( forceWorkerReload, functionCodeBuilder, parserClassName ) {
+	WorkerSupport.prototype.validate = function ( forceWorkerReload, functionCodeBuilder, parserClassName ) {
 		this.running = false;
 
 		if ( forceWorkerReload ) {
@@ -38,9 +38,78 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			console.log( 'Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
 			this.workerCode = functionCodeBuilder( buildObject, buildSingelton );
-			this.workerCode += 'WorkerParser = new ' + parserClassName + '();\n\n';
-			this.workerCode += buildSingelton( 'WWRunner', 'WWRunner', wwRunnerDef );
-			this.workerCode += 'new WWRunner();\n\n';
+
+			var workerRunnerDef = (function () {
+
+				function WorkerRunner( parser ) {
+					var scope = this;
+					var scopedRunner = function( event ) {
+						scope.runner( event.data );
+					};
+					self.addEventListener( 'message', scopedRunner, false );
+					this.parser = parser;
+				}
+
+				WorkerRunner.prototype.applyProperties = function ( params ) {
+					var property, funcName, values;
+					for ( property in params ) {
+						funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
+						values = params[ property ];
+						if ( this.parser.hasOwnProperty( property ) ) {
+
+							if ( typeof this.parser[ funcName ] === 'function' ) {
+
+								this.parser[ funcName ]( values );
+
+							} else {
+
+								this.parser[ property ] = values;
+
+							}
+						}
+					}
+				};
+
+				WorkerRunner.prototype.runner = function ( payload ) {
+					switch ( payload.cmd ) {
+						case 'run':
+							console.log( 'Worker: Parsing...' );
+
+							var callbacks = {
+								callbackBuilder: function ( payload ) {
+									self.postMessage( payload );
+								},
+								callbackProgress: function ( message ) {
+									console.log( 'Worker progress: ' + message );
+								}
+							};
+
+							this.parser.init();
+							this.applyProperties( payload.params );
+							this.applyProperties( payload.materials );
+							this.applyProperties( callbacks );
+							this.parser.parse( payload.buffers.objAsArrayBuffer );
+
+							console.log( 'Worker: Parsing complete!' );
+
+							// final is not implementation specific
+							callbacks.callbackBuilder( {
+								cmd: 'complete',
+								msg: null
+							} );
+							break;
+
+						default:
+							console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
+							break;
+
+					}
+				};
+
+				return WorkerRunner;
+			})();
+			this.workerCode += buildSingelton( 'WorkerRunner', 'WorkerRunner', workerRunnerDef );
+			this.workerCode += 'new WorkerRunner( new ' + parserClassName + '());\n\n';
 
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
@@ -141,62 +210,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		return objectString;
 	};
-
-	var wwRunnerDef = (function () {
-
-		function WWRunner( parserClassName ) {
-			self.addEventListener( 'message', this.runner, false );
-		}
-
-		WWRunner.prototype.runner = function ( event ) {
-			var payload = event.data;
-
-			var applyProperties = function ( params ) {
-				var property;
-				for ( property in params ) {
-					if ( WorkerParser.hasOwnProperty( property ) ) {
-						WorkerParser[ property ] = params[ property ] ;
-					}
-				}
-			};
-
-			switch ( payload.cmd ) {
-				case 'run':
-					console.log( 'Worker: Parsing...' );
-
-					var callbacks = {
-						callbackBuilder: function ( payload ) {
-							self.postMessage( payload );
-						},
-						callbackProgress: function ( message ) {
-							console.log( 'Worker progress: ' + message );
-						}
-					};
-
-					WorkerParser.init();
-					applyProperties( payload.params );
-					applyProperties( payload.materials );
-					applyProperties( callbacks );
-					WorkerParser.parse( payload.buffers.objAsArrayBuffer );
-
-					console.log( 'Worker: Parsing complete!' );
-
-					// final is not implementation specific
-					callbacks.callbackBuilder( {
-						cmd: 'complete',
-						msg: null
-					} );
-					break;
-
-				default:
-					console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
-					break;
-
-			}
-		};
-
-		return WWRunner;
-	})();
 
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.terminateRequested = terminateRequested === true;

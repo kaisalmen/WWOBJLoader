@@ -30,7 +30,7 @@ THREE.OBJLoader2 = (function () {
 		this.parser = new Parser();
 
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'Parser' );
+		this.workerSupport.validate( false, this._buildWebWorkerCode, 'Parser' );
 	};
 
 	/**
@@ -196,11 +196,16 @@ THREE.OBJLoader2 = (function () {
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
-			this.parser.parse( content );
+			this.parser.parseArrayBuffer( content );
+
+		} else if ( typeof( content ) === 'string' || content instanceof String ) {
+
+			console.log( 'Parsing text...' );
+			this.parser.parseText( content );
 
 		} else {
 
-			throw 'Provided content was nor Uint8Array! Aborting...';
+			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
 		console.timeEnd( 'OBJLoader2: ' + this.modelName );
@@ -371,6 +376,7 @@ THREE.OBJLoader2 = (function () {
 		 * @param {string} text OBJ data as string
 		 */
 		Parser.prototype.parseText = function ( text ) {
+			console.time( 'OBJLoader2.Parser.parseText' );
 			var length = text.length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
@@ -408,6 +414,8 @@ THREE.OBJLoader2 = (function () {
 						word += char;
 				}
 			}
+			this.finalize();
+			console.timeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces ) {
@@ -876,9 +884,9 @@ THREE.OBJLoader2 = (function () {
 
 				for ( i = 2; i < bufferLength - 1; i ++ ) {
 
-					this.attachFace( buffer[ 1     ] );
-					this.attachFace( buffer[ i     ] );
-					this.attachFace( buffer[ i + 1 ] );
+					this.buildFace( buffer[ 1     ] );
+					this.buildFace( buffer[ i     ] );
+					this.buildFace( buffer[ i + 1 ] );
 
 				}
 
@@ -887,9 +895,9 @@ THREE.OBJLoader2 = (function () {
 
 				for ( i = 3; i < bufferLength - 2; i += 2 ) {
 
-					this.attachFace( buffer[ 1     ], buffer[ 2     ] );
-					this.attachFace( buffer[ i     ], buffer[ i + 1 ] );
-					this.attachFace( buffer[ i + 2 ], buffer[ i + 3 ] );
+					this.buildFace( buffer[ 1     ], buffer[ 2     ] );
+					this.buildFace( buffer[ i     ], buffer[ i + 1 ] );
+					this.buildFace( buffer[ i + 2 ], buffer[ i + 3 ] );
 
 				}
 
@@ -898,9 +906,9 @@ THREE.OBJLoader2 = (function () {
 
 				for ( i = 4; i < bufferLength - 3; i += 3 ) {
 
-					this.attachFace( buffer[ 1     ], buffer[ 2     ], buffer[ 3     ] );
-					this.attachFace( buffer[ i     ], buffer[ i + 1 ], buffer[ i + 2 ] );
-					this.attachFace( buffer[ i + 3 ], buffer[ i + 4 ], buffer[ i + 5 ] );
+					this.buildFace( buffer[ 1     ], buffer[ 2     ], buffer[ 3     ] );
+					this.buildFace( buffer[ i     ], buffer[ i + 1 ], buffer[ i + 2 ] );
+					this.buildFace( buffer[ i + 3 ], buffer[ i + 4 ], buffer[ i + 5 ] );
 
 				}
 
@@ -909,16 +917,16 @@ THREE.OBJLoader2 = (function () {
 
 				for ( i = 3; i < bufferLength - 2; i += 2 ) {
 
-					this.attachFace( buffer[ 1     ], undefined, buffer[ 2     ] );
-					this.attachFace( buffer[ i     ], undefined, buffer[ i + 1 ] );
-					this.attachFace( buffer[ i + 2 ], undefined, buffer[ i + 3 ] );
+					this.buildFace( buffer[ 1     ], undefined, buffer[ 2     ] );
+					this.buildFace( buffer[ i     ], undefined, buffer[ i + 1 ] );
+					this.buildFace( buffer[ i + 2 ], undefined, buffer[ i + 3 ] );
 
 				}
 
 			}
 		};
 
-		RawObject.prototype.attachFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
+		RawObject.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
 			var indexV = ( parseInt( faceIndexV ) - this.globalVertexOffset ) * 3;
 			var vertices = this.rawObjectDescriptionInUse.vertices;
 			vertices.push( this.vertices[ indexV ++ ] );

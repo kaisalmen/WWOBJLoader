@@ -20,7 +20,7 @@ var MeshSpray = (function () {
 
 		this.instanceNo = 0;
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		this.workerSupport.reInit( false, this._buildWebWorkerCode, 'Parser' );
+		this.workerSupport.validate( false, this._buildWebWorkerCode, 'Parser' );
 	};
 
 	MeshSpray.prototype.setTerminateRequested = function ( terminateRequested ) {
@@ -62,7 +62,7 @@ var MeshSpray = (function () {
 					debug: this.debug,
 					dimension: prepData.dimension,
 					quantity: prepData.quantity,
-					counter: prepData.counter
+					globalObjectCount: prepData.globalObjectCount
 				},
 				materials: {
 					materialNames: this.materialNames
@@ -88,6 +88,8 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 		};
+
+
 
 		Parser.prototype.parse = function () {
 			var materialDescription;

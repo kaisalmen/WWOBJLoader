@@ -3,7 +3,7 @@
 ## 1.3.1
 
 #### Loader related changes
-- three.js issue 11707: Whenever strings are parsed (s, g, o, mtllib or usemtl) the buffer content is reset afterwards
+- Issue #12, three.js issue #11804, #11871, PR #11928: Added n-gon support
 
 ## 1.3.0
 
