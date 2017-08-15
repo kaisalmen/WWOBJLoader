@@ -469,7 +469,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var RawObject = (function () {
 
-		function RawObject( objectName, groupName, mtllibName ) {
+		function RawObject( objectName, groupName, activeMtlName ) {
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
 			this.globalNormalOffset = 1;
@@ -480,10 +480,9 @@ THREE.OBJLoader2 = (function () {
 			this.uvs = [];
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.mtllibName = Validator.verifyInput( mtllibName, '' );
+			this.activeMtlName = Validator.verifyInput( activeMtlName, '' );
 			this.objectName = Validator.verifyInput( objectName, '' );
 			this.groupName = Validator.verifyInput( groupName, '' );
-			this.activeMtlName = '';
 			this.activeSmoothingGroup = 1;
 
 			this.mtlCount = 0;
@@ -501,7 +500,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
-			var newRawObject = new RawObject( objectName, groupName, this.mtllibName );
+			var newRawObject = new RawObject( objectName, groupName, this.activeMtlName );
 
 			// move indices forward
 			newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
@@ -512,7 +511,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.newInstanceFromGroup = function ( groupName ) {
-			var newRawObject = new RawObject( this.objectName, groupName, this.mtllibName );
+			var newRawObject = new RawObject( this.objectName, groupName, this.activeMtlName );
 
 			// keep current buffers and indices forward
 			newRawObject.vertices = this.vertices;
@@ -708,8 +707,7 @@ THREE.OBJLoader2 = (function () {
 		 * Clear any empty rawObjectDescription and calculate absolute vertex, normal and uv counts
 		 */
 		RawObject.prototype.finalize = function ( meshCreator, inputObjectCount, debug ) {
-			var temp = this.rawObjectDescriptions;
-			this.rawObjectDescriptions = [];
+			var temp = [];
 			var rawObjectDescription;
 			var index = 0;
 			var absoluteVertexCount = 0;
@@ -717,12 +715,12 @@ THREE.OBJLoader2 = (function () {
 			var absoluteNormalCount = 0;
 			var absoluteUvCount = 0;
 
-			for ( var name in temp ) {
+			for ( var name in this.rawObjectDescriptions ) {
 
-				rawObjectDescription = temp[ name ];
+				rawObjectDescription = this.rawObjectDescriptions[ name ];
 				if ( rawObjectDescription.vertices.length > 0 ) {
 
-					this.rawObjectDescriptions[ index++ ] = rawObjectDescription;
+					temp[ index++ ] = rawObjectDescription;
 					absoluteVertexCount += rawObjectDescription.vertices.length;
 					absoluteColorCount += rawObjectDescription.colors.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
@@ -737,7 +735,7 @@ THREE.OBJLoader2 = (function () {
 
 				if ( debug ) this.createReport( inputObjectCount, true );
 				meshCreator.buildMesh(
-					this.rawObjectDescriptions,
+					temp,
 					inputObjectCount,
 					absoluteVertexCount,
 					absoluteColorCount,
