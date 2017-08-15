@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.1
+
+#### Loader related changes
+- Issue #14: RawObject was not set with usemtl name, but with mtllib
+
+## 1.4.0
+
+#### Loader related changes
+- Issue #12, three.js issue #11804, #11871, PR #11928: Added n-gon support
+
 ## 1.3.1
 
 #### Loader related changes
