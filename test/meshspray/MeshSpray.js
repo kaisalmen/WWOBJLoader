@@ -35,18 +35,6 @@ var MeshSpray = (function () {
 		this.workerSupport.validate( buildWorkerCode, false );
 	};
 
-	MeshSpray.prototype.setTerminateRequested = function ( terminateRequested ) {
-		this.workerSupport.setTerminateRequested( terminateRequested );
-	};
-
-	MeshSpray.prototype.setInstanceNo = function ( instanceNo ) {
-		this.instanceNo = instanceNo;
-	};
-
-	MeshSpray.prototype.getInstanceNo = function () {
-		return this.instanceNo;
-	};
-
 	MeshSpray.prototype.run = function ( prepData ) {
 		console.time( 'MeshSpray' );
 
@@ -80,7 +68,7 @@ var MeshSpray = (function () {
 					materialNames: this.materialNames
 				},
 				buffers: {
-					objAsArrayBuffer: null
+					input: null
 				}
 			}
 		);
@@ -274,7 +262,68 @@ var MeshSprayApp = (function () {
 	};
 
 	MeshSprayApp.prototype.initPostGL = function () {
-		return true;
+		var maxQueueSize = 1024;
+		var maxWebWorkers = 4;
+		var radius = 640;
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
+		this.workerDirector.setCrossOrigin( 'anonymous' );
+
+		var scope = this;
+		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+			var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')';
+			console.log( msg );
+		};
+		var reportProgress = function( content, modelName, instanceNo ) {
+			if ( THREE.LoaderSupport.Validator.isValid( content ) && content.length > 0 ) {
+
+				document.getElementById( 'feedback' ).innerHTML = content;
+				console.log( content );
+
+			}
+		};
+		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
+
+			var mesh = new THREE.Mesh( bufferGeometry, material );
+			material.side = THREE.DoubleSide;
+			mesh.name = name;
+			override.addMesh( mesh );
+
+			return override;
+		};
+
+
+		var callbacks = new THREE.LoaderSupport.Callbacks();
+		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
+		callbacks.setCallbackOnLoad( callbackOnLoad );
+		callbacks.setCallbackOnProgress( reportProgress );
+		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+
+		var prepData;
+		var pivot;
+		var s, t, r, x, y, z;
+		var globalObjectCount = 0;
+		for ( var i = 0; i < maxQueueSize; i++ ) {
+			prepData = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
+
+			pivot = new THREE.Object3D();
+			s = 2 * Math.PI * Math.random();
+			t = Math.PI * Math.random();
+			r = radius * Math.random();
+			x = r * Math.cos( s ) * Math.sin( t );
+			y = r * Math.sin( s ) * Math.sin( t );
+			z = r * Math.cos( t );
+			pivot.position.set( x, y, z );
+			this.scene.add( pivot );
+			prepData.setStreamMeshesTo( pivot );
+
+			prepData.quantity = 8192;
+			prepData.dimension = Math.max( Math.random() * 500, 100 );
+			prepData.globalObjectCount = globalObjectCount++;
+
+			this.workerDirector.enqueueForRun( prepData );
+		}
+		this.workerDirector.processQueue();
 	};
 
 	MeshSprayApp.prototype.resizeDisplayGL = function () {

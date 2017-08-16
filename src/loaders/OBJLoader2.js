@@ -65,10 +65,6 @@ THREE.OBJLoader2 = (function () {
 		THREE.LoaderSupport.Commons.prototype.setDebug.call( this, enabled );
 	};
 
-	OBJLoader2.prototype.setTerminateRequested = function ( terminateRequested ) {
-		this.workerSupport.setTerminateRequested( terminateRequested );
-	};
-
 	OBJLoader2.prototype.setPath = function ( path ) {
 		this.path = Validator.verifyInput( path, this.path );
 	};
@@ -254,7 +250,7 @@ THREE.OBJLoader2 = (function () {
 					materialNames: this.materialNames
 				},
 				buffers: {
-					objAsArrayBuffer: content
+					input: content
 				}
 			},
 			[ content.buffer ]

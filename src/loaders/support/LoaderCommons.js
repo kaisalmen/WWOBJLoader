@@ -301,26 +301,6 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Set the instance number
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {number} instanceNo
-	 */
-	Commons.prototype.setInstanceNo = function ( instanceNo ) {
-		this.instanceNo = instanceNo;
-	};
-
-	/**
-	 * Get the instance number
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @returns {number|*}
-	 */
-	Commons.prototype.getInstanceNo = function () {
-		return this.instanceNo;
-	};
-
-	/**
 	 * Allows to set debug mode.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *

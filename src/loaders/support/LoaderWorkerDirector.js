@@ -134,7 +134,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	WorkerDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
 		worker.init();
-		worker.setInstanceNo( instanceNo );
+		worker.instanceNo = instanceNo;
 
 		var scope = this;
 		var prepDataCallbacks = prepData.getCallbacks();
@@ -149,7 +149,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 				scope.instructionQueue.shift();
 				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-				scope._kickWorkerRun( worker, nextPrepData, worker.getInstanceNo() );
+				scope._kickWorkerRun( worker, nextPrepData, worker.instanceNo );
 
 			} else if ( scope.instructionQueue.length === 0 ) {
 
@@ -209,17 +209,23 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	};
 
 	WorkerDirector.prototype._buildWorker = function () {
-		var worker = Object.create( this.workerDescription.classDef.prototype );
+		var classDef = this.workerDescription.classDef;
+		var worker = Object.create( classDef.prototype );
 		this.workerDescription.classDef.call( worker );
 
 		// verify that all required functions are implemented
-		if ( worker.hasOwnProperty( 'setTerminateRequested' ) && typeof worker.setTerminateRequested !== 'function'  ) throw classDef + ' has no function "setTerminateRequested".';
-		if ( worker.hasOwnProperty( 'setInstanceNo' ) && typeof worker.setInstanceNo !== 'function'  ) throw classDef + ' has no function "_setInstanceNo".';
-		if ( worker.hasOwnProperty( 'getInstanceNo' ) && typeof worker.getInstanceNo !== 'function'  ) throw classDef + ' has no function "_getInstanceNo".';
-		if ( worker.hasOwnProperty( 'init' ) && typeof worker.init !== 'function'  ) throw classDef + ' has no function "init".';
-		if ( worker.hasOwnProperty( '_buildWebWorkerCode' ) && typeof worker._buildWebWorkerCode !== 'function'  ) throw classDef + ' has no function "_buildWebWorkerCode".';
-		if ( worker.hasOwnProperty( 'run' ) && typeof worker.run !== 'function'  ) throw classDef + ' has no function "run".';
-		if ( worker.hasOwnProperty( '_finalize' ) && typeof worker._finalize !== 'function'  ) throw classDef + ' has no function "_finalize".';
+		if ( ! worker.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
+		if ( ! worker.hasOwnProperty( 'workerSupport' ) ) {
+
+			throw classDef.name + ' has no property "workerSupport".';
+
+		} else if ( ! classDef.workerSupport instanceof THREE.LoaderSupport.WorkerSupport ) {
+
+			throw classDef.name + '.workerSupport is not of type "THREE.LoaderSupport.WorkerSupport".';
+
+		}
+		if ( typeof worker.init !== 'function'  ) throw classDef.name + ' has no function "init".';
+		if ( typeof worker.run !== 'function'  ) throw classDef.name + ' has no function "run".';
 
 		this.workerDescription.workers.push( worker );
 		return worker;
@@ -236,7 +242,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			worker = this.workerDescription.workers[ i ];
 			console.log( 'Requested termination of worker.' );
-			worker.setTerminateRequested( true );
+			worker.workerSupport.setTerminateRequested( true );
 
 			var workerCallbacks = worker.callbacks;
 			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );

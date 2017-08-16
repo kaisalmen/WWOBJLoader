@@ -3,7 +3,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	function WorkerRunnerRefImpl() {
 		var scope = this;
 		var scopedRunner = function( event ) {
-			scope.runner( event.data );
+			scope.run( event.data );
 		};
 		self.addEventListener( 'message', scopedRunner, false );
 	}
@@ -28,40 +28,37 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		}
 	};
 
-	WorkerRunnerRefImpl.prototype.runner = function ( payload ) {
-		switch ( payload.cmd ) {
-			case 'run':
-				console.log( 'Worker: Parsing...' );
+	WorkerRunnerRefImpl.prototype.run = function ( payload ) {
+		if ( payload.cmd === 'run' ) {
 
-				var callbacks = {
-					callbackBuilder: function ( payload ) {
-						self.postMessage( payload );
-					},
-					callbackProgress: function ( message ) {
-						console.log( 'Worker progress: ' + message );
-					}
-				};
+			console.log( 'WorkerRunner: Starting Run...' );
 
-				// Parser is expected to benamed as such
-				var parser = Object.create( Parser.prototype );
-				Parser.call( parser );
-				this.applyProperties( parser, payload.params );
-				this.applyProperties( parser, payload.materials );
-				this.applyProperties( parser, callbacks );
-				parser.parse( payload.buffers.objAsArrayBuffer );
+			var callbacks = {
+				callbackBuilder: function ( payload ) {
+					self.postMessage( payload );
+				},
+				callbackProgress: function ( message ) {
+					console.log( 'WorkerRunner: progress: ' + message );
+				}
+			};
 
-				console.log( 'Worker: Parsing complete!' );
+			// Parser is expected to be named as such
+			var parser = new Parser();
+			this.applyProperties( parser, payload.params );
+			this.applyProperties( parser, payload.materials );
+			this.applyProperties( parser, callbacks );
+			parser.parse( payload.buffers.input );
 
-				// final is not implementation specific
-				callbacks.callbackBuilder( {
-					cmd: 'complete',
-					msg: null
-				} );
-				break;
+			console.log( 'WorkerRunner: Run complete!' );
 
-			default:
-				console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
-				break;
+			callbacks.callbackBuilder( {
+				cmd: 'complete',
+				msg: 'WorkerRunner completed run.'
+			} );
+
+		} else {
+
+			console.error( 'WorkerRunner: Received unknown command: ' + payload.cmd );
 
 		}
 	};
@@ -106,18 +103,18 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		if ( ! Validator.isValid( this.worker ) ) {
 
-			console.log( 'Building worker code...' );
+			console.log( 'WorkerSupport: Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
 
 			var workerRunner;
 			if ( Validator.isValid( runnerImpl ) ) {
 
-				console.log( 'Using "' + runnerImpl.name + '" as Runncer class for worker.');
+				console.log( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runncer class for worker.');
 				workerRunner = runnerImpl;
 
 			} else {
 
-				console.log( 'Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.');
+				console.log( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.');
 				workerRunner = THREE.LoaderSupport.WorkerRunnerRefImpl;
 
 			}
@@ -143,7 +140,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 						scope.running = false;
 
 						if ( scope.terminateRequested ) {
-							console.log( 'Run is complete. Terminating application on request!' );
+							console.log( 'WorkerSupport: Run is complete. Terminating application on request!' );
 							if ( Validator.isValid( scope.worker ) ) {
 								scope.worker.terminate();
 							}
@@ -153,7 +150,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 						break;
 
 					default:
-						console.error( 'Received unknown command: ' + payload.cmd );
+						console.error( 'WorkerSupport: Received unknown command: ' + payload.cmd );
 						break;
 
 				}
