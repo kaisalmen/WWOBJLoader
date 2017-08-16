@@ -27,10 +27,22 @@ THREE.OBJLoader2 = (function () {
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 		this.path = '';
 
-		this.parser = new Parser();
-
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		this.workerSupport.validate( false, this._buildWebWorkerCode, 'Parser' );
+		var buildWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
+			var workerCode = '';
+			workerCode += '/**\n';
+			workerCode += '  * This code was constructed by OBJLoader2 buildWorkerCode.\n';
+			workerCode += '  */\n\n';
+			workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
+			workerCode += funcBuildObject( 'Consts', Consts );
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
+			workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
+			workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
+
+			return workerCode;
+		};
+		this.workerSupport.validate( buildWorkerCode, false );
 	};
 
 	/**
@@ -173,7 +185,7 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.parse = function ( content ) {
 		console.time( 'OBJLoader2: ' + this.modelName );
 
-		this.parser.init();
+		this.parser = new Parser();
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		this.parser.setMaterialNames( this.materialNames );
 		this.parser.setDebug( this.debug );
@@ -280,9 +292,6 @@ THREE.OBJLoader2 = (function () {
 	var Parser = (function () {
 
 		function Parser() {
-		}
-
-		Parser.prototype.init = function () {
 			this.callbackProgress = null;
 			this.inputObjectCount = 1;
 			this.debug = false;
@@ -1080,21 +1089,6 @@ THREE.OBJLoader2 = (function () {
 
 		return RawObjectDescription;
 	})();
-
-	OBJLoader2.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
-		var workerCode = '';
-		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by WWOBJLoader2._buildWebWorkerCode\n';
-		workerCode += '  */\n\n';
-		workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
-		workerCode += funcBuildObject( 'Consts', Consts );
-		workerCode += funcBuildObject( 'Validator', Validator );
-		workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
-		workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
-		workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
-
-		return workerCode;
-	};
 
 	OBJLoader2.prototype._checkFiles = function ( resources ) {
 		var resource;

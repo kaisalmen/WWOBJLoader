@@ -20,7 +20,19 @@ var MeshSpray = (function () {
 
 		this.instanceNo = 0;
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		this.workerSupport.validate( false, this._buildWebWorkerCode, 'Parser' );
+
+		var buildWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
+			var workerCode = '';
+			workerCode += '/**\n';
+			workerCode += '  * This code was constructed by MeshSpray buildWorkerCode.\n';
+			workerCode += '  */\n\n';
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
+
+			return workerCode;
+		};
+
+		this.workerSupport.validate( buildWorkerCode, false );
 	};
 
 	MeshSpray.prototype.setTerminateRequested = function ( terminateRequested ) {
@@ -77,9 +89,6 @@ var MeshSpray = (function () {
 	var Parser  = ( function () {
 
 		function Parser() {
-		}
-
-		Parser.prototype.init = function () {
 			this.sizeFactor = 0.5;
 			this.localOffsetFactor = 1.0;
 			this.globalObjectCount = 0;
@@ -88,8 +97,6 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 		};
-
-
 
 		Parser.prototype.parse = function () {
 			var materialDescription;
@@ -150,8 +157,6 @@ var MeshSpray = (function () {
 			var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
 
 			vertexFA.set( vertices, 0 );
-			colorFA.set( colors, 0 );
-
 			if ( colorFA ) {
 
 				colorFA.set( colors, 0 );
@@ -199,17 +204,6 @@ var MeshSpray = (function () {
 
 		return Parser;
 	})();
-
-	MeshSpray.prototype._buildWebWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
-		var workerCode = '';
-		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by MeshSpray._buildWebWorkerCode\n';
-		workerCode += '  */\n\n';
-		workerCode += funcBuildObject( 'Validator', Validator );
-		workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
-
-		return workerCode;
-	};
 
 	return MeshSpray;
 

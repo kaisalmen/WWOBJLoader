@@ -1,3 +1,74 @@
+THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
+
+	function WorkerRunnerRefImpl() {
+		var scope = this;
+		var scopedRunner = function( event ) {
+			scope.runner( event.data );
+		};
+		self.addEventListener( 'message', scopedRunner, false );
+	}
+
+	WorkerRunnerRefImpl.prototype.applyProperties = function ( parser, params ) {
+		var property, funcName, values;
+		for ( property in params ) {
+			funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
+			values = params[ property ];
+			if ( parser.hasOwnProperty( property ) ) {
+
+				if ( typeof parser[ funcName ] === 'function' ) {
+
+					parser[ funcName ]( values );
+
+				} else {
+
+					parser[ property ] = values;
+
+				}
+			}
+		}
+	};
+
+	WorkerRunnerRefImpl.prototype.runner = function ( payload ) {
+		switch ( payload.cmd ) {
+			case 'run':
+				console.log( 'Worker: Parsing...' );
+
+				var callbacks = {
+					callbackBuilder: function ( payload ) {
+						self.postMessage( payload );
+					},
+					callbackProgress: function ( message ) {
+						console.log( 'Worker progress: ' + message );
+					}
+				};
+
+				// Parser is expected to benamed as such
+				var parser = Object.create( Parser.prototype );
+				Parser.call( parser );
+				this.applyProperties( parser, payload.params );
+				this.applyProperties( parser, payload.materials );
+				this.applyProperties( parser, callbacks );
+				parser.parse( payload.buffers.objAsArrayBuffer );
+
+				console.log( 'Worker: Parsing complete!' );
+
+				// final is not implementation specific
+				callbacks.callbackBuilder( {
+					cmd: 'complete',
+					msg: null
+				} );
+				break;
+
+			default:
+				console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
+				break;
+
+		}
+	};
+
+	return WorkerRunnerRefImpl;
+})();
+
 THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var WORKER_SUPPORT_VERSION = '1.0.0-dev';
@@ -23,7 +94,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
-	WorkerSupport.prototype.validate = function ( forceWorkerReload, functionCodeBuilder, parserClassName ) {
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, runnerImpl ) {
 		this.running = false;
 
 		if ( forceWorkerReload ) {
@@ -37,79 +108,22 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			console.log( 'Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
+
+			var workerRunner;
+			if ( Validator.isValid( runnerImpl ) ) {
+
+				console.log( 'Using "' + runnerImpl.name + '" as Runncer class for worker.');
+				workerRunner = runnerImpl;
+
+			} else {
+
+				console.log( 'Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.');
+				workerRunner = THREE.LoaderSupport.WorkerRunnerRefImpl;
+
+			}
 			this.workerCode = functionCodeBuilder( buildObject, buildSingelton );
-
-			var workerRunnerDef = (function () {
-
-				function WorkerRunner( parser ) {
-					var scope = this;
-					var scopedRunner = function( event ) {
-						scope.runner( event.data );
-					};
-					self.addEventListener( 'message', scopedRunner, false );
-					this.parser = parser;
-				}
-
-				WorkerRunner.prototype.applyProperties = function ( params ) {
-					var property, funcName, values;
-					for ( property in params ) {
-						funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
-						values = params[ property ];
-						if ( this.parser.hasOwnProperty( property ) ) {
-
-							if ( typeof this.parser[ funcName ] === 'function' ) {
-
-								this.parser[ funcName ]( values );
-
-							} else {
-
-								this.parser[ property ] = values;
-
-							}
-						}
-					}
-				};
-
-				WorkerRunner.prototype.runner = function ( payload ) {
-					switch ( payload.cmd ) {
-						case 'run':
-							console.log( 'Worker: Parsing...' );
-
-							var callbacks = {
-								callbackBuilder: function ( payload ) {
-									self.postMessage( payload );
-								},
-								callbackProgress: function ( message ) {
-									console.log( 'Worker progress: ' + message );
-								}
-							};
-
-							this.parser.init();
-							this.applyProperties( payload.params );
-							this.applyProperties( payload.materials );
-							this.applyProperties( callbacks );
-							this.parser.parse( payload.buffers.objAsArrayBuffer );
-
-							console.log( 'Worker: Parsing complete!' );
-
-							// final is not implementation specific
-							callbacks.callbackBuilder( {
-								cmd: 'complete',
-								msg: null
-							} );
-							break;
-
-						default:
-							console.error( 'OBJLoader: Received unknown command: ' + payload.cmd );
-							break;
-
-					}
-				};
-
-				return WorkerRunner;
-			})();
-			this.workerCode += buildSingelton( 'WorkerRunner', 'WorkerRunner', workerRunnerDef );
-			this.workerCode += 'new WorkerRunner( new ' + parserClassName + '());\n\n';
+			this.workerCode += buildSingelton( workerRunner.name, workerRunner.name, workerRunner );
+			this.workerCode += 'new ' + workerRunner.name + '();\n\n';
 
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
