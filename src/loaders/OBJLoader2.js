@@ -756,6 +756,7 @@ THREE.OBJLoader2 = (function () {
 			this.activeMtlName = Validator.verifyInput( activeMtlName, '' );
 			this.objectName = Validator.verifyInput( objectName, '' );
 			this.groupName = Validator.verifyInput( groupName, '' );
+			this.mtllibName = '';
 			this.activeSmoothingGroup = 1;
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 
@@ -876,12 +877,12 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.processFaces = function ( buffer, bufferPointer, slashesCount ) {
 			var bufferLength = bufferPointer - 1;
-			var i;
+			var i, length;
 
 			// "f vertex ..."
 			if ( slashesCount === 0 ) {
 
-				for ( i = 2; i < bufferLength - 1; i ++ ) {
+				for ( i = 2, length = bufferLength - 1; i < length; i ++ ) {
 
 					this.buildFace( buffer[ 1     ] );
 					this.buildFace( buffer[ i     ] );
@@ -892,7 +893,7 @@ THREE.OBJLoader2 = (function () {
 			// "f vertex/uv ..."
 			} else if  ( bufferLength === slashesCount * 2 ) {
 
-				for ( i = 3; i < bufferLength - 2; i += 2 ) {
+				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
 					this.buildFace( buffer[ 1     ], buffer[ 2     ] );
 					this.buildFace( buffer[ i     ], buffer[ i + 1 ] );
@@ -903,7 +904,7 @@ THREE.OBJLoader2 = (function () {
 			// "f vertex/uv/normal ..."
 			} else if  ( bufferLength * 2 === slashesCount * 3 ) {
 
-				for ( i = 4; i < bufferLength - 3; i += 3 ) {
+				for ( i = 4, length = bufferLength - 3; i < length; i += 3 ) {
 
 					this.buildFace( buffer[ 1     ], buffer[ 2     ], buffer[ 3     ] );
 					this.buildFace( buffer[ i     ], buffer[ i + 1 ], buffer[ i + 2 ] );
@@ -914,7 +915,7 @@ THREE.OBJLoader2 = (function () {
 			// "f vertex//normal ..."
 			} else {
 
-				for ( i = 3; i < bufferLength - 2; i += 2 ) {
+				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
 					this.buildFace( buffer[ 1     ], undefined, buffer[ 2     ] );
 					this.buildFace( buffer[ i     ], undefined, buffer[ i + 1 ] );
@@ -968,17 +969,19 @@ THREE.OBJLoader2 = (function () {
 		 * 1: "f vertex			vertex 			..."
 		 */
 		RawObject.prototype.buildLineVvt = function ( lineArray ) {
-			var length = lineArray.length;
-			for ( var i = 1; i < length; i ++ ) {
+			for ( var i = 1, length = lineArray.length; i < length; i ++ ) {
+
 				this.vertices.push( parseInt( lineArray[ i ] ) );
 				this.uvs.push( parseInt( lineArray[ i ] ) );
+
 			}
 		};
 
 		RawObject.prototype.buildLineV = function ( lineArray ) {
-			var length = lineArray.length;
-			for ( var i = 1; i < length; i++ ) {
+			for ( var i = 1, length = lineArray.length; i < length; i++ ) {
+
 				this.vertices.push( parseInt( lineArray[ i ] ) );
+
 			}
 		};
 
@@ -988,7 +991,6 @@ THREE.OBJLoader2 = (function () {
 		RawObject.prototype.finalize = function () {
 			var temp = [];
 			var rawObjectDescription;
-			var index = 0;
 			var absoluteVertexCount = 0;
 			var absoluteColorCount = 0;
 			var absoluteNormalCount = 0;
@@ -999,7 +1001,7 @@ THREE.OBJLoader2 = (function () {
 				rawObjectDescription = this.rawObjectDescriptions[ name ];
 				if ( rawObjectDescription.vertices.length > 0 ) {
 
-					temp[ index++ ] = rawObjectDescription;
+					temp.push( rawObjectDescription );
 					absoluteVertexCount += rawObjectDescription.vertices.length;
 					absoluteColorCount += rawObjectDescription.colors.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
@@ -1010,7 +1012,7 @@ THREE.OBJLoader2 = (function () {
 
 			// don not continue if no result
 			var result = null;
-			if ( index > 0 ) {
+			if ( temp.length > 0 ) {
 
 				result = {
 					rawObjectDescriptions: temp,
