@@ -96,7 +96,6 @@
 			folderOptions.open();
 
 
-
 			// init three.js example application
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
@@ -106,46 +105,12 @@
 				requestAnimationFrame( render );
 				app.render();
 			};
-
 			window.addEventListener( 'resize', resizeWindow, false );
-
 
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-
-			var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
-			var pivot = new THREE.Object3D();
-			pivot.position.set( 0, 0, 0 );
-			prepData.setStreamMeshesTo( pivot );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-			prepData.setAutomated( true );
-			prepData.setUseAsync( true );
-			prepData.crossOrigin = 'anonymous';
-			app.addToLoadList( prepData );
-
-			prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
-			pivot = new THREE.Object3D();
-			pivot.position.set( -100, 0, 0 );
-			prepData.setStreamMeshesTo( pivot );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
-			prepData.setUseAsync( true );
-			prepData.crossOrigin = 'anonymous';
-			app.addToLoadList( prepData );
-
-			prepData = new THREE.LoaderSupport.PrepData( 'Cerberus' );
-			pivot = new THREE.Object3D();
-			pivot.position.set( 100, 0, 0 );
-			var scale = 400.0;
-			pivot.scale.set( scale, scale, scale );
-			prepData.setStreamMeshesTo( pivot );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-			prepData.setUseAsync( true );
-			prepData.crossOrigin = 'anonymous';
-			app.addToLoadList( prepData );
-
+			app.initContent();
 			app.processLoadList();
 
 			// kick render loop

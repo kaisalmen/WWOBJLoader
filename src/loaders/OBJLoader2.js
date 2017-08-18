@@ -159,7 +159,7 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		this.loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin );
+		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin );
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
@@ -1148,11 +1148,27 @@ THREE.OBJLoader2 = (function () {
 	 * Utility method for loading an mtl file according resource description.
 	 * @memberOf THREE.OBJLoader2
 	 *
+	 * @param {string} url URL to the file
+	 * @param {string} name The name of the object
+	 * @param {Object} content The file content as arraybuffer or text
+	 * @param {function} callbackOnLoad
+	 * @param {string} crossOrigin CORS value
+	 */
+	OBJLoader2.prototype.loadMtl = function ( url, name, content, callbackOnLoad, crossOrigin ) {
+		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'MTL' );
+		resource.setContent( content );
+		this._loadMtl( resource, callbackOnLoad, crossOrigin );
+	};
+
+	/**
+	 * Utility method for loading an mtl file according resource description.
+	 * @memberOf THREE.OBJLoader2
+	 *
 	 * @param {THREE.LoaderSupport.ResourceDescriptor} resource
 	 * @param {function} callbackOnLoad
 	 * @param {string} crossOrigin CORS value
 	 */
-	OBJLoader2.prototype.loadMtl = function ( resource, callbackOnLoad, crossOrigin ) {
+	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin ) {
 		if ( Validator.isValid( resource ) ) console.time( 'Loading MTL: ' + resource.name );
 
 		var materials = [];

@@ -458,19 +458,9 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 	 * Set the content of this resource (String)
 	 * @memberOf THREE.LoaderSupport.ResourceDescriptor
 	 *
-	 * @param {String} content The file content as text
+	 * @param {Object} content The file content as arraybuffer or text
 	 */
-	ResourceDescriptor.prototype.setTextContent = function ( content ) {
-		this.content = Validator.verifyInput( content, null );
-	};
-
-	/**
-	 * Set the content of this resource (String)
-	 * @memberOf THREE.LoaderSupport.ResourceDescriptor
-	 *
-	 * @param {Uint8Array} content The file content as text
-	 */
-	ResourceDescriptor.prototype.setBinaryContent = function ( content ) {
+	ResourceDescriptor.prototype.setContent = function ( content ) {
 		this.content = Validator.verifyInput( content, null );
 	};
 

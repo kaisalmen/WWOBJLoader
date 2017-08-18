@@ -75,98 +75,34 @@ var OBJLoader2Example = (function () {
 
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
+		this.pivot.position.set( 0, 25, 0 );
 		this.scene.add( this.pivot );
 	};
 
-	OBJLoader2Example.prototype.addToLoadList = function ( prepData ) {
-		this.loadList.push( prepData );
-		this.loadListNames[ prepData.modelName ] = prepData;
-	};
-
-	OBJLoader2Example.prototype.processLoadList = function () {
-		if ( this.loadList.length > 0 ) {
-			var prepData = this.loadList[ 0 ];
-			if ( ! Validator.isValid( prepData ) ) return;
-
-			this.loadList.shift();
-			this.loadObj( prepData );
-		}
-	};
-
-	/**
-	 *
-	 * @param {THREE.LoaderSupport.PrepData prepData
-	 */
-	OBJLoader2Example.prototype.loadObj = function ( prepData ) {
-		if ( ! Validator.isValid( prepData ) ) return;
-
-		var modelName = prepData.modelName;
+	OBJLoader2Example.prototype.initContent = function () {
+		var modelName = 'female02';
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			var foundPrepData = scope.loadListNames[ modelName ];
-			if ( Validator.isValid( foundPrepData ) && ! scope.streamMeshes && ! prepData.isAutomated() ) {
-
-				scope.pivot.add( foundPrepData.streamMeshesTo );
-				foundPrepData.streamMeshesTo.add( loaderRootNode );
-
-			} else {
-
-				scope.pivot.add( loaderRootNode );
-
-			}
+			scope.pivot.add( loaderRootNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
-
-			scope.processLoadList();
 		};
 
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
-			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
-
-			var mesh = new THREE.Mesh( bufferGeometry, material );
-			mesh.name = name;
-			var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
-			helper.name = 'VertexNormalsHelper';
-
-			override.addMesh( mesh );
-			override.addMesh( helper );
-
-			return override;
-		};
-
-		if ( prepData.isAutomated() ) {
+		var onLoadMtl = function ( materials ) {
 
 			scope.objLoader.init();
-			prepData.getCallbacks().setCallbackOnProgress( this._reportProgress );
-			prepData.getCallbacks().setCallbackOnLoad( callbackOnLoad );
-			prepData.getCallbacks().setCallbackOnMeshAlter( callbackMeshAlter );
-			scope.objLoader.run( prepData );
+			scope.objLoader.setModelName( 'female02');
+			scope.objLoader.setMaterials( materials );
 
-		} else {
+			scope.objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
+		};
 
-			var resourceObj = prepData.resources[ 0 ];
-			var resourceMtl = prepData.resources[ 1 ];
-
-			var onLoadMtl = function ( materials ) {
-
-				scope.objLoader.init();
-				scope.objLoader.setModelName( prepData.modelName );
-				scope.objLoader.setMaterials( materials );
-
-				scope.pivot.add( prepData.streamMeshesTo );
-				if ( scope.streamMeshes ) scope.objLoader.setStreamMeshesTo( prepData.streamMeshesTo );
-
-				scope.objLoader.load( resourceObj.url, callbackOnLoad, null, null, callbackMeshAlter, false );
-			};
-
-			scope.objLoader.loadMtl( resourceMtl, onLoadMtl, 'anonymous' );
-
-		}
+		scope.objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl, 'anonymous' );
 	};
 
-	OBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
+	OBJLoader2Example.prototype._reportProgress = function( content ) {
 		console.log( 'Progress: ' + content );
 		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
 	};
@@ -206,57 +142,6 @@ var OBJLoader2Example = (function () {
 		this.cube.rotation.y += 0.05;
 
 		this.renderer.render( this.scene, this.camera );
-	};
-
-	OBJLoader2Example.prototype.alterSmoothShading = function () {
-
-		var scope = this;
-		scope.smoothShading = ! scope.smoothShading;
-		console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
-
-		scope.traversalFunction = function ( material ) {
-			material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
-			material.needsUpdate = true;
-		};
-		var scopeTraverse = function ( object3d ) {
-			scope.traverseScene( object3d );
-		};
-		scope.pivot.traverse( scopeTraverse );
-	};
-
-	OBJLoader2Example.prototype.alterDouble = function () {
-
-		var scope = this;
-		scope.doubleSide = ! scope.doubleSide;
-		console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
-
-		scope.traversalFunction  = function ( material ) {
-			material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
-		};
-
-		var scopeTraverse = function ( object3d ) {
-			scope.traverseScene( object3d );
-		};
-		scope.pivot.traverse( scopeTraverse );
-	};
-
-	OBJLoader2Example.prototype.traverseScene = function ( object3d ) {
-
-		if ( object3d.material instanceof THREE.MultiMaterial ) {
-
-			var materials = object3d.material.materials;
-			for ( var name in materials ) {
-
-				if ( materials.hasOwnProperty( name ) )	this.traversalFunction( materials[ name ] );
-
-			}
-
-		} else if ( object3d.material ) {
-
-			this.traversalFunction( object3d.material );
-
-		}
-
 	};
 
 	return OBJLoader2Example;

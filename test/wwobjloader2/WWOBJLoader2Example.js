@@ -91,6 +91,78 @@ var WWOBJLoader2Example = (function () {
 		this.scene.add( this.pivot );
 	};
 
+	WWOBJLoader2Example.prototype.initContent = function () {
+		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+		var pivot = new THREE.Object3D();
+		pivot.name = 'Pivot_male02';
+		pivot.position.set( 0, 0, 0 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ'	) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		prepData.setAutomated( true );
+		prepData.setUseAsync( true );
+		prepData.crossOrigin = 'anonymous';
+		this.addToLoadList( prepData );
+
+		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+		pivot = new THREE.Object3D();
+		pivot.name = 'Pivot_WaltHead';
+		pivot.position.set( -125, 50, 0 );
+		var scale = 0.5;
+		pivot.scale.set( scale, scale, scale );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		prepData.setUseAsync( true );
+		prepData.crossOrigin = 'anonymous';
+		this.addToLoadList( prepData );
+
+		prepData = new THREE.LoaderSupport.PrepData( 'vive-controller' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( 125, 50, 0 );
+		pivot.name = 'Pivot_vive-controller';
+		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
+
+			var mesh = new THREE.Mesh( bufferGeometry, material );
+			scale = 200.0;
+			mesh.scale.set( scale, scale, scale );
+			mesh.name = name;
+			var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+			helper.name = 'VertexNormalsHelper';
+
+			override.addMesh( mesh );
+			override.addMesh( helper );
+
+			return override;
+		};
+		prepData.getCallbacks().setCallbackOnMeshAlter( callbackMeshAlter );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+		prepData.setUseAsync( true );
+		prepData.crossOrigin = 'anonymous';
+		this.addToLoadList( prepData );
+
+		prepData = new THREE.LoaderSupport.PrepData( 'female02_vertex' );
+		pivot = new THREE.Object3D();
+		pivot.name = 'Pivot_female02_vertex';
+		pivot.position.set( -75, 0, 0 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02_vertex_colors.obj', 'OBJ' ) );
+		prepData.setAutomated( true );
+		this.addToLoadList( prepData );
+
+		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+		pivot = new THREE.Object3D();
+		pivot.name = 'Pivot_female02';
+		pivot.position.set( 75, 0, 0 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		prepData.setUseAsync( true );
+		this.addToLoadList( prepData );
+	};
+
 	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
 		console.log( 'Progress: ' + content );
 		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
@@ -151,10 +223,15 @@ var WWOBJLoader2Example = (function () {
 					scope.pivot.add( prepData.streamMeshesTo );
 					if ( scope.streamMeshes ) scope.objLoader.setStreamMeshesTo( prepData.streamMeshesTo );
 
+					var onMeshAlter = prepData.getCallbacks().onMeshAlter;
+					if ( Validator.isValid( onMeshAlter ) ) {
+						scope.objLoader._setCallbacks( null, onMeshAlter, null );
+					}
+
 					scope.objLoader.parseAsync( uint8Array, callbackOnLoad );
 				};
 
-				scope.objLoader.loadMtl( available.mtl, onLoadMtl, 'anonymous' );
+				scope.objLoader._loadMtl( available.mtl, onLoadMtl, 'anonymous' );
 			};
 
 			fileLoader.setResponseType( 'arraybuffer' );
@@ -207,7 +284,7 @@ var WWOBJLoader2Example = (function () {
 			prepData.setStreamMeshesTo( userPivot );
 			scope.pivot.add( prepData.streamMeshesTo );
 
-			resourceOBJ.setBinaryContent( uint8Array );
+			resourceOBJ.setContent( uint8Array );
 			prepData.addResource( resourceOBJ );
 			prepData.setUseAsync( true );
 			var callbacks = prepData.getCallbacks();
@@ -217,7 +294,7 @@ var WWOBJLoader2Example = (function () {
 			fileReader.onload = function( fileDataMtl ) {
 
 				var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
-				resourceMTL.setTextContent( fileDataMtl.target.result );
+				resourceMTL.setContent( fileDataMtl.target.result );
 				prepData.addResource( resourceMTL );
 
 				scope.objLoader.init();
