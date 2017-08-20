@@ -86,7 +86,10 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			for ( i = start; i < this.maxWebWorkers; i++ ) {
 
-				this.workerDescription.workerSupports[ i ] = new THREE.LoaderSupport.WorkerSupport();
+				this.workerDescription.workerSupports[ i ] = {
+					workerSupport: new THREE.LoaderSupport.WorkerSupport(),
+					loader: null
+				};
 
 			}
 
@@ -94,7 +97,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			for ( i = start - 1; i >= this.maxWebWorkers; i-- ) {
 
-				this.workerDescription.workerSupports[ i ].setRequestTerminate( true );
+				this.workerDescription.workerSupports[ i ].workerSupport.setRequestTerminate( true );
 				this.workerDescription.workerSupports.pop();
 
 			}
@@ -191,9 +194,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
-		var workerSupport = this.workerDescription.workerSupports[ workerInstanceNo ];
-		var loaderRef = this._buildLoader( workerInstanceNo );
-		loaderRef.workerSupport = workerSupport;
+		var supportTuple = this.workerDescription.workerSupports[ workerInstanceNo ];
+		supportTuple.loader = this._buildLoader( workerInstanceNo );
+		supportTuple.loader.workerSupport = supportTuple.workerSupport;
 
 		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
@@ -201,7 +204,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
-		loaderRef.run( prepData );
+		supportTuple.loader.run( prepData );
 	};
 
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
@@ -237,12 +240,12 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
 
-			var workerSupport = this.workerDescription.workerSupports[ i ];
-			workerSupport.setTerminateRequested( true );
+			var supportTuple = this.workerDescription.workerSupports[ i ];
+			supportTuple.workerSupport.setTerminateRequested( true );
 			console.log( 'Requested termination of worker.' );
 
-			var workerCallbacks = workerSupport.loaderRef.callbacks;
-			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );
+			var loaderCallbacks = supportTuple.loader.callbacks;
+			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( '' );
 
 		}
 

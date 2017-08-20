@@ -238,7 +238,7 @@ THREE.OBJLoader2 = (function () {
 
 			return workerCode;
 		};
-		this.workerSupport.validate( this, buildCode, false );
+		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
 		this.workerSupport.run(
 			{

@@ -52,7 +52,7 @@ var MeshSpray = (function () {
 
 			return workerCode;
 		};
-		this.workerSupport.validate( this, buildCode, false );
+		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{

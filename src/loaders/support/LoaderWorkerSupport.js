@@ -80,7 +80,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
 		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
 
-		this.loaderRef = null;
 		this.worker = null;
 		this.workerCode = null;
 		this.running = false;
@@ -92,9 +91,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
-	WorkerSupport.prototype.validate = function ( loaderRef, functionCodeBuilder, forceWorkerReload, runnerImpl ) {
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, runnerImpl ) {
 		this.running = false;
-		this.loaderRef = loaderRef;
 		if ( forceWorkerReload ) {
 
 			this.worker = null;
