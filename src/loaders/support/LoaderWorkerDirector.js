@@ -29,7 +29,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.workerDescription = {
 			classDef: classDef,
 			globalCallbacks: {},
-			workers: []
+			workerSupports: []
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -80,15 +80,13 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
 
-		var start = this.workerDescription.workers.length;
-		var worker;
+		var start = this.workerDescription.workerSupports.length;
 		var i;
 		if ( start < this.maxWebWorkers ) {
 
 			for ( i = start; i < this.maxWebWorkers; i++ ) {
 
-				worker = this._buildWorker( i );
-				this.workerDescription.workers[ i ] = worker;
+				this.workerDescription.workerSupports[ i ] = new THREE.LoaderSupport.WorkerSupport();
 
 			}
 
@@ -96,9 +94,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			for ( i = start - 1; i >= this.maxWebWorkers; i-- ) {
 
-				worker = this.workerDescription.workers[ i ];
-				worker.setRequestTerminate( true );
-				this.workerDescription.workers.pop();
+				this.workerDescription.workerSupports[ i ].setRequestTerminate( true );
+				this.workerDescription.workerSupports.pop();
 
 			}
 		}
@@ -126,30 +123,23 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		var length = Math.min( this.maxWebWorkers, this.instructionQueue.length );
 		for ( var i = 0; i < length; i++ ) {
 
-			this._kickWorkerRun( this.workerDescription.workers[ i ], this.instructionQueue[ 0 ], i );
+			this._kickWorkerRun( this.instructionQueue[ 0 ], i );
 			this.instructionQueue.shift();
 
 		}
 	};
 
-	WorkerDirector.prototype._kickWorkerRun = function( worker, prepData, instanceNo ) {
-		worker.init();
-		worker.instanceNo = instanceNo;
-
+	WorkerDirector.prototype._kickWorkerRun = function( prepData, workerInstanceNo ) {
 		var scope = this;
-		var prepDataCallbacks = prepData.getCallbacks();
-		var globalCallbacks = this.workerDescription.globalCallbacks;
-
 		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			scope.objectsCompleted++;
 
-			var worker = scope.workerDescription.workers[ instanceNo ];
 			var nextPrepData = scope.instructionQueue[ 0 ];
 			if ( Validator.isValid( nextPrepData ) ) {
 
 				scope.instructionQueue.shift();
 				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-				scope._kickWorkerRun( worker, nextPrepData, worker.instanceNo );
+				scope._kickWorkerRun( nextPrepData, instanceNo );
 
 			} else if ( scope.instructionQueue.length === 0 ) {
 
@@ -158,6 +148,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
+		var prepDataCallbacks = prepData.getCallbacks();
+		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			if ( Validator.isValid( globalCallbacks.onLoad ) ) {
 
@@ -199,23 +191,29 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			}
 		};
 
+		var workerSupport = this.workerDescription.workerSupports[ workerInstanceNo ];
+		var loaderRef = this._buildLoader( workerInstanceNo );
+		loaderRef.workerSupport = workerSupport;
+
 		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
 		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
-		worker.run( prepData );
+		loaderRef.run( prepData );
 	};
 
-	WorkerDirector.prototype._buildWorker = function () {
+	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
-		var worker = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( worker );
+		var loader = Object.create( classDef.prototype );
+		this.workerDescription.classDef.call( loader );
 
 		// verify that all required functions are implemented
-		if ( ! worker.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
-		if ( ! worker.hasOwnProperty( 'workerSupport' ) ) {
+		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
+		loader.instanceNo = instanceNo;
+
+		if ( ! loader.hasOwnProperty( 'workerSupport' ) ) {
 
 			throw classDef.name + ' has no property "workerSupport".';
 
@@ -224,11 +222,10 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			throw classDef.name + '.workerSupport is not of type "THREE.LoaderSupport.WorkerSupport".';
 
 		}
-		if ( typeof worker.init !== 'function'  ) throw classDef.name + ' has no function "init".';
-		if ( typeof worker.run !== 'function'  ) throw classDef.name + ' has no function "run".';
+		if ( typeof loader.setWorkerSupport !== 'function'  ) throw classDef.name + ' has no function "setWorkerSupport".';
+		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
 
-		this.workerDescription.workers.push( worker );
-		return worker;
+		return loader;
 	};
 
 	/**
@@ -238,18 +235,18 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype.deregister = function () {
 		console.log( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
-		for ( var i = 0, worker, length = this.workerDescription.workers.length; i < length; i++ ) {
+		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
 
-			worker = this.workerDescription.workers[ i ];
+			var workerSupport = this.workerDescription.workerSupports[ i ];
+			workerSupport.setTerminateRequested( true );
 			console.log( 'Requested termination of worker.' );
-			worker.workerSupport.setTerminateRequested( true );
 
-			var workerCallbacks = worker.callbacks;
+			var workerCallbacks = workerSupport.loaderRef.callbacks;
 			if ( Validator.isValid( workerCallbacks.onProgress ) ) workerCallbacks.onProgress( '' );
 
 		}
 
-		this.workerDescription.workers = [];
+		this.workerDescription.workerSupports = [];
 		this.instructionQueue = [];
 	};
 

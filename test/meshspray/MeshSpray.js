@@ -13,26 +13,12 @@ var MeshSpray = (function () {
 
 	function MeshSpray( manager ) {
 		THREE.LoaderSupport.Commons.call( this, manager );
-	}
+		this.workerSupport = null;
+	};
 
-	MeshSpray.prototype.init = function ( manager ) {
-		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
+	MeshSpray.prototype.setWorkerSupport = function ( workerSupport ) {
+		this.workerSupport = Validator.verifyInput( workerSupport, this.workerSupport );
 
-		this.instanceNo = 0;
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-
-		var buildWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
-			var workerCode = '';
-			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by MeshSpray buildWorkerCode.\n';
-			workerCode += '  */\n\n';
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
-
-			return workerCode;
-		};
-
-		this.workerSupport.validate( buildWorkerCode, false );
 	};
 
 	MeshSpray.prototype.run = function ( prepData ) {
@@ -54,6 +40,19 @@ var MeshSpray = (function () {
 			if ( Validator.isValid( callback ) ) callback( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
 			console.timeEnd( 'MeshSpray' );
 		};
+
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
+		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
+			var workerCode = '';
+			workerCode += '/**\n';
+			workerCode += '  * This code was constructed by MeshSpray buildWorkerCode.\n';
+			workerCode += '  */\n\n';
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
+
+			return workerCode;
+		};
+		this.workerSupport.validate( this, buildCode, false );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
@@ -261,7 +260,7 @@ var MeshSprayApp = (function () {
 		this.scene.add( this.pivot );
 	};
 
-	MeshSprayApp.prototype.initPostGL = function () {
+	MeshSprayApp.prototype.initContent = function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;

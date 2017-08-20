@@ -60,7 +60,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.86.0"
+    "three": "^0.87.1"
   },
   "devDependencies": {
     "jszip": "^3.1.3",

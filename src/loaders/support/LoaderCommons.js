@@ -154,7 +154,7 @@ THREE.LoaderSupport.Builder = (function () {
 
 					materialClone = material.clone();
 					materialClone.name = materialName;
-					materialClone.shading = THREE.FlatShading;
+					materialClone.flatShading = true;
 					this.materials[ materialName ] = name;
 
 				}
@@ -256,15 +256,10 @@ THREE.LoaderSupport.Commons = (function () {
 
 	function Commons( manager ) {
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
-		this.init( manager );
-	}
-
-	Commons.prototype.init = function ( manager ) {
-		this.manager = Validator.verifyInput( manager, this.manager );
-		this.manager = Validator.verifyInput( this.manager, THREE.DefaultLoadingManager );
 
 		this.modelName = '';
 		this.instanceNo = 0;
+		this.path = '';
 
 		this.debug = false;
 		this.materials = [];
@@ -298,6 +293,14 @@ THREE.LoaderSupport.Commons = (function () {
 
 	Commons.prototype.setModelName = function ( modelName ) {
 		this.modelName = Validator.verifyInput( modelName, this.modelName );
+	};
+
+	/**
+	 * The URL of the base path
+	 * @param {string} path
+	 */
+	Commons.prototype.setPath = function ( path ) {
+		this.path = Validator.verifyInput( path, this.path );
 	};
 
 	/**

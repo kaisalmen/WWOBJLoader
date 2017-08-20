@@ -17,32 +17,21 @@ THREE.OBJLoader2 = (function () {
 
 	function OBJLoader2( manager ) {
 		THREE.LoaderSupport.Commons.call( this, manager );
-	}
-
-	OBJLoader2.prototype.init = function ( manager ) {
-		THREE.LoaderSupport.Commons.prototype.init.call( this, manager );
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
-		this.path = '';
+		this.workerSupport = null;
+	};
 
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		var buildWorkerCode = function ( funcBuildObject, funcBuildSingelton ) {
-			var workerCode = '';
-			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by OBJLoader2 buildWorkerCode.\n';
-			workerCode += '  */\n\n';
-			workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
-			workerCode += funcBuildObject( 'Consts', Consts );
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
-			workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
-			workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
+	/**
+	 * Sets the workerSupport (for example by director because of worker re-usage)
+	 *
+	 * @param {THREE.LoaderSupport.WorkerSupport} workerSupport
+	 */
+	OBJLoader2.prototype.setWorkerSupport = function ( workerSupport ) {
+		this.workerSupport = Validator.verifyInput( workerSupport, this.workerSupport );
 
-			return workerCode;
-		};
-		this.workerSupport.validate( buildWorkerCode, false );
 	};
 
 	/**
@@ -63,10 +52,6 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.setDebug = function ( enabled ) {
 		THREE.LoaderSupport.Commons.prototype.setDebug.call( this, enabled );
-	};
-
-	OBJLoader2.prototype.setPath = function ( path ) {
-		this.path = Validator.verifyInput( path, this.path );
 	};
 
 	/**
@@ -238,6 +223,22 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
+		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
+			var workerCode = '';
+			workerCode += '/**\n';
+			workerCode += '  * This code was constructed by OBJLoader2 buildWorkerCode.\n';
+			workerCode += '  */\n\n';
+			workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
+			workerCode += funcBuildObject( 'Consts', Consts );
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
+			workerCode += funcBuildSingelton( 'RawObject', 'RawObject', RawObject );
+			workerCode += funcBuildSingelton( 'RawObjectDescription', 'RawObjectDescription', RawObjectDescription );
+
+			return workerCode;
+		};
+		this.workerSupport.validate( this, buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
 		this.workerSupport.run(
 			{
@@ -1068,7 +1069,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {string} objectName Name of the mesh
 	 * @param {string} groupName Name of the group
 	 * @param {string} materialName Name of the material
-	 * @param {number} smoothingGroup Normalized smoothingGroup (0: THREE.FlatShading, 1: THREE.SmoothShading)
+	 * @param {number} smoothingGroup Normalized smoothingGroup (0: flat shading, 1: smooth shading)
 	 */
 	var RawObjectDescription = (function () {
 

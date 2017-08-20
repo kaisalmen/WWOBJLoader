@@ -25,7 +25,6 @@ var WWOBJLoader2Stage = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.objLoader2 = new THREE.OBJLoader2();
 		this.controls = null;
 		this.cube = null;
 
@@ -108,7 +107,7 @@ var WWOBJLoader2Stage = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
-	WWOBJLoader2Stage.prototype.initPostGL = function (  ) {
+	WWOBJLoader2Stage.prototype.initContent = function (  ) {
 		this.assetsDef = {
 			objsFemaleMale: [],
 			objsCerberus: [],
@@ -167,7 +166,6 @@ var WWOBJLoader2Stage = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -250, 0, -200 );
-		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
@@ -275,11 +273,14 @@ var WWOBJLoader2Stage = (function () {
 
 		if ( scope.loadCounter < scope.objs2Load.length ) {
 
+			var objLoader2 = new THREE.OBJLoader2();
 			var prepData = scope.objs2Load[ scope.loadCounter ];
 			scope.loadCounter++;
-			scope.scene.add( prepData.streamMeshesTo );
+			var streamMeshes = prepData.streamMeshesTo;
+			if ( Validator.isValid( streamMeshes ) ) scope.scene.add( streamMeshes );
 
 			var reloadAssetsProxy = function ( object3d, modelName, instanceNo ) {
+				if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( object3d );
 				scope.reloadAssets();
 				scope.reportProgress();
 			};
@@ -297,8 +298,7 @@ var WWOBJLoader2Stage = (function () {
 					scope.reportProgress( '' );
 					prepData.resources[ 1 ].content = data;
 
-					scope.objLoader2.init();
-					scope.objLoader2.run( prepData );
+					objLoader2.run( prepData );
 				};
 
 				var setMtlAsString = function ( data ) {
@@ -330,8 +330,7 @@ var WWOBJLoader2Stage = (function () {
 			} else {
 
 				scope.reportProgress( '' );
-				scope.objLoader2.init();
-				scope.objLoader2.run( prepData );
+				objLoader2.run( prepData );
 
 			}
 		} else {

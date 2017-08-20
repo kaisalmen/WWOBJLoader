@@ -26,17 +26,6 @@ var OBJLoader2Example = (function () {
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 		this.controls = null;
-
-		this.smoothShading = true;
-		this.doubleSide = false;
-
-		this.cube = null;
-		this.pivot = null;
-
-		this.objLoader = new THREE.OBJLoader2();
-		this.loadList = [];
-		this.loadListNames = {};
-		this.streamMeshes = false;
 	}
 
 	OBJLoader2Example.prototype.initGL = function () {
@@ -66,17 +55,6 @@ var OBJLoader2Example = (function () {
 
 		var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 		this.scene.add( helper );
-
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-		var material = new THREE.MeshNormalMaterial();
-		this.cube = new THREE.Mesh( geometry, material );
-		this.cube.position.set( 0, 0, 0 );
-		this.scene.add( this.cube );
-
-		this.pivot = new THREE.Object3D();
-		this.pivot.name = 'Pivot';
-		this.pivot.position.set( 0, 25, 0 );
-		this.scene.add( this.pivot );
 	};
 
 	OBJLoader2Example.prototype.initContent = function () {
@@ -84,22 +62,19 @@ var OBJLoader2Example = (function () {
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
+		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope.pivot.add( loaderRootNode );
+			scope.scene.add( loaderRootNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
 		};
 
 		var onLoadMtl = function ( materials ) {
-
-			scope.objLoader.init();
-			scope.objLoader.setModelName( 'female02');
-			scope.objLoader.setMaterials( materials );
-
-			scope.objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
+			objLoader.setModelName( 'female02');
+			objLoader.setMaterials( materials );
+			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
-
-		scope.objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl, 'anonymous' );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl, 'anonymous' );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {
@@ -135,12 +110,7 @@ var OBJLoader2Example = (function () {
 
 	OBJLoader2Example.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
-
 		this.controls.update();
-
-		this.cube.rotation.x += 0.05;
-		this.cube.rotation.y += 0.05;
-
 		this.renderer.render( this.scene, this.camera );
 	};
 
