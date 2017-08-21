@@ -25,16 +25,6 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Sets the workerSupport (for example by director because of worker re-usage)
-	 *
-	 * @param {THREE.LoaderSupport.WorkerSupport} workerSupport
-	 */
-	OBJLoader2.prototype.setWorkerSupport = function ( workerSupport ) {
-		this.workerSupport = Validator.verifyInput( workerSupport, this.workerSupport );
-
-	};
-
-	/**
 	 * Tells whether a material shall be created per smoothing group
 	 * @memberOf THREE.OBJLoader2
 	 *
@@ -111,15 +101,17 @@ THREE.OBJLoader2 = (function () {
 
 	};
 
-	/**
+    /**
 	 * Run the loader according the provided instructions.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
+	 * @param {THREE.LoaderSupport.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
 	 */
-	OBJLoader2.prototype.run = function ( prepData ) {
+	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
+        this.workerSupport = Validator.verifyInput( workerSupportExternal, this.workerSupport );
 
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
@@ -153,15 +145,14 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( prepData ) ) {
 
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
-
 		}
 	};
 
 	/**
-	 * Parses OBJ file according instructions in resource descriptor
+	 * Parses OBJ content synchronously.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {THREE.LoaderSupport.ResourceDescriptor}
+	 * @param content
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
 		console.time( 'OBJLoader2: ' + this.modelName );
@@ -206,6 +197,13 @@ THREE.OBJLoader2 = (function () {
 		return this.loaderRootNode;
 	};
 
+    /**
+     * Parses OBJ content asynchronously.
+	 * @memberOf THREE.OBJLoader2
+	 *
+     * @param {arraybuffer} content
+     * @param {callback} onLoad
+     */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
 		console.time( 'OBJLoader2: ' + this.modelName);
 
@@ -239,23 +237,23 @@ THREE.OBJLoader2 = (function () {
 			return workerCode;
 		};
 		this.workerSupport.validate( buildCode, false );
-		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
-		this.workerSupport.run(
-			{
-				cmd: 'run',
-				params: {
-					debug: this.debug,
-					materialPerSmoothingGroup: this.materialPerSmoothingGroup
-				},
-				materials: {
-					materialNames: this.materialNames
-				},
-				buffers: {
-					input: content
-				}
-			},
-			[ content.buffer ]
-		);
+        this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+        this.workerSupport.run(
+            {
+                cmd: 'run',
+                params: {
+                    debug: this.debug,
+                    materialPerSmoothingGroup: this.materialPerSmoothingGroup
+                },
+                materials: {
+                    materialNames: this.materialNames
+                },
+                buffers: {
+                    input: content
+                }
+            },
+            [ content.buffer ]
+        );
 	};
 
 	/**

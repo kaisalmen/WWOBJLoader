@@ -549,6 +549,7 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
+	 * Set whether this shall be used in an automated way.
 	 *
 	 * @param {boolean} automated
 	 */
@@ -557,6 +558,7 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
+     * Tell whether this shall used in an automated way.
 	 *
 	 * @returns {boolean|*}
 	 */
@@ -564,6 +566,11 @@ THREE.LoaderSupport.PrepData = (function () {
 		return this.automated;
 	};
 
+    /**
+	 * Clones this object and returns it afterwards.
+	 *
+     * @returns {@link THREE.LoaderSupport.PrepData}
+     */
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
 		clone.resources = this.resources;
@@ -572,6 +579,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;
 		clone.useAsync = this.useAsync;
+		clone.automated = this.automated;
 		return clone;
 	};
 

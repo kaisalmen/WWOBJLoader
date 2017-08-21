@@ -196,7 +196,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		var supportTuple = this.workerDescription.workerSupports[ workerInstanceNo ];
 		supportTuple.loader = this._buildLoader( workerInstanceNo );
-		supportTuple.loader.workerSupport = supportTuple.workerSupport;
 
 		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
@@ -204,7 +203,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
-		supportTuple.loader.run( prepData );
+		supportTuple.loader.run( prepData, supportTuple.workerSupport );
 	};
 
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
@@ -225,7 +224,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			throw classDef.name + '.workerSupport is not of type "THREE.LoaderSupport.WorkerSupport".';
 
 		}
-		if ( typeof loader.setWorkerSupport !== 'function'  ) throw classDef.name + ' has no function "setWorkerSupport".';
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
 
 		return loader;

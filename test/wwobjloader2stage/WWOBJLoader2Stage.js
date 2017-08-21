@@ -120,7 +120,7 @@ var WWOBJLoader2Stage = (function () {
 		this.assetsDef.objsFemaleMale = [];
 		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		var pivot = new THREE.Object3D();
-		pivot.position.set( 100, 0, -75 );
+		pivot.position.set( -200, 0, -175 );
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
@@ -129,7 +129,7 @@ var WWOBJLoader2Stage = (function () {
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
 		pivot = new THREE.Object3D();
-		pivot.position.set( -100, 0, 75 );
+		pivot.position.set( 200, 0, -75 );
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
@@ -147,7 +147,7 @@ var WWOBJLoader2Stage = (function () {
 
 		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
 		pivot = new THREE.Object3D();
-		pivot.position.set( 0, 0, -200 );
+		pivot.position.set( 0, 0, 75 );
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
@@ -176,7 +176,7 @@ var WWOBJLoader2Stage = (function () {
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 		prepData = new THREE.LoaderSupport.PrepData( 'oven' );
 		pivot = new THREE.Object3D();
-		pivot.position.set( 0, 0, -75 );
+		pivot.position.set( -200, 0, 50 );
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
@@ -185,7 +185,7 @@ var WWOBJLoader2Stage = (function () {
 
 		prepData = new THREE.LoaderSupport.PrepData( 'sink' );
 		pivot = new THREE.Object3D();
-		pivot.position.set( 0, 0, 75 );
+		pivot.position.set( -200, 0, 200 );
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );

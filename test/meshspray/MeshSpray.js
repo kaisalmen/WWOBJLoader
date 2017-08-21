@@ -16,12 +16,7 @@ var MeshSpray = (function () {
 		this.workerSupport = null;
 	};
 
-	MeshSpray.prototype.setWorkerSupport = function ( workerSupport ) {
-		this.workerSupport = Validator.verifyInput( workerSupport, this.workerSupport );
-
-	};
-
-	MeshSpray.prototype.run = function ( prepData ) {
+	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
 		console.time( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
@@ -41,6 +36,7 @@ var MeshSpray = (function () {
 			console.timeEnd( 'MeshSpray' );
 		};
 
+        this.workerSupport = Validator.verifyInput( workerSupportExternal, this.workerSupport );
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
 			var workerCode = '';
