@@ -106,6 +106,11 @@ THREE.LoaderSupport.Builder = (function () {
 
 		var bufferGeometry = new THREE.BufferGeometry();
 		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.buffers.vertices ), 3 ) );
+		if ( Validator.isValid( payload.buffers.indices ) ) {
+
+			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( payload.buffers.indices ), 1 ));
+
+		}
 		var haveVertexColors = Validator.isValid( payload.buffers.colors );
 		if ( haveVertexColors ) {
 

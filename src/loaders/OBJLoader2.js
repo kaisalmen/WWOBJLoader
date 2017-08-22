@@ -534,8 +534,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.debug ) this.createReport( this.inputObjectCount, true );
-				var message = this.buildMesh( result.rawObjectDescriptions, this.inputObjectCount, result.absoluteVertexCount,
-					result.absoluteColorCount, result.absoluteNormalCount, result.absoluteUvCount );
+				var message = this.buildMesh( result, this.inputObjectCount );
 				this.onProgress( message );
 
 			}
@@ -548,8 +547,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.debug ) this.createReport( this.inputObjectCount, true );
-				var message = this.buildMesh( result.rawObjectDescriptions, this.inputObjectCount, result.absoluteVertexCount,
-					result.absoluteColorCount, result.absoluteNormalCount, result.absoluteUvCount );
+				var message = this.buildMesh( result, this.inputObjectCount );
 				this.onProgress( message );
 				this.rawObject = this.rawObject.newInstanceFromGroup( groupName );
 
@@ -568,8 +566,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.debug ) this.createReport( this.inputObjectCount, true );
-				var message = this.buildMesh( result.rawObjectDescriptions, this.inputObjectCount, result.absoluteVertexCount,
-					result.absoluteColorCount, result.absoluteNormalCount, result.absoluteUvCount );
+				var message = this.buildMesh( result, this.inputObjectCount );
 				this.onProgress( message );
 
 			}
@@ -579,28 +576,23 @@ THREE.OBJLoader2 = (function () {
 			if ( Validator.isValid( text ) && Validator.isValid( this.callbackProgress) ) this.callbackProgress( text );
 		};
 
-
 		/**
-		 * This is an internal function, but due to its importance to Parser it is documented.
-		 * RawObjectDescriptions are transformed to THREE.Mesh.
+		 * RawObjectDescriptions are transformed to too intermediate format that is forwarded to the Builder.
 		 * It is ensured that rawObjectDescriptions only contain objects with vertices (no need to check).
-		 * This method shall be overridden by the web worker implementation
 		 *
-		 * @param {RawObjectDescription[]} rawObjectDescriptions Array of descriptive information and data (vertices, normals, uvs) about the parsed object(s)
-		 * @param {number} inputObjectCount Number of objects already retrieved from OBJ
-		 * @param {number} absoluteVertexCount Sum of all vertices of all rawObjectDescriptions
-		 * @param {number} absoluteColorCount Sum of all vertex colors of all rawObjectDescriptions
-		 * @param {number} absoluteNormalCount Sum of all normals of all rawObjectDescriptions
-		 * @param {number} absoluteUvCount Sum of all uvs of all rawObjectDescriptions
+		 * @param result
+		 * @param inputObjectCount
 		 */
-		Parser.prototype.buildMesh = function ( rawObjectDescriptions, inputObjectCount, absoluteVertexCount,
-													 absoluteColorCount, absoluteNormalCount, absoluteUvCount ) {
+		Parser.prototype.buildMesh = function ( result, inputObjectCount ) {
 			if ( this.debug ) console.log( 'OBJLoader.buildMesh:\nInput object no.: ' + inputObjectCount );
 
-			var vertexFA = new Float32Array( absoluteVertexCount );
-			var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
-			var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-			var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+			var rawObjectDescriptions = result.rawObjectDescriptions;
+
+			var vertexFA = new Float32Array( result.absoluteVertexCount );
+			var indexUA = ( result.absoluteIndexCount > 0 ) ? new Uint32Array( result.absoluteIndexCount ) : null;
+			var colorFA = ( result.absoluteColorCount > 0 ) ? new Float32Array( result.absoluteColorCount ) : null;
+			var normalFA = ( result.absoluteNormalCount > 0 ) ? new Float32Array( result.absoluteNormalCount ) : null;
+			var uvFA = ( result.absoluteUvCount > 0 ) ? new Float32Array( result.absoluteUvCount ) : null;
 
 			var rawObjectDescription;
 			var materialDescription;
@@ -616,6 +608,7 @@ THREE.OBJLoader2 = (function () {
 			var vertexFAOffset = 0;
 			var vertexGroupOffset = 0;
 			var vertexLength;
+			var indexUAOffset = 0;
 			var colorFAOffset = 0;
 			var normalFAOffset = 0;
 			var uvFAOffset = 0;
@@ -670,6 +663,13 @@ THREE.OBJLoader2 = (function () {
 				vertexFA.set( rawObjectDescription.vertices, vertexFAOffset );
 				vertexFAOffset += vertexLength;
 
+				if ( indexUA ) {
+
+					indexUA.set( rawObjectDescription.indices, indexUAOffset );
+					indexUAOffset += rawObjectDescription.indices.length;
+
+				}
+
 				if ( colorFA ) {
 
 					colorFA.set( rawObjectDescription.colors, colorFAOffset );
@@ -708,15 +708,17 @@ THREE.OBJLoader2 = (function () {
 					},
 					buffers: {
 						vertices: vertexFA,
+						indices: indexUA,
 						colors: colorFA,
 						normals: normalFA,
 						uvs: uvFA
 					}
 				},
 				[ vertexFA.buffer ],
-				colorFA !== null ? [ colorFA.buffer ] : null,
-				normalFA !== null ? [ normalFA.buffer ] : null,
-				uvFA !== null ? [ uvFA.buffer ] : null
+				Validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
+				Validator.isValid( colorFA ) ? [ colorFA.buffer ] : null,
+				Validator.isValid( normalFA ) ? [ normalFA.buffer ] : null,
+				Validator.isValid( uvFA ) ? [ uvFA.buffer ] : null
 			);
 		};
 
@@ -996,6 +998,7 @@ THREE.OBJLoader2 = (function () {
 			var temp = [];
 			var rawObjectDescription;
 			var absoluteVertexCount = 0;
+			var absoluteIndexCount = 0;
 			var absoluteColorCount = 0;
 			var absoluteNormalCount = 0;
 			var absoluteUvCount = 0;
@@ -1007,6 +1010,7 @@ THREE.OBJLoader2 = (function () {
 
 					temp.push( rawObjectDescription );
 					absoluteVertexCount += rawObjectDescription.vertices.length;
+					absoluteIndexCount += rawObjectDescription.indices.length;
 					absoluteColorCount += rawObjectDescription.colors.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
 					absoluteNormalCount += rawObjectDescription.normals.length;
@@ -1021,6 +1025,7 @@ THREE.OBJLoader2 = (function () {
 				result = {
 					rawObjectDescriptions: temp,
 					absoluteVertexCount: absoluteVertexCount,
+					absoluteIndexCount: absoluteIndexCount,
 					absoluteColorCount: absoluteColorCount,
 					absoluteNormalCount: absoluteNormalCount,
 					absoluteUvCount: absoluteUvCount
@@ -1035,6 +1040,7 @@ THREE.OBJLoader2 = (function () {
 				name: this.objectName ? this.objectName : 'groups',
 				mtllibName: this.mtllibName,
 				vertexCount: this.vertices.length / 3,
+				indexCount: this.indices.length,
 				normalCount: this.normals.length / 3,
 				uvCount: this.uvs.length / 2,
 				smoothingGroupCount: this.smoothingGroupCount,
@@ -1046,6 +1052,7 @@ THREE.OBJLoader2 = (function () {
 				console.log( 'Input Object number: ' + inputObjectCount + ' Object name: ' + report.name );
 				console.log( 'Mtllib name: ' + report.mtllibName );
 				console.log( 'Vertex count: ' + report.vertexCount );
+				console.log( 'Index count: ' + report.indexCount );
 				console.log( 'Normal count: ' + report.normalCount );
 				console.log( 'UV count: ' + report.uvCount );
 				console.log( 'SmoothingGroup count: ' + report.smoothingGroupCount );
@@ -1077,6 +1084,7 @@ THREE.OBJLoader2 = (function () {
 			this.materialName = materialName;
 			this.smoothingGroup = smoothingGroup;
 			this.vertices = [];
+			this.indices = [];
 			this.colors = [];
 			this.uvs = [];
 			this.normals = [];
