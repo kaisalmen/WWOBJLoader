@@ -620,7 +620,6 @@ THREE.OBJLoader2 = (function () {
 				materialDescription = {
 					name: rawObjectDescription.materialName,
 					flat: false,
-					vertexColors: false,
 					default: false
 				};
 				if ( this.materialNames[ materialDescription.name ] === null ) {
@@ -674,7 +673,6 @@ THREE.OBJLoader2 = (function () {
 
 					colorFA.set( rawObjectDescription.colors, colorFAOffset );
 					colorFAOffset += rawObjectDescription.colors.length;
-					materialDescription.vertexColors = true;
 
 				}
 

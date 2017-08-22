@@ -144,29 +144,45 @@ THREE.LoaderSupport.Builder = (function () {
 
 			materialDescription = materialDescriptions[ key ];
 			material = this.materials[ materialDescription.name ];
-			material = haveVertexColors ? this.materials[ 'vertexColorMaterial' ] : this.materials[ materialDescription.name ];
-			if ( ! material ) material = this.materials[ 'defaultMaterial' ];
+			material = Validator.verifyInput( material, this.materials[ 'defaultMaterial' ] );
+			if ( haveVertexColors ) {
 
-			if ( materialDescription.default ) {
+				if ( material.hasOwnProperty( 'vertexColors' ) ) {
 
-				material = this.materials[ 'defaultMaterial' ];
+					materialName = material.name + '_vertexColor';
+					var materialClone = this.materials[ materialName ];
+					if ( ! Validator.isValid( materialClone ) ) {
 
-			} else if ( materialDescription.flat ) {
+						materialClone = material.clone();
+						materialClone.name = materialName;
+						materialClone.vertexColors = THREE.VertexColors;
+						this.materials[ materialName ] = materialClone;
 
-				materialName = material.name + '_flat';
-				var materialClone = this.materials[ materialName ];
-				if ( ! materialClone ) {
+					}
+					material = materialClone;
 
-					materialClone = material.clone();
-					materialClone.name = materialName;
-					materialClone.flatShading = true;
-					this.materials[ materialName ] = name;
+				} else {
 
+					material = this.materials[ 'vertexColorMaterial' ];
 				}
 
 			}
 
-			if ( materialDescription.vertexColors ) material.vertexColors = THREE.VertexColors;
+			if ( materialDescription.flat ) {
+
+				materialName = material.name + '_flat';
+				var materialClone = this.materials[ materialName ];
+				if ( ! Validator.isValid( materialClone ) ) {
+
+					materialClone = material.clone();
+					materialClone.name = materialName;
+					materialClone.flatShading = true;
+					this.materials[ materialName ] = materialClone;
+
+				}
+				material = materialClone;
+
+			}
 			if ( createMultiMaterial ) multiMaterials.push( material );
 
 		}
@@ -286,7 +302,7 @@ THREE.LoaderSupport.Commons = (function () {
 		}
 		this.materialNames.push( defaultMaterial.name );
 
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		vertexColorMaterial.name = 'vertexColorMaterial';
 		vertexColorMaterial.vertexColors = THREE.VertexColors;
 		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
