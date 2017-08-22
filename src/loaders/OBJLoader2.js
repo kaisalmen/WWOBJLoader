@@ -155,7 +155,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param content
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
-		console.time( 'OBJLoader2: ' + this.modelName );
+		console.time( 'OBJLoader2 parse: ' + this.modelName );
 
 		this.parser = new Parser();
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
@@ -192,7 +192,7 @@ THREE.OBJLoader2 = (function () {
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
-		console.timeEnd( 'OBJLoader2: ' + this.modelName );
+		console.timeEnd( 'OBJLoader2 parse: ' + this.modelName );
 
 		return this.loaderRootNode;
 	};
@@ -205,12 +205,12 @@ THREE.OBJLoader2 = (function () {
      * @param {callback} onLoad
      */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
-		console.time( 'OBJLoader2: ' + this.modelName);
+		console.time( 'OBJLoader2 parseAsync: ' + this.modelName);
 
 		var scope = this;
 		var scopedOnLoad = function ( message ) {
 			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
-			console.timeEnd( 'OBJLoader2: ' + scope.modelName );
+			console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
 			var meshes = scope.builder.buildMeshes( payload );
@@ -1159,7 +1159,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {string} name The name of the object
 	 * @param {Object} content The file content as arraybuffer or text
 	 * @param {function} callbackOnLoad
-	 * @param {string} crossOrigin CORS value
+	 * @param {string} [crossOrigin] CORS value
 	 */
 	OBJLoader2.prototype.loadMtl = function ( url, name, content, callbackOnLoad, crossOrigin ) {
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'MTL' );
@@ -1173,7 +1173,7 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {THREE.LoaderSupport.ResourceDescriptor} resource
 	 * @param {function} callbackOnLoad
-	 * @param {string} crossOrigin CORS value
+	 * @param {string} [crossOrigin] CORS value
 	 */
 	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin ) {
 		if ( Validator.isValid( resource ) ) console.time( 'Loading MTL: ' + resource.name );
@@ -1200,7 +1200,8 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		var mtlLoader = new THREE.MTLLoader();
-		if ( Validator.isValid( crossOrigin ) ) mtlLoader.setCrossOrigin( crossOrigin );
+		crossOrigin = Validator.verifyInput( crossOrigin, 'anonymous' );
+		mtlLoader.setCrossOrigin( crossOrigin );
 
 		// fast-fail
 		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.url ) ) ) {

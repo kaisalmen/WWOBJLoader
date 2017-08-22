@@ -269,13 +269,31 @@ THREE.LoaderSupport.Commons = (function () {
 		this.debug = false;
 		this.materials = [];
 		this.materialNames = [];
+		this._createDefaultMaterials();
 
 		this.loaderRootNode = new THREE.Group();
 
 		this.builder = new THREE.LoaderSupport.Builder();
+		this.builder.setMaterials( this.materials );
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
 
+	Commons.prototype._createDefaultMaterials = function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
+			this.materials[ defaultMaterial.name ] = defaultMaterial;
+		}
+		this.materialNames.push( defaultMaterial.name );
+
+		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
+			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+		}
+		this.materialNames.push( vertexColorMaterial.name );
+	};
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {
@@ -342,24 +360,9 @@ THREE.LoaderSupport.Commons = (function () {
 			for ( var materialName in materials ) {
 				this.materialNames.push( materialName );
 			}
-		}
 
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
-			this.materials[ defaultMaterial.name ] = defaultMaterial;
+			this.builder.setMaterials( this.materials );
 		}
-		this.materialNames.push( defaultMaterial.name );
-
-		var vertexColorMaterial = new THREE.MeshBasicMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
-			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
-		}
-		this.materialNames.push( vertexColorMaterial.name );
-
-		this.builder.setMaterials( this.materials );
 	};
 
 	/**
@@ -492,7 +495,6 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
 		this.useAsync = false;
-		this.automated = false;
 	}
 
 	/**
@@ -553,24 +555,6 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.useAsync = useAsync === true;
 	};
 
-	/**
-	 * Set whether this shall be used in an automated way.
-	 *
-	 * @param {boolean} automated
-	 */
-	PrepData.prototype.setAutomated = function ( automated ) {
-		this.automated = automated === true;
-	};
-
-	/**
-     * Tell whether this shall used in an automated way.
-	 *
-	 * @returns {boolean|*}
-	 */
-	PrepData.prototype.isAutomated = function () {
-		return this.automated;
-	};
-
     /**
 	 * Clones this object and returns it afterwards.
 	 *
@@ -584,7 +568,6 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;
 		clone.useAsync = this.useAsync;
-		clone.automated = this.automated;
 		return clone;
 	};
 

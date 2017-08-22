@@ -70,11 +70,11 @@ var OBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( materials ) {
-			objLoader.setModelName( 'female02');
+			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
 			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl, 'anonymous' );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {
