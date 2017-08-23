@@ -85,13 +85,45 @@ THREE.LoaderSupport.Builder = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function Builder() {
-		this.materials = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
+		this.materials = [];
+		this.materialNames = [];
+		this._createDefaultMaterials();
 	}
+
+	Builder.prototype._createDefaultMaterials = function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
+			this.materials[ defaultMaterial.name ] = defaultMaterial;
+		}
+		this.materialNames.push( defaultMaterial.name );
+
+		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
+			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
+		}
+		this.materialNames.push( vertexColorMaterial.name );
+	};
 
 	Builder.prototype.setMaterials = function ( materials ) {
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
-			this.materials = materials;
+
+			var materialName;
+			for ( materialName in materials ) {
+
+				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName) ) {
+					this.materials[ materialName ] = materials[ materialName ];
+				}
+
+			}
+
+			// always reset list of names as they are an array
+			this.materialNames = [];
+			for ( materialName in materials ) this.materialNames.push( materialName );
+
 		}
 	};
 
@@ -204,12 +236,13 @@ THREE.LoaderSupport.Builder = (function () {
 		var mesh;
 		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
 		var callbackOnMeshAlterResult;
+		var useOrgMesh = true;
 		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
 			callbackOnMeshAlterResult = callbackOnMeshAlter( meshName, bufferGeometry, material );
-			if ( Validator.isValid( callbackOnMeshAlterResult ) && ! callbackOnMeshAlterResult.isDisregardMesh() ) {
+			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
 
-				if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
+				if ( ! callbackOnMeshAlterResult.isDisregardMesh() && callbackOnMeshAlterResult.providesAlteredMeshes() ) {
 
 					for ( var i in callbackOnMeshAlterResult.meshes ) {
 
@@ -217,29 +250,20 @@ THREE.LoaderSupport.Builder = (function () {
 
 					}
 
-				} else {
-
-					mesh = new THREE.Mesh( bufferGeometry, material );
-					mesh.name = meshName;
-					meshes.push( mesh );
-
 				}
-
-			} else {
-
-				mesh = new THREE.Mesh( bufferGeometry, material );
-				mesh.name = meshName;
-				meshes.push( mesh );
+				useOrgMesh = false;
 
 			}
 
-		} else {
+		}
+		if ( useOrgMesh ) {
 
 			mesh = new THREE.Mesh( bufferGeometry, material );
 			mesh.name = meshName;
 			meshes.push( mesh );
 
 		}
+
 		var progressMessage;
 		if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
 
@@ -283,32 +307,14 @@ THREE.LoaderSupport.Commons = (function () {
 		this.path = '';
 
 		this.debug = false;
-		this.materials = [];
-		this.materialNames = [];
-		this._createDefaultMaterials();
 
 		this.loaderRootNode = new THREE.Group();
 
 		this.builder = new THREE.LoaderSupport.Builder();
-		this.builder.setMaterials( this.materials );
+		this.materials = this.builder.materials;
+		this.materialNames = this.builder.materialNames;
+
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-	};
-
-	Commons.prototype._createDefaultMaterials = function () {
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
-			this.materials[ defaultMaterial.name ] = defaultMaterial;
-		}
-		this.materialNames.push( defaultMaterial.name );
-
-		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
-			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
-		}
-		this.materialNames.push( vertexColorMaterial.name );
 	};
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
@@ -369,16 +375,9 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
 	Commons.prototype.setMaterials = function ( materials ) {
-		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
-			this.materials = materials;
-
-			this.materialNames = [];
-			for ( var materialName in materials ) {
-				this.materialNames.push( materialName );
-			}
-
-			this.builder.setMaterials( this.materials );
-		}
+		this.builder.setMaterials( materials );
+		this.materials = this.builder.materials;
+		this.materialNames = this.builder.materialNames;
 	};
 
 	/**
@@ -571,11 +570,11 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.useAsync = useAsync === true;
 	};
 
-    /**
+	/**
 	 * Clones this object and returns it afterwards.
 	 *
-     * @returns {@link THREE.LoaderSupport.PrepData}
-     */
+	 * @returns {@link THREE.LoaderSupport.PrepData}
+	 */
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
 		clone.resources = this.resources;
