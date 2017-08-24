@@ -230,7 +230,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
 	exampleDef.dir.dest = 'test/wwobjloader2';
-	exampleDef.file.out = 'webgl_loader_obj2_ww';
+	exampleDef.file.out = 'webgl_loader_obj2_options';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -280,7 +280,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwparallels/template/main.three.html';
 	exampleDef.dir.dest = 'test/wwparallels';
-	exampleDef.file.out = 'webgl_loader_obj2_ww_parallels';
+	exampleDef.file.out = 'webgl_loader_obj2_run_director';
 	buildExample();
 
 	exampleDef.css.style_all = "";

@@ -108,6 +108,12 @@ THREE.LoaderSupport.Builder = (function () {
 		this.materialNames.push( vertexColorMaterial.name );
 	};
 
+	/**
+	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.LoaderSupport.Builder
+	 *
+	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 */
 	Builder.prototype.setMaterials = function ( materials ) {
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 
@@ -133,6 +139,12 @@ THREE.LoaderSupport.Builder = (function () {
 		this.callbacks.setCallbackOnLoad( callbackOnLoad );
 	};
 
+	/**
+	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info,
+	 *
+	 * @param {Object} payload buffers, params, materials
+	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
+	 */
 	Builder.prototype.buildMeshes = function ( payload ) {
 		var meshName = payload.params.meshName;
 
@@ -305,15 +317,10 @@ THREE.LoaderSupport.Commons = (function () {
 		this.modelName = '';
 		this.instanceNo = 0;
 		this.path = '';
-
 		this.debug = false;
 
 		this.loaderRootNode = new THREE.Group();
-
 		this.builder = new THREE.LoaderSupport.Builder();
-		this.materials = this.builder.materials;
-		this.materialNames = this.builder.materialNames;
-
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
 
@@ -322,7 +329,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 			this.setModelName( prepData.modelName );
 			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			this.setMaterials( prepData.materials );
+			this.builder.setMaterials( prepData.materials );
 
 			this._setCallbacks( prepData.getCallbacks().onProgress, prepData.getCallbacks().onMeshAlter, prepData.getCallbacks().onLoad );
 		}
@@ -376,8 +383,6 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setMaterials = function ( materials ) {
 		this.builder.setMaterials( materials );
-		this.materials = this.builder.materials;
-		this.materialNames = this.builder.materialNames;
 	};
 
 	/**

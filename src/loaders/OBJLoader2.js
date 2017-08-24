@@ -115,7 +115,7 @@ THREE.OBJLoader2 = (function () {
 
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
-			scope.setMaterials( materials );
+			scope.builder.setMaterials( materials );
 
 			if ( Validator.isValid( available.obj.content ) ) {
 
@@ -159,7 +159,7 @@ THREE.OBJLoader2 = (function () {
 
 		this.parser = new Parser();
 		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
-		this.parser.setMaterialNames( this.materialNames );
+		this.parser.setMaterialNames( this.builder.materialNames );
 		this.parser.setDebug( this.debug );
 
 		var scope = this;
@@ -246,7 +246,7 @@ THREE.OBJLoader2 = (function () {
                     materialPerSmoothingGroup: this.materialPerSmoothingGroup
                 },
                 materials: {
-                    materialNames: this.materialNames
+                    materialNames: this.builder.materialNames
                 },
                 buffers: {
                     input: content

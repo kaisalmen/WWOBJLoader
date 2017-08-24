@@ -39,7 +39,7 @@
 			// Init dat.gui and controls
 			var elemFileInput = document.getElementById( 'fileUploadInput' );
 			var WWOBJLoader2Control = function() {
-				this.smoothShading = app.smoothShading;
+				this.flatShading = app.flatShading;
 				this.doubleSide = app.doubleSide;
 				this.streamMeshes = app.streamMeshes;
 			};
@@ -53,10 +53,10 @@
 			var menuDiv = document.getElementById( 'dat' );
 			menuDiv.appendChild(gui.domElement);
 			var folderOptions = gui.addFolder( 'WWOBJLoader2 Options' );
-			var controlSmooth = folderOptions.add( wwObjLoader2Control, 'smoothShading' ).name( 'Smooth Shading' );
-			controlSmooth.onChange( function( value ) {
-				console.log( 'Setting smoothShading to: ' + value );
-				app.alterSmoothShading();
+			var controlFlat = folderOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
+			controlFlat.onChange( function( value ) {
+				console.log( 'Setting flatShading to: ' + value );
+				app.alterShading();
 			});
 
 			var controlDouble = folderOptions.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );

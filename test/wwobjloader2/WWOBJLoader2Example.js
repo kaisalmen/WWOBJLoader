@@ -27,7 +27,7 @@ var WWOBJLoader2Example = (function () {
 
 		this.controls = null;
 
-		this.smoothShading = true;
+		this.flatShading = false;
 		this.doubleSide = false;
 
 		this.cube = null;
@@ -285,8 +285,8 @@ var WWOBJLoader2Example = (function () {
 		}
 
 		var scope = this;
-		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			scope.scene.add( sceneGraphBaseNode );
+		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+			scope.scene.add( loaderRootNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
 		};
@@ -367,14 +367,13 @@ var WWOBJLoader2Example = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
-	WWOBJLoader2Example.prototype.alterSmoothShading = function () {
-
+	WWOBJLoader2Example.prototype.alterShading = function () {
 		var scope = this;
-		scope.smoothShading = ! scope.smoothShading;
-		console.log( scope.smoothShading ? 'Enabling SmoothShading' : 'Enabling FlatShading');
+		scope.flatShading = ! scope.flatShading;
+		console.log( scope.flatShading ? 'Enabling flat shading' : 'Enabling smooth shading');
 
 		scope.traversalFunction = function ( material ) {
-			material.shading = scope.smoothShading ? THREE.SmoothShading : THREE.FlatShading;
+			material.flatShading = scope.flatShading;
 			material.needsUpdate = true;
 		};
 		var scopeTraverse = function ( object3d ) {
@@ -384,7 +383,6 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.alterDouble = function () {
-
 		var scope = this;
 		scope.doubleSide = ! scope.doubleSide;
 		console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
@@ -400,7 +398,6 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.traverseScene = function ( object3d ) {
-
 		if ( object3d.material instanceof THREE.MultiMaterial ) {
 
 			var materials = object3d.material.materials;

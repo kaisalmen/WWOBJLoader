@@ -134,7 +134,7 @@ var WWParallels = (function () {
 		}
 		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
@@ -248,7 +248,7 @@ var WWParallels = (function () {
 
 			var remover = function ( object3d ) {
 
-				if ( object3d === prepData.sceneGraphBaseNode ) return;
+				if ( object3d === prepData.streamMeshesTo ) return;
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
@@ -268,9 +268,9 @@ var WWParallels = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
 			};
-			scope.scene.remove( prepData.sceneGraphBaseNode );
-			prepData.sceneGraphBaseNode.traverse( remover );
-			prepData.sceneGraphBaseNode = null;
+			scope.scene.remove( prepData.streamMeshesTo );
+			prepData.streamMeshesTo.traverse( remover );
+			prepData.streamMeshesTo = null;
 		}
 		this.allAssets = [];
 	};

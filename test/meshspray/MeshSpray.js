@@ -60,7 +60,7 @@ var MeshSpray = (function () {
 					globalObjectCount: prepData.globalObjectCount
 				},
 				materials: {
-					materialNames: this.materialNames
+					materialNames: this.builder.materialNames
 				},
 				buffers: {
 					input: null
