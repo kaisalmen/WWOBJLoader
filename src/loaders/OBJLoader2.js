@@ -21,7 +21,9 @@ THREE.OBJLoader2 = (function () {
 
 		this.materialPerSmoothingGroup = false;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+
 		this.workerSupport = null;
+		this.terminateWorkerOnLoad = true;
 	};
 
 	/**
@@ -111,8 +113,16 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
 		this._applyPrepData( prepData );
 		var available = this._checkFiles( prepData.resources );
-        this.workerSupport = Validator.verifyInput( workerSupportExternal, this.workerSupport );
+		if ( Validator.isValid( workerSupportExternal ) ) {
 
+			this.terminateWorkerOnLoad = false;
+			this.workerSupport = workerSupportExternal;
+
+		} else {
+
+			this.terminateWorkerOnLoad = true;
+
+		}
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
 			scope.builder.setMaterials( materials );
@@ -210,6 +220,7 @@ THREE.OBJLoader2 = (function () {
 		var scope = this;
 		var scopedOnLoad = function ( message ) {
 			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
 			console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
@@ -254,7 +265,7 @@ THREE.OBJLoader2 = (function () {
             },
             [ content.buffer ]
         );
-	};
+        };
 
 	/**
 	 * Constants used by THREE.OBJLoader2
