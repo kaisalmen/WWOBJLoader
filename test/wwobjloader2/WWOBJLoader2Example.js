@@ -32,20 +32,6 @@ var WWOBJLoader2Example = (function () {
 
 		this.cube = null;
 		this.pivot = null;
-
-		// Check for the various File API support.
-		this.fileApiAvailable = true;
-		if ( window.File && window.FileReader && window.FileList && window.Blob ) {
-
-			console.log( 'File API is supported! Enabling all features.' );
-
-		} else {
-
-			this.fileApiAvailable = false;
-			console.warn( 'File API is not supported! Disabling file loading.' );
-
-		}
-		this.streamMeshes = true;
 	}
 
 	WWOBJLoader2Example.prototype.initGL = function () {
@@ -263,73 +249,6 @@ var WWOBJLoader2Example = (function () {
 		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
 	};
 
-	WWOBJLoader2Example.prototype._handleFileSelect = function ( event, pathTexture ) {
-		var fileObj = null;
-		var fileMtl = null;
-		var files = event.target.files;
-
-		for ( var i = 0, file; file = files[ i ]; i++) {
-
-			if ( file.name.indexOf( '\.obj' ) > 0 && fileObj === null ) {
-				fileObj = file;
-			}
-
-			if ( file.name.indexOf( '\.mtl' ) > 0 && fileMtl === null ) {
-				fileMtl = file;
-			}
-
-		}
-
-		if ( ! Validator.isValid( fileObj ) ) {
-			alert( 'Unable to load OBJ file from given files.' );
-		}
-
-		var scope = this;
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope.scene.add( loaderRootNode );
-			console.log( 'Loading complete: ' + modelName );
-			scope._reportProgress( '' );
-		};
-
-		var fileReader = new FileReader();
-		fileReader.onload = function( fileDataObj ) {
-
-			var uint8Array = new Uint8Array( fileDataObj.target.result );
-
-			var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
-			var resourceOBJ = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileObj.name, 'OBJ' );
-			var userPivot = new THREE.Object3D();
-			userPivot.position.set(
-				-100 + 200 * Math.random(),
-				-100 + 200 * Math.random(),
-				-100 + 200 * Math.random()
-			);
-			prepData.setStreamMeshesTo( userPivot );
-			scope.pivot.add( prepData.streamMeshesTo );
-
-			resourceOBJ.setContent( uint8Array );
-			prepData.addResource( resourceOBJ );
-			prepData.setUseAsync( true );
-			var callbacks = prepData.getCallbacks();
-			callbacks.setCallbackOnProgress( scope._reportProgress );
-			callbacks.setCallbackOnLoad( callbackOnLoad );
-
-			fileReader.onload = function( fileDataMtl ) {
-
-				var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
-				resourceMTL.setContent( fileDataMtl.target.result );
-				prepData.addResource( resourceMTL );
-
-				var objLoader = new THREE.OBJLoader2();
-				objLoader.run( prepData );
-			};
-			fileReader.readAsText( fileMtl );
-
-		};
-		fileReader.readAsArrayBuffer( fileObj );
-
-	};
-
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 
@@ -412,41 +331,6 @@ var WWOBJLoader2Example = (function () {
 			this.traversalFunction( object3d.material );
 
 		}
-	};
-
-	WWOBJLoader2Example.prototype.clearAllAssests = function () {
-		var scope = this;
-		var remover = function ( object3d ) {
-
-			if ( object3d === scope.pivot ) {
-				return;
-			}
-			console.log( 'Removing: ' + object3d.name );
-			scope.scene.remove( object3d );
-
-			if ( object3d.hasOwnProperty( 'geometry' ) ) {
-				object3d.geometry.dispose();
-			}
-			if ( object3d.hasOwnProperty( 'material' ) ) {
-
-				var mat = object3d.material;
-				if ( mat.hasOwnProperty( 'materials' ) ) {
-
-					var materials = mat.materials;
-					for ( var name in materials ) {
-
-						if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
-
-					}
-				}
-			}
-			if ( object3d.hasOwnProperty( 'texture' ) ) {
-				object3d.texture.dispose();
-			}
-		};
-
-		scope.scene.remove( scope.pivot );
-		scope.pivot.traverse( remover );
 	};
 
 	return WWOBJLoader2Example;

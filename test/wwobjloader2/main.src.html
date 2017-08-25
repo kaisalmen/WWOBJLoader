@@ -16,10 +16,9 @@
 
 		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 direct loader test
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 usage options
 			<div id="feedback"></div>
 		</div>
-		<input id="fileUploadInput" type="file" name="files[]" multiple accept=".obj,.mtl" />
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
 		<script src="../../node_modules/three/build/three.js"></script>
@@ -36,22 +35,18 @@
 
 			var app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
 
-			// Init dat.gui and controls
-			var elemFileInput = document.getElementById( 'fileUploadInput' );
-			var WWOBJLoader2Control = function() {
-				this.flatShading = app.flatShading;
-				this.doubleSide = app.doubleSide;
-				this.streamMeshes = app.streamMeshes;
+			var wwObjLoader2Control = {
+				flatShading: app.flatShading,
+				doubleSide: app.doubleSide
 			};
-			var wwObjLoader2Control = new WWOBJLoader2Control();
 
+			var menuDiv = document.getElementById( 'dat' );
 			var gui = new dat.GUI( {
 				autoPlace: false,
 				width: 320
 			} );
+			menuDiv.appendChild( gui.domElement );
 
-			var menuDiv = document.getElementById( 'dat' );
-			menuDiv.appendChild(gui.domElement);
 			var folderOptions = gui.addFolder( 'WWOBJLoader2 Options' );
 			var controlFlat = folderOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
 			controlFlat.onChange( function( value ) {
@@ -64,38 +59,6 @@
 				console.log( 'Setting doubleSide to: ' + value );
 				app.alterDouble();
 			});
-
-			var controlStreamMeshes = folderOptions.add( wwObjLoader2Control, 'streamMeshes' ).name( 'Stream Meshes' );
-			controlStreamMeshes.onChange( function( value ) {
-				console.log( 'Setting streamMeshes to: ' + value );
-				app.streamMeshes = value;
-			});
-
-			if ( app.fileApiAvailable ) {
-
-				wwObjLoader2Control.pathTexture = '../../resource/obj/female02/';
-				var controlPathTexture = folderOptions.add( wwObjLoader2Control, 'pathTexture' ).name( 'Relative path to textures' );
-				controlPathTexture.onChange( function( value ) {
-					console.log( 'Setting pathTexture to: ' + value );
-					app.pathTexture = value + '/';
-				});
-
-				wwObjLoader2Control.loadObjFile = function () {
-					elemFileInput.click();
-				};
-				folderOptions.add( wwObjLoader2Control, 'loadObjFile' ).name( 'Load OBJ/MTL Files' );
-
-				var handleFileSelect = function ( object3d ) {
-					app._handleFileSelect( object3d, wwObjLoader2Control.pathTexture );
-				};
-				elemFileInput.addEventListener( 'change' , handleFileSelect, false );
-
-				wwObjLoader2Control.clearAllAssests = function () {
-					app.clearAllAssests();
-				};
-				folderOptions.add( wwObjLoader2Control, 'clearAllAssests' ).name( 'Clear Scene' );
-
-			}
 			folderOptions.open();
 
 

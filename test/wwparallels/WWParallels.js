@@ -136,6 +136,7 @@ var WWParallels = (function () {
 
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
+			scope.allAssets.push( loaderRootNode );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			console.log( msg );
@@ -233,22 +234,21 @@ var WWParallels = (function () {
 			modelPrepData.setUseAsync( true );
 
 			this.workerDirector.enqueueForRun( modelPrepData );
-			this.allAssets.push( modelPrepData );
 		}
 
 		this.workerDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
-		var prepData;
-		var scope = this;
-
+		var storedObject3d;
 		for ( var asset in this.allAssets ) {
-			prepData = this.allAssets[ asset ];
 
+			storedObject3d = this.allAssets[ asset ];
+			var scope = this;
 			var remover = function ( object3d ) {
 
-				if ( object3d === prepData.streamMeshesTo ) return;
+				if ( storedObject3d === object3d ) return;
+
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
@@ -266,11 +266,15 @@ var WWParallels = (function () {
 						}
 					}
 				}
-				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
+				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			scope.scene.remove( prepData.streamMeshesTo );
-			prepData.streamMeshesTo.traverse( remover );
-			prepData.streamMeshesTo = null;
+			if ( Validator.isValid( storedObject3d ) ) {
+
+				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
+				storedObject3d.traverse( remover );
+				storedObject3d = null;
+
+			}
 		}
 		this.allAssets = [];
 	};

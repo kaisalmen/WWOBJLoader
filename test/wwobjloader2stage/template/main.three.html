@@ -10,53 +10,22 @@
 
 	<body>
 		<div id="glFullscreen">
-			<div id="menu">
-				<h1>Select OBJ files:</h1>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsFemaleMale )">Male + Female</span>
-					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsWaltHead )">Walt Head</span>
-					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsCerberus )">Cerberus</span>
-					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsVive )">Vive Controller</span>
-					<span class="offsite">(<a href="http://threejs.org" target="_blank">three.js</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsZomaxSink )">Sink</span>
-					<span class="extras">(45MB->178MB)</span>
-					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsZomaxOven )">Oven</span>
-					<span class="extras">(43MB->150MB)</span>
-					<span class="offsite">(<a href="https://zomax.net" target="_blank">Zomax</a>)</span>
-				</p>
-				<p>
-					<span class="asset" onclick="loadAssets( app.assetsDef.objsPtv1Zip )">PTV1</span>
-					<span class="extras">(26MB->150MB)</span>
-					<span class="offsite">(<a href="http://kaisalmen.de" target="_blank">Kai</a>/<a href="http://zeroSouth.com" target="_blank">ZeroSouth</a>)</span>
-				</p>
-				<br><br>
-				<p class="clear" onclick="app.clearAllAssests();">Clear all assets</p>
-			</div>
 			<canvas id="example"></canvas>
 		</div>
+		<div id="dat">
+
+		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - WWOBJLoader
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - WWOBJLoader Stage
 			<div id="feedback"></div>
 		</div>
+		<input id="fileUploadInput" type="file" name="files[]" multiple accept=".obj,.mtl" />
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
 /*STUB_JS_THREE*/
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script src="../../node_modules/jszip/dist/jszip.min.js"></script>
 
 /*STUB_JS_EXT*/
@@ -64,14 +33,109 @@
 /*STUB_JS_INLINE*/
 
 			var app = new WWOBJLoader2Stage( document.getElementById( 'example' ) );
-			var loadAssets = function ( assets ) {
-				if ( ! app.processing ) {
 
-					app.updateAssets( assets );
-					app.reloadAssets();
+			// Init dat.gui and controls
+			var elemFileInput = document.getElementById( 'fileUploadInput' );
+			var menuDiv = document.getElementById( 'dat' );
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+			menuDiv.appendChild( gui.domElement );
 
+			var folderOptions = gui.addFolder( 'WWOBJLoader2Stage Options' );
+			var handleMale, handleFemale, handleWalt, handleCerberus, handleViveController, handlePTV1, handleSink, handleOven;
+			var wwOBJLoader2StageControl = {
+				pathTexture: '../../resource/obj/female02/',
+				blockEvent: function ( event ) {
+					event.stopPropagation();
+				},
+				enableElement: function ( elementHandle ) {
+					elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
+					elementHandle.domElement.parentElement.style.opacity = 1.0;
+				},
+				disableElement: function ( elementHandle ) {
+					elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'none';
+					elementHandle.domElement.parentElement.style.opacity = 0.5;
+				},
+				loadMale: function() {
+					app.updateAssets( app.assetsDef.objsMale );
+					this.disableElement( handleMale );
+				},
+				loadFemale: function() {
+					app.updateAssets( app.assetsDef.objsFemale );
+					this.disableElement( handleFemale );
+				},
+				loadWaltHead: function() {
+					app.updateAssets( app.assetsDef.objsWaltHead );
+					this.disableElement( handleWalt );
+				},
+				loadCerberus: function() {
+					app.updateAssets( app.assetsDef.objsCerberus );
+					this.disableElement( handleCerberus );
+				},
+				loadViveController: function () {
+					app.updateAssets( app.assetsDef.objsViveController );
+					this.disableElement( handleViveController );
+				},
+				loadPTV1: function () {
+					app.updateAssets( app.assetsDef.objsPtv1Zip );
+					this.disableElement( handlePTV1 );
+				},
+				loadOven: function () {
+					app.updateAssets( app.assetsDef.objsZomaxOven);
+					this.disableElement( handleOven );
+				},
+				loadSink: function () {
+					app.updateAssets( app.assetsDef.objsZomaxSink );
+					this.disableElement( handleSink );
+				},
+				loadUserFiles: function () {
+					elemFileInput.click();
+				},
+				clearAllAssests: function () {
+					app.clearAllAssests();
+					app.initContent();
+					this.enableElement( handleMale );
+					this.enableElement( handleFemale );
+					this.enableElement( handleWalt );
+					this.enableElement( handleCerberus );
+					this.enableElement( handleViveController );
+					this.enableElement( handlePTV1 );
+					this.enableElement( handleOven );
+					this.enableElement( handleSink );
 				}
 			};
+			handleMale = folderOptions.add( wwOBJLoader2StageControl, 'loadMale' ).name( 'Load Male' );
+			handleFemale = folderOptions.add( wwOBJLoader2StageControl, 'loadFemale' ).name( 'Load Female' );
+			handleWalt = folderOptions.add( wwOBJLoader2StageControl, 'loadWaltHead' ).name( 'Load Walt Head' );
+			handleCerberus = folderOptions.add( wwOBJLoader2StageControl, 'loadCerberus' ).name( 'Load Cerberus' );
+			handleViveController = folderOptions.add( wwOBJLoader2StageControl, 'loadViveController' ).name( 'Vive Controller' );
+			handlePTV1 = folderOptions.add( wwOBJLoader2StageControl, 'loadPTV1' ).name( 'PTV1 26MB->150MB' );
+			handleOven = folderOptions.add( wwOBJLoader2StageControl, 'loadOven' ).name( 'Oven 43MB->150MB' );
+			handleSink = folderOptions.add( wwOBJLoader2StageControl, 'loadSink' ).name( 'Sink 45MB->178MB' );
+			folderOptions.add( wwOBJLoader2StageControl, 'clearAllAssests' ).name( 'Clear Scene' );
+			folderOptions.open();
+
+			var folderUserFiles = gui.addFolder( 'User Files' );
+			if ( app.fileApiAvailable ) {
+
+				folderUserFiles.add( wwOBJLoader2StageControl, 'loadUserFiles' ).name( 'Load OBJ/MTL Files' );
+				var handleFileSelect = function ( event ) {
+					app._handleFileSelect( event, wwOBJLoader2StageControl.pathTexture );
+				};
+				elemFileInput.addEventListener( 'change' , handleFileSelect, false );
+
+				var controlPathTexture = folderUserFiles.add( wwOBJLoader2StageControl, 'pathTexture' ).name( 'Relative path to textures' );
+				controlPathTexture.onChange( function( value ) {
+					console.log( 'Setting pathTexture to: ' + value );
+					app.pathTexture = value + '/';
+				});
+
+			}
+
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
@@ -89,8 +153,8 @@
 			app.resizeDisplayGL();
 			app.initContent();
 
-			app.updateAssets( app.assetsDef.objsFemaleMale );
-			app.reloadAssets();
+			wwOBJLoader2StageControl.loadMale();
+			wwOBJLoader2StageControl.loadFemale();
 
 			render();
 

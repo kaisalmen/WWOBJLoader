@@ -38,23 +38,21 @@
 
 			var app = new WWParallels( document.getElementById( 'example' ) );
 
-			var WWParallelsControl = function() {
-				this.queueLength = 128;
-				this.workerCount = 4;
-				this.streamMeshes = true;
-				this.run = function () {
+			var wwParallelsControl = {
+				queueLength: 128,
+				workerCount: 4,
+				streamMeshes: true,
+				run: function () {
 					app.enqueueAllAssests( this.queueLength, this.workerCount, this.streamMeshes );
-				};
-				this.terminate = function () {
+				},
+				terminate: function () {
 					app.terminateManager();
-				};
-				this.clearAllAssests = function () {
+				},
+				clearAllAssests: function () {
 					app.terminateManager();
 					app.clearAllAssests();
-				};
+				}
 			};
-			var wwParallelsControl = new WWParallelsControl();
-
 			var gui = new dat.GUI( {
 				autoPlace: false,
 				width: 320

@@ -235,7 +235,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 
 	exampleDef.css.style_all = "";
 	exampleDef.css.style_tabs = "";
-	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
+	exampleDef.css.link_all = "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
@@ -317,8 +317,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 
 
 gulp.task( 'create-wwobj2_stage-examples', function () {
-	exampleDef.css.main = fs.readFileSync( 'test/wwobjloader2stage/main.css', 'utf8' );
-	exampleDef.css.style_all = exampleDef.css.common + "\n" + exampleDef.css.main;
+	exampleDef.css.style_all = exampleDef.css.common;
 	exampleDef.css.style_tabs = "\t\t\t";
 	exampleDef.css.link_all = "";
 	exampleDef.css.link_tabs = "";
@@ -336,7 +335,7 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 
 	exampleDef.css.style_all = "";
 	exampleDef.css.style_tabs = "";
-	exampleDef.css.link_all = exampleDef.css.link_all_ref;
+	exampleDef.css.link_all = "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
