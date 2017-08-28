@@ -21,6 +21,7 @@ THREE.OBJLoader2 = (function () {
 
 		this.materialPerSmoothingGroup = false;
 		this.useIndices = false;
+		this.recalNormals = false;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 
 		this.workerSupport = null;
@@ -42,9 +43,11 @@ THREE.OBJLoader2 = (function () {
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {boolean} useIndices=false Default is false
+	 * @param {boolean} recalNormals=false Default is false
 	 */
-	OBJLoader2.prototype.setUseIndices = function ( useIndices ) {
+	OBJLoader2.prototype.setUseIndices = function ( useIndices, recalNormals ) {
 		this.useIndices = useIndices === true;
+		this.recalNormals = recalNormals === true;
 	};
 
 	/**
@@ -166,7 +169,8 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( prepData ) ) {
 
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
-			this.setUseIndices( prepData.useIndices );
+			this.setUseIndices( prepData.useIndices, prepData.recalNormals );
+
 		}
 	};
 
@@ -179,11 +183,11 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.parse = function ( content ) {
 		console.time( 'OBJLoader2 parse: ' + this.modelName );
 
-		this.parser = new Parser();
-		this.parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
-		this.parser.setUseIndices( this.useIndices );
-		this.parser.setMaterialNames( this.builder.materialNames );
-		this.parser.setDebug( this.debug );
+		var parser = new Parser();
+		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+		parser.setUseIndices( this.useIndices, this.recalNormals );
+		parser.setMaterialNames( this.builder.materialNames );
+		parser.setDebug( this.debug );
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
@@ -194,21 +198,21 @@ THREE.OBJLoader2 = (function () {
 				scope.loaderRootNode.add( mesh );
 			}
 		};
-		this.parser.setCallbackBuilder( onMeshLoaded );
+		parser.setCallbackBuilder( onMeshLoaded );
 		var onProgressScoped = function ( message ) {
 			scope.onProgress( message );
 		};
-		this.parser.setCallbackProgress( onProgressScoped );
+		parser.setCallbackProgress( onProgressScoped );
 
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			console.log( 'Parsing arrayBuffer...' );
-			this.parser.parse( content );
+			parser.parse( content );
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
 			console.log( 'Parsing text...' );
-			this.parser.parseText( content );
+			parser.parseText( content );
 
 		} else {
 
@@ -268,7 +272,8 @@ THREE.OBJLoader2 = (function () {
                 params: {
                     debug: this.debug,
                     materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-					useIndices: this.useIndices
+					useIndices: this.useIndices,
+					recalNormals: this.recalNormals
                 },
                 materials: {
                     materialNames: this.builder.materialNames
@@ -331,8 +336,8 @@ THREE.OBJLoader2 = (function () {
 			this.rawObject.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		};
 
-		Parser.prototype.setUseIndices = function ( useIndices ) {
-			this.rawObject.setUseIndices( useIndices );
+		Parser.prototype.setUseIndices = function ( useIndices, recalNormals ) {
+			this.rawObject.setUseIndices( useIndices, recalNormals );
 		};
 
 		Parser.prototype.setMaterialNames = function ( materialNames ) {
@@ -790,6 +795,8 @@ THREE.OBJLoader2 = (function () {
 			this.mtllibName = '';
 			this.activeSmoothingGroup = 1;
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+			this.useIndices = true;
+			this.recalNormals = false;
 
 			this.mtlCount = 0;
 			this.smoothingGroupCount = 0;
@@ -805,8 +812,9 @@ THREE.OBJLoader2 = (function () {
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 		};
 
-		RawObject.prototype.setUseIndices = function ( useIndices ) {
-			this.useIndices = useIndices;
+		RawObject.prototype.setUseIndices = function ( useIndices, recalNormals ) {
+//			this.useIndices = useIndices;
+//			this.recalNormals = recalNormals;
 		};
 
 		RawObject.prototype.buildIndex = function ( materialName, smoothingGroup ) {
@@ -963,41 +971,74 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
 			var indexV = ( parseInt( faceIndexV ) - this.globalVertexOffset ) * 3;
+			var vertices;
 
 			if ( this.useIndices ) {
 
-				var rodin = this.rawObjectDescriptionInUse;
-				var mapping = rodin.mapping[ indexV ];
+				var rodiu = this.rawObjectDescriptionInUse;
+				var mapping = rodiu.mapping[ indexV ];
 				if ( ! Validator.isValid( mapping ) ) {
 
 					mapping = {
-						index: rodin.vertexCount
-						//					normals: null,
-						//					uv: null
+						index: rodiu.vertexCount,
+						uvMapping: [],
+						normalMapping: []
 					};
-					rodin.mapping[ indexV ] = mapping;
-					rodin.vertices.push( this.vertices[ indexV ++ ] );
-					rodin.vertices.push( this.vertices[ indexV ++ ] );
-					rodin.vertices.push( this.vertices[ indexV ] );
+					rodiu.mapping[ indexV ] = mapping;
+					vertices = rodiu.vertices;
+					vertices.push( this.vertices[ indexV++ ] );
+					vertices.push( this.vertices[ indexV++ ] );
+					vertices.push( this.vertices[ indexV ] );
 
-					rodin.vertexCount ++;
+					if ( this.colors.length > 0 ) {
+
+						indexV -= 2;
+						var colors = rodiu.colors;
+						colors.push( this.colors[ indexV++ ] );
+						colors.push( this.colors[ indexV++ ] );
+						colors.push( this.colors[ indexV ] );
+
+					}
+
+					rodiu.vertexCount++;
 
 				}
-				rodin.indices.push( mapping.index );
+				if ( faceIndexU ) {
+
+					var indexU = ( parseInt( faceIndexU ) - this.globalUvOffset ) * 2;
+					if ( mapping.uvMapping.indexOf( indexU ) === -1 ) {
+
+						mapping.uvMapping.push( indexU );
+
+					}
+
+				}
+
+				if ( faceIndexN ) {
+
+					var indexN = ( parseInt( faceIndexN ) - this.globalNormalOffset ) * 3;
+					if ( mapping.normalMapping.indexOf( indexN ) === -1 ) {
+
+						mapping.normalMapping.push( indexN );
+
+					}
+
+				}
+				rodiu.indices.push( mapping.index );
 
 			} else {
 
-				var vertices = this.rawObjectDescriptionInUse.vertices;
-				vertices.push( this.vertices[ indexV ++ ] );
-				vertices.push( this.vertices[ indexV ++ ] );
+				vertices = this.rawObjectDescriptionInUse.vertices;
+				vertices.push( this.vertices[ indexV++ ] );
+				vertices.push( this.vertices[ indexV++ ] );
 				vertices.push( this.vertices[ indexV ] );
 
 				if ( this.colors.length > 0 ) {
 
 					indexV -= 2;
 					var colors = this.rawObjectDescriptionInUse.colors;
-					colors.push( this.colors[ indexV ++ ] );
-					colors.push( this.colors[ indexV ++ ] );
+					colors.push( this.colors[ indexV++ ] );
+					colors.push( this.colors[ indexV++ ] );
 					colors.push( this.colors[ indexV ] );
 
 				}
@@ -1006,7 +1047,7 @@ THREE.OBJLoader2 = (function () {
 
 					var indexU = ( parseInt( faceIndexU ) - this.globalUvOffset ) * 2;
 					var uvs = this.rawObjectDescriptionInUse.uvs;
-					uvs.push( this.uvs[ indexU ++ ] );
+					uvs.push( this.uvs[ indexU++ ] );
 					uvs.push( this.uvs[ indexU ] );
 
 				}
@@ -1015,8 +1056,8 @@ THREE.OBJLoader2 = (function () {
 
 					var indexN = ( parseInt( faceIndexN ) - this.globalNormalOffset ) * 3;
 					var normals = this.rawObjectDescriptionInUse.normals;
-					normals.push( this.normals[ indexN ++ ] );
-					normals.push( this.normals[ indexN ++ ] );
+					normals.push( this.normals[ indexN++ ] );
+					normals.push( this.normals[ indexN++ ] );
 					normals.push( this.normals[ indexN ] );
 
 				}
@@ -1050,14 +1091,14 @@ THREE.OBJLoader2 = (function () {
 		 * Clear any empty rawObjectDescription and calculate absolute vertex, normal and uv counts
 		 */
 		RawObject.prototype.finalize = function () {
-			var temp = [];
+			var rawObjectDescriptionsTemp = [];
 			var rawObjectDescription;
 			var absoluteVertexCount = 0;
 			var absoluteIndexCount = 0;
 			var absoluteColorCount = 0;
 			var absoluteNormalCount = 0;
 			var absoluteUvCount = 0;
-			var mapping;
+			var mapping, entry;
 
 			for ( var name in this.rawObjectDescriptions ) {
 
@@ -1065,26 +1106,49 @@ THREE.OBJLoader2 = (function () {
 				if ( rawObjectDescription.vertices.length > 0 ) {
 
 					mapping = rawObjectDescription.mapping;
-//					for ( var property in mapping ) {
+					for ( var property in mapping ) {
+						entry = mapping[ property ];
+
+//						if ( entry.uvMapping.length > 2 ) {
+//							console.log( "Over 2: " );
+							var u = 0;
+							var v = 0;
+							var uvTemp;
+							for ( var elem in entry.uvMapping ) {
+
+								uvTemp = this.uvs[ elem ++ ];
+//								console.log( uvTemp );
+								u += uvTemp;
+
+								uvTemp = this.uvs[ elem ];
+//								console.log( uvTemp );
+								v += uvTemp;
+
+							}
+							rawObjectDescription.uvs.push( u / entry.uvMapping.length );
+							rawObjectDescription.uvs.push( v / entry.uvMapping.length );
+//							console.log( u + '/' + v );
+
+						}
 //					}
 
-					temp.push( rawObjectDescription );
+					rawObjectDescriptionsTemp.push( rawObjectDescription );
 					absoluteVertexCount += rawObjectDescription.vertices.length;
 					absoluteIndexCount += rawObjectDescription.indices.length;
 					absoluteColorCount += rawObjectDescription.colors.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
 					absoluteNormalCount += rawObjectDescription.normals.length;
 
-					console.log( "Overall vertex count: " + absoluteVertexCount );
+					if ( this.useIndices ) console.log( "Overall vertex count: " + absoluteVertexCount );
 				}
 			}
 
 			// don not continue if no result
 			var result = null;
-			if ( temp.length > 0 ) {
+			if ( rawObjectDescriptionsTemp.length > 0 ) {
 
 				result = {
-					rawObjectDescriptions: temp,
+					rawObjectDescriptions: rawObjectDescriptionsTemp,
 					absoluteVertexCount: absoluteVertexCount,
 					absoluteIndexCount: absoluteIndexCount,
 					absoluteColorCount: absoluteColorCount,

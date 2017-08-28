@@ -513,6 +513,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.streamMeshesTo = null;
 		this.materialPerSmoothingGroup = false;
 		this.useIndices = false;
+		this.recalNormals = false;
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
 		this.useAsync = false;
@@ -542,10 +543,12 @@ THREE.LoaderSupport.PrepData = (function () {
 	 * Tells whether indices should be used
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {boolean} useIndices
+	 * @param {boolean} useIndices=false Default is false
+	 * @param {boolean} recalNormals=false Default is false
 	 */
-	PrepData.prototype.setUseIndices = function ( useIndices ) {
-		this.useIndices = useIndices;
+	PrepData.prototype.setUseIndices = function ( useIndices, recalNormals ) {
+		this.useIndices = useIndices === true;
+		this.recalNormals = recalNormals === true;
 	};
 
 	/**
@@ -597,6 +600,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.streamMeshesTo = this.streamMeshesTo;
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
 		clone.useIndices = this.useIndices;
+		clone.recalNormals = this.recalNormals;
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;
 		clone.useAsync = this.useAsync;
