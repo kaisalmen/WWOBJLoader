@@ -512,6 +512,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.resources = [];
 		this.streamMeshesTo = null;
 		this.materialPerSmoothingGroup = false;
+		this.useIndices = false;
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.crossOrigin;
 		this.useAsync = false;
@@ -531,10 +532,20 @@ THREE.LoaderSupport.PrepData = (function () {
 	 * Tells whether a material shall be created per smoothing group
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 * @param {boolean} materialPerSmoothingGroup
 	 */
 	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+	};
+
+	/**
+	 * Tells whether indices should be used
+	 * @memberOf THREE.LoaderSupport.PrepData
+	 *
+	 * @param {boolean} useIndices
+	 */
+	PrepData.prototype.setUseIndices = function ( useIndices ) {
+		this.useIndices = useIndices;
 	};
 
 	/**
@@ -585,6 +596,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.resources = this.resources;
 		clone.streamMeshesTo = this.streamMeshesTo;
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
+		clone.useIndices = this.useIndices;
 		clone.callbacks = this.callbacks;
 		clone.crossOrigin = this.crossOrigin;
 		clone.useAsync = this.useAsync;
