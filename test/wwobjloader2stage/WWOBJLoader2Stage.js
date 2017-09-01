@@ -137,6 +137,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		prepData.setUseIndices( true, false );
 		prepData.setUseAsync( true );
 		this.assetsDef.objsMale = prepData;
 
@@ -146,6 +147,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		prepData.setUseIndices( true, false );
 		prepData.setUseAsync( true );
 		this.assetsDef.objsFemale = prepData;
 
@@ -194,6 +196,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
+		prepData.setUseIndices( true, false );
 		prepData.setUseAsync( true );
 		this.assetsDef.objsZomaxOven = prepData;
 
@@ -203,6 +206,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.setStreamMeshesTo( pivot );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
+		prepData.setUseIndices( true, false );
 		prepData.setUseAsync( true );
 		this.assetsDef.objsZomaxSink = prepData;
 	};

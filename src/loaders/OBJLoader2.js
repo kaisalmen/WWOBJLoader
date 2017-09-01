@@ -185,7 +185,8 @@ THREE.OBJLoader2 = (function () {
 
 		var parser = new Parser();
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
-		parser.setUseIndices( this.useIndices, this.recalNormals );
+		parser.setUseIndices( this.useIndices );
+		parser.setRecalNormals( this.recalNormals );
 		parser.setMaterialNames( this.builder.materialNames );
 		parser.setDebug( this.debug );
 
@@ -318,15 +319,17 @@ THREE.OBJLoader2 = (function () {
 
 		function Parser() {
 			this.callbackProgress = null;
-			this.inputObjectCount = 1;
-			this.debug = false;
-			this.rawObject = new RawObject();
-
-			// build mesh related
 			this.callbackBuilder = null;
-			this.materialNames = [];
-			this.outputObjectCount = 1;
 
+			this.materialNames = [];
+			this.debug = false;
+			this.rawObject = null;
+			this.materialPerSmoothingGroup = false;
+			this.useIndices = false;
+			this.recalNormals = false;
+
+			this.inputObjectCount = 1;
+			this.outputObjectCount = 1;
 			this.vertexCount = 0;
 		};
 
@@ -334,12 +337,21 @@ THREE.OBJLoader2 = (function () {
 			if ( debug === true || debug === false ) this.debug = debug;
 		};
 
-		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-			this.rawObject.setMaterialPerSmoothingGroup( materialPerSmoothingGroup );
+		Parser.prototype.configure = function () {
+			this.rawObject = new RawObject( this.materialPerSmoothingGroup, this.useIndices, this.recalNormals );
+			this.printConfig();
 		};
 
-		Parser.prototype.setUseIndices = function ( useIndices, recalNormals ) {
-			this.rawObject.setUseIndices( useIndices, recalNormals );
+		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
+			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+		};
+
+		Parser.prototype.setUseIndices = function ( useIndices ) {
+			this.useIndices = useIndices;
+		};
+
+		Parser.prototype.setRecalNormals = function ( recalNormals ) {
+			this.recalNormals = recalNormals;
 		};
 
 		Parser.prototype.setMaterialNames = function ( materialNames ) {
@@ -364,6 +376,8 @@ THREE.OBJLoader2 = (function () {
 		 */
 		Parser.prototype.parse = function ( arrayBuffer ) {
 			console.time( 'OBJLoader2.Parser.parse' );
+			this.configure();
+
 			var arrayBufferView = new Uint8Array( arrayBuffer );
 			var length = arrayBufferView.byteLength;
 			var buffer = new Array( 128 );
@@ -415,6 +429,8 @@ THREE.OBJLoader2 = (function () {
 		 */
 		Parser.prototype.parseText = function ( text ) {
 			console.time( 'OBJLoader2.Parser.parseText' );
+			this.configure();
+
 			var length = text.length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
@@ -454,6 +470,16 @@ THREE.OBJLoader2 = (function () {
 			}
 			this.finalize();
 			console.timeEnd( 'OBJLoader2.Parser.parseText' );
+		};
+
+		Parser.prototype.printConfig = function () {
+			console.log( '<--- OBJLoader2.Parser configuration --->' );
+			console.log( 'debug: ' + this.debug );
+			console.log( 'materialNames: ' + this.materialNames );
+			console.log( 'materialPerSmoothingGroup: ' + this.materialPerSmoothingGroup );
+			console.log( 'useIndices: ' + this.useIndices );
+			console.log( 'recalNormals: ' + this.recalNormals );
+			console.log( '<--- OBJLoader2.Parser configuration --->' );
 		};
 
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces ) {
@@ -1142,7 +1168,7 @@ THREE.OBJLoader2 = (function () {
 			var result = null;
 			if ( rawObjectDescriptionsTemp.length > 0 ) {
 
-				console.log( "Overall vertex count: " + absoluteVertexCount / 3 );
+//				console.log( "Overall vertex count: " + absoluteVertexCount / 3 );
 				result = {
 					rawObjectDescriptions: rawObjectDescriptionsTemp,
 					absoluteVertexCount: absoluteVertexCount,
