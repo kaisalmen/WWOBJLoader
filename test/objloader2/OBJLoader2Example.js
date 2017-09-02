@@ -69,13 +69,14 @@ var OBJLoader2Example = (function () {
 			scope._reportProgress( '' );
 		};
 
-		var onLoadMtl = function ( materials ) {
+//		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
-			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( true, false );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
-		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+//			objLoader.setMaterials( materials );
+			objLoader.setUseIndices( true );
+			objLoader.setDebug( true );
+			objLoader.load( '../../resource/obj/cerberus/Cerberus.obj', callbackOnLoad, null, null, null, false );
+//		};
+//		objLoader.loadMtl( '../../resource/obj/cerberus/Cerberus.mtl', 'Cerberus.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {
