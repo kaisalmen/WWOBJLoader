@@ -58,7 +58,7 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype.initContent = function () {
-		var modelName = 'female02';
+		var modelName = 'PTV1';
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
@@ -69,14 +69,14 @@ var OBJLoader2Example = (function () {
 			scope._reportProgress( '' );
 		};
 
-//		var onLoadMtl = function ( materials ) {
+		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
-//			objLoader.setMaterials( materials );
+			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
-			objLoader.setDebug( true );
-			objLoader.load( '../../resource/obj/cerberus/Cerberus.obj', callbackOnLoad, null, null, null, false );
-//		};
-//		objLoader.loadMtl( '../../resource/obj/cerberus/Cerberus.mtl', 'Cerberus.mtl', null, onLoadMtl );
+			objLoader.setDebug( false );
+			objLoader.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
+		};
+		objLoader.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', 'PTV1.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {

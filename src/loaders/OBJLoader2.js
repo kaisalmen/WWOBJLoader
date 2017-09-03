@@ -337,7 +337,13 @@ THREE.OBJLoader2 = (function () {
 
 		Parser.prototype.configure = function () {
 			this.rawObject = new RawObject( this.materialPerSmoothingGroup, this.useIndices );
-			this.printConfig();
+
+			console.log( '<--- OBJLoader2.Parser configuration --->' );
+			console.log( 'debug: ' + this.debug );
+			console.log( 'materialNames: ' + this.materialNames );
+			console.log( 'materialPerSmoothingGroup: ' + this.materialPerSmoothingGroup );
+			console.log( 'useIndices: ' + this.useIndices );
+			console.log( '<--- OBJLoader2.Parser configuration --->' );
 		};
 
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
@@ -464,15 +470,6 @@ THREE.OBJLoader2 = (function () {
 			}
 			this.finalize();
 			console.timeEnd( 'OBJLoader2.Parser.parseText' );
-		};
-
-		Parser.prototype.printConfig = function () {
-			console.log( '<--- OBJLoader2.Parser configuration --->' );
-			console.log( 'debug: ' + this.debug );
-			console.log( 'materialNames: ' + this.materialNames );
-			console.log( 'materialPerSmoothingGroup: ' + this.materialPerSmoothingGroup );
-			console.log( 'useIndices: ' + this.useIndices );
-			console.log( '<--- OBJLoader2.Parser configuration --->' );
 		};
 
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces ) {
@@ -932,7 +929,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.verifyIndex = function () {
-			var index = this.activeMtlName + '|' + this.smoothingGroup.normalized;
+			var index = this.useIndices ? 0 : this.activeMtlName + '|' + this.smoothingGroup.normalized;
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ];
 			if ( ! Validator.isValid( this.rawObjectDescriptionInUse ) ) {
 
@@ -995,14 +992,12 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
 			var indexPointerV = ( parseInt( faceIndexV ) - this.globalVertexOffset ) * 3;
-			var indexPointerC = indexPointerV;
-			var indexPointerU;
-			var indexPointerN;
+			var indexPointerC = this.colors.length > 0 ? indexPointerV : undefined;
 			var x = this.vertices[ indexPointerV++ ];
 			var y = this.vertices[ indexPointerV++ ];
 			var z = this.vertices[ indexPointerV ];
 			var ca, cb, cc, u, v, na, nb, nc;
-			if ( this.colors.length > 0 ) {
+			if ( indexPointerC ) {
 
 				ca = this.colors[ indexPointerC++ ];
 				cb = this.colors[ indexPointerC++ ];
@@ -1011,52 +1006,56 @@ THREE.OBJLoader2 = (function () {
 			}
 			if ( faceIndexU ) {
 
-				indexPointerU = ( parseInt( faceIndexU ) - this.globalUvOffset ) * 2;
+				var indexPointerU = ( parseInt( faceIndexU ) - this.globalUvOffset ) * 2;
 				u = this.uvs[ indexPointerU++ ];
 				v = this.uvs[ indexPointerU ];
 
 			}
 			if ( faceIndexN ) {
 
-				indexPointerN = ( parseInt( faceIndexN ) - this.globalNormalOffset ) * 3;
+				var indexPointerN = ( parseInt( faceIndexN ) - this.globalNormalOffset ) * 3;
 				na = this.normals[ indexPointerN++ ];
 				nb = this.normals[ indexPointerN++ ];
 				nc = this.normals[ indexPointerN ];
 
 			}
+
 			var rodiu = this.rawObjectDescriptionInUse;
-
 			var updateRawObjectDescriptionInUse = function () {
-				rodiu.vertices.push( x );
-				rodiu.vertices.push( y );
-				rodiu.vertices.push( z );
+				var vertices = rodiu.vertices;
+				vertices.push( x );
+				vertices.push( y );
+				vertices.push( z );
 
-				if ( ca ) {
+				if ( indexPointerC ) {
 
-					rodiu.colors.push( ca );
-					rodiu.colors.push( cb );
-					rodiu.colors.push( cc );
-
-				}
-
-				if ( u ) {
-
-					rodiu.uvs.push( u );
-					rodiu.uvs.push( v );
+					var colors = rodiu.colors;
+					colors.push( ca );
+					colors.push( cb );
+					colors.push( cc );
 
 				}
-				if ( na ) {
 
-					rodiu.normals.push( na );
-					rodiu.normals.push( nb );
-					rodiu.normals.push( nc );
+				if ( faceIndexU ) {
+
+					var uvs = rodiu.uvs;
+					uvs.push( u );
+					uvs.push( v );
+
+				}
+				if ( faceIndexN ) {
+
+					var normals = rodiu.normals;
+					normals.push( na );
+					normals.push( nb );
+					normals.push( nc );
 
 				}
 			};
 
 			if ( this.useIndices ) {
 
-				var mappingName = x + '_' + y + '_' + z + ( faceIndexU ? '_' + u + '_' + v : '' ) + ( faceIndexN ? '_' + na + '_' + nb + '_' + nc : '' );
+				var mappingName = x + '_' + y + '_' + z + ( faceIndexU ? '_' + u + '_' + v : 'na' ) + ( faceIndexN ? '_' + na + '_' + nb + '_' + nc : 'na' );
 				var indicesPointer = rodiu.indexMappings[ mappingName ];
 				if ( Validator.isValid( indicesPointer ) ) {
 
@@ -1064,10 +1063,9 @@ THREE.OBJLoader2 = (function () {
 
 				} else {
 
+					indicesPointer = rodiu.vertices.length / 3;
 					updateRawObjectDescriptionInUse();
-					indicesPointer = rodiu.indexPointer;
 					rodiu.indexMappings[ mappingName ] = indicesPointer;
-					rodiu.indexPointer++;
 
 				}
 				rodiu.indices.push( indicesPointer );
@@ -1149,7 +1147,7 @@ THREE.OBJLoader2 = (function () {
 					faceCount: this.faceCount,
 					doubleIndicesCount: this.doubleIndicesCount
 				};
-				console.log( this.faceCount + ': ' + this.doubleIndicesCount );
+//				console.log( this.faceCount + ': ' + this.doubleIndicesCount );
 
 			}
 			return result;
@@ -1202,7 +1200,6 @@ THREE.OBJLoader2 = (function () {
 			this.materialName = materialName;
 			this.smoothingGroup = smoothingGroup;
 			this.vertices = [];
-			this.indexPointer = 0;
 			this.indexMappings = [];
 			this.indices = [];
 			this.colors = [];
