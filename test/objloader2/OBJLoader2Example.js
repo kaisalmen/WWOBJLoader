@@ -58,7 +58,7 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype.initContent = function () {
-		var modelName = 'PTV1';
+		var modelName = 'female02';
 		this._reportProgress( 'Loading: ' + modelName );
 
 		var scope = this;
@@ -71,12 +71,12 @@ var OBJLoader2Example = (function () {
 
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
-//			objLoader.setMaterials( materials );
+			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
 			objLoader.setDebug( false );
-			objLoader.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', 'PTV1.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {

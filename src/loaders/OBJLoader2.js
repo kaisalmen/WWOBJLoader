@@ -338,12 +338,13 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.configure = function () {
 			this.rawObject = new RawObject( this.materialPerSmoothingGroup, this.useIndices );
 
-			console.log( '<--- OBJLoader2.Parser configuration --->' );
-			console.log( 'debug: ' + this.debug );
-			console.log( 'materialNames: ' + this.materialNames );
-			console.log( 'materialPerSmoothingGroup: ' + this.materialPerSmoothingGroup );
-			console.log( 'useIndices: ' + this.useIndices );
-			console.log( '<--- OBJLoader2.Parser configuration --->' );
+			var matNames = ( this.materialNames.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + this.materialNames.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
+			var printConfig = 'OBJLoader2.Parser configuration:'
+				+ '\n\tdebug: ' + this.debug
+				+ matNames
+				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
+				+ '\n\tuseIndices: ' + this.useIndices;
+			console.log( printConfig );
 		};
 
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
@@ -663,12 +664,12 @@ THREE.OBJLoader2 = (function () {
 			var materialGroups = [];
 
 			var vertexFAOffset = 0;
-			var vertexGroupOffset = 0;
-			var vertexLength;
 			var indexUAOffset = 0;
 			var colorFAOffset = 0;
 			var normalFAOffset = 0;
 			var uvFAOffset = 0;
+			var materialGroupOffset = 0;
+			var materialGroupLength = 0;
 
 			for ( var oodIndex in rawObjectDescriptions ) {
 				if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
@@ -688,7 +689,6 @@ THREE.OBJLoader2 = (function () {
 				// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
 				if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
 
-				vertexLength = rawObjectDescription.vertices.length;
 				if ( createMultiMaterial ) {
 
 					// re-use material if already used before. Reduces materials array size and eliminates duplicates
@@ -702,13 +702,14 @@ THREE.OBJLoader2 = (function () {
 						materialIndex++;
 
 					}
+					materialGroupLength = this.useIndices ? rawObjectDescription.indices.length : rawObjectDescription.vertices.length / 3;
 					materialGroup = {
-						start: vertexGroupOffset,
-						count: vertexLength / 3,
+						start: materialGroupOffset,
+						count: materialGroupLength,
 						index: selectedMaterialIndex
 					};
 					materialGroups.push( materialGroup );
-					vertexGroupOffset += vertexLength / 3;
+					materialGroupOffset += materialGroupLength;
 
 				} else {
 
@@ -717,7 +718,7 @@ THREE.OBJLoader2 = (function () {
 				}
 
 				vertexFA.set( rawObjectDescription.vertices, vertexFAOffset );
-				vertexFAOffset += vertexLength;
+				vertexFAOffset += rawObjectDescription.vertices.length;
 
 				if ( indexUA ) {
 
@@ -928,7 +929,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.verifyIndex = function () {
-			var index = this.useIndices ? 0 : this.activeMtlName + '|' + this.smoothingGroup.normalized;
+			var index = this.activeMtlName + '|' + this.smoothingGroup.normalized;
 			this.rawObjectDescriptionInUse = this.rawObjectDescriptions[ index ];
 			if ( ! Validator.isValid( this.rawObjectDescriptionInUse ) ) {
 
@@ -1043,6 +1044,7 @@ THREE.OBJLoader2 = (function () {
 					indicesPointer = rodiu.vertices.length / 3;
 					updateRawObjectDescriptionInUse();
 					rodiu.indexMappings[ mappingName ] = indicesPointer;
+					rodiu.indexMappingsCount++;
 
 				}
 				rodiu.indices.push( indicesPointer );
@@ -1084,6 +1086,7 @@ THREE.OBJLoader2 = (function () {
 			var rawObjectDescriptionsTemp = [];
 			var rawObjectDescription;
 			var absoluteVertexCount = 0;
+			var absoluteIndexMappingsCount = 0;
 			var absoluteIndexCount = 0;
 			var absoluteColorCount = 0;
 			var absoluteNormalCount = 0;
@@ -1097,11 +1100,12 @@ THREE.OBJLoader2 = (function () {
 					indices = rawObjectDescription.indices;
 					if ( indices.length > 0 && absoluteVertexCount > 0 ) {
 
-						for ( var i in indices ) indices[ i ] = indices[ i ] + absoluteVertexCount;
+						for ( var i in indices ) indices[ i ] = indices[ i ] + absoluteIndexMappingsCount;
 
 					}
 					rawObjectDescriptionsTemp.push( rawObjectDescription );
 					absoluteVertexCount += rawObjectDescription.vertices.length;
+					absoluteIndexMappingsCount += rawObjectDescription.indexMappingsCount;
 					absoluteIndexCount += rawObjectDescription.indices.length;
 					absoluteColorCount += rawObjectDescription.colors.length;
 					absoluteUvCount += rawObjectDescription.uvs.length;
@@ -1124,7 +1128,6 @@ THREE.OBJLoader2 = (function () {
 					faceCount: this.faceCount,
 					doubleIndicesCount: this.doubleIndicesCount
 				};
-//				console.log( this.faceCount + ': ' + this.doubleIndicesCount );
 
 			}
 			return result;
@@ -1177,6 +1180,7 @@ THREE.OBJLoader2 = (function () {
 			this.materialName = materialName;
 			this.smoothingGroup = smoothingGroup;
 			this.vertices = [];
+			this.indexMappingsCount = 0;
 			this.indexMappings = [];
 			this.indices = [];
 			this.colors = [];
