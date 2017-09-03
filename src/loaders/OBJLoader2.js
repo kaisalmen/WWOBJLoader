@@ -20,7 +20,6 @@ THREE.OBJLoader2 = (function () {
 		console.log( "Using THREE.OBJLoader2 version: " + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
-		this.useIndices = false;
 		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
 
 		this.workerSupport = null;
@@ -35,16 +34,6 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
-	};
-
-	/**
-	 * Tells whether indices should be used
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {boolean} useIndices=false Default is false
-	 */
-	OBJLoader2.prototype.setUseIndices = function ( useIndices ) {
-		this.useIndices = useIndices === true;
 	};
 
 	/**
@@ -166,7 +155,6 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( prepData ) ) {
 
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
-			this.setUseIndices( prepData.useIndices );
 
 		}
 	};
@@ -183,6 +171,7 @@ THREE.OBJLoader2 = (function () {
 		var parser = new Parser();
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
+		parser.setDisregardNormals( this.disregardNormals );
 		parser.setMaterialNames( this.builder.materialNames );
 		parser.setDebug( this.debug );
 
@@ -269,7 +258,8 @@ THREE.OBJLoader2 = (function () {
                 params: {
                     debug: this.debug,
                     materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-					useIndices: this.useIndices
+					useIndices: this.useIndices,
+					disregardNormals: this.disregardNormals
                 },
                 materials: {
                     materialNames: this.builder.materialNames
@@ -321,6 +311,7 @@ THREE.OBJLoader2 = (function () {
 			this.rawObject = null;
 			this.materialPerSmoothingGroup = false;
 			this.useIndices = false;
+			this.disregardNormals = false;
 
 			this.inputObjectCount = 1;
 			this.outputObjectCount = 1;
@@ -336,14 +327,15 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.configure = function () {
-			this.rawObject = new RawObject( this.materialPerSmoothingGroup, this.useIndices );
+			this.rawObject = new RawObject( this.materialPerSmoothingGroup, this.useIndices, this.disregardNormals );
 
 			var matNames = ( this.materialNames.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + this.materialNames.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
 			var printConfig = 'OBJLoader2.Parser configuration:'
 				+ '\n\tdebug: ' + this.debug
 				+ matNames
 				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
-				+ '\n\tuseIndices: ' + this.useIndices;
+				+ '\n\tuseIndices: ' + this.useIndices
+				+ '\n\tdisregardNormals: ' +this.disregardNormals;
 			console.log( printConfig );
 		};
 
@@ -353,6 +345,10 @@ THREE.OBJLoader2 = (function () {
 
 		Parser.prototype.setUseIndices = function ( useIndices ) {
 			this.useIndices = useIndices;
+		};
+
+		Parser.prototype.setDisregardNormals = function ( disregardNormals ) {
+			this.disregardNormals = disregardNormals;
 		};
 
 		Parser.prototype.setMaterialNames = function ( materialNames ) {
@@ -805,7 +801,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var RawObject = (function () {
 
-		function RawObject( materialPerSmoothingGroup, useIndices, objectName, groupName, activeMtlName ) {
+		function RawObject( materialPerSmoothingGroup, useIndices, disregardNormals, objectName, groupName, activeMtlName ) {
 			this.globalVertexOffset = 1;
 			this.globalUvOffset = 1;
 			this.globalNormalOffset = 1;
@@ -826,6 +822,7 @@ THREE.OBJLoader2 = (function () {
 				real: -1
 			};
 			this.useIndices = useIndices === true;
+			this.disregardNormals = disregardNormals === true;
 
 			this.mtlCount = 0;
 			this.smoothingGroupCount = 0;
@@ -839,7 +836,7 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		RawObject.prototype.newInstanceFromObject = function ( objectName, groupName ) {
-			var newRawObject = new RawObject( this.smoothingGroup.splitMaterials, this.useIndices, objectName, groupName, this.activeMtlName );
+			var newRawObject = new RawObject( this.smoothingGroup.splitMaterials, this.useIndices, this.disregardNormals, objectName, groupName, this.activeMtlName );
 
 			// move indices forward
 			newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
@@ -850,7 +847,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.newInstanceFromGroup = function ( groupName ) {
-			var newRawObject = new RawObject( this.smoothingGroup.splitMaterials, this.useIndices, this.objectName, groupName, this.activeMtlName );
+			var newRawObject = new RawObject( this.smoothingGroup.splitMaterials, this.useIndices, this.disregardNormals, this.objectName, groupName, this.activeMtlName );
 
 			// keep current buffers and indices forward
 			newRawObject.vertices = this.vertices;
@@ -992,6 +989,7 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
 			var rodiu = this.rawObjectDescriptionInUse;
+			if ( this.disregardNormals ) faceIndexN = undefined;
 			var scope = this;
 			var updateRawObjectDescriptionInUse = function () {
 

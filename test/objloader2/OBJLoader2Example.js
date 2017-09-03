@@ -73,6 +73,7 @@ var OBJLoader2Example = (function () {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
+			objLoader.setDisregardNormals( false );
 			objLoader.setDebug( false );
 			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
