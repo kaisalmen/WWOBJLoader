@@ -899,7 +899,6 @@ THREE.OBJLoader2 = (function () {
 
 		RawObject.prototype.pushGroup = function ( groupName ) {
 			this.groupName = groupName;
-			this.verifyIndex();
 		};
 
 		RawObject.prototype.pushUsemtl = function ( mtlName ) {
@@ -991,71 +990,49 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawObject.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
-			var indexPointerV = ( parseInt( faceIndexV ) - this.globalVertexOffset ) * 3;
-			var indexPointerC = this.colors.length > 0 ? indexPointerV : undefined;
-			var x = this.vertices[ indexPointerV++ ];
-			var y = this.vertices[ indexPointerV++ ];
-			var z = this.vertices[ indexPointerV ];
-			var ca, cb, cc, u, v, na, nb, nc;
-			if ( indexPointerC ) {
-
-				ca = this.colors[ indexPointerC++ ];
-				cb = this.colors[ indexPointerC++ ];
-				cc = this.colors[ indexPointerC ];
-
-			}
-			if ( faceIndexU ) {
-
-				var indexPointerU = ( parseInt( faceIndexU ) - this.globalUvOffset ) * 2;
-				u = this.uvs[ indexPointerU++ ];
-				v = this.uvs[ indexPointerU ];
-
-			}
-			if ( faceIndexN ) {
-
-				var indexPointerN = ( parseInt( faceIndexN ) - this.globalNormalOffset ) * 3;
-				na = this.normals[ indexPointerN++ ];
-				nb = this.normals[ indexPointerN++ ];
-				nc = this.normals[ indexPointerN ];
-
-			}
-
 			var rodiu = this.rawObjectDescriptionInUse;
+			var scope = this;
 			var updateRawObjectDescriptionInUse = function () {
+
+				var indexPointerV = ( parseInt( faceIndexV ) - scope.globalVertexOffset ) * 3;
+				var indexPointerC = scope.colors.length > 0 ? indexPointerV : undefined;
+
 				var vertices = rodiu.vertices;
-				vertices.push( x );
-				vertices.push( y );
-				vertices.push( z );
+				vertices.push( scope.vertices[ indexPointerV++ ] );
+				vertices.push( scope.vertices[ indexPointerV++ ] );
+				vertices.push( scope.vertices[ indexPointerV ] );
 
 				if ( indexPointerC ) {
 
 					var colors = rodiu.colors;
-					colors.push( ca );
-					colors.push( cb );
-					colors.push( cc );
+					colors.push( scope.colors[ indexPointerC++ ] );
+					colors.push( scope.colors[ indexPointerC++ ] );
+					colors.push( scope.colors[ indexPointerC ] );
 
 				}
 
 				if ( faceIndexU ) {
 
+					var indexPointerU = ( parseInt( faceIndexU ) - scope.globalUvOffset ) * 2;
 					var uvs = rodiu.uvs;
-					uvs.push( u );
-					uvs.push( v );
+					uvs.push( scope.uvs[ indexPointerU++ ] );
+					uvs.push( scope.uvs[ indexPointerU ] );
 
 				}
 				if ( faceIndexN ) {
 
+					var indexPointerN = ( parseInt( faceIndexN ) - scope.globalNormalOffset ) * 3;
 					var normals = rodiu.normals;
-					normals.push( na );
-					normals.push( nb );
-					normals.push( nc );
+					normals.push( scope.normals[ indexPointerN++ ] );
+					normals.push( scope.normals[ indexPointerN++ ] );
+					normals.push( scope.normals[ indexPointerN ] );
 
 				}
 			};
 
 			if ( this.useIndices ) {
 
-				var mappingName = x + '_' + y + '_' + z + ( faceIndexU ? '_' + u + '_' + v : 'na' ) + ( faceIndexN ? '_' + na + '_' + nb + '_' + nc : 'na' );
+				var mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
 				var indicesPointer = rodiu.indexMappings[ mappingName ];
 				if ( Validator.isValid( indicesPointer ) ) {
 

@@ -71,7 +71,7 @@ var OBJLoader2Example = (function () {
 
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
-			objLoader.setMaterials( materials );
+//			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
 			objLoader.setDebug( false );
 			objLoader.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
