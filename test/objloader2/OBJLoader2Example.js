@@ -63,21 +63,26 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
+		var callbackOnMeshAlter = function ( meshName, bufferGeometry, material ) {
+			console.log( meshName );
+		};
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+			var scale = 0.01;
+			loaderRootNode.scale.set( scale, scale, scale );
 			scope.scene.add( loaderRootNode );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( '' );
 		};
 
-		var onLoadMtl = function ( materials ) {
-			objLoader.setModelName( modelName );
-			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( true );
-			objLoader.setDisregardNormals( false );
-			objLoader.setDebug( false );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
-		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+//		var onLoadMtl = function ( materials ) {
+		objLoader.setModelName( modelName );
+//			objLoader.setMaterials( materials );
+		objLoader.setUseIndices( false );
+		objLoader.setDisregardNormals( false );
+		objLoader.setDebug( false );
+		objLoader.load( '../../resource/obj/12120/12120.obj', callbackOnLoad, null, null, callbackOnMeshAlter, false );
+//		};
+//		objLoader.loadMtl( '../../resource/obj/12120/12120.mtl', '12120.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {
