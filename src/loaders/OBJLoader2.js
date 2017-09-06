@@ -995,14 +995,14 @@ THREE.OBJLoader2 = (function () {
 			var updateRawObjectDescriptionInUse = function () {
 
 				var indexPointerV = ( parseInt( faceIndexV ) - scope.globalVertexOffset ) * 3;
-				var indexPointerC = scope.colors.length > 0 ? indexPointerV : undefined;
+				var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 
 				var vertices = sgiu.vertices;
 				vertices.push( scope.vertices[ indexPointerV++ ] );
 				vertices.push( scope.vertices[ indexPointerV++ ] );
 				vertices.push( scope.vertices[ indexPointerV ] );
 
-				if ( indexPointerC ) {
+				if ( indexPointerC !== null ) {
 
 					var colors = sgiu.colors;
 					colors.push( scope.colors[ indexPointerC++ ] );
