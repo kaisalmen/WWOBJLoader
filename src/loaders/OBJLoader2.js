@@ -103,7 +103,7 @@ THREE.OBJLoader2 = (function () {
 
 	};
 
-    /**
+	/**
 	 * Run the loader according the provided instructions.
 	 * @memberOf THREE.OBJLoader2
 	 *
@@ -210,13 +210,13 @@ THREE.OBJLoader2 = (function () {
 		return this.loaderRootNode;
 	};
 
-    /**
-     * Parses OBJ content asynchronously.
+	/**
+	 * Parses OBJ content asynchronously.
 	 * @memberOf THREE.OBJLoader2
 	 *
-     * @param {arraybuffer} content
-     * @param {callback} onLoad
-     */
+	 * @param {arraybuffer} content
+	 * @param {callback} onLoad
+	 */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
 		console.time( 'OBJLoader2 parseAsync: ' + this.modelName);
 
@@ -251,26 +251,26 @@ THREE.OBJLoader2 = (function () {
 			return workerCode;
 		};
 		this.workerSupport.validate( buildCode, false );
-        this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
-        this.workerSupport.run(
-            {
-                cmd: 'run',
-                params: {
-                    debug: this.debug,
-                    materialPerSmoothingGroup: this.materialPerSmoothingGroup,
+		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+		this.workerSupport.run(
+			{
+				cmd: 'run',
+				params: {
+					debug: this.debug,
+					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 					useIndices: this.useIndices,
 					disregardNormals: this.disregardNormals
-                },
-                materials: {
-                    materialNames: this.builder.materialNames
-                },
-                buffers: {
-                    input: content
-                }
-            },
-            [ content.buffer ]
-        );
-        };
+				},
+				materials: {
+					materialNames: this.builder.materialNames
+				},
+				buffers: {
+					input: content
+				}
+			},
+			[ content.buffer ]
+		);
+	};
 
 	/**
 	 * Constants used by THREE.OBJLoader2
@@ -946,41 +946,41 @@ THREE.OBJLoader2 = (function () {
 
 				for ( i = 2, length = bufferLength - 1; i < length; i ++ ) {
 
-					this.buildFace( buffer[ 1     ] );
-					this.buildFace( buffer[ i     ] );
+					this.buildFace( buffer[ 1 ] );
+					this.buildFace( buffer[ i ] );
 					this.buildFace( buffer[ i + 1 ] );
 
 				}
 
-			// "f vertex/uv ..."
+				// "f vertex/uv ..."
 			} else if  ( bufferLength === slashesCount * 2 ) {
 
 				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
-					this.buildFace( buffer[ 1     ], buffer[ 2     ] );
-					this.buildFace( buffer[ i     ], buffer[ i + 1 ] );
+					this.buildFace( buffer[ 1 ], buffer[ 2 ] );
+					this.buildFace( buffer[ i ], buffer[ i + 1 ] );
 					this.buildFace( buffer[ i + 2 ], buffer[ i + 3 ] );
 
 				}
 
-			// "f vertex/uv/normal ..."
+				// "f vertex/uv/normal ..."
 			} else if  ( bufferLength * 2 === slashesCount * 3 ) {
 
 				for ( i = 4, length = bufferLength - 3; i < length; i += 3 ) {
 
-					this.buildFace( buffer[ 1     ], buffer[ 2     ], buffer[ 3     ] );
-					this.buildFace( buffer[ i     ], buffer[ i + 1 ], buffer[ i + 2 ] );
+					this.buildFace( buffer[ 1 ], buffer[ 2 ], buffer[ 3 ] );
+					this.buildFace( buffer[ i ], buffer[ i + 1 ], buffer[ i + 2 ] );
 					this.buildFace( buffer[ i + 3 ], buffer[ i + 4 ], buffer[ i + 5 ] );
 
 				}
 
-			// "f vertex//normal ..."
+				// "f vertex//normal ..."
 			} else {
 
 				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
-					this.buildFace( buffer[ 1     ], undefined, buffer[ 2     ] );
-					this.buildFace( buffer[ i     ], undefined, buffer[ i + 1 ] );
+					this.buildFace( buffer[ 1 ], undefined, buffer[ 2 ] );
+					this.buildFace( buffer[ i ], undefined, buffer[ i + 1 ] );
 					this.buildFace( buffer[ i + 2 ], undefined, buffer[ i + 3 ] );
 
 				}
