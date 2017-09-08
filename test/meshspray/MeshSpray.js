@@ -7,6 +7,7 @@
 var MeshSpray = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
+	var Logger = THREE.LoaderSupport.Logger;
 
 	MeshSpray.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
@@ -14,10 +15,23 @@ var MeshSpray = (function () {
 	function MeshSpray( manager ) {
 		THREE.LoaderSupport.Commons.call( this, manager );
 		this.workerSupport = null;
+		this.logger = new Logger();
 	};
 
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
-		console.time( 'MeshSpray' );
+
+		if ( Validator.isValid( workerSupportExternal ) ) {
+
+			this.workerSupport = workerSupportExternal;
+			this.logger = workerSupportExternal.logger;
+
+		} else {
+
+			this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
+
+		}
+
+		this.logger.logTimeStart( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
 
@@ -33,17 +47,16 @@ var MeshSpray = (function () {
 		var scopeFuncComplete = function ( message ) {
 			var callback = scope.callbacks.onLoad;
 			if ( Validator.isValid( callback ) ) callback( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
-			console.timeEnd( 'MeshSpray' );
+			scope.logger.logTimeEnd( 'MeshSpray' );
 		};
 
-        this.workerSupport = Validator.verifyInput( workerSupportExternal, this.workerSupport );
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildWorkerCode.\n';
 			workerCode += '  */\n\n';
 			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'Logger', 'Logger', Logger );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 
 			return workerCode;
@@ -55,6 +68,7 @@ var MeshSpray = (function () {
 				cmd: 'run',
 				params: {
 					debug: this.debug,
+					enableLogging: this.logger.enabled,
 					dimension: prepData.dimension,
 					quantity: prepData.quantity,
 					globalObjectCount: prepData.globalObjectCount
@@ -71,7 +85,7 @@ var MeshSpray = (function () {
 
 	var Parser  = ( function () {
 
-		function Parser() {
+		function Parser( logger ) {
 			this.sizeFactor = 0.5;
 			this.localOffsetFactor = 1.0;
 			this.globalObjectCount = 0;
@@ -79,6 +93,7 @@ var MeshSpray = (function () {
 			this.dimension = 200;
 			this.quantity = 1;
 			this.callbackBuilder = null;
+			this.logger = Validator.verifyInput( logger, new Logger() );
 		};
 
 		Parser.prototype.parse = function () {
@@ -182,7 +197,7 @@ var MeshSpray = (function () {
 				uvFA !== null ? [ uvFA.buffer ] : null
 			);
 
-			console.log( 'Global output object count: ' + this.globalObjectCount );
+			this.logger.logInfo( 'Global output object count: ' + this.globalObjectCount );
 		};
 
 		return Parser;
@@ -260,19 +275,21 @@ var MeshSprayApp = (function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
+		var logger = new THREE.LoaderSupport.Logger();
+		logger.setEnabled( false );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		var scope = this;
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			var msg = 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')';
-			console.log( msg );
+			logger.logInfo( msg );
 		};
 		var reportProgress = function( content, modelName, instanceNo ) {
 			if ( THREE.LoaderSupport.Validator.isValid( content ) && content.length > 0 ) {
 
 				document.getElementById( 'feedback' ).innerHTML = content;
-				console.log( content );
+				logger.logInfo( content );
 
 			}
 		};

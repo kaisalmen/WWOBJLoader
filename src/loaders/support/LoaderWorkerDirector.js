@@ -17,8 +17,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
-	function WorkerDirector( classDef ) {
-		console.log( "Using THREE.LoaderSupport.WorkerDirector version: " + LOADER_WORKER_DIRECTOR_VERSION );
+	function WorkerDirector( classDef, logger ) {
+		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.Logger() );
+		this.logger.logInfo( "Using THREE.LoaderSupport.WorkerDirector version: " + LOADER_WORKER_DIRECTOR_VERSION );
 
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
@@ -87,7 +88,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			for ( i = start; i < this.maxWebWorkers; i++ ) {
 
 				this.workerDescription.workerSupports[ i ] = {
-					workerSupport: new THREE.LoaderSupport.WorkerSupport(),
+					workerSupport: new THREE.LoaderSupport.WorkerSupport( this.logger ),
 					loader: null
 				};
 
@@ -141,7 +142,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			if ( Validator.isValid( nextPrepData ) ) {
 
 				scope.instructionQueue.shift();
-				console.log( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
+				scope.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 				scope._kickWorkerRun( nextPrepData, instanceNo );
 
 			} else if ( scope.instructionQueue.length === 0 ) {
@@ -209,7 +210,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( loader );
+		this.workerDescription.classDef.call( loader, this.logger );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
@@ -234,13 +235,13 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 */
 	WorkerDirector.prototype.deregister = function () {
-		console.log( 'WorkerDirector received the deregister call. Terminating all workers!' );
+		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
 		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
 
 			var supportTuple = this.workerDescription.workerSupports[ i ];
 			supportTuple.workerSupport.setTerminateRequested( true );
-			console.log( 'Requested termination of worker.' );
+			this.logger.logInfo( 'Requested termination of worker.' );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;
 			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( '' );

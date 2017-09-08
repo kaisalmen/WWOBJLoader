@@ -28,6 +28,100 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
+ * Logging wrapper
+ * @class
+ */
+THREE.LoaderSupport.Logger = (function () {
+
+	function Logger() {
+		this.debug = false;
+		this.enabled = true;
+	}
+
+	/**
+	 * Enable or disable debug logging
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {boolean} debug True or False
+	 */
+	Logger.prototype.setDebug = function ( debug ) {
+		this.debug = debug === true;
+	};
+
+	/**
+	 * Enable or disable info, debug and time logging
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {boolean} enabled True or False
+	 */
+	Logger.prototype.setEnabled = function ( enabled ) {
+		this.enabled = enabled === true;
+	};
+
+	/**
+	 * Log a debug message if enabled and debug is set.
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} message Message to log
+	 */
+	Logger.prototype.logDebug = function ( message ) {
+		if ( this.enabled && this.debug ) console.debug( message );
+	};
+
+	/**
+	 * Log an info message if enabled.
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} message Message to log
+	 */
+	Logger.prototype.logInfo = function ( message ) {
+		if ( this.enabled ) console.info( message );
+	};
+
+	/**
+	 * Log a warn message (always).
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} message Message to log
+	 */
+	Logger.prototype.logWarn = function ( message ) {
+		console.warn( message );
+	};
+
+	/**
+	 * Log an error message (always).
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} message Message to log
+	 */
+	Logger.prototype.logError = function ( message ) {
+		console.error( message );
+	};
+
+	/**
+	 * Start time measurement with provided id.
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} id Time identification
+	 */
+	Logger.prototype.logTimeStart = function ( id ) {
+		if ( this.enabled ) console.time( id );
+	};
+
+	/**
+	 * Start time measurement with provided id.
+	 * @memberOf THREE.LoaderSupport.Logger
+	 *
+	 * @param {string} id Time identification
+	 */
+	Logger.prototype.logTimeEnd = function ( id ) {
+		if ( this.enabled ) console.timeEnd( id );
+	};
+
+	return Logger;
+})();
+
+/**
  * Callbacks utilized by functions working with WWLoader implementations
  * @class
  */
@@ -310,8 +404,10 @@ THREE.LoaderSupport.Builder = (function () {
 THREE.LoaderSupport.Commons = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
+	var Logger = THREE.LoaderSupport.Logger;
 
-	function Commons( manager ) {
+	function Commons( logger, manager ) {
+		this.logger = Validator.verifyInput( logger, new Logger() );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
 		this.modelName = '';
@@ -366,7 +462,8 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param {boolean} enabled
 	 */
 	Commons.prototype.setDebug = function ( enabled ) {
-		this.debug = enabled;
+		this.debug = enabled === true;
+		this.logger.setDebug( this.debug );
 	};
 
 	/**
@@ -422,7 +519,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
 
-		if ( this.debug ) console.log( content );
+		this.logger.logDebug( content );
 	};
 
 	return Commons;
