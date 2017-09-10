@@ -18,8 +18,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	var MAX_QUEUE_SIZE = 8192;
 
 	function WorkerDirector( classDef, logger ) {
-		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.Logger() );
-		this.logger.logInfo( "Using THREE.LoaderSupport.WorkerDirector version: " + LOADER_WORKER_DIRECTOR_VERSION );
+		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
+		this.logger.logInfo( function () { return "Using THREE.LoaderSupport.WorkerDirector version: " + LOADER_WORKER_DIRECTOR_VERSION; } );
 
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
@@ -142,7 +142,11 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			if ( Validator.isValid( nextPrepData ) ) {
 
 				scope.instructionQueue.shift();
-				scope.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
+				scope.logger.logInfo(
+					function () {
+						return '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n';
+					}
+				);
 				scope._kickWorkerRun( nextPrepData, instanceNo );
 
 			} else if ( scope.instructionQueue.length === 0 ) {
@@ -235,13 +239,13 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 */
 	WorkerDirector.prototype.deregister = function () {
-		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
+		this.logger.logInfo( function () { return 'WorkerDirector received the deregister call. Terminating all workers!'; } );
 
 		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
 
 			var supportTuple = this.workerDescription.workerSupports[ i ];
 			supportTuple.workerSupport.setTerminateRequested( true );
-			this.logger.logInfo( 'Requested termination of worker.' );
+			this.logger.logInfo( function () { return 'Requested termination of worker.'; } );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;
 			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( '' );

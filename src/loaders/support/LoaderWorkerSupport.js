@@ -27,20 +27,18 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	};
 
 	WorkerRunnerRefImpl.prototype.run = function ( payload ) {
-		var logger = new Logger();
-		logger.setEnabled( payload.params.enableLogging );
-		logger.setDebug( payload.params.debug );
+		var logger = new ConsoleLogger( payload.logger.enabled, payload.logger.debug );
 
 		if ( payload.cmd === 'run' ) {
 
-			logger.logInfo( 'WorkerRunner: Starting Run...' );
+			logger.logInfo( function () { return 'WorkerRunner: Starting Run...'; } );
 
 			var callbacks = {
 				callbackBuilder: function ( payload ) {
 					self.postMessage( payload );
 				},
 				callbackProgress: function ( message ) {
-					logger.logInfo( 'WorkerRunner: progress: ' + message );
+					logger.logInfo( function () { return 'WorkerRunner: progress: ' + message; } );
 				}
 			};
 
@@ -51,7 +49,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 			this.applyProperties( parser, callbacks );
 			parser.parse( payload.buffers.input );
 
-			logger.logInfo( 'WorkerRunner: Run complete!' );
+			logger.logInfo( function () { return 'WorkerRunner: Run complete!'; } );
 
 			callbacks.callbackBuilder( {
 				cmd: 'complete',
@@ -75,8 +73,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function WorkerSupport( logger ) {
-		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.Logger() );
-		this.logger.logInfo( "Using THREE.LoaderSupport.WorkerSupport version: " + WORKER_SUPPORT_VERSION );
+		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
+		this.logger.logInfo( function () { return "Using THREE.LoaderSupport.WorkerSupport version: " + WORKER_SUPPORT_VERSION; } );
 
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
@@ -107,18 +105,24 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		if ( ! Validator.isValid( this.worker ) ) {
 
-			this.logger.logInfo( 'WorkerSupport: Building worker code...' );
-			this.logger.logTimeStart( 'buildWebWorkerCode' );
+			this.logger.logInfo( function () { return 'WorkerSupport: Building worker code...'; } );
+			this.logger.logTimeStart( function () { return 'buildWebWorkerCode'; } );
 
 			var workerRunner;
 			if ( Validator.isValid( runnerImpl ) ) {
 
-				this.logger.logInfo( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runncer class for worker.');
+				this.logger.logInfo(
+					function () {
+						return 'WorkerSupport: Using "' + runnerImpl.name + '" as Runncer class for worker.';
+					} );
 				workerRunner = runnerImpl;
 
 			} else {
 
-				this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.');
+				this.logger.logInfo(
+					function () {
+						return 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.';
+					} );
 				workerRunner = THREE.LoaderSupport.WorkerRunnerRefImpl;
 
 			}
@@ -128,7 +132,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-			this.logger.logTimeEnd( 'buildWebWorkerCode' );
+			this.logger.logTimeEnd( function () { return 'buildWebWorkerCode'; } );
 
 			var scope = this;
 			var receiveWorkerMessage = function ( e ) {
@@ -145,7 +149,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 						if ( scope.terminateRequested ) {
 
-							scope.logger.logInfo( 'WorkerSupport: Run is complete. Terminating application on request!' );
+							scope.logger.logInfo( function () { return 'WorkerSupport: Run is complete. Terminating application on request!'; } );
 							scope.terminateWorker();
 
 						}
