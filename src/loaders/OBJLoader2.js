@@ -591,8 +591,9 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
-				this.callbackProgress( message, currentByte / this.totalBytes );
+				this.buildMesh( result, this.inputObjectCount );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 
 			}
 			this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
@@ -604,8 +605,9 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
-				this.callbackProgress( message, currentByte / this.totalBytes );
+				this.buildMesh( result, this.inputObjectCount );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed group: ' + groupName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 				this.rawMesh = this.rawMesh.newInstanceFromGroup( groupName );
 
 			} else {
@@ -623,7 +625,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
+				this.buildMesh( result, this.inputObjectCount );
 
 				if ( this.logger.isEnabled() ) {
 
@@ -634,7 +636,7 @@ THREE.OBJLoader2 = (function () {
 					this.logger.logInfo( parserFinalReport );
 
 				}
-				this.callbackProgress( message, 100 );
+				this.callbackProgress( 'Completed Parsing: 100%', 1.0 );
 
 			}
 		};

@@ -37,8 +37,8 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 				callbackBuilder: function ( payload ) {
 					self.postMessage( payload );
 				},
-				callbackProgress: function ( message ) {
-					logger.logInfo( 'WorkerRunner: progress: ' + message );
+				callbackProgress: function ( text ) {
+					logger.logInfo( 'WorkerRunner: progress: ' + text );
 				}
 			};
 
