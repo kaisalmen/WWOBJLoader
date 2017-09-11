@@ -244,9 +244,16 @@ var WWOBJLoader2Example = (function () {
 		this._reportProgress( '' );
 	};
 
-	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
-		console.log( 'Progress: ' + content );
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
+	WWOBJLoader2Example.prototype._reportProgress = function( content ) {
+		var output = content;
+		if ( content instanceof  CustomEvent ) {
+
+			output = content.detail.text;
+
+		}
+		output = Validator.verifyInput( output, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {

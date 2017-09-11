@@ -107,8 +107,17 @@ var WWParallels = (function () {
 
 		this.renderer.render( this.scene, this.camera );
 	};
-	WWParallels.prototype.reportProgress = function( text ) {
-		document.getElementById( 'feedback' ).innerHTML = text;
+
+	WWParallels.prototype._reportProgress = function( content ) {
+		var output = content;
+		if ( content instanceof  CustomEvent ) {
+
+			output = content.detail.text;
+
+		}
+		output = Validator.verifyInput( output, '' );
+		console.log( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, streamMeshes ) {
@@ -134,7 +143,7 @@ var WWParallels = (function () {
 			scope.reportDonwload[ i ] = true;
 
 		}
-		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+		scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			scope.reportDonwload[ instanceNo ] = false;
@@ -143,7 +152,7 @@ var WWParallels = (function () {
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
-			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+			scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
 			if ( scope.workerDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
@@ -154,7 +163,7 @@ var WWParallels = (function () {
 				console.log( msg );
 
 				scope.feedbackArray[ instanceNo ] = msg;
-				scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+				scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 			}
 		};
 

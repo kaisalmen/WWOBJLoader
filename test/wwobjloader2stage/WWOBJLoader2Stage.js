@@ -263,15 +263,23 @@ var WWOBJLoader2Stage = (function () {
 
 			} else {
 
-				this.reportProgress( 'Will not reload: ' + prepData.modelName );
+				this._reportProgress( 'Will not reload: ' + prepData.modelName );
 
 			}
 
 		}
 	};
 
-	WWOBJLoader2Stage.prototype.reportProgress = function( content, modelName, instanceNo  ) {
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
+	WWOBJLoader2Stage.prototype._reportProgress = function( content ) {
+		var output = content;
+		if ( content instanceof  CustomEvent ) {
+
+			output = content.detail.text;
+
+		}
+		output = Validator.verifyInput( output, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	WWOBJLoader2Stage.prototype.reloadAssets = function () {
@@ -297,11 +305,11 @@ var WWOBJLoader2Stage = (function () {
 			scope.processing = false;
 			scope.allAssets[ prepData.modelName ] = object3d;
 			scope.reloadAssets();
-			scope.reportProgress();
+			scope._reportProgress();
 		};
 		var callbacks = prepData.getCallbacks();
 		callbacks.setCallbackOnLoad( reloadAssetsProxy );
-		callbacks.setCallbackOnProgress( this.reportProgress );
+		callbacks.setCallbackOnProgress( this._reportProgress );
 
 		var first = prepData.resources[ 0 ];
 		if ( first.extension === 'ZIP' ) {
@@ -310,7 +318,7 @@ var WWOBJLoader2Stage = (function () {
 
 			var zipTools = new ZipTools( first.pathBase );
 			var setObjAsArrayBuffer = function ( data ) {
-				scope.reportProgress( '' );
+				scope._reportProgress();
 				prepData.resources[ 1 ].content = data;
 				objLoader2.run( prepData );
 			};
@@ -318,7 +326,7 @@ var WWOBJLoader2Stage = (function () {
 			var setMtlAsString = function ( data ) {
 
 				if ( prepData.resources.length > 1 ) resourceObj.content = data;
-				scope.reportProgress( 'Unzipping: ' + resourceObj.name );
+				scope._reportProgress( 'Unzipping: ' + resourceObj.name );
 				zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
 			};
 
@@ -336,14 +344,14 @@ var WWOBJLoader2Stage = (function () {
 			};
 
 			var errorCase = function ( text ) {
-				scope.reportProgress( text );
+				scope._reportProgress( text );
 				scope.processing = false;
 			};
-			zipTools.load( first.url, { success: doneUnzipping, progress: this.reportProgress, error: errorCase } );
+			zipTools.load( first.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
 
 		} else {
 
-			this.reportProgress();
+			this._reportProgress();
 			objLoader2.run( prepData );
 
 		}
@@ -374,7 +382,7 @@ var WWOBJLoader2Stage = (function () {
 		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
 			scope.scene.add( loaderRootNode );
 			console.log( 'Loading complete: ' + modelName );
-			scope.reportProgress( '' );
+			scope._reportProgress();
 		};
 
 		var fileReader = new FileReader();

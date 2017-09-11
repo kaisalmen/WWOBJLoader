@@ -287,7 +287,7 @@ var MeshSprayApp = (function () {
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
 			logger.logInfo( 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
 		};
-		var reportProgress = function( content, modelName, instanceNo ) {
+		var reportProgress = function( content ) {
 			if ( THREE.LoaderSupport.Validator.isValid( content ) && content.length > 0 ) {
 
 				document.getElementById( 'feedback' ).innerHTML = content;
