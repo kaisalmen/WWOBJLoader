@@ -525,11 +525,19 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param baseText
 	 * @param text
 	 */
-	Commons.prototype.onProgress = function ( baseText, text ) {
-		var content = Validator.isValid( baseText ) ? baseText: '';
-		content = Validator.isValid( text ) ? content + ' ' + text : content;
+	Commons.prototype.onProgress = function ( type, text, value ) {
+		var content = Validator.isValid( text ) ? text: '';
+		var event = new CustomEvent( 'OBJLoader2Event', {
+			detail: {
+				type: type,
+				modelName: this.modelName,
+				instanceNo: this.instanceNo,
+				text: content,
+				numericalValue: value
+			}
+		} );
 
-		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
+		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
 
 		this.logger.logDebug( content );
 	};
