@@ -61,7 +61,7 @@ THREE.OBJLoader2 = (function () {
 
 					refPercentComplete = percentComplete;
 					var output = 'Download of "' + url + '": ' + percentComplete + '%';
-					scope.onProgress( 'progress', output, percentComplete );
+					scope.onProgress( 'progressLoad', output, percentComplete );
 
 				}
 			};
@@ -176,7 +176,7 @@ THREE.OBJLoader2 = (function () {
 		};
 		parser.setCallbackBuilder( onMeshLoaded );
 		var onProgressScoped = function ( text, numericalValue ) {
-			scope.onProgress( 'progress', text, numericalValue );
+			scope.onProgress( 'progressParse', text, numericalValue );
 		};
 		parser.setCallbackProgress( onProgressScoped );
 
@@ -379,7 +379,8 @@ THREE.OBJLoader2 = (function () {
 			var reachedFaces = false;
 			var code;
 			var word = '';
-			for ( var i = 0; i < length; i ++ ) {
+			var i = 0;
+			for ( ; i < length; i ++ ) {
 
 				code = arrayBufferView[ i ];
 				switch ( code ) {
@@ -410,7 +411,7 @@ THREE.OBJLoader2 = (function () {
 						break;
 				}
 			}
-			this.finalize();
+			this.finalize( i );
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parse' );
 		};
 
@@ -431,7 +432,8 @@ THREE.OBJLoader2 = (function () {
 			var reachedFaces = false;
 			var char;
 			var word = '';
-			for ( var i = 0; i < length; i ++ ) {
+			var i = 0;
+			for ( ; i < length; i ++ ) {
 
 				char = text[ i ];
 				switch ( char ) {
@@ -449,7 +451,7 @@ THREE.OBJLoader2 = (function () {
 					case Consts.STRING_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces );
+						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces, i );
 						bufferPointer = 0;
 						slashesCount = 0;
 						break;
@@ -461,7 +463,7 @@ THREE.OBJLoader2 = (function () {
 						word += char;
 				}
 			}
-			this.finalize();
+			this.finalize( i );
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
@@ -591,7 +593,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount );
+				this.buildMesh( result, this.inputObjectCount, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 
@@ -605,7 +607,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount );
+				this.buildMesh( result, this.inputObjectCount, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed group: ' + groupName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 				this.rawMesh = this.rawMesh.newInstanceFromGroup( groupName );
@@ -618,14 +620,14 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		Parser.prototype.finalize = function () {
+		Parser.prototype.finalize = function ( currentByte ) {
 			this.logger.logInfo( 'Global output object count: ' + this.outputObjectCount );
 			var result = Validator.isValid( this.rawMesh ) ? this.rawMesh.finalize() : null;
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount );
+				this.buildMesh( result, this.inputObjectCount, currentByte );
 
 				if ( this.logger.isEnabled() ) {
 
@@ -636,7 +638,8 @@ THREE.OBJLoader2 = (function () {
 					this.logger.logInfo( parserFinalReport );
 
 				}
-				this.callbackProgress( 'Completed Parsing: 100%', 1.0 );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed Parsing: 100.00%', progressBytesPercent );
 
 			}
 		};
@@ -647,7 +650,7 @@ THREE.OBJLoader2 = (function () {
 		 *
 		 * @param result
 		 */
-		Parser.prototype.buildMesh = function ( result ) {
+		Parser.prototype.buildMesh = function ( result, currentByte ) {
 			var rawObjectDescriptions = result.subGroups;
 
 			var vertexFA = new Float32Array( result.absoluteVertexCount );
@@ -779,6 +782,9 @@ THREE.OBJLoader2 = (function () {
 			this.callbackBuilder(
 				{
 					cmd: 'meshData',
+					progress: {
+						numericalValue: currentByte / this.totalBytes
+					},
 					params: {
 						meshName: result.name
 					},

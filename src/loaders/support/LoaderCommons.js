@@ -408,7 +408,19 @@ THREE.LoaderSupport.Builder = (function () {
 
 		}
 		var callbackOnProgress = this.callbacks.onProgress;
-		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( progressMessage );
+		if ( Validator.isValid( callbackOnProgress ) ) {
+
+			var event = new CustomEvent( 'BuilderEvent', {
+				detail: {
+					type: 'progress',
+					modelName: payload.params.meshName,
+					text: progressMessage,
+					numericalValue: payload.progress.numericalValue
+				}
+			} );
+			callbackOnProgress( event );
+
+		}
 
 		return meshes;
 	};
