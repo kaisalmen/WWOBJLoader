@@ -63,9 +63,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {function} createMessageFunction Function used to create log string
+	 * @param {Array} [args] Extra arguments to be passed to createMessageFunction
 	 */
 	ConsoleLogger.prototype.logDebug = function ( createMessageFunction, args ) {
-		if ( this.enabled && this.debug ) console.debug( createMessageFunction( args ) );
+		if ( this.enabled && this.debug ) console.info( createMessageFunction.apply( this, args ) );
 	};
 
 	/**
@@ -73,9 +74,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {function} createMessageFunction Message to log
+	 * @param {Array} [args] Extra arguments to be passed to createMessageFunction
 	 */
-	ConsoleLogger.prototype.logInfo = function ( createMessageFunction ) {
-		if ( this.enabled ) console.info( createMessageFunction() );
+	ConsoleLogger.prototype.logInfo = function ( createMessageFunction, args ) {
+		if ( this.enabled ) console.info( createMessageFunction.apply( this, args ) );
 	};
 
 	/**
@@ -103,9 +105,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {function} id Time identification
+	 * @param {Array} [args] Extra arguments to be passed to createIdFunction
 	 */
-	ConsoleLogger.prototype.logTimeStart = function ( createIdFunction ) {
-		if ( this.enabled ) console.time( createIdFunction() );
+	ConsoleLogger.prototype.logTimeStart = function ( createIdFunction, args ) {
+		if ( this.enabled ) console.time( createIdFunction.apply( this, args ) );
 	};
 
 	/**
@@ -113,9 +116,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {function} id Time identification
+	 * @param {Array} [args] Extra arguments to be passed to createIdFunction
 	 */
-	ConsoleLogger.prototype.logTimeEnd = function ( createIdFunction ) {
-		if ( this.enabled ) console.timeEnd( createIdFunction() );
+	ConsoleLogger.prototype.logTimeEnd = function ( createIdFunction, args ) {
+		if ( this.enabled ) console.timeEnd( createIdFunction.apply( this, args ) );
 	};
 
 	return ConsoleLogger;

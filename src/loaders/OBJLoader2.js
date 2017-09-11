@@ -158,7 +158,9 @@ THREE.OBJLoader2 = (function () {
 	 * @param content
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
-		this.logger.logTimeStart( function () { return 'OBJLoader2 parse: ' + this.modelName; } );
+		this.logger.logTimeStart( function ( modelName ) {
+			return 'OBJLoader2 parse: ' + modelName;
+		}, [ this.modelName ] );
 
 		var parser = new Parser( this.logger );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
@@ -196,7 +198,9 @@ THREE.OBJLoader2 = (function () {
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
-		this.logger.logTimeEnd( function () { return 'OBJLoader2 parse: ' + this.modelName; } );
+		this.logger.logTimeEnd( function ( modelName ) {
+			return 'OBJLoader2 parse: ' + modelName;
+		}, [ this.modelName ] );
 
 		return this.loaderRootNode;
 	};
@@ -209,13 +213,17 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} onLoad
 	 */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
-		this.logger.logTimeStart( function () { return 'OBJLoader2 parseAsync: ' + this.modelName; } );
+		this.logger.logTimeStart( function ( modelName ) {
+			return 'OBJLoader2 parseAsync: ' + modelName;
+		}, [ this.modelName ] );
 
 		var scope = this;
 		var scopedOnLoad = function ( message ) {
 			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
 			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
-			scope.logger.logTimeEnd( function () { return 'OBJLoader2 parseAsync: ' + scope.modelName; } );
+			scope.logger.logTimeEnd( function ( modelName ) {
+				return 'OBJLoader2 parseAsync: ' + modelName;
+			}, [ scope.modelName ] );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
 			var meshes = scope.builder.buildMeshes( payload );
@@ -597,7 +605,7 @@ THREE.OBJLoader2 = (function () {
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
-				this.logger.logDebug( this.printRawMeshReport, this.rawMesh, this.inputObjectCount );
+				this.logger.logDebug( this.printRawMeshReport, [ this.rawMesh, this.inputObjectCount ] );
 				var message = this.buildMesh( result, this.inputObjectCount );
 				this.onProgress( message );
 
@@ -610,7 +618,7 @@ THREE.OBJLoader2 = (function () {
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
-				this.logger.logDebug( this.printRawMeshReport, this.rawMesh, this.inputObjectCount );
+				this.logger.logDebug( this.printRawMeshReport, [ this.rawMesh, this.inputObjectCount ] );
 				var message = this.buildMesh( result, this.inputObjectCount );
 				this.onProgress( message );
 				this.rawMesh = this.rawMesh.newInstanceFromGroup( groupName );
@@ -624,23 +632,25 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.finalize = function () {
-			this.logger.logInfo( function () { return 'Global output object count: ' + this.outputObjectCount; } );
+			this.logger.logInfo( function ( count ) {
+				return 'Global output object count: ' + count;
+			}, [ this.outputObjectCount ] );
 			var result = Validator.isValid( this.rawMesh ) ? this.rawMesh.finalize() : null;
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
-				this.logger.logDebug( this.printRawMeshReport, this.rawMesh, this.inputObjectCount );
+				this.logger.logDebug( this.printRawMeshReport, [ this.rawMesh, this.inputObjectCount ] );
 				var message = this.buildMesh( result, this.inputObjectCount );
 
 				this.logger.logInfo(
-					function ( vertexCount, faceCount, indicesCount) {
+					function ( vertexCount, faceCount, indicesCount ) {
 						return 'Overall counts: ' +
 							'\n\tVertices: ' + vertexCount +
 							'\n\tFaces: ' + faceCount +
 							'\n\tMultiple definitions: ' + indicesCount;
-					}
+					}, [ this.counts.vertices, this.counts.faces, this.counts.doubleIndicesCount ]
 				);
-				this.onProgress( message, this.counts.vertices, this.counts.faces, this.counts.doubleIndicesCount );
+				this.onProgress( message );
 
 			}
 		};
@@ -764,21 +774,21 @@ THREE.OBJLoader2 = (function () {
 
 				}
 
-				var createReport = function () {
-					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n\tmaterialIndex: ' + selectedMaterialIndex : '';
-					return '\tOutput Object no.: ' + this.outputObjectCount +
-						'\n\tobjectName: ' + rawObjectDescription.objectName +
-						'\n\tgroupName: ' + rawObjectDescription.groupName +
-						'\n\tmaterialName: ' + rawObjectDescription.materialName +
+				var createReport = function ( objectCount ) {
+					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
+					return 'Output Object no.: ' + objectCount +
+						'\n\t\tobjectName: ' + rawObjectDescription.objectName +
+						'\n\t\tgroupName: ' + rawObjectDescription.groupName +
+						'\n\t\tmaterialName: ' + rawObjectDescription.materialName +
 						materialIndexLine +
-						'\n\tsmoothingGroup: ' + rawObjectDescription.smoothingGroup +
-						'\n\t#vertices: ' + rawObjectDescription.vertices.length / 3 +
-						'\n\t#indices: ' + rawObjectDescription.indices.length +
-						'\n\t#colors: ' + rawObjectDescription.colors.length / 3 +
-						'\n\t#uvs: ' + rawObjectDescription.uvs.length / 2 +
-						'\n\t#normals: ' + rawObjectDescription.normals.length / 3
+						'\n\t\tsmoothingGroup: ' + rawObjectDescription.smoothingGroup +
+						'\n\t\t#vertices: ' + rawObjectDescription.vertices.length / 3 +
+						'\n\t\t#indices: ' + rawObjectDescription.indices.length +
+						'\n\t\t#colors: ' + rawObjectDescription.colors.length / 3 +
+						'\n\t\t#uvs: ' + rawObjectDescription.uvs.length / 2 +
+						'\n\t\t#normals: ' + rawObjectDescription.normals.length / 3
 				};
-				this.logger.logDebug( createReport );
+				this.logger.logDebug( createReport, [ this.outputObjectCount ] );
 
 			}
 
@@ -1282,7 +1292,13 @@ THREE.OBJLoader2 = (function () {
 	 * @param {string} [crossOrigin] CORS value
 	 */
 	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin ) {
-		if ( Validator.isValid( resource ) ) this.logger.logTimeStart( function () { return 'Loading MTL: ' + resource.name; } );
+		if ( Validator.isValid( resource ) ) {
+
+			this.logger.logTimeStart( function ( mtlName ) {
+				return 'Loading MTL: ' + mtlName;
+			}, [ resource.name ] );
+
+		}
 
 		var materials = [];
 		var scope = this;
@@ -1302,7 +1318,13 @@ THREE.OBJLoader2 = (function () {
 				}
 			}
 
-			if ( Validator.isValid( resource ) ) scope.logger.logTimeEnd( function () { return 'Loading MTL: ' + resource.name; } );
+			if ( Validator.isValid( resource ) ) {
+
+				scope.logger.logTimeEnd( function ( mtlName ) {
+					return 'Loading MTL: ' + mtlName;
+				}, [ resource.name ] );
+
+			}
 			callbackOnLoad( materials );
 		};
 
