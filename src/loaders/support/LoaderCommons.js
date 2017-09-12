@@ -49,6 +49,16 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	};
 
 	/**
+	 * Returns if is enabled and debug
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @returns {boolean}
+	 */
+	ConsoleLogger.prototype.isDebug = function () {
+		return this.isEnabled() && this.debug;
+	};
+
+	/**
 	 * Enable or disable info, debug and time logging
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
@@ -59,25 +69,33 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	};
 
 	/**
+	 * Returns if is enabled.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @returns {boolean}
+	 */
+	ConsoleLogger.prototype.isEnabled = function () {
+		return this.enabled;
+	};
+
+	/**
 	 * Log a debug message if enabled and debug is set.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
-	 * @param {function} createMessageFunction Function used to create log string
-	 * @param {Array} [args] Extra arguments to be passed to createMessageFunction
+	 * @param {string} message Message to log
 	 */
-	ConsoleLogger.prototype.logDebug = function ( createMessageFunction, args ) {
-		if ( this.enabled && this.debug ) console.info( createMessageFunction.apply( this, args ) );
+	ConsoleLogger.prototype.logDebug = function ( message ) {
+		if ( this.enabled && this.debug ) console.info( message );
 	};
 
 	/**
 	 * Log an info message if enabled.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
-	 * @param {function} createMessageFunction Message to log
-	 * @param {Array} [args] Extra arguments to be passed to createMessageFunction
+	 * @param {string} message Message to log
 	 */
-	ConsoleLogger.prototype.logInfo = function ( createMessageFunction, args ) {
-		if ( this.enabled ) console.info( createMessageFunction.apply( this, args ) );
+	ConsoleLogger.prototype.logInfo = function ( message ) {
+		if ( this.enabled ) console.info( message );
 	};
 
 	/**
@@ -104,22 +122,20 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * Start time measurement with provided id.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
-	 * @param {function} id Time identification
-	 * @param {Array} [args] Extra arguments to be passed to createIdFunction
+	 * @param {string} id Time identification
 	 */
-	ConsoleLogger.prototype.logTimeStart = function ( createIdFunction, args ) {
-		if ( this.enabled ) console.time( createIdFunction.apply( this, args ) );
+	ConsoleLogger.prototype.logTimeStart = function ( id ) {
+		if ( this.enabled ) console.time( id );
 	};
 
 	/**
 	 * Start time measurement with provided id.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
-	 * @param {function} id Time identification
-	 * @param {Array} [args] Extra arguments to be passed to createIdFunction
+	 * @param {string} id Time identification
 	 */
-	ConsoleLogger.prototype.logTimeEnd = function ( createIdFunction, args ) {
-		if ( this.enabled ) console.timeEnd( createIdFunction.apply( this, args ) );
+	ConsoleLogger.prototype.logTimeEnd = function ( id ) {
+		if ( this.enabled ) console.timeEnd( id );
 	};
 
 	return ConsoleLogger;
@@ -515,7 +531,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
 
-		this.logger.logDebug( function () { return content; } );
+		this.logger.logDebug( content );
 	};
 
 	return Commons;

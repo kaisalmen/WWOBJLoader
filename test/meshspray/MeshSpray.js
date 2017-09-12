@@ -31,7 +31,7 @@ var MeshSpray = (function () {
 
 		}
 
-		this.logger.logTimeStart( function () { return 'MeshSpray'; } );
+		this.logger.logTimeStart( 'MeshSpray' );
 
 		this._applyPrepData( prepData );
 
@@ -47,7 +47,7 @@ var MeshSpray = (function () {
 		var scopeFuncComplete = function ( message ) {
 			var callback = scope.callbacks.onLoad;
 			if ( Validator.isValid( callback ) ) callback( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
-			scope.logger.logTimeEnd( function () { return 'MeshSpray'; } );
+			scope.logger.logTimeEnd( 'MeshSpray' );
 		};
 
 		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
@@ -201,7 +201,7 @@ var MeshSpray = (function () {
 				uvFA !== null ? [ uvFA.buffer ] : null
 			);
 
-			this.logger.logInfo( function () { return 'Global output object count: ' + this.globalObjectCount; } );
+			this.logger.logInfo( 'Global output object count: ' + this.globalObjectCount );
 		};
 
 		return Parser;
@@ -285,13 +285,13 @@ var MeshSprayApp = (function () {
 
 		var scope = this;
 		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			logger.logInfo( function () { return 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')'; } );
+			logger.logInfo( 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
 		};
 		var reportProgress = function( content, modelName, instanceNo ) {
 			if ( THREE.LoaderSupport.Validator.isValid( content ) && content.length > 0 ) {
 
 				document.getElementById( 'feedback' ).innerHTML = content;
-				logger.logInfo( function () { return content; } );
+				logger.logInfo( content );
 
 			}
 		};
