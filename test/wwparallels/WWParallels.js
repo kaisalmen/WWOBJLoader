@@ -25,7 +25,9 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2 );
+		var logger = new THREE.LoaderSupport.ConsoleLogger();
+		logger.setEnabled( false );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2, logger  );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;

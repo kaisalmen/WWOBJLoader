@@ -28,6 +28,120 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
+ * Logging wrapper
+ * @class
+ */
+THREE.LoaderSupport.ConsoleLogger = (function () {
+
+	function ConsoleLogger( enabled, debug ) {
+		this.enabled = enabled !== false;
+		this.debug = debug === true;
+	}
+
+	/**
+	 * Enable or disable debug logging
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {boolean} debug True or False
+	 */
+	ConsoleLogger.prototype.setDebug = function ( debug ) {
+		this.debug = debug === true;
+	};
+
+	/**
+	 * Returns if is enabled and debug
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @returns {boolean}
+	 */
+	ConsoleLogger.prototype.isDebug = function () {
+		return this.isEnabled() && this.debug;
+	};
+
+	/**
+	 * Enable or disable info, debug and time logging
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {boolean} enabled True or False
+	 */
+	ConsoleLogger.prototype.setEnabled = function ( enabled ) {
+		this.enabled = enabled === true;
+	};
+
+	/**
+	 * Returns if is enabled.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @returns {boolean}
+	 */
+	ConsoleLogger.prototype.isEnabled = function () {
+		return this.enabled;
+	};
+
+	/**
+	 * Log a debug message if enabled and debug is set.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} message Message to log
+	 */
+	ConsoleLogger.prototype.logDebug = function ( message ) {
+		if ( this.enabled && this.debug ) console.info( message );
+	};
+
+	/**
+	 * Log an info message if enabled.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} message Message to log
+	 */
+	ConsoleLogger.prototype.logInfo = function ( message ) {
+		if ( this.enabled ) console.info( message );
+	};
+
+	/**
+	 * Log a warn message (always).
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} message Message to log
+	 */
+	ConsoleLogger.prototype.logWarn = function ( message ) {
+		console.warn( message );
+	};
+
+	/**
+	 * Log an error message (always).
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} message Message to log
+	 */
+	ConsoleLogger.prototype.logError = function ( message ) {
+		console.error( message );
+	};
+
+	/**
+	 * Start time measurement with provided id.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} id Time identification
+	 */
+	ConsoleLogger.prototype.logTimeStart = function ( id ) {
+		if ( this.enabled ) console.time( id );
+	};
+
+	/**
+	 * Start time measurement with provided id.
+	 * @memberOf THREE.LoaderSupport.ConsoleLogger
+	 *
+	 * @param {string} id Time identification
+	 */
+	ConsoleLogger.prototype.logTimeEnd = function ( id ) {
+		if ( this.enabled ) console.timeEnd( id );
+	};
+
+	return ConsoleLogger;
+})();
+
+/**
  * Callbacks utilized by functions working with WWLoader implementations
  * @class
  */
@@ -310,14 +424,15 @@ THREE.LoaderSupport.Builder = (function () {
 THREE.LoaderSupport.Commons = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
+	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	function Commons( manager ) {
+	function Commons( logger, manager ) {
+		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
 		this.modelName = '';
 		this.instanceNo = 0;
 		this.path = '';
-		this.debug = false;
 		this.useIndices = false;
 		this.disregardNormals = false;
 
@@ -347,6 +462,10 @@ THREE.LoaderSupport.Commons = (function () {
 		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad );
 	};
 
+	Commons.prototype.getLogger = function () {
+		return this.logger;
+	};
+
 	Commons.prototype.setModelName = function ( modelName ) {
 		this.modelName = Validator.verifyInput( modelName, this.modelName );
 	};
@@ -357,16 +476,6 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.setPath = function ( path ) {
 		this.path = Validator.verifyInput( path, this.path );
-	};
-
-	/**
-	 * Allows to set debug mode.
-	 * @memberOf THREE.LoaderSupport.Commons
-	 *
-	 * @param {boolean} enabled
-	 */
-	Commons.prototype.setDebug = function ( enabled ) {
-		this.debug = enabled;
 	};
 
 	/**
@@ -410,7 +519,7 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Announce feedback which is give to the registered callbacks and logged if debug is enabled
+	 * Announce feedback which is give to the registered callbacks
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
 	 * @param baseText
@@ -422,7 +531,7 @@ THREE.LoaderSupport.Commons = (function () {
 
 		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
 
-		if ( this.debug ) console.log( content );
+		this.logger.logDebug( content );
 	};
 
 	return Commons;
