@@ -272,7 +272,7 @@ var WWOBJLoader2Stage = (function () {
 
 	WWOBJLoader2Stage.prototype._reportProgress = function( content ) {
 		var output = content;
-		if ( content instanceof  CustomEvent ) {
+		if ( content instanceof CustomEvent ) {
 
 			output = content.detail.text;
 
@@ -453,18 +453,17 @@ var ZipTools = (function () {
 			} );
 		};
 
-		var refPercentComplete = 0;
-		var percentComplete = 0;
+		var numericalValueRef = 0;
+		var numericalValue = 0;
 		var output;
 		var onProgress = function ( event ) {
 			if ( ! event.lengthComputable ) return;
 
-			percentComplete = Math.round( event.loaded / event.total * 100 );
-			if ( percentComplete > refPercentComplete ) {
+			numericalValue = event.loaded / event.total;
+			if ( numericalValue > numericalValueRef ) {
 
-				refPercentComplete = percentComplete;
-				output = 'Download of "' + filename + '": ' + percentComplete + '%';
-				console.log( output );
+				numericalValueRef = numericalValue;
+				output = 'Download of "' + filename + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
 				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( output );
 
 			}

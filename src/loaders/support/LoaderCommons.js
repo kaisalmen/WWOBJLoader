@@ -401,10 +401,12 @@ THREE.LoaderSupport.Builder = (function () {
 
 			}
 			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
+			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		} else {
 
 			progressMessage = 'Not adding mesh: ' + meshName;
+			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		}
 		var callbackOnProgress = this.callbacks.onProgress;

@@ -51,17 +51,17 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
 		var scope = this;
 		if ( ! Validator.isValid( onProgress ) ) {
-			var refPercentComplete = 0;
-			var percentComplete = 0;
+			var numericalValueRef = 0;
+			var numericalValue = 0;
 			onProgress = function ( event ) {
 				if ( ! event.lengthComputable ) return;
 
-				percentComplete = Math.round( event.loaded / event.total * 100 );
-				if ( percentComplete > refPercentComplete ) {
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
 
-					refPercentComplete = percentComplete;
-					var output = 'Download of "' + url + '": ' + percentComplete + '%';
-					scope.onProgress( 'progressLoad', output, percentComplete );
+					numericalValueRef = numericalValue;
+					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+					scope.onProgress( 'progressLoad', output, numericalValue );
 
 				}
 			};
@@ -426,6 +426,7 @@ THREE.OBJLoader2 = (function () {
 			this.configure();
 
 			var length = text.length;
+			this.totalBytes = length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
 			var slashesCount = 0;
@@ -593,7 +594,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount, currentByte );
+				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 
@@ -607,7 +608,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount, currentByte );
+				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed group: ' + groupName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 				this.rawMesh = this.rawMesh.newInstanceFromGroup( groupName );
@@ -627,7 +628,7 @@ THREE.OBJLoader2 = (function () {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, this.inputObjectCount, currentByte );
+				this.buildMesh( result, currentByte );
 
 				if ( this.logger.isEnabled() ) {
 
