@@ -8,7 +8,7 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.0.0-dev';
+	var OBJLOADER2_VERSION = '2.0.0';
 	var Commons = THREE.LoaderSupport.Commons;
 	var Validator = THREE.LoaderSupport.Validator;
 	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;

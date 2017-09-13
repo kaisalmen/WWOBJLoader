@@ -374,7 +374,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/meshspray/template/main.three.html';
 	exampleDef.dir.dest = 'test/meshspray';
-	exampleDef.file.out = 'webgl_loader_ww_meshspray';
+	exampleDef.file.out = 'webgl_loader_obj2_meshspray';
 	buildExample();
 
 	exampleDef.css.style_all = "";

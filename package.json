@@ -1,10 +1,10 @@
 {
   "name": "wwobjloader2",
-  "version": "2.0.0-dev",
+  "version": "2.0.0",
   "versions": {
-    "loader_obj2": "2.0.0-dev",
-    "loader_worker_director": "1.0.0-dev",
-    "loader_worker_support": "1.0.0-dev"
+    "loader_obj2": "2.0.0",
+    "loader_worker_director": "2.0.0",
+    "loader_worker_support": "1.0.0"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WWOBJLoader.js",
@@ -42,13 +42,16 @@
     "test/wwobjloader2stage/main.html",
     "test/wwobjloader2stage/main.min.html",
     "test/wwobjloader2stage/main.src.html",
-    "test/wwobjloader2stage/main.css",
     "test/wwobjloader2stage/WWOBJLoader2Stage.js",
     "test/wwparallels/main.html",
     "test/wwparallels/main.min.html",
     "test/wwparallels/main.src.html",
     "test/wwparallels/main.css",
-    "test/wwparallels/WWParallels.js"
+    "test/wwparallels/WWParallels.js",
+    "test/meshspray/main.html",
+    "test/meshspray/main.min.html",
+    "test/meshspray/main.src.html",
+    "test/meshspray/MeshSpray.js"
   ],
   "directories": {
     "resource": "resource",

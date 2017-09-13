@@ -68,7 +68,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 THREE.LoaderSupport.WorkerSupport = (function () {
 
-	var WORKER_SUPPORT_VERSION = '1.0.0-dev';
+	var WORKER_SUPPORT_VERSION = '1.0.0';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
