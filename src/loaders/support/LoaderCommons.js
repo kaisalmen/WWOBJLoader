@@ -365,7 +365,15 @@ THREE.LoaderSupport.Builder = (function () {
 		var useOrgMesh = true;
 		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
-			callbackOnMeshAlterResult = callbackOnMeshAlter( meshName, bufferGeometry, material );
+			callbackOnMeshAlterResult = callbackOnMeshAlter(
+				{
+					detail: {
+						meshName: meshName,
+						bufferGeometry: bufferGeometry,
+						material: material
+					}
+				}
+			);
 			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
 
 				if ( ! callbackOnMeshAlterResult.isDisregardMesh() && callbackOnMeshAlterResult.providesAlteredMeshes() ) {
@@ -401,14 +409,28 @@ THREE.LoaderSupport.Builder = (function () {
 
 			}
 			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
+			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		} else {
 
 			progressMessage = 'Not adding mesh: ' + meshName;
+			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		}
 		var callbackOnProgress = this.callbacks.onProgress;
-		if ( Validator.isValid( callbackOnProgress ) ) callbackOnProgress( progressMessage );
+		if ( Validator.isValid( callbackOnProgress ) ) {
+
+			var event = new CustomEvent( 'BuilderEvent', {
+				detail: {
+					type: 'progress',
+					modelName: payload.params.meshName,
+					text: progressMessage,
+					numericalValue: payload.progress.numericalValue
+				}
+			} );
+			callbackOnProgress( event );
+
+		}
 
 		return meshes;
 	};
@@ -525,11 +547,19 @@ THREE.LoaderSupport.Commons = (function () {
 	 * @param baseText
 	 * @param text
 	 */
-	Commons.prototype.onProgress = function ( baseText, text ) {
-		var content = Validator.isValid( baseText ) ? baseText: '';
-		content = Validator.isValid( text ) ? content + ' ' + text : content;
+	Commons.prototype.onProgress = function ( type, text, value ) {
+		var content = Validator.isValid( text ) ? text: '';
+		var event = {
+			detail: {
+				type: type,
+				modelName: this.modelName,
+				instanceNo: this.instanceNo,
+				text: content,
+				numericalValue: value
+			}
+		};
 
-		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( content, this.modelName, this.instanceNo );
+		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
 
 		this.logger.logDebug( content );
 	};

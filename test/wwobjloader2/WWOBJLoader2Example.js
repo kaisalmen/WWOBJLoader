@@ -75,7 +75,7 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useParseSync = function () {
 		var modelName = 'female02';
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
@@ -94,7 +94,7 @@ var WWOBJLoader2Example = (function () {
 					scope.pivot.add( local );
 					local.add( objLoader.parse( content ) );
 
-					scope._reportProgress( 'Loading complete: ' + modelName );
+					scope._reportProgress( { detail: { text: 'Loading complete: ' + modelName } } );
 				}
 			);
 		};
@@ -104,16 +104,16 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useParseAsync = function () {
 		var modelName = 'female02_vertex' ;
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( event ) {
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_female02_vertex';
 			local.position.set( -75, 0, 0 );
 			scope.pivot.add( local );
-			local.add( loaderRootNode );
+			local.add( event.detail.loaderRootNode );
 
-			scope._reportProgress( 'Loading complete: ' + modelName );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
 		var scope = this;
@@ -123,28 +123,29 @@ var WWOBJLoader2Example = (function () {
 		var fileLoader = new THREE.FileLoader();
 		fileLoader.setPath( '../../' );
 		fileLoader.setResponseType( 'arraybuffer' );
-		fileLoader.load( 'resource/obj/female02/female02_vertex_colors.obj',
+		var filename = 'resource/obj/female02/female02_vertex_colors.obj';
+		fileLoader.load( filename,
 			function ( content ) {
 				objLoader.parseAsync( content, callbackOnLoad );
-				scope._reportProgress( 'Loading complete: ' + modelName );
+				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
 		);
 	};
 
 	WWOBJLoader2Example.prototype.useLoadSync = function () {
 		var modelName = 'male02';
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( event ) {
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_male02';
 			local.position.set( 0, 0, -75 );
 			scope.pivot.add( local );
-			local.add( loaderRootNode );
+			local.add( event.detail.loaderRootNode );
 
-			scope._reportProgress( 'Loading complete: ' + modelName );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
 		var onLoadMtl = function ( materials ) {
@@ -157,20 +158,20 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useLoadAsync = function () {
 		var modelName = 'WaltHead';
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( event ) {
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_WaltHead';
 			local.position.set( -125, 50, 0 );
 			var scale = 0.5;
 			local.scale.set( scale, scale, scale );
 			scope.pivot.add( local );
-			local.add( loaderRootNode );
+			local.add( event.detail.loaderRootNode );
 
-			scope._reportProgress( 'Loading complete: ' + modelName );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
 		var onLoadMtl = function ( materials ) {
@@ -183,8 +184,8 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useRunSync = function () {
 		var scope = this;
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope._reportProgress( 'Loading complete: ' + modelName );
+		var callbackOnLoad = function ( event ) {
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
 		var prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
@@ -204,8 +205,8 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
 		var scope = this;
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope._reportProgress( 'Loading complete: ' + modelName );
+		var callbackOnLoad = function ( event ) {
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
 		var prepData = new THREE.LoaderSupport.PrepData( 'vive-controller' );
@@ -217,13 +218,13 @@ var WWOBJLoader2Example = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
 		var callbacks = prepData.getCallbacks();
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
-			var mesh = new THREE.Mesh( bufferGeometry, material );
+			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
 			var scale = 200.0;
 			mesh.scale.set( scale, scale, scale );
-			mesh.name = name;
+			mesh.name = event.detail.meshName;
 			var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
 			helper.name = 'VertexNormalsHelper';
 
@@ -241,12 +242,13 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {
-		this._reportProgress( '' );
+		this._reportProgress( { detail: { text: '' } } );
 	};
 
-	WWOBJLoader2Example.prototype._reportProgress = function( content, modelName, instanceNo ) {
-		console.log( 'Progress: ' + content );
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
+	WWOBJLoader2Example.prototype._reportProgress = function( event ) {
+		var output = Validator.verifyInput( event.detail.text, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	WWOBJLoader2Example.prototype.resizeDisplayGL = function () {

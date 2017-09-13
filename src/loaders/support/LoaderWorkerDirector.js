@@ -135,7 +135,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	WorkerDirector.prototype._kickWorkerRun = function( prepData, workerInstanceNo ) {
 		var scope = this;
-		var directorOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
+		var directorOnLoad = function ( event ) {
 			scope.objectsCompleted++;
 
 			var nextPrepData = scope.instructionQueue[ 0 ];
@@ -143,7 +143,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 				scope.instructionQueue.shift();
 				scope.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
-				scope._kickWorkerRun( nextPrepData, instanceNo );
+				scope._kickWorkerRun( nextPrepData, event.detail.instanceNo );
 
 			} else if ( scope.instructionQueue.length === 0 ) {
 
@@ -154,45 +154,20 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
-		var wrapperOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			if ( Validator.isValid( globalCallbacks.onLoad ) ) {
-
-				globalCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
-
-			}
-
-			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) {
-
-				prepDataCallbacks.onLoad( sceneGraphBaseNode, modelName, instanceNo );
-
-			}
-			directorOnLoad( sceneGraphBaseNode, modelName, instanceNo );
+		var wrapperOnLoad = function ( event ) {
+			if ( Validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
+			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) prepDataCallbacks.onLoad( event );
+			directorOnLoad( event );
 		};
 
-		var wrapperOnProgress = function ( content, modelName, instanceNo ) {
-			if ( Validator.isValid( globalCallbacks.onProgress ) ) {
-
-				globalCallbacks.onProgress( content, modelName, instanceNo );
-			}
-
-			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) {
-
-				prepDataCallbacks.onProgress( content, modelName, instanceNo );
-
-			}
+		var wrapperOnProgress = function ( event ) {
+			if ( Validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
+			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
 		};
 
-		var wrapperOnMeshAlter = function ( meshName, bufferGeometry, material ) {
-			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) {
-
-				globalCallbacks.onMeshAlter( meshName, bufferGeometry, material );
-			}
-
-			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) {
-
-				prepDataCallbacks.onMeshAlter( meshName, bufferGeometry, material );
-
-			}
+		var wrapperOnMeshAlter = function ( event ) {
+			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) globalCallbacks.onMeshAlter( event );
+			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) prepDataCallbacks.onMeshAlter( event );
 		};
 
 		var supportTuple = this.workerDescription.workerSupports[ workerInstanceNo ];
@@ -244,7 +219,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			this.logger.logInfo( 'Requested termination of worker.' );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;
-			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( '' );
+			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
 
 		}
 

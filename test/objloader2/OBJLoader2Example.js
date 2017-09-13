@@ -63,9 +63,9 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope.scene.add( loaderRootNode );
-			console.log( 'Loading complete: ' + modelName );
+		var callbackOnLoad = function ( event ) {
+			scope.scene.add( event.detail.loaderRootNode );
+			console.log( 'Loading complete: ' + event.detail.modelName );
 			scope._reportProgress( '' );
 		};
 
@@ -74,7 +74,6 @@ var OBJLoader2Example = (function () {
 			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
 			objLoader.setDisregardNormals( false );
-			objLoader.getLogger().setDebug( true );
 			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
 		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );

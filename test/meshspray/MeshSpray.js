@@ -46,7 +46,15 @@ var MeshSpray = (function () {
 		};
 		var scopeFuncComplete = function ( message ) {
 			var callback = scope.callbacks.onLoad;
-			if ( Validator.isValid( callback ) ) callback( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+			if ( Validator.isValid( callback ) ) callback(
+				{
+					detail: {
+						loaderRootNode: scope.loaderRootNode,
+						modelName: scope.modelName,
+						instanceNo: scope.instanceNo
+					}
+				}
+			);
 			scope.logger.logTimeEnd( 'MeshSpray' );
 		};
 
@@ -180,6 +188,9 @@ var MeshSpray = (function () {
 			this.callbackBuilder(
 				{
 					cmd: 'meshData',
+					progress: {
+						numericalValue: 1.0
+					},
 					params: {
 						meshName: 'Gen' + this.globalObjectCount
 					},
@@ -212,6 +223,8 @@ var MeshSpray = (function () {
 })();
 
 var MeshSprayApp = (function () {
+
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function MeshSprayApp( elementToBindTo ) {
 		this.renderer = null;
@@ -284,23 +297,19 @@ var MeshSprayApp = (function () {
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		var scope = this;
-		var callbackOnLoad = function ( sceneGraphBaseNode, modelName, instanceNo ) {
-			logger.logInfo( 'Worker #' + instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
+		var callbackOnLoad = function ( event ) {
+			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
 		};
-		var reportProgress = function( content, modelName, instanceNo ) {
-			if ( THREE.LoaderSupport.Validator.isValid( content ) && content.length > 0 ) {
-
-				document.getElementById( 'feedback' ).innerHTML = content;
-				logger.logInfo( content );
-
-			}
+		var reportProgress = function( event ) {
+			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
+			logger.logInfo( event.detail.text );
 		};
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
-			var mesh = new THREE.Mesh( bufferGeometry, material );
-			material.side = THREE.DoubleSide;
-			mesh.name = name;
+			event.detail.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
+			mesh.name = event.detail.meshName;
 			override.addMesh( mesh );
 
 			return override;

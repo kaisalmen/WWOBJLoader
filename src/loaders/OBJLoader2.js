@@ -51,17 +51,17 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
 		var scope = this;
 		if ( ! Validator.isValid( onProgress ) ) {
-			var refPercentComplete = 0;
-			var percentComplete = 0;
+			var numericalValueRef = 0;
+			var numericalValue = 0;
 			onProgress = function ( event ) {
 				if ( ! event.lengthComputable ) return;
 
-				percentComplete = Math.round( event.loaded / event.total * 100 );
-				if ( percentComplete > refPercentComplete ) {
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
 
-					refPercentComplete = percentComplete;
-					var output = 'Download of "' + url + '": ' + percentComplete + '%';
-					scope.onProgress( output );
+					numericalValueRef = numericalValue;
+					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+					scope.onProgress( 'progressLoad', output, numericalValue );
 
 				}
 			};
@@ -71,7 +71,7 @@ THREE.OBJLoader2 = (function () {
 			onError = function ( event ) {
 				var output = 'Error occurred while downloading "' + url + '"';
 				scope.logger.logError( output + ': ' + event );
-				scope.onProgress( output );
+				scope.onProgress( 'error', output, -1 );
 			};
 		}
 
@@ -85,7 +85,15 @@ THREE.OBJLoader2 = (function () {
 			} else {
 
 				scope._setCallbacks( null, onMeshAlter, null );
-				onLoad( scope.parse( content ), scope.modelName, scope.instanceNo );
+				onLoad(
+					{
+						detail: {
+							loaderRootNode: scope.parse( content ),
+							modelName: scope.modelName,
+							instanceNo: scope.instanceNo
+						}
+					}
+				);
 
 			}
 
@@ -175,8 +183,8 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 		parser.setCallbackBuilder( onMeshLoaded );
-		var onProgressScoped = function ( message ) {
-			scope.onProgress( message );
+		var onProgressScoped = function ( text, numericalValue ) {
+			scope.onProgress( 'progressParse', text, numericalValue );
 		};
 		parser.setCallbackProgress( onProgressScoped );
 
@@ -211,8 +219,16 @@ THREE.OBJLoader2 = (function () {
 		this.logger.logTimeStart( 'OBJLoader2 parseAsync: ' + this.modelName );
 
 		var scope = this;
-		var scopedOnLoad = function ( message ) {
-			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+		var scopedOnLoad = function () {
+			onLoad(
+				{
+					detail: {
+						loaderRootNode: scope.loaderRootNode,
+						modelName: scope.modelName,
+						instanceNo: scope.instanceNo
+					}
+				}
+			);
 			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
@@ -314,6 +330,7 @@ THREE.OBJLoader2 = (function () {
 				doubleIndicesCount: 0
 			};
 			this.logger = logger;
+			this.totalBytes = 0;
 		};
 
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
@@ -371,13 +388,15 @@ THREE.OBJLoader2 = (function () {
 
 			var arrayBufferView = new Uint8Array( arrayBuffer );
 			var length = arrayBufferView.byteLength;
+			this.totalBytes = length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
 			var slashesCount = 0;
 			var reachedFaces = false;
 			var code;
 			var word = '';
-			for ( var i = 0; i < length; i ++ ) {
+			var i = 0;
+			for ( ; i < length; i ++ ) {
 
 				code = arrayBufferView[ i ];
 				switch ( code ) {
@@ -395,7 +414,7 @@ THREE.OBJLoader2 = (function () {
 					case Consts.CODE_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces );
+						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces, i );
 						bufferPointer = 0;
 						slashesCount = 0;
 						break;
@@ -408,7 +427,7 @@ THREE.OBJLoader2 = (function () {
 						break;
 				}
 			}
-			this.finalize();
+			this.finalize( i );
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parse' );
 		};
 
@@ -423,13 +442,15 @@ THREE.OBJLoader2 = (function () {
 			this.configure();
 
 			var length = text.length;
+			this.totalBytes = length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
 			var slashesCount = 0;
 			var reachedFaces = false;
 			var char;
 			var word = '';
-			for ( var i = 0; i < length; i ++ ) {
+			var i = 0;
+			for ( ; i < length; i ++ ) {
 
 				char = text[ i ];
 				switch ( char ) {
@@ -447,7 +468,7 @@ THREE.OBJLoader2 = (function () {
 					case Consts.STRING_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces );
+						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces, i );
 						bufferPointer = 0;
 						slashesCount = 0;
 						break;
@@ -459,11 +480,11 @@ THREE.OBJLoader2 = (function () {
 						word += char;
 				}
 			}
-			this.finalize();
+			this.finalize( i );
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
-		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces ) {
+		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces, currentByte ) {
 			if ( bufferPointer < 1 ) return reachedFaces;
 
 			var bufferLength = bufferPointer - 1;
@@ -479,7 +500,7 @@ THREE.OBJLoader2 = (function () {
 							throw 'Vertex Colors were detected, but vertex count and color count do not match!';
 
 						}
-						this.processCompletedObject( null, this.rawMesh.groupName );
+						this.processCompletedObject( null, this.rawMesh.groupName, currentByte );
 						reachedFaces = false;
 
 					}
@@ -526,7 +547,7 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_G:
 					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
-					this.processCompletedGroup( concatBuffer );
+					this.processCompletedGroup( concatBuffer, currentByte );
 					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -534,7 +555,7 @@ THREE.OBJLoader2 = (function () {
 					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
 					if ( this.rawMesh.vertices.length > 0 ) {
 
-						this.processCompletedObject( concatBuffer, null );
+						this.processCompletedObject( concatBuffer, null, currentByte );
 						reachedFaces = false;
 
 					} else {
@@ -583,27 +604,29 @@ THREE.OBJLoader2 = (function () {
 				'\n\tReal RawMeshSubGroup count: ' + report.subGroups;
 		};
 
-		Parser.prototype.processCompletedObject = function ( objectName, groupName ) {
+		Parser.prototype.processCompletedObject = function ( objectName, groupName, currentByte ) {
 			var result = this.rawMesh.finalize();
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
-				this.onProgress( message );
+				this.buildMesh( result, currentByte );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 
 			}
 			this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
 		};
 
-		Parser.prototype.processCompletedGroup = function ( groupName ) {
+		Parser.prototype.processCompletedGroup = function ( groupName, currentByte ) {
 			var result = this.rawMesh.finalize();
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
-				this.onProgress( message );
+				this.buildMesh( result, currentByte );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed group: ' + groupName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 				this.rawMesh = this.rawMesh.newInstanceFromGroup( groupName );
 
 			} else {
@@ -614,14 +637,14 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		Parser.prototype.finalize = function () {
+		Parser.prototype.finalize = function ( currentByte ) {
 			this.logger.logInfo( 'Global output object count: ' + this.outputObjectCount );
 			var result = Validator.isValid( this.rawMesh ) ? this.rawMesh.finalize() : null;
 			if ( Validator.isValid( result ) ) {
 
 				this.inputObjectCount++;
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				var message = this.buildMesh( result, this.inputObjectCount );
+				this.buildMesh( result, currentByte );
 
 				if ( this.logger.isEnabled() ) {
 
@@ -632,13 +655,10 @@ THREE.OBJLoader2 = (function () {
 					this.logger.logInfo( parserFinalReport );
 
 				}
-				this.onProgress( message );
+				var progressBytesPercent = currentByte / this.totalBytes;
+				this.callbackProgress( 'Completed Parsing: 100.00%', progressBytesPercent );
 
 			}
-		};
-
-		Parser.prototype.onProgress = function ( text ) {
-			if ( Validator.isValid( text ) && Validator.isValid( this.callbackProgress) ) this.callbackProgress( text );
 		};
 
 		/**
@@ -647,7 +667,7 @@ THREE.OBJLoader2 = (function () {
 		 *
 		 * @param result
 		 */
-		Parser.prototype.buildMesh = function ( result ) {
+		Parser.prototype.buildMesh = function ( result, currentByte ) {
 			var rawObjectDescriptions = result.subGroups;
 
 			var vertexFA = new Float32Array( result.absoluteVertexCount );
@@ -779,6 +799,9 @@ THREE.OBJLoader2 = (function () {
 			this.callbackBuilder(
 				{
 					cmd: 'meshData',
+					progress: {
+						numericalValue: currentByte / this.totalBytes
+					},
 					params: {
 						meshName: result.name
 					},
