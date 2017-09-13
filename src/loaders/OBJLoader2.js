@@ -85,7 +85,15 @@ THREE.OBJLoader2 = (function () {
 			} else {
 
 				scope._setCallbacks( null, onMeshAlter, null );
-				onLoad( scope.parse( content ), scope.modelName, scope.instanceNo );
+				onLoad(
+					{
+						detail: {
+							loaderRootNode: scope.parse( content ),
+							modelName: scope.modelName,
+							instanceNo: scope.instanceNo
+						}
+					}
+				);
 
 			}
 
@@ -211,8 +219,16 @@ THREE.OBJLoader2 = (function () {
 		this.logger.logTimeStart( 'OBJLoader2 parseAsync: ' + this.modelName );
 
 		var scope = this;
-		var scopedOnLoad = function ( message ) {
-			onLoad( scope.loaderRootNode, scope.modelName, scope.instanceNo, message );
+		var scopedOnLoad = function () {
+			onLoad(
+				{
+					detail: {
+						loaderRootNode: scope.loaderRootNode,
+						modelName: scope.modelName,
+						instanceNo: scope.instanceNo
+					}
+				}
+			);
 			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};

@@ -63,9 +63,9 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
-			scope.scene.add( loaderRootNode );
-			console.log( 'Loading complete: ' + modelName );
+		var callbackOnLoad = function ( event ) {
+			scope.scene.add( event.detail.loaderRootNode );
+			console.log( 'Loading complete: ' + event.detail.modelName );
 			scope._reportProgress( '' );
 		};
 

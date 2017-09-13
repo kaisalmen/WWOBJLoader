@@ -541,7 +541,7 @@ THREE.LoaderSupport.Commons = (function () {
 	 */
 	Commons.prototype.onProgress = function ( type, text, value ) {
 		var content = Validator.isValid( text ) ? text: '';
-		var event = new CustomEvent( 'OBJLoader2Event', {
+		var event = {
 			detail: {
 				type: type,
 				modelName: this.modelName,
@@ -549,7 +549,7 @@ THREE.LoaderSupport.Commons = (function () {
 				text: content,
 				numericalValue: value
 			}
-		} );
+		};
 
 		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
 

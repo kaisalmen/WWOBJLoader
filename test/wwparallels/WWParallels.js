@@ -110,11 +110,8 @@ var WWParallels = (function () {
 
 	WWParallels.prototype._reportProgress = function( content ) {
 		var output = content;
-		if ( content instanceof  CustomEvent ) {
+		if ( Validator.isValid( content ) && Validator.isValid( content.detail ) ) output = content.detail.text;
 
-			output = content.detail.text;
-
-		}
 		output = Validator.verifyInput( output, '' );
 		console.log( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
 		document.getElementById( 'feedback' ).innerHTML = output;
@@ -145,11 +142,12 @@ var WWParallels = (function () {
 		}
 		scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackOnLoad = function ( loaderRootNode, modelName, instanceNo ) {
+		var callbackOnLoad = function ( event ) {
+			var instanceNo = event.detail.instanceNo;
 			scope.reportDonwload[ instanceNo ] = false;
-			scope.allAssets.push( loaderRootNode );
+			scope.allAssets.push( event.detail.loaderRootNode );
 
-			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
+			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
@@ -157,9 +155,12 @@ var WWParallels = (function () {
 			if ( scope.workerDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
-		var callbackReportProgress = function ( content, modelName, instanceNo ) {
+		var callbackReportProgress = function ( event ) {
+			var	instanceNo = event.detail.instanceNo;
+			var text = event.detail.text;
+
 			if ( scope.reportDonwload[ instanceNo ] ) {
-				var msg = 'Worker #' + instanceNo + ': ' + content;
+				var msg = 'Worker #' + instanceNo + ': ' + text;
 				console.log( msg );
 
 				scope.feedbackArray[ instanceNo ] = msg;
