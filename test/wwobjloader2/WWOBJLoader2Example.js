@@ -218,13 +218,13 @@ var WWOBJLoader2Example = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
 		prepData.setUseAsync( true );
 		var callbacks = prepData.getCallbacks();
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
-			var mesh = new THREE.Mesh( bufferGeometry, material );
+			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
 			var scale = 200.0;
 			mesh.scale.set( scale, scale, scale );
-			mesh.name = name;
+			mesh.name = event.detail.meshName;
 			var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
 			helper.name = 'VertexNormalsHelper';
 

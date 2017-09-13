@@ -365,7 +365,15 @@ THREE.LoaderSupport.Builder = (function () {
 		var useOrgMesh = true;
 		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
-			callbackOnMeshAlterResult = callbackOnMeshAlter( meshName, bufferGeometry, material );
+			callbackOnMeshAlterResult = callbackOnMeshAlter(
+				{
+					detail: {
+						meshName: meshName,
+						bufferGeometry: bufferGeometry,
+						material: material
+					}
+				}
+			);
 			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
 
 				if ( ! callbackOnMeshAlterResult.isDisregardMesh() && callbackOnMeshAlterResult.providesAlteredMeshes() ) {

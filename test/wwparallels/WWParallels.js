@@ -168,15 +168,17 @@ var WWParallels = (function () {
 			}
 		};
 
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
-			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
+			var material = event.detail.material;
+			var meshName = event.detail.meshName;
+			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
 				var materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
-				var mesh = new THREE.Mesh( bufferGeometry, material );
-				mesh.name = name;
+				var mesh = new THREE.Mesh( event.detail.bufferGeometry, material );
+				mesh.name = meshName;
 
 				override.addMesh( mesh );
 				override.alteredMesh = true;

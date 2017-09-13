@@ -165,17 +165,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
 		};
 
-		var wrapperOnMeshAlter = function ( meshName, bufferGeometry, material ) {
-			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) {
-
-				globalCallbacks.onMeshAlter( meshName, bufferGeometry, material );
-			}
-
-			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) {
-
-				prepDataCallbacks.onMeshAlter( meshName, bufferGeometry, material );
-
-			}
+		var wrapperOnMeshAlter = function ( event ) {
+			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) globalCallbacks.onMeshAlter( event );
+			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) prepDataCallbacks.onMeshAlter( event );
 		};
 
 		var supportTuple = this.workerDescription.workerSupports[ workerInstanceNo ];

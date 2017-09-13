@@ -304,12 +304,12 @@ var MeshSprayApp = (function () {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
 			logger.logInfo( event.detail.text );
 		};
-		var callbackMeshAlter = function ( name, bufferGeometry, material ) {
+		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
 
-			var mesh = new THREE.Mesh( bufferGeometry, material );
-			material.side = THREE.DoubleSide;
-			mesh.name = name;
+			event.detail.side = THREE.DoubleSide;
+			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
+			mesh.name = event.detail.meshName;
 			override.addMesh( mesh );
 
 			return override;
