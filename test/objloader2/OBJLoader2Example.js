@@ -74,6 +74,7 @@ var OBJLoader2Example = (function () {
 			objLoader.setMaterials( materials );
 			objLoader.setUseIndices( true );
 			objLoader.setDisregardNormals( false );
+			objLoader.getLogger().setDebug( true );
 			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
 		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );

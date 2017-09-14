@@ -7,6 +7,9 @@
  *   deregister
  *
  * @class
+ *
+ * @param {string} classDef Class definition to be used for construction
+ * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
 THREE.LoaderSupport.WorkerDirector = (function () {
 
@@ -109,7 +112,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	 * Store run instructions in internal instructionQueue.
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
-	 * @param {Object} prepData Either {@link THREE.LoaderSupport.PrepData}
+	 * @param {THREE.LoaderSupport.PrepData} prepData
 	 */
 	WorkerDirector.prototype.enqueueForRun = function ( prepData ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {

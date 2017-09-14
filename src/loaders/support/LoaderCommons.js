@@ -28,7 +28,7 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
- * Logging wrapper
+ * Logging wrapper for console
  * @class
  */
 THREE.LoaderSupport.ConsoleLogger = (function () {
@@ -142,7 +142,7 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 })();
 
 /**
- * Callbacks utilized by functions working with WWLoader implementations
+ * Callbacks utilized by loaders and builder.
  * @class
  */
 THREE.LoaderSupport.Callbacks = (function () {
@@ -191,7 +191,8 @@ THREE.LoaderSupport.Callbacks = (function () {
 
 
 /**
- * Global callback definition
+ * Builds one or many THREE.Mesh from one raw set of Arraybuffers, materialGroup descriptions and further parameters.
+ * Supports vertex, vertexColor, normal, uv and index buffers.
  * @class
  */
 THREE.LoaderSupport.Builder = (function () {
@@ -255,6 +256,7 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info,
+	 * @memberOf THREE.LoaderSupport.Builder
 	 *
 	 * @param {Object} payload buffers, params, materials
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
@@ -440,7 +442,7 @@ THREE.LoaderSupport.Builder = (function () {
 
 
 /**
- * Global callback definition
+ * Base class to be used by loaders.
  * @class
  */
 THREE.LoaderSupport.Commons = (function () {
@@ -484,17 +486,30 @@ THREE.LoaderSupport.Commons = (function () {
 		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad );
 	};
 
+	/**
+	 * Provides access to console logging wrapper.
+	 *
+	 * @returns {THREE.LoaderSupport.ConsoleLogger}
+	 */
 	Commons.prototype.getLogger = function () {
 		return this.logger;
 	};
 
+	/**
+	 * Set the name of the model.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {string} modelName
+	 */
 	Commons.prototype.setModelName = function ( modelName ) {
 		this.modelName = Validator.verifyInput( modelName, this.modelName );
 	};
 
 	/**
-	 * The URL of the base path
-	 * @param {string} path
+	 * The URL of the base path.
+	 * @memberOf THREE.LoaderSupport.Commons
+	 *
+	 * @param {string} path URL
 	 */
 	Commons.prototype.setPath = function ( path ) {
 		this.path = Validator.verifyInput( path, this.path );
@@ -504,7 +519,7 @@ THREE.LoaderSupport.Commons = (function () {
 	 * Set the node where the loaded objects will be attached directly.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {THREE.Object3D} streamMeshesTo Attached scenegraph object where meshes will be attached live
+	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
 	 */
 	Commons.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
 		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
@@ -521,20 +536,20 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Tells whether indices should be used
+	 * Instructs loaders to create indexed {@link THREE.BufferGeometry}.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {boolean} useIndices=false Default is false
+	 * @param {boolean} useIndices=false
 	 */
 	Commons.prototype.setUseIndices = function ( useIndices ) {
 		this.useIndices = useIndices === true;
 	};
 
 	/**
-	 * Tells whether normals should be completely disregarded
+	 * Tells whether normals should be completely disregarded and regenerated.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 *
-	 * @param {boolean} disregardNormals=false Default is false
+	 * @param {boolean} disregardNormals=false
 	 */
 	Commons.prototype.setDisregardNormals = function ( disregardNormals ) {
 		this.disregardNormals = disregardNormals === true;
@@ -543,11 +558,13 @@ THREE.LoaderSupport.Commons = (function () {
 	/**
 	 * Announce feedback which is give to the registered callbacks
 	 * @memberOf THREE.LoaderSupport.Commons
+	 * @private
 	 *
-	 * @param baseText
-	 * @param text
+	 * @param {string} type
+	 * @param {string} text
+	 * @param {number} numericalValue
 	 */
-	Commons.prototype.onProgress = function ( type, text, value ) {
+	Commons.prototype.onProgress = function ( type, text, numericalValue ) {
 		var content = Validator.isValid( text ) ? text: '';
 		var event = {
 			detail: {
@@ -555,7 +572,7 @@ THREE.LoaderSupport.Commons = (function () {
 				modelName: this.modelName,
 				instanceNo: this.instanceNo,
 				text: content,
-				numericalValue: value
+				numericalValue: numericalValue
 			}
 		};
 
@@ -569,11 +586,11 @@ THREE.LoaderSupport.Commons = (function () {
 
 
 /**
- * Object to return by {@link THREE.LoaderSupport.Commons}.callbacks.meshLoaded.
- * Used to disregard a certain mesh or to return one to many created meshes.
+ * Object to return by callback onMeshAlter. Used to disregard a certain mesh or to return one to many meshes.
  * @class
  *
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
+ * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
 THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
 
@@ -663,7 +680,7 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 
 
 /**
- * Base class for configuration of prepareRun when using {@link THREE.LoaderSupport.WorkerSupport}.
+ * Configuration instructions to be used by run method.
  * @class
  */
 THREE.LoaderSupport.PrepData = (function () {
@@ -683,41 +700,40 @@ THREE.LoaderSupport.PrepData = (function () {
 	}
 
 	/**
-	 * {@link THREE.Object3D} where meshes will be attached.
+	 * Set the node where the loaded objects will be attached directly.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {THREE.Object3D} streamMeshesTo Scene graph object
+	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
 	 */
 	PrepData.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
 		this.streamMeshesTo = Validator.verifyInput( streamMeshesTo, null );
 	};
 
 	/**
-	 * Tells whether a material shall be created per smoothing group
+	 * Tells whether a material shall be created per smoothing group.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {boolean} materialPerSmoothingGroup
+	 * @param {boolean} materialPerSmoothingGroup=false
 	 */
 	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
 	};
 
 	/**
 	 * Tells whether indices should be used
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {boolean} useIndices=false Default is false
+	 * @param {boolean} useIndices=false
 	 */
 	PrepData.prototype.setUseIndices = function ( useIndices ) {
 		this.useIndices = useIndices === true;
 	};
 
-
 	/**
-	 * Tells whether normals should be completely disregarded
+	 * Tells whether normals should be completely disregarded and regenerated.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {boolean} disregardNormals=false Default is false
+	 * @param {boolean} disregardNormals=false
 	 */
 	PrepData.prototype.setDisregardNormals = function ( disregardNormals ) {
 		this.disregardNormals = disregardNormals === true;
@@ -744,16 +760,18 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
-	 * Add a resource description
+	 * Add a resource description.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {THREE.LoaderSupport.ResourceDescriptor} The resource description
+	 * @param {THREE.LoaderSupport.ResourceDescriptor}
 	 */
 	PrepData.prototype.addResource = function ( resource ) {
 		this.resources.push( resource );
 	};
 
 	/**
+	 * If true uses async loading with worker, if false loads data synchronously.
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @param {boolean} useAsync
 	 */
@@ -763,6 +781,7 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	/**
 	 * Clones this object and returns it afterwards.
+	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @returns {@link THREE.LoaderSupport.PrepData}
 	 */

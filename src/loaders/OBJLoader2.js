@@ -28,25 +28,25 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Tells whether a material shall be created per smoothing group
+	 * Tells whether a material shall be created per smoothing group.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {boolean} materialPerSmoothingGroup=false Default is false
+	 * @param {boolean} materialPerSmoothingGroup=false
 	 */
 	OBJLoader2.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
 	};
 
 	/**
-	 * Use this convenient method to load an OBJ file at the given URL. Per default the fileLoader uses an arraybuffer
+	 * Use this convenient method to load an OBJ file at the given URL. Per default the fileLoader uses an arraybuffer.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {string} url URL of the file to load
 	 * @param {callback} onLoad Called after loading was successfully completed
 	 * @param {callback} onProgress Called to report progress of loading. The argument will be the XMLHttpRequest instance, which contains {integer total} and {integer loaded} bytes.
 	 * @param {callback} onError Called after an error occurred during loading
-	 * @param {callback} onMeshAlter Called after a new mesh raw data becomes available
-	 * @param {boolean} useAsync Set this to use async loading
+	 * @param {callback} onMeshAlter Called after a new mesh raw data becomes available to allow alteration
+	 * @param {boolean} useAsync If true uses async loading with worker, if false loads data synchronously
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
 		var scope = this;
@@ -159,10 +159,10 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Parses OBJ content synchronously.
+	 * Parses OBJ data synchronously from arraybuffer or string.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param content
+	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
 		this.logger.logTimeStart( 'OBJLoader2 parse: ' + this.modelName );
@@ -209,11 +209,11 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Parses OBJ content asynchronously.
+	 * Parses OBJ content asynchronously from arraybuffer.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {arraybuffer} content
-	 * @param {callback} onLoad
+	 * @param {arraybuffer} content OBJ data as Uint8Array
+	 * @param {callback} onLoad Called after worker successfully completed loading
 	 */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
 		this.logger.logTimeStart( 'OBJLoader2 parseAsync: ' + this.modelName );
