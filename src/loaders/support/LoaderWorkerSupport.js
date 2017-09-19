@@ -1,3 +1,8 @@
+/**
+ * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
+ *
+ * @class
+ */
 THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 	function WorkerRunnerRefImpl() {
@@ -8,6 +13,13 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		self.addEventListener( 'message', scopedRunner, false );
 	}
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
+	 *
+	 * @param parser
+	 * @param params
+	 */
 	WorkerRunnerRefImpl.prototype.applyProperties = function ( parser, params ) {
 		var property, funcName, values;
 		for ( property in params ) {
@@ -26,6 +38,12 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		}
 	};
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
+	 *
+	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 */
 	WorkerRunnerRefImpl.prototype.run = function ( payload ) {
 		var logger = new ConsoleLogger( payload.logger.enabled, payload.logger.debug );
 
@@ -66,6 +84,13 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	return WorkerRunnerRefImpl;
 })();
 
+/**
+ * TODO
+ *
+ * @class
+ *
+ * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
+ */
 THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var WORKER_SUPPORT_VERSION = '1.0.0';
@@ -92,6 +117,14 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 	}
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param functionCodeBuilder
+	 * @param forceWorkerReload
+	 * @param runnerImpl
+	 */
 	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, runnerImpl ) {
 		this.running = false;
 		if ( forceWorkerReload ) {
@@ -160,6 +193,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		}
 	};
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 */
 	WorkerSupport.prototype.terminateWorker = function () {
 		if ( Validator.isValid( this.worker ) ) {
 			this.worker.terminate();
@@ -168,6 +205,13 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		this.workerCode = null;
 	};
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param builder
+	 * @param onLoad
+	 */
 	WorkerSupport.prototype.setCallbacks = function ( builder, onLoad ) {
 		this.callbacks = {
 			builder: builder,
@@ -230,10 +274,22 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return objectString;
 	};
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param terminateRequested
+	 */
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.terminateRequested = terminateRequested === true;
 	};
 
+	/**
+	 * TODO
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param messageObject
+	 */
 	WorkerSupport.prototype.run = function ( messageObject ) {
 		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';

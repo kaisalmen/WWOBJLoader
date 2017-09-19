@@ -177,7 +177,7 @@ THREE.LoaderSupport.Callbacks = (function () {
 	};
 
 	/**
-	 * Register callback function that is called once loading of the complete model is completed.
+	 * Register callback function that is called once loading of the complete OBJ file is completed.
 	 * @memberOf THREE.LoaderSupport.Callbacks
 	 *
 	 * @param {callback} callbackOnLoad Callback function for described functionality
@@ -255,10 +255,10 @@ THREE.LoaderSupport.Builder = (function () {
 	};
 
 	/**
-	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info,
+	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info.
 	 * @memberOf THREE.LoaderSupport.Builder
 	 *
-	 * @param {Object} payload buffers, params, materials
+	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
 	 */
 	Builder.prototype.buildMeshes = function ( payload ) {
@@ -556,13 +556,13 @@ THREE.LoaderSupport.Commons = (function () {
 	};
 
 	/**
-	 * Announce feedback which is give to the registered callbacks
+	 * Announce feedback which is give to the registered callbacks.
 	 * @memberOf THREE.LoaderSupport.Commons
 	 * @private
 	 *
-	 * @param {string} type
-	 * @param {string} text
-	 * @param {number} numericalValue
+	 * @param {string} type The type of event
+	 * @param {string} text Textual description of the event
+	 * @param {number} numericalValue Numerical value describing the progress
 	 */
 	Commons.prototype.onProgress = function ( type, text, numericalValue ) {
 		var content = Validator.isValid( text ) ? text: '';
@@ -609,6 +609,7 @@ THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
 	 */
 	LoadedMeshUserOverride.prototype.addMesh = function ( mesh ) {
 		this.meshes.push( mesh );
+		this.alteredMesh = true;
 	};
 
 	/**
