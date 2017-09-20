@@ -1,14 +1,14 @@
 if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
 
 /**
- * Validation functions
+ * Validation functions.
  * @class
  */
 THREE.LoaderSupport.Validator = {
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
 	 *
-	 * @param input Anything
+	 * @param input Can be anything
 	 * @returns {boolean}
 	 */
 	isValid: function( input ) {
@@ -17,8 +17,8 @@ THREE.LoaderSupport.Validator = {
 	/**
 	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
 	 *
-	 * @param input Anything
-	 * @param defaultValue Anything
+	 * @param input Can be anything
+	 * @param defaultValue Can be anything
 	 * @returns {*}
 	 */
 	verifyInput: function( input, defaultValue ) {
@@ -28,8 +28,11 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
- * Logging wrapper for console
+ * Logging wrapper for console.
  * @class
+ *
+ * @param {boolean} enabled=true Tell if logger is enabled.
+ * @param {boolean} debug=false Toggle debug logging.
  */
 THREE.LoaderSupport.ConsoleLogger = (function () {
 
@@ -39,7 +42,7 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	}
 
 	/**
-	 * Enable or disable debug logging
+	 * Enable or disable debug logging.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {boolean} debug True or False
@@ -49,7 +52,7 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	};
 
 	/**
-	 * Returns if is enabled and debug
+	 * Returns if is enabled and debug.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @returns {boolean}
@@ -59,7 +62,7 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	};
 
 	/**
-	 * Enable or disable info, debug and time logging
+	 * Enable or disable info, debug and time logging.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {boolean} enabled True or False
@@ -129,7 +132,7 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	};
 
 	/**
-	 * Start time measurement with provided id.
+	 * Stop time measurement started with provided id.
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {string} id Time identification
@@ -444,6 +447,9 @@ THREE.LoaderSupport.Builder = (function () {
 /**
  * Base class to be used by loaders.
  * @class
+ *
+ * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
+ * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
 THREE.LoaderSupport.Commons = (function () {
 

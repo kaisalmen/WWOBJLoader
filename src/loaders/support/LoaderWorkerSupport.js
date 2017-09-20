@@ -14,11 +14,11 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	}
 
 	/**
-	 * TODO
+	 * Applies values from parameter object via set functions or via direct assignment.
 	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
 	 *
-	 * @param parser
-	 * @param params
+	 * @param {Object} parser The parser instance
+	 * @param {Object} params The parameter object
 	 */
 	WorkerRunnerRefImpl.prototype.applyProperties = function ( parser, params ) {
 		var property, funcName, values;
@@ -39,7 +39,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	};
 
 	/**
-	 * TODO
+	 * Configures the Parser implementation according the supplied configuration object.
 	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
@@ -85,8 +85,8 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 })();
 
 /**
- * TODO
- *
+ * This class provides means to transform existing parser code into a web worker. It defines a simple communication protocol
+ * which allows to configure the worker and receive raw mesh data during execution.
  * @class
  *
  * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
@@ -118,12 +118,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	}
 
 	/**
-	 * TODO
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * Validate the status of worker code and the derived worker.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param functionCodeBuilder
-	 * @param forceWorkerReload
-	 * @param runnerImpl
+	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
+	 * @param {boolean} forceWorkerReload Force re-build of the worker code.
+	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
 	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, runnerImpl ) {
 		this.running = false;
@@ -194,8 +194,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	/**
-	 * TODO
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * Terminate the worker and the code.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 */
 	WorkerSupport.prototype.terminateWorker = function () {
 		if ( Validator.isValid( this.worker ) ) {
@@ -206,11 +206,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	/**
-	 * TODO
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * Specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param builder
-	 * @param onLoad
+	 * @param {Function} builder The builder function. Default is {@link THREE.LoaderSupport.Builder}.
+	 * @param {Function} onLoad The function that is called when parsing is complete.
 	 */
 	WorkerSupport.prototype.setCallbacks = function ( builder, onLoad ) {
 		this.callbacks = {
@@ -275,27 +275,27 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	/**
-	 * TODO
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * Request termination of worker once parser is finished.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param terminateRequested
+	 * @param {boolean} terminateRequested True or false.
 	 */
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.terminateRequested = terminateRequested === true;
 	};
 
 	/**
-	 * TODO
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * Runs the parser with the provided configuration.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param messageObject
+	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
-	WorkerSupport.prototype.run = function ( messageObject ) {
+	WorkerSupport.prototype.run = function ( payload ) {
 		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( Validator.isValid( this.worker ) ) {
 			this.running = true;
-			this.worker.postMessage( messageObject );
+			this.worker.postMessage( payload );
 		}
 	};
 
