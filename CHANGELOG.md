@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0
+
+TODO 
+
 ## 1.4.1
 
 #### Loader related changes

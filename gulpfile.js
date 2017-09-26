@@ -9,6 +9,9 @@ var concat = require( 'gulp-concat' );
 var uglify = require( 'gulp-uglify' );
 var header = require( 'gulp-header' );
 var replace = require( 'gulp-replace-task' );
+var remoteSrc = require( 'gulp-remote-src' );
+var gutil = require( 'gulp-util' );
+var decompress = require('gulp-decompress');
 
 var jsdoc = require( 'gulp-jsdoc3' );
 var config = require('./jsdoc.json');
@@ -499,6 +502,96 @@ function buildExample() {
 		.pipe( gulp.dest( exampleDef.dir.dest ) );
 };
 
+gulp.task( 'dl-female02', function() {
+	gutil.log( 'Downloading female02:' );
+	return remoteSrc(
+		[ 'female02.obj', 'female02.mtl', 'female02_vertex_colors.obj', '01_-_Default1noCulling.JPG', '02_-_Default1noCulling.JPG', '03_-_Default1noCulling.JPG' ],
+		{
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/female02/'
+		}
+	).pipe( gulp.dest( './resource/obj/female02/' ) );
+});
+
+gulp.task( 'dl-male02', [ 'dl-female02' ], function() {
+	gutil.log( 'Downloading male02:' );
+	return remoteSrc(
+		[ 'male02.obj', 'male02.mtl', '01_-_Default1noCulling.JPG', 'male-02-1noCulling.JPG', 'orig_02_-_Defaul1noCulling.JPG' ],
+		{
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/male02/'
+		}
+	).pipe( gulp.dest( './resource/obj/male02/' ) );
+});
+
+gulp.task( 'dl-cerberus', [ 'dl-male02' ], function() {
+	gutil.log( 'Downloading cerberus:' );
+	return remoteSrc(
+		[ 'Cerberus.obj' ],
+		{
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/cerberus/'
+		}
+	)
+	.pipe( gulp.dest( './resource/obj/cerberus/' ) );
+});
+
+gulp.task( 'dl-vive-controller', [ 'dl-cerberus' ], function() {
+	gutil.log( 'Downloading vive-controller:' );
+	return remoteSrc(
+		[ 'vr_controller_vive_1_5.obj' ],
+		{
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/vive-controller/'
+		}
+	)
+	.pipe( gulp.dest( './resource/obj/vive-controller/' ) );
+});
+
+gulp.task( 'dl-walt', [ 'dl-vive-controller' ], function() {
+	gutil.log( 'Downloading walt:' );
+	return remoteSrc(
+		[ 'WaltHead.obj', 'WaltHead.mtl' ],
+		{
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/walt/'
+		}
+	)
+	.pipe( gulp.dest( './resource/obj/walt/' ) );
+});
+
+gulp.task( 'dl-ptv1', [ 'dl-walt' ], function() {
+	gutil.log( 'Downloading model PTV1:' );
+	return remoteSrc(
+		[ 'PTV1.zip' ],
+		{
+			base: 'https://kaisalmen.de/resource/obj/PTV1/'
+		}
+	)
+	.pipe( decompress() )
+	.pipe( gulp.dest( './resource/obj/PTV1/' ) );
+});
+
+gulp.task( 'dl-sink', [ 'dl-ptv1' ], function() {
+	gutil.log( 'Downloading model Sink from Zomax (Cornelius Dämmrich):' );
+	return remoteSrc(
+		[ 'zomax-net_haze-sink-scene.zip' ],
+		{
+			base: 'https://zomax.net/download/263/'
+		}
+	)
+	.pipe( decompress() )
+	.pipe( gulp.dest( './resource/obj/zomax/' ) );
+});
+
+gulp.task( 'dl-oven', [ 'dl-sink' ], function() {
+	gutil.log( 'Downloading model Oven from Zomax (Cornelius Dämmrich):' );
+	return remoteSrc(
+		[ 'zomax-net_haze-oven-scene.obj' ],
+		{
+			base: 'https://zomax.net/download/260/'
+		}
+	)
+	.pipe( decompress() )
+	.pipe( gulp.dest( './resource/obj/zomax/' ) );
+});
+
+
 gulp.task(
 	'build-examples',
 	[
@@ -508,6 +601,14 @@ gulp.task(
 		'create-wwobj2_stage-examples',
 		'create-wwobj2_parallels-examples',
 		'create-meshspray-examples'
+	]
+);
+
+
+gulp.task(
+	'get-resources',
+	[
+		'dl-oven'
 	]
 );
 
