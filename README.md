@@ -35,25 +35,28 @@ From the project's root run `gulp` to create The documentation in directory **bu
 
 ## Implementation Overview
 Version 2.0.0 introduced substantial enhancements and chances especially but not only to the way the web worker execution of the parser is performed:
-- `OBJLoader2` and `WWOBJLoader` have been fused. Worker based asynchronous execution of the loader is now handled by `parseAsync` method. Common functionality independent of OBJ parsing has been moved to `LoaderSupport`. This enables the Parser's execution in a worker. Raw results are passed to a common mesh builder function. This functionality can now be applied to any other Loader.
+- `OBJLoader2` and `WWOBJLoader2` have been fused. Worker based asynchronous execution of the loader is now handled by `parseAsync`, `load` with `useAsync` flag or `run` which is used for batch processing (see example **OBJLoader2 usage options** below). Common functionality independent of OBJ parsing has been moved to package `THREE.LoaderSupport` located in `LoaderSupport.js`. The Parser can either be executed directly or it is run inside a web worker (`THREE.LoaderSupport.WorkerSupport` handles the building and execution). Raw results are passed to a common mesh builder function. These support classes can be used to transform other Loaders to support asynchronous parsing. 
 
-#### **UPDATE REQUIRED:** Parser POIs
-The parser and mesh creation functions have reached full feature parity with the existing OBJ loader. These are some interesting POIs:
-- Per default `OBJLoader2` parse method requires arraybuffer as input. A fallback method for parsing text directly still exists, but it is approx. 15-20 pecent slower
-- Face N-Gons are supported
-- Direct re-usage of all involved classes is fully supported. I took care in resource clean-up and re-validation of status on all involved objects
+### Features
+`OBJLoader2` contains all features of the existing `OBJLoader` and it has to . These are some interesting POIs:
+- `OBJLoader2.parse` method accepts arraybuffer or string as input. Text processing is approx. 15-20 pecent slower
+- `OBJLoader2.parseAsync` only accepts arraybuffer as input as buffer is passed to worker.
+- Face N-Gons are now support supported
+- Indexed rendering is now available, but `OBJLoader2` must it must be switched on via `setUseIndices` (see example **OBJLoader2 basic usage** below).
+- `OBJLoader2` must now be re-instantiated every time it is used, but caching of worker code via `WorkerSupport` and `LoaderDirector` is available
+- `ConsoleLogger` now encapsulates all console logging. Logging can be fully deactivated or switched to debug mode (issue #15)
+- progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16) 
 - "o name" (object), "g name" (group) and new vertex definition without any other declaration lead to new object creation
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
 
 
-#### **UPDATE REQUIRED:** Directing the symphony
-`WWOBJLoader2Director` is introduced to ease usage of multiple `WWOBJLoader2`. It is able to create a configurable amount of loaders via reflection just by providing parameters. An instruction queue is fed and all workers created will work to deplete it once they have been started. The usage of `WWOBJLoader2Director` is not required.
+### Directing the symphony
+`LoaderDirector` is able to create a configurable amount of `OBJLoader2` via reflection just by providing parameters. It is now able to direct all loaders that over automation via `run` and use `WorkerSupport` to allow running the `Parser` in a web worker. An instruction queue is fed and all workers created will work to deplete it once they have been started.
 
 
-#### **UPDATE REQUIRED:** Bundle Details
-The web worker code is contained in `WWOBJLoader2.js`. At worker init a string is built from code within the class that contains all code of private classes within `WWOBJLoader2._buildWebWorkerCode`. `OBJLoader2` also provides provides a build function as `Parser` is private to it which is called by during the execution of the function. The string contains all code required for the worker to be fully functional. It is put to a blob that is used to create the worker. This reliefs the user of the loader to care about path issues and static imports within the worker are no longer required.
-
+### Web Worker Support
+`LoaderSupport` offers utility functions used to serialize existing code into strings that are used to build the web worker code. Any loader that uses it must provide a function that builds the parser code (for example see `buildCode` inside `OBJLoader2.parseAsync`). `WorkerSupport` provides wrapper code to create the web worker and to organize communication with it. Configuration of the Parser inside the worker is handled by a configuration object that configures the parser identical to synchronous usage.
 
 ## Examples:
 [OBJLoader2 basic usage](https://kaisalmen.de/proto/test/objloader2/main.src.html)<br>
@@ -64,7 +67,11 @@ The web worker code is contained in `WWOBJLoader2.js`. At worker init a string i
 
 ## Models and resources
 
-Use gulp to download missing resources (OBJ, MTL files and texutres):
+Use gulp to download missing resources (OBJ, MTL files and textures):
 ```bash
 gulp get-resources
 ```
+
+Have fun!
+
+Kai
