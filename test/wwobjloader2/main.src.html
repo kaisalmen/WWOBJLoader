@@ -4,8 +4,8 @@
 		<title>three.js webgl - OBJLoader2 usage options</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-/*STUB_CSS_EMBED*/
-/*STUB_CSS_LINK*/
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
@@ -21,14 +21,17 @@
 		</div>
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
-/*STUB_JS_THREE*/
+		<script src="../../node_modules/three/build/three.js"></script>
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-/*STUB_JS_EXT*/
+		<script src="../../src/loaders/support/LoaderCommons.js"></script>
+		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
+		<script src="../../src/loaders/OBJLoader2.js"></script>
+		<script src="./WWOBJLoader2Example.js"></script>
 		<script>
-/*STUB_JS_INLINE*/
+
 
 			var app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
 

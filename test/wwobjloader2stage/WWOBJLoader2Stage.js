@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Validator = THREE.OBJLoader2.prototype._getValidator();
+var Validator = THREE.LoaderSupport.Validator;
 
 var WWOBJLoader2Stage = (function () {
 
@@ -25,18 +25,25 @@ var WWOBJLoader2Stage = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwObjLoader2 = new THREE.OBJLoader2.WWOBJLoader2();
-		this.wwObjLoader2.setCrossOrigin( 'anonymous' );
-
 		this.controls = null;
-
 		this.cube = null;
 
-		this.loadCounter = 0;
 		this.objs2Load = [];
 		this.allAssets = [];
-
 		this.processing = false;
+
+		// Check for the various File API support.
+		this.fileApiAvailable = true;
+		if ( window.File && window.FileReader && window.FileList && window.Blob ) {
+
+			console.log( 'File API is supported! Enabling all features.' );
+
+		} else {
+
+			this.fileApiAvailable = false;
+			console.warn( 'File API is not supported! Disabling file loading.' );
+
+		}
 	}
 
 	WWOBJLoader2Stage.prototype.initGL = function () {
@@ -74,33 +81,6 @@ var WWOBJLoader2Stage = (function () {
 		this.scene.add( this.cube );
 	};
 
-	WWOBJLoader2Stage.prototype.initPostGL = function () {
-		var scope = this;
-
-		var reloadAssetsProxy = function () {
-			scope.reloadAssets();
-		};
-		var materialsLoaded = function ( materials ) {
-			var count = Validator.isValid( materials ) ? materials.length : 0;
-			console.log( 'Loaded #' + count + ' materials.' );
-		};
-		var meshLoaded = function ( meshName ) {
-			// just for demonstration...
-		};
-		var errorWhileLoading = function () {
-			// just for demonstration...
-		};
-		this.wwObjLoader2.registerCallbackMaterialsLoaded( materialsLoaded );
-		this.wwObjLoader2.registerCallbackMeshLoaded( meshLoaded );
-		this.wwObjLoader2.registerCallbackCompletedLoading( reloadAssetsProxy );
-		this.wwObjLoader2.registerCallbackProgress( this.reportProgress );
-		this.wwObjLoader2.registerCallbackErrorWhileLoading( errorWhileLoading );
-
-		this.reloadAssets();
-
-		return true;
-	};
-
 	WWOBJLoader2Stage.prototype.resizeDisplayGL = function () {
 		this.controls.handleResize();
 
@@ -129,6 +109,7 @@ var WWOBJLoader2Stage = (function () {
 
 	WWOBJLoader2Stage.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
+		this.reloadAssets();
 
 		this.controls.update();
 
@@ -138,16 +119,110 @@ var WWOBJLoader2Stage = (function () {
 		this.renderer.render( this.scene, this.camera );
 	};
 
+	WWOBJLoader2Stage.prototype.initContent = function (  ) {
+		this.assetsDef = {
+			objsMale: null,
+			objsFemale: null,
+			objsCerberus: null,
+			objsWaltHead: null,
+			objsViveController: null,
+			objsPtv1Zip: null,
+			objsZomaxOven: null,
+			objsZomaxSink: null
+		};
+		this.assetsDef.objsFemaleMale = [];
+		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+		var pivot = new THREE.Object3D();
+		pivot.position.set( -200, 0, -175 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsMale = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( 200, 0, -75 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsFemale = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( 0, -100, 0 );
+		pivot.scale.set( 50.0, 50.0, 50.0 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsCerberus = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( 0, 0, 75 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsWaltHead = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( 0, 0, 200 );
+		pivot.scale.set( 400.0, 400.0, 400.0 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsViveController = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( -250, 0, -200 );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsPtv1Zip = prepData;
+
+		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+		prepData = new THREE.LoaderSupport.PrepData( 'oven' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( -200, 0, 50 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsZomaxOven = prepData;
+
+		prepData = new THREE.LoaderSupport.PrepData( 'sink' );
+		pivot = new THREE.Object3D();
+		pivot.position.set( -200, 0, 200 );
+		prepData.setStreamMeshesTo( pivot );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
+		prepData.setUseIndices( true );
+		prepData.setUseAsync( true );
+		this.assetsDef.objsZomaxSink = prepData;
+	};
+
 	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
-		var ref;
-		var scope = this;
-
+		var storedObject3d;
 		for ( var asset in this.allAssets ) {
-			ref = this.allAssets[ asset ];
 
+			storedObject3d = this.allAssets[ asset ];
+			var scope = this;
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.pivot ) return;
+				if ( storedObject3d === object3d ) return;
 
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
@@ -168,122 +243,179 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			scope.scene.remove( ref.pivot );
-			ref.pivot.traverse( remover );
-			ref.pivot = null;
+			if ( Validator.isValid( storedObject3d ) ) {
+
+				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
+				storedObject3d.traverse( remover );
+				storedObject3d = null;
+
+			}
 		}
-		this.loadCounter = 0;
 		this.allAssets = [];
 	};
 
-	WWOBJLoader2Stage.prototype.updateAssets = function ( objs ) {
-		this.objs2Load = [];
-		this.loadCounter = 0;
-		this.processing = true;
+	WWOBJLoader2Stage.prototype.updateAssets = function ( prepData ) {
+		if ( Validator.isValid( prepData ) ) {
 
-		if ( Validator.isValid( objs ) ) {
+			if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
-			var obj2Load;
-			var pivot;
-			var errors = '';
-
-			for ( var i = 0; i < objs.length; i ++ ) {
-
-				obj2Load = objs[i];
-				if ( ! this.allAssets.hasOwnProperty( obj2Load.name ) ) {
-
-					pivot = new THREE.Object3D();
-					pivot.position.set( obj2Load.pos.x, obj2Load.pos.y, obj2Load.pos.z );
-					pivot.scale.set( obj2Load.scale, obj2Load.scale, obj2Load.scale );
-					obj2Load.pivot = pivot;
-					this.objs2Load.push( obj2Load );
-					this.allAssets[obj2Load.name] = obj2Load;
-
-				} else {
-
-					errors += obj2Load.name + ' ';
-
-				}
-
-				if ( errors !== '' ) {
-					this.reportProgress( 'Will not reload: ' + errors );
-				}
-
-			}
-
-		}
-	};
-
-	WWOBJLoader2Stage.prototype.reportProgress = function( text ) {
-		document.getElementById( 'feedback' ).innerHTML = text;
-	};
-
-	WWOBJLoader2Stage.prototype.reloadAssets = function () {
-		var scope = this;
-
-		if ( scope.loadCounter < scope.objs2Load.length ) {
-
-			var obj2Load = scope.objs2Load[ scope.loadCounter ];
-			var prepData;
-			scope.loadCounter ++;
-
-			scope.scene.add( obj2Load.pivot );
-
-			if ( Validator.isValid( obj2Load.fileZip ) ) {
-
-				var zipTools = new ZipTools( obj2Load.pathBase );
-				var mtlAsString = null;
-
-				var setObjAsArrayBuffer = function ( data ) {
-					scope.reportProgress( '' );
-					prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataArrayBuffer(
-						obj2Load.name, data, obj2Load.pathTexture, mtlAsString
-					);
-					prepData.setSceneGraphBaseNode( obj2Load.pivot );
-					scope.wwObjLoader2.prepareRun( prepData );
-					scope.wwObjLoader2.run();
-				};
-
-				var setMtlAsString = function ( data ) {
-					mtlAsString = data;
-					scope.reportProgress( 'Unzipping: ' + obj2Load.fileObj );
-					zipTools.unpackAsUint8Array( obj2Load.fileObj, setObjAsArrayBuffer );
-				};
-
-				var doneUnzipping = function () {
-					if ( Validator.isValid( obj2Load.fileMtl ) ) {
-
-						zipTools.unpackAsString( obj2Load.fileMtl, setMtlAsString );
-
-					} else {
-
-						setMtlAsString( null );
-
-					}
-				};
-
-				var errorCase = function ( text ) {
-					scope.reportProgress( text );
-					scope.processing = false;
-				};
-				zipTools.load( obj2Load.fileZip, { success: doneUnzipping, progress: scope.reportProgress, error: errorCase } );
+				this.objs2Load.push( prepData );
 
 			} else {
 
-				scope.reportProgress( '' );
-				prepData = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-					obj2Load.name, obj2Load.pathBase, obj2Load.fileObj, obj2Load.pathTexture, obj2Load.fileMtl
-				);
-				prepData.setSceneGraphBaseNode( obj2Load.pivot );
-				scope.wwObjLoader2.prepareRun( prepData );
-				scope.wwObjLoader2.run();
+				this._reportProgress( { detail: { text: 'Will not reload: ' + prepData.modelName } } );
 
 			}
-		} else {
-
-			scope.processing = false;
 
 		}
+	};
+
+	WWOBJLoader2Stage.prototype._reportProgress = function( event ) {
+		var output = Validator.verifyInput( event.detail.text, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
+	};
+
+	WWOBJLoader2Stage.prototype.reloadAssets = function () {
+		if ( this.objs2Load.length === 0 || this.processing ) {
+
+			return;
+
+		} else {
+
+			this.processing = true;
+
+		}
+
+		var objLoader2 = new THREE.OBJLoader2();
+		var prepData = this.objs2Load[ 0 ];
+		this.objs2Load.shift();
+		var streamMeshes = prepData.streamMeshesTo;
+		if ( Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
+
+		var scope = this;
+		var reloadAssetsProxy = function ( event ) {
+			if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
+			scope.processing = false;
+			scope.allAssets[ prepData.modelName ] = event.detail.loaderRootNode;
+			scope.reloadAssets();
+			scope._reportProgress( { detail: { text: '' } } );
+		};
+		var callbacks = prepData.getCallbacks();
+		callbacks.setCallbackOnLoad( reloadAssetsProxy );
+		callbacks.setCallbackOnProgress( this._reportProgress );
+
+		var first = prepData.resources[ 0 ];
+		if ( first.extension === 'ZIP' ) {
+			var resourceObj = prepData.resources[ 1 ];
+			var resourceMtl = prepData.length === 3 ? prepData.resources[ 2 ] : null;
+
+			var zipTools = new ZipTools( first.pathBase );
+			var setObjAsArrayBuffer = function ( data ) {
+				scope._reportProgress( { detail: { text: '' } } );
+				prepData.resources[ 1 ].content = data;
+				objLoader2.run( prepData );
+			};
+
+			var setMtlAsString = function ( data ) {
+
+				if ( prepData.resources.length > 1 ) resourceObj.content = data;
+				scope._reportProgress( { detail: { text: 'Unzipping: ' + resourceObj.name } } );
+				zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
+			};
+
+			var doneUnzipping = function () {
+
+				if ( Validator.isValid( resourceMtl ) ) {
+
+					zipTools.unpackAsString( resourceMtl.name, setMtlAsString );
+
+				} else {
+
+					setMtlAsString( null );
+
+				}
+			};
+
+			var errorCase = function ( text ) {
+				scope._reportProgress( { detail: { text: text } } );
+				scope.processing = false;
+			};
+			zipTools.load( first.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
+
+		} else {
+
+			this._reportProgress( { detail: { text: '' } } );
+			objLoader2.run( prepData );
+
+		}
+	};
+
+	WWOBJLoader2Stage.prototype._handleFileSelect = function ( event, pathTexture ) {
+		var fileObj = null;
+		var fileMtl = null;
+		var files = event.target.files;
+
+		for ( var i = 0, file; file = files[ i ]; i++) {
+
+			if ( file.name.indexOf( '\.obj' ) > 0 && fileObj === null ) {
+				fileObj = file;
+			}
+
+			if ( file.name.indexOf( '\.mtl' ) > 0 && fileMtl === null ) {
+				fileMtl = file;
+			}
+
+		}
+
+		if ( ! Validator.isValid( fileObj ) ) {
+			alert( 'Unable to load OBJ file from given files.' );
+		}
+
+		var scope = this;
+		var callbackOnLoad = function ( event ) {
+			scope.scene.add( event.detail.loaderRootNode );
+			console.log( 'Loading complete: ' + event.detail.modelName );
+			scope._reportProgress( { detail: { text: '' } } );
+		};
+
+		var fileReader = new FileReader();
+		fileReader.onload = function( fileDataObj ) {
+
+			var uint8Array = new Uint8Array( fileDataObj.target.result );
+
+			var prepData = new THREE.LoaderSupport.PrepData( 'userObj' );
+			var resourceOBJ = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileObj.name, 'OBJ' );
+			var userPivot = new THREE.Object3D();
+			userPivot.position.set(
+				-100 + 200 * Math.random(),
+				-100 + 200 * Math.random(),
+				-100 + 200 * Math.random()
+			);
+			prepData.setStreamMeshesTo( userPivot );
+			scope.scene.add( userPivot );
+			scope.allAssets[ prepData.modelName ] = userPivot;
+
+			resourceOBJ.setContent( uint8Array );
+			prepData.addResource( resourceOBJ );
+			prepData.setUseAsync( true );
+			var callbacks = prepData.getCallbacks();
+			callbacks.setCallbackOnProgress( scope._reportProgress );
+			callbacks.setCallbackOnLoad( callbackOnLoad );
+
+			fileReader.onload = function( fileDataMtl ) {
+
+				var resourceMTL = new THREE.LoaderSupport.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
+				resourceMTL.setContent( fileDataMtl.target.result );
+				prepData.addResource( resourceMTL );
+
+				var objLoader = new THREE.OBJLoader2();
+				objLoader.run( prepData );
+			};
+			fileReader.readAsText( fileMtl );
+		};
+		fileReader.readAsArrayBuffer( fileObj );
+
 	};
 
 	return WWOBJLoader2Stage;
@@ -315,19 +447,18 @@ var ZipTools = (function () {
 			} );
 		};
 
-		var refPercentComplete = 0;
-		var percentComplete = 0;
+		var numericalValueRef = 0;
+		var numericalValue = 0;
 		var output;
 		var onProgress = function ( event ) {
 			if ( ! event.lengthComputable ) return;
 
-			percentComplete = Math.round( event.loaded / event.total * 100 );
-			if ( percentComplete > refPercentComplete ) {
+			numericalValue = event.loaded / event.total;
+			if ( numericalValue > numericalValueRef ) {
 
-				refPercentComplete = percentComplete;
-				output = 'Download of "' + filename + '": ' + percentComplete + '%';
-				console.log( output );
-				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( output );
+				numericalValueRef = numericalValue;
+				output = 'Download of "' + filename + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
 
 			}
 		};
@@ -377,39 +508,3 @@ var ZipTools = (function () {
 	return ZipTools;
 
 })();
-
-var WWOBJLoader2ObjDef = function ( name, pathBase, fileObj, fileMtl, pathTexture, fileZip, pos, scale ) {
-	this.name = name;
-	this.pathBase = pathBase;
-	this.fileObj = fileObj;
-	this.fileMtl = fileMtl;
-	this.pathTexture = pathTexture;
-	this.fileZip = fileZip;
-	this.pos = pos;
-	this.scale = ! Validator.isValid( scale ) ? 1.0 : scale;
-	this.pivot = null;
-};
-
-var objsFemaleMale = [];
-objsFemaleMale.push( new WWOBJLoader2ObjDef( 'male02', '../../resource/obj/male02/', 'male02.obj', 'male02.mtl', '../../resource/obj/male02/', null, { x: 100, y: 0, z: -75 } ) );
-objsFemaleMale.push( new WWOBJLoader2ObjDef( 'female02', '../../resource/obj/female02/', 'female02.obj', 'female02.mtl', '../../resource/obj/female02/', null, { x: -100, y: 0, z: 75 } ) );
-
-// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-var objsZomaxOven = [];
-objsZomaxOven.push( new WWOBJLoader2ObjDef( 'oven', '../../resource/obj/zomax/', 'zomax-net_haze-oven-scene.obj', null, null, 'zomax-net_haze-oven-scene.zip', { x: 0, y: 0, z: -75 } ) );
-
-var objsZomaxSink = [];
-objsZomaxSink.push( new WWOBJLoader2ObjDef( 'sink', '../../resource/obj/zomax/', 'zomax-net_haze-sink-scene.obj', null, null, 'zomax-net_haze-sink-scene.zip', { x: 0, y: 0, z: 75 } ) );
-
-var objsPtv1Zip = [];
-objsPtv1Zip.push( new WWOBJLoader2ObjDef( 'PTV1', '../../resource/obj/PTV1/', 'PTV1.obj', 'PTV1.mtl', '../../resource/obj/PTV1/', 'PTV1.zip', { x: -250, y: 0, z: -200 } ) );
-
-var objsCerberus = [];
-objsCerberus.push( new WWOBJLoader2ObjDef( 'cerberus', '../../resource/obj/cerberus/', 'Cerberus.obj', null, '../../resource/obj/cerberus/', null, { x: 0, y: -100, z: 0 }, 50.0 ) );
-
-var objsWaltHead = [];
-objsWaltHead.push( new WWOBJLoader2ObjDef( 'WaltHead', '../../resource/obj/walt/', 'WaltHead.obj', 'WaltHead.mtl', '../../resource/obj/walt/', null, { x: 0, y: 0, z: -200 } ) );
-
-var objsVive = [];
-objsVive.push( new WWOBJLoader2ObjDef( 'Vive Controller', '../../resource/obj/vive-controller/', 'vr_controller_vive_1_5.obj', null, '../../resource/obj/vive-controller/', null, { x: 0, y: 0, z: 200 }, 400.0 ) );

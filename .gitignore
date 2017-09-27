@@ -6,25 +6,38 @@
 /node
 /node_modules
 
+/resource/obj/14
 /resource/obj/1701
+/resource/obj/11707
+/resource/obj/11811
+/resource/obj/12120
 /resource/obj/capsule
 /resource/obj/Cerberus
 /resource/obj/datamogensen
+/resource/obj/emmy3d
 /resource/obj/PTV1
 /resource/obj/rolleiflex
+/resource/obj/totoro
 /resource/obj/vive-controller
 /resource/obj/walt
 /resource/obj/zomax
 
 /screenshots
 
-/test/objloader2/main.*.html
+/test/meshspray/main.html
+/test/meshspray/main.min.html
+/test/meshspray/webgl_*.html
+/test/objloader2/main.html
+/test/objloader2/main.min.html
 /test/objloader2/webgl_*.html
-/test/wwobjloader2/main.*.html
+/test/wwobjloader2/main.html
+/test/wwobjloader2/main.min.html
 /test/wwobjloader2/webgl_*.html
-/test/wwobjloader2stage/main.*.html
+/test/wwobjloader2stage/main.html
+/test/wwobjloader2stage/main.min.html
 /test/wwobjloader2stage/webgl_*.html
-/test/wwparallels/main.*.html
+/test/wwparallels/main.html
+/test/wwparallels/main.min.html
 /test/wwparallels/webgl_*.html
 
 /*.log
@@ -33,4 +46,4 @@
 /docs/fonts
 /docs/img
 /docs/scripts
-/docs/CHANGELOG.md
+/docs/*

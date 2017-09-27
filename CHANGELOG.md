@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0
+
+- `OBJLoader2` and `WWOBJLoader2` have been fused. Worker based asynchronous execution of the loader is now handled by `parseAsync`, `load` with `useAsync` flag or `run` which is used for batch processing
+- All common functionality independent of OBJ parsing has been moved to package `THREE.LoaderSupport`. Thease are:
+  - Builder
+  - LoadedMeshUserOverride
+  - WorkerSupport
+  - WorkerRunnerRefImpl
+  - WorkerDirector
+  - PrepData
+  - Commons
+  - Callbacks
+  - Validator
+  - ConsoleLogger
+- `OBJLoader2.parse` method accepts arraybuffer or string as input.
+- Indexed rendering is supported.
+- Issue #15: `ConsoleLogger` now encapsulates all console logging. Logging can be fully deactivated or switched to debug mode
+- Issue #16: progress callbacks provide numerical values to indicate overall progress of download or parsing
+
 ## 1.4.1
 
 #### Loader related changes
@@ -13,7 +32,7 @@
 ## 1.3.1
 
 #### Loader related changes
-- three.js issue 11707: Whenever strings are parsed (s, g, o, mtllib or usemtl) the buffer content is reset afterwards
+- Issue #12, three.js issue #11804, #11871, PR #11928: Added n-gon support
 
 ## 1.3.0
 

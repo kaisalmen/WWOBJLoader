@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - OBJLoader2 basic usage</title>
+		<title>three.js webgl - Mesh Spray</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 /*STUB_CSS_EMBED*/
@@ -9,29 +9,28 @@
 	</head>
 
 	<body>
-		<div id="glFullscreen">
-			<canvas id="example"></canvas>
-		</div>
-		<div id="dat">
+	<div id="glFullscreen">
+		<canvas id="example"></canvas>
+	</div>
+	<div id="dat">
 
-		</div>
-		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 basic usage
-			<div id="feedback"></div>
-		</div>
+	</div>
+	<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> - Web Worker LoaderDirector Mesh Spray
+		<div id="feedback"></div>
+	</div>
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
 /*STUB_JS_THREE*/
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
 /*STUB_JS_EXT*/
 		<script>
 /*STUB_JS_INLINE*/
+			var app = new MeshSprayApp( document.getElementById( 'example' ) );
 
-			var app = new OBJLoader2Example( document.getElementById( 'example' ) );
-
+			// init three.js example application
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
 			};

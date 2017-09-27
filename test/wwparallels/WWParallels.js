@@ -6,7 +6,7 @@
 
 var WWParallels = (function () {
 
-	var Validator = THREE.OBJLoader2.prototype._getValidator();
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;
@@ -25,8 +25,10 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.wwDirector = new THREE.OBJLoader2.WWOBJLoader2Director();
-		this.wwDirector.setCrossOrigin( 'anonymous' );
+		var logger = new THREE.LoaderSupport.ConsoleLogger();
+		logger.setEnabled( false );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2, logger  );
+		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
 		this.cube = null;
@@ -105,8 +107,14 @@ var WWParallels = (function () {
 
 		this.renderer.render( this.scene, this.camera );
 	};
-	WWParallels.prototype.reportProgress = function( text ) {
-		document.getElementById( 'feedback' ).innerHTML = text;
+
+	WWParallels.prototype._reportProgress = function( content ) {
+		var output = content;
+		if ( Validator.isValid( content ) && Validator.isValid( content.detail ) ) output = content.detail.text;
+
+		output = Validator.verifyInput( output, '' );
+		console.log( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, streamMeshes ) {
@@ -121,7 +129,7 @@ var WWParallels = (function () {
 		}
 
 		var scope = this;
-		scope.wwDirector.objectsCompleted = 0;
+		scope.workerDirector.objectsCompleted = 0;
 		scope.feedbackArray = [];
 		scope.reportDonwload = [];
 
@@ -132,106 +140,100 @@ var WWParallels = (function () {
 			scope.reportDonwload[ i ] = true;
 
 		}
-		scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+		scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackCompletedLoading = function ( modelName, instanceNo ) {
+		var callbackOnLoad = function ( event ) {
+			var instanceNo = event.detail.instanceNo;
 			scope.reportDonwload[ instanceNo ] = false;
+			scope.allAssets.push( event.detail.loaderRootNode );
 
-			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + modelName + ' (#' + scope.wwDirector.objectsCompleted + ')';
+			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			console.log( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
-			scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+			scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-			if ( scope.wwDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
+			if ( scope.workerDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
-		var callbackReportProgress = function ( content, instanceNo ) {
+		var callbackReportProgress = function ( event ) {
+			var	instanceNo = event.detail.instanceNo;
+			var text = event.detail.text;
+
 			if ( scope.reportDonwload[ instanceNo ] ) {
-				var msg = 'Worker #' + instanceNo + ': ' + content;
+				var msg = 'Worker #' + instanceNo + ': ' + text;
 				console.log( msg );
 
 				scope.feedbackArray[ instanceNo ] = msg;
-				scope.reportProgress( scope.feedbackArray.join( '\<br\>' ) );
+				scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 			}
 		};
 
-		var callbackMeshLoaded = function ( name, bufferGeometry, material ) {
-			var materialOverride;
+		var callbackMeshAlter = function ( event ) {
+			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
-			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || name === 'Mesh_Mesh_head_geo.001' ) {
+			var material = event.detail.material;
+			var meshName = event.detail.meshName;
+			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
-				materialOverride = material;
+				var materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
+				var mesh = new THREE.Mesh( event.detail.bufferGeometry, material );
+				mesh.name = meshName;
+
+				override.addMesh( mesh );
 
 			}
-
-			return new THREE.OBJLoader2.WWOBJLoader2.LoadedMeshUserOverride( false, undefined, materialOverride );
+			return override;
 		};
 
-		var globalCallbacks = new THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks();
-		globalCallbacks.registerCallbackProgress( callbackReportProgress );
-		globalCallbacks.registerCallbackCompletedLoading( callbackCompletedLoading );
-		globalCallbacks.registerCallbackMeshLoaded( callbackMeshLoaded );
-		this.wwDirector.prepareWorkers( globalCallbacks, maxQueueSize, maxWebWorkers );
-		console.log( 'Configuring WWManager with queue size ' + this.wwDirector.getMaxQueueSize() + ' and ' + this.wwDirector.getMaxWebWorkers() + ' workers.' );
+		var callbacks = new THREE.LoaderSupport.Callbacks();
+		callbacks.setCallbackOnProgress( callbackReportProgress );
+		callbacks.setCallbackOnLoad( callbackOnLoad );
+		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 
-		var callbackCompletedLoadingWalt = function () {
-			console.log( 'Callback check: WALT was loaded (#' + scope.wwDirector.objectsCompleted + ')' );
-		};
+		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+		console.log( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
 
-		var models = [];
-		models.push( {
-			modelName: 'male02',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/male02/',
-			fileObj: 'male02.obj',
-			pathTexture: '../../resource/obj/male02/',
-			fileMtl: 'male02.mtl'
-		} );
+		var modelPrepDatas = [];
+		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'female02',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/female02/',
-			fileObj: 'female02.obj',
-			pathTexture: '../../resource/obj/female02/',
-			fileMtl: 'female02.mtl'
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'viveController',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/vive-controller/',
-			fileObj: 'vr_controller_vive_1_5.obj',
-			scale: 400.0
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+		prepData.scale = 400.0;
+		modelPrepDatas.push( prepData );
 
-		models.push( {
-			modelName: 'cerberus',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/cerberus/',
-			fileObj: 'Cerberus.obj',
-			scale: 50.0
-		} );
-		models.push( {
-			modelName: 'WaltHead',
-			dataAvailable: false,
-			pathObj: '../../resource/obj/walt/',
-			fileObj: 'WaltHead.obj',
-			pathTexture: '../../resource/obj/walt/',
-			fileMtl: 'WaltHead.mtl'
-		} );
+		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+		prepData.scale = 50.0;
+		modelPrepDatas.push( prepData );
+
+		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
+		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		modelPrepDatas.push( prepData );
 
 		var pivot;
 		var distributionBase = -500;
 		var distributionMax = 1000;
-		var modelIndex = 0;
-		var model;
-		var runParams;
+		var modelPrepDataIndex = 0;
+		var modelPrepData;
+		var prepData;
+		var scale;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
-			modelIndex = Math.floor( Math.random() * models.length );
-			model = models[ modelIndex ];
+			modelPrepDataIndex = Math.floor( Math.random() * modelPrepDatas.length );
+
+			modelPrepData = modelPrepDatas[ modelPrepDataIndex ];
+			scale = Validator.verifyInput( modelPrepData.scale, 0 );
+			modelPrepData = modelPrepData.clone();
 
 			pivot = new THREE.Object3D();
 			pivot.position.set(
@@ -239,38 +241,27 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random(),
 				distributionBase + distributionMax * Math.random()
 			);
-			if ( Validator.isValid( model.scale ) ) pivot.scale.set( model.scale, model.scale, model.scale );
-
+			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 			this.scene.add( pivot );
+			modelPrepData.setStreamMeshesTo( pivot );
+			modelPrepData.setUseAsync( true );
 
-			model.sceneGraphBaseNode = pivot;
-
-			runParams = new THREE.OBJLoader2.WWOBJLoader2.PrepDataFile(
-				model.modelName, model.pathObj, model.fileObj, model.pathTexture, model.fileMtl
-			);
-			runParams.setSceneGraphBaseNode( model.sceneGraphBaseNode );
-			runParams.setStreamMeshes( streamMeshes );
-			if ( model.modelName === 'WaltHead' ) {
-				runParams.getCallbacks().registerCallbackCompletedLoading( callbackCompletedLoadingWalt );
-			}
-
-			this.wwDirector.enqueueForRun( runParams );
-			this.allAssets.push( runParams );
+			this.workerDirector.enqueueForRun( modelPrepData );
 		}
 
-		this.wwDirector.processQueue();
+		this.workerDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
-		var ref;
-		var scope = this;
-
+		var storedObject3d;
 		for ( var asset in this.allAssets ) {
-			ref = this.allAssets[ asset ];
 
+			storedObject3d = this.allAssets[ asset ];
+			var scope = this;
 			var remover = function ( object3d ) {
 
-				if ( object3d === ref.sceneGraphBaseNode ) return;
+				if ( storedObject3d === object3d ) return;
+
 				console.log( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
@@ -288,17 +279,22 @@ var WWParallels = (function () {
 						}
 					}
 				}
-				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
+				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			scope.scene.remove( ref.sceneGraphBaseNode );
-			ref.sceneGraphBaseNode.traverse( remover );
-			ref.sceneGraphBaseNode = null;
+			if ( Validator.isValid( storedObject3d ) ) {
+
+				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
+				storedObject3d.traverse( remover );
+				storedObject3d = null;
+
+			}
 		}
 		this.allAssets = [];
 	};
 
 	WWParallels.prototype.terminateManager = function () {
-		this.wwDirector.deregister();
+		this.workerDirector.deregister();
+		this.running = false;
 	};
 
 	return WWParallels;
