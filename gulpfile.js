@@ -582,7 +582,7 @@ gulp.task( 'dl-sink', [ 'dl-ptv1' ], function() {
 gulp.task( 'dl-oven', [ 'dl-sink' ], function() {
 	gutil.log( 'Downloading model Oven from Zomax (Cornelius Dämmrich):' );
 	return remoteSrc(
-		[ 'zomax-net_haze-oven-scene.obj' ],
+		[ 'zomax-net_haze-oven-scene.zip' ],
 		{
 			base: 'https://zomax.net/download/260/'
 		}
