@@ -2,7 +2,7 @@
   "name": "wwobjloader2",
   "version": "1.4.1",
   "description": "New OBJLoader utilizing web worker for three.js",
-  "main": "build/WWOBJLoader.js",
+  "main": "build/WWOBJLoader2.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
