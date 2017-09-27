@@ -7,7 +7,7 @@
     "loader_worker_support": "1.0.0"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
-  "main": "build/WWOBJLoader.js",
+  "main": "build/OBJLoader2.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
