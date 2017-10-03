@@ -391,7 +391,8 @@ THREE.OBJLoader2 = (function () {
 			this.totalBytes = length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
-			var slashesCount = 0;
+			var slashSpacePattern = new Array( 16 );
+			var slashSpacePatternPointer = 0;
 			var reachedFaces = false;
 			var code;
 			var word = '';
@@ -401,22 +402,23 @@ THREE.OBJLoader2 = (function () {
 				code = arrayBufferView[ i ];
 				switch ( code ) {
 					case Consts.CODE_SPACE:
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+						slashSpacePattern[ slashSpacePatternPointer++ ] = 0;
 						word = '';
 						break;
 
 					case Consts.CODE_SLASH:
-						slashesCount ++;
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+						slashSpacePattern[ slashSpacePatternPointer++ ] = 1;
 						word = '';
 						break;
 
 					case Consts.CODE_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces, i );
+						reachedFaces = this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, i );
 						bufferPointer = 0;
-						slashesCount = 0;
+						slashSpacePatternPointer = 0;
 						break;
 
 					case Consts.CODE_CR:
@@ -445,7 +447,8 @@ THREE.OBJLoader2 = (function () {
 			this.totalBytes = length;
 			var buffer = new Array( 128 );
 			var bufferPointer = 0;
-			var slashesCount = 0;
+			var slashSpacePattern = new Array( 16 );
+			var slashSpacePatternPointer = 0;
 			var reachedFaces = false;
 			var char;
 			var word = '';
@@ -455,22 +458,23 @@ THREE.OBJLoader2 = (function () {
 				char = text[ i ];
 				switch ( char ) {
 					case Consts.STRING_SPACE:
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+						slashSpacePattern[ slashSpacePatternPointer++ ] = 0;
 						word = '';
 						break;
 
 					case Consts.STRING_SLASH:
-						slashesCount ++;
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
+						slashSpacePattern[ slashSpacePatternPointer++ ] = 1;
 						word = '';
 						break;
 
 					case Consts.STRING_LF:
 						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
 						word = '';
-						reachedFaces = this.processLine( buffer, bufferPointer, slashesCount, reachedFaces, i );
+						reachedFaces = this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, i );
 						bufferPointer = 0;
-						slashesCount = 0;
+						slashSpacePatternPointer = 0;
 						break;
 
 					case Consts.STRING_CR:
@@ -484,11 +488,10 @@ THREE.OBJLoader2 = (function () {
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
-		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, reachedFaces, currentByte ) {
+		Parser.prototype.processLine = function ( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, currentByte ) {
 			if ( bufferPointer < 1 ) return reachedFaces;
 
 			var bufferLength = bufferPointer - 1;
-			var concatBuffer;
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
 
@@ -525,10 +528,19 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_F:
 					reachedFaces = true;
+
+					var slashesCount = 0;
+					for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
+						slashesCount += slashSpacePattern[ i ];
+					}
 					this.rawMesh.processFaces( buffer, bufferPointer, slashesCount );
 					break;
 
 				case Consts.LINE_L:
+					var slashesCount = 0;
+					for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
+						slashesCount += slashSpacePattern[ i ];
+					}
 					if ( bufferLength === slashesCount * 2 ) {
 
 						this.rawMesh.buildLineVvt( buffer );
@@ -546,13 +558,13 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
 					this.processCompletedGroup( concatBuffer, currentByte );
 					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
-					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
 					if ( this.rawMesh.vertices.length > 0 ) {
 
 						this.processCompletedObject( concatBuffer, null, currentByte );
@@ -567,13 +579,13 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_MTLLIB:
-					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
 					this.rawMesh.pushMtllib( concatBuffer );
 					this.flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_USEMTL:
-					concatBuffer = bufferLength > 1 ? buffer.slice( 1, bufferPointer ).join( ' ' ) : buffer[ 1 ];
+					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
 					this.rawMesh.pushUsemtl( concatBuffer );
 					this.flushStringBuffer( buffer, bufferPointer );
 					break;
@@ -584,8 +596,29 @@ THREE.OBJLoader2 = (function () {
 			return reachedFaces;
 		};
 
-		Parser.prototype.flushStringBuffer = function ( buffer, bufferLength ) {
-			for ( var i = 0; i < bufferLength; i ++ ) {
+		Parser.prototype.concatStringBuffer = function ( bufferPointer, buffer, slashSpacePattern ) {
+			var concatBuffer = '';
+			if ( bufferPointer === 2 ) {
+
+				concatBuffer = buffer[ 1 ];
+
+			} else {
+
+				var i = 1;
+				var length = bufferPointer - 1;
+				for ( ; i < length; i ++ ) {
+
+					concatBuffer += buffer[ i ] + ( slashSpacePattern[ i ] === 0 ? ' ' : '/' );
+
+				}
+				concatBuffer += buffer[ length ];
+
+			}
+			return concatBuffer;
+		};
+
+		Parser.prototype.flushStringBuffer = function ( buffer, bufferPointer ) {
+			for ( var i = 0; i < bufferPointer; i ++ ) {
 				buffer[ i ] = '';
 			}
 		};
