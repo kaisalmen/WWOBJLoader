@@ -397,7 +397,7 @@ THREE.OBJLoader2 = (function () {
 			var code;
 			var word = '';
 			var i = 0;
-			for ( ; i < length; i ++ ) {
+			for ( ; i < length; i++ ) {
 
 				code = arrayBufferView[ i ];
 				switch ( code ) {
@@ -414,7 +414,7 @@ THREE.OBJLoader2 = (function () {
 						break;
 
 					case Consts.CODE_LF:
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
 						reachedFaces = this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, i );
 						bufferPointer = 0;
@@ -453,7 +453,7 @@ THREE.OBJLoader2 = (function () {
 			var char;
 			var word = '';
 			var i = 0;
-			for ( ; i < length; i ++ ) {
+			for ( ; i < length; i++ ) {
 
 				char = text[ i ];
 				switch ( char ) {
@@ -470,7 +470,7 @@ THREE.OBJLoader2 = (function () {
 						break;
 
 					case Consts.STRING_LF:
-						if ( word.length > 0 ) buffer[ bufferPointer ++ ] = word;
+						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
 						reachedFaces = this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, i );
 						bufferPointer = 0;
@@ -491,18 +491,15 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, reachedFaces, currentByte ) {
 			if ( bufferPointer < 1 ) return reachedFaces;
 
-			var bufferLength = bufferPointer - 1;
-
 			var countSlashes = function ( slashSpacePattern, slashSpacePatternPointer ) {
 				var slashesCount = 0;
-				for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
+				for ( var i = 0; i < slashSpacePatternPointer; i++ ) {
 					slashesCount += slashSpacePattern[ i ];
 				}
 				return slashesCount;
 			};
 
-
-			var concatStringBuffer = function ( bufferPointer, buffer, slashSpacePattern ) {
+			var concatStringBuffer = function ( buffer, bufferPointer, slashSpacePattern ) {
 				var concatBuffer = '';
 				if ( bufferPointer === 2 ) {
 
@@ -510,28 +507,26 @@ THREE.OBJLoader2 = (function () {
 
 				} else {
 
-					var i = 1;
-					var length = bufferPointer - 1;
-					for ( ; i < length; i ++ ) {
+					var bufferLength = bufferPointer - 1;
+					for ( var i = 1; i < bufferLength; i++ ) {
 
 						concatBuffer += buffer[ i ] + ( slashSpacePattern[ i ] === 0 ? ' ' : '/' );
 
 					}
-					concatBuffer += buffer[ length ];
+					concatBuffer += buffer[ bufferLength ];
 
 				}
 				return concatBuffer;
 			};
 
 			var flushStringBuffer = function ( buffer, bufferPointer ) {
-				for ( var i = 0; i < bufferPointer; i ++ ) {
+				for ( var i = 0; i < bufferPointer; i++ ) {
 					buffer[ i ] = '';
 				}
 			};
 
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
-
 					// object complete instance required if reached faces already (= reached next block of v)
 					if ( reachedFaces ) {
 
@@ -544,7 +539,7 @@ THREE.OBJLoader2 = (function () {
 						reachedFaces = false;
 
 					}
-					if ( bufferLength === 3 ) {
+					if ( bufferPointer === 4 ) {
 
 						this.rawMesh.pushVertex( buffer )
 
@@ -569,15 +564,7 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_L:
-					if ( bufferLength === countSlashes( slashSpacePattern, slashSpacePatternPointer ) * 2 ) {
-
-						this.rawMesh.buildLineVvt( buffer );
-
-					} else {
-
-						this.rawMesh.buildLineV( buffer );
-
-					}
+					this.rawMesh.processLines( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 					break;
 
 				case Consts.LINE_S:
@@ -586,31 +573,31 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					this.processCompletedGroup( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ), currentByte );
+					this.processCompletedGroup( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), currentByte );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
 					if ( this.rawMesh.vertices.length > 0 ) {
 
-						this.processCompletedObject( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ), null, currentByte );
+						this.processCompletedObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), null, currentByte );
 						reachedFaces = false;
 
 					} else {
 
-						this.rawMesh.pushObject( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
+						this.rawMesh.pushObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 
 					}
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_MTLLIB:
-					this.rawMesh.pushMtllib( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
+					this.rawMesh.pushMtllib( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_USEMTL:
-					this.rawMesh.pushUsemtl( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
+					this.rawMesh.pushUsemtl( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -1126,19 +1113,27 @@ THREE.OBJLoader2 = (function () {
 		 * 0: "f vertex/uv		vertex/uv 		..."
 		 * 1: "f vertex			vertex 			..."
 		 */
-		RawMesh.prototype.buildLineVvt = function ( lineArray ) {
-			for ( var i = 1, length = lineArray.length; i < length; i ++ ) {
+		RawMesh.prototype.processLines = function ( buffer, bufferPointer, slashCount ) {
+			var i = 1;
+			var length;
+			var bufferLength = bufferPointer - 1;
 
-				this.vertices.push( parseInt( lineArray[ i ] ) );
-				this.uvs.push( parseInt( lineArray[ i ] ) );
+			if ( bufferLength === slashCount * 2 ) {
 
-			}
-		};
+				for ( length = bufferLength - 2; i < length; i += 2 ) {
 
-		RawMesh.prototype.buildLineV = function ( lineArray ) {
-			for ( var i = 1, length = lineArray.length; i < length; i++ ) {
+					this.vertices.push( parseInt( buffer[ i ] ) );
+					this.uvs.push( parseInt( buffer[ i + 1 ] ) );
 
-				this.vertices.push( parseInt( lineArray[ i ] ) );
+				}
+
+			} else {
+
+				for ( length = bufferLength - 1; i < length; i ++ ) {
+
+					this.vertices.push( parseInt( buffer[ i ] ) );
+
+				}
 
 			}
 		};
