@@ -492,6 +492,43 @@ THREE.OBJLoader2 = (function () {
 			if ( bufferPointer < 1 ) return reachedFaces;
 
 			var bufferLength = bufferPointer - 1;
+
+			var countSlashes = function ( slashSpacePattern, slashSpacePatternPointer ) {
+				var slashesCount = 0;
+				for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
+					slashesCount += slashSpacePattern[ i ];
+				}
+				return slashesCount;
+			};
+
+
+			var concatStringBuffer = function ( bufferPointer, buffer, slashSpacePattern ) {
+				var concatBuffer = '';
+				if ( bufferPointer === 2 ) {
+
+					concatBuffer = buffer[ 1 ];
+
+				} else {
+
+					var i = 1;
+					var length = bufferPointer - 1;
+					for ( ; i < length; i ++ ) {
+
+						concatBuffer += buffer[ i ] + ( slashSpacePattern[ i ] === 0 ? ' ' : '/' );
+
+					}
+					concatBuffer += buffer[ length ];
+
+				}
+				return concatBuffer;
+			};
+
+			var flushStringBuffer = function ( buffer, bufferPointer ) {
+				for ( var i = 0; i < bufferPointer; i ++ ) {
+					buffer[ i ] = '';
+				}
+			};
+
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
 
@@ -528,20 +565,11 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_F:
 					reachedFaces = true;
-
-					var slashesCount = 0;
-					for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
-						slashesCount += slashSpacePattern[ i ];
-					}
-					this.rawMesh.processFaces( buffer, bufferPointer, slashesCount );
+					this.rawMesh.processFaces( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 					break;
 
 				case Consts.LINE_L:
-					var slashesCount = 0;
-					for ( var i = 0; i < slashSpacePatternPointer; i ++ ) {
-						slashesCount += slashSpacePattern[ i ];
-					}
-					if ( bufferLength === slashesCount * 2 ) {
+					if ( bufferLength === countSlashes( slashSpacePattern, slashSpacePatternPointer ) * 2 ) {
 
 						this.rawMesh.buildLineVvt( buffer );
 
@@ -554,73 +582,42 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_S:
 					this.rawMesh.pushSmoothingGroup( buffer[ 1 ] );
-					this.flushStringBuffer( buffer, bufferPointer );
+					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_G:
-					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
-					this.processCompletedGroup( concatBuffer, currentByte );
-					this.flushStringBuffer( buffer, bufferPointer );
+					this.processCompletedGroup( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ), currentByte );
+					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
-					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
 					if ( this.rawMesh.vertices.length > 0 ) {
 
-						this.processCompletedObject( concatBuffer, null, currentByte );
+						this.processCompletedObject( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ), null, currentByte );
 						reachedFaces = false;
 
 					} else {
 
-						this.rawMesh.pushObject( concatBuffer );
+						this.rawMesh.pushObject( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
 
 					}
-					this.flushStringBuffer( buffer, bufferPointer );
+					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_MTLLIB:
-					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
-					this.rawMesh.pushMtllib( concatBuffer );
-					this.flushStringBuffer( buffer, bufferPointer );
+					this.rawMesh.pushMtllib( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
+					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_USEMTL:
-					var concatBuffer = this.concatStringBuffer( bufferPointer, buffer, slashSpacePattern );
-					this.rawMesh.pushUsemtl( concatBuffer );
-					this.flushStringBuffer( buffer, bufferPointer );
+					this.rawMesh.pushUsemtl( concatStringBuffer( bufferPointer, buffer, slashSpacePattern ) );
+					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				default:
 					break;
 			}
 			return reachedFaces;
-		};
-
-		Parser.prototype.concatStringBuffer = function ( bufferPointer, buffer, slashSpacePattern ) {
-			var concatBuffer = '';
-			if ( bufferPointer === 2 ) {
-
-				concatBuffer = buffer[ 1 ];
-
-			} else {
-
-				var i = 1;
-				var length = bufferPointer - 1;
-				for ( ; i < length; i ++ ) {
-
-					concatBuffer += buffer[ i ] + ( slashSpacePattern[ i ] === 0 ? ' ' : '/' );
-
-				}
-				concatBuffer += buffer[ length ];
-
-			}
-			return concatBuffer;
-		};
-
-		Parser.prototype.flushStringBuffer = function ( buffer, bufferPointer ) {
-			for ( var i = 0; i < bufferPointer; i ++ ) {
-				buffer[ i ] = '';
-			}
 		};
 
 		Parser.prototype.createRawMeshReport = function ( rawMesh , inputObjectCount ) {
