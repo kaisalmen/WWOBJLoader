@@ -1,4 +1,4 @@
-OBJLoader2 and WWOBJLoader2 for three.js
+OBJLoader2 (sync&async) for three.js
 ===
 
 [![Latest NPM release](https://img.shields.io/npm/v/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
@@ -31,6 +31,12 @@ npm install --global gulp-cli
 From the project's root run `gulp` to create The documentation in directory **build/docs** and the bundles in directory **build**:
  - **OBJLoader2[.min].js**: Contains all code required for the loader to work
  - **LoaderSupport[.min].js**: Consists of common support functions, worker control and worker director code
+ 
+### Models and resources
+Use gulp to download missing resources (OBJ, MTL files and textures):
+```bash
+gulp get-resources
+```
 
 
 ## Implementation Overview
@@ -65,12 +71,6 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 [LoaderDirector - Mesh Spray](https://kaisalmen.de/proto/test/meshspray/main.src.html)<br>
 [LoaderDirector Parallels Demo](https://kaisalmen.de/proto/test/wwparallels/main.src.html)<br>
 
-## Models and resources
-
-Use gulp to download missing resources (OBJ, MTL files and textures):
-```bash
-gulp get-resources
-```
 
 Have fun!
 
