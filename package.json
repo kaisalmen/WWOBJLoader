@@ -1,8 +1,8 @@
 {
   "name": "wwobjloader2",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "versions": {
-    "loader_obj2": "2.0.0",
+    "loader_obj2": "2.0.1",
     "loader_worker_director": "2.0.0",
     "loader_worker_support": "1.0.0"
   },

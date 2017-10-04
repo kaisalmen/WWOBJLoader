@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+- three.js issue #12324: Fix slashes in string pattern (e.g. usemtl) were replaced by spaces
+- Fixed line processing with uv
+
 ## 2.0.0
 
 - `OBJLoader2` and `WWOBJLoader2` have been fused. Worker based asynchronous execution of the loader is now handled by `parseAsync`, `load` with `useAsync` flag or `run` which is used for batch processing
