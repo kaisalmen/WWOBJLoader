@@ -71,6 +71,20 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 [LoaderDirector - Mesh Spray](https://kaisalmen.de/proto/test/meshspray/main.src.html)<br>
 [LoaderDirector Parallels Demo](https://kaisalmen.de/proto/test/wwparallels/main.src.html)<br>
 
+## Http server for development
+If you have `docker` and `docker-compose` installed on your development platform, you are now able to launch `nginx` which is serving the complete content of this repository. Any changes to files are directly available in the HTTP server. This is solely meant for development.
+
+From the command-line, use the following command to launch the HTTP server:
+```bash
+docker-compose up -d
+```
+Content is available here: [http://localhost:8085](http://localhost:8085)<br>
+Nginx configuration is stored here: `resource/nginx/nginx.conf`. Adjust according your needs.
+ 
+From the command-line, use the following to stop the HTTP server:
+```bash
+docker-compose down
+```
 
 Have fun!
 
