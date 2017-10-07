@@ -295,10 +295,54 @@ THREE.LoaderSupport.Builder = (function () {
 
 		}
 
+
+		var material;
+		var newMaterial;
+		var materialJson;
+		var materialName;
+		var serializedMaterials = payload.materials.serializedMaterials;
+		if ( Validator.isValid( serializedMaterials ) && serializedMaterials.length > 0 ) {
+
+			var loader = new THREE.MaterialLoader();
+			for ( key in serializedMaterials ) {
+
+				materialJson = serializedMaterials[ key ];
+				newMaterial = loader.parse( materialJson );
+
+				materialName = newMaterial.name;
+				material = this.materials[ newMaterial ];
+				if ( ! Validator.isValid( material ) ) {
+
+					console.log( 'De-serialized material with name "' + materialName + '" will be added.');
+					this.materials[ materialName ] = newMaterial;
+
+				}
+
+			}
+
+		}
+		var runtimeMaterials = payload.materials.runtimeMaterials;
+		if ( Validator.isValid( runtimeMaterials ) && runtimeMaterials.length > 0 ) {
+
+			for ( key in runtimeMaterials ) {
+
+				newMaterial = runtimeMaterials[ key ];
+				materialName = newMaterial.name;
+				material = this.materials[ newMaterial ];
+				if ( ! Validator.isValid( material ) ) {
+
+					console.log( 'Runtime material with name "' + materialName + '" will be added.');
+					this.materials[ materialName ] = newMaterial;
+
+				}
+
+			}
+
+		}
+
+
 		var materialDescriptions = payload.materials.materialDescriptions;
 		var materialDescription;
-		var material;
-		var materialName;
 		var createMultiMaterial = payload.materials.multiMaterial;
 		var multiMaterials = [];
 

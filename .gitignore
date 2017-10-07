@@ -1,14 +1,11 @@
-.project
 .idea
 
 /build
-/examples
-/node
 /node_modules
 
 /resource/obj/1*
 /resource/obj/capsule
-/resource/obj/Cerberus
+/resource/obj/cerberus
 /resource/obj/datamogensen
 /resource/obj/emmy3d
 /resource/obj/PTV1

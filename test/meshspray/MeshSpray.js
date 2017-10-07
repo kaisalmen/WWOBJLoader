@@ -71,6 +71,9 @@ var MeshSpray = (function () {
 		};
 		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
+
+		var testMaterial = new THREE.MeshStandardMaterial( { color: 0xFF0000 } );
+		testMaterial.name = 'redTestMaterial';
 		this.workerSupport.run(
 			{
 				cmd: 'run',
@@ -86,6 +89,7 @@ var MeshSpray = (function () {
 					enabled: this.logger.enabled
 				},
 				materials: {
+					serializedMaterials: [ testMaterial.toJSON() ],
 					materialNames: this.builder.materialNames
 				},
 				buffers: {
@@ -106,6 +110,7 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 			this.logger = logger;
+			this.serializedMaterials = null;
 		};
 
 		Parser.prototype.parse = function () {
@@ -195,6 +200,7 @@ var MeshSpray = (function () {
 						meshName: 'Gen' + this.globalObjectCount
 					},
 					materials: {
+						serializedMaterials: this.serializedMaterials,
 						multiMaterial: false,
 						materialDescriptions: materialDescriptions,
 						materialGroups: materialGroups
@@ -213,6 +219,14 @@ var MeshSpray = (function () {
 			);
 
 			this.logger.logInfo( 'Global output object count: ' + this.globalObjectCount );
+		};
+
+		Parser.prototype.setSerializedMaterials = function ( serializedMaterials ) {
+			if ( Validator.isValid( serializedMaterials ) ) {
+
+				this.serializedMaterials = serializedMaterials;
+
+			}
 		};
 
 		return Parser;
@@ -289,7 +303,7 @@ var MeshSprayApp = (function () {
 	};
 
 	MeshSprayApp.prototype.initContent = function () {
-		var maxQueueSize = 1024;
+		var maxQueueSize = 10;
 		var maxWebWorkers = 4;
 		var radius = 640;
 		var logger = new THREE.LoaderSupport.ConsoleLogger( false );
