@@ -307,14 +307,18 @@ THREE.LoaderSupport.Builder = (function () {
 			for ( key in serializedMaterials ) {
 
 				materialJson = serializedMaterials[ key ];
-				newMaterial = loader.parse( materialJson );
+				if ( Validator.isValid( materialJson ) ) {
 
-				materialName = newMaterial.name;
-				material = this.materials[ newMaterial ];
-				if ( ! Validator.isValid( material ) ) {
+					newMaterial = loader.parse( materialJson );
 
-					console.log( 'De-serialized material with name "' + materialName + '" will be added.');
-					this.materials[ materialName ] = newMaterial;
+					materialName = newMaterial.name;
+					material = this.materials[ newMaterial ];
+					if ( ! Validator.isValid( material ) ) {
+
+						console.log( 'De-serialized material with name "' + materialName + '" will be added.');
+						this.materials[ materialName ] = newMaterial;
+
+					}
 
 				}
 
@@ -327,12 +331,16 @@ THREE.LoaderSupport.Builder = (function () {
 			for ( key in runtimeMaterials ) {
 
 				newMaterial = runtimeMaterials[ key ];
-				materialName = newMaterial.name;
-				material = this.materials[ newMaterial ];
-				if ( ! Validator.isValid( material ) ) {
+				if ( Validator.isValid( newMaterial ) ) {
 
-					console.log( 'Runtime material with name "' + materialName + '" will be added.');
-					this.materials[ materialName ] = newMaterial;
+					materialName = newMaterial.name;
+					material = this.materials[ newMaterial ];
+					if ( ! Validator.isValid( material ) ) {
+
+						console.log( 'Runtime material with name "' + materialName + '" will be added.');
+						this.materials[ materialName ] = newMaterial;
+
+					}
 
 				}
 

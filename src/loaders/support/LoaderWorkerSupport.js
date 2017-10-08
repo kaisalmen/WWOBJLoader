@@ -108,6 +108,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		this.worker = null;
 		this.workerCode = null;
+		this.loading = true;
+		this.queuedMessage = null;
 		this.running = false;
 		this.terminateRequested = false;
 
@@ -123,14 +125,18 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 *
 	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
 	 * @param {boolean} forceWorkerReload Force re-build of the worker code.
+	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
+	 * @param {String} libPath Base path used for loading libraries
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
-	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, runnerImpl ) {
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, libLocations, libPath, runnerImpl ) {
 		this.running = false;
 		if ( forceWorkerReload ) {
 
 			this.worker = null;
 			this.workerCode = null;
+			this.loading = true;
+			this.queuedMessage = null;
 			this.callbacks.builder = null;
 			this.callbacks.onLoad = null;
 
@@ -153,43 +159,96 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				workerRunner = THREE.LoaderSupport.WorkerRunnerRefImpl;
 
 			}
-			this.workerCode = functionCodeBuilder( buildObject, buildSingelton );
-			this.workerCode += buildSingelton( workerRunner.name, workerRunner.name, workerRunner );
-			this.workerCode += 'new ' + workerRunner.name + '();\n\n';
-
-			var blob = new Blob( [ this.workerCode ], { type: 'text/plain' } );
-			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-			this.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 			var scope = this;
-			var receiveWorkerMessage = function ( e ) {
-				var payload = e.data;
+			var buildWorkerCode = function ( baseWorkerCode ) {
+				scope.workerCode = baseWorkerCode;
+				scope.workerCode += functionCodeBuilder( buildObject, buildSingelton );
+				scope.workerCode += buildSingelton( workerRunner.name, workerRunner.name, workerRunner );
+				scope.workerCode += 'new ' + workerRunner.name + '();\n\n';
 
-				switch ( payload.cmd ) {
-					case 'meshData':
-						scope.callbacks.builder( payload );
-						break;
+				var blob = new Blob( [ scope.workerCode ], { type: 'text/plain' } );
+				scope.worker = new Worker( window.URL.createObjectURL( blob ) );
+				scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
-					case 'complete':
-						scope.callbacks.onLoad( payload.msg );
-						scope.running = false;
+				var receiveWorkerMessage = function ( e ) {
+					var payload = e.data;
 
-						if ( scope.terminateRequested ) {
+					switch ( payload.cmd ) {
+						case 'meshData':
+							scope.callbacks.builder( payload );
+							break;
 
-							scope.logger.logInfo( 'WorkerSupport: Run is complete. Terminating application on request!' );
-							scope.terminateWorker();
+						case 'complete':
+							scope.callbacks.onLoad( payload.msg );
+							scope.running = false;
 
-						}
-						break;
+							if ( scope.terminateRequested ) {
 
-					default:
-						scope.logger.logError( 'WorkerSupport: Received unknown command: ' + payload.cmd );
-						break;
+								scope.logger.logInfo( 'WorkerSupport: Run is complete. Terminating application on request!' );
+								scope.terminateWorker();
+
+							}
+							break;
+
+						default:
+							scope.logger.logError( 'WorkerSupport: Received unknown command: ' + payload.cmd );
+							break;
+
+					}
+				};
+				scope.worker.addEventListener( 'message', receiveWorkerMessage, false );
+				scope.loading = false;
+				scope._postMessage();
+			};
+
+			if ( Validator.isValid( libLocations ) && libLocations.length > 0 ) {
+
+				var loadedAllLibs = false;
+				var libsContent = '';
+				var loadAllLibraries = function ( path, locations ) {
+					if ( locations.length === 0 ) {
+
+						loadedAllLibs = true;
+
+					} else {
+
+						var libLoaction = locations[ 0 ];
+						locations.shift();
+
+						var loadedLib = function ( contentAsString ) {
+							libsContent += contentAsString;
+							loadAllLibraries( path, locations );
+						};
+
+						var fileLoader = new THREE.FileLoader();
+						fileLoader.setPath( path );
+						fileLoader.setResponseType( 'text' );
+						fileLoader.load( libLoaction, loadedLib );
+
+					}
+				};
+				loadAllLibraries( libPath, libLocations );
+
+				function verifyLoading() {
+					if ( ! loadedAllLibs ) {
+
+						setTimeout( verifyLoading, 100 );
+
+					} else {
+
+						buildWorkerCode( libsContent );
+
+					}
 
 				}
-			};
-			this.worker.addEventListener( 'message', receiveWorkerMessage, false );
+				verifyLoading();
 
+			} else {
+
+				buildWorkerCode( '' );
+
+			}
 		}
 	};
 
@@ -293,9 +352,17 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	WorkerSupport.prototype.run = function ( payload ) {
 		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
-		if ( Validator.isValid( this.worker ) ) {
+		if ( Validator.isValid( this.worker ) || this.loading ) {
 			this.running = true;
-			this.worker.postMessage( payload );
+			this.queuedMessage = payload;
+			this._postMessage();
+
+		}
+	};
+
+	WorkerSupport.prototype._postMessage = function () {
+		if ( ! this.loading && Validator.isValid( this.queuedMessage ) ) {
+			this.worker.postMessage( this.queuedMessage );
 		}
 	};
 
