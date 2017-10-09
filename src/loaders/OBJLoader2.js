@@ -175,7 +175,7 @@ THREE.OBJLoader2 = (function () {
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.buildMeshes( payload );
+			var meshes = scope.builder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
@@ -233,7 +233,7 @@ THREE.OBJLoader2 = (function () {
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.buildMeshes( payload );
+			var meshes = scope.builder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];

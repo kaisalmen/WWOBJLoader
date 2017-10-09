@@ -37,7 +37,7 @@ var MeshSpray = (function () {
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {
-			var meshes = scope.builder.buildMeshes( payload );
+			var meshes = scope.builder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];

@@ -201,30 +201,14 @@ THREE.LoaderSupport.Callbacks = (function () {
 THREE.LoaderSupport.Builder = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
+	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	function Builder() {
+	function Builder( logger ) {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.materials = [];
 		this.materialNames = [];
-		this._createDefaultMaterials();
+		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
 	}
-
-	Builder.prototype._createDefaultMaterials = function () {
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-		if ( ! Validator.isValid( this.materials[ defaultMaterial ] ) ) {
-			this.materials[ defaultMaterial.name ] = defaultMaterial;
-		}
-		this.materialNames.push( defaultMaterial.name );
-
-		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-		if ( ! Validator.isValid( this.materials[ vertexColorMaterial.name ] ) ) {
-			this.materials[ vertexColorMaterial.name ] = vertexColorMaterial;
-		}
-		this.materialNames.push( vertexColorMaterial.name );
-	};
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
@@ -233,22 +217,14 @@ THREE.LoaderSupport.Builder = (function () {
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
 	Builder.prototype.setMaterials = function ( materials ) {
-		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
-
-			var materialName;
-			for ( materialName in materials ) {
-
-				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName) ) {
-					this.materials[ materialName ] = materials[ materialName ];
-				}
-
+		var payload = {
+			cmd: 'materialData',
+			materials: {
+				serializedMaterials: null,
+				runtimeMaterials: materials
 			}
-
-			// always reset list of names as they are an array
-			this.materialNames = [];
-			for ( materialName in materials ) this.materialNames.push( materialName );
-
-		}
+		};
+		this.buildMaterials( payload );
 	};
 
 	Builder.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad ) {
@@ -264,97 +240,55 @@ THREE.LoaderSupport.Builder = (function () {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
 	 */
-	Builder.prototype.buildMeshes = function ( payload ) {
-		var meshName = payload.params.meshName;
+	Builder.prototype.processPayload = function ( payload ) {
+		if ( payload.cmd === 'meshData' ) {
+
+			return this.buildMeshes( payload );
+
+		} else if ( payload.cmd === 'materialData' ) {
+
+			this.buildMaterials( payload );
+			return null;
+
+		}
+	};
+
+	Builder.prototype.buildMeshes = function ( meshPayload ) {
+		var meshName = meshPayload.params.meshName;
 
 		var bufferGeometry = new THREE.BufferGeometry();
-		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( payload.buffers.vertices ), 3 ) );
-		if ( Validator.isValid( payload.buffers.indices ) ) {
+		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
+		if ( Validator.isValid( meshPayload.buffers.indices ) ) {
 
-			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( payload.buffers.indices ), 1 ));
+			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ));
 
 		}
-		var haveVertexColors = Validator.isValid( payload.buffers.colors );
+		var haveVertexColors = Validator.isValid( meshPayload.buffers.colors );
 		if ( haveVertexColors ) {
 
-			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( payload.buffers.colors ), 3 ) );
+			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
 
 		}
-		if ( Validator.isValid( payload.buffers.normals ) ) {
+		if ( Validator.isValid( meshPayload.buffers.normals ) ) {
 
-			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( payload.buffers.normals ), 3 ) );
+			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.normals ), 3 ) );
 
 		} else {
 
 			bufferGeometry.computeVertexNormals();
 
 		}
-		if ( Validator.isValid( payload.buffers.uvs ) ) {
+		if ( Validator.isValid( meshPayload.buffers.uvs ) ) {
 
-			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( payload.buffers.uvs ), 2 ) );
-
-		}
-
-
-		var material;
-		var newMaterial;
-		var materialJson;
-		var materialName;
-		var serializedMaterials = payload.materials.serializedMaterials;
-		if ( Validator.isValid( serializedMaterials ) && serializedMaterials.length > 0 ) {
-
-			var loader = new THREE.MaterialLoader();
-			for ( key in serializedMaterials ) {
-
-				materialJson = serializedMaterials[ key ];
-				if ( Validator.isValid( materialJson ) ) {
-
-					newMaterial = loader.parse( materialJson );
-
-					materialName = newMaterial.name;
-					material = this.materials[ newMaterial ];
-					if ( ! Validator.isValid( material ) ) {
-
-						console.log( 'De-serialized material with name "' + materialName + '" will be added.');
-						this.materials[ materialName ] = newMaterial;
-
-					}
-
-				}
-
-			}
-
-		}
-		var runtimeMaterials = payload.materials.runtimeMaterials;
-		if ( Validator.isValid( runtimeMaterials ) && runtimeMaterials.length > 0 ) {
-
-			for ( key in runtimeMaterials ) {
-
-				newMaterial = runtimeMaterials[ key ];
-				if ( Validator.isValid( newMaterial ) ) {
-
-					materialName = newMaterial.name;
-					material = this.materials[ newMaterial ];
-					if ( ! Validator.isValid( material ) ) {
-
-						console.log( 'Runtime material with name "' + materialName + '" will be added.');
-						this.materials[ materialName ] = newMaterial;
-
-					}
-
-				}
-
-			}
+			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
 
 		}
 
-
-		var materialDescriptions = payload.materials.materialDescriptions;
+		var material, materialName, key;
+		var materialDescriptions = meshPayload.materials.materialDescriptions;
 		var materialDescription;
-		var createMultiMaterial = payload.materials.multiMaterial;
+		var createMultiMaterial = meshPayload.materials.multiMaterial;
 		var multiMaterials = [];
-
-		var key;
 		for ( key in materialDescriptions ) {
 
 			materialDescription = materialDescriptions[ key ];
@@ -404,7 +338,7 @@ THREE.LoaderSupport.Builder = (function () {
 		if ( createMultiMaterial ) {
 
 			material = multiMaterials;
-			var materialGroups = payload.materials.materialGroups;
+			var materialGroups = meshPayload.materials.materialGroups;
 			var materialGroup;
 			for ( key in materialGroups ) {
 
@@ -466,12 +400,12 @@ THREE.LoaderSupport.Builder = (function () {
 
 			}
 			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
-			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		} else {
 
 			progressMessage = 'Not adding mesh: ' + meshName;
-			progressMessage += ' (' + ( payload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		}
 		var callbackOnProgress = this.callbacks.onProgress;
@@ -480,9 +414,9 @@ THREE.LoaderSupport.Builder = (function () {
 			var event = new CustomEvent( 'BuilderEvent', {
 				detail: {
 					type: 'progress',
-					modelName: payload.params.meshName,
+					modelName: meshPayload.params.meshName,
 					text: progressMessage,
-					numericalValue: payload.progress.numericalValue
+					numericalValue: meshPayload.progress.numericalValue
 				}
 			} );
 			callbackOnProgress( event );
@@ -490,6 +424,53 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 
 		return meshes;
+	};
+
+	Builder.prototype.buildMaterials = function ( materialPayload ) {
+		var material, materialName;
+		var materials = materialPayload.materials.serializedMaterials;
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+
+			var loader = new THREE.MaterialLoader();
+			var materialJson;
+			for ( materialName in materials ) {
+
+				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName ) ) {
+
+					materialJson = materials[ materialName ];
+					if ( Validator.isValid( materialJson ) ) {
+
+						material = loader.parse( materialJson );
+						this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
+						this.materials[ materialName ] = material;
+					}
+
+				}
+
+			}
+
+		}
+
+		materials = materialPayload.materials.runtimeMaterials;
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+
+			for ( materialName in materials ) {
+
+				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName ) ) {
+
+					this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
+					material = materials[ materialName ];
+					this.materials[ materialName ] = material;
+
+				}
+
+			}
+
+		}
+
+		// always reset list of names as they are an array
+		this.materialNames = [];
+		for ( materialName in this.materials ) this.materialNames.push( materialName );
 	};
 
 	return Builder;
@@ -519,9 +500,33 @@ THREE.LoaderSupport.Commons = (function () {
 		this.disregardNormals = false;
 
 		this.loaderRootNode = new THREE.Group();
-		this.builder = new THREE.LoaderSupport.Builder();
+		this.builder = new THREE.LoaderSupport.Builder( this.logger );
+		this._createDefaultMaterials();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	};
+
+	Commons.prototype._createDefaultMaterials = function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+
+		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		vertexColorMaterial.name = 'vertexColorMaterial';
+		vertexColorMaterial.vertexColors = THREE.VertexColors;
+
+		var runtimeMaterials = {};
+		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
+		runtimeMaterials[ vertexColorMaterial.name ] = vertexColorMaterial;
+
+		this.builder.buildMaterials(
+			{
+				cmd: 'materialData',
+				materials: {
+					serializedMaterials: null,
+					runtimeMaterials: runtimeMaterials
+				}
+			}
+		);
+	}
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {

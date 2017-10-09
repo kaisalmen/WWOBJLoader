@@ -179,6 +179,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 							scope.callbacks.builder( payload );
 							break;
 
+						case 'materialData':
+							scope.callbacks.builder( payload );
+							break;
+
 						case 'complete':
 							scope.callbacks.onLoad( payload.msg );
 							scope.running = false;
