@@ -204,17 +204,13 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			if ( Validator.isValid( libLocations ) && libLocations.length > 0 ) {
 
-				var loadedAllLibs = false;
 				var libsContent = '';
 				var loadAllLibraries = function ( path, locations ) {
 					if ( locations.length === 0 ) {
 
-						loadedAllLibs = true;
+						buildWorkerCode( libsContent );
 
 					} else {
-
-						var libLoaction = locations[ 0 ];
-						locations.shift();
 
 						var loadedLib = function ( contentAsString ) {
 							libsContent += contentAsString;
@@ -224,25 +220,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 						var fileLoader = new THREE.FileLoader();
 						fileLoader.setPath( path );
 						fileLoader.setResponseType( 'text' );
-						fileLoader.load( libLoaction, loadedLib );
+						fileLoader.load( locations[ 0 ], loadedLib );
+						locations.shift();
 
 					}
 				};
 				loadAllLibraries( libPath, libLocations );
-
-				function verifyLoading() {
-					if ( ! loadedAllLibs ) {
-
-						setTimeout( verifyLoading, 100 );
-
-					} else {
-
-						buildWorkerCode( libsContent );
-
-					}
-
-				}
-				verifyLoading();
 
 			} else {
 
