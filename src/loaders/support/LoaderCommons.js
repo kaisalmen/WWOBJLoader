@@ -206,7 +206,6 @@ THREE.LoaderSupport.Builder = (function () {
 	function Builder( logger ) {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.materials = [];
-		this.materialNames = [];
 		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
 	}
 
@@ -285,53 +284,13 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 
 		var material, materialName, key;
-		var materialDescriptions = meshPayload.materials.materialDescriptions;
-		var materialDescription;
+		var materialNames = meshPayload.materials.materialNames;
 		var createMultiMaterial = meshPayload.materials.multiMaterial;
 		var multiMaterials = [];
-		for ( key in materialDescriptions ) {
+		for ( key in materialNames ) {
 
-			materialDescription = materialDescriptions[ key ];
-			material = this.materials[ materialDescription.name ];
-			material = Validator.verifyInput( material, this.materials[ 'defaultMaterial' ] );
-			if ( haveVertexColors ) {
-
-				if ( material.hasOwnProperty( 'vertexColors' ) ) {
-
-					materialName = material.name + '_vertexColor';
-					var materialClone = this.materials[ materialName ];
-					if ( ! Validator.isValid( materialClone ) ) {
-
-						materialClone = material.clone();
-						materialClone.name = materialName;
-						materialClone.vertexColors = THREE.VertexColors;
-						this.materials[ materialName ] = materialClone;
-
-					}
-					material = materialClone;
-
-				} else {
-
-					material = this.materials[ 'vertexColorMaterial' ];
-				}
-
-			}
-
-			if ( materialDescription.flat ) {
-
-				materialName = material.name + '_flat';
-				var materialClone = this.materials[ materialName ];
-				if ( ! Validator.isValid( materialClone ) ) {
-
-					materialClone = material.clone();
-					materialClone.name = materialName;
-					materialClone.flatShading = true;
-					this.materials[ materialName ] = materialClone;
-
-				}
-				material = materialClone;
-
-			}
+			materialName = materialNames[ key ];
+			material = this.materials[ materialName ];
 			if ( createMultiMaterial ) multiMaterials.push( material );
 
 		}
@@ -435,7 +394,7 @@ THREE.LoaderSupport.Builder = (function () {
 			var materialJson;
 			for ( materialName in materials ) {
 
-				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName ) ) {
+				if ( ! this.materials.hasOwnProperty( materialName ) ) {
 
 					materialJson = materials[ materialName ];
 					if ( Validator.isValid( materialJson ) ) {
@@ -456,9 +415,9 @@ THREE.LoaderSupport.Builder = (function () {
 
 			for ( materialName in materials ) {
 
-				if ( materials.hasOwnProperty( materialName ) && ! this.materials.hasOwnProperty( materialName ) ) {
+				if ( ! this.materials.hasOwnProperty( materialName ) ) {
 
-					this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
+					this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
 					material = materials[ materialName ];
 					this.materials[ materialName ] = material;
 
@@ -467,10 +426,22 @@ THREE.LoaderSupport.Builder = (function () {
 			}
 
 		}
+	};
 
-		// always reset list of names as they are an array
-		this.materialNames = [];
-		for ( materialName in this.materials ) this.materialNames.push( materialName );
+	Builder.prototype.getMaterialsJSON = function () {
+		var materialsJSON = {};
+		var material;
+		for ( var materialName in this.materials ) {
+
+			material = this.materials[ materialName ];
+			materialsJSON[ materialName ] = material.toJSON();
+		}
+
+		return materialsJSON;
+	};
+
+	Builder.prototype.getMaterials = function () {
+		return this.materials;
 	};
 
 	return Builder;
@@ -526,7 +497,7 @@ THREE.LoaderSupport.Commons = (function () {
 				}
 			}
 		);
-	}
+	};
 
 	Commons.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {

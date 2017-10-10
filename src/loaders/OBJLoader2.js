@@ -171,7 +171,7 @@ THREE.OBJLoader2 = (function () {
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
-		parser.setMaterialNames( this.builder.materialNames );
+		parser.setMaterials( this.builder.getMaterials() );
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
@@ -263,6 +263,7 @@ THREE.OBJLoader2 = (function () {
 			{
 				cmd: 'run',
 				params: {
+					useAsync: true,
 					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 					useIndices: this.useIndices,
 					disregardNormals: this.disregardNormals
@@ -272,7 +273,7 @@ THREE.OBJLoader2 = (function () {
 					enabled: this.logger.enabled
 				},
 				materials: {
-					materialNames: this.builder.materialNames
+					materials: this.builder.getMaterialsJSON()
 				},
 				buffers: {
 					input: content
@@ -316,8 +317,9 @@ THREE.OBJLoader2 = (function () {
 			this.callbackProgress = null;
 			this.callbackBuilder = null;
 
-			this.materialNames = [];
+			this.materials = {};
 			this.rawMesh = null;
+			this.useAsync = false;
 			this.materialPerSmoothingGroup = false;
 			this.useIndices = false;
 			this.disregardNormals = false;
@@ -333,6 +335,10 @@ THREE.OBJLoader2 = (function () {
 			this.totalBytes = 0;
 		};
 
+		Parser.prototype.setUseAsync = function ( useAsync ) {
+			this.useAsync = useAsync;
+		};
+
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 		};
@@ -345,9 +351,9 @@ THREE.OBJLoader2 = (function () {
 			this.disregardNormals = disregardNormals;
 		};
 
-		Parser.prototype.setMaterialNames = function ( materialNames ) {
-			this.materialNames = Validator.verifyInput( materialNames, this.materialNames );
-			this.materialNames = Validator.verifyInput( this.materialNames, [] );
+		Parser.prototype.setMaterials = function ( materials ) {
+			this.materials = Validator.verifyInput( materials, this.materials );
+			this.materials = Validator.verifyInput( this.materials, {} );
 		};
 
 		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
@@ -364,9 +370,11 @@ THREE.OBJLoader2 = (function () {
 
 			if ( this.logger.isEnabled() ) {
 
-				var matNames = ( this.materialNames.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + this.materialNames.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
+				var matKeys = Object.keys( this.materials );
+				var matNames = ( matKeys.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
 				var printedConfig = 'OBJLoader2.Parser configuration:'
 						+ matNames
+						+ '\n\tuseAsync: ' + this.useAsync
 						+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 						+ '\n\tuseIndices: ' + this.useIndices
 						+ '\n\tdisregardNormals: ' + this.disregardNormals
@@ -695,10 +703,10 @@ THREE.OBJLoader2 = (function () {
 			var colorFA = ( result.absoluteColorCount > 0 ) ? new Float32Array( result.absoluteColorCount ) : null;
 			var normalFA = ( result.absoluteNormalCount > 0 ) ? new Float32Array( result.absoluteNormalCount ) : null;
 			var uvFA = ( result.absoluteUvCount > 0 ) ? new Float32Array( result.absoluteUvCount ) : null;
+			var haveVertexColors = Validator.isValid( colorFA );
 
 			var rawObjectDescription;
-			var materialDescription;
-			var materialDescriptions = [];
+			var materialNames = [];
 
 			var createMultiMaterial = ( rawObjectDescriptions.length > 1 );
 			var materialIndex = 0;
@@ -715,36 +723,97 @@ THREE.OBJLoader2 = (function () {
 			var materialGroupOffset = 0;
 			var materialGroupLength = 0;
 
+			var material, materialClone, materialName;
 			for ( var oodIndex in rawObjectDescriptions ) {
 				if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
 				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
-				materialDescription = {
-					name: rawObjectDescription.materialName,
-					flat: false,
-					default: false
-				};
-				if ( this.materialNames[ materialDescription.name ] === null ) {
+				materialName = rawObjectDescription.materialName;
+				material = this.materials[ materialName ];
+				if ( ! Validator.isValid( material ) ) {
 
-					materialDescription.default = true;
+					material = this.materials[ 'defaultMaterial' ];
 					this.logger.logWarn( 'object_group "' + rawObjectDescription.objectName + '_' +
-						rawObjectDescription.groupName +
-						'" was defined without material! Assigning "defaultMaterial".' );
+						rawObjectDescription.groupName + '" was defined with unresolvable material "' + materialName + '"! Assigning "defaultMaterial".' );
+
+					materialName = material.name;
+				}
+
+				if ( haveVertexColors ) {
+
+					if ( material.hasOwnProperty( 'vertexColors' ) ) {
+
+						// refer to original name
+						materialName = rawObjectDescription.materialName + '_vertexColor';
+						materialClone = this.materials[ materialName ];
+						if ( ! Validator.isValid( materialClone ) ) {
+
+							materialClone = this.useAsync ? Object.assign( {}, material ) : material.clone();
+							materialClone[ 'name' ] = materialName;
+							materialClone[ 'vertexColors' ] = 2;
+							this.materials[ materialName ] = materialClone;
+							if ( this.useAsync ) {
+
+								var payload = {
+									cmd: 'materialData',
+									materials: {
+										serializedMaterials: [ materialClone ]
+									}
+								};
+								this.callbackBuilder( payload );
+
+							}
+							material = materialClone;
+
+						}
+
+
+					} else {
+
+						materialName = 'vertexColorMaterial';
+						material = this.materials[ materialName ];
+
+					}
 
 				}
+
 				// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-				if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
+				if ( rawObjectDescription.smoothingGroup === 0 ) {
+
+					materialName = materialName + '_flat';
+					materialClone = this.materials[ materialName ];
+					if ( ! Validator.isValid( materialClone ) ) {
+
+						materialClone = this.useAsync ? Object.assign( {}, material ) : material.clone();
+						materialClone[ 'name' ] = materialName;
+						materialClone[ 'flatShading' ] = true;
+						this.materials[ materialName ] = materialClone;
+						if ( this.useAsync ) {
+
+							var payload = {
+								cmd: 'materialData',
+								materials: {
+									serializedMaterials: [ materialClone ]
+								}
+							};
+							this.callbackBuilder( payload );
+
+						}
+						material = materialClone;
+
+					}
+
+				}
 
 				if ( createMultiMaterial ) {
 
 					// re-use material if already used before. Reduces materials array size and eliminates duplicates
-
-					selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
+					selectedMaterialIndex = materialIndexMapping[ materialName ];
 					if ( ! selectedMaterialIndex ) {
 
 						selectedMaterialIndex = materialIndex;
-						materialIndexMapping[ materialDescription.name ] = materialIndex;
-						materialDescriptions.push( materialDescription );
+						materialIndexMapping[ materialName ] = materialIndex;
+						materialNames.push( materialName );
 						materialIndex++;
 
 					}
@@ -759,7 +828,7 @@ THREE.OBJLoader2 = (function () {
 
 				} else {
 
-					materialDescriptions.push( materialDescription );
+					materialNames.push( materialName );
 
 				}
 
@@ -809,7 +878,6 @@ THREE.OBJLoader2 = (function () {
 					this.logger.logDebug( createdReport );
 				}
 
-
 			}
 
 			this.outputObjectCount++;
@@ -824,7 +892,7 @@ THREE.OBJLoader2 = (function () {
 					},
 					materials: {
 						multiMaterial: createMultiMaterial,
-						materialDescriptions: materialDescriptions,
+						materialNames: materialNames,
 						materialGroups: materialGroups
 					},
 					buffers: {
