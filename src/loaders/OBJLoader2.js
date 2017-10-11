@@ -171,6 +171,7 @@ THREE.OBJLoader2 = (function () {
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
+		// sync code works directly on the material references
 		parser.setMaterials( this.builder.getMaterials() );
 
 		var scope = this;
@@ -259,6 +260,14 @@ THREE.OBJLoader2 = (function () {
 		};
 		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+
+		var materialNames = {};
+		var materials = this.builder.getMaterials();
+		for ( var materialName in materials ) {
+
+			materialNames[ materialName ] = materialName;
+
+		}
 		this.workerSupport.run(
 			{
 				cmd: 'run',
@@ -273,7 +282,8 @@ THREE.OBJLoader2 = (function () {
 					enabled: this.logger.enabled
 				},
 				materials: {
-					materials: this.builder.getMaterialsJSON()
+					// in async case only material names are supplied to parser
+					materials: materialNames
 				},
 				buffers: {
 					input: content
@@ -723,85 +733,54 @@ THREE.OBJLoader2 = (function () {
 			var materialGroupOffset = 0;
 			var materialGroupLength = 0;
 
-			var material, materialClone, materialName;
+			var materialOrg, material, materialName, materialNameOrg;
 			for ( var oodIndex in rawObjectDescriptions ) {
+
 				if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
 				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
-				materialName = rawObjectDescription.materialName;
+				materialNameOrg = rawObjectDescription.materialName;
+				materialName = materialNameOrg + ( haveVertexColors ? '_vertexColor' : '' ) + ( rawObjectDescription.smoothingGroup === 0 ? '_flat' : '' );
+				materialOrg = this.materials[ materialNameOrg ];
 				material = this.materials[ materialName ];
+
+				// both original and derived names do not lead to an existing material => need to use a default material
+				if ( ! Validator.isValid( materialOrg ) && ! Validator.isValid( material ) ) {
+
+					var defaultMaterialName = haveVertexColors ? 'vertexColorMaterial' : 'defaultMaterial';
+					materialOrg = this.materials[ defaultMaterialName ];
+					this.logger.logWarn( 'object_group "' + rawObjectDescription.objectName + '_' +
+						rawObjectDescription.groupName + '" was defined with unresolvable material "' +
+						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
+					materialNameOrg = defaultMaterialName;
+
+					// if names are identical then there is no need for later manipulation
+					if ( materialNameOrg === materialName ) {
+
+						material = materialOrg;
+						materialName = defaultMaterialName;
+
+					}
+
+				}
 				if ( ! Validator.isValid( material ) ) {
 
-					material = this.materials[ 'defaultMaterial' ];
-					this.logger.logWarn( 'object_group "' + rawObjectDescription.objectName + '_' +
-						rawObjectDescription.groupName + '" was defined with unresolvable material "' + materialName + '"! Assigning "defaultMaterial".' );
-
-					materialName = material.name;
-				}
-
-				if ( haveVertexColors ) {
-
-					if ( material.hasOwnProperty( 'vertexColors' ) ) {
-
-						// refer to original name
-						materialName = rawObjectDescription.materialName + '_vertexColor';
-						materialClone = this.materials[ materialName ];
-						if ( ! Validator.isValid( materialClone ) ) {
-
-							materialClone = this.useAsync ? Object.assign( {}, material ) : material.clone();
-							materialClone[ 'name' ] = materialName;
-							materialClone[ 'vertexColors' ] = 2;
-							this.materials[ materialName ] = materialClone;
-							if ( this.useAsync ) {
-
-								var payload = {
-									cmd: 'materialData',
-									materials: {
-										serializedMaterials: [ materialClone ]
-									}
-								};
-								this.callbackBuilder( payload );
-
-							}
-							material = materialClone;
-
+					var alterationInstruction = {
+						materialNameOrg: materialNameOrg,
+						materialName: materialName,
+						vertexColors: haveVertexColors ? 2 : 0,
+						flatShading: rawObjectDescription.smoothingGroup === 0
+					};
+					var payload = {
+						cmd: 'materialData',
+						materials: {
+							alterationInstruction: alterationInstruction
 						}
+					};
+					this.callbackBuilder( payload );
 
-
-					} else {
-
-						materialName = 'vertexColorMaterial';
-						material = this.materials[ materialName ];
-
-					}
-
-				}
-
-				// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-				if ( rawObjectDescription.smoothingGroup === 0 ) {
-
-					materialName = materialName + '_flat';
-					materialClone = this.materials[ materialName ];
-					if ( ! Validator.isValid( materialClone ) ) {
-
-						materialClone = this.useAsync ? Object.assign( {}, material ) : material.clone();
-						materialClone[ 'name' ] = materialName;
-						materialClone[ 'flatShading' ] = true;
-						this.materials[ materialName ] = materialClone;
-						if ( this.useAsync ) {
-
-							var payload = {
-								cmd: 'materialData',
-								materials: {
-									serializedMaterials: [ materialClone ]
-								}
-							};
-							this.callbackBuilder( payload );
-
-						}
-						material = materialClone;
-
-					}
+					// fake entry for async; sync Parser always works on material references (Builder update directly visible here)
+					if ( this.useAsync ) this.materials[ materialName ] = alterationInstruction;
 
 				}
 

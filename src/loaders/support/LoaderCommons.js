@@ -219,11 +219,11 @@ THREE.LoaderSupport.Builder = (function () {
 		var payload = {
 			cmd: 'materialData',
 			materials: {
-				serializedMaterials: null,
+				alterationInstructions: null,
 				runtimeMaterials: materials
 			}
 		};
-		this.buildMaterials( payload );
+		this.updateMaterials( payload );
 	};
 
 	Builder.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad ) {
@@ -233,11 +233,11 @@ THREE.LoaderSupport.Builder = (function () {
 	};
 
 	/**
-	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info.
+	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
 	 * @memberOf THREE.LoaderSupport.Builder
 	 *
-	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
-	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
+	 * @param {Object} payload Raw Mesh or Material descriptions.
+	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
 	 */
 	Builder.prototype.processPayload = function ( payload ) {
 		if ( payload.cmd === 'meshData' ) {
@@ -246,12 +246,19 @@ THREE.LoaderSupport.Builder = (function () {
 
 		} else if ( payload.cmd === 'materialData' ) {
 
-			this.buildMaterials( payload );
+			this.updateMaterials( payload );
 			return null;
 
 		}
 	};
 
+	/**
+	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info.
+	 * @memberOf THREE.LoaderSupport.Builder
+	 *
+	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
+	 */
 	Builder.prototype.buildMeshes = function ( meshPayload ) {
 		var meshName = meshPayload.params.meshName;
 
@@ -385,40 +392,38 @@ THREE.LoaderSupport.Builder = (function () {
 		return meshes;
 	};
 
-	Builder.prototype.buildMaterials = function ( materialPayload ) {
+	/**
+	 * Updates the materials with contained material objects (sync) or from alteration instructions (async)
+	 * @memberOf THREE.LoaderSupport.Builder
+	 *
+	 * @param {Object} materialPayload Material update instructions
+	 */
+	Builder.prototype.updateMaterials = function ( materialPayload ) {
 		var material, materialName;
-		var materials = materialPayload.materials.serializedMaterials;
-		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+		var alterationInstruction = materialPayload.materials.alterationInstruction;
+		if ( Validator.isValid( alterationInstruction ) ) {
 
-			var loader = new THREE.MaterialLoader();
-			var materialJson;
-			for ( materialName in materials ) {
+			var materialNameOrg = alterationInstruction.materialNameOrg;
+			var materialOrg = this.materials[ materialNameOrg ];
+			material = materialOrg.clone();
 
-				if ( ! this.materials.hasOwnProperty( materialName ) ) {
-
-					materialJson = materials[ materialName ];
-					if ( Validator.isValid( materialJson ) ) {
-
-						material = loader.parse( materialJson );
-						this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
-						this.materials[ materialName ] = material;
-					}
-
-				}
-
-			}
+			materialName = alterationInstruction.materialName;
+			material.name = materialName;
+			material.vertexColors = alterationInstruction.vertexColors;
+			material.flatShading = alterationInstruction.flatShading;
+			this.materials[ materialName ] = material;
 
 		}
 
-		materials = materialPayload.materials.runtimeMaterials;
+		var materials = materialPayload.materials.runtimeMaterials;
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 
 			for ( materialName in materials ) {
 
 				if ( ! this.materials.hasOwnProperty( materialName ) ) {
 
-					this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
 					material = materials[ materialName ];
+					this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
 					this.materials[ materialName ] = material;
 
 				}
@@ -428,18 +433,11 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 	};
 
-	Builder.prototype.getMaterialsJSON = function () {
-		var materialsJSON = {};
-		var material;
-		for ( var materialName in this.materials ) {
-
-			material = this.materials[ materialName ];
-			materialsJSON[ materialName ] = material.toJSON();
-		}
-
-		return materialsJSON;
-	};
-
+	/**
+	 * Returns the mapping object of material name and corresponding material
+	 *
+	 * @returns {Object} Map of {@link THREE.Material}
+	 */
 	Builder.prototype.getMaterials = function () {
 		return this.materials;
 	};
@@ -488,11 +486,11 @@ THREE.LoaderSupport.Commons = (function () {
 		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
 		runtimeMaterials[ vertexColorMaterial.name ] = vertexColorMaterial;
 
-		this.builder.buildMaterials(
+		this.builder.updateMaterials(
 			{
 				cmd: 'materialData',
 				materials: {
-					serializedMaterials: null,
+					alterationInstructions: null,
 					runtimeMaterials: runtimeMaterials
 				}
 			}
