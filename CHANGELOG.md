@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.0
+- Issue #18: Builder enhancements:
+ - Materials can be added to it as regular objects, as jsonified objects (e.g. from worker) and as clone instruction (map of property and value)
+ - Separated mesh processing from material processing
+ - Builder no longer defines default materials. This is no the responsibility of the user (loader) 
+- WorkerSupport is now able to load arbitrary js files into Blob used to create the Worker (as exemplary shown and used in MeshSpray)
+
 ## 2.0.1
 - three.js issue #12324: Fix slashes in string pattern (e.g. usemtl) were replaced by spaces
 - Fixed line processing with uv

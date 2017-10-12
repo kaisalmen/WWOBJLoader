@@ -8,16 +8,16 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.0.0';
-	var Commons = THREE.LoaderSupport.Commons;
+	var OBJLOADER2_VERSION = '2.1.0';
+	var LoaderBase = THREE.LoaderSupport.LoaderBase;
 	var Validator = THREE.LoaderSupport.Validator;
 	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
+	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
 
 	function OBJLoader2( logger, manager ) {
-		THREE.LoaderSupport.Commons.call( this, logger, manager );
+		THREE.LoaderSupport.LoaderBase.call( this, logger, manager );
 		this.logger.logInfo( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
@@ -149,7 +149,7 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
-		THREE.LoaderSupport.Commons.prototype._applyPrepData.call( this, prepData );
+		THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
 
 		if ( Validator.isValid( prepData ) ) {
 
@@ -248,7 +248,7 @@ THREE.OBJLoader2 = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by OBJLoader2 buildWorkerCode.\n';
 			workerCode += '  */\n\n';
-			workerCode += funcBuildSingelton( 'Commons', 'Commons', Commons );
+			workerCode += funcBuildSingelton( 'LoaderBase', 'LoaderBase', LoaderBase );
 			workerCode += funcBuildObject( 'Consts', Consts );
 			workerCode += funcBuildObject( 'Validator', Validator );
 			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );

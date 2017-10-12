@@ -9,11 +9,11 @@ var MeshSpray = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	MeshSpray.prototype = Object.create( THREE.LoaderSupport.Commons.prototype );
+	MeshSpray.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray( manager ) {
-		THREE.LoaderSupport.Commons.call( this, manager );
+		THREE.LoaderSupport.LoaderBase.call( this, manager );
 		this.workerSupport = null;
 		this.logger = new ConsoleLogger();
 	};
