@@ -219,7 +219,8 @@ THREE.LoaderSupport.Builder = (function () {
 		var payload = {
 			cmd: 'materialData',
 			materials: {
-				alterationInstructions: null,
+				materialCloneInstructions: null,
+				serializedMaterials: null,
 				runtimeMaterials: materials
 			}
 		};
@@ -400,37 +401,74 @@ THREE.LoaderSupport.Builder = (function () {
 	 */
 	Builder.prototype.updateMaterials = function ( materialPayload ) {
 		var material, materialName;
-		var alterationInstruction = materialPayload.materials.alterationInstruction;
-		if ( Validator.isValid( alterationInstruction ) ) {
+		var materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
+		if ( Validator.isValid( materialCloneInstructions ) ) {
 
-			var materialNameOrg = alterationInstruction.materialNameOrg;
+			var materialNameOrg = materialCloneInstructions.materialNameOrg;
 			var materialOrg = this.materials[ materialNameOrg ];
 			material = materialOrg.clone();
 
-			materialName = alterationInstruction.materialName;
+			materialName = materialCloneInstructions.materialName;
 			material.name = materialName;
-			material.vertexColors = alterationInstruction.vertexColors;
-			material.flatShading = alterationInstruction.flatShading;
+
+			var materialProperties = materialCloneInstructions.materialProperties;
+			for ( var key in materialProperties ) {
+
+				if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) material[ key ] = materialProperties[ key ];
+
+			}
 			this.materials[ materialName ] = material;
 
 		}
 
-		var materials = materialPayload.materials.runtimeMaterials;
+		var materials = materialPayload.materials.serializedMaterials;
 		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 
+			var loader = new THREE.MaterialLoader();
+			var materialJson;
 			for ( materialName in materials ) {
 
-				if ( ! this.materials.hasOwnProperty( materialName ) ) {
+				materialJson = materials[ materialName ];
+				if ( Validator.isValid( materialJson ) ) {
 
-					material = materials[ materialName ];
-					this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
+					material = loader.parse( materialJson );
+					this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
 					this.materials[ materialName ] = material;
-
 				}
 
 			}
 
 		}
+
+		materials = materialPayload.materials.runtimeMaterials;
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+
+			for ( materialName in materials ) {
+
+				material = materials[ materialName ];
+				this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
+				this.materials[ materialName ] = material;
+
+			}
+
+		}
+	};
+
+	/**
+	 * Returns the mapping object of material name and corresponding jsonified material.
+	 *
+	 * @returns {Object} Map of Materials in JSON representation
+	 */
+	Builder.prototype.getMaterialsJSON = function () {
+		var materialsJSON = {};
+		var material;
+		for ( var materialName in this.materials ) {
+
+			material = this.materials[ materialName ];
+			materialsJSON[ materialName ] = material.toJSON();
+		}
+
+		return materialsJSON;
 	};
 
 	/**
@@ -490,7 +528,8 @@ THREE.LoaderSupport.Commons = (function () {
 			{
 				cmd: 'materialData',
 				materials: {
-					alterationInstructions: null,
+					materialCloneInstructions: null,
+					serializedMaterials: null,
 					runtimeMaterials: runtimeMaterials
 				}
 			}

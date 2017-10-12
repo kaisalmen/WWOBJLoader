@@ -765,22 +765,24 @@ THREE.OBJLoader2 = (function () {
 				}
 				if ( ! Validator.isValid( material ) ) {
 
-					var alterationInstruction = {
+					var materialCloneInstructions = {
 						materialNameOrg: materialNameOrg,
 						materialName: materialName,
-						vertexColors: haveVertexColors ? 2 : 0,
-						flatShading: rawObjectDescription.smoothingGroup === 0
+						materialProperties: {
+							vertexColors: haveVertexColors ? 2 : 0,
+							flatShading: rawObjectDescription.smoothingGroup === 0
+						}
 					};
 					var payload = {
 						cmd: 'materialData',
 						materials: {
-							alterationInstruction: alterationInstruction
+							materialCloneInstructions: materialCloneInstructions
 						}
 					};
 					this.callbackBuilder( payload );
 
 					// fake entry for async; sync Parser always works on material references (Builder update directly visible here)
-					if ( this.useAsync ) this.materials[ materialName ] = alterationInstruction;
+					if ( this.useAsync ) this.materials[ materialName ] = materialCloneInstructions;
 
 				}
 
