@@ -171,11 +171,12 @@ THREE.OBJLoader2 = (function () {
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
-		parser.setMaterialNames( this.builder.materialNames );
+		// sync code works directly on the material references
+		parser.setMaterials( this.builder.getMaterials() );
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.buildMeshes( payload );
+			var meshes = scope.builder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
@@ -233,7 +234,7 @@ THREE.OBJLoader2 = (function () {
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.buildMeshes( payload );
+			var meshes = scope.builder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
@@ -259,10 +260,19 @@ THREE.OBJLoader2 = (function () {
 		};
 		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+
+		var materialNames = {};
+		var materials = this.builder.getMaterials();
+		for ( var materialName in materials ) {
+
+			materialNames[ materialName ] = materialName;
+
+		}
 		this.workerSupport.run(
 			{
 				cmd: 'run',
 				params: {
+					useAsync: true,
 					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 					useIndices: this.useIndices,
 					disregardNormals: this.disregardNormals
@@ -272,7 +282,8 @@ THREE.OBJLoader2 = (function () {
 					enabled: this.logger.enabled
 				},
 				materials: {
-					materialNames: this.builder.materialNames
+					// in async case only material names are supplied to parser
+					materials: materialNames
 				},
 				buffers: {
 					input: content
@@ -316,8 +327,9 @@ THREE.OBJLoader2 = (function () {
 			this.callbackProgress = null;
 			this.callbackBuilder = null;
 
-			this.materialNames = [];
+			this.materials = {};
 			this.rawMesh = null;
+			this.useAsync = false;
 			this.materialPerSmoothingGroup = false;
 			this.useIndices = false;
 			this.disregardNormals = false;
@@ -333,6 +345,10 @@ THREE.OBJLoader2 = (function () {
 			this.totalBytes = 0;
 		};
 
+		Parser.prototype.setUseAsync = function ( useAsync ) {
+			this.useAsync = useAsync;
+		};
+
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 		};
@@ -345,9 +361,9 @@ THREE.OBJLoader2 = (function () {
 			this.disregardNormals = disregardNormals;
 		};
 
-		Parser.prototype.setMaterialNames = function ( materialNames ) {
-			this.materialNames = Validator.verifyInput( materialNames, this.materialNames );
-			this.materialNames = Validator.verifyInput( this.materialNames, [] );
+		Parser.prototype.setMaterials = function ( materials ) {
+			this.materials = Validator.verifyInput( materials, this.materials );
+			this.materials = Validator.verifyInput( this.materials, {} );
 		};
 
 		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
@@ -364,9 +380,11 @@ THREE.OBJLoader2 = (function () {
 
 			if ( this.logger.isEnabled() ) {
 
-				var matNames = ( this.materialNames.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + this.materialNames.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
+				var matKeys = Object.keys( this.materials );
+				var matNames = ( matKeys.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
 				var printedConfig = 'OBJLoader2.Parser configuration:'
 						+ matNames
+						+ '\n\tuseAsync: ' + this.useAsync
 						+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 						+ '\n\tuseIndices: ' + this.useIndices
 						+ '\n\tdisregardNormals: ' + this.disregardNormals
@@ -695,10 +713,10 @@ THREE.OBJLoader2 = (function () {
 			var colorFA = ( result.absoluteColorCount > 0 ) ? new Float32Array( result.absoluteColorCount ) : null;
 			var normalFA = ( result.absoluteNormalCount > 0 ) ? new Float32Array( result.absoluteNormalCount ) : null;
 			var uvFA = ( result.absoluteUvCount > 0 ) ? new Float32Array( result.absoluteUvCount ) : null;
+			var haveVertexColors = Validator.isValid( colorFA );
 
 			var rawObjectDescription;
-			var materialDescription;
-			var materialDescriptions = [];
+			var materialNames = [];
 
 			var createMultiMaterial = ( rawObjectDescriptions.length > 1 );
 			var materialIndex = 0;
@@ -715,36 +733,68 @@ THREE.OBJLoader2 = (function () {
 			var materialGroupOffset = 0;
 			var materialGroupLength = 0;
 
+			var materialOrg, material, materialName, materialNameOrg;
 			for ( var oodIndex in rawObjectDescriptions ) {
+
 				if ( ! rawObjectDescriptions.hasOwnProperty( oodIndex ) ) continue;
 				rawObjectDescription = rawObjectDescriptions[ oodIndex ];
 
-				materialDescription = {
-					name: rawObjectDescription.materialName,
-					flat: false,
-					default: false
-				};
-				if ( this.materialNames[ materialDescription.name ] === null ) {
+				materialNameOrg = rawObjectDescription.materialName;
+				materialName = materialNameOrg + ( haveVertexColors ? '_vertexColor' : '' ) + ( rawObjectDescription.smoothingGroup === 0 ? '_flat' : '' );
+				materialOrg = this.materials[ materialNameOrg ];
+				material = this.materials[ materialName ];
 
-					materialDescription.default = true;
+				// both original and derived names do not lead to an existing material => need to use a default material
+				if ( ! Validator.isValid( materialOrg ) && ! Validator.isValid( material ) ) {
+
+					var defaultMaterialName = haveVertexColors ? 'vertexColorMaterial' : 'defaultMaterial';
+					materialOrg = this.materials[ defaultMaterialName ];
 					this.logger.logWarn( 'object_group "' + rawObjectDescription.objectName + '_' +
-						rawObjectDescription.groupName +
-						'" was defined without material! Assigning "defaultMaterial".' );
+						rawObjectDescription.groupName + '" was defined with unresolvable material "' +
+						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
+					materialNameOrg = defaultMaterialName;
+
+					// if names are identical then there is no need for later manipulation
+					if ( materialNameOrg === materialName ) {
+
+						material = materialOrg;
+						materialName = defaultMaterialName;
+
+					}
 
 				}
-				// Attach '_flat' to materialName in case flat shading is needed due to smoothingGroup 0
-				if ( rawObjectDescription.smoothingGroup === 0 ) materialDescription.flat = true;
+				if ( ! Validator.isValid( material ) ) {
+
+					var materialCloneInstructions = {
+						materialNameOrg: materialNameOrg,
+						materialName: materialName,
+						materialProperties: {
+							vertexColors: haveVertexColors ? 2 : 0,
+							flatShading: rawObjectDescription.smoothingGroup === 0
+						}
+					};
+					var payload = {
+						cmd: 'materialData',
+						materials: {
+							materialCloneInstructions: materialCloneInstructions
+						}
+					};
+					this.callbackBuilder( payload );
+
+					// fake entry for async; sync Parser always works on material references (Builder update directly visible here)
+					if ( this.useAsync ) this.materials[ materialName ] = materialCloneInstructions;
+
+				}
 
 				if ( createMultiMaterial ) {
 
 					// re-use material if already used before. Reduces materials array size and eliminates duplicates
-
-					selectedMaterialIndex = materialIndexMapping[ materialDescription.name ];
+					selectedMaterialIndex = materialIndexMapping[ materialName ];
 					if ( ! selectedMaterialIndex ) {
 
 						selectedMaterialIndex = materialIndex;
-						materialIndexMapping[ materialDescription.name ] = materialIndex;
-						materialDescriptions.push( materialDescription );
+						materialIndexMapping[ materialName ] = materialIndex;
+						materialNames.push( materialName );
 						materialIndex++;
 
 					}
@@ -759,7 +809,7 @@ THREE.OBJLoader2 = (function () {
 
 				} else {
 
-					materialDescriptions.push( materialDescription );
+					materialNames.push( materialName );
 
 				}
 
@@ -809,7 +859,6 @@ THREE.OBJLoader2 = (function () {
 					this.logger.logDebug( createdReport );
 				}
 
-
 			}
 
 			this.outputObjectCount++;
@@ -824,7 +873,7 @@ THREE.OBJLoader2 = (function () {
 					},
 					materials: {
 						multiMaterial: createMultiMaterial,
-						materialDescriptions: materialDescriptions,
+						materialNames: materialNames,
 						materialGroups: materialGroups
 					},
 					buffers: {
