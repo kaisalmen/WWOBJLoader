@@ -5,6 +5,7 @@ if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
+ * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
 THREE.OBJLoader2 = (function () {
 
@@ -16,8 +17,8 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
 
-	function OBJLoader2( logger, manager ) {
-		THREE.LoaderSupport.LoaderBase.call( this, logger, manager );
+	function OBJLoader2( manager, logger ) {
+		THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
 		this.logger.logInfo( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;

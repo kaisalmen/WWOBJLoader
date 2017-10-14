@@ -188,7 +188,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( loader, this.logger );
+		this.workerDescription.classDef.call( loader, null, this.logger );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
