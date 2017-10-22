@@ -269,9 +269,8 @@ THREE.OBJLoader2 = (function () {
 			materialNames[ materialName ] = materialName;
 
 		}
-		this.workerSupport.run(
+		this.workerSupport.prepare(
 			{
-				cmd: 'run',
 				params: {
 					useAsync: true,
 					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
@@ -285,10 +284,12 @@ THREE.OBJLoader2 = (function () {
 				materials: {
 					// in async case only material names are supplied to parser
 					materials: materialNames
-				},
-				buffers: {
-					input: content
 				}
+			}
+		);
+		this.workerSupport.run(
+			{
+				data: content
 			},
 			[ content.buffer ]
 		);

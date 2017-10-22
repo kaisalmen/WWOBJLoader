@@ -72,9 +72,8 @@ var MeshSpray = (function () {
 		var libs2Load = [ 'node_modules/three/build/three.js' ];
 		this.workerSupport.validate( buildCode, false, libs2Load, '../../' );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
-		this.workerSupport.run(
+		this.workerSupport.prepare(
 			{
-				cmd: 'run',
 				params: {
 					dimension: prepData.dimension,
 					quantity: prepData.quantity,
@@ -86,10 +85,12 @@ var MeshSpray = (function () {
 				logger: {
 					debug: this.logger.debug,
 					enabled: this.logger.enabled
-				},
-				buffers: {
-					input: null
 				}
+			}
+		);
+		this.workerSupport.run(
+			{
+				data: null
 			}
 		);
 	};

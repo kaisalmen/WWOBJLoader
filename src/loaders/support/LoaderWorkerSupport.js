@@ -7,8 +7,11 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 	function WorkerRunnerRefImpl() {
 		var scope = this;
+		this.logger = new ConsoleLogger();
+		this.parser = null;
+		this.callbacks = null;
 		var scopedRunner = function( event ) {
-			scope.run( event.data );
+			scope.processMessage( event.data );
 		};
 		self.addEventListener( 'message', scopedRunner, false );
 	}
@@ -43,40 +46,48 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 *
 	 */
-	WorkerRunnerRefImpl.prototype.run = function ( payload ) {
-		var logger = new ConsoleLogger( payload.logger.enabled, payload.logger.debug );
+	WorkerRunnerRefImpl.prototype.processMessage = function ( payload ) {
+		if ( payload.cmd === 'prepare' ) {
 
-		if ( payload.cmd === 'run' ) {
+			if ( Validator.isValid( payload.logger ) ) {
 
-			logger.logInfo( 'WorkerRunner: Starting Run...' );
+				this.logger.setEnabled( payload.logger.enabled );
+				this.logger.setDebug( payload.logger.debug );
 
-			var callbacks = {
+			}
+			this.logger.logInfo( 'WorkerRunner: Starting Run...' );
+
+			this.callbacks = {
 				callbackBuilder: function ( payload ) {
 					self.postMessage( payload );
 				},
 				callbackProgress: function ( text ) {
-					logger.logDebug( 'WorkerRunner: progress: ' + text );
+					this.logger.logDebug( 'WorkerRunner: progress: ' + text );
 				}
 			};
 
 			// Parser is expected to be named as such
-			var parser = new Parser( logger );
-			this.applyProperties( parser, payload.params );
-			this.applyProperties( parser, payload.materials );
-			this.applyProperties( parser, callbacks );
-			parser.parse( payload.buffers.input );
+			this.parser = new Parser( this.logger );
+			this.applyProperties( this.parser, payload.params );
+			this.applyProperties( this.parser, payload.materials );
+			this.applyProperties( this.parser, this.callbacks );
 
-			logger.logInfo( 'WorkerRunner: Run complete!' );
+		} else if ( payload.cmd === 'run' ) {
 
-			callbacks.callbackBuilder( {
+			this.parser.parse( payload.data );
+
+			this.logger.logInfo( 'WorkerRunner: Run complete!' );
+
+			this.callbacks.callbackBuilder( {
 				cmd: 'complete',
 				msg: 'WorkerRunner completed run.'
 			} );
 
 		} else {
 
-			logger.logError( 'WorkerRunner: Received unknown command: ' + payload.cmd );
+			this.logger.logError( 'WorkerRunner: Received unknown command: ' + payload.cmd );
 
 		}
 	};
@@ -109,7 +120,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		this.worker = null;
 		this.workerCode = null;
 		this.loading = true;
-		this.queuedMessage = null;
+		this.queuedMessages = [];
 		this.running = false;
 		this.terminateRequested = false;
 
@@ -136,7 +147,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.worker = null;
 			this.workerCode = null;
 			this.loading = true;
-			this.queuedMessage = null;
+			this.queuedMessages = [];
 			this.callbacks.builder = null;
 			this.callbacks.onLoad = null;
 
@@ -167,7 +178,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				scope.workerCode += buildSingelton( workerRunner.name, workerRunner.name, workerRunner );
 				scope.workerCode += 'new ' + workerRunner.name + '();\n\n';
 
-				var blob = new Blob( [ scope.workerCode ], { type: 'text/plain' } );
+				var blob = new Blob( [ scope.workerCode ], { type: 'application/javascript' } );
 				scope.worker = new Worker( window.URL.createObjectURL( blob ) );
 				scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
@@ -331,25 +342,49 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	};
 
 	/**
-	 * Runs the parser with the provided configuration.
+	 * Prepare the parser with the provided configuration.
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 * @param {Object} payload Parser configuration (params, materials and logger configuration.
 	 */
-	WorkerSupport.prototype.run = function ( payload ) {
+	WorkerSupport.prototype.prepare = function ( payload ) {
 		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( Validator.isValid( this.worker ) || this.loading ) {
-			this.running = true;
-			this.queuedMessage = payload;
+			if ( payload.cmd !== 'prepare' ) payload.cmd = 'prepare';
+			this.queuedMessages.push( payload );
 			this._postMessage();
 
 		}
 	};
 
+	/**
+	 * Runs the parser as previously configured.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
+	 *
+	 * @param {Object} payload Raw mesh description (buffer).
+	 */
+	WorkerSupport.prototype.run = function ( payload ) {
+		if ( Validator.isValid( this.worker ) || this.loading ) {
+			this.running = true;
+			if ( payload.cmd !== 'run' ) payload.cmd = 'run';
+			this.queuedMessages.push( payload );
+			this._postMessage();
+
+		}
+	};
+
+
 	WorkerSupport.prototype._postMessage = function () {
-		if ( ! this.loading && Validator.isValid( this.queuedMessage ) ) {
-			this.worker.postMessage( this.queuedMessage );
+		if ( ! this.loading ) {
+
+			while ( this.queuedMessages.length > 0 ) {
+
+				this.worker.postMessage( this.queuedMessages[ 0 ] );
+				this.queuedMessages.shift();
+
+			}
+
 		}
 	};
 
