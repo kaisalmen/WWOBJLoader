@@ -72,12 +72,12 @@ var OBJLoader2Example = (function () {
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( true );
+			objLoader.setUseIndices( false );
 			objLoader.setDisregardNormals( false );
 			objLoader.getLogger().setDebug( true );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/21/Table_Photo_Frame_03.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/21/Table_Photo_Frame_03.mtl', 'Table_Photo_Frame_03.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( content ) {
