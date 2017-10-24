@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+- Issue #21: Fixed 'o' or 'g' declaration lead to early cleanup of stored vertex data 
+- WorkerSupport: Added worker payloads "imageData" and "error"
+
 ## 2.1.0
 - Issue #18: Builder enhancements:
   - Materials can be added to it as regular objects, as jsonified objects (e.g. from worker) and as clone instruction (map of property and value)
