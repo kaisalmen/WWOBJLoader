@@ -59,30 +59,31 @@ var OBJLoader2Example = (function () {
 
 	OBJLoader2Example.prototype.initContent = function () {
 		var modelName = 'female02';
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( event ) {
 			scope.scene.add( event.detail.loaderRootNode );
 			console.log( 'Loading complete: ' + event.detail.modelName );
-			scope._reportProgress( '' );
+			scope._reportProgress( { detail: { text: '' } } );
 		};
 
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( false );
+			objLoader.setUseIndices( true );
 			objLoader.setDisregardNormals( false );
 			objLoader.getLogger().setDebug( true );
-			objLoader.load( '../../resource/obj/21/Table_Photo_Frame_03.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/21/Table_Photo_Frame_03.mtl', 'Table_Photo_Frame_03.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
 	};
 
-	OBJLoader2Example.prototype._reportProgress = function( content ) {
-		console.log( 'Progress: ' + content );
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
+	OBJLoader2Example.prototype._reportProgress = function( event ) {
+		var output = Validator.verifyInput( event.detail.text, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - OBJLoader2 basic usage</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+	</head>
+
+	<body>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+		<div id="dat">
+
+		</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 basic usage
+			<div id="feedback"></div>
+		</div>
+
+		<script src="../../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../../node_modules/three/build/three.js"></script>
+		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+
+		<script src="../../src/loaders/support/LoaderCommons.js"></script>
+		<script src="../../src/loaders/support/LoaderBuilder.js"></script>
+		<script src="../../src/loaders/support/LoaderBase.js"></script>
+		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
+		<script src="../../src/loaders/OBJLoader2.js"></script>
+		<script>
+
+			'use strict';
+
+			var OBJLoader2BugVerify = (function () {
+
+				var Validator = THREE.LoaderSupport.Validator;
+
+				function OBJLoader2BugVerify( elementToBindTo ) {
+					this.renderer = null;
+					this.canvas = elementToBindTo;
+					this.aspectRatio = 1;
+					this.recalcAspectRatio();
+
+					this.scene = null;
+					this.cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+						near: 0.1,
+						far: 10000,
+						fov: 45
+					};
+					this.camera = null;
+					this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+					this.controls = null;
+
+					this.objs2Load = [];
+					this.processing = false;
+				}
+
+				OBJLoader2BugVerify.prototype.initGL = function () {
+					this.renderer = new THREE.WebGLRenderer( {
+						canvas: this.canvas,
+						antialias: true,
+						autoClear: true
+					} );
+					this.renderer.setClearColor( 0x050505 );
+
+					this.scene = new THREE.Scene();
+
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.resetCamera();
+					this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
+
+					var ambientLight = new THREE.AmbientLight( 0x404040 );
+					var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+					directionalLight1.position.set( -100, -50, 100 );
+					directionalLight2.position.set( 100, 50, -100 );
+
+					this.scene.add( directionalLight1 );
+					this.scene.add( directionalLight2 );
+					this.scene.add( ambientLight );
+
+					var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					this.scene.add( helper );
+				};
+
+				OBJLoader2BugVerify.prototype.updateAssets = function ( prepData ) {
+					if ( Validator.isValid( prepData ) ) this.objs2Load.push( prepData );
+				};
+
+				OBJLoader2BugVerify.prototype.loadAssets = function () {
+					if ( this.objs2Load.length === 0 || this.processing ) {
+
+						return;
+
+					} else {
+
+						this.processing = true;
+
+					}
+
+					var objLoader2 = new THREE.OBJLoader2();
+					var prepData = this.objs2Load[ 0 ];
+					this.objs2Load.shift();
+					var streamMeshes = prepData.streamMeshesTo;
+					if ( Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
+
+					var scope = this;
+					var loadAssetsProxy = function ( event ) {
+						if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
+						scope.processing = false;
+						scope.loadAssets();
+						scope._reportProgress( { detail: { text: '' } } );
+					};
+					var callbacks = prepData.getCallbacks();
+					callbacks.setCallbackOnLoad( loadAssetsProxy );
+					callbacks.setCallbackOnProgress( this._reportProgress );
+
+					this._reportProgress( { detail: { text: '' } } );
+					objLoader2.run( prepData );
+				};
+
+				OBJLoader2BugVerify.prototype._reportProgress = function( event ) {
+					var output = Validator.verifyInput( event.detail.text, '' );
+					console.log( 'Progress: ' + output );
+					document.getElementById( 'feedback' ).innerHTML = output;
+				};
+
+				OBJLoader2BugVerify.prototype.resizeDisplayGL = function () {
+					this.controls.handleResize();
+
+					this.recalcAspectRatio();
+					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+					this.updateCamera();
+				};
+
+				OBJLoader2BugVerify.prototype.recalcAspectRatio = function () {
+					this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+				};
+
+				OBJLoader2BugVerify.prototype.resetCamera = function () {
+					this.camera.position.copy( this.cameraDefaults.posCamera );
+					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+					this.updateCamera();
+				};
+
+				OBJLoader2BugVerify.prototype.updateCamera = function () {
+					this.camera.aspect = this.aspectRatio;
+					this.camera.lookAt( this.cameraTarget );
+					this.camera.updateProjectionMatrix();
+				};
+
+				OBJLoader2BugVerify.prototype.render = function () {
+					if ( ! this.renderer.autoClear ) this.renderer.clear();
+					this.controls.update();
+					this.renderer.render( this.scene, this.camera );
+				};
+
+				return OBJLoader2BugVerify;
+
+			})();
+
+			var app = new OBJLoader2BugVerify( document.getElementById( 'example' ) );
+
+			var resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			var render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+
+
+			var prepData = new THREE.LoaderSupport.PrepData( 'Issue14' );
+			var pivot = new THREE.Object3D();
+			pivot.position.set( -200, 0, 0 );
+			var scale = 5.0;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue21' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( -100, 0, 0 );
+			var scale = 25.0;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/21/Table_Photo_Frame_03.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/21/Table_Photo_Frame_03.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue12120' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( -175, 0, -100 );
+			var scale = 0.01;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12120/zjej_abm_f01_out_T005.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12120/zjej_abm_f01_out_T005.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue12324' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( 75, 0, 0 );
+			var scale = 1.0;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12324/rampanueva.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12324/rampanueva.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue11811a' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( 175, 0, 0 );
+			var scale = 0.25;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbpo10518T.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbpo10518T.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue11811b' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( 300, 0, 0 );
+			var scale = 0.25;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+			app.loadAssets();
+
+			render();
+
+		</script>
+	</body>
+</html>
