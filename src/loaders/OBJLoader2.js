@@ -247,12 +247,10 @@ THREE.OBJLoader2 = (function () {
 		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by OBJLoader2 buildWorkerCode.\n';
+			workerCode += '  * This code was constructed by OBJLoader2 buildCode.\n';
 			workerCode += '  */\n\n';
 			workerCode += funcBuildSingelton( 'LoaderBase', 'LoaderBase', LoaderBase );
 			workerCode += funcBuildObject( 'Consts', Consts );
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 			workerCode += funcBuildSingelton( 'RawMesh', 'RawMesh', RawMesh );
 			workerCode += funcBuildSingelton( 'RawMeshSubGroup', 'RawMeshSubGroup', RawMeshSubGroup );
@@ -269,7 +267,7 @@ THREE.OBJLoader2 = (function () {
 			materialNames[ materialName ] = materialName;
 
 		}
-		this.workerSupport.prepare(
+		this.workerSupport.run(
 			{
 				params: {
 					useAsync: true,
@@ -284,12 +282,11 @@ THREE.OBJLoader2 = (function () {
 				materials: {
 					// in async case only material names are supplied to parser
 					materials: materialNames
+				},
+				data: {
+					input: content,
+					options: null
 				}
-			}
-		);
-		this.workerSupport.run(
-			{
-				data: content
 			},
 			[ content.buffer ]
 		);
@@ -600,7 +597,7 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_O:
 					this.processCompletedObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), this.rawMesh.groupName, currentByte );
-					reachedFaces = false;
+						reachedFaces = false;
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -643,7 +640,7 @@ THREE.OBJLoader2 = (function () {
 				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
-				this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
+			this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
 
 			} else {
 
