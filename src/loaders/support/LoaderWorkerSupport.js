@@ -8,7 +8,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	function WorkerRunnerRefImpl() {
 		var scope = this;
 		var scopedRunner = function( event ) {
-			scope.run( event.data );
+			scope.processMessage( event.data );
 		};
 		self.addEventListener( 'message', scopedRunner, false );
 	}
@@ -44,12 +44,15 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
-	WorkerRunnerRefImpl.prototype.run = function ( payload ) {
-		var logger = new ConsoleLogger( payload.logger.enabled, payload.logger.debug );
+	WorkerRunnerRefImpl.prototype.processMessage = function ( payload ) {
+		var logger = new ConsoleLogger();
+		if ( Validator.isValid( payload.logger ) ) {
 
+			logger.setEnabled( payload.logger.enabled );
+			logger.setDebug( payload.logger.debug );
+
+		}
 		if ( payload.cmd === 'run' ) {
-
-			logger.logInfo( 'WorkerRunner: Starting Run...' );
 
 			var callbacks = {
 				callbackBuilder: function ( payload ) {
@@ -65,7 +68,8 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 			this.applyProperties( parser, payload.params );
 			this.applyProperties( parser, payload.materials );
 			this.applyProperties( parser, callbacks );
-			parser.parse( payload.buffers.input );
+			parser.workerScope = self;
+			parser.parse( payload.data.input, payload.data.options );
 
 			logger.logInfo( 'WorkerRunner: Run complete!' );
 
@@ -163,11 +167,17 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			var scope = this;
 			var buildWorkerCode = function ( baseWorkerCode ) {
 				scope.workerCode = baseWorkerCode;
+				if ( workerRunner == THREE.LoaderSupport.WorkerRunnerRefImpl ) {
+
+					scope.workerCode += buildObject( 'Validator', THREE.LoaderSupport.Validator );
+					scope.workerCode += buildSingelton( 'ConsoleLogger', 'ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
+
+				}
 				scope.workerCode += functionCodeBuilder( buildObject, buildSingelton );
 				scope.workerCode += buildSingelton( workerRunner.name, workerRunner.name, workerRunner );
 				scope.workerCode += 'new ' + workerRunner.name + '();\n\n';
 
-				var blob = new Blob( [ scope.workerCode ], { type: 'text/plain' } );
+				var blob = new Blob( [ scope.workerCode ], { type: 'application/javascript' } );
 				scope.worker = new Worker( window.URL.createObjectURL( blob ) );
 				scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
@@ -176,10 +186,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 					switch ( payload.cmd ) {
 						case 'meshData':
-							scope.callbacks.builder( payload );
-							break;
-
 						case 'materialData':
+						case 'imageData':
 							scope.callbacks.builder( payload );
 							break;
 
@@ -189,14 +197,18 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 							if ( scope.terminateRequested ) {
 
-								scope.logger.logInfo( 'WorkerSupport: Run is complete. Terminating application on request!' );
+								scope.logger.logInfo( 'WorkerSupport [' + workerRunner + ']: Run is complete. Terminating application on request!' );
 								scope.terminateWorker();
 
 							}
 							break;
 
+						case 'error':
+							scope.logger.logError( 'WorkerSupport [' + workerRunner + ']: Reported error: ' + payload.msg );
+							break;
+
 						default:
-							scope.logger.logError( 'WorkerSupport: Received unknown command: ' + payload.cmd );
+							scope.logger.logError( 'WorkerSupport [' + workerRunner + ']: Received unknown command: ' + payload.cmd );
 							break;
 
 					}
@@ -300,6 +312,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	var buildSingelton = function ( fullName, internalName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
+		objectString = objectString.replace( object.name, internalName );
 
 		var funcString;
 		var objectPart;
@@ -340,8 +353,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 		if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( Validator.isValid( this.worker ) || this.loading ) {
-			this.running = true;
+			if ( payload.cmd !== 'run' ) payload.cmd = 'run';
 			this.queuedMessage = payload;
+			this.running = true;
 			this._postMessage();
 
 		}

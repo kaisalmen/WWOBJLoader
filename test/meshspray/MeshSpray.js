@@ -61,10 +61,8 @@ var MeshSpray = (function () {
 		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by MeshSpray buildWorkerCode.\n';
+			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 
 			return workerCode;
@@ -74,7 +72,6 @@ var MeshSpray = (function () {
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
-				cmd: 'run',
 				params: {
 					dimension: prepData.dimension,
 					quantity: prepData.quantity,
@@ -87,8 +84,9 @@ var MeshSpray = (function () {
 					debug: this.logger.debug,
 					enabled: this.logger.enabled
 				},
-				buffers: {
-					input: null
+				data: {
+					input: null,
+					options: null
 				}
 			}
 		);
@@ -104,6 +102,7 @@ var MeshSpray = (function () {
 			this.dimension = 200;
 			this.quantity = 1;
 			this.callbackBuilder = null;
+			this.callbackProgress = null;
 			this.logger = logger;
 			this.serializedMaterials = null;
 		};
