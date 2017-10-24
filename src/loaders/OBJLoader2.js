@@ -554,7 +554,7 @@ THREE.OBJLoader2 = (function () {
 							throw 'Vertex Colors were detected, but vertex count and color count do not match!';
 
 						}
-						this.processCompletedObject( null, this.rawMesh.groupName, currentByte );
+						this.processCompletedObject( this.rawMesh.objectName, this.rawMesh.groupName, currentByte );
 						reachedFaces = false;
 
 					}
@@ -593,20 +593,13 @@ THREE.OBJLoader2 = (function () {
 
 				case Consts.LINE_G:
 					this.processCompletedGroup( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), currentByte );
+					reachedFaces = false;
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
-					if ( this.rawMesh.vertices.length > 0 ) {
-
-						this.processCompletedObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), null, currentByte );
-						reachedFaces = false;
-
-					} else {
-
-						this.rawMesh.pushObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
-
-					}
+					this.processCompletedObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), this.rawMesh.groupName, currentByte );
+					reachedFaces = false;
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -649,9 +642,15 @@ THREE.OBJLoader2 = (function () {
 				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed object: ' + objectName + ' Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
+				this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
+
+			} else {
+
+				// if a object was set that did not lead to object creation in finalize, then the object name has to be updated
+				this.rawMesh.pushObject( objectName );
 
 			}
-			this.rawMesh = this.rawMesh.newInstanceFromObject( objectName, groupName );
+
 		};
 
 		Parser.prototype.processCompletedGroup = function ( groupName, currentByte ) {

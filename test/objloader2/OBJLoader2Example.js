@@ -59,14 +59,14 @@ var OBJLoader2Example = (function () {
 
 	OBJLoader2Example.prototype.initContent = function () {
 		var modelName = 'female02';
-		this._reportProgress( 'Loading: ' + modelName );
+		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( event ) {
 			scope.scene.add( event.detail.loaderRootNode );
 			console.log( 'Loading complete: ' + event.detail.modelName );
-			scope._reportProgress( '' );
+			scope._reportProgress( { detail: { text: '' } } );
 		};
 
 		var onLoadMtl = function ( materials ) {
@@ -80,9 +80,10 @@ var OBJLoader2Example = (function () {
 		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
 	};
 
-	OBJLoader2Example.prototype._reportProgress = function( content ) {
-		console.log( 'Progress: ' + content );
-		document.getElementById( 'feedback' ).innerHTML = Validator.isValid( content ) ? content : '';
+	OBJLoader2Example.prototype._reportProgress = function( event ) {
+		var output = Validator.verifyInput( event.detail.text, '' );
+		console.log( 'Progress: ' + output );
+		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
 	OBJLoader2Example.prototype.resizeDisplayGL = function () {

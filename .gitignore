@@ -4,6 +4,7 @@
 /node_modules
 
 /resource/obj/1*
+/resource/obj/2*
 /resource/obj/capsule
 /resource/obj/cerberus
 /resource/obj/datamogensen
