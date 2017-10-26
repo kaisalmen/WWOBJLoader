@@ -65,11 +65,11 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 `LoaderSupport` offers utility functions used to serialize existing code into strings that are used to build the web worker code. Any loader that uses it must provide a function that builds the parser code (for example see `buildCode` inside `OBJLoader2.parseAsync`). `WorkerSupport` provides wrapper code to create the web worker and to organize communication with it. Configuration of the Parser inside the worker is handled by a configuration object that configures the parser identical to synchronous usage.
 
 ## Examples:
-[OBJLoader2 basic usage](https://kaisalmen.de/proto/test/objloader2/main.src.html)<br>
-[OBJLoader2 usage options](https://kaisalmen.de/proto/test/wwobjloader2/main.src.html)<br>
-[OBJLoader2 Stage](https://kaisalmen.de/proto/test/wwobjloader2stage/main.src.html)<br>
-[LoaderDirector - Mesh Spray](https://kaisalmen.de/proto/test/meshspray/main.src.html)<br>
-[LoaderDirector Parallels Demo](https://kaisalmen.de/proto/test/wwparallels/main.src.html)<br>
+[OBJLoader2 basic usage](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
+[OBJLoader2 usage options](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
+[OBJLoader2 Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
+[LoaderDirector - Mesh Spray](https://kaisalmen.de/wwobjloader2/meshspray/main.min.html)<br>
+[LoaderDirector Parallels Demo](https://kaisalmen.de/wwobjloader2/wwparallels/main.min.html)<br>
 
 ## Http server for development
 If you have `docker` and `docker-compose` installed on your development platform, you are now able to launch `nginx` which is serving the complete content of this repository. Any changes to files are directly available in the HTTP server. This is solely meant for development.
