@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.2
+- Added onLoadMaterials allowing alteration of materials when they have been loaded
+- Issue #21 Part2: Fixed new mesh detection (offset and not) solely relies on 'v' and 'f' occurrences. 'o' and 'g' are meta information, that no longer drive the decision
+- Example WWOBJLoader2Stage: Added validity checks to ZipTools
+- Fixed worker code generated from minified version is broken 
+
 ## 2.1.1
 - Issue #21: Fixed 'o' or 'g' declaration lead to early cleanup of stored vertex data 
 - WorkerSupport: Added worker payloads "imageData" and "error"
