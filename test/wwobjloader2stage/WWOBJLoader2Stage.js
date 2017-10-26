@@ -287,7 +287,6 @@ var WWOBJLoader2Stage = (function () {
 
 		}
 
-		var objLoader2 = new THREE.OBJLoader2();
 		var prepData = this.objs2Load[ 0 ];
 		this.objs2Load.shift();
 		var streamMeshes = prepData.streamMeshesTo;
@@ -305,12 +304,13 @@ var WWOBJLoader2Stage = (function () {
 		callbacks.setCallbackOnLoad( reloadAssetsProxy );
 		callbacks.setCallbackOnProgress( this._reportProgress );
 
-		var first = prepData.resources[ 0 ];
-		if ( first.extension === 'ZIP' ) {
+		var objLoader2 = new THREE.OBJLoader2();
+		var resourceZip = prepData.resources[ 0 ];
+		if ( resourceZip.extension === 'ZIP' ) {
 			var resourceObj = prepData.resources[ 1 ];
-			var resourceMtl = prepData.length === 3 ? prepData.resources[ 2 ] : null;
+			var resourceMtl = prepData.resources.length === 3 ? prepData.resources[ 2 ] : null;
 
-			var zipTools = new ZipTools( first.pathBase );
+			var zipTools = new ZipTools( resourceZip.pathBase );
 			var setObjAsArrayBuffer = function ( data ) {
 				scope._reportProgress( { detail: { text: '' } } );
 				prepData.resources[ 1 ].content = data;
@@ -318,30 +318,20 @@ var WWOBJLoader2Stage = (function () {
 			};
 
 			var setMtlAsString = function ( data ) {
-
-				if ( prepData.resources.length > 1 ) resourceObj.content = data;
+				if ( prepData.resources.length > 2 ) resourceMtl.content = data;
 				scope._reportProgress( { detail: { text: 'Unzipping: ' + resourceObj.name } } );
 				zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
 			};
 
 			var doneUnzipping = function () {
-
-				if ( Validator.isValid( resourceMtl ) ) {
-
-					zipTools.unpackAsString( resourceMtl.name, setMtlAsString );
-
-				} else {
-
-					setMtlAsString( null );
-
-				}
+				zipTools.unpackAsString( Validator.isValid( resourceMtl ) ? resourceMtl.name : null, setMtlAsString );
 			};
 
 			var errorCase = function ( text ) {
 				scope._reportProgress( { detail: { text: text } } );
 				scope.processing = false;
 			};
-			zipTools.load( first.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
+			zipTools.load( resourceZip.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
 
 		} else {
 
@@ -424,6 +414,8 @@ var WWOBJLoader2Stage = (function () {
 
 var ZipTools = (function () {
 
+	var Validator = THREE.LoaderSupport.Validator;
+
 	function ZipTools( path ) {
 		this.zip = new JSZip();
 
@@ -497,12 +489,20 @@ var ZipTools = (function () {
 	};
 
 	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
-		this.zipContent.file( filename ).async( 'string' )
-		.then( function ( dataAsString ) {
+		if ( Validator.isValid( filename ) ) {
 
-			callback( dataAsString );
+			this.zipContent.file( filename ).async( 'string' )
+			.then( function ( dataAsString ) {
 
-		} );
+				callback( dataAsString );
+
+			} );
+
+		} else {
+
+			callback( null );
+
+		}
 	};
 
 	return ZipTools;

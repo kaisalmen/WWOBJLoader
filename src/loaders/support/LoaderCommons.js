@@ -156,6 +156,7 @@ THREE.LoaderSupport.Callbacks = (function () {
 		this.onProgress = null;
 		this.onMeshAlter = null;
 		this.onLoad = null;
+		this.onLoadMaterials = null;
 	}
 
 	/**
@@ -187,6 +188,16 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 */
 	Callbacks.prototype.setCallbackOnLoad = function ( callbackOnLoad ) {
 		this.onLoad = Validator.verifyInput( callbackOnLoad, this.onLoad );
+	};
+
+	/**
+	 * Register callback function that is called when materials have been loaded.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackOnLoadMaterials Callback function for described functionality
+	 */
+	Callbacks.prototype.setCallbackOnLoadMaterials = function ( callbackOnLoadMaterials ) {
+		this.onLoadMaterials = Validator.verifyInput( callbackOnLoadMaterials, this.onLoadMaterials );
 	};
 
 	return Callbacks;

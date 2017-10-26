@@ -59,16 +59,17 @@ THREE.LoaderSupport.LoaderBase = (function () {
 			this.setUseIndices( prepData.useIndices );
 			this.setDisregardNormals( prepData.disregardNormals );
 
-			this._setCallbacks( prepData.getCallbacks().onProgress, prepData.getCallbacks().onMeshAlter, prepData.getCallbacks().onLoad );
+			this._setCallbacks( prepData.getCallbacks() );
 		}
 	};
 
-	LoaderBase.prototype._setCallbacks = function ( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad ) {
-		this.callbacks.setCallbackOnProgress( callbackOnProgress );
-		this.callbacks.setCallbackOnMeshAlter( callbackOnMeshAlter );
-		this.callbacks.setCallbackOnLoad( callbackOnLoad );
+	LoaderBase.prototype._setCallbacks = function ( callbacks ) {
+		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
+		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
 
-		this.builder._setCallbacks( callbackOnProgress, callbackOnMeshAlter, callbackOnLoad );
+		this.builder._setCallbacks( this.callbacks );
 	};
 
 	/**

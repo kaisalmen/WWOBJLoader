@@ -12,7 +12,6 @@ THREE.OBJLoader2 = (function () {
 	var OBJLOADER2_VERSION = '2.1.0';
 	var LoaderBase = THREE.LoaderSupport.LoaderBase;
 	var Validator = THREE.LoaderSupport.Validator;
-	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
@@ -85,7 +84,9 @@ THREE.OBJLoader2 = (function () {
 
 			} else {
 
-				scope._setCallbacks( null, onMeshAlter, null );
+				var callbacks = new THREE.LoaderSupport.Callbacks();
+				callbacks.setCallbackOnMeshAlter( onMeshAlter );
+				scope._setCallbacks( callbacks );
 				onLoad(
 					{
 						detail: {
@@ -1275,6 +1276,10 @@ THREE.OBJLoader2 = (function () {
 			this.groupName = groupName;
 			this.materialName = materialName;
 			this.smoothingGroup = smoothingGroup;
+			this._init();
+		}
+
+		RawMeshSubGroup.prototype._init = function () {
 			this.vertices = [];
 			this.indexMappingsCount = 0;
 			this.indexMappings = [];
@@ -1282,7 +1287,7 @@ THREE.OBJLoader2 = (function () {
 			this.colors = [];
 			this.uvs = [];
 			this.normals = [];
-		}
+		};
 
 		return RawMeshSubGroup;
 	})();
