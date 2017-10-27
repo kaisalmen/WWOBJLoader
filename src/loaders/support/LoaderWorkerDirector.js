@@ -222,7 +222,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			this.logger.logInfo( 'Requested termination of worker.' );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;
-			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
+			if ( Validator.isValid( loaderCallbacks ) && Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
 
 		}
 
