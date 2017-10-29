@@ -204,6 +204,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		}
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
+		if ( ! loader.hasOwnProperty( 'callbacks' ) ) throw classDef.name + ' has no property "callbacks".';
 
 		return loader;
 	};
@@ -222,7 +223,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			this.logger.logInfo( 'Requested termination of worker.' );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;
-			if ( Validator.isValid( loaderCallbacks ) && Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
+			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
 
 		}
 
