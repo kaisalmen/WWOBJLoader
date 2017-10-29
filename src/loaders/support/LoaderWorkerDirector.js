@@ -219,7 +219,15 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
 
 			var supportTuple = this.workerDescription.workerSupports[ i ];
-			supportTuple.workerSupport.setTerminateRequested( true );
+			if ( supportTuple.workerSupport.running ) {
+
+				supportTuple.workerSupport.setTerminateRequested( true );
+
+			} else {
+
+				supportTuple.workerSupport.terminateWorker();
+
+			}
 			this.logger.logInfo( 'Requested termination of worker.' );
 
 			var loaderCallbacks = supportTuple.loader.callbacks;

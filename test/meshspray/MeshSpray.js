@@ -311,12 +311,11 @@ var MeshSprayApp = (function () {
 		var maxWebWorkers = 4;
 		var radius = 640;
 		var logger = new THREE.LoaderSupport.ConsoleLogger( false );
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
-		this.workerDirector.setCrossOrigin( 'anonymous' );
+		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
+		workerDirector.setCrossOrigin( 'anonymous' );
 
-		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
+			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerDirector.objectsCompleted + ')' );
 		};
 		var reportProgress = function( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
@@ -338,7 +337,7 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
-		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+		workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 
 		var prepData;
 		var pivot;
@@ -362,9 +361,9 @@ var MeshSprayApp = (function () {
 			prepData.dimension = Math.max( Math.random() * 500, 100 );
 			prepData.globalObjectCount = globalObjectCount++;
 
-			this.workerDirector.enqueueForRun( prepData );
+			workerDirector.enqueueForRun( prepData );
 		}
-		this.workerDirector.processQueue();
+		workerDirector.processQueue();
 	};
 
 	MeshSprayApp.prototype.resizeDisplayGL = function () {

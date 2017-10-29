@@ -197,18 +197,18 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 							if ( scope.terminateRequested ) {
 
-								scope.logger.logInfo( 'WorkerSupport [' + workerRunner + ']: Run is complete. Terminating application on request!' );
+								scope.logger.logInfo( 'WorkerSupport [' + workerRunner.name + ']: Run is complete. Terminating application on request!' );
 								scope.terminateWorker();
 
 							}
 							break;
 
 						case 'error':
-							scope.logger.logError( 'WorkerSupport [' + workerRunner + ']: Reported error: ' + payload.msg );
+							scope.logger.logError( 'WorkerSupport [' + workerRunner.name + ']: Reported error: ' + payload.msg );
 							break;
 
 						default:
-							scope.logger.logError( 'WorkerSupport [' + workerRunner + ']: Received unknown command: ' + payload.cmd );
+							scope.logger.logError( 'WorkerSupport [' + workerRunner.name + ']: Received unknown command: ' + payload.cmd );
 							break;
 
 					}
