@@ -188,7 +188,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( loader, null, this.logger );
+		this.workerDescription.classDef.call( loader, THREE.DefaultLoadingManager, this.logger );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
@@ -198,13 +198,17 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			throw classDef.name + ' has no property "workerSupport".';
 
-		} else if ( ! classDef.workerSupport instanceof THREE.LoaderSupport.WorkerSupport ) {
-
-			throw classDef.name + '.workerSupport is not of type "THREE.LoaderSupport.WorkerSupport".';
-
 		}
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
-		if ( ! loader.hasOwnProperty( 'callbacks' ) ) throw classDef.name + ' has no property "callbacks".';
+		if ( ! loader.hasOwnProperty( 'callbacks' ) ) {
+
+			throw classDef.name + ' has no property "callbacks".';
+
+		} else if ( ! ( loader.callbacks instanceof THREE.LoaderSupport.Callbacks ) ) {
+
+			throw classDef.name + '.callbacks is not of type "THREE.LoaderSupport.Callbacks".';
+
+		}
 
 		return loader;
 	};
