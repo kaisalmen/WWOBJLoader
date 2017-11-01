@@ -63,6 +63,8 @@ var MeshSpray = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 
 			return workerCode;
@@ -94,7 +96,9 @@ var MeshSpray = (function () {
 
 	var Parser  = ( function () {
 
-		function Parser( logger ) {
+		var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
+
+		function Parser() {
 			this.sizeFactor = 0.5;
 			this.localOffsetFactor = 1.0;
 			this.globalObjectCount = 0;
@@ -103,8 +107,13 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 			this.callbackProgress = null;
-			this.logger = logger;
+			this.logger = new ConsoleLogger();
 			this.serializedMaterials = null;
+		};
+
+		Parser.prototype.setLogConfig = function ( enabled, debug ) {
+			this.logger.setEnabled( enabled );
+			this.logger.setDebug( debug );
 		};
 
 		Parser.prototype.parse = function () {
