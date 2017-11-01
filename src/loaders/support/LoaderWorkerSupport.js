@@ -130,7 +130,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
 	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, libLocations, libPath, runnerImpl ) {
-		this.running = false;
 		if ( forceWorkerReload ) {
 
 			this.worker = null;
@@ -195,6 +194,14 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 						case 'error':
 							scope.logger.logError( 'WorkerSupport [' + workerRunner.name + ']: Reported error: ' + payload.msg );
+							scope.running = false;
+
+							if ( scope.terminateRequested ) {
+
+								scope.logger.logInfo( 'WorkerSupport [' + workerRunner.name + ']: Run reported error. Terminating application on request!' );
+								scope.terminateWorker();
+
+							}
 							break;
 
 						default:
@@ -331,6 +338,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 */
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.terminateRequested = terminateRequested === true;
+		if ( ! this.running ) {
+
+			this.logger.logWarn( 'WorkerSupport: Terminating application immediately!' );
+			this.terminateWorker();
+
+		}
 	};
 
 	/**
@@ -359,7 +372,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			}
 			this.queuedMessage = payload;
-			this.running = true;
 			this._postMessage();
 
 		}
@@ -367,6 +379,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	WorkerSupport.prototype._postMessage = function () {
 		if ( ! this.loading && Validator.isValid( this.queuedMessage ) ) {
+			this.running = true;
 			this.worker.postMessage( this.queuedMessage );
 		}
 	};

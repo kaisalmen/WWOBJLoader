@@ -27,7 +27,7 @@ var WWParallels = (function () {
 
 		this.logger = new THREE.LoaderSupport.ConsoleLogger();
 		this.logger.setEnabled( false );
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2, this.logger  );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2, this.logger );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
