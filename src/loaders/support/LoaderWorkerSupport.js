@@ -10,7 +10,6 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		var scopedRunner = function( event ) {
 			scope.processMessage( event.data );
 		};
-		this.sequenceNo = 1;
 		self.addEventListener( 'message', scopedRunner, false );
 	}
 
@@ -50,11 +49,9 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		var logDebug = payload.logger.enabled;
 		var scope = this;
 		if ( payload.cmd === 'run' ) {
-			this.sequenceNo = 0;
 
 			var callbacks = {
 				callbackBuilder: function ( payload ) {
-					payload.sequenceNo = scope.sequenceNo++;
 					self.postMessage( payload );
 				},
 				callbackProgress: function ( text ) {
@@ -101,133 +98,119 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	var WorkerRuntime = function ( logger ) {
-		return {
-			ref: null,
-			code: null,
-			runnerImpl: null,
-			callbacks: {
+	var WorkerRuntime = ( function () {
+
+		function WorkerRuntime() {
+			this.worker = null;
+			this.callbacks = {
 				builder: null,
 				onLoad: null
-			},
-			logger: logger,
-			loading: true,
-			queuedMessage: null,
-			terminateRequested: false,
-			lastSequenceNo: 0,
-			init: function ( runnerImpl ) {
-				if ( Validator.isValid( runnerImpl ) ) {
+			};
+			this.terminateRequested = false;
+			this.queuedMessage = null;
+		}
 
-					this.runnerImpl = runnerImpl;
-					this.logger.logInfo( 'WorkerSupport: Using "' + this.runnerImpl.name + '" as Runncer class for worker.' );
+		WorkerRuntime.prototype.initWorker = function ( code, logger, runnerImplName ) {
+			var blob = new Blob( [ code ], { type: 'application/javascript' } );
+			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+			this.worker.onmessage = this.receiveWorkerMessage;
+
+			this.worker.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
+			this.worker.runnerImplName = runnerImplName;
+			this.worker.callbacks = {
+				builder: this.callbacks.builder,
+				onLoad: this.callbacks.onLoad
+			};
+			this.worker.terminateRequested = this.terminateRequested;
+			this._postMessage();
+		};
+
+		// Worker scope
+		WorkerRuntime.prototype.receiveWorkerMessage = function ( e ) {
+			var payload = e.data;
+			switch ( payload.cmd ) {
+				case 'meshData':
+				case 'materialData':
+				case 'imageData':
+					this.callbacks.builder( payload );
+					break;
+
+				case 'complete':
+					this.callbacks.onLoad( payload.msg );
+					if ( this.terminateRequested ) {
+
+						this.logger.logInfo( 'WorkerSupport [' + this.runnerImplName + ']: Run is complete. Terminating application on request!' );
+						this.terminate();
+
+					}
+					break;
+
+				case 'error':
+					this.logger.logError( 'WorkerSupport [' + this.runnerImplName + ']: Reported error: ' + payload.msg );
+					if ( this.terminateRequested ) {
+
+						this.logger.logInfo( 'WorkerSupport [' + this.runnerImplName + ']: Run reported error. Terminating application on request!' );
+						this.terminate();
+
+					}
+					break;
+
+				default:
+					this.logger.logError( 'WorkerSupport [' + this.runnerImplName + ']: Received unknown command: ' + payload.cmd );
+					break;
+
+			}
+		};
+
+		WorkerRuntime.prototype.setCallbacks = function ( builder, onLoad ) {
+			this.callbacks.builder = Validator.verifyInput( builder, this.callbacks.builder );
+			this.callbacks.onLoad = Validator.verifyInput( onLoad, this.callbacks.onLoad );
+			if ( Validator.isValid( this.worker ) ) {
+
+				this.worker.callbacks.builder = this.callbacks.builder;
+				this.worker.callbacks.onLoad = this.callbacks.onLoad;
+
+			}
+		};
+
+		WorkerRuntime.prototype.run = function( payload ) {
+			if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
+			if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
+
+				if ( payload.cmd !== 'run' ) payload.cmd = 'run';
+				if ( Validator.isValid( payload.logger ) ) {
+
+					payload.logger.enabled = Validator.verifyInput( payload.logger.enabled, true );
+					payload.logger.debug = Validator.verifyInput( payload.logger.debug, false );
 
 				} else {
 
-					this.runnerImpl = THREE.LoaderSupport.WorkerRunnerRefImpl;
-					this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.' );
-
-				}
-				this.logger.logTimeStart( 'buildWebWorkerCode' );
-			},
-			buildWorkerCode: function ( baseWorkerCode, userWorkerCode ) {
-				this.code = baseWorkerCode;
-				this.code += userWorkerCode;
-				this.code += buildSingelton( this.runnerImpl.name, this.runnerImpl.name, this.runnerImpl );
-				this.code += 'new ' + this.runnerImpl.name + '();\n\n';
-
-				var blob = new Blob( [ this.code ], { type: 'application/javascript' } );
-				this.ref = new Worker( window.URL.createObjectURL( blob ) );
-				this.ref.runtime = this;
-				this.logger.logTimeEnd( 'buildWebWorkerCode' );
-
-				this.ref.addEventListener( 'message', this.receiveWorkerMessage, false );
-				this.loading = false;
-				this.postMessage();
-			},
-			// executed in the worker scope, that's the reason for "this.runtime"
-			receiveWorkerMessage: function ( e ) {
-				var payload = e.data;
-
-				if ( ( payload.sequenceNo - this.runtime.lastSequenceNo ) > 1 ) this.runtime.logger.logError( payload.sequenceNo - this.runtime.lastSequenceNo );
-				this.runtime.lastSequenceNo = payload.sequenceNo;
-
-				switch ( payload.cmd ) {
-					case 'meshData':
-					case 'materialData':
-					case 'imageData':
-						this.runtime.callbacks.builder( payload );
-						break;
-
-					case 'complete':
-						this.runtime.callbacks.onLoad( payload.msg );
-						if ( this.runtime.terminateRequested ) {
-
-							this.runtime.logger.logInfo( 'WorkerSupport [' + this.runtime.runnerImpl.name + ']: Run is complete. Terminating application on request!' );
-							this.runtime.terminateWorker();
-
-						}
-						break;
-
-					case 'error':
-						this.runtime.logger.logError( 'WorkerSupport [' + this.runtime.runnerImpl.name + ']: Reported error: ' + payload.msg );
-						if ( this.runtime.terminateRequested ) {
-
-							this.runtime.logger.logInfo( 'WorkerSupport [' + this.runtime.runnerImpl.name + ']: Run reported error. Terminating application on request!' );
-							this.runtime.terminateWorker();
-
-						}
-						break;
-
-					default:
-						this.runtime.logger.logError( 'WorkerSupport [' + this.runtime.runnerImpl.name + ']: Received unknown command: ' + payload.cmd );
-						break;
-
-				}
-			},
-			setCallbacks: function ( builder, onLoad ) {
-				this.callbacks.builder = builder;
-				this.callbacks.onLoad = onLoad;
-			},
-			run: function( payload ) {
-				if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
-				if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
-				if ( Validator.isValid( this.ref ) || this.loading ) {
-
-					if ( payload.cmd !== 'run' ) payload.cmd = 'run';
-					if ( Validator.isValid( payload.logger ) ) {
-
-						payload.logger.enabled = Validator.verifyInput( payload.logger.enabled, true );
-						payload.logger.debug = Validator.verifyInput( payload.logger.debug, false );
-
-					} else {
-
-						payload.logger = {
-							enabled: true,
-							debug: false
-						}
-
+					payload.logger = {
+						enabled: true,
+						debug: false
 					}
-					this.queuedMessage = payload;
-					this.postMessage();
+
 				}
-			},
-			postMessage: function () {
-				if ( ! this.loading && Validator.isValid( this.queuedMessage ) ) {
-					this.ref.postMessage( this.queuedMessage );
-				}
-			},
-			setTerminateRequested: function ( terminateRequested ) {
-				this.terminateRequested = terminateRequested === true;
-			},
-			terminateWorker: function () {
-				if ( Validator.isValid( this.ref ) ) {
-					this.ref.terminate();
-				}
-				this.ref = null;
-				this.code = null;
+				this.queuedMessage = payload;
+				this._postMessage();
+		};
+
+		WorkerRuntime.prototype._postMessage = function () {
+			if ( Validator.isValid( this.queuedMessage ) && Validator.isValid( this.worker ) ) {
+
+				this.worker.postMessage( this.queuedMessage );
+
 			}
 		};
-	};
+
+		WorkerRuntime.prototype.setTerminateRequested = function ( terminateRequested ) {
+			this.terminateRequested = terminateRequested === true;
+			if ( Validator.isValid( this.worker ) ) this.worker.terminateRequested = true;
+		};
+
+		return WorkerRuntime;
+
+	} )();
 
 	function WorkerSupport( logger ) {
 		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
@@ -238,7 +221,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
 		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
 
-		this.workerRuntime = new WorkerRuntime( this.logger );
+		this.workerRuntime = null;
 	}
 
 	/**
@@ -252,14 +235,25 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
 	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, libLocations, libPath, runnerImpl ) {
-		if ( forceWorkerReload ) this.workerRuntime = new WorkerRuntime();
-
-		// fast-fail
-		if ( Validator.isValid( this.workerRuntime.ref ) ) return;
+		if ( ! forceWorkerReload && Validator.isValid( this.workerRuntime ) ) return;
 
 		this.logger.logInfo( 'WorkerSupport: Building worker code...' );
-		this.workerRuntime.init( runnerImpl );
+		this.logger.logTimeStart( 'buildWebWorkerCode' );
+		this.workerRuntime = new WorkerRuntime();
+
+		if ( Validator.isValid( runnerImpl ) ) {
+
+			this.logger.logInfo( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runncer class for worker.' );
+
+		} else {
+
+			runnerImpl = THREE.LoaderSupport.WorkerRunnerRefImpl;
+			this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.' );
+
+		}
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
+		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl.name, runnerImpl );
+		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
 
 		var scope = this;
 		if ( Validator.isValid( libLocations ) && libLocations.length > 0 ) {
@@ -268,7 +262,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			var loadAllLibraries = function ( path, locations ) {
 				if ( locations.length === 0 ) {
 
-					scope.workerRuntime.buildWorkerCode( libsContent, userWorkerCode );
+					scope.workerRuntime.initWorker( libsContent + userWorkerCode, scope.logger, runnerImpl.name );
+					scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 				} else {
 
@@ -289,7 +284,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		} else {
 
-			this.workerRuntime.buildWorkerCode( '', userWorkerCode );
+			this.workerRuntime.initWorker( userWorkerCode, this.logger, runnerImpl.name );
+			this.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 		}
 	};
@@ -323,14 +319,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 */
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
 		this.workerRuntime.setTerminateRequested( terminateRequested );
-	};
-
-	/**
-	 * Terminate the worker and the code.
-	 * @memberOf THREE.LoaderSupport.WorkerSupport
-	 */
-	WorkerSupport.prototype.terminateWorker = function () {
-		this.workerRuntime.terminateWorker();
 	};
 
 	var buildObject = function ( fullName, object ) {

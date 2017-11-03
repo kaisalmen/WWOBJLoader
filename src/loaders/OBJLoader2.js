@@ -234,7 +234,6 @@ THREE.OBJLoader2 = (function () {
 					}
 				}
 			);
-			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
@@ -264,6 +263,7 @@ THREE.OBJLoader2 = (function () {
 		};
 		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
 		var materialNames = {};
 		var materials = this.builder.getMaterials();
