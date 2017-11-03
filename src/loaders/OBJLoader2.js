@@ -41,43 +41,17 @@ THREE.OBJLoader2 = (function () {
 	 * Use this convenient method to load an OBJ file at the given URL. By default the fileLoader uses an arraybuffer.
 	 * @memberOf THREE.OBJLoader2
 	 *
-	 * @param {string}  url A string containing the path/URL of the .obj file.
+	 * @param {string | ArrayBuffer}  data A string containing the path/URL of the .obj file or an ArrayBuffer.
 	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
 	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
 	 * @param {boolean} [useAsync] If true, uses async loading with worker, if false loads data synchronously.
 	 */
-	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+	OBJLoader2.prototype.load = function ( data, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
 		var scope = this;
-		if ( ! Validator.isValid( onProgress ) ) {
-			var numericalValueRef = 0;
-			var numericalValue = 0;
-			onProgress = function ( event ) {
-				if ( ! event.lengthComputable ) return;
-
-				numericalValue = event.loaded / event.total;
-				if ( numericalValue > numericalValueRef ) {
-
-					numericalValueRef = numericalValue;
-					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					scope.onProgress( 'progressLoad', output, numericalValue );
-
-				}
-			};
-		}
-
-		if ( ! Validator.isValid( onError ) ) {
-			onError = function ( event ) {
-				var output = 'Error occurred while downloading "' + url + '"';
-				scope.logger.logError( output + ': ' + event );
-				scope.onProgress( 'error', output, -1 );
-			};
-		}
-
-		this.fileLoader.setPath( this.path );
-		this.fileLoader.setResponseType( 'arraybuffer' );
-		this.fileLoader.load( url, function ( content ) {
+		
+		var parseContent = function ( content ) {
 			if ( useAsync ) {
 
 				scope.parseAsync( content, onLoad );
@@ -99,8 +73,42 @@ THREE.OBJLoader2 = (function () {
 
 			}
 
-		}, onProgress, onError );
+		};
+		if(data instanceof ArrayBuffer) { // ArrayBuffer
+			
+			parseContent(data);
+			
+		} else { // URL
+		
+			if ( ! Validator.isValid( onProgress ) ) {
+				var numericalValueRef = 0;
+				var numericalValue = 0;
+				onProgress = function ( event ) {
+					if ( ! event.lengthComputable ) return;
 
+					numericalValue = event.loaded / event.total;
+					if ( numericalValue > numericalValueRef ) {
+
+						numericalValueRef = numericalValue;
+						var output = 'Download of "' + data + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+						scope.onProgress( 'progressLoad', output, numericalValue );
+
+					}
+				};
+			}
+
+			if ( ! Validator.isValid( onError ) ) {
+				onError = function ( event ) {
+					var output = 'Error occurred while downloading "' + data + '"';
+					scope.logger.logError( output + ': ' + event );
+					scope.onProgress( 'error', output, -1 );
+				};
+			}
+
+			this.fileLoader.setPath( this.path );
+			this.fileLoader.setResponseType( 'arraybuffer' );
+			this.fileLoader.load( data, parseContent, onProgress, onError );	
+		}
 	};
 
 	/**
