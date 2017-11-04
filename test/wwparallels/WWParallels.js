@@ -293,7 +293,7 @@ var WWParallels = (function () {
 	};
 
 	WWParallels.prototype.terminateManager = function () {
-		this.workerDirector.deregister();
+		this.workerDirector.tearDown();
 		this.running = false;
 	};
 

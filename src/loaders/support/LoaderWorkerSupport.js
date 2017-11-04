@@ -174,6 +174,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		WorkerRuntime.prototype.run = function( payload ) {
+			if ( Validator.isValid( this.queuedMessage ) ) {
+
+				console.warn( 'Already processing message. Rejecting new run instruction' );
+				return;
+
+			}
 			if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 			if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 
@@ -199,6 +205,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			if ( Validator.isValid( this.queuedMessage ) && Validator.isValid( this.worker ) ) {
 
 				this.worker.postMessage( this.queuedMessage );
+				this.queuedMessage = null;
 
 			}
 		};
