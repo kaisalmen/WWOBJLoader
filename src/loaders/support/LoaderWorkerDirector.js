@@ -200,16 +200,12 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		}
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
-		if ( ! loader.hasOwnProperty( 'callbacks' ) ) {
+		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! Validator.isValid( loader.callbacks ) ) {
 
-			throw classDef.name + ' has no property "callbacks".';
-
-		} else if ( ! ( loader.callbacks instanceof THREE.LoaderSupport.Callbacks ) ) {
-
-			throw classDef.name + '.callbacks is not of type "THREE.LoaderSupport.Callbacks".';
+			this.logger.logWarn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.LoaderSupport.Callbacks"' );
+			loader.callbacks = new THREE.LoaderSupport.Callbacks();
 
 		}
-
 		return loader;
 	};
 
