@@ -12,6 +12,7 @@ THREE.OBJLoader2 = (function () {
 	var OBJLOADER2_VERSION = '2.1.0';
 	var LoaderBase = THREE.LoaderSupport.LoaderBase;
 	var Validator = THREE.LoaderSupport.Validator;
+	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
@@ -119,10 +120,6 @@ THREE.OBJLoader2 = (function () {
 			this.workerSupport = workerSupportExternal;
 			this.logger = workerSupportExternal.logger;
 
-		} else {
-
-			this.terminateWorkerOnLoad = true;
-
 		}
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
@@ -169,7 +166,8 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.parse = function ( content ) {
 		this.logger.logTimeStart( 'OBJLoader2 parse: ' + this.modelName );
 
-		var parser = new Parser( this.logger );
+		var parser = new Parser();
+		parser.setLogConfig( this.logger.enabled, this.logger.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
@@ -232,7 +230,6 @@ THREE.OBJLoader2 = (function () {
 					}
 				}
 			);
-			if ( scope.terminateWorkerOnLoad ) scope.workerSupport.terminateWorker();
 			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
@@ -250,6 +247,8 @@ THREE.OBJLoader2 = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by OBJLoader2 buildCode.\n';
 			workerCode += '  */\n\n';
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
 			workerCode += funcBuildSingelton( 'LoaderBase', 'LoaderBase', LoaderBase );
 			workerCode += funcBuildObject( 'Consts', Consts );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
@@ -260,6 +259,7 @@ THREE.OBJLoader2 = (function () {
 		};
 		this.workerSupport.validate( buildCode, false );
 		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
 		var materialNames = {};
 		var materials = this.builder.getMaterials();
@@ -323,7 +323,9 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var Parser = (function () {
 
-		function Parser( logger ) {
+		var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
+
+		function Parser() {
 			this.callbackProgress = null;
 			this.callbackBuilder = null;
 
@@ -341,7 +343,7 @@ THREE.OBJLoader2 = (function () {
 				faces: 0,
 				doubleIndicesCount: 0
 			};
-			this.logger = logger;
+			this.logger = new ConsoleLogger();
 			this.totalBytes = 0;
 			this.reachedFaces = false;
 		};
@@ -374,6 +376,11 @@ THREE.OBJLoader2 = (function () {
 
 		Parser.prototype.setCallbackProgress = function ( callbackProgress ) {
 			this.callbackProgress = callbackProgress;
+		};
+
+		Parser.prototype.setLogConfig = function ( enabled, debug ) {
+			this.logger.setEnabled( enabled );
+			this.logger.setDebug( debug );
 		};
 
 		Parser.prototype.configure = function () {

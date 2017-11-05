@@ -33,7 +33,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.workerDescription = {
 			classDef: classDef,
 			globalCallbacks: {},
-			workerSupports: []
+			workerSupports: {}
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -81,30 +81,17 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
+		this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
 
-		var start = this.workerDescription.workerSupports.length;
-		var i;
-		if ( start < this.maxWebWorkers ) {
+		for ( var i = 0; i < this.maxWebWorkers; i++ ) {
 
-			for ( i = start; i < this.maxWebWorkers; i++ ) {
+			this.workerDescription.workerSupports[ i ] = {
+				workerSupport: new THREE.LoaderSupport.WorkerSupport( this.logger ),
+				loader: null
+			};
 
-				this.workerDescription.workerSupports[ i ] = {
-					workerSupport: new THREE.LoaderSupport.WorkerSupport( this.logger ),
-					loader: null
-				};
-
-			}
-
-		} else {
-
-			for ( i = start - 1; i >= this.maxWebWorkers; i-- ) {
-
-				this.workerDescription.workerSupports[ i ].workerSupport.setRequestTerminate( true );
-				this.workerDescription.workerSupports.pop();
-
-			}
 		}
 	};
 
@@ -148,9 +135,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 				scope.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + scope.instructionQueue.length + ')\n\n' );
 				scope._kickWorkerRun( nextPrepData, event.detail.instanceNo );
 
-			} else if ( scope.instructionQueue.length === 0 ) {
+			} else {
 
-				scope.deregister();
+				scope._deregister( event.detail.instanceNo );
 
 			}
 		};
@@ -188,7 +175,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( loader, null, this.logger );
+		this.workerDescription.classDef.call( loader, THREE.DefaultLoadingManager, this.logger );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
@@ -198,36 +185,49 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			throw classDef.name + ' has no property "workerSupport".';
 
-		} else if ( ! classDef.workerSupport instanceof THREE.LoaderSupport.WorkerSupport ) {
-
-			throw classDef.name + '.workerSupport is not of type "THREE.LoaderSupport.WorkerSupport".';
-
 		}
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
-		if ( ! loader.hasOwnProperty( 'callbacks' ) ) throw classDef.name + ' has no property "callbacks".';
+		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! Validator.isValid( loader.callbacks ) ) {
 
+			this.logger.logWarn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.LoaderSupport.Callbacks"' );
+			loader.callbacks = new THREE.LoaderSupport.Callbacks();
+
+		}
 		return loader;
+	};
+
+	WorkerDirector.prototype._deregister = function ( workerInstanceNo ) {
+		var supportTuple = this.workerDescription.workerSupports[ workerInstanceNo ];
+		if ( Validator.isValid( supportTuple ) ) {
+
+			supportTuple.workerSupport.setTerminateRequested( true );
+			this.logger.logInfo( 'Requested termination of worker #' + workerInstanceNo + '.' );
+
+			var loaderCallbacks = supportTuple.loader.callbacks;
+			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
+			delete this.workerDescription.workerSupports[ workerInstanceNo ];
+
+		} else {
+
+			this.logger.logInfo( 'Worker #' + workerInstanceNo + ' was already terminated!' );
+
+		}
 	};
 
 	/**
 	 * Terminate all workers.
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 */
-	WorkerDirector.prototype.deregister = function () {
+	WorkerDirector.prototype.tearDown = function () {
 		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
-		for ( var i = 0, length = this.workerDescription.workerSupports.length; i < length; i++ ) {
+		var wsKeys = Object.keys( this.workerDescription.workerSupports );
+		for ( var supportTuple, i = 0, wsLength = wsKeys.length; i < wsLength; i++ ) {
 
-			var supportTuple = this.workerDescription.workerSupports[ i ];
-			supportTuple.workerSupport.setTerminateRequested( true );
-			this.logger.logInfo( 'Requested termination of worker.' );
-
-			var loaderCallbacks = supportTuple.loader.callbacks;
-			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
+			supportTuple = this.workerDescription.workerSupports[ i ];
+			if ( Validator.isValid( supportTuple ) ) supportTuple.workerSupport.setTerminateRequested( true );
 
 		}
-
-		this.workerDescription.workerSupports = [];
 		this.instructionQueue = [];
 	};
 

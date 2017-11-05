@@ -63,12 +63,14 @@ var MeshSpray = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
+			workerCode += funcBuildObject( 'Validator', Validator );
+			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
 			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
 
 			return workerCode;
 		};
 		var libs2Load = [ 'node_modules/three/build/three.js' ];
-		this.workerSupport.validate( buildCode, false, libs2Load, '../../' );
+		this.workerSupport.validate( buildCode, libs2Load, '../../' );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
@@ -94,7 +96,9 @@ var MeshSpray = (function () {
 
 	var Parser  = ( function () {
 
-		function Parser( logger ) {
+		var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
+
+		function Parser() {
 			this.sizeFactor = 0.5;
 			this.localOffsetFactor = 1.0;
 			this.globalObjectCount = 0;
@@ -103,8 +107,13 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 			this.callbackProgress = null;
-			this.logger = logger;
+			this.logger = new ConsoleLogger();
 			this.serializedMaterials = null;
+		};
+
+		Parser.prototype.setLogConfig = function ( enabled, debug ) {
+			this.logger.setEnabled( enabled );
+			this.logger.setDebug( debug );
 		};
 
 		Parser.prototype.parse = function () {
@@ -311,12 +320,11 @@ var MeshSprayApp = (function () {
 		var maxWebWorkers = 4;
 		var radius = 640;
 		var logger = new THREE.LoaderSupport.ConsoleLogger( false );
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
-		this.workerDirector.setCrossOrigin( 'anonymous' );
+		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
+		workerDirector.setCrossOrigin( 'anonymous' );
 
-		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + scope.workerDirector.objectsCompleted + ')' );
+			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerDirector.objectsCompleted + ')' );
 		};
 		var reportProgress = function( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
@@ -338,7 +346,7 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
-		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
+		workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 
 		var prepData;
 		var pivot;
@@ -362,9 +370,9 @@ var MeshSprayApp = (function () {
 			prepData.dimension = Math.max( Math.random() * 500, 100 );
 			prepData.globalObjectCount = globalObjectCount++;
 
-			this.workerDirector.enqueueForRun( prepData );
+			workerDirector.enqueueForRun( prepData );
 		}
-		this.workerDirector.processQueue();
+		workerDirector.processQueue();
 	};
 
 	MeshSprayApp.prototype.resizeDisplayGL = function () {
