@@ -47,7 +47,6 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	WorkerRunnerRefImpl.prototype.processMessage = function ( payload ) {
 		var logEnabled = payload.logger.enabled;
 		var logDebug = payload.logger.enabled;
-		var scope = this;
 		if ( payload.cmd === 'run' ) {
 
 			var callbacks = {
@@ -98,82 +97,90 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	var WorkerRuntime = ( function () {
+	var LoaderWorker = (function () {
 
-		function WorkerRuntime() {
+		function LoaderWorker( logger ) {
+			this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
+			this._reset();
+		}
+
+		LoaderWorker.prototype._reset = function () {
 			this.worker = null;
+			this.runnerImplName = null;
 			this.callbacks = {
 				builder: null,
 				onLoad: null
 			};
 			this.terminateRequested = false;
 			this.queuedMessage = null;
-		}
+			this.running = true;
+		};
 
-		WorkerRuntime.prototype.initWorker = function ( code, logger, runnerImplName ) {
+		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
+			this.runnerImplName = runnerImplName;
 			var blob = new Blob( [ code ], { type: 'application/javascript' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
-			this.worker.onmessage = this.receiveWorkerMessage;
+			this.worker.onmessage = this._receiveWorkerMessage;
 
-			this.worker.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
-			this.worker.runnerImplName = runnerImplName;
-			this.worker.callbacks = {
-				builder: this.callbacks.builder,
-				onLoad: this.callbacks.onLoad
-			};
-			this.worker.terminateRequested = this.terminateRequested;
+			// set referemce to this, then processing in worker scope within "_receiveWorkerMessage" can access members
+			this.worker.runtimeRef = this;
+
+			// process stored queuedMessage
 			this._postMessage();
 		};
 
-		// Worker scope
-		WorkerRuntime.prototype.receiveWorkerMessage = function ( e ) {
+		/**
+		 * Executed in worker scope
+ 		 */
+		LoaderWorker.prototype._receiveWorkerMessage = function ( e ) {
 			var payload = e.data;
 			switch ( payload.cmd ) {
 				case 'meshData':
 				case 'materialData':
 				case 'imageData':
-					this.callbacks.builder( payload );
+					this.runtimeRef.callbacks.builder( payload );
 					break;
 
 				case 'complete':
-					this.callbacks.onLoad( payload.msg );
-					if ( this.terminateRequested ) {
+					this.runtimeRef.running = false;
+					this.runtimeRef.queuedMessage = null;
+					this.runtimeRef.callbacks.onLoad( payload.msg );
 
-						this.logger.logInfo( 'WorkerSupport [' + this.runnerImplName + ']: Run is complete. Terminating application on request!' );
-						this.terminate();
+					if ( this.runtimeRef.terminateRequested ) {
+
+						this.runtimeRef.logger.logInfo( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Run is complete. Terminating application on request!' );
+						this.runtimeRef._terminate();
 
 					}
 					break;
 
 				case 'error':
-					this.logger.logError( 'WorkerSupport [' + this.runnerImplName + ']: Reported error: ' + payload.msg );
-					if ( this.terminateRequested ) {
+					this.runtimeRef.logger.logError( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Reported error: ' + payload.msg );
+					this.runtimeRef.running = false;
+					this.runtimeRef.queuedMessage = null;
+					this.runtimeRef.callbacks.onLoad( payload.msg );
 
-						this.logger.logInfo( 'WorkerSupport [' + this.runnerImplName + ']: Run reported error. Terminating application on request!' );
-						this.terminate();
+					if ( this.runtimeRef.terminateRequested ) {
+
+						this.runtimeRef.logger.logInfo( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Run reported error. Terminating application on request!' );
+						this.runtimeRef._terminate();
 
 					}
 					break;
 
 				default:
-					this.logger.logError( 'WorkerSupport [' + this.runnerImplName + ']: Received unknown command: ' + payload.cmd );
+					this.runtimeRef.logger.logError( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Received unknown command: ' + payload.cmd );
 					break;
 
 			}
 		};
 
-		WorkerRuntime.prototype.setCallbacks = function ( builder, onLoad ) {
+		LoaderWorker.prototype.setCallbacks = function ( builder, onLoad ) {
 			this.callbacks.builder = Validator.verifyInput( builder, this.callbacks.builder );
 			this.callbacks.onLoad = Validator.verifyInput( onLoad, this.callbacks.onLoad );
-			if ( Validator.isValid( this.worker ) ) {
-
-				this.worker.callbacks.builder = this.callbacks.builder;
-				this.worker.callbacks.onLoad = this.callbacks.onLoad;
-
-			}
 		};
 
-		WorkerRuntime.prototype.run = function( payload ) {
+		LoaderWorker.prototype.run = function( payload ) {
 			if ( Validator.isValid( this.queuedMessage ) ) {
 
 				console.warn( 'Already processing message. Rejecting new run instruction' );
@@ -201,23 +208,33 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				this._postMessage();
 		};
 
-		WorkerRuntime.prototype._postMessage = function () {
+		LoaderWorker.prototype._postMessage = function () {
 			if ( Validator.isValid( this.queuedMessage ) && Validator.isValid( this.worker ) ) {
 
+				this.running = true;
 				this.worker.postMessage( this.queuedMessage );
-				this.queuedMessage = null;
 
 			}
 		};
 
-		WorkerRuntime.prototype.setTerminateRequested = function ( terminateRequested ) {
+		LoaderWorker.prototype.setTerminateRequested = function ( terminateRequested ) {
 			this.terminateRequested = terminateRequested === true;
-			if ( Validator.isValid( this.worker ) ) this.worker.terminateRequested = true;
+			if ( this.terminateRequested && Validator.isValid( this.worker ) && ! this.running ) {
+
+				this.logger.logInfo( 'Worker is terminated immediately as it is not running!' );
+				this._terminate();
+
+			}
 		};
 
-		return WorkerRuntime;
+		LoaderWorker.prototype._terminate = function () {
+			this.worker.terminate();
+			this._reset();
+		};
 
-	} )();
+		return LoaderWorker;
+
+	})();
 
 	function WorkerSupport( logger ) {
 		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
@@ -228,7 +245,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
 		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
 
-		this.workerRuntime = null;
+		this.loaderWorker = new LoaderWorker( this.logger );
 	}
 
 	/**
@@ -236,17 +253,15 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
 	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
-	 * @param {boolean} forceWorkerReload Force re-build of the worker code.
 	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
 	 * @param {String} libPath Base path used for loading libraries
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
-	WorkerSupport.prototype.validate = function ( functionCodeBuilder, forceWorkerReload, libLocations, libPath, runnerImpl ) {
-		if ( ! forceWorkerReload && Validator.isValid( this.workerRuntime ) ) return;
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, libLocations, libPath, runnerImpl ) {
+		if ( Validator.isValid( this.loaderWorker.worker ) ) return;
 
 		this.logger.logInfo( 'WorkerSupport: Building worker code...' );
 		this.logger.logTimeStart( 'buildWebWorkerCode' );
-		this.workerRuntime = new WorkerRuntime();
 
 		if ( Validator.isValid( runnerImpl ) ) {
 
@@ -258,6 +273,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.' );
 
 		}
+
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
 		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl.name, runnerImpl );
 		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
@@ -269,7 +285,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			var loadAllLibraries = function ( path, locations ) {
 				if ( locations.length === 0 ) {
 
-					scope.workerRuntime.initWorker( libsContent + userWorkerCode, scope.logger, runnerImpl.name );
+					scope.loaderWorker.initWorker( libsContent + userWorkerCode, scope.logger, runnerImpl.name );
 					scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 				} else {
@@ -291,7 +307,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		} else {
 
-			this.workerRuntime.initWorker( userWorkerCode, this.logger, runnerImpl.name );
+			this.loaderWorker.initWorker( userWorkerCode, this.logger, runnerImpl.name );
 			this.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 		}
@@ -305,7 +321,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @param {Function} onLoad The function that is called when parsing is complete.
 	 */
 	WorkerSupport.prototype.setCallbacks = function ( builder, onLoad ) {
-		this.workerRuntime.setCallbacks( builder, onLoad );
+		this.loaderWorker.setCallbacks( builder, onLoad );
 	};
 
 	/**
@@ -315,7 +331,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	WorkerSupport.prototype.run = function ( payload ) {
-		this.workerRuntime.run( payload );
+		this.loaderWorker.run( payload );
 	};
 
 	/**
@@ -325,7 +341,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @param {boolean} terminateRequested True or false.
 	 */
 	WorkerSupport.prototype.setTerminateRequested = function ( terminateRequested ) {
-		this.workerRuntime.setTerminateRequested( terminateRequested );
+		this.loaderWorker.setTerminateRequested( terminateRequested );
 	};
 
 	var buildObject = function ( fullName, object ) {

@@ -120,10 +120,6 @@ THREE.OBJLoader2 = (function () {
 			this.workerSupport = workerSupportExternal;
 			this.logger = workerSupportExternal.logger;
 
-		} else {
-
-			this.terminateWorkerOnLoad = true;
-
 		}
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {

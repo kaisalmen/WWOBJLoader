@@ -222,13 +222,12 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
 		var wsKeys = Object.keys( this.workerDescription.workerSupports );
-		var wsLength = wsKeys.length;
-		for ( var i = 0; i < wsLength; i++ ) {
+		for ( var supportTuple, i = 0, wsLength = wsKeys.length; i < wsLength; i++ ) {
 
-			this._deregister( i );
+			supportTuple = this.workerDescription.workerSupports[ i ];
+			if ( Validator.isValid( supportTuple ) ) supportTuple.workerSupport.setTerminateRequested( true );
 
 		}
-		this.workerDescription.workerSupports = [];
 		this.instructionQueue = [];
 	};
 

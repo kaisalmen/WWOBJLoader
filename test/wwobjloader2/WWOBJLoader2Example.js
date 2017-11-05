@@ -163,6 +163,8 @@ var WWOBJLoader2Example = (function () {
 		var scope = this;
 		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( event ) {
+			objLoader.workerSupport.setTerminateRequested( true );
+
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_WaltHead';
 			local.position.set( -125, 50, 0 );
@@ -177,7 +179,9 @@ var WWOBJLoader2Example = (function () {
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
+			objLoader.terminateWorkerOnLoad = false;
 			objLoader.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null, true );
+
 		};
 		objLoader.loadMtl( '../../resource/obj/walt//WaltHead.mtl', 'WaltHead.mtl', null, onLoadMtl );
 	};

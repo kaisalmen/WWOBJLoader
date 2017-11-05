@@ -70,7 +70,7 @@ var MeshSpray = (function () {
 			return workerCode;
 		};
 		var libs2Load = [ 'node_modules/three/build/three.js' ];
-		this.workerSupport.validate( buildCode, false, libs2Load, '../../' );
+		this.workerSupport.validate( buildCode, libs2Load, '../../' );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
