@@ -113,7 +113,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			};
 			this.terminateRequested = false;
 			this.queuedMessage = null;
-			this.running = true;
 		};
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
@@ -142,9 +141,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 					break;
 
 				case 'complete':
-					this.runtimeRef.running = false;
-					this.runtimeRef.queuedMessage = null;
 					this.runtimeRef.callbacks.onLoad( payload.msg );
+					this.runtimeRef.queuedMessage = null;
 
 					if ( this.runtimeRef.terminateRequested ) {
 
@@ -156,9 +154,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 				case 'error':
 					this.runtimeRef.logger.logError( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Reported error: ' + payload.msg );
-					this.runtimeRef.running = false;
-					this.runtimeRef.queuedMessage = null;
 					this.runtimeRef.callbacks.onLoad( payload.msg );
+					this.runtimeRef.queuedMessage = null;
 
 					if ( this.runtimeRef.terminateRequested ) {
 
@@ -181,37 +178,38 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		LoaderWorker.prototype.run = function( payload ) {
-			if ( Validator.isValid( this.queuedMessage ) ) {
+			if ( Validator.isValid( this.queuedMessage) ) {
 
 				console.warn( 'Already processing message. Rejecting new run instruction' );
 				return;
 
+			} else {
+
+				this.queuedMessage = payload;
+
 			}
 			if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
 			if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
+			if ( payload.cmd !== 'run' ) payload.cmd = 'run';
+			if ( Validator.isValid( payload.logger ) ) {
 
-				if ( payload.cmd !== 'run' ) payload.cmd = 'run';
-				if ( Validator.isValid( payload.logger ) ) {
+				payload.logger.enabled = Validator.verifyInput( payload.logger.enabled, true );
+				payload.logger.debug = Validator.verifyInput( payload.logger.debug, false );
 
-					payload.logger.enabled = Validator.verifyInput( payload.logger.enabled, true );
-					payload.logger.debug = Validator.verifyInput( payload.logger.debug, false );
+			} else {
 
-				} else {
-
-					payload.logger = {
-						enabled: true,
-						debug: false
-					}
-
+				payload.logger = {
+					enabled: true,
+					debug: false
 				}
-				this.queuedMessage = payload;
-				this._postMessage();
+
+			}
+			this._postMessage();
 		};
 
 		LoaderWorker.prototype._postMessage = function () {
 			if ( Validator.isValid( this.queuedMessage ) && Validator.isValid( this.worker ) ) {
 
-				this.running = true;
 				this.worker.postMessage( this.queuedMessage );
 
 			}
@@ -219,7 +217,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		LoaderWorker.prototype.setTerminateRequested = function ( terminateRequested ) {
 			this.terminateRequested = terminateRequested === true;
-			if ( this.terminateRequested && Validator.isValid( this.worker ) && ! this.running ) {
+			if ( this.terminateRequested && Validator.isValid( this.worker ) && ! Validator.isValid( this.queuedMessage ) ) {
 
 				this.logger.logInfo( 'Worker is terminated immediately as it is not running!' );
 				this._terminate();

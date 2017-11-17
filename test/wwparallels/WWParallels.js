@@ -100,6 +100,8 @@ var WWParallels = (function () {
 	WWParallels.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
+		this.workerDirector.processQueue();
+
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
@@ -248,8 +250,7 @@ var WWParallels = (function () {
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 		}
-
-		this.workerDirector.processQueue();
+		this.workerDirector.start();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
