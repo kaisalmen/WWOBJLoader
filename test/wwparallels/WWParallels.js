@@ -100,8 +100,6 @@ var WWParallels = (function () {
 	WWParallels.prototype.render = function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
-		this.workerDirector.processQueue();
-
 		this.controls.update();
 
 		this.cube.rotation.x += 0.05;
@@ -250,7 +248,7 @@ var WWParallels = (function () {
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 		}
-		this.workerDirector.start();
+		this.workerDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
@@ -295,6 +293,23 @@ var WWParallels = (function () {
 
 	WWParallels.prototype.terminateManager = function () {
 		this.workerDirector.tearDown();
+		this.running = false;
+	};
+
+	WWParallels.prototype.terminateManagerAndClearScene = function () {
+		var scope = this;
+		var scopedClearAllAssests = function (){
+			scope.clearAllAssests();
+		};
+		if ( this.workerDirector.isRunning() ) {
+
+			this.workerDirector.tearDown( scopedClearAllAssests );
+
+		} else {
+
+			scopedClearAllAssests();
+		}
+
 		this.running = false;
 	};
 
