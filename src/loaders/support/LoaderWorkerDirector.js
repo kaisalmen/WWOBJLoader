@@ -133,7 +133,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 					prepData = this.instructionQueue[ this.instructionQueuePointer ];
 					supportDesc.inUse = true;
-					this._kickWorkerRun( prepData.clone(), supportDesc );
+					this._kickWorkerRun( prepData, supportDesc );
 					this.instructionQueuePointer++;
 
 				} else {

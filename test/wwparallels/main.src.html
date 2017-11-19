@@ -41,8 +41,8 @@
 			var app = new WWParallels( document.getElementById( 'example' ) );
 
 			var wwParallelsControl = {
-				queueLength: 64,
-				workerCount: 16,
+				queueLength: 128,
+				workerCount: 4,
 				streamMeshes: true,
 				run: function () {
 					app.enqueueAllAssests( this.queueLength, this.workerCount, this.streamMeshes );

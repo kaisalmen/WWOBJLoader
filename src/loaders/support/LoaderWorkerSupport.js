@@ -141,8 +141,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 					break;
 
 				case 'complete':
-					this.runtimeRef.callbacks.onLoad( payload.msg );
 					this.runtimeRef.queuedMessage = null;
+					this.runtimeRef.callbacks.onLoad( payload.msg );
 
 					if ( this.runtimeRef.terminateRequested ) {
 
@@ -154,8 +154,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 				case 'error':
 					this.runtimeRef.logger.logError( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Reported error: ' + payload.msg );
-					this.runtimeRef.callbacks.onLoad( payload.msg );
 					this.runtimeRef.queuedMessage = null;
+					this.runtimeRef.callbacks.onLoad( payload.msg );
 
 					if ( this.runtimeRef.terminateRequested ) {
 
