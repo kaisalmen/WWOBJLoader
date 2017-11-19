@@ -248,7 +248,6 @@ var WWParallels = (function () {
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 		}
-
 		this.workerDirector.processQueue();
 	};
 
@@ -294,6 +293,23 @@ var WWParallels = (function () {
 
 	WWParallels.prototype.terminateManager = function () {
 		this.workerDirector.tearDown();
+		this.running = false;
+	};
+
+	WWParallels.prototype.terminateManagerAndClearScene = function () {
+		var scope = this;
+		var scopedClearAllAssests = function (){
+			scope.clearAllAssests();
+		};
+		if ( this.workerDirector.isRunning() ) {
+
+			this.workerDirector.tearDown( scopedClearAllAssests );
+
+		} else {
+
+			scopedClearAllAssests();
+		}
+
 		this.running = false;
 	};
 
