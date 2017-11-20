@@ -113,6 +113,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			};
 			this.terminateRequested = false;
 			this.queuedMessage = null;
+			this.started = false;
 		};
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
@@ -142,6 +143,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 				case 'complete':
 					this.runtimeRef.queuedMessage = null;
+					this.started = false;
 					this.runtimeRef.callbacks.onLoad( payload.msg );
 
 					if ( this.runtimeRef.terminateRequested ) {
@@ -155,6 +157,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				case 'error':
 					this.runtimeRef.logger.logError( 'WorkerSupport [' + this.runtimeRef.runnerImplName + ']: Reported error: ' + payload.msg );
 					this.runtimeRef.queuedMessage = null;
+					this.started = false;
 					this.runtimeRef.callbacks.onLoad( payload.msg );
 
 					if ( this.runtimeRef.terminateRequested ) {
@@ -178,7 +181,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		LoaderWorker.prototype.run = function( payload ) {
-			if ( Validator.isValid( this.queuedMessage) ) {
+			if ( Validator.isValid( this.queuedMessage ) ) {
 
 				console.warn( 'Already processing message. Rejecting new run instruction' );
 				return;
@@ -186,6 +189,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			} else {
 
 				this.queuedMessage = payload;
+				this.started = true;
 
 			}
 			if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
@@ -217,7 +221,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		LoaderWorker.prototype.setTerminateRequested = function ( terminateRequested ) {
 			this.terminateRequested = terminateRequested === true;
-			if ( this.terminateRequested && Validator.isValid( this.worker ) && ! Validator.isValid( this.queuedMessage ) ) {
+			if ( this.terminateRequested && Validator.isValid( this.worker ) && ! Validator.isValid( this.queuedMessage ) && this.started ) {
 
 				this.logger.logInfo( 'Worker is terminated immediately as it is not running!' );
 				this._terminate();
