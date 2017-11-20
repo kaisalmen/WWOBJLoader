@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.0
+- WorkerRunnerRefImpl changes: No longer required `THREE.LoaderSupport.Validator` and `THREE.LoaderSupport.ConsoleLogger` which reduces size of worker. Default workers only include WorkerRunnerRefImpl for establishing communication and no longer need the Validator or the ConsoleLogger. 
+- LoaderWorkerSupport changes: It always ensures logConfig parameters are properly initialized before being passed to worker. Fixed logging problems.
+- Issue #25: OBJLoader2 now logs an error if `THREE.LoaderSupport` is not included as script in HTML. The same is true for missing `THRE.MTLLoader`, but only if method `loadMtl` is used.
+- Issue #26: `WorkerSuport` now contains a inner private class `LoaderWorker` that encapsulates the native worker. This separates the runtime functionality from the setup and interaction. Workers are now terminated when immediately when they are not running otherwise `LoaderWorker.terminateRequested` ensures termination when final execution status is reached. `WorkerDirector` now properly handles shutdown of workers. Evaluation of status is always performed in `WorkerDirector.processQueue`. `WorkerDirector.callbackOnFinishedProcessing` is called when processing is completed and all workers are terminated. This allows to clear all meshes, for example.
+
 ## 2.1.2
 - Added onLoadMaterials allowing alteration of materials when they have been loaded
 - Issue #21 Part2: Fixed new mesh detection (offset and not) solely relies on 'v' and 'f' occurrences. 'o' and 'g' are meta information, that no longer drive the decision

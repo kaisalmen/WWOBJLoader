@@ -146,10 +146,10 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		}
 
-		if ( ! this.isRunning() ) {
+		if ( ! this.isRunning() && this.callbackOnFinishedProcessing !== null ) {
 
-			if ( this.callbackOnFinishedProcessing !== null ) this.callbackOnFinishedProcessing();
-			return;
+			this.callbackOnFinishedProcessing();
+			this.callbackOnFinishedProcessing = null;
 
 		}
 	};
