@@ -181,6 +181,7 @@ var WWParallels = (function () {
 				mesh.name = meshName;
 
 				override.addMesh( mesh );
+				override.alteredMesh = true;
 
 			}
 			return override;

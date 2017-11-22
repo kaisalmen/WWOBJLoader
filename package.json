@@ -1,10 +1,10 @@
 {
   "name": "wwobjloader2",
-  "version": "2.2.0-dev",
+  "version": "2.2.0",
   "versions": {
-    "loader_obj2": "2.2.0-dev",
-    "loader_worker_director": "2.1.0-dev",
-    "loader_worker_support": "2.0.0-dev",
+    "loader_obj2": "2.2.0",
+    "loader_worker_director": "2.1.0",
+    "loader_worker_support": "2.0.0",
     "loader_builder": "1.1.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
@@ -67,7 +67,7 @@
     "three": "^0.88.0"
   },
   "devDependencies": {
-    "jszip": "^3.1.4",
+    "jszip": "^3.1.5",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.1",
