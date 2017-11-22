@@ -94,6 +94,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			this.workerDescription.workerSupports[ instanceNo ] = {
 				instanceNo: instanceNo,
 				inUse: false,
+				terminateRequested: false,
 				workerSupport: new THREE.LoaderSupport.WorkerSupport( this.logger ),
 				loader: null
 			};
@@ -113,6 +114,12 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		}
 	};
 
+	/**
+	 * Returns if any workers are running.
+	 *
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @returns {boolean}
+	 */
 	WorkerDirector.prototype.isRunning = function () {
 		var wsKeys = Object.keys( this.workerDescription.workerSupports );
 		return ( ( this.instructionQueue.length > 0 && this.instructionQueuePointer < this.instructionQueue.length ) || wsKeys.length > 0 );
@@ -132,7 +139,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 				if ( this.instructionQueuePointer < this.instructionQueue.length ) {
 
 					prepData = this.instructionQueue[ this.instructionQueuePointer ];
-					supportDesc.inUse = true;
 					this._kickWorkerRun( prepData, supportDesc );
 					this.instructionQueuePointer++;
 
@@ -155,6 +161,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	};
 
 	WorkerDirector.prototype._kickWorkerRun = function( prepData, supportDesc ) {
+		supportDesc.inUse = true;
+		supportDesc.workerSupport.setTerminateRequested( supportDesc.terminateRequested );
+
 		this.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
 		var scope = this;
@@ -164,7 +173,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			if ( Validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
 			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) prepDataCallbacks.onLoad( event );
 			scope.objectsCompleted++;
-			scope.workerDescription.workerSupports[ event.detail.instanceNo ].inUse = false;
+			supportDesc.inUse = false;
 
 			scope.processQueue();
 		};
@@ -230,6 +239,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	/**
 	 * Terminate all workers.
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */
 	WorkerDirector.prototype.tearDown = function ( callbackOnFinishedProcessing ) {
 		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
@@ -237,11 +248,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.instructionQueuePointer = this.instructionQueue.length;
 		this.callbackOnFinishedProcessing = Validator.verifyInput( callbackOnFinishedProcessing, null );
 
-		var supportDesc;
 		for ( var name in this.workerDescription.workerSupports ) {
 
-			supportDesc = this.workerDescription.workerSupports[ name ];
-			supportDesc.workerSupport.setTerminateRequested( true );
+			this.workerDescription.workerSupports[ name ].terminateRequested = true;
 
 		}
 	};

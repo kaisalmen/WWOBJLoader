@@ -51,8 +51,8 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 - Indexed rendering is now available, but `OBJLoader2` must it must be switched on via `setUseIndices` (see example **OBJLoader2 basic usage** below).
 - `OBJLoader2` must now be re-instantiated every time it is used, but caching of worker code via `WorkerSupport` and `LoaderDirector` is available
 - `ConsoleLogger` now encapsulates all console logging. Logging can be fully deactivated or switched to debug mode (issue #15)
-- progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16) 
-- "o name" (object), "g name" (group) and new vertex definition without any other declaration lead to new object creation
+- Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16) 
+- New mesh detection solely relies on 'v' and 'f' occurrences. 'o' and 'g' are meta information, that no longer drive the decision (issue #21)
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
 
