@@ -70,14 +70,27 @@ var OBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( materials ) {
+			var callbackMeshAlter = function ( event ) {
+				var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
+
+				var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
+				var helper = new THREE.VertexNormalsHelper( mesh, 5, 0x00ff00, 1 );
+				helper.name = 'VertexNormalsHelper';
+
+				override.addMesh( mesh );
+				override.addMesh( helper );
+
+				return override;
+			};
+
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( true );
+			objLoader.setUseIndices( false );
 			objLoader.setDisregardNormals( false );
 			objLoader.getLogger().setDebug( true );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/verify/verify.obj', callbackOnLoad, null, null, callbackMeshAlter, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/verify/verify.mtl', 'verify.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {

@@ -347,7 +347,7 @@ THREE.OBJLoader2 = (function () {
 			};
 			this.logger = new ConsoleLogger();
 			this.totalBytes = 0;
-			this.reachedFaces = false;
+			this.foundMesh = false;
 		};
 
 		Parser.prototype.setUseAsync = function ( useAsync ) {
@@ -554,7 +554,7 @@ THREE.OBJLoader2 = (function () {
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
 					// object complete instance required if reached faces already (= reached next block of v)
-					if ( this.reachedFaces ) {
+					if ( this.foundMesh ) {
 
 						if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
 
@@ -563,7 +563,7 @@ THREE.OBJLoader2 = (function () {
 						}
 						// only when new vertices are declared after faces have been detected
 						this.processCompletedMesh( currentByte );
-						this.reachedFaces = false;
+						this.foundMesh = false;
 
 					}
 					if ( bufferPointer === 4 ) {
@@ -586,7 +586,7 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_F:
-					this.reachedFaces = true;
+					this.foundMesh = true;
 					this.rawMesh.processFaces( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 					break;
 
@@ -1016,7 +1016,7 @@ THREE.OBJLoader2 = (function () {
 			// "f vertex ..."
 			if ( slashesCount === 0 ) {
 
-				for ( i = 2, length = bufferLength - 1; i < length; i ++ ) {
+				for ( i = 2, length = bufferLength; i < length; i ++ ) {
 
 					this.buildFace( buffer[ 1 ] );
 					this.buildFace( buffer[ i ] );
