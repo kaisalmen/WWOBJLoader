@@ -231,7 +231,6 @@
 			app.updateAssets( prepData );
 
 
-
 			prepData = new THREE.LoaderSupport.PrepData( 'Issue11811a' );
 			pivot = new THREE.Object3D();
 			pivot.position.set( 175, 0, 0 );
@@ -251,6 +250,27 @@
 			prepData.setStreamMeshesTo( pivot );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+
+			var prepData = new THREE.LoaderSupport.PrepData( 'Issue27door' );
+			var pivot = new THREE.Object3D();
+			pivot.position.set( 400, 0, 0 );
+			var scale = 0.5;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/door.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/door.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+			var prepData = new THREE.LoaderSupport.PrepData( 'Issue27wall2' );
+			var pivot = new THREE.Object3D();
+			pivot.position.set( -400, 0, 0 );
+			var scale = 0.5;
+			pivot.scale.set( scale, scale, scale );
+			prepData.setStreamMeshesTo( pivot );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.mtl', 'MTL' ) );
 			app.updateAssets( prepData );
 
 			app.loadAssets();

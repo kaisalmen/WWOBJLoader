@@ -561,8 +561,8 @@ THREE.OBJLoader2 = (function () {
 							throw 'Vertex Colors were detected, but vertex count and color count do not match!';
 
 						}
-						// only when new vertices after faces are detected complete new mesh is prepared (reset offsets, etc)
-						this.processCompletedMesh( this.rawMesh.objectName, this.rawMesh.groupName, currentByte, true );
+						// only when new vertices are declared after faces have been detected
+						this.processCompletedMesh( currentByte );
 						this.reachedFaces = false;
 
 					}
@@ -600,12 +600,12 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					this.processCompletedMesh( this.rawMesh.objectName, concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), currentByte, false );
+					this.rawMesh.pushGroup( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
-					this.processCompletedMesh( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), this.rawMesh.groupName, currentByte, false );
+					this.rawMesh.pushObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -638,7 +638,7 @@ THREE.OBJLoader2 = (function () {
 				'\n\tReal RawMeshSubGroup count: ' + report.subGroups;
 		};
 
-		Parser.prototype.processCompletedMesh = function ( objectName, groupName, currentByte, beginNewObject ) {
+		Parser.prototype.processCompletedMesh = function ( currentByte ) {
 			var result = this.rawMesh.finalize();
 			if ( Validator.isValid( result ) ) {
 
@@ -647,12 +647,9 @@ THREE.OBJLoader2 = (function () {
 				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
-				this.rawMesh = beginNewObject ? this.rawMesh.newInstanceResetOffsets() : this.rawMesh.newInstanceKeepOffsets();
+				this.rawMesh = this.rawMesh.newInstance();
 
 			}
-			// Always update group an object name in case they have changed and are valid
-			if ( this.rawMesh.objectName !== objectName && Validator.isValid( objectName ) ) this.rawMesh.pushObject( objectName );
-			if ( this.rawMesh.groupName !== groupName && Validator.isValid( groupName ) ) this.rawMesh.pushGroup( groupName );
 		};
 
 		Parser.prototype.finalize = function ( currentByte ) {
@@ -897,8 +894,8 @@ THREE.OBJLoader2 = (function () {
 
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
 			this.activeMtlName = Validator.verifyInput( activeMtlName, '' );
-			this.objectName = '';
 			this.groupName = '';
+			this.objectName = '';
 			this.mtllibName = '';
 			this.smoothingGroup = {
 				splitMaterials: materialPerSmoothingGroup === true,
@@ -920,20 +917,9 @@ THREE.OBJLoader2 = (function () {
 			this.faceCount = 0;
 		}
 
-		RawMesh.prototype.newInstanceResetOffsets = function () {
+		RawMesh.prototype.newInstance = function () {
 			var newRawObject = new RawMesh( this.smoothingGroup.splitMaterials, this.useIndices, this.disregardNormals, this.activeMtlName );
-
-			// move indices forward
-			newRawObject.globalVertexOffset = this.globalVertexOffset + this.vertices.length / 3;
-			newRawObject.globalUvOffset = this.globalUvOffset + this.uvs.length / 2;
-			newRawObject.globalNormalOffset = this.globalNormalOffset + this.normals.length / 3;
-
-			return newRawObject;
-		};
-
-		RawMesh.prototype.newInstanceKeepOffsets = function () {
-			var newRawObject = new RawMesh( this.smoothingGroup.splitMaterials, this.useIndices, this.disregardNormals, this.activeMtlName );
-			// keep objectName
+			newRawObject.pushGroup( this.groupName );
 			newRawObject.pushObject( this.objectName );
 
 			// keep current buffers and indices forward
@@ -974,16 +960,16 @@ THREE.OBJLoader2 = (function () {
 			this.normals.push( parseFloat( buffer[ 3 ] ) );
 		};
 
+		RawMesh.prototype.pushGroup = function ( groupName ) {
+			this.groupName = Validator.verifyInput( groupName, '' );
+		};
+
 		RawMesh.prototype.pushObject = function ( objectName ) {
 			this.objectName = Validator.verifyInput( objectName, '' );
 		};
 
 		RawMesh.prototype.pushMtllib = function ( mtllibName ) {
 			this.mtllibName = Validator.verifyInput( mtllibName, '' );
-		};
-
-		RawMesh.prototype.pushGroup = function ( groupName ) {
-			this.groupName = Validator.verifyInput( groupName, '' );
 		};
 
 		RawMesh.prototype.pushUsemtl = function ( mtlName ) {
