@@ -347,7 +347,6 @@ THREE.OBJLoader2 = (function () {
 			};
 			this.logger = new ConsoleLogger();
 			this.totalBytes = 0;
-			this.foundMesh = false;
 		};
 
 		Parser.prototype.setUseAsync = function ( useAsync ) {
@@ -553,19 +552,6 @@ THREE.OBJLoader2 = (function () {
 
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
-					// object complete instance required if reached faces already (= reached next block of v)
-					if ( this.foundMesh ) {
-
-						if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
-
-							throw 'Vertex Colors were detected, but vertex count and color count do not match!';
-
-						}
-						// only when new vertices are declared after faces have been detected
-						this.processCompletedMesh( currentByte );
-						this.foundMesh = false;
-
-					}
 					if ( bufferPointer === 4 ) {
 
 						this.rawMesh.pushVertex( buffer )
@@ -586,7 +572,6 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_F:
-					this.foundMesh = true;
 					this.rawMesh.processFaces( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 					break;
 
@@ -600,7 +585,7 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					this.rawMesh.pushGroup( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
+					this.processCompletedMesh( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), currentByte );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
@@ -638,40 +623,40 @@ THREE.OBJLoader2 = (function () {
 				'\n\tReal RawMeshSubGroup count: ' + report.subGroups;
 		};
 
-		Parser.prototype.processCompletedMesh = function ( currentByte ) {
+		Parser.prototype.processCompletedMesh = function ( groupName, currentByte ) {
 			var result = this.rawMesh.finalize();
+			var newMesh = false;
 			if ( Validator.isValid( result ) ) {
 
-				this.inputObjectCount++;
+				if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
+
+					throw 'Vertex Colors were detected, but vertex count and color count do not match!';
+
+				}
 				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
+				this.inputObjectCount++;
+
 				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
-				this.rawMesh = this.rawMesh.newInstance();
+				this.rawMesh.reset( this.rawMesh.smoothingGroup.splitMaterials );
+
+				newMesh = true;
 
 			}
+			this.rawMesh.pushGroup( groupName );
+			return newMesh;
 		};
 
 		Parser.prototype.finalize = function ( currentByte ) {
 			this.logger.logInfo( 'Global output object count: ' + this.outputObjectCount );
-			var result = Validator.isValid( this.rawMesh ) ? this.rawMesh.finalize() : null;
-			if ( Validator.isValid( result ) ) {
+			if ( this.processCompletedMesh( this.groupName, currentByte ) && this.logger.isEnabled() ) {
 
-				this.inputObjectCount++;
-				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
-				this.buildMesh( result, currentByte );
-
-				if ( this.logger.isEnabled() ) {
-
-					var parserFinalReport = 'Overall counts: ' +
-						'\n\tVertices: ' + this.counts.vertices +
-						'\n\tFaces: ' + this.counts.faces +
-						'\n\tMultiple definitions: ' + this.counts.doubleIndicesCount;
-					this.logger.logInfo( parserFinalReport );
-
-				}
-				var progressBytesPercent = currentByte / this.totalBytes;
-				this.callbackProgress( 'Completed Parsing: 100.00%', progressBytesPercent );
+				var parserFinalReport = 'Overall counts: ' +
+					'\n\tVertices: ' + this.counts.vertices +
+					'\n\tFaces: ' + this.counts.faces +
+					'\n\tMultiple definitions: ' + this.counts.doubleIndicesCount;
+				this.logger.logInfo( parserFinalReport );
 
 			}
 		};
@@ -826,11 +811,11 @@ THREE.OBJLoader2 = (function () {
 				if ( this.logger.isDebug() ) {
 					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
 					var createdReport = 'Output Object no.: ' + this.outputObjectCount +
-						'\n\t\tobjectName: ' + rawObjectDescription.objectName +
 						'\n\t\tgroupName: ' + rawObjectDescription.groupName +
-						'\n\t\tmaterialName: ' + rawObjectDescription.materialName +
 						materialIndexLine +
+						'\n\t\tmaterialName: ' + rawObjectDescription.materialName +
 						'\n\t\tsmoothingGroup: ' + rawObjectDescription.smoothingGroup +
+						'\n\t\tobjectName: ' + rawObjectDescription.objectName +
 						'\n\t\t#vertices: ' + rawObjectDescription.vertices.length / 3 +
 						'\n\t\t#indices: ' + rawObjectDescription.indices.length +
 						'\n\t\t#colors: ' + rawObjectDescription.colors.length / 3 +
@@ -882,56 +867,40 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var RawMesh = (function () {
 
-		function RawMesh( materialPerSmoothingGroup, useIndices, disregardNormals, activeMtlName ) {
-			this.globalVertexOffset = 1;
-			this.globalUvOffset = 1;
-			this.globalNormalOffset = 1;
-
+		function RawMesh( materialPerSmoothingGroup, useIndices, disregardNormals ) {
 			this.vertices = [];
 			this.colors = [];
 			this.normals = [];
 			this.uvs = [];
 
-			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.activeMtlName = Validator.verifyInput( activeMtlName, '' );
-			this.groupName = '';
+			this.useIndices = useIndices === true;
+			this.disregardNormals = disregardNormals === true;
+
 			this.objectName = '';
+			this.groupName = '';
+			this.reset( materialPerSmoothingGroup );
+		}
+
+		RawMesh.prototype.reset = function ( materialPerSmoothingGroup ) {
+			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
+			this.activeMtlName = '';
 			this.mtllibName = '';
+
+			this.subGroups = [];
+			this.subGroupInUse = null;
+
 			this.smoothingGroup = {
 				splitMaterials: materialPerSmoothingGroup === true,
 				normalized: -1,
 				real: -1
 			};
-			this.useIndices = useIndices === true;
-			this.disregardNormals = disregardNormals === true;
-
-			this.mtlCount = 0;
-			this.smoothingGroupCount = 0;
-
-			this.subGroups = [];
-			this.subGroupInUse = null;
 			// this default index is required as it is possible to define faces without 'g' or 'usemtl'
 			this.pushSmoothingGroup( 1 );
 
 			this.doubleIndicesCount = 0;
 			this.faceCount = 0;
-		}
-
-		RawMesh.prototype.newInstance = function () {
-			var newRawObject = new RawMesh( this.smoothingGroup.splitMaterials, this.useIndices, this.disregardNormals, this.activeMtlName );
-			newRawObject.pushGroup( this.groupName );
-			newRawObject.pushObject( this.objectName );
-
-			// keep current buffers and indices forward
-			newRawObject.vertices = this.vertices;
-			newRawObject.colors = this.colors;
-			newRawObject.uvs = this.uvs;
-			newRawObject.normals = this.normals;
-			newRawObject.globalVertexOffset = this.globalVertexOffset;
-			newRawObject.globalUvOffset = this.globalUvOffset;
-			newRawObject.globalNormalOffset = this.globalNormalOffset;
-
-			return newRawObject;
+			this.mtlCount = 0;
+			this.smoothingGroupCount = 0;
 		};
 
 		RawMesh.prototype.pushVertex = function ( buffer ) {
@@ -1060,20 +1029,22 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
+
 		RawMesh.prototype.buildFace = function ( faceIndexV, faceIndexU, faceIndexN ) {
 			var sgiu = this.subGroupInUse;
 			if ( this.disregardNormals ) faceIndexN = undefined;
 			var scope = this;
 			var updateRawObjectDescriptionInUse = function () {
 
-				var indexPointerV = ( parseInt( faceIndexV ) - scope.globalVertexOffset ) * 3;
-				var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
+				var faceIndexVi = parseInt( faceIndexV );
+				var indexPointerV = 3 * ( faceIndexVi < 0 ? faceIndexVi + scope.vertices.length / 3 : faceIndexVi - 1 );
 
 				var vertices = sgiu.vertices;
 				vertices.push( scope.vertices[ indexPointerV++ ] );
 				vertices.push( scope.vertices[ indexPointerV++ ] );
 				vertices.push( scope.vertices[ indexPointerV ] );
 
+				var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 				if ( indexPointerC !== null ) {
 
 					var colors = sgiu.colors;
@@ -1085,7 +1056,8 @@ THREE.OBJLoader2 = (function () {
 
 				if ( faceIndexU ) {
 
-					var indexPointerU = ( parseInt( faceIndexU ) - scope.globalUvOffset ) * 2;
+					var faceIndexUi = parseInt( faceIndexU );
+					var indexPointerU = 2 * ( faceIndexUi < 0 ? faceIndexUi + scope.uvs.length / 2 : faceIndexUi - 1 );
 					var uvs = sgiu.uvs;
 					uvs.push( scope.uvs[ indexPointerU++ ] );
 					uvs.push( scope.uvs[ indexPointerU ] );
@@ -1093,7 +1065,8 @@ THREE.OBJLoader2 = (function () {
 				}
 				if ( faceIndexN ) {
 
-					var indexPointerN = ( parseInt( faceIndexN ) - scope.globalNormalOffset ) * 3;
+					var faceIndexNi = parseInt( faceIndexN );
+					var indexPointerN = 3 * ( faceIndexNi < 0 ? faceIndexNi + scope.normals.length / 3 : faceIndexNi - 1 );
 					var normals = sgiu.normals;
 					normals.push( scope.normals[ indexPointerN++ ] );
 					normals.push( scope.normals[ indexPointerN++ ] );
