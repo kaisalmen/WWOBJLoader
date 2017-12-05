@@ -552,15 +552,7 @@ THREE.OBJLoader2 = (function () {
 
 			switch ( buffer[ 0 ] ) {
 				case Consts.LINE_V:
-					if ( bufferPointer === 4 ) {
-
-						this.rawMesh.pushVertex( buffer )
-
-					} else {
-
-						this.rawMesh.pushVertexAndVertextColors( buffer );
-
-					}
+					this.rawMesh.pushVertex( buffer, bufferPointer > 4 );
 					break;
 
 				case Consts.LINE_VT:
@@ -585,11 +577,14 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case Consts.LINE_G:
-					this.processCompletedMesh( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), currentByte );
+					// 'g' leads to creation of mesh if valid data (faces declaration was done before), otherwise only groupName gets set
+					this.processCompletedMesh( currentByte );
+					this.rawMesh.pushGroup( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case Consts.LINE_O:
+					// 'o' is pure meta-information and does not result in creation of new meshes
 					this.rawMesh.pushObject( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ) );
 					flushStringBuffer( buffer, bufferPointer );
 					break;
@@ -623,9 +618,8 @@ THREE.OBJLoader2 = (function () {
 				'\n\tReal RawMeshSubGroup count: ' + report.subGroups;
 		};
 
-		Parser.prototype.processCompletedMesh = function ( groupName, currentByte ) {
+		Parser.prototype.processCompletedMesh = function ( currentByte ) {
 			var result = this.rawMesh.finalize();
-			var newMesh = false;
 			if ( Validator.isValid( result ) ) {
 
 				if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
@@ -641,16 +635,17 @@ THREE.OBJLoader2 = (function () {
 				this.callbackProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
 				this.rawMesh.reset( this.rawMesh.smoothingGroup.splitMaterials );
 
-				newMesh = true;
+				return true;
 
+			} else {
+
+				return false;
 			}
-			this.rawMesh.pushGroup( groupName );
-			return newMesh;
 		};
 
 		Parser.prototype.finalize = function ( currentByte ) {
 			this.logger.logInfo( 'Global output object count: ' + this.outputObjectCount );
-			if ( this.processCompletedMesh( this.groupName, currentByte ) && this.logger.isEnabled() ) {
+			if ( this.processCompletedMesh( currentByte ) && this.logger.isEnabled() ) {
 
 				var parserFinalReport = 'Overall counts: ' +
 					'\n\tVertices: ' + this.counts.vertices +
@@ -903,19 +898,17 @@ THREE.OBJLoader2 = (function () {
 			this.smoothingGroupCount = 0;
 		};
 
-		RawMesh.prototype.pushVertex = function ( buffer ) {
+		RawMesh.prototype.pushVertex = function ( buffer, haveVertexColors ) {
 			this.vertices.push( parseFloat( buffer[ 1 ] ) );
 			this.vertices.push( parseFloat( buffer[ 2 ] ) );
 			this.vertices.push( parseFloat( buffer[ 3 ] ) );
-		};
+			if ( haveVertexColors ) {
 
-		RawMesh.prototype.pushVertexAndVertextColors = function ( buffer ) {
-			this.vertices.push( parseFloat( buffer[ 1 ] ) );
-			this.vertices.push( parseFloat( buffer[ 2 ] ) );
-			this.vertices.push( parseFloat( buffer[ 3 ] ) );
-			this.colors.push( parseFloat( buffer[ 4 ] ) );
-			this.colors.push( parseFloat( buffer[ 5 ] ) );
-			this.colors.push( parseFloat( buffer[ 6 ] ) );
+				this.colors.push( parseFloat( buffer[ 4 ] ) );
+				this.colors.push( parseFloat( buffer[ 5 ] ) );
+				this.colors.push( parseFloat( buffer[ 6 ] ) );
+
+			}
 		};
 
 		RawMesh.prototype.pushUv = function ( buffer ) {
@@ -1037,7 +1030,7 @@ THREE.OBJLoader2 = (function () {
 			var updateRawObjectDescriptionInUse = function () {
 
 				var faceIndexVi = parseInt( faceIndexV );
-				var indexPointerV = 3 * ( faceIndexVi < 0 ? faceIndexVi + scope.vertices.length / 3 : faceIndexVi - 1 );
+				var indexPointerV = 3 * ( faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3 );
 
 				var vertices = sgiu.vertices;
 				vertices.push( scope.vertices[ indexPointerV++ ] );
@@ -1057,7 +1050,7 @@ THREE.OBJLoader2 = (function () {
 				if ( faceIndexU ) {
 
 					var faceIndexUi = parseInt( faceIndexU );
-					var indexPointerU = 2 * ( faceIndexUi < 0 ? faceIndexUi + scope.uvs.length / 2 : faceIndexUi - 1 );
+					var indexPointerU = 2 * ( faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.uvs.length / 2 );
 					var uvs = sgiu.uvs;
 					uvs.push( scope.uvs[ indexPointerU++ ] );
 					uvs.push( scope.uvs[ indexPointerU ] );
@@ -1066,7 +1059,7 @@ THREE.OBJLoader2 = (function () {
 				if ( faceIndexN ) {
 
 					var faceIndexNi = parseInt( faceIndexN );
-					var indexPointerN = 3 * ( faceIndexNi < 0 ? faceIndexNi + scope.normals.length / 3 : faceIndexNi - 1 );
+					var indexPointerN = 3 * ( faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.normals.length / 3 );
 					var normals = sgiu.normals;
 					normals.push( scope.normals[ indexPointerN++ ] );
 					normals.push( scope.normals[ indexPointerN++ ] );
