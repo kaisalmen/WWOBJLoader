@@ -214,7 +214,15 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		LoaderWorker.prototype._postMessage = function () {
 			if ( Validator.isValid( this.queuedMessage ) && Validator.isValid( this.worker ) ) {
 
-				this.worker.postMessage( this.queuedMessage );
+				if ( this.queuedMessage.data.input instanceof ArrayBuffer ) {
+
+					this.worker.postMessage( this.queuedMessage, [ this.queuedMessage.data.input ] );
+
+				} else {
+
+					this.worker.postMessage( this.queuedMessage );
+
+				}
 
 			}
 		};

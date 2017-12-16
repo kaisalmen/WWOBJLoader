@@ -270,7 +270,7 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 		if ( urlParts.length < 2 ) {
 
 			this.path = null;
-			this.name = this.name = url;
+			this.name = url;
 			this.url = url;
 
 		} else {

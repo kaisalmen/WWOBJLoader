@@ -98,7 +98,7 @@ var WWOBJLoader2Example = (function () {
 				}
 			);
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', 'female02.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl );
 	};
 
 
@@ -153,7 +153,7 @@ var WWOBJLoader2Example = (function () {
 			objLoader.setMaterials( materials );
 			objLoader.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/male02/male02.mtl', 'female02.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/male02/male02.mtl', null, onLoadMtl );
 	};
 
 	WWOBJLoader2Example.prototype.useLoadAsync = function () {
@@ -183,7 +183,7 @@ var WWOBJLoader2Example = (function () {
 			objLoader.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null, true );
 
 		};
-		objLoader.loadMtl( '../../resource/obj/walt//WaltHead.mtl', 'WaltHead.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/walt/WaltHead.mtl', null, onLoadMtl );
 	};
 
 	WWOBJLoader2Example.prototype.useRunSync = function () {
