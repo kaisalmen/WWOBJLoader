@@ -872,17 +872,15 @@ THREE.OBJLoader2 = (function () {
 
 			this.objectName = '';
 			this.groupName = '';
+			this.activeMtlName = '';
 			this.mtllibName = '';
 			this.reset( materialPerSmoothingGroup );
 		}
 
 		RawMesh.prototype.reset = function ( materialPerSmoothingGroup ) {
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
-			this.activeMtlName = '';
-
 			this.subGroups = [];
 			this.subGroupInUse = null;
-
 			this.smoothingGroup = {
 				splitMaterials: materialPerSmoothingGroup === true,
 				normalized: -1,
