@@ -47,15 +47,16 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 `OBJLoader2` contains all features of the existing `OBJLoader` and it has to . These are some interesting POIs:
 - `OBJLoader2.parse` method accepts arraybuffer or string as input. Text processing is approx. 15-20 pecent slower
 - `OBJLoader2.parseAsync` only accepts arraybuffer as input as buffer is passed to worker.
-- Face N-Gons are now support supported
-- Indexed rendering is now available, but `OBJLoader2` must it must be switched on via `setUseIndices` (see example **OBJLoader2 basic usage** below).
+- Face N-Gons are supported
+- Indexed rendering is now available, but `OBJLoader2` must it must be switched on via `setUseIndices` (see `useLoadSync` in example **OBJLoader2 usage options** below).
 - `OBJLoader2` must now be re-instantiated every time it is used, but caching of worker code via `WorkerSupport` and `LoaderDirector` is available
 - `ConsoleLogger` now encapsulates all console logging. Logging can be fully deactivated or switched to debug mode (issue #15)
 - Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16) 
 - New mesh detection solely relies on 'v' and 'f' occurrences. 'o' and 'g' are meta information, that no longer drive the decision (issue #21)
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
-
+- Multiple mesh definitions within one group are supported (issue #27)
+- Negative face indices are now supported (issue #28)
 
 ### Directing the symphony
 `LoaderDirector` is able to create a configurable amount of `OBJLoader2` via reflection just by providing parameters. It is now able to direct all loaders that over automation via `run` and use `WorkerSupport` to allow running the `Parser` in a web worker. An instruction queue is fed and all workers created will work to deplete it once they have been started.
@@ -68,7 +69,7 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 [OBJLoader2 basic usage](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
 [OBJLoader2 usage options](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
 [OBJLoader2 Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
-[LoaderDirector - Mesh Spray](https://kaisalmen.de/wwobjloader2/meshspray/main.min.html)<br>
+[LoaderDirector Mesh Spray](https://kaisalmen.de/wwobjloader2/meshspray/main.min.html)<br>
 [LoaderDirector Parallels Demo](https://kaisalmen.de/wwobjloader2/wwparallels/main.min.html)<br>
 
 ## Http server for development

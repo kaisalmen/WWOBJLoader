@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.1
+- Issue #27: Multiple mesh definitions (vertices, normals, uvs and faces) within one group are now supported. Needed to remove early release of vertex data from memory.
+- Issue #28: Negative face indices are now supported.
+- Issue #29: Cleaned loadMtl API and clarified `WorkerSupport.run` contract. Transferable is automatically attached if data is an ArrayBuffer.
+
 ## 2.2.0
 - WorkerRunnerRefImpl changes: No longer required `THREE.LoaderSupport.Validator` and `THREE.LoaderSupport.ConsoleLogger` which reduces size of worker. Default workers only include WorkerRunnerRefImpl for establishing communication and no longer need the Validator or the ConsoleLogger. 
 - LoaderWorkerSupport changes: It always ensures logConfig parameters are properly initialized before being passed to worker. Fixed logging problems.

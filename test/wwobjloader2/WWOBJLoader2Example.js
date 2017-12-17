@@ -151,6 +151,7 @@ var WWOBJLoader2Example = (function () {
 		var onLoadMtl = function ( materials ) {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
+			objLoader.setUseIndices( true );
 			objLoader.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null, false );
 		};
 		objLoader.loadMtl( '../../resource/obj/male02/male02.mtl', null, onLoadMtl );
