@@ -249,13 +249,16 @@ THREE.OBJLoader2 = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by OBJLoader2 buildCode.\n';
 			workerCode += '  */\n\n';
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
-			workerCode += funcBuildSingelton( 'LoaderBase', 'LoaderBase', LoaderBase );
+			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
+			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
+			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', ConsoleLogger );
+			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.LoaderBase', LoaderBase );
 			workerCode += funcBuildObject( 'Consts', Consts );
-			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
-			workerCode += funcBuildSingelton( 'RawMesh', 'RawMesh', RawMesh );
-			workerCode += funcBuildSingelton( 'RawMeshSubGroup', 'RawMeshSubGroup', RawMeshSubGroup );
+			workerCode += 'var Validator = THREE.LoaderSupport.Validator;';
+			workerCode += 'var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;';
+			workerCode += funcBuildSingelton( 'Parser', Parser );
+			workerCode += funcBuildSingelton( 'RawMesh', RawMesh );
+			workerCode += funcBuildSingelton( 'RawMeshSubGroup', RawMeshSubGroup );
 
 			return workerCode;
 		};
@@ -324,8 +327,6 @@ THREE.OBJLoader2 = (function () {
 	 */
 	var Parser = (function () {
 
-		var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
-
 		function Parser() {
 			this.callbackProgress = null;
 			this.callbackBuilder = null;
@@ -344,7 +345,8 @@ THREE.OBJLoader2 = (function () {
 				faces: 0,
 				doubleIndicesCount: 0
 			};
-			this.logger = new ConsoleLogger();
+
+			this.logger = new THREE.LoaderSupport.ConsoleLogger();
 			this.totalBytes = 0;
 		};
 
@@ -365,13 +367,13 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.setMaterials = function ( materials ) {
-			this.materials = Validator.verifyInput( materials, this.materials );
-			this.materials = Validator.verifyInput( this.materials, {} );
+			this.materials = THREE.LoaderSupport.Validator.verifyInput( materials, this.materials );
+			this.materials = THREE.LoaderSupport.Validator.verifyInput( this.materials, {} );
 		};
 
 		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
 			this.callbackBuilder = callbackBuilder;
-			if ( ! Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
+			if ( ! THREE.LoaderSupport.Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 		};
 
 		Parser.prototype.setCallbackProgress = function ( callbackProgress ) {
@@ -619,7 +621,7 @@ THREE.OBJLoader2 = (function () {
 
 		Parser.prototype.processCompletedMesh = function ( currentByte ) {
 			var result = this.rawMesh.finalize();
-			if ( Validator.isValid( result ) ) {
+			if ( THREE.LoaderSupport.Validator.isValid( result ) ) {
 
 				if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
 
@@ -672,7 +674,7 @@ THREE.OBJLoader2 = (function () {
 			var colorFA = ( result.absoluteColorCount > 0 ) ? new Float32Array( result.absoluteColorCount ) : null;
 			var normalFA = ( result.absoluteNormalCount > 0 ) ? new Float32Array( result.absoluteNormalCount ) : null;
 			var uvFA = ( result.absoluteUvCount > 0 ) ? new Float32Array( result.absoluteUvCount ) : null;
-			var haveVertexColors = Validator.isValid( colorFA );
+			var haveVertexColors = THREE.LoaderSupport.Validator.isValid( colorFA );
 
 			var rawObjectDescription;
 			var materialNames = [];
@@ -704,7 +706,7 @@ THREE.OBJLoader2 = (function () {
 				material = this.materials[ materialName ];
 
 				// both original and derived names do not lead to an existing material => need to use a default material
-				if ( ! Validator.isValid( materialOrg ) && ! Validator.isValid( material ) ) {
+				if ( ! THREE.LoaderSupport.Validator.isValid( materialOrg ) && ! THREE.LoaderSupport.Validator.isValid( material ) ) {
 
 					var defaultMaterialName = haveVertexColors ? 'vertexColorMaterial' : 'defaultMaterial';
 					materialOrg = this.materials[ defaultMaterialName ];
@@ -722,7 +724,7 @@ THREE.OBJLoader2 = (function () {
 					}
 
 				}
-				if ( ! Validator.isValid( material ) ) {
+				if ( ! THREE.LoaderSupport.Validator.isValid( material ) ) {
 
 					var materialCloneInstructions = {
 						materialNameOrg: materialNameOrg,
@@ -803,7 +805,7 @@ THREE.OBJLoader2 = (function () {
 				}
 
 				if ( this.logger.isDebug() ) {
-					var materialIndexLine = Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
+					var materialIndexLine = THREE.LoaderSupport.Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
 					var createdReport = 'Output Object no.: ' + this.outputObjectCount +
 						'\n\t\tgroupName: ' + rawObjectDescription.groupName +
 						materialIndexLine +
@@ -844,10 +846,10 @@ THREE.OBJLoader2 = (function () {
 					}
 				},
 				[ vertexFA.buffer ],
-				Validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
-				Validator.isValid( colorFA ) ? [ colorFA.buffer ] : null,
-				Validator.isValid( normalFA ) ? [ normalFA.buffer ] : null,
-				Validator.isValid( uvFA ) ? [ uvFA.buffer ] : null
+				THREE.LoaderSupport.Validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
+				THREE.LoaderSupport.Validator.isValid( colorFA ) ? [ colorFA.buffer ] : null,
+				THREE.LoaderSupport.Validator.isValid( normalFA ) ? [ normalFA.buffer ] : null,
+				THREE.LoaderSupport.Validator.isValid( uvFA ) ? [ uvFA.buffer ] : null
 			);
 		};
 
@@ -920,19 +922,19 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		RawMesh.prototype.pushGroup = function ( groupName ) {
-			this.groupName = Validator.verifyInput( groupName, '' );
+			this.groupName = THREE.LoaderSupport.Validator.verifyInput( groupName, '' );
 		};
 
 		RawMesh.prototype.pushObject = function ( objectName ) {
-			this.objectName = Validator.verifyInput( objectName, '' );
+			this.objectName = THREE.LoaderSupport.Validator.verifyInput( objectName, '' );
 		};
 
 		RawMesh.prototype.pushMtllib = function ( mtllibName ) {
-			this.mtllibName = Validator.verifyInput( mtllibName, '' );
+			this.mtllibName = THREE.LoaderSupport.Validator.verifyInput( mtllibName, '' );
 		};
 
 		RawMesh.prototype.pushUsemtl = function ( mtlName ) {
-			if ( this.activeMtlName === mtlName || ! Validator.isValid( mtlName ) ) return;
+			if ( this.activeMtlName === mtlName || ! THREE.LoaderSupport.Validator.isValid( mtlName ) ) return;
 			this.activeMtlName = mtlName;
 			this.mtlCount++;
 
@@ -960,7 +962,7 @@ THREE.OBJLoader2 = (function () {
 		RawMesh.prototype.verifyIndex = function () {
 			var index = this.activeMtlName + '|' + this.smoothingGroup.normalized;
 			this.subGroupInUse = this.subGroups[ index ];
-			if ( ! Validator.isValid( this.subGroupInUse ) ) {
+			if ( ! THREE.LoaderSupport.Validator.isValid( this.subGroupInUse ) ) {
 
 				this.subGroupInUse = new RawMeshSubGroup( this.objectName, this.groupName, this.activeMtlName, this.smoothingGroup.normalized );
 				this.subGroups[ index ] = this.subGroupInUse;
@@ -1069,7 +1071,7 @@ THREE.OBJLoader2 = (function () {
 
 				var mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
 				var indicesPointer = sgiu.indexMappings[ mappingName ];
-				if ( Validator.isValid( indicesPointer ) ) {
+				if ( THREE.LoaderSupport.Validator.isValid( indicesPointer ) ) {
 
 					this.doubleIndicesCount++;
 

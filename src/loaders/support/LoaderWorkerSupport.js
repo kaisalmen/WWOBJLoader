@@ -285,7 +285,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		}
 
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
-		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl.name, runnerImpl );
+		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl );
 		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
 
 		var scope = this;
@@ -386,10 +386,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return objectString;
 	};
 
-	var buildSingelton = function ( fullName, internalName, object ) {
+	var buildSingelton = function ( fullName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
-		objectString = objectString.replace( object.name, internalName );
 
 		var funcString;
 		var objectPart;
@@ -399,12 +398,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			if ( typeof objectPart === 'function' ) {
 
 				funcString = objectPart.toString();
-				objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+				objectString += '\t' + object.name + '.prototype.' + name + ' = ' + funcString + ';\n\n';
 
 			}
 
 		}
-		objectString += '\treturn ' + internalName + ';\n';
+		objectString += '\treturn ' + object.name + ';\n';
 		objectString += '})();\n\n';
 
 		return objectString;
