@@ -263,11 +263,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
 	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
+	 * @param {String} parserName Name of the Parser object
 	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
 	 * @param {String} libPath Base path used for loading libraries
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
-	WorkerSupport.prototype.validate = function ( functionCodeBuilder, libLocations, libPath, runnerImpl ) {
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, parserName, libLocations, libPath, runnerImpl ) {
 		if ( Validator.isValid( this.loaderWorker.worker ) ) return;
 
 		this.logger.logInfo( 'WorkerSupport: Building worker code...' );
@@ -285,6 +286,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		}
 
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
+		userWorkerCode += 'var Parser = '+ parserName + ';\n\n';
 		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl );
 		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
 
