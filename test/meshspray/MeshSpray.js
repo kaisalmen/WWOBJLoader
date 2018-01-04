@@ -6,28 +6,25 @@
 
 var MeshSpray = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
-	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
-
 	MeshSpray.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	MeshSpray.prototype.constructor = MeshSpray;
 
 	function MeshSpray( manager, logger ) {
 		THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
 		this.workerSupport = null;
-		this.logger = new ConsoleLogger();
+		this.logger = new THREE.LoaderSupport.ConsoleLogger();
 	};
 
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
 
-		if ( Validator.isValid( workerSupportExternal ) ) {
+		if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) {
 
 			this.workerSupport = workerSupportExternal;
 			this.logger = workerSupportExternal.logger;
 
 		} else {
 
-			this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
+			this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 
 		}
 
@@ -46,7 +43,7 @@ var MeshSpray = (function () {
 		};
 		var scopeFuncComplete = function ( message ) {
 			var callback = scope.callbacks.onLoad;
-			if ( Validator.isValid( callback ) ) callback(
+			if ( THREE.LoaderSupport.Validator.isValid( callback ) ) callback(
 				{
 					detail: {
 						loaderRootNode: scope.loaderRootNode,
@@ -63,17 +60,15 @@ var MeshSpray = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
-			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
-			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
-			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', ConsoleLogger );
-			workerCode += 'var Validator = THREE.LoaderSupport.Validator;';
-			workerCode += 'var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;';
+			workerCode += 'THREE.LoaderSupport = {};\n\n';
+			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
+			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
 			workerCode += funcBuildSingelton( 'Parser', Parser );
 
 			return workerCode;
 		};
 		var libs2Load = [ 'node_modules/three/build/three.js' ];
-		this.workerSupport.validate( buildCode, libs2Load, '../../' );
+		this.workerSupport.validate( buildCode, 'Parser', libs2Load, '../../' );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
 			{
@@ -99,8 +94,6 @@ var MeshSpray = (function () {
 
 	var Parser  = ( function () {
 
-		var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
-
 		function Parser() {
 			this.sizeFactor = 0.5;
 			this.localOffsetFactor = 1.0;
@@ -110,7 +103,7 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 			this.callbackProgress = null;
-			this.logger = new ConsoleLogger();
+			this.logger = new THREE.LoaderSupport.ConsoleLogger();
 			this.serializedMaterials = null;
 		};
 
@@ -243,7 +236,7 @@ var MeshSpray = (function () {
 
 
 	Parser.prototype.setSerializedMaterials = function ( serializedMaterials ) {
-		if ( Validator.isValid( serializedMaterials ) ) {
+		if ( THREE.LoaderSupport.Validator.isValid( serializedMaterials ) ) {
 
 			this.serializedMaterials = serializedMaterials;
 
