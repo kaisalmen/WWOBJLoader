@@ -263,11 +263,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
 	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
+	 * @param {String} parserName Name of the Parser object
 	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
 	 * @param {String} libPath Base path used for loading libraries
 	 * @param {THREE.LoaderSupport.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
-	WorkerSupport.prototype.validate = function ( functionCodeBuilder, libLocations, libPath, runnerImpl ) {
+	WorkerSupport.prototype.validate = function ( functionCodeBuilder, parserName, libLocations, libPath, runnerImpl ) {
 		if ( Validator.isValid( this.loaderWorker.worker ) ) return;
 
 		this.logger.logInfo( 'WorkerSupport: Building worker code...' );
@@ -285,7 +286,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		}
 
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
-		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl.name, runnerImpl );
+		userWorkerCode += 'var Parser = '+ parserName + ';\n\n';
+		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl );
 		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
 
 		var scope = this;
@@ -386,10 +388,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return objectString;
 	};
 
-	var buildSingelton = function ( fullName, internalName, object ) {
+	var buildSingelton = function ( fullName, object ) {
 		var objectString = fullName + ' = (function () {\n\n';
 		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
-		objectString = objectString.replace( object.name, internalName );
 
 		var funcString;
 		var objectPart;
@@ -399,12 +400,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			if ( typeof objectPart === 'function' ) {
 
 				funcString = objectPart.toString();
-				objectString += '\t' + internalName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+				objectString += '\t' + object.name + '.prototype.' + name + ' = ' + funcString + ';\n\n';
 
 			}
 
 		}
-		objectString += '\treturn ' + internalName + ';\n';
+		objectString += '\treturn ' + object.name + ';\n';
 		objectString += '})();\n\n';
 
 		return objectString;

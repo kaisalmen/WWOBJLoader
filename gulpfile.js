@@ -68,7 +68,7 @@ gulp.task( 'bundle-loader-support', function () {
 	} ) )
 	.pipe( gulp.dest( DIR.BUILD ) )
 
-	.pipe( uglify( { mangle: false } ) )
+	.pipe( uglify( { mangle: { toplevel: true } } ) )
 	.pipe( rename( { basename: 'LoaderSupport.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
 } );
@@ -92,7 +92,7 @@ gulp.task( 'bundle-objloader2', function () {
 		} ) )
 		.pipe( gulp.dest( DIR.BUILD ) )
 
-		.pipe( uglify( { mangle: false } ) )
+		.pipe( uglify( { mangle: { toplevel: true } } ) )
 		.pipe( rename( { basename: 'OBJLoader2.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
 } );

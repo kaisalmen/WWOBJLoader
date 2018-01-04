@@ -63,9 +63,12 @@ var MeshSpray = (function () {
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
-			workerCode += funcBuildObject( 'Validator', Validator );
-			workerCode += funcBuildSingelton( 'ConsoleLogger', 'ConsoleLogger', ConsoleLogger );
-			workerCode += funcBuildSingelton( 'Parser', 'Parser', Parser );
+			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
+			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
+			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', ConsoleLogger );
+			workerCode += 'var Validator = THREE.LoaderSupport.Validator;';
+			workerCode += 'var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;';
+			workerCode += funcBuildSingelton( 'Parser', Parser );
 
 			return workerCode;
 		};
