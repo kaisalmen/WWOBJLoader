@@ -73,9 +73,9 @@ var OBJLoader2Example = (function () {
 			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
 			objLoader.getLogger().setDebug( true );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/verify/verify.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/verify/verify.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {

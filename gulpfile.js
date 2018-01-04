@@ -612,8 +612,10 @@ gulp.task( 'dl-oven', [ 'dl-sink' ], function() {
 var obj_verify = {
 	vertices: [],
 	normals: [],
+	uvs: [],
 	facesV: [],
 	facesVn: [],
+	facesVt: [],
 	materials: []
 };
 
@@ -633,6 +635,11 @@ obj_verify.normals.push( [  0, -1,  0 ] );
 obj_verify.normals.push( [  1,  0,  0 ] );
 obj_verify.normals.push( [ -1,  0,  0 ] );
 
+obj_verify.uvs.push( [ 0, 1 ] );
+obj_verify.uvs.push( [ 1, 1 ] );
+obj_verify.uvs.push( [ 1, 0 ] );
+obj_verify.uvs.push( [ 0, 0 ] );
+
 obj_verify.facesV.push( [ 1, 2, 3, 4 ] );
 obj_verify.facesV.push( [ 8, 7, 6, 5 ] );
 obj_verify.facesV.push( [ 4, 3, 7, 8 ] );
@@ -646,6 +653,13 @@ obj_verify.facesVn.push( [ 5, 5, 5, 5 ] );
 obj_verify.facesVn.push( [ 3, 3, 3, 3 ] );
 obj_verify.facesVn.push( [ 6, 6, 6, 6 ] );
 obj_verify.facesVn.push( [ 4, 4, 4, 4 ] );
+
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
+obj_verify.facesVt.push( [ 1, 2, 3, 4 ] );
 
 obj_verify.materials.push( 'usemtl red' );
 obj_verify.materials.push( 'usemtl blue' );
@@ -662,6 +676,16 @@ function vobjCreateVertices( factor, offsets ) {
 		y = v[ i ][ 1 ] * factor + offsets[ 1 ];
 		z = v[ i ][ 2 ] * factor + offsets[ 2 ];
 		output += 'v ' + x + ' ' + y + ' ' + z + '\n';
+	}
+	return output;
+};
+
+function vobjCreateUvs() {
+	var output = '\n';
+	for ( var x, y, z, i = 0, vn = obj_verify.uvs, length = vn.length; i < length; i++ ) {
+		x = vn[ i ][ 0 ];
+		y = vn[ i ][ 1 ];
+		output += 'vt ' + x + ' ' + y + '\n';
 	}
 	return output;
 };
@@ -689,13 +713,25 @@ function vobjCreateCubeV( offset ) {
 	return output;
 };
 
-function vobjCreateCubeVn( offsets ) {
+function vobjCreateCubeVVn( offsets ) {
 	var output = '\n';
 	for ( var f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVn = obj_verify.facesVn; i < 6; i++ ) {
 		f0 = facesV[ i ][ 0 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 0 ] + offsets[ 1 ] );
 		f1 = facesV[ i ][ 1 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 1 ] + offsets[ 1 ] );
 		f2 = facesV[ i ][ 2 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 2 ] + offsets[ 1 ] );
 		f3 = facesV[ i ][ 3 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 3 ] + offsets[ 1 ] );
+		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
+	}
+	return output;
+};
+
+function vobjCreateCubeVVnVt( offsets ) {
+	var output = '\n';
+	for ( var f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVt = obj_verify.facesVt, facesVn = obj_verify.facesVn; i < 6; i++ ) {
+		f0 = facesV[ i ][ 0 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 0 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 0 ] + offsets[ 2 ] );
+		f1 = facesV[ i ][ 1 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 1 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 1 ] + offsets[ 2 ] );
+		f2 = facesV[ i ][ 2 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 2 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 2 ] + offsets[ 2 ] );
+		f3 = facesV[ i ][ 3 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 3 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 3 ] + offsets[ 2 ] );
 		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
 	}
 	return output;
@@ -717,7 +753,13 @@ gulp.task( 'create-verify-obj', function( cb ){
 	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Simple cube with normals no materials. Translated x:-50\n' );
 //	fs.appendFileSync( './resource/obj/verify/verify.obj', 'g CubeVN\n' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -50, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVn( [ 16, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ 16, 0 ] ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Simple cube with uvs and normals and material. Translated x:-100\n' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', 'usemtl red\n' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -100, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateUvs() );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ 24, 0, 0 ] ) );
 });
 
 gulp.task(
