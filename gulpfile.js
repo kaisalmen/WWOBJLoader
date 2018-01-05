@@ -670,7 +670,7 @@ obj_verify.materials.push( 'usemtl purple' );
 
 
 function vobjCreateVertices( factor, offsets ) {
-	var output = '';
+	var output = '\n';
 	for ( var x, y, z, i = 0, v = obj_verify.vertices, length = v.length; i < length; i++ ) {
 		x = v[ i ][ 0 ] * factor + offsets[ 0 ];
 		y = v[ i ][ 1 ] * factor + offsets[ 1 ];
@@ -701,38 +701,84 @@ function vobjCreateNormals() {
 	return output;
 };
 
-function vobjCreateCubeV( offset ) {
+function vobjCreateCubeV( offset, groups, usemtls ) {
 	var output = '\n';
-	for ( var f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, length = facesV.length; i < length; i++ ) {
+	if ( groups === null || groups.length === 0 ) groups = [ null, null, null, null, null, null ];
+	if ( usemtls === null || usemtls.length === 0 ) usemtls = [ null, null, null, null, null, null ];
+	for ( var group, usemtl, f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, length = facesV.length; i < length; i++ ) {
 		f0 = facesV[ i ][ 0 ] + offset;
 		f1 = facesV[ i ][ 1 ] + offset;
 		f2 = facesV[ i ][ 2 ] + offset;
 		f3 = facesV[ i ][ 3 ] + offset;
+
+		group = groups[ i ];
+		usemtl = usemtls[ i ];
+		if ( group ) output += 'g ' + group + '\n';
+		if ( usemtl ) output += 'usemtl ' + usemtl + '\n';
 		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
 	}
 	return output;
 };
 
-function vobjCreateCubeVVn( offsets ) {
+function vobjCreateCubeVVn( offsets, groups, usemtls ) {
 	var output = '\n';
-	for ( var f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVn = obj_verify.facesVn; i < 6; i++ ) {
+	if ( groups === null || groups.length === 0 ) groups = [ null, null, null, null, null, null ];
+	if ( usemtls === null || usemtls.length === 0 ) usemtls = [ null, null, null, null, null, null ];
+	for ( var group, usemtl, f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVn = obj_verify.facesVn; i < 6; i++ ) {
+
 		f0 = facesV[ i ][ 0 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 0 ] + offsets[ 1 ] );
 		f1 = facesV[ i ][ 1 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 1 ] + offsets[ 1 ] );
 		f2 = facesV[ i ][ 2 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 2 ] + offsets[ 1 ] );
 		f3 = facesV[ i ][ 3 ] + offsets[ 0 ] + '//' + ( facesVn[ i ][ 3 ] + offsets[ 1 ] );
+
+		group = groups[ i ];
+		usemtl = usemtls[ i ];
+		if ( group ) output += 'g ' + group + '\n';
+		if ( usemtl ) output += 'usemtl ' + usemtl + '\n';
 		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
+
 	}
 	return output;
 };
 
-function vobjCreateCubeVVnVt( offsets ) {
+function vobjCreateCubeVVt( offsets, groups, usemtls ) {
 	var output = '\n';
-	for ( var f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVt = obj_verify.facesVt, facesVn = obj_verify.facesVn; i < 6; i++ ) {
+	if ( groups === null || groups.length === 0 ) groups = [ null, null, null, null, null, null ];
+	if ( usemtls === null || usemtls.length === 0 ) usemtls = [ null, null, null, null, null, null ];
+	for ( var group, usemtl, f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVt = obj_verify.facesVt; i < 6; i++ ) {
+
+		f0 = facesV[ i ][ 0 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 0 ] + offsets[ 1 ] );
+		f1 = facesV[ i ][ 1 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 1 ] + offsets[ 1 ] );
+		f2 = facesV[ i ][ 2 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 2 ] + offsets[ 1 ] );
+		f3 = facesV[ i ][ 3 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 3 ] + offsets[ 1 ] );
+
+		group = groups[ i ];
+		usemtl = usemtls[ i ];
+		if ( group ) output += 'g ' + group + '\n';
+		if ( usemtl ) output += 'usemtl ' + usemtl + '\n';
+		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
+
+	}
+	return output;
+};
+
+function vobjCreateCubeVVnVt( offsets, groups, usemtls ) {
+	var output = '\n';
+	if ( groups === null || groups.length === 0 ) groups = [ null, null, null, null, null, null ];
+	if ( usemtls === null || usemtls.length === 0 ) usemtls = [ null, null, null, null, null, null ];
+	for ( var group, usemtl, f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, facesVt = obj_verify.facesVt, facesVn = obj_verify.facesVn; i < 6; i++ ) {
+
 		f0 = facesV[ i ][ 0 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 0 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 0 ] + offsets[ 2 ] );
 		f1 = facesV[ i ][ 1 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 1 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 1 ] + offsets[ 2 ] );
 		f2 = facesV[ i ][ 2 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 2 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 2 ] + offsets[ 2 ] );
 		f3 = facesV[ i ][ 3 ] + offsets[ 0 ] + '/' + ( facesVt[ i ][ 3 ] + offsets[ 1 ] ) + '/' + ( facesVn[ i ][ 3 ] + offsets[ 2 ] );
+
+		group = groups[ i ];
+		usemtl = usemtls[ i ];
+		if ( group ) output += 'g ' + group + '\n';
+		if ( usemtl ) output += 'usemtl ' + usemtl + '\n';
 		output += 'f ' + f0 + ' ' + f1 + ' ' + f2 + ' ' + f3 + '\n';
+
 	}
 	return output;
 };
@@ -740,26 +786,27 @@ function vobjCreateCubeVVnVt( offsets ) {
 gulp.task( 'create-verify-obj', function( cb ){
 	gutil.log( 'Building: verify.obj' );
 	fs.writeFileSync( './resource/obj/verify/verify.obj', '# Verification OBJ created with gulp\n\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', 'mtllib verify.mtl\n\n# Simple cube no materials\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 0, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 0 ) );
-
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Simple cube no materials. Translated x:50\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 50, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 8 ) );
-
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
-
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Simple cube with normals no materials. Translated x:-50\n' );
-//	fs.appendFileSync( './resource/obj/verify/verify.obj', 'g CubeVN\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -50, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ 16, 0 ] ) );
-
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Simple cube with uvs and normals and material. Translated x:-100\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', 'usemtl red\n' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', 'mtllib verify.mtl\n\n# Cube no materials. Translated x:-100' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -100, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 0, null, null ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with two materials. Translated x:-50' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -50, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 8, null, [ 'orange', null, null, 'purple', null, null ] ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with normals no materials. Translated x:0' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 0, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ 16, 0 ], [ 'cube', null, null, null, null, null ], [ 'lightblue', null, null, null, null, null ] ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with uvs and red material. Translated x:50' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 50, 0, 0 ] ) );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateUvs() );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ 24, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVt( [ 24, 0 ], null, [ 'red', null, null, null, null, null ] ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cimple cube with uvs and normals and material. Translated x:100' );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 100, 0, 0 ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ 32, 0, 0 ], [], [ 'red', null, null, 'blue', null, 'green' ] ) );
 });
 
 gulp.task(
