@@ -342,7 +342,6 @@ THREE.OBJLoader2 = (function () {
 			this.materialPerSmoothingGroup = false;
 			this.useIndices = false;
 			this.disregardNormals = false;
-			this.faceType = -1;
 
 			this.inputObjectCount = 1;
 			this.outputObjectCount = 1;
@@ -577,49 +576,25 @@ THREE.OBJLoader2 = (function () {
 					// "f vertex ..."
 					if ( slashesCount === 0 ) {
 
-						if ( this.faceType !== 0 ) {
+						if ( this.rawMesh.checkFaceType( 0 ) ) this.processCompletedMesh( currentByte );
 
-							this.processCompletedMesh( currentByte );
-							this.faceType = 0;
-							this.rawMesh.verifyIndex( this.faceType );
-
-						}
-
-						// "f vertex/uv ..."
+					// "f vertex/uv ..."
 					} else if  ( bufferLength === slashesCount * 2 ) {
 
-						if ( this.faceType !== 1 ) {
+						if ( this.rawMesh.checkFaceType( 1 ) ) this.processCompletedMesh( currentByte );
 
-							this.processCompletedMesh( currentByte );
-							this.faceType = 1;
-							this.rawMesh.verifyIndex( this.faceType );
-
-						}
-
-						// "f vertex/uv/normal ..."
+					// "f vertex/uv/normal ..."
 					} else if  ( bufferLength * 2 === slashesCount * 3 ) {
 
-						if ( this.faceType !== 2 ) {
+						if ( this.rawMesh.checkFaceType( 2 ) ) this.processCompletedMesh( currentByte );
 
-							this.processCompletedMesh( currentByte );
-							this.faceType = 2;
-							this.rawMesh.verifyIndex( this.faceType );
-
-						}
-
-						// "f vertex//normal ..."
+					// "f vertex//normal ..."
 					} else {
 
-						if ( this.faceType !== 3 ) {
-
-							this.processCompletedMesh( currentByte );
-							this.faceType = 3;
-							this.rawMesh.verifyIndex( this.faceType );
-
-						}
+						if ( this.rawMesh.checkFaceType( 3 ) ) this.processCompletedMesh( currentByte );
 
 					}
-					this.rawMesh.processFaces( buffer, bufferLength, this.faceType );
+					this.rawMesh.processFaces( buffer, bufferLength );
 					break;
 
 				case THREE.LoaderSupport.Parser.Obj.Consts.LINE_L:
@@ -688,8 +663,7 @@ THREE.OBJLoader2 = (function () {
 				this.buildMesh( result, currentByte );
 				var progressBytesPercent = currentByte / this.totalBytes;
 				this.callbackProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
-				this.rawMesh.reset( this.rawMesh.smoothingGroup.splitMaterials );
-
+				this.rawMesh.reset( this.rawMesh.smoothingGroup.splitMaterials, this.rawMesh.faceType );
 				return true;
 
 			} else {
@@ -860,7 +834,7 @@ THREE.OBJLoader2 = (function () {
 
 				if ( this.logger.isDebug() ) {
 					var materialIndexLine = THREE.LoaderSupport.Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
-					var createdReport = 'Output Object no.: ' + this.outputObjectCount +
+					var createdReport = '\tOutput Object no.: ' + this.outputObjectCount +
 						'\n\t\tgroupName: ' + rawObjectDescription.groupName +
 						'\n\t\tIndex: ' + rawObjectDescription.index +
 						'\n\t\tfaceType: ' + rawObjectDescription.faceType +
@@ -932,10 +906,11 @@ THREE.OBJLoader2 = (function () {
 			this.groupName = '';
 			this.activeMtlName = '';
 			this.mtllibName = '';
-			this.reset( materialPerSmoothingGroup );
+			this.reset( materialPerSmoothingGroup, -1 );
 		}
 
-		RawMesh.prototype.reset = function ( materialPerSmoothingGroup ) {
+		RawMesh.prototype.reset = function ( materialPerSmoothingGroup, faceType ) {
+			this.faceType = faceType;
 			// faces are stored according combined index of group, material and smoothingGroup (0 or not)
 			this.subGroups = [];
 			this.subGroupInUse = null;
@@ -994,7 +969,8 @@ THREE.OBJLoader2 = (function () {
 			this.activeMtlName = mtlName;
 			this.mtlCount++;
 
-			this.verifyIndex( -1 );
+			this.checkSubGroup();
+
 		};
 
 		RawMesh.prototype.pushSmoothingGroup = function ( smoothingGroup ) {
@@ -1010,27 +986,41 @@ THREE.OBJLoader2 = (function () {
 			if ( smoothCheck !== smoothingGroupInt ) {
 
 				this.smoothingGroupCount++;
-				this.verifyIndex( -1 );
+				this.checkSubGroup();
 
 			}
 		};
 
-		RawMesh.prototype.verifyIndex = function ( faceType ) {
-			var index = faceType + '|' + this.activeMtlName + '|' + this.smoothingGroup.normalized;
+		RawMesh.prototype.checkFaceType = function ( faceType ) {
+			if ( this.faceType === faceType ) {
+
+				return false;
+
+			} else {
+
+				this.faceType = faceType;
+				this.checkSubGroup();
+				return true;
+
+			}
+		};
+
+		RawMesh.prototype.checkSubGroup = function () {
+			var index = this.faceType + '|' + this.activeMtlName + '|' + this.smoothingGroup.normalized;
 			this.subGroupInUse = this.subGroups[ index ];
 			if ( ! THREE.LoaderSupport.Validator.isValid( this.subGroupInUse ) ) {
 
-				this.subGroupInUse = new THREE.LoaderSupport.Parser.Obj.RawMeshSubGroup( index, this.objectName, this.groupName, this.activeMtlName, this.smoothingGroup.normalized, faceType );
+				this.subGroupInUse = new THREE.LoaderSupport.Parser.Obj.RawMeshSubGroup( index, this.objectName, this.groupName, this.activeMtlName, this.smoothingGroup.normalized, this.faceType );
 				this.subGroups[ index ] = this.subGroupInUse;
 
 			}
 		};
 
-		RawMesh.prototype.processFaces = function ( buffer, bufferLength, faceType ) {
+		RawMesh.prototype.processFaces = function ( buffer, bufferLength ) {
 			var i, length;
 
 			// "f vertex ..."
-			if ( faceType === 0 ) {
+			if ( this.faceType === 0 ) {
 
 				for ( i = 2, length = bufferLength; i < length; i ++ ) {
 
@@ -1041,7 +1031,7 @@ THREE.OBJLoader2 = (function () {
 				}
 
 				// "f vertex/uv ..."
-			} else if  ( faceType === 1 ) {
+			} else if  ( this.faceType === 1 ) {
 
 				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
@@ -1052,7 +1042,7 @@ THREE.OBJLoader2 = (function () {
 				}
 
 				// "f vertex/uv/normal ..."
-			} else if  ( faceType === 2 ) {
+			} else if  ( this.faceType === 2 ) {
 
 				for ( i = 4, length = bufferLength - 3; i < length; i += 3 ) {
 
@@ -1390,7 +1380,7 @@ THREE.OBJLoader2 = (function () {
 			}
 
 			if ( Validator.isValid( resource ) ) scope.logger.logTimeEnd( 'Loading MTL: ' + resource.name );
-			callbackOnLoad( materials );
+			callbackOnLoad( materials, materialCreator );
 		};
 
 		var mtlLoader = new THREE.MTLLoader(this.manager);

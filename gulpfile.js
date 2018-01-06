@@ -785,28 +785,35 @@ function vobjCreateCubeVVnVt( offsets, groups, usemtls ) {
 
 gulp.task( 'create-verify-obj', function( cb ){
 	gutil.log( 'Building: verify.obj' );
+	var vertex_offset = 0;
 	fs.writeFileSync( './resource/obj/verify/verify.obj', '# Verification OBJ created with gulp\n\n' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', 'mtllib verify.mtl\n\n# Cube no materials. Translated x:-100' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -100, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 0, null, null ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, null ) );
 
 	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with two materials. Translated x:-50' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -50, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( 8, null, [ 'orange', null, null, 'purple', null, null ] ) );
+	vertex_offset += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, [ 'orange', null, null, 'purple', null, null ] ) );
 
 	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with normals no materials. Translated x:0' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 0, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ 16, 0 ], [ 'cube', null, null, null, null, null ], [ 'lightblue', null, null, null, null, null ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
+	vertex_offset += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ vertex_offset, 0 ], [ 'cube3', null, null, null, null, null ], [ 'lightblue', null, null, null, null, null ] ) );
+//	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, [ 'green', null, null, null, null, null ] ) );
 
 	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with uvs and red material. Translated x:50' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 50, 0, 0 ] ) );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateUvs() );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVt( [ 24, 0 ], null, [ 'red', null, null, null, null, null ] ) );
+	vertex_offset += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVt( [ vertex_offset, 0 ], null, [ 'red', null, null, null, null, null ] ) );
 
 	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cimple cube with uvs and normals and material. Translated x:100' );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 100, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ 32, 0, 0 ], [], [ 'red', null, null, 'blue', null, 'green' ] ) );
+	vertex_offset += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ vertex_offset, 0, 0 ], [], [ 'red', null, null, 'blue', null, 'green' ] ) );
+
 });
 
 gulp.task(

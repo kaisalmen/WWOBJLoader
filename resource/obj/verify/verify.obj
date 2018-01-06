@@ -41,13 +41,6 @@ f 10 14 15 11
 
 
 # Cube with normals no materials. Translated x:0
-vn 0 0 1
-vn 0 0 -1
-vn 0 1 0
-vn 0 -1 0
-vn 1 0 0
-vn -1 0 0
-
 v -10 10 10
 v -10 -10 10
 v 10 -10 10
@@ -57,7 +50,14 @@ v -10 -10 -10
 v 10 -10 -10
 v 10 10 -10
 
-g cube
+vn 0 0 1
+vn 0 0 -1
+vn 0 1 0
+vn 0 -1 0
+vn 1 0 0
+vn -1 0 0
+
+g cube3
 usemtl lightblue
 f 17//1 18//1 19//1 20//1
 f 24//2 23//2 22//2 21//2
