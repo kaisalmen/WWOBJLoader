@@ -338,12 +338,12 @@ THREE.OBJLoader2 = (function () {
 			this.useIndices = false;
 			this.disregardNormals = false;
 
-			this.rawMesh = {
-				vertices: [],
-				colors: [],
-				normals: [],
-				uvs: [],
+			this.vertices = [];
+			this.colors = [];
+			this.normals = [];
+			this.uvs = [];
 
+			this.rawMesh = {
 				objectName: '',
 				groupName: '',
 				activeMtlName: '',
@@ -597,27 +597,27 @@ THREE.OBJLoader2 = (function () {
 
 			switch ( buffer[ 0 ] ) {
 				case THREE.LoaderSupport.Parser.Obj.Consts.LINE_V:
-					this.rawMesh.vertices.push( parseFloat( buffer[ 1 ] ) );
-					this.rawMesh.vertices.push( parseFloat( buffer[ 2 ] ) );
-					this.rawMesh.vertices.push( parseFloat( buffer[ 3 ] ) );
+					this.vertices.push( parseFloat( buffer[ 1 ] ) );
+					this.vertices.push( parseFloat( buffer[ 2 ] ) );
+					this.vertices.push( parseFloat( buffer[ 3 ] ) );
 					if ( bufferPointer > 4 ) {
 
-						this.rawMesh.colors.push( parseFloat( buffer[ 4 ] ) );
-						this.rawMesh.colors.push( parseFloat( buffer[ 5 ] ) );
-						this.rawMesh.colors.push( parseFloat( buffer[ 6 ] ) );
+						this.colors.push( parseFloat( buffer[ 4 ] ) );
+						this.colors.push( parseFloat( buffer[ 5 ] ) );
+						this.colors.push( parseFloat( buffer[ 6 ] ) );
 
 					}
 					break;
 
 				case THREE.LoaderSupport.Parser.Obj.Consts.LINE_VT:
-					this.rawMesh.uvs.push( parseFloat( buffer[ 1 ] ) );
-					this.rawMesh.uvs.push( parseFloat( buffer[ 2 ] ) );
+					this.uvs.push( parseFloat( buffer[ 1 ] ) );
+					this.uvs.push( parseFloat( buffer[ 2 ] ) );
 					break;
 
 				case THREE.LoaderSupport.Parser.Obj.Consts.LINE_VN:
-					this.rawMesh.normals.push( parseFloat( buffer[ 1 ] ) );
-					this.rawMesh.normals.push( parseFloat( buffer[ 2 ] ) );
-					this.rawMesh.normals.push( parseFloat( buffer[ 3 ] ) );
+					this.normals.push( parseFloat( buffer[ 1 ] ) );
+					this.normals.push( parseFloat( buffer[ 2 ] ) );
+					this.normals.push( parseFloat( buffer[ 3 ] ) );
 					break;
 
 				case THREE.LoaderSupport.Parser.Obj.Consts.LINE_F:
@@ -807,40 +807,40 @@ THREE.OBJLoader2 = (function () {
 			var updateRawObjectDescriptionInUse = function () {
 
 				var faceIndexVi = parseInt( faceIndexV );
-				var indexPointerV = 3 * ( faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.rawMesh.vertices.length / 3 );
+				var indexPointerV = 3 * ( faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3 );
 
 				var vertices = scope.rawMesh.subGroupInUse.vertices;
-				vertices.push( scope.rawMesh.vertices[ indexPointerV++ ] );
-				vertices.push( scope.rawMesh.vertices[ indexPointerV++ ] );
-				vertices.push( scope.rawMesh.vertices[ indexPointerV ] );
+				vertices.push( scope.vertices[ indexPointerV++ ] );
+				vertices.push( scope.vertices[ indexPointerV++ ] );
+				vertices.push( scope.vertices[ indexPointerV ] );
 
-				var indexPointerC = scope.rawMesh.colors.length > 0 ? indexPointerV : null;
+				var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 				if ( indexPointerC !== null ) {
 
 					var colors = scope.rawMesh.subGroupInUse.colors;
-					colors.push( scope.rawMesh.colors[ indexPointerC++ ] );
-					colors.push( scope.rawMesh.colors[ indexPointerC++ ] );
-					colors.push( scope.rawMesh.colors[ indexPointerC ] );
+					colors.push( scope.colors[ indexPointerC++ ] );
+					colors.push( scope.colors[ indexPointerC++ ] );
+					colors.push( scope.colors[ indexPointerC ] );
 
 				}
 
 				if ( faceIndexU ) {
 
 					var faceIndexUi = parseInt( faceIndexU );
-					var indexPointerU = 2 * ( faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.rawMesh.uvs.length / 2 );
+					var indexPointerU = 2 * ( faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.uvs.length / 2 );
 					var uvs = scope.rawMesh.subGroupInUse.uvs;
-					uvs.push( scope.rawMesh.uvs[ indexPointerU++ ] );
-					uvs.push( scope.rawMesh.uvs[ indexPointerU ] );
+					uvs.push( scope.uvs[ indexPointerU++ ] );
+					uvs.push( scope.uvs[ indexPointerU ] );
 
 				}
 				if ( faceIndexN ) {
 
 					var faceIndexNi = parseInt( faceIndexN );
-					var indexPointerN = 3 * ( faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.rawMesh.normals.length / 3 );
+					var indexPointerN = 3 * ( faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.normals.length / 3 );
 					var normals = scope.rawMesh.subGroupInUse.normals;
-					normals.push( scope.rawMesh.normals[ indexPointerN++ ] );
-					normals.push( scope.rawMesh.normals[ indexPointerN++ ] );
-					normals.push( scope.rawMesh.normals[ indexPointerN ] );
+					normals.push( scope.normals[ indexPointerN++ ] );
+					normals.push( scope.normals[ indexPointerN++ ] );
+					normals.push( scope.normals[ indexPointerN ] );
 
 				}
 			};
@@ -848,20 +848,20 @@ THREE.OBJLoader2 = (function () {
 			if ( this.useIndices ) {
 
 				var mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
-				var indicesPointer = scope.rawMesh.subGroupInUse.indexMappings[ mappingName ];
+				var indicesPointer = this.rawMesh.subGroupInUse.indexMappings[ mappingName ];
 				if ( THREE.LoaderSupport.Validator.isValid( indicesPointer ) ) {
 
 					this.rawMesh.counts.doubleIndicesCount++;
 
 				} else {
 
-					indicesPointer = scope.rawMesh.subGroupInUse.vertices.length / 3;
+					indicesPointer = this.rawMesh.subGroupInUse.vertices.length / 3;
 					updateRawObjectDescriptionInUse();
-					scope.rawMesh.subGroupInUse.indexMappings[ mappingName ] = indicesPointer;
-					scope.rawMesh.subGroupInUse.indexMappingsCount++;
+					this.rawMesh.subGroupInUse.indexMappings[ mappingName ] = indicesPointer;
+					this.rawMesh.subGroupInUse.indexMappingsCount++;
 
 				}
-				scope.rawMesh.subGroupInUse.indices.push( indicesPointer );
+				this.rawMesh.subGroupInUse.indices.push( indicesPointer );
 
 			} else {
 
@@ -885,8 +885,8 @@ THREE.OBJLoader2 = (function () {
 
 				for ( length = bufferLength - 2; i < length; i += 2 ) {
 
-					this.rawMesh.vertices.push( parseInt( buffer[ i ] ) );
-					this.rawMesh.uvs.push( parseInt( buffer[ i + 1 ] ) );
+					this.vertices.push( parseInt( buffer[ i ] ) );
+					this.uvs.push( parseInt( buffer[ i + 1 ] ) );
 
 				}
 
@@ -894,22 +894,21 @@ THREE.OBJLoader2 = (function () {
 
 				for ( length = bufferLength - 1; i < length; i ++ ) {
 
-					this.rawMesh.vertices.push( parseInt( buffer[ i ] ) );
+					this.vertices.push( parseInt( buffer[ i ] ) );
 
 				}
 
 			}
 		};
 
-
 		Parser.prototype.createRawMeshReport = function ( inputObjectCount ) {
 			return 'Input Object number: ' + inputObjectCount +
 				'\n\tObject name: ' + this.rawMesh.objectName +
 				'\n\tGroup name: ' + this.rawMesh.groupName +
 				'\n\tMtllib name: ' + this.rawMesh.mtllibName +
-				'\n\tVertex count: ' + this.rawMesh.vertices.length / 3 +
-				'\n\tNormal count: ' + this.rawMesh.normals.length / 3 +
-				'\n\tUV count: ' + this.rawMesh.uvs.length / 2 +
+				'\n\tVertex count: ' + this.vertices.length / 3 +
+				'\n\tNormal count: ' + this.normals.length / 3 +
+				'\n\tUV count: ' + this.uvs.length / 2 +
 				'\n\tSmoothingGroup count: ' + this.rawMesh.counts.smoothingGroupCount +
 				'\n\tMaterial count: ' + this.rawMesh.counts.mtlCount +
 				'\n\tReal MeshOutputGroup count: ' + this.rawMesh.subGroups.length;
@@ -974,12 +973,12 @@ THREE.OBJLoader2 = (function () {
 			var result = this.finalizeRawMesh();
 			if ( THREE.LoaderSupport.Validator.isValid( result ) ) {
 
-				if ( this.rawMesh.colors.length > 0 && this.rawMesh.colors.length !== this.rawMesh.vertices.length ) {
+				if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
 					throw 'Vertex Colors were detected, but vertex count and color count do not match!';
 
 				}
-				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.rawMesh, this.inputObjectCount ) );
+				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.inputObjectCount ) );
 				this.inputObjectCount++;
 
 				this.buildMesh( result, currentByte );
