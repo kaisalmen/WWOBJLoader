@@ -701,15 +701,15 @@ function vobjCreateNormals() {
 	return output;
 };
 
-function vobjCreateCubeV( offset, groups, usemtls ) {
+function vobjCreateCubeV( offsets, groups, usemtls ) {
 	var output = '\n';
 	if ( groups === null || groups.length === 0 ) groups = [ null, null, null, null, null, null ];
 	if ( usemtls === null || usemtls.length === 0 ) usemtls = [ null, null, null, null, null, null ];
 	for ( var group, usemtl, f0, f1, f2, f3, i = 0, facesV = obj_verify.facesV, length = facesV.length; i < length; i++ ) {
-		f0 = facesV[ i ][ 0 ] + offset;
-		f1 = facesV[ i ][ 1 ] + offset;
-		f2 = facesV[ i ][ 2 ] + offset;
-		f3 = facesV[ i ][ 3 ] + offset;
+		f0 = facesV[ i ][ 0 ] + offsets[ 0 ];
+		f1 = facesV[ i ][ 1 ] + offsets[ 0 ];
+		f2 = facesV[ i ][ 2 ] + offsets[ 0 ];
+		f3 = facesV[ i ][ 3 ] + offsets[ 0 ];
 
 		group = groups[ i ];
 		usemtl = usemtls[ i ];
@@ -785,34 +785,49 @@ function vobjCreateCubeVVnVt( offsets, groups, usemtls ) {
 
 gulp.task( 'create-verify-obj', function( cb ){
 	gutil.log( 'Building: verify.obj' );
-	var vertex_offset = 0;
+	var offsets = [ 0, 0, 0 ];
+	var pos = [ -150, 0, 0 ];
 	fs.writeFileSync( './resource/obj/verify/verify.obj', '# Verification OBJ created with gulp\n\n' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', 'mtllib verify.mtl\n\n# Cube no materials. Translated x:-100' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -100, 0, 0 ] ) );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, null ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', 'mtllib verify.mtl\n\n# Cube no materials. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( offsets, null, null ) );
 
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with two materials. Translated x:-50' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ -50, 0, 0 ] ) );
-	vertex_offset += 8;
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, [ 'orange', null, null, 'purple', null, null ] ) );
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with two materials. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( offsets, null, [ 'orange', null, null, 'purple', null, null ] ) );
 
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with normals no materials. Translated x:0' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 0, 0, 0 ] ) );
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with normals no materials. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
-	vertex_offset += 8;
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( [ vertex_offset, 0 ], [ 'cube3', null, null, null, null, null ], [ 'lightblue', null, null, null, null, null ] ) );
-//	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeV( vertex_offset, null, [ 'green', null, null, null, null, null ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVn( offsets, [ 'cube3', null, null, null, null, null ], [ 'lightblue', null, null, null, null, null ] ) );
 
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with uvs and red material. Translated x:50' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 50, 0, 0 ] ) );
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cube with uvs and red material. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
 	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateUvs() );
-	vertex_offset += 8;
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVt( [ vertex_offset, 0 ], null, [ 'red', null, null, null, null, null ] ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVt( offsets, null, [ 'red', null, null, null, null, null ] ) );
 
-	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# Cimple cube with uvs and normals and material. Translated x:100' );
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, [ 100, 0, 0 ] ) );
-	vertex_offset += 8;
-	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ vertex_offset, 0, 0 ], [], [ 'red', null, null, 'blue', null, 'green' ] ) );
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# cube with uvs and normals and material. Translated x' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
+
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( offsets, [], [ 'red', null, null, 'blue', null, 'green' ] ) );
+
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	offsets[ 1 ] += 6;
+	fs.appendFileSync( './resource/obj/verify/verify.obj', '\n\n# cube with uvs and normals and one material and group for every quad. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateVertices( 10, pos ) );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateNormals() );
+	fs.appendFileSync( './resource/obj/verify/verify.obj', vobjCreateCubeVVnVt( [ -9, offsets[ 1 ], offsets[ 2 ] ],
+		[ 'cube6a', 'cube6b', 'cube6c', 'cube6d', 'cube6e', 'cube6f' ],
+		[ 'green', null, null, 'orange', null, null ] ) );
 
 });
 
