@@ -421,6 +421,10 @@ THREE.LoaderSupport.PrepData = (function () {
 	return PrepData;
 })();
 
+THREE.LoaderSupport.Consts = {
+	Obj: null
+};
+
 THREE.LoaderSupport.Parser = {
 	Obj: null
 };
