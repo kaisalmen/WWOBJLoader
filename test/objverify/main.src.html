@@ -36,12 +36,6 @@
 
 			'use strict';
 
-			/**
-			 * @author Kai Salmen / www.kaisalmen.de
-			 */
-
-			'use strict';
-
 			var OBJLoaderVerify = (function () {
 
 				var Validator = THREE.LoaderSupport.Validator;
@@ -111,7 +105,7 @@
 					var onLoadMtl = function ( materials, materialCreator ) {
 						var objLoader = new THREE.OBJLoader();
 						objLoader.setMaterials( materialCreator );
-						objLoader.load( '../../resource/obj/verify/verify.obj', function ( object ) {
+						objLoader.load( './verify.obj', function ( object ) {
 							object.position.y = -100;
 							scope.scene.add( object );
 						} );
@@ -119,9 +113,9 @@
 						objLoader2.setModelName( modelName );
 						objLoader2.setMaterials( materials );
 						objLoader2.getLogger().setDebug( true );
-						objLoader2.load( '../../resource/obj/verify/verify.obj', callbackOnLoad, null, null, null, false );
+						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null, false );
 					};
-					objLoader2.loadMtl( '../../resource/obj/verify/verify.mtl', null, onLoadMtl );
+					objLoader2.loadMtl( './verify.mtl', null, onLoadMtl );
 				};
 
 				OBJLoaderVerify.prototype._reportProgress = function( event ) {

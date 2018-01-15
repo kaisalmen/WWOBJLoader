@@ -3,14 +3,14 @@
 mtllib verify.mtl
 
 # Cube no materials. Translated x:-150
-v -160 10 10
-v -160 -10 10
-v -140 -10 10
-v -140 10 10
-v -160 10 -10
-v -160 -10 -10
-v -140 -10 -10
-v -140 10 -10
+v -160 60 10
+v -160 40 10
+v -140 40 10
+v -140 60 10
+v -160 60 -10
+v -160 40 -10
+v -140 40 -10
+v -140 60 -10
 
 f 1 2 3 4
 f 8 7 6 5
@@ -21,14 +21,14 @@ f 2 6 7 3
 
 
 # Cube with two materials. Translated x:-100
-v -110 10 10
-v -110 -10 10
-v -90 -10 10
-v -90 10 10
-v -110 10 -10
-v -110 -10 -10
-v -90 -10 -10
-v -90 10 -10
+v -110 60 10
+v -110 40 10
+v -90 40 10
+v -90 60 10
+v -110 60 -10
+v -110 40 -10
+v -90 40 -10
+v -90 60 -10
 
 usemtl orange
 f 9 10 11 12
@@ -41,14 +41,14 @@ f 10 14 15 11
 
 
 # Cube with normals no materials. Translated x:-50
-v -60 10 10
-v -60 -10 10
-v -40 -10 10
-v -40 10 10
-v -60 10 -10
-v -60 -10 -10
-v -40 -10 -10
-v -40 10 -10
+v -60 60 10
+v -60 40 10
+v -40 40 10
+v -40 60 10
+v -60 60 -10
+v -60 40 -10
+v -40 40 -10
+v -40 60 -10
 
 vn 0 0 1
 vn 0 0 -1
@@ -68,14 +68,14 @@ f 18//4 22//4 23//4 19//4
 
 
 # Cube with uvs and red material. Translated x:0
-v -10 10 10
-v -10 -10 10
-v 10 -10 10
-v 10 10 10
-v -10 10 -10
-v -10 -10 -10
-v 10 -10 -10
-v 10 10 -10
+v -10 60 10
+v -10 40 10
+v 10 40 10
+v 10 60 10
+v -10 60 -10
+v -10 40 -10
+v 10 40 -10
+v 10 60 -10
 
 vt 0 1
 vt 1 1
@@ -92,14 +92,14 @@ f 26/1 30/2 31/3 27/4
 
 
 # cube with uvs and normals and material. Translated x50
-v 40 10 10
-v 40 -10 10
-v 60 -10 10
-v 60 10 10
-v 40 10 -10
-v 40 -10 -10
-v 60 -10 -10
-v 60 10 -10
+v 40 60 10
+v 40 40 10
+v 60 40 10
+v 60 60 10
+v 40 60 -10
+v 40 40 -10
+v 60 40 -10
+v 60 60 -10
 
 usemtl red
 f 33/1/1 34/2/1 35/3/1 36/4/1
@@ -112,15 +112,15 @@ usemtl green
 f 34/1/4 38/2/4 39/3/4 35/4/4
 
 
-# cube with uvs and normals and one material and group for every quad. Translated x:100
-v 90 10 10
-v 90 -10 10
-v 110 -10 10
-v 110 10 10
-v 90 10 -10
-v 90 -10 -10
-v 110 -10 -10
-v 110 10 -10
+# cube with uvs and normals and two materials and group for every quad. Translated x:100
+v 90 60 10
+v 90 40 10
+v 110 40 10
+v 110 60 10
+v 90 60 -10
+v 90 40 -10
+v 110 40 -10
+v 110 60 -10
 
 vn 0 0 1
 vn 0 0 -1
@@ -143,3 +143,33 @@ g cube6e
 f -4/7/6 -3/8/6 -7/9/6 -8/10/6
 g cube6f
 f -7/7/4 -3/8/4 -2/9/4 -6/10/4
+
+
+# cube with uvs and normals and six materials and six groups, one for every quad. Translated x:150
+v 140 60 10
+v 140 40 10
+v 160 40 10
+v 160 60 10
+v 140 60 -10
+v 140 40 -10
+v 160 40 -10
+v 160 60 -10
+
+g cube6a
+usemtl red
+f 49/7/1 50/8/1 51/9/1 52/10/1
+g cube6b
+usemtl blue
+f 56/7/2 55/8/2 54/9/2 53/10/2
+g cube6c
+usemtl green
+f 52/7/5 51/8/5 55/9/5 56/10/5
+g cube6d
+usemtl lightblue
+f 53/7/3 49/8/3 52/9/3 56/10/3
+g cube6e
+usemtl orange
+f 53/7/6 54/8/6 50/9/6 49/10/6
+g cube6f
+usemtl purple
+f 50/7/4 54/8/4 55/9/4 51/10/4
