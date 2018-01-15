@@ -62,29 +62,20 @@ var OBJLoader2Example = (function () {
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
-		var objLoader2 = new THREE.OBJLoader2();
-
+		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( event ) {
 			scope.scene.add( event.detail.loaderRootNode );
 			console.log( 'Loading complete: ' + event.detail.modelName );
 			scope._reportProgress( { detail: { text: '' } } );
 		};
 
-		var onLoadMtl = function ( materials, materialCreator ) {
-/*
-			var objLoader = new THREE.OBJLoader();
-			objLoader.setMaterials( materialCreator );
-			objLoader.load( '../../resource/obj/verify/verify.obj', function ( object ) {
-				object.position.y = -100;
-				scope.scene.add( object );
-			} );
-*/
-			objLoader2.setModelName( modelName );
-			objLoader2.setMaterials( materials );
-			objLoader2.getLogger().setDebug( true );
-			objLoader2.load( '../../resource/obj/verify/verify.obj', callbackOnLoad, null, null, null, false );
+		var onLoadMtl = function ( materials ) {
+			objLoader.setModelName( modelName );
+			objLoader.setMaterials( materials );
+			objLoader.getLogger().setDebug( true );
+			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null, false );
 		};
-		objLoader2.loadMtl( '../../resource/obj/verify/verify.mtl', null, onLoadMtl );
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {
