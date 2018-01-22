@@ -36,6 +36,8 @@ THREE.LoaderSupport.Validator = {
  */
 THREE.LoaderSupport.ConsoleLogger = (function () {
 
+	var Validator = THREE.LoaderSupport.Validator;
+
 	function ConsoleLogger( enabled, debug ) {
 		this.enabled = enabled !== false;
 		this.debug = debug === true;
@@ -86,9 +88,15 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {string} message Message to log
+	 * @param {string[]} additional Array of strings containing additional content to be logged
+	 *
 	 */
-	ConsoleLogger.prototype.logDebug = function ( message ) {
-		if ( this.enabled && this.debug ) console.info( message );
+	ConsoleLogger.prototype.logDebug = function ( message, additional ) {
+		if ( this.enabled && this.debug ) {
+
+			this._createStatement( message, 'Additional content:', additional, function ( output ) { console.debug( output ) } );
+
+		}
 	};
 
 	/**
@@ -96,9 +104,14 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {string} message Message to log
+	 * @param {string[]} additional Array of strings containing additional content to be logged
 	 */
-	ConsoleLogger.prototype.logInfo = function ( message ) {
-		if ( this.enabled ) console.info( message );
+	ConsoleLogger.prototype.logInfo = function ( message, additional ) {
+		if ( this.enabled ) {
+
+			this._createStatement( message, 'Additional content:', additional, function ( output ) { console.info( output ) } );
+
+		}
 	};
 
 	/**
@@ -106,9 +119,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {string} message Message to log
+	 * @param {string[]} additional Array of strings containing additional content to be logged
 	 */
-	ConsoleLogger.prototype.logWarn = function ( message ) {
-		console.warn( message );
+	ConsoleLogger.prototype.logWarn = function ( message, additional ) {
+		this._createStatement( message, 'Additional content:', additional, function ( output ) { console.warn( output ) } );
 	};
 
 	/**
@@ -116,9 +130,10 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 * @memberOf THREE.LoaderSupport.ConsoleLogger
 	 *
 	 * @param {string} message Message to log
+	 * @param {string[]} additional Array of strings containing additional content to be logged
 	 */
-	ConsoleLogger.prototype.logError = function ( message ) {
-		console.error( message );
+	ConsoleLogger.prototype.logError = function ( message, additional ) {
+		this._createStatement( message, 'Additional content:', additional, function ( output ) { console.error( output ) } );
 	};
 
 	/**
@@ -139,6 +154,16 @@ THREE.LoaderSupport.ConsoleLogger = (function () {
 	 */
 	ConsoleLogger.prototype.logTimeEnd = function ( id ) {
 		if ( this.enabled ) console.timeEnd( id );
+	};
+
+	ConsoleLogger.prototype._createStatement = function ( message, addHeader, additional, logFunction ) {
+		var output = message;
+		if ( Array.isArray( additional ) ) {
+
+			output += '\n' + addHeader + '\n' + additional.join( '\n' );
+
+		}
+		logFunction( output );
 	};
 
 	return ConsoleLogger;
