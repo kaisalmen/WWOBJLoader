@@ -36,8 +36,6 @@ THREE.LoaderSupport.Validator = {
  */
 THREE.LoaderSupport.ConsoleLogger = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
-
 	function ConsoleLogger( enabled, debug ) {
 		this.enabled = enabled !== false;
 		this.debug = debug === true;
@@ -445,10 +443,6 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	return PrepData;
 })();
-
-THREE.LoaderSupport.Consts = {
-	Obj: null
-};
 
 THREE.LoaderSupport.Parser = {
 	Obj: null

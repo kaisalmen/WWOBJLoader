@@ -251,9 +251,7 @@ THREE.OBJLoader2 = (function () {
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
 			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
 			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.LoaderBase', THREE.LoaderSupport.LoaderBase );
-			workerCode += 'THREE.LoaderSupport.Consts = {\nObj: null\n};\n';
 			workerCode += 'THREE.LoaderSupport.Parser = {\nObj: null\n};\n';
-			workerCode += funcBuildObject( 'THREE.LoaderSupport.Consts.Obj', THREE.LoaderSupport.Consts.Obj );
 			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.Parser.Obj', THREE.LoaderSupport.Parser.Obj );
 
 			return workerCode;
@@ -434,30 +432,6 @@ THREE.OBJLoader2 = (function () {
 })();
 
 /**
- * Constants used by Parser
- */
-THREE.LoaderSupport.Consts.Obj = {
-	CODE_LF: 10,
-	CODE_CR: 13,
-	CODE_SPACE: 32,
-	CODE_SLASH: 47,
-	STRING_LF: '\n',
-	STRING_CR: '\r',
-	STRING_SPACE: ' ',
-	STRING_SLASH: '/',
-	LINE_F: 'f',
-	LINE_G: 'g',
-	LINE_L: 'l',
-	LINE_O: 'o',
-	LINE_S: 's',
-	LINE_V: 'v',
-	LINE_VT: 'vt',
-	LINE_VN: 'vn',
-	LINE_MTLLIB: 'mtllib',
-	LINE_USEMTL: 'usemtl'
-};
-
-/**
  * Parse OBJ data either from ArrayBuffer or string
  * @class
  */
@@ -607,19 +581,21 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 
 			code = arrayBufferView[ i ];
 			switch ( code ) {
-				case THREE.LoaderSupport.Consts.Obj.CODE_SPACE:
+				// space
+				case 32:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					slashSpacePattern[ slashSpacePatternPointer++ ] = 0;
 					word = '';
 					break;
-
-				case THREE.LoaderSupport.Consts.Obj.CODE_SLASH:
+				// slash
+				case 47:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					slashSpacePattern[ slashSpacePatternPointer++ ] = 1;
 					word = '';
 					break;
 
-				case THREE.LoaderSupport.Consts.Obj.CODE_LF:
+				// LF
+				case 10:
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, i );
@@ -627,7 +603,8 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 					slashSpacePatternPointer = 0;
 					break;
 
-				case THREE.LoaderSupport.Consts.Obj.CODE_CR:
+				// CR
+				case 13:
 					break;
 
 				default:
@@ -662,19 +639,19 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 
 			char = text[ i ];
 			switch ( char ) {
-				case THREE.LoaderSupport.Consts.Obj.STRING_SPACE:
+				case ' ':
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					slashSpacePattern[ slashSpacePatternPointer++ ] = 0;
 					word = '';
 					break;
 
-				case THREE.LoaderSupport.Consts.Obj.STRING_SLASH:
+				case '/':
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					slashSpacePattern[ slashSpacePatternPointer++ ] = 1;
 					word = '';
 					break;
 
-				case THREE.LoaderSupport.Consts.Obj.STRING_LF:
+				case '\n':
 					if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 					word = '';
 					this.processLine( buffer, bufferPointer, slashSpacePattern, slashSpacePatternPointer, i );
@@ -682,7 +659,7 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 					slashSpacePatternPointer = 0;
 					break;
 
-				case THREE.LoaderSupport.Consts.Obj.STRING_CR:
+				case '\r':
 					break;
 
 				default:
@@ -731,7 +708,7 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 		};
 
 		switch ( buffer[ 0 ] ) {
-			case THREE.LoaderSupport.Consts.Obj.LINE_V:
+			case 'v':
 				this.vertices.push( parseFloat( buffer[ 1 ] ) );
 				this.vertices.push( parseFloat( buffer[ 2 ] ) );
 				this.vertices.push( parseFloat( buffer[ 3 ] ) );
@@ -744,18 +721,18 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 				}
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_VT:
+			case 'vt':
 				this.uvs.push( parseFloat( buffer[ 1 ] ) );
 				this.uvs.push( parseFloat( buffer[ 2 ] ) );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_VN:
+			case 'vn':
 				this.normals.push( parseFloat( buffer[ 1 ] ) );
 				this.normals.push( parseFloat( buffer[ 2 ] ) );
 				this.normals.push( parseFloat( buffer[ 3 ] ) );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_F:
+			case 'f':
 				var slashesCount = countSlashes( slashSpacePattern, slashSpacePatternPointer );
 				var bufferLength = bufferPointer - 1;
 
@@ -783,34 +760,34 @@ THREE.LoaderSupport.Parser.Obj = (function () {
 				this.processFaces( buffer, bufferLength );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_L:
+			case 'l':
 				this.processLines( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_S:
+			case 's':
 				this.pushSmoothingGroup( buffer[ 1 ] );
 				flushStringBuffer( buffer, bufferPointer );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_G:
+			case 'g':
 				// 'g' leads to creation of mesh if valid data (faces declaration was done before), otherwise only groupName gets set
 				this.processCompletedMesh( currentByte );
 				this.rawMesh.groupName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), '' );
 				flushStringBuffer( buffer, bufferPointer );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_O:
+			case 'o':
 				// 'o' is pure meta-information and does not result in creation of new meshes
 				this.rawMesh.objectName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), '' );
 				flushStringBuffer( buffer, bufferPointer );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_MTLLIB:
+			case 'mtllib':
 				this.rawMesh.mtllibName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, slashSpacePattern ), '' );
 				flushStringBuffer( buffer, bufferPointer );
 				break;
 
-			case THREE.LoaderSupport.Consts.Obj.LINE_USEMTL:
+			case 'usemtl':
 				var mtlName = concatStringBuffer( buffer, bufferPointer, slashSpacePattern );
 				if ( this.rawMesh.activeMtlName !== mtlName && THREE.LoaderSupport.Validator.isValid( mtlName ) ) {
 
