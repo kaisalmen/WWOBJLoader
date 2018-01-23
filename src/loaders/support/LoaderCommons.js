@@ -443,7 +443,3 @@ THREE.LoaderSupport.PrepData = (function () {
 
 	return PrepData;
 })();
-
-THREE.LoaderSupport.Parser = {
-	Obj: null
-};
