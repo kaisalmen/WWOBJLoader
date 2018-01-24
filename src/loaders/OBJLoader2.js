@@ -624,6 +624,10 @@ THREE.OBJLoader2 = (function () {
 					this.processLines( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
 					break;
 
+				case 'p':
+					this.processPoints( buffer, bufferPointer );
+					break;
+
 				case 's':
 					this.pushSmoothingGroup( buffer[ 1 ] );
 					flushStringBuffer( buffer, bufferPointer );
@@ -696,6 +700,16 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
+		/**
+		 * Expanded faceTypes include all four face types, both line types and the point type
+		 * faceType = 0: "f vertex ..."
+		 * faceType = 1: "f vertex/uv ..."
+		 * faceType = 2: "f vertex/uv/normal ..."
+		 * faceType = 3: "f vertex//normal ..."
+		 * faceType = 4: "l vertex/uv ..."
+		 * faceType = 5: "l vertex ..."
+		 * faceType = 6: "p vertex ..."
+		 */
 		Parser.prototype.checkSubGroup = function () {
 			var index = this.rawMesh.faceType + '|' + this.rawMesh.activeMtlName + '|' + this.rawMesh.smoothingGroup.normalized;
 			this.rawMesh.subGroupInUse = this.rawMesh.subGroups[ index ];
@@ -845,8 +859,8 @@ THREE.OBJLoader2 = (function () {
 
 		/*
 		 * Support for lines with or without texture. First element in indexArray is the line identification
-		 * 0: "f vertex/uv		vertex/uv 		..."
-		 * 1: "f vertex			vertex 			..."
+		 * 0: "l vertex/uv		vertex/uv 		..."
+		 * 1: "l vertex			vertex 			..."
 		 */
 		Parser.prototype.processLines = function ( buffer, bufferPointer, slashCount ) {
 			var i = 1;
@@ -869,6 +883,14 @@ THREE.OBJLoader2 = (function () {
 					this.vertices.push( parseInt( buffer[ i ] ) );
 
 				}
+
+			}
+		};
+
+		Parser.prototype.processPoints = function ( buffer, bufferPointer ) {
+			for ( var i = 1, length = bufferPointer - 2; i < length; i ++ ) {
+
+				this.vertices.push( parseInt( buffer[ i ] ) );
 
 			}
 		};
