@@ -67,7 +67,7 @@ var MeshSpray = (function () {
 
 			return workerCode;
 		};
-		var libs2Load = [ 'node_modules/three/build/three.js' ];
+		var libs2Load = [ 'node_modules/three/build/three.min.js' ];
 		this.workerSupport.validate( buildCode, 'Parser', libs2Load, '../../' );
 		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
 		this.workerSupport.run(
