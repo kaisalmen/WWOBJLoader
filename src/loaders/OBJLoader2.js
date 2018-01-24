@@ -1245,22 +1245,16 @@ THREE.OBJLoader2 = (function () {
 	 * @param {Object} content The file content as arraybuffer or text
 	 * @param {function} callbackOnLoad
 	 * @param {string} [crossOrigin] CORS value
+ 	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
-	OBJLoader2.prototype.loadMtl = function ( url, content, callbackOnLoad, crossOrigin ) {
+	OBJLoader2.prototype.loadMtl = function ( url, content, callbackOnLoad, crossOrigin, materialOptions ) {
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'MTL' );
 		resource.setContent( content );
-		this._loadMtl( resource, callbackOnLoad, crossOrigin );
+		this._loadMtl( resource, callbackOnLoad, crossOrigin, materialOptions );
 	};
 
-	/**
-	 * Utility method for loading an mtl file according resource description.
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {THREE.LoaderSupport.ResourceDescriptor} resource
-	 * @param {function} callbackOnLoad
-	 * @param {string} [crossOrigin] CORS value
-	 */
-	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin ) {
+
+	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin, materialOptions ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
 		if ( Validator.isValid( resource ) ) this.logger.logTimeStart( 'Loading MTL: ' + resource.name );
 
@@ -1286,9 +1280,10 @@ THREE.OBJLoader2 = (function () {
 			callbackOnLoad( materials, materialCreator );
 		};
 
-		var mtlLoader = new THREE.MTLLoader(this.manager);
+		var mtlLoader = new THREE.MTLLoader( this.manager );
 		crossOrigin = Validator.verifyInput( crossOrigin, 'anonymous' );
 		mtlLoader.setCrossOrigin( crossOrigin );
+		if ( Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
 
 		// fast-fail
 		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.url ) ) ) {
