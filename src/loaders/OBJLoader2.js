@@ -1238,12 +1238,12 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Utility method for loading an mtl file according resource description.
+	 * Utility method for loading an mtl file according resource description. Provide url or content.
 	 * @memberOf THREE.OBJLoader2
 	 *
 	 * @param {string} url URL to the file
 	 * @param {Object} content The file content as arraybuffer or text
-	 * @param {function} callbackOnLoad
+	 * @param {function} callbackOnLoad Callback to be called after successful load
 	 * @param {string} [crossOrigin] CORS value
  	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */

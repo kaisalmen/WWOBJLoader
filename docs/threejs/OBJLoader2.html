@@ -164,7 +164,21 @@
 		<div>
 			Tells whether normals should be completely disregarded and regenerated.
 		</div>
+		
+		
+		<h3>[method:null loadMtl]( [page:String url], [page:Object content], [page:Function callbackOnLoad], [page:String crossOrigin], [page:Object materialOptions]) </h3>
+		<div>
+			[page:String url] - URL to the file
+			[page:Object content] - The file content as arraybuffer or text
+			[page:Function callbackOnLoad] - Callback to be called after successful load
+			[page:String crossOrigin] - (optional) CORS value
+			[page:Function materialOptions] - (optional) Set material loading options for MTLLoader
+		</div>
+		<div>
+			Utility method for loading an mtl file according resource description. Provide url or content..
+		</div>
 
+		
 		<h2>Source</h2>
 
 		[link:https://github.com/mrdoob/three.js/blob/master/examples/js/loaders/OBJLoader2.js examples/js/loaders/OBJLoader2.js]
