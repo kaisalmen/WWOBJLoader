@@ -621,11 +621,13 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case 'l':
-					this.processLines( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
+					if ( this.checkFaceType( 4 ) ) this.processCompletedMesh( currentByte );
+					this.processLines( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ), currentByte );
 					break;
 
 				case 'p':
-					this.processPoints( buffer, bufferPointer );
+					if ( this.checkFaceType( 5 ) ) this.processCompletedMesh( currentByte );
+					this.processPoints( buffer, bufferPointer, currentByte );
 					break;
 
 				case 's':
@@ -706,9 +708,8 @@ THREE.OBJLoader2 = (function () {
 		 * faceType = 1: "f vertex/uv ..."
 		 * faceType = 2: "f vertex/uv/normal ..."
 		 * faceType = 3: "f vertex//normal ..."
-		 * faceType = 4: "l vertex/uv ..."
-		 * faceType = 5: "l vertex ..."
-		 * faceType = 6: "p vertex ..."
+		 * faceType = 4: "l vertex/uv ..." or "l vertex ..."
+		 * faceType = 5: "p vertex ..."
 		 */
 		Parser.prototype.checkSubGroup = function () {
 			var index = this.rawMesh.faceType + '|' + this.rawMesh.activeMtlName + '|' + this.rawMesh.smoothingGroup.normalized;
@@ -1031,7 +1032,15 @@ THREE.OBJLoader2 = (function () {
 				meshOutputGroup = meshOutputGroups[ oodIndex ];
 
 				materialNameOrg = meshOutputGroup.materialName;
-				materialName = materialNameOrg + ( haveVertexColors ? '_vertexColor' : '' ) + ( meshOutputGroup.smoothingGroup === 0 ? '_flat' : '' );
+				if ( meshOutputGroup.faceType < 4 ) {
+
+					materialName = materialNameOrg + ( haveVertexColors ? '_vertexColor' : '' ) + ( meshOutputGroup.smoothingGroup === 0 ? '_flat' : '' );
+
+				} else {
+
+					materialName = meshOutputGroup.faceType === 4 ? 'defaultLineMaterial' : 'defaultPointMaterial';
+
+				}
 				materialOrg = this.materials[ materialNameOrg ];
 				material = this.materials[ materialName ];
 
@@ -1175,7 +1184,8 @@ THREE.OBJLoader2 = (function () {
 						colors: colorFA,
 						normals: normalFA,
 						uvs: uvFA
-					}
+					},
+					faceType: faceType
 				},
 				[ vertexFA.buffer ],
 				THREE.LoaderSupport.Validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
