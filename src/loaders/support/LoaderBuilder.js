@@ -130,6 +130,7 @@ THREE.LoaderSupport.Builder = (function () {
 		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
 		var callbackOnMeshAlterResult;
 		var useOrgMesh = true;
+		var geometryType = Validator.verifyInput( meshPayload.geometryType, 0 );
 		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
 			callbackOnMeshAlterResult = callbackOnMeshAlter(
@@ -137,7 +138,8 @@ THREE.LoaderSupport.Builder = (function () {
 					detail: {
 						meshName: meshName,
 						bufferGeometry: bufferGeometry,
-						material: material
+						material: material,
+						geometryType: geometryType
 					}
 				}
 			);
@@ -159,7 +161,19 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 		if ( useOrgMesh ) {
 
-			mesh = new THREE.Mesh( bufferGeometry, material );
+			if ( geometryType === 0 ) {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+
+			} else if ( geometryType === 1) {
+
+				mesh = new THREE.LineSegments( bufferGeometry, material );
+
+			} else {
+
+				mesh = new THREE.Points( bufferGeometry, material );
+
+			}
 			mesh.name = meshName;
 			meshes.push( mesh );
 
