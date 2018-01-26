@@ -103,17 +103,17 @@
 					};
 
 					var onLoadMtl = function ( materials, materialCreator ) {
+						objLoader2.setModelName( modelName );
+						objLoader2.setMaterials( materials );
+						objLoader2.getLogger().setDebug( true );
+						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null, false );
+
 						var objLoader = new THREE.OBJLoader();
 						objLoader.setMaterials( materialCreator );
 						objLoader.load( './verify.obj', function ( object ) {
 							object.position.y = -100;
 							scope.scene.add( object );
 						} );
-
-						objLoader2.setModelName( modelName );
-						objLoader2.setMaterials( materials );
-						objLoader2.getLogger().setDebug( true );
-						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null, false );
 					};
 					objLoader2.loadMtl( './verify.mtl', null, onLoadMtl, null, { invertTrProperty: false } );
 				};

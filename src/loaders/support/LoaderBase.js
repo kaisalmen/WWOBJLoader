@@ -34,9 +34,17 @@ THREE.LoaderSupport.LoaderBase = (function () {
 		vertexColorMaterial.name = 'vertexColorMaterial';
 		vertexColorMaterial.vertexColors = THREE.VertexColors;
 
+		var defaultLineMaterial = new THREE.LineBasicMaterial();
+		defaultLineMaterial.name = 'defaultLineMaterial';
+
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false } );
+		defaultPointMaterial.name = 'defaultPointMaterial';
+
 		var runtimeMaterials = {};
 		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
 		runtimeMaterials[ vertexColorMaterial.name ] = vertexColorMaterial;
+		runtimeMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
+		runtimeMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
 
 		this.builder.updateMaterials(
 			{

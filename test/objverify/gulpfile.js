@@ -235,4 +235,19 @@ gulp.task( 'default', function( cb ){
 		[ 'cube6a', 'cube6b', 'cube6c', 'cube6d', 'cube6e', 'cube6f' ],
 		[ 'red', 'blue', 'green', 'lightblue', 'orange', 'purple' ] ) );
 
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './verify.obj', '\n\n# Point/Line. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './verify.obj', vobjCreateVertices( 10, pos ) );
+	fs.appendFileSync( './verify.obj', '\np -8 -7 -6 -5 -4 -3 -2 -1\n' );
+	fs.appendFileSync( './verify.obj', 'l -8 -7 -6 -5 -4 -3 -2 -1 -8 -5 -8 -4 -7 -6 -7 -3 -5 -1 -3 -2 -6 -2 -4 -1\n' );
+
+	pos[ 0 ] += 50;
+	offsets[ 0 ] += 8;
+	fs.appendFileSync( './verify.obj', '\n\n# Line UV. Translated x:' + pos[ 0 ] );
+	fs.appendFileSync( './verify.obj', vobjCreateVertices( 10, pos ) );
+	fs.appendFileSync( './verify.obj', '\nl -8/-2 -7/-1 -6/-2 -5/-1\n' );
+
+
+
 });
