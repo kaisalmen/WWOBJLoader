@@ -57,6 +57,7 @@ Version 2.0.0 introduced substantial enhancements and chances especially but not
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
 - Multiple mesh definitions within one group are supported (issue #27)
 - Negative face indices are now supported (issue #28)
+- Support for points (added) and lines (fixed) (issue #33)
 
 ### Directing the symphony
 `LoaderDirector` is able to create a configurable amount of `OBJLoader2` via reflection just by providing parameters. It is now able to direct all loaders that over automation via `run` and use `WorkerSupport` to allow running the `Parser` in a web worker. An instruction queue is fed and all workers created will work to deplete it once they have been started.

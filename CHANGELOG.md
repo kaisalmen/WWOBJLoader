@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.0
+- Issue #28: Parser Verification. Reduce overall complexity of Parser. It is now a single class. Missing 'g' statement don't cripple parsing.
+- Issue #31: Worker code still works when mangling is used during minification.
+- Issue #32: THREE.LoaderSupport.ConsoleLogger: Allow to pass additional arguments to error, warn, info and debug
+- Issue #33: Added support for Points and fixed Lines along
+
 ## 2.2.1
 - Issue #27: Multiple mesh definitions (vertices, normals, uvs and faces) within one group are now supported. Needed to remove early release of vertex data from memory.
 - Issue #28: Negative face indices are now supported.

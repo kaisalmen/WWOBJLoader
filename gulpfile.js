@@ -37,6 +37,52 @@ gulp.task( 'clean-build', function () {
 	return del.sync( DIR.BUILD );
 });
 
+gulp.task( 'set-versions', function () {
+	gulp.src(
+		[ 'src/loaders/OBJLoader2.js' ]
+	)
+	.pipe( replace( {
+		patterns: [	{
+				match: /var OBJLOADER2_VERSION.*/g,
+				replacement: "var OBJLOADER2_VERSION = '"+ packageContent.versions.loader_obj2 + "';"
+			} ]
+	} ) )
+	.pipe( gulp.dest( "src/loaders" ) );
+
+	gulp.src(
+		[ 'src/loaders/support/LoaderWorkerSupport.js' ]
+	)
+	.pipe( replace( {
+		patterns: [	{
+				match: /var WORKER_SUPPORT_VERSION.*/g,
+				replacement: "var WORKER_SUPPORT_VERSION = '"+ packageContent.versions.loader_worker_support + "';"
+			} ]
+	} ) )
+	.pipe( gulp.dest( "src/loaders/support" ) );
+
+	gulp.src(
+		[ 'src/loaders/support/LoaderWorkerDirector.js' ]
+	)
+	.pipe( replace( {
+		patterns: [	{
+			match: /var LOADER_WORKER_DIRECTOR_VERSION.*/g,
+			replacement: "var LOADER_WORKER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_worker_director + "';"
+		} ]
+	} ) )
+	.pipe( gulp.dest( "src/loaders/support" ) );
+
+	gulp.src(
+		[ 'src/loaders/support/LoaderBuilder.js' ]
+	)
+	.pipe( replace( {
+		patterns: [	{
+			match: /var LOADER_BUILDER_VERSION.*/g,
+			replacement: "var LOADER_BUILDER_VERSION = '"+ packageContent.versions.loader_builder + "';"
+		} ]
+	} ) )
+	.pipe( gulp.dest( "src/loaders/support" ) );
+} );
+
 gulp.task( 'bundle-loader-support', function () {
 	var builtHeader = buildHeader();
 	gulp.src(
@@ -50,22 +96,6 @@ gulp.task( 'bundle-loader-support', function () {
 	)
 	.pipe( concat( 'LoaderSupport.js' ) )
 	.pipe( header( builtHeader ) )
-	.pipe( replace( {
-		patterns: [
-			{
-				match: /var WORKER_SUPPORT_VERSION.*/g,
-				replacement: "var WORKER_SUPPORT_VERSION = '"+ packageContent.versions.loader_worker_support + "';"
-			},
-			{
-				match: /var LOADER_WORKER_DIRECTOR_VERSION.*/g,
-				replacement: "var LOADER_WORKER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_worker_director + "';"
-			},
-			{
-				match: /var LOADER_BUILDER_VERSION.*/g,
-				replacement: "var LOADER_BUILDER_VERSION = '"+ packageContent.versions.loader_builder + "';"
-			}
-		]
-	} ) )
 	.pipe( gulp.dest( DIR.BUILD ) )
 
 	.pipe( uglify( { mangle: { toplevel: true } } ) )
@@ -82,14 +112,6 @@ gulp.task( 'bundle-objloader2', function () {
 		)
 		.pipe( concat( 'OBJLoader2.js' ) )
 		.pipe( header( builtHeader ) )
-		.pipe( replace( {
-			patterns: [
-				{
-					match: /var OBJLOADER2_VERSION.*/g,
-					replacement: "var OBJLOADER2_VERSION = '"+ packageContent.versions.loader_obj2 + "';"
-				}
-			]
-		} ) )
 		.pipe( gulp.dest( DIR.BUILD ) )
 
 		.pipe( uglify( { mangle: { toplevel: true } } ) )
@@ -635,6 +657,7 @@ gulp.task(
 	'default',
 	[
 		'clean-build',
+		'set-versions',
 		'bundle-loader-support',
 		'bundle-objloader2',
 		'create-docs',
