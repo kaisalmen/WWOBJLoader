@@ -22,40 +22,7 @@ THREE.LoaderSupport.LoaderBase = (function () {
 
 		this.loaderRootNode = new THREE.Group();
 		this.builder = new THREE.LoaderSupport.Builder( this.logger );
-		this._createDefaultMaterials();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-	};
-
-	LoaderBase.prototype._createDefaultMaterials = function () {
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		defaultMaterial.name = 'defaultMaterial';
-
-		var vertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
-		vertexColorMaterial.name = 'vertexColorMaterial';
-		vertexColorMaterial.vertexColors = THREE.VertexColors;
-
-		var defaultLineMaterial = new THREE.LineBasicMaterial();
-		defaultLineMaterial.name = 'defaultLineMaterial';
-
-		var defaultPointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false } );
-		defaultPointMaterial.name = 'defaultPointMaterial';
-
-		var runtimeMaterials = {};
-		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
-		runtimeMaterials[ vertexColorMaterial.name ] = vertexColorMaterial;
-		runtimeMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
-		runtimeMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
-
-		this.builder.updateMaterials(
-			{
-				cmd: 'materialData',
-				materials: {
-					materialCloneInstructions: null,
-					serializedMaterials: null,
-					runtimeMaterials: runtimeMaterials
-				}
-			}
-		);
 	};
 
 	LoaderBase.prototype._applyPrepData = function ( prepData ) {

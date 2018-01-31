@@ -242,16 +242,16 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( this.logger ) );
-		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
+		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by OBJLoader2 buildCode.\n';
 			workerCode += '  */\n\n';
 			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
-			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
-			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.LoaderBase', THREE.LoaderSupport.LoaderBase );
-			workerCode += funcBuildSingelton( 'Parser', Parser );
+			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
+			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.LoaderBase', THREE.LoaderSupport.LoaderBase );
+			workerCode += funcBuildSingleton( 'Parser', Parser );
 
 			return workerCode;
 		};
@@ -1030,7 +1030,7 @@ THREE.OBJLoader2 = (function () {
 				// both original and derived names do not lead to an existing material => need to use a default material
 				if ( ! THREE.LoaderSupport.Validator.isValid( materialOrg ) && ! THREE.LoaderSupport.Validator.isValid( material ) ) {
 
-					var defaultMaterialName = haveVertexColors ? 'vertexColorMaterial' : 'defaultMaterial';
+					var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 					materialOrg = this.materials[ defaultMaterialName ];
 					this.logger.logWarn( 'object_group "' + meshOutputGroup.objectName + '_' +
 						meshOutputGroup.groupName + '" was defined with unresolvable material "' +

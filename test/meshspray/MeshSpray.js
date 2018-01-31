@@ -55,15 +55,15 @@ var MeshSpray = (function () {
 			scope.logger.logTimeEnd( 'MeshSpray' );
 		};
 
-		var buildCode = function ( funcBuildObject, funcBuildSingelton ) {
+		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
 			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
 			workerCode += '  */\n\n';
 			workerCode += 'THREE.LoaderSupport = {};\n\n';
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
-			workerCode += funcBuildSingelton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
-			workerCode += funcBuildSingelton( 'Parser', Parser );
+			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
+			workerCode += funcBuildSingleton( 'Parser', Parser );
 
 			return workerCode;
 		};
@@ -182,16 +182,16 @@ var MeshSpray = (function () {
 			 *
 			 * This is not the most effective way, but outlining possibilities
 			 */
-			var materialName = 'vertexColorMaterial_double';
-			var vertexColorMaterialJson = this.serializedMaterials[ 'vertexColorMaterial' ];
+			var materialName = 'defaultVertexColorMaterial_double';
+			var defaultVertexColorMaterialJson = this.serializedMaterials[ 'defaultVertexColorMaterial' ];
 			var loader = new THREE.MaterialLoader();
 
-			var vertexColorMaterialDouble = loader.parse( vertexColorMaterialJson );
-			vertexColorMaterialDouble.name = materialName;
-			vertexColorMaterialDouble.side = THREE.DoubleSide;
+			var defaultVertexColorMaterialDouble = loader.parse( defaultVertexColorMaterialJson );
+			defaultVertexColorMaterialDouble.name = materialName;
+			defaultVertexColorMaterialDouble.side = THREE.DoubleSide;
 
 			var newSerializedMaterials = {};
-			newSerializedMaterials[ materialName ] = vertexColorMaterialDouble.toJSON();
+			newSerializedMaterials[ materialName ] = defaultVertexColorMaterialDouble.toJSON();
 			var payload = {
 				cmd: 'materialData',
 				materials: {

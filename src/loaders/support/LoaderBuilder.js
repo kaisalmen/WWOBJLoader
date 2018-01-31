@@ -15,7 +15,40 @@ THREE.LoaderSupport.Builder = (function () {
 		this.logger.logInfo( 'Using THREE.LoaderSupport.Builder version: ' + LOADER_BUILDER_VERSION );
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.materials = [];
+		this._createDefaultMaterials();
 	}
+
+	Builder.prototype._createDefaultMaterials = function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+
+		var defaultVertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
+		defaultVertexColorMaterial.vertexColors = THREE.VertexColors;
+
+		var defaultLineMaterial = new THREE.LineBasicMaterial();
+		defaultLineMaterial.name = 'defaultLineMaterial';
+
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 1, sizeAttenuation: false } );
+		defaultPointMaterial.name = 'defaultPointMaterial';
+
+		var runtimeMaterials = {};
+		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
+		runtimeMaterials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
+		runtimeMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
+		runtimeMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
+
+		this.updateMaterials(
+			{
+				cmd: 'materialData',
+				materials: {
+					materialCloneInstructions: null,
+					serializedMaterials: null,
+					runtimeMaterials: runtimeMaterials
+				}
+			}
+		);
+	};
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
@@ -161,6 +194,7 @@ THREE.LoaderSupport.Builder = (function () {
 		}
 		if ( useOrgMesh ) {
 
+			if ( meshPayload.computeBoundingSphere ) bufferGeometry.computeBoundingSphere();
 			if ( geometryType === 0 ) {
 
 				mesh = new THREE.Mesh( bufferGeometry, material );
@@ -229,19 +263,27 @@ THREE.LoaderSupport.Builder = (function () {
 
 			var materialNameOrg = materialCloneInstructions.materialNameOrg;
 			var materialOrg = this.materials[ materialNameOrg ];
-			material = materialOrg.clone();
 
-			materialName = materialCloneInstructions.materialName;
-			material.name = materialName;
+			if ( Validator.isValid( materialNameOrg ) ) {
 
-			var materialProperties = materialCloneInstructions.materialProperties;
-			for ( var key in materialProperties ) {
+				material = materialOrg.clone();
 
-				if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) material[ key ] = materialProperties[ key ];
+				materialName = materialCloneInstructions.materialName;
+				material.name = materialName;
+
+				var materialProperties = materialCloneInstructions.materialProperties;
+				for ( var key in materialProperties ) {
+
+					if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) material[ key ] = materialProperties[ key ];
+
+				}
+				this.materials[ materialName ] = material;
+
+			} else {
+
+				this.logger.logWarn( 'Requested material "' + materialNameOrg + '" is not available!' );
 
 			}
-			this.materials[ materialName ] = material;
-
 		}
 
 		var materials = materialPayload.materials.serializedMaterials;

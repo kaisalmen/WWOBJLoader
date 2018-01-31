@@ -262,7 +262,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * Validate the status of worker code and the derived worker.
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingelton that allows stringification of objects and singletons.
+	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingleton that allows stringification of objects and singletons.
 	 * @param {String} parserName Name of the Parser object
 	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
 	 * @param {String} libPath Base path used for loading libraries
@@ -285,9 +285,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		}
 
-		var userWorkerCode = functionCodeBuilder( buildObject, buildSingelton );
+		var userWorkerCode = functionCodeBuilder( buildObject, buildSingleton );
 		userWorkerCode += 'var Parser = '+ parserName + ';\n\n';
-		userWorkerCode += buildSingelton( runnerImpl.name, runnerImpl );
+		userWorkerCode += buildSingleton( runnerImpl.name, runnerImpl );
 		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
 
 		var scope = this;
@@ -297,7 +297,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			var loadAllLibraries = function ( path, locations ) {
 				if ( locations.length === 0 ) {
 
-					scope.loaderWorker.initWorker( libsContent + userWorkerCode, scope.logger, runnerImpl.name );
+					scope.loaderWorker.initWorker( libsContent + userWorkerCode, runnerImpl.name );
 					scope.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 				} else {
@@ -319,7 +319,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		} else {
 
-			this.loaderWorker.initWorker( userWorkerCode, this.logger, runnerImpl.name );
+			this.loaderWorker.initWorker( userWorkerCode, runnerImpl.name );
 			this.logger.logTimeEnd( 'buildWebWorkerCode' );
 
 		}
@@ -388,26 +388,41 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return objectString;
 	};
 
-	var buildSingelton = function ( fullName, object ) {
-		var objectString = fullName + ' = (function () {\n\n';
-		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
+	var buildSingleton = function ( fullName, object, internalName ) {
+		var objectString = '';
+		var objectName = ( Validator.isValid( internalName ) ) ? internalName : object.name;
 
-		var funcString;
-		var objectPart;
+		var funcString, objectPart, constructorString;
 		for ( var name in object.prototype ) {
 
 			objectPart = object.prototype[ name ];
-			if ( typeof objectPart === 'function' ) {
+			if ( name === 'constructor' ) {
 
 				funcString = objectPart.toString();
-				objectString += '\t' + object.name + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+				funcString = funcString.replace( 'function', '' );
+				constructorString = '\tfunction ' + objectName + funcString + ';\n\n';
+
+			} else if ( typeof objectPart === 'function' ) {
+
+				funcString = objectPart.toString();
+				objectString += '\t' + objectName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
 
 			}
 
 		}
-		objectString += '\treturn ' + object.name + ';\n';
+		objectString += '\treturn ' + objectName + ';\n';
 		objectString += '})();\n\n';
+		if ( ! Validator.isValid( constructorString ) ) {
 
+			constructorString = fullName + ' = (function () {\n\n';
+			constructorString += '\t' + object.prototype.constructor.toString() + '\n\n';
+			objectString = constructorString + objectString;
+
+		} else {
+
+			objectString = fullName + ' = (function () {\n\n' + constructorString + objectString;
+
+		}
 		return objectString;
 	};
 
