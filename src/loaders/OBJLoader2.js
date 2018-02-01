@@ -26,7 +26,7 @@ THREE.OBJLoader2 = (function () {
 
 		this.workerSupport = null;
 		this.terminateWorkerOnLoad = true;
-	};
+	}
 
 	/**
 	 * Tells whether a material shall be created per smoothing group.

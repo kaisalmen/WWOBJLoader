@@ -9,118 +9,165 @@
  *
  */
 
-THREE.PCDLoader = function ( manager ) {
-	this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
-	this.builder = new THREE.LoaderSupport.Builder();
+THREE.PCDLoader = function ( manager, logger ) {
+	THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
 	this.workerSupport = null;
-	this.modelName = null;
 	var materials = this.builder.getMaterials();
 	var defaultPointMaterial = materials[ 'defaultPointMaterial' ];
 	defaultPointMaterial.color.setHex( Math.random() * 0xffffff );
 };
 
-THREE.PCDLoader.prototype = {
+THREE.PCDLoader.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
+THREE.PCDLoader.prototype.constructor = THREE.PCDLoader;
 
-	constructor: THREE.PCDLoader,
+THREE.PCDLoader.prototype.load = function ( url, onLoad, onProgress, onError, useAsync ) {
+	var fileLoader = new THREE.FileLoader( this.manager );
+	fileLoader.setPath( this.path );
+	fileLoader.setResponseType( 'arraybuffer' );
 
-	setModelName: function( modelName ) {
-		this.modelName = THREE.LoaderSupport.Validator.verifyInput( modelName, 'noname' );
-	},
+	var scope = this;
+	fileLoader.load( url, function ( data ) {
 
-	load: function ( url, onLoad, onProgress, onError, useAsync ) {
-		var scope = this;
-		var loader = new THREE.FileLoader( scope.manager );
-		loader.setResponseType( 'arraybuffer' );
-		loader.load( url, function ( data ) {
+		if ( useAsync ) {
 
-			if ( useAsync ) {
+			scope.parseAsync( data, onLoad );
 
-				scope.parseAsync( data, onLoad );
+		} else {
+
+			onLoad( scope.parse( data, url ) );
+
+		}
+
+	}, onProgress, onError );
+
+};
+
+THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
+	var Validator =THREE.LoaderSupport.Validator;
+	THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
+	if ( Validator.isValid( workerSupportExternal ) ) this.workerSupport = workerSupportExternal;
+
+	var checkFiles = function ( resources ) {
+		if ( resources.length < 1 ) return null;
+		var resource = resources[ 0 ];
+		if ( ! Validator.isValid( resource.name ) ) return null;
+
+		var result;
+		if ( Validator.isValid( resource.content ) ) {
+
+			if ( resource.extension === 'PCD' ) {
+
+				// fast-fail on bad type
+				if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+				result = resource;
 
 			} else {
 
-				onLoad( scope.parse( data, url ) );
+				throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
 
 			}
 
-		}, onProgress, onError );
+		} else {
 
-	},
+			// fast-fail on bad type
+			if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+			if ( resource.extension === 'PCD' ) {
 
-	run: function ( prepData, workerSupportExternal ) {
-		if ( THREE.LoaderSupport.Validator.isValid( prepData ) ) {
+				result = resource;
 
-			this.setModelName( prepData.modelName );
-			this.builder.setMaterials( prepData.materials );
+			} else {
+
+				throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
+			}
+		}
+		return result;
+	};
+
+	var available = checkFiles( prepData.resources );
+	if ( Validator.isValid( available.content ) ) {
+
+		if ( prepData.useAsync ) {
+
+			this.parseAsync( available.content, this.callbacks.onLoad );
+
+		} else {
+
+			this.parse( available.content );
 
 		}
-	},
 
-	parse: function ( data ) {
-		var scope = this;
-		var parser = new THREE.PCDLoader.Parser();
+	} else {
 
-		var loaderRootNode = null;
-		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.processPayload( payload );
-			// no mesh alteration, therefore short-cut
-			loaderRootNode = meshes[ 0 ];
-		};
-		parser.setCallbackBuilder( onMeshLoaded );
+		this.setPath( available.path );
+		this.load( available.name, this.callbacks.onLoad, null, null, null, prepData.useAsync );
 
-		// parse header (always ascii format)
-		parser.parse( data );
-
-		return loaderRootNode;
-	},
-
-	parseAsync: function ( content, onLoad ) {
-		var scope = this;
-
-		var loaderRootNode = null;
-		var scopedOnLoad = function () {
-			onLoad( loaderRootNode );
-		};
-		var scopedOnMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.processPayload( payload );
-			// no mesh alteration, therefore short-cut
-			loaderRootNode = meshes[ 0 ];
-		};
-
-		this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
-			var workerCode = '';
-			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by PCDLoader buildCode.\n';
-			workerCode += '  */\n\n';
-			workerCode += 'THREE = {\n\tLoaderSupport: {},\n\tPCDLoader: {}\n};\n\n';
-			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
-			workerCode += funcBuildObject( 'THREE.LoaderUtils', THREE.LoaderUtils );
-			workerCode += funcBuildSingleton( 'THREE.PCDLoader.Parser', THREE.PCDLoader.Parser, 'Parser' );
-
-			return workerCode;
-		};
-		this.workerSupport.validate( buildCode, 'THREE.PCDLoader.Parser' );
-		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
-		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
-
-		var materialNames = [];
-		this.workerSupport.run(
-			{
-				params: {},
-				logger: {},
-				materials: {
-					// in async case only material names are supplied to parser
-					materials: materialNames
-				},
-				data: {
-					input: content,
-					options: null
-				}
-			}
-		);
 	}
+};
 
+THREE.PCDLoader.prototype.parse = function ( data ) {
+	var scope = this;
+	var parser = new THREE.PCDLoader.Parser();
+
+	var loaderRootNode = null;
+	var onMeshLoaded = function ( payload ) {
+		var meshes = scope.builder.processPayload( payload );
+		// no mesh alteration, therefore short-cut
+		loaderRootNode = meshes[ 0 ];
+	};
+	parser.setCallbackBuilder( onMeshLoaded );
+
+	// parse header (always ascii format)
+	parser.parse( data );
+
+	return loaderRootNode;
+};
+
+THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
+	var scope = this;
+
+	var loaderRootNode = null;
+	var scopedOnLoad = function () {
+		onLoad( loaderRootNode );
+	};
+	var scopedOnMeshLoaded = function ( payload ) {
+		var meshes = scope.builder.processPayload( payload );
+		// no mesh alteration, therefore short-cut
+		loaderRootNode = meshes[ 0 ];
+	};
+
+	this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
+	var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
+		var workerCode = '';
+		workerCode += '/**\n';
+		workerCode += '  * This code was constructed by PCDLoader buildCode.\n';
+		workerCode += '  */\n\n';
+		workerCode += 'THREE = {\n\tLoaderSupport: {},\n\tPCDLoader: {}\n};\n\n';
+		workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
+		workerCode += funcBuildObject( 'THREE.LoaderUtils', THREE.LoaderUtils );
+		workerCode += funcBuildSingleton( 'THREE.PCDLoader.Parser', THREE.PCDLoader.Parser, 'Parser' );
+
+		return workerCode;
+	};
+	this.workerSupport.validate( buildCode, 'THREE.PCDLoader.Parser' );
+	this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
+	if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
+
+	var materialNames = [];
+	this.workerSupport.run(
+		{
+			params: {},
+			logger: {},
+			materials: {
+				// in async case only material names are supplied to parser
+				materials: materialNames
+			},
+			data: {
+				input: content,
+				options: null
+			}
+		}
+	);
 };
 
 

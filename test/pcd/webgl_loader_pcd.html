@@ -52,6 +52,7 @@
 		<script src="../../node_modules/three/examples/js/libs/stats.min.js"></script>
 
 		<script src="../../src/loaders/support/LoaderCommons.js"></script>
+		<script src="../../src/loaders/support/LoaderBase.js"></script>
 		<script src="../../src/loaders/support/LoaderBuilder.js"></script>
 		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
 		<script src="../../src/loaders/PCDLoader.js"></script>
@@ -96,7 +97,7 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
-
+/*
 				var loader = new THREE.PCDLoader();
 				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', function ( mesh ) {
 
@@ -107,6 +108,25 @@
 					controls.update();
 
 				}, null, null, true );
+*/
+				prepData = new THREE.LoaderSupport.PrepData( 'Zaghetto' );
+				pivot = new THREE.Object3D();
+				pivot.position.set( 0, 0, 0 );
+				prepData.setStreamMeshesTo( pivot );
+				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/pcd/binary/Zaghetto.pcd', 'PCD' ) );
+				prepData.setUseAsync( true );
+				var callbacks = prepData.getCallbacks();
+				callbacks.setCallbackOnLoad( function ( mesh ) {
+					scene.add( mesh );
+					var center = mesh.geometry.boundingSphere.center;
+					mesh.name = 'Zaghetto.pcd';
+					mesh.position.set( 0.5, 0, 0 );
+					controls.target.set( center.x, center.y, center.z);
+					controls.update();
+				} );
+
+				var loader = new THREE.PCDLoader();
+				loader.run( prepData );
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
