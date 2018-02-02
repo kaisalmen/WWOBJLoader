@@ -11,7 +11,11 @@
 
 THREE.PCDLoader = function ( manager, logger ) {
 	THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
+
+	this.fileLoader = new THREE.FileLoader( this.manager );
+	this.fileLoader.setResponseType( 'arraybuffer' );
 	this.workerSupport = null;
+
 	var materials = this.builder.getMaterials();
 	var defaultPointMaterial = materials[ 'defaultPointMaterial' ];
 	defaultPointMaterial.color.setHex( Math.random() * 0xffffff );
@@ -21,12 +25,10 @@ THREE.PCDLoader.prototype = Object.create( THREE.LoaderSupport.LoaderBase.protot
 THREE.PCDLoader.prototype.constructor = THREE.PCDLoader;
 
 THREE.PCDLoader.prototype.load = function ( url, onLoad, onProgress, onError, useAsync ) {
-	var fileLoader = new THREE.FileLoader( this.manager );
-	fileLoader.setPath( this.path );
-	fileLoader.setResponseType( 'arraybuffer' );
-
 	var scope = this;
-	fileLoader.load( url, function ( data ) {
+
+	this.fileLoader.setPath( this.path );
+	this.fileLoader.load( url, function ( data ) {
 
 		if ( useAsync ) {
 
@@ -34,7 +36,15 @@ THREE.PCDLoader.prototype.load = function ( url, onLoad, onProgress, onError, us
 
 		} else {
 
-			onLoad( scope.parse( data, url ) );
+			onLoad(
+				{
+					detail: {
+						loaderRootNode: scope.parse( data ),
+						modelName: scope.modelName,
+						instanceNo: scope.instanceNo
+					}
+				}
+			);
 
 		}
 
@@ -100,7 +110,7 @@ THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
 	} else {
 
 		this.setPath( available.path );
-		this.load( available.name, this.callbacks.onLoad, null, null, null, prepData.useAsync );
+		this.load( available.name, this.callbacks.onLoad, null, null, prepData.useAsync );
 
 	}
 };
@@ -128,7 +138,15 @@ THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
 
 	var loaderRootNode = null;
 	var scopedOnLoad = function () {
-		onLoad( loaderRootNode );
+		onLoad(
+			{
+				detail: {
+					loaderRootNode: loaderRootNode,
+					modelName: scope.modelName,
+					instanceNo: scope.instanceNo
+				}
+			}
+		);
 	};
 	var scopedOnMeshLoaded = function ( payload ) {
 		var meshes = scope.builder.processPayload( payload );

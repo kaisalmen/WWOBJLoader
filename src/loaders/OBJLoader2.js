@@ -22,7 +22,8 @@ THREE.OBJLoader2 = (function () {
 		this.logger.logInfo( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
-		this.fileLoader = Validator.verifyInput( this.fileLoader, new THREE.FileLoader( this.manager ) );
+		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.fileLoader.setResponseType( 'arraybuffer' );
 
 		this.workerSupport = null;
 		this.terminateWorkerOnLoad = true;
@@ -77,7 +78,6 @@ THREE.OBJLoader2 = (function () {
 		}
 
 		this.fileLoader.setPath( this.path );
-		this.fileLoader.setResponseType( 'arraybuffer' );
 		this.fileLoader.load( url, function ( content ) {
 			if ( useAsync ) {
 

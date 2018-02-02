@@ -63,6 +63,7 @@
 
 			var container, stats;
 			var camera, controls, scene, renderer;
+			var models = [];
 
 			init();
 			animate();
@@ -97,18 +98,22 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
-/*
-				var loader = new THREE.PCDLoader();
-				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', function ( mesh ) {
 
+				var loader = new THREE.PCDLoader();
+				loader.setModelName( 'Zaghetto' );
+				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', function ( event ) {
+
+					var mesh = event.detail.loaderRootNode;
+					mesh.name = event.detail.modelName;
 					scene.add( mesh );
+					models.push( mesh );
+
 					var center = mesh.geometry.boundingSphere.center;
-					mesh.name = 'Zaghetto.pcd';
 					controls.target.set( center.x, center.y, center.z);
 					controls.update();
-
 				}, null, null, true );
-*/
+
+
 				prepData = new THREE.LoaderSupport.PrepData( 'Zaghetto' );
 				pivot = new THREE.Object3D();
 				pivot.position.set( 0, 0, 0 );
@@ -116,16 +121,15 @@
 				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/pcd/binary/Zaghetto.pcd', 'PCD' ) );
 				prepData.setUseAsync( true );
 				var callbacks = prepData.getCallbacks();
-				callbacks.setCallbackOnLoad( function ( mesh ) {
-					scene.add( mesh );
-					var center = mesh.geometry.boundingSphere.center;
-					mesh.name = 'Zaghetto.pcd';
+				callbacks.setCallbackOnLoad( function ( event ) {
+					var mesh = event.detail.loaderRootNode;
+					mesh.name = event.detail.modelName;
 					mesh.position.set( 0.5, 0, 0 );
-					controls.target.set( center.x, center.y, center.z);
-					controls.update();
+					scene.add( mesh );
+					models.push( mesh );
 				} );
 
-				var loader = new THREE.PCDLoader();
+				loader = new THREE.PCDLoader();
 				loader.run( prepData );
 
 				container = document.createElement( 'div' );
@@ -152,24 +156,27 @@
 
 			function keyboard ( ev ) {
 
-				var ZaghettoMesh = scene.getObjectByName( 'Zaghetto.pcd' );
 
-				switch ( ev.key || String.fromCharCode( ev.keyCode || ev.charCode ) ) {
+				var model;
+				for ( var name in models ) {
 
-					case '+':
-						ZaghettoMesh.material.size*=1.2;
-						ZaghettoMesh.material.needsUpdate = true;
-						break;
+					model = models[ name ];
+					switch ( ev.key || String.fromCharCode( ev.keyCode || ev.charCode ) ) {
+						case '+':
+							model.material.size *= 1.2;
+							model.material.needsUpdate = true;
+							break;
 
-					case '-':
-						ZaghettoMesh.material.size/=1.2;
-						ZaghettoMesh.material.needsUpdate = true;
-						break;
+						case '-':
+							model.material.size /= 1.2;
+							model.material.needsUpdate = true;
+							break;
 
-					case 'c':
-						ZaghettoMesh.material.color.setHex(Math.random()*0xffffff);
-						ZaghettoMesh.material.needsUpdate = true;
-						break;
+						case 'c':
+							model.material.color.setHex( Math.random() * 0xffffff );
+							model.material.needsUpdate = true;
+							break;
+					}
 
 				}
 
