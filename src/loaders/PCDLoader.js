@@ -1,7 +1,7 @@
 /**
  * @author Filipe Caixeta / http://filipecaixeta.com.br
  * @author Mugen87 / https://github.com/Mugen87
- * @author Kai Salmen / https://kaisalmen.de / https://github.com/kaisalmen.de
+ * @author Kai Salmen / https://kaisalmen.de / https://github.com/kaisalmen
  *
  * Description: A THREE loader for PCD ascii and binary files.
  *
@@ -119,29 +119,30 @@ THREE.PCDLoader.prototype.parse = function ( data ) {
 	var scope = this;
 	var parser = new THREE.PCDLoader.Parser();
 
-	var loaderRootNode = null;
 	var onMeshLoaded = function ( payload ) {
 		var meshes = scope.builder.processPayload( payload );
 		// no mesh alteration, therefore short-cut
-		loaderRootNode = meshes[ 0 ];
+		var mesh;
+		for ( var i in meshes ) {
+			mesh = meshes[ i ];
+			scope.loaderRootNode.add( mesh );
+		}
 	};
 	parser.setCallbackBuilder( onMeshLoaded );
 
 	// parse header (always ascii format)
 	parser.parse( data );
 
-	return loaderRootNode;
+	return this.loaderRootNode;
 };
 
 THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
 	var scope = this;
-
-	var loaderRootNode = null;
 	var scopedOnLoad = function () {
 		onLoad(
 			{
 				detail: {
-					loaderRootNode: loaderRootNode,
+					loaderRootNode: scope.loaderRootNode,
 					modelName: scope.modelName,
 					instanceNo: scope.instanceNo
 				}
@@ -150,8 +151,11 @@ THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
 	};
 	var scopedOnMeshLoaded = function ( payload ) {
 		var meshes = scope.builder.processPayload( payload );
-		// no mesh alteration, therefore short-cut
-		loaderRootNode = meshes[ 0 ];
+		var mesh;
+		for ( var i in meshes ) {
+			mesh = meshes[ i ];
+			scope.loaderRootNode.add( mesh );
+		}
 	};
 
 	this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
@@ -430,7 +434,6 @@ THREE.PCDLoader.Parser.prototype = {
 					normals: normalFA,
 					uvs: null
 				},
-				computeBoundingSphere: true,
 				// 0: mesh, 1: line, 2: point
 				geometryType: 2
 			},

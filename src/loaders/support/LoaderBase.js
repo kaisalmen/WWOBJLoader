@@ -23,7 +23,7 @@ THREE.LoaderSupport.LoaderBase = (function () {
 		this.loaderRootNode = new THREE.Group();
 		this.builder = new THREE.LoaderSupport.Builder( this.logger );
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-	};
+	}
 
 	LoaderBase.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {

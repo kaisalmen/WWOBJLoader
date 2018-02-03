@@ -97,40 +97,6 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-
-				var loader = new THREE.PCDLoader();
-				loader.setModelName( 'Zaghetto' );
-				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', function ( event ) {
-
-					var mesh = event.detail.loaderRootNode;
-					mesh.name = event.detail.modelName;
-					scene.add( mesh );
-					models.push( mesh );
-
-					var center = mesh.geometry.boundingSphere.center;
-					controls.target.set( center.x, center.y, center.z);
-					controls.update();
-				}, null, null, true );
-
-
-				prepData = new THREE.LoaderSupport.PrepData( 'Zaghetto' );
-				pivot = new THREE.Object3D();
-				pivot.position.set( 0, 0, 0 );
-				prepData.setStreamMeshesTo( pivot );
-				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/pcd/binary/Zaghetto.pcd', 'PCD' ) );
-				prepData.setUseAsync( true );
-				var callbacks = prepData.getCallbacks();
-				callbacks.setCallbackOnLoad( function ( event ) {
-					var mesh = event.detail.loaderRootNode;
-					mesh.name = event.detail.modelName;
-					mesh.position.set( 0.5, 0, 0 );
-					scene.add( mesh );
-					models.push( mesh );
-				} );
-
-				loader = new THREE.PCDLoader();
-				loader.run( prepData );
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -143,6 +109,42 @@
 
 				window.addEventListener('keypress', keyboard);
 
+				var integrateIntoScene =  function ( event ) {
+					var mesh = event.detail.loaderRootNode;
+					mesh.name = event.detail.modelName;
+					scene.add( mesh );
+
+					var child;
+					for ( var name in mesh.children ) {
+
+						child = mesh.children[ name ];
+						models.push( child );
+
+					}
+				};
+
+				// test async load
+				var loader = new THREE.PCDLoader();
+				var pivotA = new THREE.Object3D();
+				pivotA.position.set( 0.5, -0.66, 0 );
+				pivotA.rotation.z = Math.PI / 2;
+				loader.setModelName( 'Zaghetto' );
+				loader.setStreamMeshesTo( pivotA );
+				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', integrateIntoScene, null, null, true );
+
+
+				// test async run
+				loader = new THREE.PCDLoader();
+				prepData = new THREE.LoaderSupport.PrepData( 'Zaghetto' );
+				var pivotB = new THREE.Object3D();
+				pivotB.position.set( 0.5, -0.166, 0 );
+				pivotB.rotation.z = Math.PI / 2;
+				prepData.setStreamMeshesTo( pivotB );
+				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/pcd/binary/Zaghetto.pcd', 'PCD' ) );
+				prepData.setUseAsync( true );
+				var callbacks = prepData.getCallbacks();
+				callbacks.setCallbackOnLoad( integrateIntoScene );
+				loader.run( prepData );
 			}
 
 			function onWindowResize() {
