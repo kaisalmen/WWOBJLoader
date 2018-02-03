@@ -57,60 +57,27 @@ THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
 	THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
 	if ( Validator.isValid( workerSupportExternal ) ) this.workerSupport = workerSupportExternal;
 
-	var checkFiles = function ( resources ) {
-		if ( resources.length < 1 ) return null;
-		var resource = resources[ 0 ];
-		if ( ! Validator.isValid( resource.name ) ) return null;
+	var available = this.checkFiles( prepData.resources,
+		[ { ext: "pcd", type: "Uint8Array", ignore: false } ],
+		{ pcd: null }
+	);
 
-		var result;
-		if ( Validator.isValid( resource.content ) ) {
-
-			if ( resource.extension === 'PCD' ) {
-
-				// fast-fail on bad type
-				if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
-				result = resource;
-
-			} else {
-
-				throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-			}
-
-		} else {
-
-			// fast-fail on bad type
-			if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
-			if ( resource.extension === 'PCD' ) {
-
-				result = resource;
-
-			} else {
-
-				throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-			}
-		}
-		return result;
-	};
-
-	var available = checkFiles( prepData.resources );
-	if ( Validator.isValid( available.content ) ) {
+	if ( Validator.isValid( available.pcd.content ) ) {
 
 		if ( prepData.useAsync ) {
 
-			this.parseAsync( available.content, this.callbacks.onLoad );
+			this.parseAsync( available.pcd.content, this.callbacks.onLoad );
 
 		} else {
 
-			this.parse( available.content );
+			this.parse( available.pcd.content );
 
 		}
 
 	} else {
 
-		this.setPath( available.path );
-		this.load( available.name, this.callbacks.onLoad, null, null, prepData.useAsync );
+		this.setPath( available.pcd.path );
+		this.load( available.pcd.name, this.callbacks.onLoad, null, null, prepData.useAsync );
 
 	}
 };

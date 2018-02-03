@@ -113,7 +113,14 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
 		this._applyPrepData( prepData );
-		var available = this._checkFiles( prepData.resources );
+		var available = this.checkFiles( prepData.resources,
+			[
+				{ ext: "obj", type: "Uint8Array", ignore: false },
+				{ ext: "mtl", type: "String", ignore: false },
+				{ ext: "zip", type: "String", ignore: true }
+			],
+			{ mtl: null, obj: null }
+		);
 		if ( Validator.isValid( workerSupportExternal ) ) {
 
 			this.terminateWorkerOnLoad = false;
@@ -1194,64 +1201,6 @@ THREE.OBJLoader2 = (function () {
 
 		return Parser;
 	})();
-
-	OBJLoader2.prototype._checkFiles = function ( resources ) {
-		var resource;
-		var result = {
-			mtl: null,
-			obj: null
-		};
-		for ( var index in resources ) {
-
-			resource = resources[ index ];
-			if ( ! Validator.isValid( resource.name ) ) continue;
-			if ( Validator.isValid( resource.content ) ) {
-
-				if ( resource.extension === 'OBJ' ) {
-
-					// fast-fail on bad type
-					if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
-					result.obj = resource;
-
-				} else if ( resource.extension === 'MTL' && Validator.isValid( resource.name ) ) {
-
-					if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String ) ) throw 'Provided  content is not of type String! Aborting...';
-					result.mtl = resource;
-
-				} else if ( resource.extension === "ZIP" ) {
-					// ignore
-
-				} else {
-
-					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-				}
-
-			} else {
-
-				// fast-fail on bad type
-				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
-				if ( resource.extension === 'OBJ' ) {
-
-					result.obj = resource;
-
-				} else if ( resource.extension === 'MTL' ) {
-
-					result.mtl = resource;
-
-				} else if ( resource.extension === "ZIP" ) {
-					// ignore
-
-				} else {
-
-					throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
-
-				}
-			}
-		}
-
-		return result;
-	};
 
 	/**
 	 * Utility method for loading an mtl file according resource description. Provide url or content.
