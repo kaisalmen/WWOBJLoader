@@ -24,8 +24,6 @@
 			}
 
 			a { color: #d14826 }
-			.button { background:#999; color:#eee; padding:0.2em 0.5em; cursor:pointer }
-			.highlight { background:orange; color:#fff; }
 
 			span {
 				display: inline-block;
@@ -40,7 +38,7 @@
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>
 			<a href="http://pointclouds.org/documentation/tutorials/pcd_file_format.php#pcd-file-format" target="_blank" rel="noopener">PCD File format</a>
-			<div>PCD loader test by <a href="http://filipecaixeta.com.br" target="_blank" rel="noopener">Filipe Caixeta</a></div>
+			<div>PCD loader test (sync/async/run) by <a href="http://filipecaixeta.com.br" target="_blank" rel="noopener">Filipe Caixeta</a> / <a href="https://kaisalmen.de" target="_blank" rel="noopener">Kai Salmen</a></div>
 			<div>+/-: Increase/Decrease point size</div>
 			<div>c: Toggle color</div>
 		</div>
@@ -74,24 +72,10 @@
 
 				camera = new THREE.PerspectiveCamera( 15, window.innerWidth / window.innerHeight, 0.01, 40 );
 				camera.position.x = 0.4;
-				camera.position.z = -2;
-				camera.up.set(0,0,1);
+				camera.position.z = -3;
+				camera.up.set( 0, 0, 1 );
 
 				controls = new THREE.TrackballControls( camera );
-
-				controls.rotateSpeed = 2.0;
-				controls.zoomSpeed = 0.3;
-				controls.panSpeed = 0.2;
-
-				controls.noZoom = false;
-				controls.noPan = false;
-
-				controls.staticMoving = true;
-				controls.dynamicDampingFactor = 0.3;
-
-				controls.minDistance = 0.3;
-				controls.maxDistance = 0.3 * 100;
-
 				scene.add( camera );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -123,23 +107,33 @@
 					}
 				};
 
-				// test async load
+				// test sync load
 				var loader = new THREE.PCDLoader();
 				var pivotA = new THREE.Object3D();
-				pivotA.position.set( 0.5, -0.66, 0 );
+				pivotA.position.set( 0.5, -1.0, 0 );
 				pivotA.rotation.z = Math.PI / 2;
 				loader.setModelName( 'Zaghetto' );
 				loader.setStreamMeshesTo( pivotA );
-				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', integrateIntoScene, null, null, true );
+				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', integrateIntoScene, null, null, null, false );
+
+
+				// test async load
+				 loader = new THREE.PCDLoader();
+				var pivotB = new THREE.Object3D();
+				pivotB.position.set( 0.5, -0.3, 0 );
+				pivotB.rotation.z = Math.PI / 2;
+				loader.setModelName( 'Zaghetto' );
+				loader.setStreamMeshesTo( pivotB );
+				loader.load( '../../resource/pcd/binary/Zaghetto.pcd', integrateIntoScene, null, null, null, true );
 
 
 				// test async run
 				loader = new THREE.PCDLoader();
 				prepData = new THREE.LoaderSupport.PrepData( 'Zaghetto' );
-				var pivotB = new THREE.Object3D();
-				pivotB.position.set( 0.5, -0.166, 0 );
-				pivotB.rotation.z = Math.PI / 2;
-				prepData.setStreamMeshesTo( pivotB );
+				var pivotC = new THREE.Object3D();
+				pivotC.position.set( 0.5, 0.4, 0 );
+				pivotC.rotation.z = Math.PI / 2;
+				prepData.setStreamMeshesTo( pivotC );
 				prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/pcd/binary/Zaghetto.pcd', 'PCD' ) );
 				prepData.setUseAsync( true );
 				var callbacks = prepData.getCallbacks();
@@ -157,7 +151,6 @@
 			}
 
 			function keyboard ( ev ) {
-
 
 				var model;
 				for ( var name in models ) {

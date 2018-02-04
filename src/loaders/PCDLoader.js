@@ -9,6 +9,15 @@
  *
  */
 
+if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" is not available. "THREE.PCDLoader" requires it. Please include "LoaderSupport.js" in your HTML.' );
+
+/**
+ * Use this class to load PCD data from files or to parse PCD data from an arraybuffer
+ * @class
+ *
+ * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
+ * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
+ */
 THREE.PCDLoader = function ( manager, logger ) {
 	THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
 
@@ -24,45 +33,23 @@ THREE.PCDLoader = function ( manager, logger ) {
 THREE.PCDLoader.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 THREE.PCDLoader.prototype.constructor = THREE.PCDLoader;
 
-THREE.PCDLoader.prototype.load = function ( url, onLoad, onProgress, onError, useAsync ) {
-	var scope = this;
-
-	this.fileLoader.setPath( this.path );
-	this.fileLoader.load( url, function ( data ) {
-
-		if ( useAsync ) {
-
-			scope.parseAsync( data, onLoad );
-
-		} else {
-
-			onLoad(
-				{
-					detail: {
-						loaderRootNode: scope.parse( data ),
-						modelName: scope.modelName,
-						instanceNo: scope.instanceNo
-					}
-				}
-			);
-
-		}
-
-	}, onProgress, onError );
-
-};
-
+/**
+ * Run the loader according the provided instructions.
+ * @memberOf THREE.PCDLoader
+ *
+ * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
+ * @param {THREE.LoaderSupport.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
+ */
 THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
-	var Validator =THREE.LoaderSupport.Validator;
 	THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
-	if ( Validator.isValid( workerSupportExternal ) ) this.workerSupport = workerSupportExternal;
+	if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) this.workerSupport = workerSupportExternal;
 
 	var available = this.checkFiles( prepData.resources,
 		[ { ext: "pcd", type: "Uint8Array", ignore: false } ],
 		{ pcd: null }
 	);
 
-	if ( Validator.isValid( available.pcd.content ) ) {
+	if ( THREE.LoaderSupport.Validator.isValid( available.pcd.content ) ) {
 
 		if ( prepData.useAsync ) {
 
@@ -77,11 +64,17 @@ THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
 	} else {
 
 		this.setPath( available.pcd.path );
-		this.load( available.pcd.name, this.callbacks.onLoad, null, null, prepData.useAsync );
+		this.load( available.pcd.name, this.callbacks.onLoad, null, null, this.callbacks.onMeshAlter, prepData.useAsync );
 
 	}
 };
 
+/**
+ * Parses PCD data synchronously from arraybuffer.
+ * @memberOf THREE.PCDLoader
+ *
+ * @param {arraybuffer|string} data PCD data as Uint8Array
+ */
 THREE.PCDLoader.prototype.parse = function ( data ) {
 	var scope = this;
 	var parser = new THREE.PCDLoader.Parser();
@@ -103,7 +96,14 @@ THREE.PCDLoader.prototype.parse = function ( data ) {
 	return this.loaderRootNode;
 };
 
-THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
+/**
+ * Parses PCD content asynchronously from arraybuffer.
+ * @memberOf THREE.PCDLoader
+ *
+ * @param {arraybuffer} data PCD data as Uint8Array
+ * @param {callback} onLoad Called after worker successfully completed loading
+ */
+THREE.PCDLoader.prototype.parseAsync = function ( data, onLoad ) {
 	var scope = this;
 	var scopedOnLoad = function () {
 		onLoad(
@@ -152,7 +152,7 @@ THREE.PCDLoader.prototype.parseAsync = function ( content, onLoad ) {
 				materials: materialNames
 			},
 			data: {
-				input: content,
+				input: data,
 				options: null
 			}
 		}
