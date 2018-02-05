@@ -276,12 +276,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		if ( Validator.isValid( runnerImpl ) ) {
 
-			this.logger.logInfo( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runncer class for worker.' );
+			this.logger.logInfo( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runner class for worker.' );
 
 		} else {
 
 			runnerImpl = THREE.LoaderSupport.WorkerRunnerRefImpl;
-			this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runncer class for worker.' );
+			this.logger.logInfo( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runner class for worker.' );
 
 		}
 

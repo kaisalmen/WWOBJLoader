@@ -1,5 +1,5 @@
 /**
- * Base class to be used by loaders.
+ * Base class to be used by Loaders that provide load, parse, parseAsync and run
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
@@ -13,6 +13,9 @@ THREE.LoaderSupport.LoaderBase = (function () {
 	function LoaderBase( manager, logger ) {
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
+
+		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.fileLoader.setResponseType( 'arraybuffer' );
 
 		this.modelName = '';
 		this.instanceNo = 0;
@@ -143,7 +146,7 @@ THREE.LoaderSupport.LoaderBase = (function () {
 	};
 
 	/**
-	 * Use this convenient method to load an OBJ file at the given URL. By default the fileLoader uses an arraybuffer.
+	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
 	 * @memberOf THREE.LoaderSupport.LoaderBase
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
@@ -207,8 +210,16 @@ THREE.LoaderSupport.LoaderBase = (function () {
 
 	};
 
-	LoaderBase.prototype.checkFiles = function ( resources, fileDesc, result ) {
+	/**
+	 * Identify files or content of interest from an Array of {@link THREE.LoaderSupport.ResourceDescriptor}.
+	 *
+	 * @param {THREE.LoaderSupport.ResourceDescriptor[]} resources Array of {@link THREE.LoaderSupport.ResourceDescriptor}
+	 * @param Object fileDesc Object describing which resources are of interest (ext, type (string or UInt8Array) and ignore (boolean))
+	 * @returns {{}} Object with each "ext" and the corresponding {@link THREE.LoaderSupport.ResourceDescriptor}
+	 */
+	LoaderBase.prototype.checkResourceDescriptorFiles = function ( resources, fileDesc ) {
 		var resource, triple, i, found;
+		var result = {};
 
 		for ( var index in resources ) {
 

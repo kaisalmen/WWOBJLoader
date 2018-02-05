@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.3.1
+- Issue #10: Moved load and checkResourceDescriptorFiles from OBJLoader2 to LoaderBase. Re-use generic functions in other loaders
+
 ## 2.3.0
 - Issue #28: Parser Verification. Reduce overall complexity of Parser. It is now a single class. Missing 'g' statement don't cripple parsing.
 - Issue #31: Worker code still works when mangling is used during minification.

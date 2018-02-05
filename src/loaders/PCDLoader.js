@@ -16,13 +16,14 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
- * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
-THREE.PCDLoader = function ( manager, logger ) {
-	THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
+THREE.PCDLoader = function ( manager ) {
+	THREE.LoaderSupport.LoaderBase.call( this, manager );
 
-	this.fileLoader = new THREE.FileLoader( this.manager );
-	this.fileLoader.setResponseType( 'arraybuffer' );
+	var PCDLOADER_VERSION = '2.0.0';
+	console.info( 'Using THREE.PCDLOADER_VERSION version: ' + PCDLOADER_VERSION );
+
+	this.littleEndian = true;
 	this.workerSupport = null;
 
 	var materials = this.builder.getMaterials();
@@ -33,41 +34,14 @@ THREE.PCDLoader = function ( manager, logger ) {
 THREE.PCDLoader.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 THREE.PCDLoader.prototype.constructor = THREE.PCDLoader;
 
-/**
- * Run the loader according the provided instructions.
- * @memberOf THREE.PCDLoader
- *
- * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
- * @param {THREE.LoaderSupport.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
- */
-THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
-	THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
-	if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) this.workerSupport = workerSupportExternal;
-
-	var available = this.checkFiles( prepData.resources,
-		[ { ext: "pcd", type: "Uint8Array", ignore: false } ],
-		{ pcd: null }
-	);
-
-	if ( THREE.LoaderSupport.Validator.isValid( available.pcd.content ) ) {
-
-		if ( prepData.useAsync ) {
-
-			this.parseAsync( available.pcd.content, this.callbacks.onLoad );
-
-		} else {
-
-			this.parse( available.pcd.content );
-
-		}
-
-	} else {
-
-		this.setPath( available.pcd.path );
-		this.load( available.pcd.name, this.callbacks.onLoad, null, null, this.callbacks.onMeshAlter, prepData.useAsync );
-
-	}
+THREE.PCDLoader.prototype.setLittleEndian = function ( littleEndian ) {
+	this.littleEndian = littleEndian === true;
 };
+
+/*
+ * Load method is provided by THREE.LoaderSupport.LoaderBase.load.
+ */
+
 
 /**
  * Parses PCD data synchronously from arraybuffer.
@@ -78,6 +52,7 @@ THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
 THREE.PCDLoader.prototype.parse = function ( data ) {
 	var scope = this;
 	var parser = new THREE.PCDLoader.Parser();
+	parser.setLittleEndian( this.littleEndian );
 
 	var onMeshLoaded = function ( payload ) {
 		var meshes = scope.builder.processPayload( payload );
@@ -132,7 +107,6 @@ THREE.PCDLoader.prototype.parseAsync = function ( data, onLoad ) {
 		workerCode += '  * This code was constructed by PCDLoader buildCode.\n';
 		workerCode += '  */\n\n';
 		workerCode += 'THREE = {\n\tLoaderSupport: {},\n\tPCDLoader: {}\n};\n\n';
-		workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
 		workerCode += funcBuildObject( 'THREE.LoaderUtils', THREE.LoaderUtils );
 		workerCode += funcBuildSingleton( 'THREE.PCDLoader.Parser', THREE.PCDLoader.Parser, 'Parser' );
 
@@ -142,15 +116,12 @@ THREE.PCDLoader.prototype.parseAsync = function ( data, onLoad ) {
 	this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
 	if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
-	var materialNames = [];
 	this.workerSupport.run(
 		{
-			params: {},
-			logger: {},
-			materials: {
-				// in async case only material names are supplied to parser
-				materials: materialNames
+			params: {
+				littleEndian: this.littleEndian
 			},
+			// there is currently no need to send any material properties or logging config to the Parser
 			data: {
 				input: data,
 				options: null
@@ -159,7 +130,46 @@ THREE.PCDLoader.prototype.parseAsync = function ( data, onLoad ) {
 	);
 };
 
+/**
+ * Run the loader according the provided instructions.
+ * @memberOf THREE.PCDLoader
+ *
+ * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
+ * @param {THREE.LoaderSupport.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
+ */
+THREE.PCDLoader.prototype.run = function ( prepData, workerSupportExternal ) {
+	THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
+	if ( workerSupportExternal !== null && workerSupportExternal !== undefined ) this.workerSupport = workerSupportExternal;
 
+	var available = this.checkResourceDescriptorFiles( prepData.resources,
+		[ { ext: "pcd", type: "Uint8Array", ignore: false } ]
+	);
+
+	if ( available.pcd.content !== null && available.pcd.content !== undefined ) {
+
+		if ( prepData.useAsync ) {
+
+			this.parseAsync( available.pcd.content, this.callbacks.onLoad );
+
+		} else {
+
+			this.parse( available.pcd.content );
+
+		}
+
+	} else {
+
+		this.setPath( available.pcd.path );
+		this.load( available.pcd.name, this.callbacks.onLoad, null, null, this.callbacks.onMeshAlter, prepData.useAsync );
+
+	}
+};
+
+
+/**
+ * Isolated Parser that is put to the Worker in case of async use
+ * @constructor
+ */
 THREE.PCDLoader.Parser = function () {
 	this.littleEndian = true;
 	this.callbackBuilder = null;
@@ -169,9 +179,13 @@ THREE.PCDLoader.Parser.prototype = {
 
 	constructor: THREE.PCDLoader.Parser,
 
+	setLittleEndian: function ( littleEndian ) {
+		this.littleEndian = littleEndian;
+	},
+
 	setCallbackBuilder: function ( callbackBuilder ) {
+		if ( callbackBuilder === null || callbackBuilder === undefined ) throw 'Unable to run as no "builder" callback is set.';
 		this.callbackBuilder = callbackBuilder;
-		if ( ! THREE.LoaderSupport.Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 	},
 
 	parse: function ( data ) {
@@ -379,9 +393,10 @@ THREE.PCDLoader.Parser.prototype = {
 		}
 
 		var vertexFA = new Float32Array( position );
-		var normalFA = new Float32Array( normal );
-		var colorFA = new Float32Array( color );
+		var normalFA = normal.length > 0 ? new Float32Array( normal ) : null;
+		var colorFA = color.length > 0 ? new Float32Array( color ) : null;
 
+		// Global builder function will construct meshes from the supplied data
 		this.callbackBuilder(
 			{
 				cmd: 'meshData',
@@ -406,8 +421,8 @@ THREE.PCDLoader.Parser.prototype = {
 			},
 			[ vertexFA.buffer ],
 			null,
-			THREE.LoaderSupport.Validator.isValid( colorFA ) ? [ colorFA.buffer ] : null,
-			THREE.LoaderSupport.Validator.isValid( normalFA ) ? [ normalFA.buffer ] : null,
+			colorFA !== null ? [ colorFA.buffer ] : null,
+			normalFA !== null ? [ normalFA.buffer ] : null,
 			null
 		);
 	}

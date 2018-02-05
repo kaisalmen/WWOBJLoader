@@ -11,7 +11,7 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.3.0';
+	var OBJLOADER2_VERSION = '2.3.1';
 	var Validator = THREE.LoaderSupport.Validator;
 
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
@@ -22,8 +22,6 @@ THREE.OBJLoader2 = (function () {
 		this.logger.logInfo( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
-		this.fileLoader = new THREE.FileLoader( this.manager );
-		this.fileLoader.setResponseType( 'arraybuffer' );
 
 		this.workerSupport = null;
 		this.terminateWorkerOnLoad = true;
@@ -48,13 +46,12 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
 		this._applyPrepData( prepData );
-		var available = this.checkFiles( prepData.resources,
+		var available = this.checkResourceDescriptorFiles( prepData.resources,
 			[
 				{ ext: "obj", type: "Uint8Array", ignore: false },
 				{ ext: "mtl", type: "String", ignore: false },
 				{ ext: "zip", type: "String", ignore: true }
-			],
-			{ mtl: null, obj: null }
+			]
 		);
 		if ( Validator.isValid( workerSupportExternal ) ) {
 
@@ -327,8 +324,8 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
+			if ( ! THREE.LoaderSupport.Validator.isValid( callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 			this.callbackBuilder = callbackBuilder;
-			if ( ! THREE.LoaderSupport.Validator.isValid( this.callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
 		};
 
 		Parser.prototype.setCallbackProgress = function ( callbackProgress ) {
