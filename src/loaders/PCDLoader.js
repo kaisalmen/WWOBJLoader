@@ -34,6 +34,11 @@ THREE.PCDLoader = function ( manager ) {
 THREE.PCDLoader.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 THREE.PCDLoader.prototype.constructor = THREE.PCDLoader;
 
+/**
+ * Set if littleEndian should be used.
+ *
+ * @param littleEndian
+ */
 THREE.PCDLoader.prototype.setLittleEndian = function ( littleEndian ) {
 	this.littleEndian = littleEndian === true;
 };
@@ -44,10 +49,11 @@ THREE.PCDLoader.prototype.setLittleEndian = function ( littleEndian ) {
 
 
 /**
- * Parses PCD data synchronously from arraybuffer.
+ * Parses a PCD binary structure synchronously from given ArrayBuffer and returns a new Group containing
+ * the object. It is converted to Points with a BufferGeometry and a PointsMaterial.
  * @memberOf THREE.PCDLoader
  *
- * @param {arraybuffer|string} data PCD data as Uint8Array
+ * @param {ArrayBuffer} data PCD data as Uint8Array
  */
 THREE.PCDLoader.prototype.parse = function ( data ) {
 	var scope = this;
@@ -72,7 +78,9 @@ THREE.PCDLoader.prototype.parse = function ( data ) {
 };
 
 /**
- * Parses PCD content asynchronously from arraybuffer.
+ * Parses a PCD binary structure asynchronously from given ArrayBuffer. Calls onLoad once loading is complete.
+ * A new Group containing the object is passed to onLoad. The object is converted to Points with a BufferGeometry
+ * and a PointsMaterial.
  * @memberOf THREE.PCDLoader
  *
  * @param {arraybuffer} data PCD data as Uint8Array
@@ -131,7 +139,7 @@ THREE.PCDLoader.prototype.parseAsync = function ( data, onLoad ) {
 };
 
 /**
- * Run the loader according the provided instructions.
+ * Run the loader according the provided instructions. Used for batch-loading orchestrated by {THREE.LoaderSupport.WorkerDirector}
  * @memberOf THREE.PCDLoader
  *
  * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
