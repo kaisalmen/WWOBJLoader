@@ -29,7 +29,7 @@ THREE.LoaderSupport.Builder = (function () {
 		var defaultLineMaterial = new THREE.LineBasicMaterial();
 		defaultLineMaterial.name = 'defaultLineMaterial';
 
-		var defaultPointMaterial = new THREE.PointsMaterial( { size: 1, sizeAttenuation: false } );
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 1 } );
 		defaultPointMaterial.name = 'defaultPointMaterial';
 
 		var runtimeMaterials = {};
