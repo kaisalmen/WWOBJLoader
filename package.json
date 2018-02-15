@@ -1,11 +1,11 @@
 {
   "name": "wwobjloader2",
-  "version": "2.3.1",
+  "version": "2.3.2-dev",
   "versions": {
-    "loader_obj2": "2.3.1",
-    "loader_worker_director": "2.1.0",
-    "loader_worker_support": "2.1.2",
-    "loader_builder": "1.1.1"
+    "loader_obj2": "2.3.1-dev",
+    "loader_worker_director": "2.1.0-dev",
+    "loader_worker_support": "2.1.2-dev",
+    "loader_builder": "1.1.1-dev"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/OBJLoader2.js",
@@ -52,7 +52,11 @@
     "test/meshspray/main.html",
     "test/meshspray/main.min.html",
     "test/meshspray/main.src.html",
-    "test/meshspray/MeshSpray.js"
+    "test/meshspray/MeshSpray.js",
+    "test/objverify/gulpfile.js",
+    "test/objverify/verify.html",
+    "test/objverify/verify.mtl",
+    "test/objverify/verify.obj"
   ],
   "directories": {
     "resource": "resource",

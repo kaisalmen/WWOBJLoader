@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.3.2-dev
+- Added objverify to npm package
+
 ## 2.3.1
 - Issue #10: Moved load and checkResourceDescriptorFiles from OBJLoader2 to LoaderBase. Re-use generic functions in other loaders
 
