@@ -13,7 +13,7 @@
  */
 THREE.LoaderSupport.WorkerDirector = (function () {
 
-	var LOADER_WORKER_DIRECTOR_VERSION = '2.1.0-dev';
+	var LOADER_WORKER_DIRECTOR_VERSION = '2.1.1-dev';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
@@ -202,7 +202,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		this.workerDescription.classDef.call( loader, THREE.DefaultLoadingManager, this.logger );
+		classDef.call( loader, THREE.DefaultLoadingManager, this.logger );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';

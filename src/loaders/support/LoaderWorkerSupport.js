@@ -93,7 +93,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
  */
 THREE.LoaderSupport.WorkerSupport = (function () {
 
-	var WORKER_SUPPORT_VERSION = '2.1.2-dev';
+	var WORKER_SUPPORT_VERSION = '2.1.3-dev';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
@@ -388,11 +388,12 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		return objectString;
 	};
 
-	var buildSingleton = function ( fullName, object, internalName ) {
+	var buildSingleton = function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
 		var objectString = '';
 		var objectName = ( Validator.isValid( internalName ) ) ? internalName : object.name;
 
 		var funcString, objectPart, constructorString;
+		ignoreFunctions = Validator.verifyInput( ignoreFunctions, [] );
 		for ( var name in object.prototype ) {
 
 			objectPart = object.prototype[ name ];
@@ -404,25 +405,39 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			} else if ( typeof objectPart === 'function' ) {
 
-				funcString = objectPart.toString();
-				objectString += '\t' + objectName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+				if ( ignoreFunctions.indexOf( name ) < 0 ) {
+
+					funcString = objectPart.toString();
+					objectString += '\t' + objectName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+
+				}
 
 			}
 
 		}
 		objectString += '\treturn ' + objectName + ';\n';
 		objectString += '})();\n\n';
+
+		var inheritanceBlock = '';
+		if ( Validator.isValid( basePrototypeName ) ) {
+
+			inheritanceBlock += '\n';
+			inheritanceBlock += objectName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
+			inheritanceBlock += objectName + '.constructor = ' + objectName + ';\n';
+			inheritanceBlock += '\n';
+		}
 		if ( ! Validator.isValid( constructorString ) ) {
 
 			constructorString = fullName + ' = (function () {\n\n';
-			constructorString += '\t' + object.prototype.constructor.toString() + '\n\n';
+			constructorString += inheritanceBlock + '\t' + object.prototype.constructor.toString() + '\n\n';
 			objectString = constructorString + objectString;
 
 		} else {
 
-			objectString = fullName + ' = (function () {\n\n' + constructorString + objectString;
+			objectString = fullName + ' = (function () {\n\n' + inheritanceBlock + constructorString + objectString;
 
 		}
+
 		return objectString;
 	};
 

@@ -83,7 +83,8 @@ gulp.task( 'set-versions', function () {
 	.pipe( gulp.dest( "src/loaders/support" ) );
 } );
 
-gulp.task( 'bundle-loader-support', function () {
+
+gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
@@ -102,6 +103,7 @@ gulp.task( 'bundle-loader-support', function () {
 	.pipe( rename( { basename: 'LoaderSupport.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
 } );
+
 
 gulp.task( 'bundle-objloader2', function () {
 	var builtHeader = buildHeader();
@@ -659,7 +661,6 @@ gulp.task(
 		'clean-build',
 		'set-versions',
 		'bundle-loader-support',
-		'bundle-objloader2',
 		'create-docs',
 		'build-examples'
 	]

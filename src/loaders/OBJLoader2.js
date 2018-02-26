@@ -11,7 +11,7 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.3.1-dev';
+	var OBJLOADER2_VERSION = '2.3.2-dev';
 	var Validator = THREE.LoaderSupport.Validator;
 
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
@@ -508,6 +508,7 @@ THREE.OBJLoader2 = (function () {
 				}
 			};
 
+			var bufferLength, slashesCount, faceType;
 			switch ( buffer[ 0 ] ) {
 				case 'v':
 					this.vertices.push( parseFloat( buffer[ 1 ] ) );
@@ -534,41 +535,47 @@ THREE.OBJLoader2 = (function () {
 					break;
 
 				case 'f':
-					var slashesCount = countSlashes( slashSpacePattern, slashSpacePatternPointer );
-					var bufferLength = bufferPointer - 1;
+					slashesCount = countSlashes( slashSpacePattern, slashSpacePatternPointer );
+					bufferLength = bufferPointer - 1;
 
 					// "f vertex ..."
 					if ( slashesCount === 0 ) {
 
-						this.checkFaceType( 0 );
+						faceType = 0;
 
-						// "f vertex/uv ..."
+					// "f vertex/uv ..."
 					} else if  ( bufferLength === slashesCount * 2 ) {
 
-						this.checkFaceType( 1 );
+						faceType = 1;
 
-						// "f vertex/uv/normal ..."
+					// "f vertex/uv/normal ..."
 					} else if  ( bufferLength * 2 === slashesCount * 3 ) {
 
-						this.checkFaceType( 2 );
+						faceType = 2;
 
-						// "f vertex//normal ..."
+					// "f vertex//normal ..."
 					} else {
 
-						this.checkFaceType( 3 );
+						faceType = 3;
 
 					}
+					this.checkFaceType( faceType );
 					this.processFaces( buffer, bufferLength );
 					break;
 
 				case 'l':
-					this.checkFaceType( 4 );
-					this.processLinesOrPoints( buffer, bufferPointer, countSlashes( slashSpacePattern, slashSpacePatternPointer ) );
+					slashesCount = countSlashes( slashSpacePattern, slashSpacePatternPointer );
+					bufferLength = bufferPointer - 1;
+					faceType = ( bufferLength === slashesCount * 2 ) ? 4 : 5;
+					this.checkFaceType( faceType );
+					this.processFaces( buffer, bufferLength );
 					break;
 
 				case 'p':
-					this.checkFaceType( 5 );
-					this.processLinesOrPoints( buffer, bufferPointer, 0 );
+					bufferLength = bufferPointer - 1;
+					faceType = 6;
+					this.checkFaceType( faceType );
+					this.processFaces( buffer, bufferLength, 0 );
 					break;
 
 				case 's':
@@ -676,50 +683,77 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.processFaces = function ( buffer, bufferLength ) {
 			var i, length;
 
-			// "f vertex ..."
-			if ( this.rawMesh.faceType === 0 ) {
+			var faceType = this.rawMesh.faceType;
+			switch ( faceType ) {
 
-				for ( i = 2, length = bufferLength; i < length; i ++ ) {
+				// "f vertex ..."
+				case 0:
+					for ( i = 2, length = bufferLength; i < length; i ++ ) {
 
-					this.buildFace( buffer[ 1 ] );
-					this.buildFace( buffer[ i ] );
-					this.buildFace( buffer[ i + 1 ] );
+						this.buildFace( buffer[ 1 ] );
+						this.buildFace( buffer[ i ] );
+						this.buildFace( buffer[ i + 1 ] );
 
-				}
+					}
+					break;
 
 				// "f vertex/uv ..."
-			} else if  ( this.rawMesh.faceType === 1 ) {
+				case 1:
+					for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
-				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
+						this.buildFace( buffer[ 1 ], buffer[ 2 ] );
+						this.buildFace( buffer[ i ], buffer[ i + 1 ] );
+						this.buildFace( buffer[ i + 2 ], buffer[ i + 3 ] );
 
-					this.buildFace( buffer[ 1 ], buffer[ 2 ] );
-					this.buildFace( buffer[ i ], buffer[ i + 1 ] );
-					this.buildFace( buffer[ i + 2 ], buffer[ i + 3 ] );
-
-				}
+					}
+					break;
 
 				// "f vertex/uv/normal ..."
-			} else if  ( this.rawMesh.faceType === 2 ) {
+				case 2:
 
-				for ( i = 4, length = bufferLength - 3; i < length; i += 3 ) {
+					for ( i = 4, length = bufferLength - 3; i < length; i += 3 ) {
 
-					this.buildFace( buffer[ 1 ], buffer[ 2 ], buffer[ 3 ] );
-					this.buildFace( buffer[ i ], buffer[ i + 1 ], buffer[ i + 2 ] );
-					this.buildFace( buffer[ i + 3 ], buffer[ i + 4 ], buffer[ i + 5 ] );
+						this.buildFace( buffer[ 1 ], buffer[ 2 ], buffer[ 3 ] );
+						this.buildFace( buffer[ i ], buffer[ i + 1 ], buffer[ i + 2 ] );
+						this.buildFace( buffer[ i + 3 ], buffer[ i + 4 ], buffer[ i + 5 ] );
 
-				}
+					}
+					break;
 
 				// "f vertex//normal ..."
-			} else {
+				case 3:
 
-				for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
+					for ( i = 3, length = bufferLength - 2; i < length; i += 2 ) {
 
-					this.buildFace( buffer[ 1 ], undefined, buffer[ 2 ] );
-					this.buildFace( buffer[ i ], undefined, buffer[ i + 1 ] );
-					this.buildFace( buffer[ i + 2 ], undefined, buffer[ i + 3 ] );
+						this.buildFace( buffer[ 1 ], undefined, buffer[ 2 ] );
+						this.buildFace( buffer[ i ], undefined, buffer[ i + 1 ] );
+						this.buildFace( buffer[ i + 2 ], undefined, buffer[ i + 3 ] );
 
-				}
+					}
+					break;
 
+				// "l vertex/uv		vertex/uv 		..."
+				case 4:
+					for ( i = 1, length = bufferLength + 1; i < length; i += 2 ) {
+
+						this.buildFace( buffer[ i ], buffer[ i + 1 ] );
+
+					}
+					break;
+
+				// "l vertex		vertex 			..."
+				case 5:
+				// "p vertex		vertex 			..."
+				case 6:
+					for ( i = 1, length = bufferLength + 1; i < length; i ++ ) {
+
+						this.buildFace( buffer[ i ] );
+
+					}
+					break;
+
+				default:
+					break;
 			}
 		};
 
@@ -791,29 +825,6 @@ THREE.OBJLoader2 = (function () {
 
 			}
 			this.rawMesh.counts.faceCount++;
-		};
-
-		/*
-		 * Support for lines with or without texture or Points (just Vertex).
-		 * First element in indexArray is the line/point identification
-		 *
-		 * : "l vertex/uv		vertex/uv 		..."
-		 * 1: "l vertex			vertex 			..."
-		 */
-		Parser.prototype.processLinesOrPoints = function ( buffer, bufferPointer, slashCount ) {
-			var i = 1;
-			var length;
-			var bufferLength = bufferPointer - 1;
-
-			if ( bufferLength === slashCount * 2 ) {
-
-				for ( length = bufferPointer; i < length; i += 2 ) this.buildFace( buffer[ i ], buffer[ i + 1 ] );
-
-			} else {
-
-				for ( length = bufferPointer; i < length; i ++ ) this.buildFace( buffer[ i ] );
-
-			}
 		};
 
 		Parser.prototype.createRawMeshReport = function ( inputObjectCount ) {
@@ -960,7 +971,7 @@ THREE.OBJLoader2 = (function () {
 
 				} else {
 
-					materialName = this.rawMesh.faceType === 4 ? 'defaultLineMaterial' : 'defaultPointMaterial';
+					materialName = this.rawMesh.faceType === 6 ? 'defaultPointMaterial' : 'defaultLineMaterial';
 
 				}
 				materialOrg = this.materials[ materialNameOrg ];
@@ -1108,7 +1119,7 @@ THREE.OBJLoader2 = (function () {
 						uvs: uvFA
 					},
 					// 0: mesh, 1: line, 2: point
-					geometryType: this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 4 ) ? 1 : 2
+					geometryType: this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1
 				},
 				[ vertexFA.buffer ],
 				THREE.LoaderSupport.Validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
