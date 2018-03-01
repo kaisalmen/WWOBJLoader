@@ -106,7 +106,7 @@ THREE.OBJLoader2 = (function () {
 		this.logger.logTimeStart( 'OBJLoader2 parse: ' + this.modelName );
 
 		var parser = new Parser();
-		parser.setLogConfig( this.logger.enabled, this.logger.debug );
+		parser.setLogging( this.logger.enabled, this.logger.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
@@ -188,7 +188,6 @@ THREE.OBJLoader2 = (function () {
 			workerCode += '  */\n\n';
 			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
-			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
 			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.LoaderBase', THREE.LoaderSupport.LoaderBase );
 			workerCode += funcBuildSingleton( 'Parser', Parser );
 
@@ -213,7 +212,7 @@ THREE.OBJLoader2 = (function () {
 					useIndices: this.useIndices,
 					disregardNormals: this.disregardNormals
 				},
-				logger: {
+				logging: {
 					debug: this.logger.debug,
 					enabled: this.logger.enabled
 				},
@@ -287,7 +286,10 @@ THREE.OBJLoader2 = (function () {
 				totalBytes: 0
 			};
 
-			this.logger = new THREE.LoaderSupport.ConsoleLogger();
+			this.logging = {
+				enabled: true,
+				debug: false
+			};
 		}
 
 		Parser.prototype.resetRawMesh = function () {
@@ -336,15 +338,15 @@ THREE.OBJLoader2 = (function () {
 			this.callbackProgress = callbackProgress;
 		};
 
-		Parser.prototype.setLogConfig = function ( enabled, debug ) {
-			this.logger.setEnabled( enabled );
-			this.logger.setDebug( debug );
+		Parser.prototype.setLogging = function ( enabled, debug ) {
+			this.logging.enabled = enabled === true;
+			this.logging.debug = debug === true;
 		};
 
 		Parser.prototype.configure = function () {
 			this.pushSmoothingGroup( 1 );
 
-			if ( this.logger.isEnabled() ) {
+			if ( this.logging.enabled ) {
 
 				var matKeys = Object.keys( this.materials );
 				var matNames = ( matKeys.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
@@ -356,7 +358,7 @@ THREE.OBJLoader2 = (function () {
 					+ '\n\tdisregardNormals: ' + this.disregardNormals
 					+ '\n\tcallbackBuilderName: ' + this.callbackBuilder.name
 					+ '\n\tcallbackProgressName: ' + this.callbackProgress.name;
-				this.logger.logInfo( printedConfig );
+				console.info( printedConfig );
 			}
 		};
 
@@ -367,7 +369,7 @@ THREE.OBJLoader2 = (function () {
 		 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 		 */
 		Parser.prototype.parse = function ( arrayBuffer ) {
-			this.logger.logTimeStart( 'OBJLoader2.Parser.parse' );
+			if ( this.logging.enabled ) console.time( 'OBJLoader2.Parser.parse' );
 			this.configure();
 
 			var arrayBufferView = new Uint8Array( arrayBuffer );
@@ -413,7 +415,7 @@ THREE.OBJLoader2 = (function () {
 				}
 			}
 			this.finalizeParsing();
-			this.logger.logTimeEnd( 'OBJLoader2.Parser.parse' );
+			if ( this.logging.enabled ) console.timeEnd(  'OBJLoader2.Parser.parse' );
 		};
 
 		/**
@@ -423,7 +425,7 @@ THREE.OBJLoader2 = (function () {
 		 * @param {string} text OBJ data as string
 		 */
 		Parser.prototype.parseText = function ( text ) {
-			this.logger.logTimeStart( 'OBJLoader2.Parser.parseText' );
+			if ( this.logging.enabled ) console.time(  'OBJLoader2.Parser.parseText' );
 			this.configure();
 			this.legacyMode = true;
 			this.contentRef = text;
@@ -464,7 +466,7 @@ THREE.OBJLoader2 = (function () {
 				}
 			}
 			this.finalizeParsing();
-			this.logger.logTimeEnd( 'OBJLoader2.Parser.parseText' );
+			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount ) {
@@ -832,7 +834,7 @@ THREE.OBJLoader2 = (function () {
 					throw 'Vertex Colors were detected, but vertex count and color count do not match!';
 
 				}
-				if ( this.logger.isDebug() ) this.logger.logDebug( this.createRawMeshReport( this.inputObjectCount ) );
+				if ( this.logging.enabled && this.logging.debug ) console.debug( this.createRawMeshReport( this.inputObjectCount ) );
 				this.inputObjectCount++;
 
 				this.buildMesh( result );
@@ -910,7 +912,7 @@ THREE.OBJLoader2 = (function () {
 
 					var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 					materialOrg = this.materials[ defaultMaterialName ];
-					this.logger.logWarn( 'object_group "' + meshOutputGroup.objectName + '_' +
+					if ( this.logging.enabled ) console.warn( 'object_group "' + meshOutputGroup.objectName + '_' +
 						meshOutputGroup.groupName + '" was defined with unresolvable material "' +
 						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
 					materialNameOrg = defaultMaterialName;
@@ -1004,7 +1006,7 @@ THREE.OBJLoader2 = (function () {
 
 				}
 
-				if ( this.logger.isDebug() ) {
+				if ( this.logging.enabled && this.logging.debug ) {
 					var materialIndexLine = THREE.LoaderSupport.Validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
 					var createdReport = '\tOutput Object no.: ' + this.outputObjectCount +
 						'\n\t\tgroupName: ' + meshOutputGroup.groupName +
@@ -1019,7 +1021,7 @@ THREE.OBJLoader2 = (function () {
 						'\n\t\t#colors: ' + meshOutputGroup.colors.length / 3 +
 						'\n\t\t#uvs: ' + meshOutputGroup.uvs.length / 2 +
 						'\n\t\t#normals: ' + meshOutputGroup.normals.length / 3;
-					this.logger.logDebug( createdReport );
+					console.debug( createdReport );
 				}
 
 			}
@@ -1058,14 +1060,14 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.finalizeParsing = function () {
-			this.logger.logInfo( 'Global output object count: ' + this.outputObjectCount );
-			if ( this.processCompletedMesh() && this.logger.isEnabled() ) {
+			if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.outputObjectCount );
+			if ( this.processCompletedMesh() && this.logging.enabled ) {
 
 				var parserFinalReport = 'Overall counts: ' +
 					'\n\tVertices: ' + this.globalCounts.vertices +
 					'\n\tFaces: ' + this.globalCounts.faces +
 					'\n\tMultiple definitions: ' + this.globalCounts.doubleIndicesCount;
-				this.logger.logInfo( parserFinalReport );
+				console.info( parserFinalReport );
 
 			}
 		};
