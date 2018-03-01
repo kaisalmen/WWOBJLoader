@@ -239,6 +239,8 @@ THREE.OBJLoader2 = (function () {
 		function Parser() {
 			this.callbackProgress = null;
 			this.callbackBuilder = null;
+			this.contentRef = null;
+			this.legacyMode = false;
 
 			this.materials = {};
 			this.useAsync = false;
@@ -280,9 +282,11 @@ THREE.OBJLoader2 = (function () {
 				vertices: 0,
 				faces: 0,
 				doubleIndicesCount: 0,
+				lineByte: 0,
 				currentByte: 0,
 				totalBytes: 0
 			};
+
 			this.logger = new THREE.LoaderSupport.ConsoleLogger();
 		}
 
@@ -367,25 +371,23 @@ THREE.OBJLoader2 = (function () {
 			this.configure();
 
 			var arrayBufferView = new Uint8Array( arrayBuffer );
+			this.contentRef = arrayBufferView;
 			var length = arrayBufferView.byteLength;
 			this.globalCounts.totalBytes = length;
 			var buffer = new Array( 128 );
-			var separators = new Array( 16 );
 
-			for ( var code, word = '', bufferPointer = 0, separatorCount = 0, slashesCount = 0, i = 0; i < length; i++ ) {
+			for ( var code, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i++ ) {
 
 				code = arrayBufferView[ i ];
 				switch ( code ) {
 					// space
 					case 32:
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						separators[ separatorCount++ ] = 0;
 						word = '';
 						break;
 					// slash
 					case 47:
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						separators[ separatorCount++ ] = 1;
 						slashesCount++;
 						word = '';
 						break;
@@ -394,10 +396,10 @@ THREE.OBJLoader2 = (function () {
 					case 10:
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
+						this.globalCounts.lineByte = this.globalCounts.currentByte;
 						this.globalCounts.currentByte = i;
-						this.processLine( buffer, bufferPointer, slashesCount, separators );
+						this.processLine( buffer, bufferPointer, slashesCount );
 						bufferPointer = 0;
-						separatorCount = 0;
 						slashesCount = 0;
 						break;
 
@@ -423,25 +425,23 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.parseText = function ( text ) {
 			this.logger.logTimeStart( 'OBJLoader2.Parser.parseText' );
 			this.configure();
-
+			this.legacyMode = true;
+			this.contentRef = text;
 			var length = text.length;
 			this.globalCounts.totalBytes = length;
 			var buffer = new Array( 128 );
-			var separators = new Array( 16 );
 
-			for ( var char, word = '', bufferPointer = 0, separatorCount = 0, slashesCount = 0, i = 0; i < length; i++ ) {
+			for ( var char, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i++ ) {
 
 				char = text[ i ];
 				switch ( char ) {
 					case ' ':
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						separators[ separatorCount++ ] = 0;
 						word = '';
 						break;
 
 					case '/':
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
-						separators[ separatorCount++ ] = 1;
 						slashesCount++;
 						word = '';
 						break;
@@ -449,10 +449,10 @@ THREE.OBJLoader2 = (function () {
 					case '\n':
 						if ( word.length > 0 ) buffer[ bufferPointer++ ] = word;
 						word = '';
+						this.globalCounts.lineByte = this.globalCounts.currentByte;
 						this.globalCounts.currentByte = i;
-						this.processLine( buffer, bufferPointer, slashesCount, separators );
+						this.processLine( buffer, bufferPointer, slashesCount );
 						bufferPointer = 0;
-						separatorCount = 0;
 						slashesCount = 0;
 						break;
 
@@ -467,34 +467,28 @@ THREE.OBJLoader2 = (function () {
 			this.logger.logTimeEnd( 'OBJLoader2.Parser.parseText' );
 		};
 
-		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount, separators ) {
+		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount ) {
 			if ( bufferPointer < 1 ) return;
 
-			var concatStringBuffer = function ( buffer, bufferPointer, separators ) {
-				var concatBuffer = '';
-				if ( bufferPointer === 2 ) {
+			var reconstructString = function ( content, start, stop ) {
+				var line = '';
+				if ( stop > start ) {
 
-					concatBuffer = buffer[ 1 ];
+					var i;
+					if ( this.legacyMode ) {
 
-				} else {
+						for ( i = start; i < stop; i++ ) line += content[ i ];
 
-					var bufferLength = bufferPointer - 1;
-					var separatorCount = 1;
-					for ( var i = 1; i < bufferLength; i++ ) {
+					} else {
 
-						concatBuffer += buffer[ i ] + ( separators[ separatorCount++ ] === 0 ? ' ' : '/' );
+
+						for ( i = start; i < stop; i++ ) line += String.fromCharCode( content[ i ] );
 
 					}
-					concatBuffer += buffer[ bufferLength ];
+					line = line.trim();
 
 				}
-				return concatBuffer;
-			};
-
-			var flushStringBuffer = function ( buffer, bufferPointer ) {
-				for ( var i = 0; i < bufferPointer; i++ ) {
-					buffer[ i ] = '';
-				}
+				return line;
 			};
 
 			var bufferLength, length, i, lineDesignation;
@@ -584,57 +578,44 @@ THREE.OBJLoader2 = (function () {
 					if ( bufferLength === slashesCount * 2 )  {
 
 						this.checkFaceType( 4 );
-						for ( i = 1, length = bufferLength + 1; i < length; i += 2 ) {
-
-							this.buildFace( buffer[ i ], buffer[ i + 1 ] );
-
-						}
+						for ( i = 1, length = bufferLength + 1; i < length; i += 2 ) this.buildFace( buffer[ i ], buffer[ i + 1 ] );
 
 					} else {
 
 						this.checkFaceType( ( lineDesignation === 'l' ) ? 5 : 6  );
-						for ( i = 1, length = bufferLength + 1; i < length; i ++ ) {
-
-							this.buildFace( buffer[ i ] );
-
-						}
+						for ( i = 1, length = bufferLength + 1; i < length; i ++ ) this.buildFace( buffer[ i ] );
 
 					}
 					break;
 
 				case 's':
 					this.pushSmoothingGroup( buffer[ 1 ] );
-					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				case 'g':
 					// 'g' leads to creation of mesh if valid data (faces declaration was done before), otherwise only groupName gets set
 					this.processCompletedMesh();
-					this.rawMesh.groupName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, separators ), '' );
-					flushStringBuffer( buffer, bufferPointer );
+					this.rawMesh.groupName = reconstructString( this.contentRef, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
 					break;
 
 				case 'o':
 					// 'o' is pure meta-information and does not result in creation of new meshes
-					this.rawMesh.objectName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, separators ), '' );
-					flushStringBuffer( buffer, bufferPointer );
+					this.rawMesh.objectName = reconstructString( this.contentRef, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
 					break;
 
 				case 'mtllib':
-					this.rawMesh.mtllibName = THREE.LoaderSupport.Validator.verifyInput( concatStringBuffer( buffer, bufferPointer, separators ), '' );
-					flushStringBuffer( buffer, bufferPointer );
+					this.rawMesh.mtllibName = reconstructString( this.contentRef, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
 					break;
 
 				case 'usemtl':
-					var mtlName = concatStringBuffer( buffer, bufferPointer, separators );
-					if ( this.rawMesh.activeMtlName !== mtlName && THREE.LoaderSupport.Validator.isValid( mtlName ) ) {
+					var mtlName = reconstructString( this.contentRef, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
+					if ( mtlName !== '' && this.rawMesh.activeMtlName !== mtlName ) {
 
 						this.rawMesh.activeMtlName = mtlName;
 						this.rawMesh.counts.mtlCount++;
 						this.checkSubGroup();
 
 					}
-					flushStringBuffer( buffer, bufferPointer );
 					break;
 
 				default:
