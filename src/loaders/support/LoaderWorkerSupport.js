@@ -45,8 +45,6 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	WorkerRunnerRefImpl.prototype.processMessage = function ( payload ) {
-		var logEnabled = payload.logging.enabled;
-		var logDebug = payload.logging.enabled;
 		if ( payload.cmd === 'run' ) {
 
 			var callbacks = {
@@ -54,20 +52,20 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 					self.postMessage( payload );
 				},
 				callbackProgress: function ( text ) {
-					if ( logEnabled && logDebug ) console.debug( 'WorkerRunner: progress: ' + text );
+					if ( payload.logging.enabled && payload.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 				}
 			};
 
 			// Parser is expected to be named as such
 			var parser = new Parser();
-			if ( typeof parser[ 'setLogging' ] === 'function' ) parser.setLogging( logEnabled, logDebug );
+			if ( typeof parser[ 'setLogging' ] === 'function' ) parser.setLogging( payload.logging.enabled, payload.logging.debug );
 			this.applyProperties( parser, payload.params );
 			this.applyProperties( parser, payload.materials );
 			this.applyProperties( parser, callbacks );
 			parser.workerScope = self;
 			parser.parse( payload.data.input, payload.data.options );
 
-			if ( logEnabled ) console.log( 'WorkerRunner: Run complete!' );
+			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 
 			callbacks.callbackBuilder( {
 				cmd: 'complete',
@@ -102,6 +100,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		}
 
 		LoaderWorker.prototype._reset = function () {
+			this.logging = {
+				enabled: true,
+				debug: false
+			};
 			this.worker = null;
 			this.runnerImplName = null;
 			this.callbacks = {
@@ -111,10 +113,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.terminateRequested = false;
 			this.queuedMessage = null;
 			this.started = false;
-			this.logging = {
-				enabled: true,
-				debug: false
-			};
 		};
 
 		LoaderWorker.prototype.setLogging = function ( enabled, debug ) {
@@ -254,6 +252,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	function WorkerSupport() {
 		console.info( 'Using THREE.LoaderSupport.WorkerSupport version: ' + WORKER_SUPPORT_VERSION );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
 
 		// check worker support first
 		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
@@ -261,10 +263,6 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
 
 		this.loaderWorker = new LoaderWorker();
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
 	}
 
 	/**

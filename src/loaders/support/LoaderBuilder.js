@@ -8,17 +8,36 @@ THREE.LoaderSupport.Builder = (function () {
 	var LOADER_BUILDER_VERSION = '1.1.1';
 
 	var Validator = THREE.LoaderSupport.Validator;
-	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	function Builder( logger ) {
-		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
-		this.logger.logInfo( 'Using THREE.LoaderSupport.Builder version: ' + LOADER_BUILDER_VERSION );
+	function Builder() {
+		console.info( 'Using THREE.LoaderSupport.Builder version: ' + LOADER_BUILDER_VERSION );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
+
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.materials = [];
-		this._createDefaultMaterials();
 	}
 
-	Builder.prototype._createDefaultMaterials = function () {
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.LoaderSupport.Builder
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	Builder.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+	};
+
+	/**
+	 *
+	 * @memberOf THREE.LoaderSupport.Builder
+	 *
+	 */
+	Builder.prototype.init = function () {
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
@@ -281,7 +300,7 @@ THREE.LoaderSupport.Builder = (function () {
 
 			} else {
 
-				this.logger.logWarn( 'Requested material "' + materialNameOrg + '" is not available!' );
+				console.warn( 'Requested material "' + materialNameOrg + '" is not available!' );
 
 			}
 		}
@@ -297,7 +316,7 @@ THREE.LoaderSupport.Builder = (function () {
 				if ( Validator.isValid( materialJson ) ) {
 
 					material = loader.parse( materialJson );
-					this.logger.logInfo( 'De-serialized material with name "' + materialName + '" will be added.' );
+					if ( this.logging.enabled ) console.info( 'De-serialized material with name "' + materialName + '" will be added.' );
 					this.materials[ materialName ] = material;
 				}
 
@@ -311,7 +330,7 @@ THREE.LoaderSupport.Builder = (function () {
 			for ( materialName in materials ) {
 
 				material = materials[ materialName ];
-				this.logger.logInfo( 'Material with name "' + materialName + '" will be added.' );
+				if ( this.logging.enabled ) console.info( 'Material with name "' + materialName + '" will be added.' );
 				this.materials[ materialName ] = material;
 
 			}

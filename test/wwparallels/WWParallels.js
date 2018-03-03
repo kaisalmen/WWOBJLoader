@@ -25,9 +25,12 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.logger = new THREE.LoaderSupport.ConsoleLogger();
-		this.logger.setEnabled( false );
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2, this.logger );
+		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2 );
+		this.logging = {
+			enabled: false,
+			debug: false
+		}
+		this.workerDirector.setLogging( this.logging.enabled, this.logging.debug );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 
 		this.controls = null;
@@ -113,7 +116,7 @@ var WWParallels = (function () {
 		if ( Validator.isValid( content ) && Validator.isValid( content.detail ) ) output = content.detail.text;
 
 		output = Validator.verifyInput( output, '' );
-		this.logger.logInfo( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
+		if ( this.logging.enabled ) console.info( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
@@ -148,7 +151,7 @@ var WWParallels = (function () {
 			scope.allAssets.push( event.detail.loaderRootNode );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
-			scope.logger.logInfo( msg );
+			if ( scope.logging.enabled ) console.info( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
@@ -161,7 +164,7 @@ var WWParallels = (function () {
 
 			if ( scope.reportDonwload[ instanceNo ] ) {
 				var msg = 'Worker #' + instanceNo + ': ' + text;
-				scope.logger.logInfo( msg );
+				if ( scope.logging.enabled ) console.info( msg );
 
 				scope.feedbackArray[ instanceNo ] = msg;
 				scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
@@ -193,7 +196,7 @@ var WWParallels = (function () {
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 
 		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
-		this.logger.logInfo( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
+		if ( this.logging.enabled ) console.info( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
 
 		var modelPrepDatas = [];
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
@@ -262,7 +265,7 @@ var WWParallels = (function () {
 
 				if ( storedObject3d === object3d ) return;
 
-				scope.logger.logInfo( 'Removing ' + object3d.name );
+				if ( scope.logging.enabled ) console.info( 'Removing ' + object3d.name );
 				scope.scene.remove( object3d );
 
 				if ( object3d.hasOwnProperty( 'geometry' ) ) object3d.geometry.dispose();

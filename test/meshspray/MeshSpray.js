@@ -12,11 +12,7 @@ var MeshSpray = (function () {
 	function MeshSpray( manager ) {
 		THREE.LoaderSupport.LoaderBase.call( this, manager );
 		this.workerSupport = null;
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
-	};
+	}
 
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
 
@@ -31,10 +27,11 @@ var MeshSpray = (function () {
 			this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 
 		}
-
 		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.workerSupport.instanceNo );
 
 		this._applyPrepData( prepData );
+
+		this.builder.init();
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {
@@ -322,6 +319,7 @@ var MeshSprayApp = (function () {
 		var maxWebWorkers = 4;
 		var radius = 640;
 		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
+		workerDirector.setLogging( false, false );
 		workerDirector.setCrossOrigin( 'anonymous' );
 
 		var callbackOnLoad = function ( event ) {

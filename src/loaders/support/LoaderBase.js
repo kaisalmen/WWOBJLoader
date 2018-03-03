@@ -3,16 +3,17 @@
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
- * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
 THREE.LoaderSupport.LoaderBase = (function () {
 
 	var Validator = THREE.LoaderSupport.Validator;
-	var ConsoleLogger = THREE.LoaderSupport.ConsoleLogger;
 
-	function LoaderBase( manager, logger ) {
+	function LoaderBase( manager ) {
 		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
-		this.logger = Validator.verifyInput( logger, new ConsoleLogger() );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
 
 		this.fileLoader = new THREE.FileLoader( this.manager );
 		this.fileLoader.setResponseType( 'arraybuffer' );
@@ -24,13 +25,28 @@ THREE.LoaderSupport.LoaderBase = (function () {
 		this.disregardNormals = false;
 
 		this.loaderRootNode = new THREE.Group();
-		this.builder = new THREE.LoaderSupport.Builder( this.logger );
+		this.builder = new THREE.LoaderSupport.Builder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
+
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.LoaderSupport.LoaderBase
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	LoaderBase.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+	};
 
 	LoaderBase.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {
 
+			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
 			this.setModelName( prepData.modelName );
 			this.setStreamMeshesTo( prepData.streamMeshesTo );
 			this.builder.setMaterials( prepData.materials );
@@ -48,15 +64,6 @@ THREE.LoaderSupport.LoaderBase = (function () {
 		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
 
 		this.builder._setCallbacks( this.callbacks );
-	};
-
-	/**
-	 * Provides access to console logging wrapper.
-	 *
-	 * @returns {THREE.LoaderSupport.ConsoleLogger}
-	 */
-	LoaderBase.prototype.getLogger = function () {
-		return this.logger;
 	};
 
 	/**
@@ -142,7 +149,7 @@ THREE.LoaderSupport.LoaderBase = (function () {
 
 		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
 
-		this.logger.logDebug( content );
+		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
 	};
 
 	/**
@@ -178,7 +185,7 @@ THREE.LoaderSupport.LoaderBase = (function () {
 		if ( ! Validator.isValid( onError ) ) {
 			onError = function ( event ) {
 				var output = 'Error occurred while downloading "' + url + '"';
-				scope.logger.logError( output + ': ' + event );
+				console.error( output + ': ' + event );
 				scope.onProgress( 'error', output, -1 );
 			};
 		}

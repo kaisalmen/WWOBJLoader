@@ -7,7 +7,6 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  * @class
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
- * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
 THREE.OBJLoader2 = (function () {
 
@@ -17,9 +16,9 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
 	OBJLoader2.prototype.constructor = OBJLoader2;
 
-	function OBJLoader2( manager, logger ) {
-		THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
-		this.logger.logInfo( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
+	function OBJLoader2( manager ) {
+		THREE.LoaderSupport.LoaderBase.call( this, manager );
+		console.info( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
 		this.materialPerSmoothingGroup = false;
 
@@ -57,7 +56,8 @@ THREE.OBJLoader2 = (function () {
 
 			this.terminateWorkerOnLoad = false;
 			this.workerSupport = workerSupportExternal;
-			this.logger = workerSupportExternal.logger;
+			this.logging.enabled = this.workerSupport.logging.enabled;
+			this.logging.debug = this.workerSupport.logging.debug;
 
 		}
 		var scope = this;
@@ -103,10 +103,11 @@ THREE.OBJLoader2 = (function () {
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
-		this.logger.logTimeStart( 'OBJLoader2 parse: ' + this.modelName );
+		if ( this.logging.enabled ) console.time( 'OBJLoader2 parse: ' + this.modelName );
+		this.builder.init();
 
 		var parser = new Parser();
-		parser.setLogging( this.logger.enabled, this.logger.debug );
+		parser.setLogging( this.logging.enabled, this.logging.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
@@ -130,12 +131,12 @@ THREE.OBJLoader2 = (function () {
 
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
-			this.logger.logInfo( 'Parsing arrayBuffer...' );
+			if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
 			parser.parse( content );
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
-			this.logger.logInfo( 'Parsing text...' );
+			if ( this.logging.enabled ) console.nfo( 'Parsing text...' );
 			parser.parseText( content );
 
 		} else {
@@ -143,7 +144,7 @@ THREE.OBJLoader2 = (function () {
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
-		this.logger.logTimeEnd( 'OBJLoader2 parse: ' + this.modelName );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2 parse: ' + this.modelName );
 
 		return this.loaderRootNode;
 	};
@@ -156,7 +157,8 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} onLoad Called after worker successfully completed loading
 	 */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
-		this.logger.logTimeStart( 'OBJLoader2 parseAsync: ' + this.modelName );
+		if ( this.logging.enabled ) console.time( 'OBJLoader2 parseAsync: ' + this.modelName );
+		this.builder.init();
 
 		var scope = this;
 		var scopedOnLoad = function () {
@@ -169,7 +171,7 @@ THREE.OBJLoader2 = (function () {
 					}
 				}
 			);
-			scope.logger.logTimeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
+			if ( scope.logging.enabled ) console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		var scopedOnMeshLoaded = function ( payload ) {
 			var meshes = scope.builder.processPayload( payload );
@@ -180,7 +182,7 @@ THREE.OBJLoader2 = (function () {
 			}
 		};
 
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport( this.logger ) );
+		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
@@ -213,8 +215,8 @@ THREE.OBJLoader2 = (function () {
 					disregardNormals: this.disregardNormals
 				},
 				logging: {
-					debug: this.logger.debug,
-					enabled: this.logger.enabled
+					enabled: this.logging.enabled,
+					debug: this.logging.debug
 				},
 				materials: {
 					// in async case only material names are supplied to parser
@@ -1094,7 +1096,7 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin, materialOptions ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
-		if ( Validator.isValid( resource ) ) this.logger.logTimeStart( 'Loading MTL: ' + resource.name );
+		if ( Validator.isValid( resource ) && this.logging.enabled ) console.time( 'Loading MTL: ' + resource.name );
 
 		var materials = [];
 		var scope = this;
@@ -1114,7 +1116,7 @@ THREE.OBJLoader2 = (function () {
 				}
 			}
 
-			if ( Validator.isValid( resource ) ) scope.logger.logTimeEnd( 'Loading MTL: ' + resource.name );
+			if ( Validator.isValid( resource ) && scope.logging.enabled ) console.timeEnd( 'Loading MTL: ' + resource.name );
 			callbackOnLoad( materials, materialCreator );
 		};
 
@@ -1139,7 +1141,13 @@ THREE.OBJLoader2 = (function () {
 
 				var onError = function ( event ) {
 					var output = 'Error occurred while downloading "' + resource.url + '"';
-					scope.logger.logError( output, event instanceof ProgressEvent ? [ 'Status: ' + event.currentTarget.statusText ] : null );
+
+					if ( event instanceof ProgressEvent ) {
+
+						output += '\n' + 'ProgressEvent Status: ' + event.currentTarget.statusText;
+
+					}
+					console.error( output );
 					throw output;
 				};
 
