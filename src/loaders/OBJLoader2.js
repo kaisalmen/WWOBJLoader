@@ -13,18 +13,104 @@ THREE.OBJLoader2 = (function () {
 	var OBJLOADER2_VERSION = '2.3.2-dev';
 	var Validator = THREE.LoaderSupport.Validator;
 
-	OBJLoader2.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
-	OBJLoader2.prototype.constructor = OBJLoader2;
-
 	function OBJLoader2( manager ) {
-		THREE.LoaderSupport.LoaderBase.call( this, manager );
 		console.info( 'Using THREE.OBJLoader2 version: ' + OBJLOADER2_VERSION );
 
-		this.materialPerSmoothingGroup = false;
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
 
+		this.fileLoader = new THREE.FileLoader( this.manager );
+		this.fileLoader.setResponseType( 'arraybuffer' );
+
+		this.modelName = '';
+		this.instanceNo = 0;
+		this.path = '';
+		this.useIndices = false;
+		this.disregardNormals = false;
+		this.materialPerSmoothingGroup = false;
+		this.loaderRootNode = new THREE.Group();
+
+		this.builder = new THREE.LoaderSupport.Builder();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = null;
 		this.terminateWorkerOnLoad = true;
 	}
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	OBJLoader2.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+	};
+
+	/**
+	 * Set the name of the model.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {string} modelName
+	 */
+	OBJLoader2.prototype.setModelName = function ( modelName ) {
+		this.modelName = Validator.verifyInput( modelName, this.modelName );
+	};
+
+	/**
+	 * The URL of the base path.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {string} path URL
+	 */
+	OBJLoader2.prototype.setPath = function ( path ) {
+		this.path = Validator.verifyInput( path, this.path );
+	};
+
+	/**
+	 * Set the node where the loaded objects will be attached directly.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
+	 */
+	OBJLoader2.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
+	};
+
+	/**
+	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 */
+	OBJLoader2.prototype.setMaterials = function ( materials ) {
+		this.builder.setMaterials( materials );
+	};
+
+	/**
+	 * Instructs loaders to create indexed {@link THREE.BufferGeometry}.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {boolean} useIndices=false
+	 */
+	OBJLoader2.prototype.setUseIndices = function ( useIndices ) {
+		this.useIndices = useIndices === true;
+	};
+
+	/**
+	 * Tells whether normals should be completely disregarded and regenerated.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {boolean} disregardNormals=false
+	 */
+	OBJLoader2.prototype.setDisregardNormals = function ( disregardNormals ) {
+		this.disregardNormals = disregardNormals === true;
+	};
 
 	/**
 	 * Tells whether a material shall be created per smoothing group.
@@ -36,6 +122,106 @@ THREE.OBJLoader2 = (function () {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
 	};
 
+	OBJLoader2.prototype._setCallbacks = function ( callbacks ) {
+		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
+		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
+
+		this.builder._setCallbacks( this.callbacks );
+	};
+
+	/**
+	 * Announce feedback which is give to the registered callbacks.
+	 * @memberOf THREE.OBJLoader2
+	 * @private
+	 *
+	 * @param {string} type The type of event
+	 * @param {string} text Textual description of the event
+	 * @param {number} numericalValue Numerical value describing the progress
+	 */
+	OBJLoader2.prototype.onProgress = function ( type, text, numericalValue ) {
+		var content = Validator.isValid( text ) ? text: '';
+		var event = {
+			detail: {
+				type: type,
+				modelName: this.modelName,
+				instanceNo: this.instanceNo,
+				text: content,
+				numericalValue: numericalValue
+			}
+		};
+
+		if ( Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
+
+		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
+	};
+
+	/**
+	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
+	 * @memberOf THREE.OBJLoader2
+	 *
+	 * @param {string}  url A string containing the path/URL of the file to be loaded.
+	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
+	 * @param {boolean} [useAsync] If true, uses async loading with worker, if false loads data synchronously.
+	 */
+	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+		var scope = this;
+		if ( ! Validator.isValid( onProgress ) ) {
+			var numericalValueRef = 0;
+			var numericalValue = 0;
+			onProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
+
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
+
+					numericalValueRef = numericalValue;
+					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+					scope.onProgress( 'progressLoad', output, numericalValue );
+
+				}
+			};
+		}
+
+		if ( ! Validator.isValid( onError ) ) {
+			onError = function ( event ) {
+				var output = 'Error occurred while downloading "' + url + '"';
+				console.error( output + ': ' + event );
+				scope.onProgress( 'error', output, -1 );
+			};
+		}
+
+		this.fileLoader.setPath( this.path );
+		this.fileLoader.load( url, function ( content ) {
+			if ( useAsync ) {
+
+				scope.parseAsync( content, onLoad );
+
+			} else {
+
+				var callbacks = new THREE.LoaderSupport.Callbacks();
+				callbacks.setCallbackOnMeshAlter( onMeshAlter );
+				scope._setCallbacks( callbacks );
+				onLoad(
+					{
+						detail: {
+							loaderRootNode: scope.parse( content ),
+							modelName: scope.modelName,
+							instanceNo: scope.instanceNo
+						}
+					}
+				);
+
+			}
+
+		}, onProgress, onError );
+
+	};
+
 	/**
 	 * Run the loader according the provided instructions.
 	 * @memberOf THREE.OBJLoader2
@@ -45,7 +231,7 @@ THREE.OBJLoader2 = (function () {
 	 */
 	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
 		this._applyPrepData( prepData );
-		var available = this.checkResourceDescriptorFiles( prepData.resources,
+		var available = prepData.checkResourceDescriptorFiles( prepData.resources,
 			[
 				{ ext: "obj", type: "Uint8Array", ignore: false },
 				{ ext: "mtl", type: "String", ignore: false },
@@ -87,11 +273,17 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
-		THREE.LoaderSupport.LoaderBase.prototype._applyPrepData.call( this, prepData );
-
 		if ( Validator.isValid( prepData ) ) {
 
+			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
+			this.setModelName( prepData.modelName );
+			this.setStreamMeshesTo( prepData.streamMeshesTo );
+			this.builder.setMaterials( prepData.materials );
+			this.setUseIndices( prepData.useIndices );
+			this.setDisregardNormals( prepData.disregardNormals );
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
+
+			this._setCallbacks( prepData.getCallbacks() );
 
 		}
 	};
@@ -190,7 +382,6 @@ THREE.OBJLoader2 = (function () {
 			workerCode += '  */\n\n';
 			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
-			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.LoaderBase', THREE.LoaderSupport.LoaderBase );
 			workerCode += funcBuildSingleton( 'Parser', Parser );
 
 			return workerCode;

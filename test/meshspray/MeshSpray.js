@@ -6,13 +6,32 @@
 
 var MeshSpray = (function () {
 
-	MeshSpray.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
-	MeshSpray.prototype.constructor = MeshSpray;
+	var Validator = THREE.LoaderSupport.Validator;
 
 	function MeshSpray( manager ) {
-		THREE.LoaderSupport.LoaderBase.call( this, manager );
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
+
+		this.instanceNo = 0;
+		this.loaderRootNode = new THREE.Group();
+
+		this.builder = new THREE.LoaderSupport.Builder();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = null;
 	}
+
+	MeshSpray.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+	};
+
+	MeshSpray.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
+	};
 
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
 
@@ -91,6 +110,28 @@ var MeshSpray = (function () {
 			}
 		);
 	};
+
+	MeshSpray.prototype._applyPrepData = function ( prepData ) {
+		if ( Validator.isValid( prepData ) ) {
+
+			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
+			this.setStreamMeshesTo( prepData.streamMeshesTo );
+			this.builder.setMaterials( prepData.materials );
+			this._setCallbacks( prepData.getCallbacks() );
+
+		}
+	};
+
+	MeshSpray.prototype._setCallbacks = function ( callbacks ) {
+		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
+		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
+
+		this.builder._setCallbacks( this.callbacks );
+	};
+
+
 
 	var Parser  = ( function () {
 
