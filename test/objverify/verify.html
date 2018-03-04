@@ -29,7 +29,6 @@
 
 		<script src="../../src/loaders/support/LoaderCommons.js"></script>
 		<script src="../../src/loaders/support/LoaderBuilder.js"></script>
-		<script src="../../src/loaders/support/LoaderBase.js"></script>
 		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script>
@@ -112,7 +111,7 @@
 
 						objLoader2.setModelName( modelName );
 						objLoader2.setMaterials( materials );
-						objLoader2.getLogger().setDebug( true );
+						objLoader2.setLogging( true, false );
 						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null, false );
 					};
 					objLoader2.loadMtl( './verify.mtl', null, onLoadMtl, null, { invertTrProperty: false } );

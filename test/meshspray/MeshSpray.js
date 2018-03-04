@@ -6,13 +6,31 @@
 
 var MeshSpray = (function () {
 
-	MeshSpray.prototype = Object.create( THREE.LoaderSupport.LoaderBase.prototype );
-	MeshSpray.prototype.constructor = MeshSpray;
+	var Validator = THREE.LoaderSupport.Validator;
 
-	function MeshSpray( manager, logger ) {
-		THREE.LoaderSupport.LoaderBase.call( this, manager, logger );
+	function MeshSpray( manager ) {
+		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
+
+		this.instanceNo = 0;
+		this.loaderRootNode = new THREE.Group();
+
+		this.builder = new THREE.LoaderSupport.Builder();
+		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = null;
-		this.logger = new THREE.LoaderSupport.ConsoleLogger();
+	}
+
+	MeshSpray.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+	};
+
+	MeshSpray.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
+		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
 	};
 
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
@@ -20,17 +38,19 @@ var MeshSpray = (function () {
 		if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) {
 
 			this.workerSupport = workerSupportExternal;
-			this.logger = workerSupportExternal.logger;
+			this.logging.enabled = this.workerSupport.logging.enabled;
+			this.logging.debug = this.workerSupport.logging.debug;
 
 		} else {
 
 			this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 
 		}
-
-		this.logger.logTimeStart( 'MeshSpray' );
+		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.workerSupport.instanceNo );
 
 		this._applyPrepData( prepData );
+
+		this.builder.init();
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {
@@ -52,7 +72,7 @@ var MeshSpray = (function () {
 					}
 				}
 			);
-			scope.logger.logTimeEnd( 'MeshSpray' );
+			if ( scope.logging.enabled ) console.timeEnd( 'MeshSpray' + scope.workerSupport.instanceNo );
 		};
 
 		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
@@ -62,7 +82,6 @@ var MeshSpray = (function () {
 			workerCode += '  */\n\n';
 			workerCode += 'THREE.LoaderSupport = {};\n\n';
 			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
-			workerCode += funcBuildSingleton( 'THREE.LoaderSupport.ConsoleLogger', THREE.LoaderSupport.ConsoleLogger );
 			workerCode += funcBuildSingleton( 'Parser', Parser );
 
 			return workerCode;
@@ -80,9 +99,9 @@ var MeshSpray = (function () {
 				materials: {
 					serializedMaterials: this.builder.getMaterialsJSON()
 				},
-				logger: {
-					debug: this.logger.debug,
-					enabled: this.logger.enabled
+				logging: {
+					enabled: this.logging.enabled,
+					debug: this.logging.debug
 				},
 				data: {
 					input: null,
@@ -91,6 +110,28 @@ var MeshSpray = (function () {
 			}
 		);
 	};
+
+	MeshSpray.prototype._applyPrepData = function ( prepData ) {
+		if ( Validator.isValid( prepData ) ) {
+
+			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
+			this.setStreamMeshesTo( prepData.streamMeshesTo );
+			this.builder.setMaterials( prepData.materials );
+			this._setCallbacks( prepData.getCallbacks() );
+
+		}
+	};
+
+	MeshSpray.prototype._setCallbacks = function ( callbacks ) {
+		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
+		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
+		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
+
+		this.builder._setCallbacks( this.callbacks );
+	};
+
+
 
 	var Parser  = ( function () {
 
@@ -103,13 +144,16 @@ var MeshSpray = (function () {
 			this.quantity = 1;
 			this.callbackBuilder = null;
 			this.callbackProgress = null;
-			this.logger = new THREE.LoaderSupport.ConsoleLogger();
 			this.serializedMaterials = null;
+			this.logging = {
+				enabled: true,
+				debug: false
+			};
 		};
 
-		Parser.prototype.setLogConfig = function ( enabled, debug ) {
-			this.logger.setEnabled( enabled );
-			this.logger.setDebug( debug );
+		Parser.prototype.setLogging = function ( enabled, debug ) {
+			this.logging.enabled = enabled === true;
+			this.logging.debug = debug === true;
 		};
 
 		Parser.prototype.parse = function () {
@@ -228,7 +272,7 @@ var MeshSpray = (function () {
 				uvFA !== null ? [ uvFA.buffer ] : null
 			);
 
-			this.logger.logInfo( 'Global output object count: ' + this.globalObjectCount );
+			if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.globalObjectCount );
 		};
 
 		return Parser;
@@ -315,16 +359,16 @@ var MeshSprayApp = (function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		var logger = new THREE.LoaderSupport.ConsoleLogger( false );
-		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray, logger );
+		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
+		workerDirector.setLogging( false, false );
 		workerDirector.setCrossOrigin( 'anonymous' );
 
 		var callbackOnLoad = function ( event ) {
-			logger.logInfo( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerDirector.objectsCompleted + ')' );
+			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerDirector.objectsCompleted + ')' );
 		};
 		var reportProgress = function( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
-			logger.logInfo( event.detail.text );
+			console.info( event.detail.text );
 		};
 		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );

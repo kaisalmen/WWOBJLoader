@@ -28,146 +28,6 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
- * Logging wrapper for console.
- * @class
- *
- * @param {boolean} enabled=true Tell if logger is enabled.
- * @param {boolean} debug=false Toggle debug logging.
- */
-THREE.LoaderSupport.ConsoleLogger = (function () {
-
-	function ConsoleLogger( enabled, debug ) {
-		this.enabled = enabled !== false;
-		this.debug = debug === true;
-	}
-
-	/**
-	 * Enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {boolean} debug True or False
-	 */
-	ConsoleLogger.prototype.setDebug = function ( debug ) {
-		this.debug = debug === true;
-	};
-
-	/**
-	 * Returns if is enabled and debug.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @returns {boolean}
-	 */
-	ConsoleLogger.prototype.isDebug = function () {
-		return this.isEnabled() && this.debug;
-	};
-
-	/**
-	 * Enable or disable info, debug and time logging.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {boolean} enabled True or False
-	 */
-	ConsoleLogger.prototype.setEnabled = function ( enabled ) {
-		this.enabled = enabled === true;
-	};
-
-	/**
-	 * Returns if is enabled.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @returns {boolean}
-	 */
-	ConsoleLogger.prototype.isEnabled = function () {
-		return this.enabled;
-	};
-
-	/**
-	 * Log a debug message if enabled and debug is set.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} message Message to log
-	 * @param {string[]} additional Array of strings containing additional content to be logged
-	 *
-	 */
-	ConsoleLogger.prototype.logDebug = function ( message, additional ) {
-		if ( this.enabled && this.debug ) {
-
-			this._createStatement( message, 'Additional content:', additional, function ( output ) { console.debug( output ) } );
-
-		}
-	};
-
-	/**
-	 * Log an info message if enabled.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} message Message to log
-	 * @param {string[]} additional Array of strings containing additional content to be logged
-	 */
-	ConsoleLogger.prototype.logInfo = function ( message, additional ) {
-		if ( this.enabled ) {
-
-			this._createStatement( message, 'Additional content:', additional, function ( output ) { console.info( output ) } );
-
-		}
-	};
-
-	/**
-	 * Log a warn message (always).
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} message Message to log
-	 * @param {string[]} additional Array of strings containing additional content to be logged
-	 */
-	ConsoleLogger.prototype.logWarn = function ( message, additional ) {
-		this._createStatement( message, 'Additional content:', additional, function ( output ) { console.warn( output ) } );
-	};
-
-	/**
-	 * Log an error message (always).
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} message Message to log
-	 * @param {string[]} additional Array of strings containing additional content to be logged
-	 */
-	ConsoleLogger.prototype.logError = function ( message, additional ) {
-		this._createStatement( message, 'Additional content:', additional, function ( output ) { console.error( output ) } );
-	};
-
-	/**
-	 * Start time measurement with provided id.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} id Time identification
-	 */
-	ConsoleLogger.prototype.logTimeStart = function ( id ) {
-		if ( this.enabled ) console.time( id );
-	};
-
-	/**
-	 * Stop time measurement started with provided id.
-	 * @memberOf THREE.LoaderSupport.ConsoleLogger
-	 *
-	 * @param {string} id Time identification
-	 */
-	ConsoleLogger.prototype.logTimeEnd = function ( id ) {
-		if ( this.enabled ) console.timeEnd( id );
-	};
-
-	ConsoleLogger.prototype._createStatement = function ( message, addHeader, additional, logFunction ) {
-		var output = message;
-		if ( Array.isArray( additional ) ) {
-
-			output += '\n' + addHeader + '\n' + additional.join( '\n' );
-
-		}
-		logFunction( output );
-	};
-
-	return ConsoleLogger;
-})();
-
-/**
  * Callbacks utilized by loaders and builder.
  * @class
  */
@@ -331,6 +191,10 @@ THREE.LoaderSupport.PrepData = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function PrepData( modelName ) {
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.resources = [];
 		this.streamMeshesTo = null;
@@ -341,6 +205,18 @@ THREE.LoaderSupport.PrepData = (function () {
 		this.crossOrigin;
 		this.useAsync = false;
 	}
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.LoaderSupport.PrepData
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	PrepData.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+	};
 
 	/**
 	 * Set the node where the loaded objects will be attached directly.
@@ -439,6 +315,78 @@ THREE.LoaderSupport.PrepData = (function () {
 		clone.crossOrigin = this.crossOrigin;
 		clone.useAsync = this.useAsync;
 		return clone;
+	};
+
+
+	/**
+	 * Identify files or content of interest from an Array of {@link THREE.LoaderSupport.ResourceDescriptor}.
+	 * @memberOf THREE.LoaderSupport.PrepData
+	 *
+	 * @param {THREE.LoaderSupport.ResourceDescriptor[]} resources Array of {@link THREE.LoaderSupport.ResourceDescriptor}
+	 * @param Object fileDesc Object describing which resources are of interest (ext, type (string or UInt8Array) and ignore (boolean))
+	 * @returns {{}} Object with each "ext" and the corresponding {@link THREE.LoaderSupport.ResourceDescriptor}
+	 */
+	PrepData.prototype.checkResourceDescriptorFiles = function ( resources, fileDesc ) {
+		var resource, triple, i, found;
+		var result = {};
+
+		for ( var index in resources ) {
+
+			resource = resources[ index ];
+			found = false;
+			if ( ! Validator.isValid( resource.name ) ) continue;
+			if ( Validator.isValid( resource.content ) ) {
+
+				for ( i = 0; i < fileDesc.length && !found; i++ ) {
+
+					triple = fileDesc[ i ];
+					if ( resource.extension.toLowerCase() === triple.ext.toLowerCase() ) {
+
+						if ( triple.ignore ) {
+
+							found = true;
+
+						} else if ( triple.type === "Uint8Array" ) {
+
+							// fast-fail on bad type
+							if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+							result[ triple.ext ] = resource;
+							found = true;
+
+						} else if ( triple.type === "String" ) {
+
+							if ( ! (typeof(resource.content) === 'string' || resource.content instanceof String) ) throw 'Provided  content is not of type String! Aborting...';
+							result[ triple.ext ] = resource;
+							found = true;
+
+						}
+
+					}
+
+				}
+				if ( !found ) throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
+			} else {
+
+				// fast-fail on bad type
+				if ( ! ( typeof( resource.name ) === 'string' || resource.name instanceof String ) ) throw 'Provided file is not properly defined! Aborting...';
+				for ( i = 0; i < fileDesc.length && !found; i++ ) {
+
+					triple = fileDesc[ i ];
+					if ( resource.extension.toLowerCase() === triple.ext.toLowerCase() ) {
+
+						if ( ! triple.ignore ) result[ triple.ext ] = resource;
+						found = true;
+
+					}
+
+				}
+				if ( !found ) throw 'Unidentified resource "' + resource.name + '": ' + resource.url;
+
+			}
+		}
+
+		return result;
 	};
 
 	return PrepData;

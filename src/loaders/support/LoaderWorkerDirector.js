@@ -9,7 +9,6 @@
  * @class
  *
  * @param {string} classDef Class definition to be used for construction
- * @param {THREE.LoaderSupport.ConsoleLogger} logger logger to be used
  */
 THREE.LoaderSupport.WorkerDirector = (function () {
 
@@ -20,9 +19,12 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
-	function WorkerDirector( classDef, logger ) {
-		this.logger = Validator.verifyInput( logger, new THREE.LoaderSupport.ConsoleLogger() );
-		this.logger.logInfo( 'Using THREE.LoaderSupport.WorkerDirector version: ' + LOADER_WORKER_DIRECTOR_VERSION );
+	function WorkerDirector( classDef ) {
+		console.info( 'Using THREE.LoaderSupport.WorkerDirector version: ' + LOADER_WORKER_DIRECTOR_VERSION );
+		this.logging = {
+			enabled: true,
+			debug: false
+		};
 
 		this.maxQueueSize = MAX_QUEUE_SIZE ;
 		this.maxWebWorkers = MAX_WEB_WORKER;
@@ -41,6 +43,18 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		this.callbackOnFinishedProcessing = null;
 	}
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	WorkerDirector.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+	};
 
 	/**
 	 * Returns the maximum length of the instruction queue.
@@ -91,11 +105,13 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo++ ) {
 
+			var workerSupport = new THREE.LoaderSupport.WorkerSupport();
+			workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 			this.workerDescription.workerSupports[ instanceNo ] = {
 				instanceNo: instanceNo,
 				inUse: false,
 				terminateRequested: false,
-				workerSupport: new THREE.LoaderSupport.WorkerSupport( this.logger ),
+				workerSupport: workerSupport,
 				loader: null
 			};
 
@@ -164,7 +180,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		supportDesc.inUse = true;
 		supportDesc.workerSupport.setTerminateRequested( supportDesc.terminateRequested );
 
-		this.logger.logInfo( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
+		if ( this.logging.enabled ) console.info( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
 		var scope = this;
 		var prepDataCallbacks = prepData.getCallbacks();
@@ -196,13 +212,16 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
+		// set global logging config from worker to PrepData. This will configure the loader accordingly
+		prepData.setLogging( this.logging.enabled, this.logging.debug );
+
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );
 	};
 
 	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
-		classDef.call( loader, THREE.DefaultLoadingManager, this.logger );
+		classDef.call( loader, THREE.DefaultLoadingManager );
 
 		// verify that all required functions are implemented
 		if ( ! loader.hasOwnProperty( 'instanceNo' ) ) throw classDef.name + ' has no property "instanceNo".';
@@ -216,7 +235,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
 		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! Validator.isValid( loader.callbacks ) ) {
 
-			this.logger.logWarn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.LoaderSupport.Callbacks"' );
+			console.warn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.LoaderSupport.Callbacks"' );
 			loader.callbacks = new THREE.LoaderSupport.Callbacks();
 
 		}
@@ -227,7 +246,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		if ( Validator.isValid( supportDesc ) ) {
 
 			supportDesc.workerSupport.setTerminateRequested( true );
-			this.logger.logInfo( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
+			if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
 
 			var loaderCallbacks = supportDesc.loader.callbacks;
 			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
@@ -243,7 +262,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */
 	WorkerDirector.prototype.tearDown = function ( callbackOnFinishedProcessing ) {
-		this.logger.logInfo( 'WorkerDirector received the deregister call. Terminating all workers!' );
+		if ( this.logging.enabled ) console.info( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
 		this.instructionQueuePointer = this.instructionQueue.length;
 		this.callbackOnFinishedProcessing = Validator.verifyInput( callbackOnFinishedProcessing, null );
