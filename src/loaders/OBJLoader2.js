@@ -10,7 +10,7 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.3.2-dev';
+	var OBJLOADER2_VERSION = '2.4.0-dev';
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function OBJLoader2( manager ) {
@@ -21,9 +21,6 @@ THREE.OBJLoader2 = (function () {
 			enabled: true,
 			debug: false
 		};
-
-		this.fileLoader = new THREE.FileLoader( this.manager );
-		this.fileLoader.setResponseType( 'arraybuffer' );
 
 		this.modelName = '';
 		this.instanceNo = 0;
@@ -195,8 +192,10 @@ THREE.OBJLoader2 = (function () {
 			};
 		}
 
-		this.fileLoader.setPath( this.path );
-		this.fileLoader.load( url, function ( content ) {
+		var fileLoader = new THREE.FileLoader( this.manager );
+		fileLoader.setPath( this.path );
+		fileLoader.setResponseType( 'arraybuffer' );
+		fileLoader.load( url, function ( content ) {
 			if ( useAsync ) {
 
 				scope.parseAsync( content, onLoad );
@@ -328,7 +327,7 @@ THREE.OBJLoader2 = (function () {
 
 		} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
-			if ( this.logging.enabled ) console.nfo( 'Parsing text...' );
+			if ( this.logging.enabled ) console.info( 'Parsing text...' );
 			parser.parseText( content );
 
 		} else {
@@ -665,12 +664,12 @@ THREE.OBJLoader2 = (function () {
 		Parser.prototype.processLine = function ( buffer, bufferPointer, slashesCount ) {
 			if ( bufferPointer < 1 ) return;
 
-			var reconstructString = function ( content, start, stop ) {
+			var reconstructString = function ( content, legacyMode, start, stop ) {
 				var line = '';
 				if ( stop > start ) {
 
 					var i;
-					if ( this.legacyMode ) {
+					if ( legacyMode ) {
 
 						for ( i = start; i < stop; i++ ) line += content[ i ];
 
@@ -790,20 +789,20 @@ THREE.OBJLoader2 = (function () {
 				case 'g':
 					// 'g' leads to creation of mesh if valid data (faces declaration was done before), otherwise only groupName gets set
 					this.processCompletedMesh();
-					this.rawMesh.groupName = reconstructString( this.contentRef, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
+					this.rawMesh.groupName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
 					break;
 
 				case 'o':
 					// 'o' is pure meta-information and does not result in creation of new meshes
-					this.rawMesh.objectName = reconstructString( this.contentRef, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
+					this.rawMesh.objectName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
 					break;
 
 				case 'mtllib':
-					this.rawMesh.mtllibName = reconstructString( this.contentRef, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
+					this.rawMesh.mtllibName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
 					break;
 
 				case 'usemtl':
-					var mtlName = reconstructString( this.contentRef, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
+					var mtlName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
 					if ( mtlName !== '' && this.rawMesh.activeMtlName !== mtlName ) {
 
 						this.rawMesh.activeMtlName = mtlName;

@@ -5,7 +5,7 @@
  */
 THREE.LoaderSupport.Builder = (function () {
 
-	var LOADER_BUILDER_VERSION = '1.1.1';
+	var LOADER_BUILDER_VERSION = '1.2.0-dev';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
