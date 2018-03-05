@@ -306,6 +306,8 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
+		clone.logging.enabled = this.logging.enabled;
+		clone.logging.debug = this.logging.debug;
 		clone.resources = this.resources;
 		clone.streamMeshesTo = this.streamMeshesTo;
 		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
@@ -346,10 +348,10 @@ THREE.LoaderSupport.PrepData = (function () {
 
 							found = true;
 
-						} else if ( triple.type === "Uint8Array" ) {
+						} else if ( triple.type === "ArrayBuffer" ) {
 
 							// fast-fail on bad type
-							if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+							if ( ! ( resource.content instanceof ArrayBuffer || resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type ArrayBuffer! Aborting...';
 							result[ triple.ext ] = resource;
 							found = true;
 

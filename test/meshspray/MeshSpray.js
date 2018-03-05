@@ -33,6 +33,10 @@ var MeshSpray = (function () {
 		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
 	};
 
+	MeshSpray.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy  ) {
+		// nothing to do here
+	};
+
 	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
 
 		if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) {
@@ -46,7 +50,7 @@ var MeshSpray = (function () {
 			this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 
 		}
-		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.workerSupport.instanceNo );
+		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.instanceNo );
 
 		this._applyPrepData( prepData );
 
@@ -72,7 +76,7 @@ var MeshSpray = (function () {
 					}
 				}
 			);
-			if ( scope.logging.enabled ) console.timeEnd( 'MeshSpray' + scope.workerSupport.instanceNo );
+			if ( scope.logging.enabled ) console.timeEnd( 'MeshSpray' + scope.instanceNo );
 		};
 
 		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
@@ -405,6 +409,7 @@ var MeshSprayApp = (function () {
 			pivot.position.set( x, y, z );
 			this.scene.add( pivot );
 			prepData.setStreamMeshesTo( pivot );
+			prepData.setLogging( false, false );
 
 			prepData.quantity = 8192;
 			prepData.dimension = Math.max( Math.random() * 500, 100 );

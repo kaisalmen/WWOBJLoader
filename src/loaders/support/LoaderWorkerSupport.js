@@ -113,11 +113,16 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.terminateRequested = false;
 			this.queuedMessage = null;
 			this.started = false;
+			this.forceCopy = false;
 		};
 
 		LoaderWorker.prototype.setLogging = function ( enabled, debug ) {
 			this.logging.enabled = enabled === true;
 			this.logging.debug = debug === true;
+		};
+
+		LoaderWorker.prototype.setForceCopy = function ( forceCopy ) {
+			this.forceCopy = forceCopy === true;
 		};
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
@@ -220,7 +225,17 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 				if ( this.queuedMessage.data.input instanceof ArrayBuffer ) {
 
-					this.worker.postMessage( this.queuedMessage, [ this.queuedMessage.data.input ] );
+					var content;
+					if ( this.forceCopy ) {
+
+						content = this.queuedMessage.data.input.slice( 0 );
+
+					} else {
+
+						content = this.queuedMessage.data.input;
+
+					}
+					this.worker.postMessage( this.queuedMessage, [ content ] );
 
 				} else {
 
@@ -276,6 +291,16 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 		this.loaderWorker.setLogging( this.logging.enabled, this.logging.debug );
+	};
+
+	/**
+	 * Forces all ArrayBuffers to be transferred to worker to be copied.
+	 * @memberOf THREE.LoaderSupport.WorkerSupport
+	 *
+	 * @param {boolean} forceWorkerDataCopy True or false.
+	 */
+	WorkerSupport.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy ) {
+		this.loaderWorker.setForceCopy( forceWorkerDataCopy );
 	};
 
 	/**
