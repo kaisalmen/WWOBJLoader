@@ -277,7 +277,7 @@ THREE.OBJLoader2 = (function () {
 			scope._loadObj( available.obj, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
 
 		};
-		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin );
+		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin, prepData.materialOptions );
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {

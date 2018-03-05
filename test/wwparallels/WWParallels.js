@@ -242,6 +242,7 @@ var WWParallels = (function () {
 			modelPrepDataIndex = Math.floor( Math.random() * modelPrepDatas.length );
 
 			modelPrepData = modelPrepDatas[ modelPrepDataIndex ];
+			modelPrepData.useAsync = true;
 			scale = Validator.verifyInput( modelPrepData.scale, 0 );
 			modelPrepData = modelPrepData.clone();
 
@@ -253,8 +254,7 @@ var WWParallels = (function () {
 			);
 			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 			this.scene.add( pivot );
-			modelPrepData.setStreamMeshesTo( pivot );
-			modelPrepData.setUseAsync( true );
+			modelPrepData.streamMeshesTo = pivot;
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 		}

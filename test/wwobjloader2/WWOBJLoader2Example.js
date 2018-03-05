@@ -198,7 +198,7 @@ var WWOBJLoader2Example = (function () {
 		local.position.set( 0, 0, 100 );
 		local.scale.set( 50.0, 50.0, 50.0 );
 		this.pivot.add( local );
-		prepData.setStreamMeshesTo( local );
+		prepData.streamMeshesTo = local;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
 		var callbacks = prepData.getCallbacks();
 		callbacks.setCallbackOnProgress( this._reportProgress );
@@ -219,9 +219,9 @@ var WWOBJLoader2Example = (function () {
 		local.position.set( 125, 50, 0 );
 		local.name = 'Pivot_vive-controller';
 		this.pivot.add( local );
-		prepData.setStreamMeshesTo( local );
+		prepData.streamMeshesTo = local;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-		prepData.setUseAsync( true );
+		prepData.useAsync = true;
 		var callbacks = prepData.getCallbacks();
 		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );

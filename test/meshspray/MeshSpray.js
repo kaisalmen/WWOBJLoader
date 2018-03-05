@@ -408,7 +408,7 @@ var MeshSprayApp = (function () {
 			z = r * Math.cos( t );
 			pivot.position.set( x, y, z );
 			this.scene.add( pivot );
-			prepData.setStreamMeshesTo( pivot );
+			prepData.streamMeshesTo = pivot;
 			prepData.setLogging( false, false );
 
 			prepData.quantity = 8192;

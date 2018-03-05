@@ -103,7 +103,7 @@
 						objLoader.setLogging( true, false );
 						objLoader.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
 					};
-					objLoader.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', null, onLoadMtl );
+					objLoader.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', null, onLoadMtl, null, { invertTrProperty: true } );
 				};
 
 				OBJLoader2Perf.prototype._reportProgress = function( event ) {
