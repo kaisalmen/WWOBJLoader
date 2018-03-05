@@ -35,7 +35,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		this.workerDescription = {
 			classDef: classDef,
 			globalCallbacks: {},
-			workerSupports: {}
+			workerSupports: {},
+			forceWorkerDataCopy: true
 		};
 		this.objectsCompleted = 0;
 		this.instructionQueue = [];
@@ -87,6 +88,16 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	};
 
 	/**
+	 * Forces all ArrayBuffers to be transferred to worker to be copied.
+	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 *
+	 * @param {boolean} forceWorkerDataCopy True or false.
+	 */
+	WorkerDirector.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy ) {
+		this.workerDescription.forceWorkerDataCopy = forceWorkerDataCopy === true;
+	};
+
+	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.LoaderSupport.WorkerDirector
 	 *
@@ -107,6 +118,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 			var workerSupport = new THREE.LoaderSupport.WorkerSupport();
 			workerSupport.setLogging( this.logging.enabled, this.logging.debug );
+			workerSupport.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
 			this.workerDescription.workerSupports[ instanceNo ] = {
 				instanceNo: instanceNo,
 				inUse: false,
@@ -212,9 +224,6 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		prepData.callbacks = updatedCallbacks;
 
-		// set global logging config from worker to PrepData. This will configure the loader accordingly
-		prepData.setLogging( this.logging.enabled, this.logging.debug );
-
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );
 	};
 
@@ -239,6 +248,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			loader.callbacks = new THREE.LoaderSupport.Callbacks();
 
 		}
+
 		return loader;
 	};
 

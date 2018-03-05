@@ -32,6 +32,7 @@ var WWParallels = (function () {
 		}
 		this.workerDirector.setLogging( this.logging.enabled, this.logging.debug );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
+		this.workerDirector.setForceWorkerDataCopy( true );
 
 		this.controls = null;
 		this.cube = null;
@@ -202,26 +203,31 @@ var WWParallels = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
+		prepData.setLogging( false, false );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
+		prepData.setLogging( false, false );
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
+		prepData.setLogging( false, false );
 		prepData.scale = 400.0;
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
+		prepData.setLogging( false, false );
 		prepData.scale = 50.0;
 		modelPrepDatas.push( prepData );
 
 		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
+		prepData.setLogging( false, false );
 		modelPrepDatas.push( prepData );
 
 		var pivot;
@@ -236,6 +242,7 @@ var WWParallels = (function () {
 			modelPrepDataIndex = Math.floor( Math.random() * modelPrepDatas.length );
 
 			modelPrepData = modelPrepDatas[ modelPrepDataIndex ];
+			modelPrepData.useAsync = true;
 			scale = Validator.verifyInput( modelPrepData.scale, 0 );
 			modelPrepData = modelPrepData.clone();
 
@@ -247,8 +254,7 @@ var WWParallels = (function () {
 			);
 			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
 			this.scene.add( pivot );
-			modelPrepData.setStreamMeshesTo( pivot );
-			modelPrepData.setUseAsync( true );
+			modelPrepData.streamMeshesTo = pivot;
 
 			this.workerDirector.enqueueForRun( modelPrepData );
 		}

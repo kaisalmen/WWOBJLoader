@@ -32,7 +32,7 @@ THREE.OBJLoader2 = (function () {
 
 		this.builder = new THREE.LoaderSupport.Builder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-		this.workerSupport = null;
+		this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 		this.terminateWorkerOnLoad = true;
 	}
 
@@ -154,6 +154,18 @@ THREE.OBJLoader2 = (function () {
 		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
 	};
 
+	OBJLoader2.prototype._onError = function ( event ) {
+		var output = 'Error occurred while downloading!';
+
+		if ( event.currentTarget && event.currentTarget.statusText !== null ) {
+
+			output += '\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
+
+		}
+		this.onProgress( 'error', output, -1 );
+		throw output;
+	};
+
 	/**
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
 	 * @memberOf THREE.OBJLoader2
@@ -166,36 +178,19 @@ THREE.OBJLoader2 = (function () {
 	 * @param {boolean} [useAsync] If true, uses async loading with worker, if false loads data synchronously.
 	 */
 	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ' );
+		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter, useAsync );
+	};
+
+	OBJLoader2.prototype._loadObj = function ( resource, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+		if ( ! Validator.isValid( onError ) ) onError = this._onError;
+
+		// fast-fail
+		if ( ! Validator.isValid( resource ) ) onError( 'An invalid ResourceDescriptor was provided. Unable to continue!' );
 		var scope = this;
-		if ( ! Validator.isValid( onProgress ) ) {
-			var numericalValueRef = 0;
-			var numericalValue = 0;
-			onProgress = function ( event ) {
-				if ( ! event.lengthComputable ) return;
+		var fileLoaderOnLoad = function ( content ) {
 
-				numericalValue = event.loaded / event.total;
-				if ( numericalValue > numericalValueRef ) {
-
-					numericalValueRef = numericalValue;
-					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					scope.onProgress( 'progressLoad', output, numericalValue );
-
-				}
-			};
-		}
-
-		if ( ! Validator.isValid( onError ) ) {
-			onError = function ( event ) {
-				var output = 'Error occurred while downloading "' + url + '"';
-				console.error( output + ': ' + event );
-				scope.onProgress( 'error', output, -1 );
-			};
-		}
-
-		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setPath( this.path );
-		fileLoader.setResponseType( 'arraybuffer' );
-		fileLoader.load( url, function ( content ) {
+			resource.content = content;
 			if ( useAsync ) {
 
 				scope.parseAsync( content, onLoad );
@@ -216,10 +211,41 @@ THREE.OBJLoader2 = (function () {
 				);
 
 			}
+		};
 
-		}, onProgress, onError );
+		// fast-fail
+		if ( ! Validator.isValid( resource.url ) || Validator.isValid( resource.content ) ) {
 
+			fileLoaderOnLoad( Validator.isValid( resource.content ) ? resource.content : null );
+
+		} else {
+
+			if ( ! Validator.isValid( onProgress ) ) {
+				var numericalValueRef = 0;
+				var numericalValue = 0;
+				onProgress = function ( event ) {
+					if ( ! event.lengthComputable ) return;
+
+					numericalValue = event.loaded / event.total;
+					if ( numericalValue > numericalValueRef ) {
+
+						numericalValueRef = numericalValue;
+						var output = 'Download of "' + resource.url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+						scope.onProgress( 'progressLoad', output, numericalValue );
+
+					}
+				};
+			}
+
+
+			var fileLoader = new THREE.FileLoader( this.manager );
+			fileLoader.setPath( this.path );
+			fileLoader.setResponseType( 'arraybuffer' );
+			fileLoader.load( resource.url, fileLoaderOnLoad, onProgress, onError );
+
+		}
 	};
+
 
 	/**
 	 * Run the loader according the provided instructions.
@@ -232,7 +258,7 @@ THREE.OBJLoader2 = (function () {
 		this._applyPrepData( prepData );
 		var available = prepData.checkResourceDescriptorFiles( prepData.resources,
 			[
-				{ ext: "obj", type: "Uint8Array", ignore: false },
+				{ ext: "obj", type: "ArrayBuffer", ignore: false },
 				{ ext: "mtl", type: "String", ignore: false },
 				{ ext: "zip", type: "String", ignore: true }
 			]
@@ -247,28 +273,11 @@ THREE.OBJLoader2 = (function () {
 		}
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
-			scope.builder.setMaterials( materials );
+			if ( materials !== null ) scope.builder.setMaterials( materials );
+			scope._loadObj( available.obj, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
 
-			if ( Validator.isValid( available.obj.content ) ) {
-
-				if ( prepData.useAsync ) {
-
-					scope.parseAsync( available.obj.content, scope.callbacks.onLoad );
-
-				} else {
-
-					scope.parse( available.obj.content );
-
-				}
-			} else {
-
-				scope.setPath( available.obj.path );
-				scope.load( available.obj.name, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
-
-			}
 		};
-
-		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin );
+		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin, prepData.materialOptions );
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
@@ -294,6 +303,13 @@ THREE.OBJLoader2 = (function () {
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 */
 	OBJLoader2.prototype.parse = function ( content ) {
+		// fast-fail in case of illegal data
+		if ( ! Validator.isValid( content ) ) {
+
+			console.warn( 'Provided content is not a valid ArrayBuffer or String.' );
+			return this.loaderRootNode;
+
+		}
 		if ( this.logging.enabled ) console.time( 'OBJLoader2 parse: ' + this.modelName );
 		this.builder.init();
 
@@ -348,10 +364,8 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} onLoad Called after worker successfully completed loading
 	 */
 	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
-		if ( this.logging.enabled ) console.time( 'OBJLoader2 parseAsync: ' + this.modelName );
-		this.builder.init();
-
 		var scope = this;
+		var measureTime = false;
 		var scopedOnLoad = function () {
 			onLoad(
 				{
@@ -362,8 +376,22 @@ THREE.OBJLoader2 = (function () {
 					}
 				}
 			);
-			if ( scope.logging.enabled ) console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
+			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
+		// fast-fail in case of illegal data
+		if ( ! Validator.isValid( content ) ) {
+
+			console.warn( 'Provided content is not a valid ArrayBuffer.' );
+			scopedOnLoad()
+
+		} else {
+
+			measureTime = true;
+
+		}
+		if ( measureTime && this.logging.enabled ) console.time( 'OBJLoader2 parseAsync: ' + this.modelName );
+		this.builder.init();
+
 		var scopedOnMeshLoaded = function ( payload ) {
 			var meshes = scope.builder.processPayload( payload );
 			var mesh;
@@ -372,8 +400,6 @@ THREE.OBJLoader2 = (function () {
 				scope.loaderRootNode.add( mesh );
 			}
 		};
-
-		this.workerSupport = Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
 		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
 			var workerCode = '';
 			workerCode += '/**\n';
@@ -1310,11 +1336,6 @@ THREE.OBJLoader2 = (function () {
 			callbackOnLoad( materials, materialCreator );
 		};
 
-		var mtlLoader = new THREE.MTLLoader( this.manager );
-		crossOrigin = Validator.verifyInput( crossOrigin, 'anonymous' );
-		mtlLoader.setCrossOrigin( crossOrigin );
-		if ( Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
-
 		// fast-fail
 		if ( ! Validator.isValid( resource ) || ( ! Validator.isValid( resource.content ) && ! Validator.isValid( resource.url ) ) ) {
 
@@ -1322,26 +1343,25 @@ THREE.OBJLoader2 = (function () {
 
 		} else {
 
+			var mtlLoader = new THREE.MTLLoader( this.manager );
+			crossOrigin = Validator.verifyInput( crossOrigin, 'anonymous' );
+			mtlLoader.setCrossOrigin( crossOrigin );
 			mtlLoader.setPath( resource.path );
+			if ( Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
+
 			if ( Validator.isValid( resource.content ) ) {
 
 				processMaterials( Validator.isValid( resource.content ) ? mtlLoader.parse( resource.content ) : null );
 
 			} else if ( Validator.isValid( resource.url ) ) {
 
-				var onError = function ( event ) {
-					var output = 'Error occurred while downloading "' + resource.url + '"';
+				var fileLoader = new THREE.FileLoader( this.manager );
+				fileLoader.load( resource.url, function ( text ) {
 
-					if ( event instanceof ProgressEvent ) {
+					resource.content = text;
+					processMaterials( mtlLoader.parse( text ) );
 
-						output += '\n' + 'ProgressEvent Status: ' + event.currentTarget.statusText;
-
-					}
-					console.error( output );
-					throw output;
-				};
-
-				mtlLoader.load( resource.name, processMaterials, undefined, onError );
+				}, this._onProgress, this._onError );
 
 			}
 		}

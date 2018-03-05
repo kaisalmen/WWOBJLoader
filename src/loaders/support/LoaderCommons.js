@@ -197,13 +197,7 @@ THREE.LoaderSupport.PrepData = (function () {
 		};
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.resources = [];
-		this.streamMeshesTo = null;
-		this.materialPerSmoothingGroup = false;
-		this.useIndices = false;
-		this.disregardNormals = false;
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-		this.crossOrigin;
-		this.useAsync = false;
 	}
 
 	/**
@@ -219,46 +213,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
-	 * Set the node where the loaded objects will be attached directly.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
-	 */
-	PrepData.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
-		this.streamMeshesTo = Validator.verifyInput( streamMeshesTo, null );
-	};
-
-	/**
-	 * Tells whether a material shall be created per smoothing group.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} materialPerSmoothingGroup=false
-	 */
-	PrepData.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
-	};
-
-	/**
-	 * Tells whether indices should be used
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} useIndices=false
-	 */
-	PrepData.prototype.setUseIndices = function ( useIndices ) {
-		this.useIndices = useIndices === true;
-	};
-
-	/**
-	 * Tells whether normals should be completely disregarded and regenerated.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} disregardNormals=false
-	 */
-	PrepData.prototype.setDisregardNormals = function ( disregardNormals ) {
-		this.disregardNormals = disregardNormals === true;
-	};
-
-	/**
 	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
@@ -266,16 +220,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.getCallbacks = function () {
 		return this.callbacks;
-	};
-
-	/**
-	 * Sets the CORS string to be used.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {string} crossOrigin CORS value
-	 */
-	PrepData.prototype.setCrossOrigin = function ( crossOrigin ) {
-		this.crossOrigin = crossOrigin;
 	};
 
 	/**
@@ -289,16 +233,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	};
 
 	/**
-	 * If true uses async loading with worker, if false loads data synchronously.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} useAsync
-	 */
-	PrepData.prototype.setUseAsync = function ( useAsync ) {
-		this.useAsync = useAsync === true;
-	};
-
-	/**
 	 * Clones this object and returns it afterwards.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
@@ -306,14 +240,22 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
+		clone.logging.enabled = this.logging.enabled;
+		clone.logging.debug = this.logging.debug;
 		clone.resources = this.resources;
-		clone.streamMeshesTo = this.streamMeshesTo;
-		clone.materialPerSmoothingGroup = this.materialPerSmoothingGroup;
-		clone.useIndices = this.useIndices;
-		clone.disregardNormals = this.disregardNormals;
 		clone.callbacks = this.callbacks;
-		clone.crossOrigin = this.crossOrigin;
-		clone.useAsync = this.useAsync;
+
+		var property, value;
+		for ( property in this ) {
+
+			value = this[ property ];
+			if ( ! clone.hasOwnProperty( property ) && typeof this[ property ] !== 'function' ) {
+
+				clone[ property ] = value;
+
+			}
+		}
+
 		return clone;
 	};
 
@@ -346,16 +288,16 @@ THREE.LoaderSupport.PrepData = (function () {
 
 							found = true;
 
-						} else if ( triple.type === "Uint8Array" ) {
+						} else if ( triple.type === "ArrayBuffer" ) {
 
 							// fast-fail on bad type
-							if ( ! ( resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type arraybuffer! Aborting...';
+							if ( ! ( resource.content instanceof ArrayBuffer || resource.content instanceof Uint8Array ) ) throw 'Provided content is not of type ArrayBuffer! Aborting...';
 							result[ triple.ext ] = resource;
 							found = true;
 
 						} else if ( triple.type === "String" ) {
 
-							if ( ! (typeof(resource.content) === 'string' || resource.content instanceof String) ) throw 'Provided  content is not of type String! Aborting...';
+							if ( ! ( typeof( resource.content ) === 'string' || resource.content instanceof String) ) throw 'Provided  content is not of type String! Aborting...';
 							result[ triple.ext ] = resource;
 							found = true;
 

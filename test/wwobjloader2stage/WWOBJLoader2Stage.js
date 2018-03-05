@@ -134,51 +134,51 @@ var WWOBJLoader2Stage = (function () {
 		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		var pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, -175 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsMale = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 200, 0, -75 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsFemale = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, -100, 0 );
 		pivot.scale.set( 50.0, 50.0, 50.0 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsCerberus = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 75 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsWaltHead = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 200 );
 		pivot.scale.set( 400.0, 400.0, 400.0 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsViveController = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
@@ -187,8 +187,9 @@ var WWOBJLoader2Stage = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
+		prepData.materialOptions = { invertTrProperty: true };
 		this.assetsDef.objsPtv1Zip = prepData;
 
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
@@ -196,21 +197,21 @@ var WWOBJLoader2Stage = (function () {
 		prepData = new THREE.LoaderSupport.PrepData( 'oven' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, 50 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsZomaxOven = prepData;
 
 		prepData = new THREE.LoaderSupport.PrepData( 'sink' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, 200 );
-		prepData.setStreamMeshesTo( pivot );
+		prepData.streamMeshesTo = pivot;
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
-		prepData.setUseIndices( true );
-		prepData.setUseAsync( true );
+		prepData.useIndices = true;
+		prepData.useAsync = true;
 		this.assetsDef.objsZomaxSink = prepData;
 	};
 
@@ -382,13 +383,13 @@ var WWOBJLoader2Stage = (function () {
 				-100 + 200 * Math.random(),
 				-100 + 200 * Math.random()
 			);
-			prepData.setStreamMeshesTo( userPivot );
+			prepData.streamMeshesTo = userPivot;
 			scope.scene.add( userPivot );
 			scope.allAssets[ prepData.modelName ] = userPivot;
 
 			resourceOBJ.setContent( uint8Array );
 			prepData.addResource( resourceOBJ );
-			prepData.setUseAsync( true );
+			prepData.useAsync = true;
 			var callbacks = prepData.getCallbacks();
 			callbacks.setCallbackOnProgress( scope._reportProgress );
 			callbacks.setCallbackOnLoad( callbackOnLoad );
