@@ -10,7 +10,7 @@ if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" i
  */
 THREE.OBJLoader2 = (function () {
 
-	var OBJLOADER2_VERSION = '2.4.0-dev';
+	var OBJLOADER2_VERSION = '2.4.0';
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function OBJLoader2( manager ) {
