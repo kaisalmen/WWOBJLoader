@@ -48,7 +48,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 		if ( payload.cmd === 'run' ) {
 
 			var callbacks = {
-				callbackBuilder: function ( payload ) {
+				callbackMeshBuilder: function ( payload ) {
 					self.postMessage( payload );
 				},
 				callbackProgress: function ( text ) {
@@ -67,7 +67,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 
-			callbacks.callbackBuilder( {
+			callbacks.callbackMeshBuilder( {
 				cmd: 'complete',
 				msg: 'WorkerRunner completed run.'
 			} );
@@ -107,7 +107,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this.worker = null;
 			this.runnerImplName = null;
 			this.callbacks = {
-				builder: null,
+				meshBuilder: null,
 				onLoad: null
 			};
 			this.terminateRequested = false;
@@ -147,7 +147,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				case 'meshData':
 				case 'materialData':
 				case 'imageData':
-					this.runtimeRef.callbacks.builder( payload );
+					this.runtimeRef.callbacks.meshBuilder( payload );
 					break;
 
 				case 'complete':
@@ -184,8 +184,8 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			}
 		};
 
-		LoaderWorker.prototype.setCallbacks = function ( builder, onLoad ) {
-			this.callbacks.builder = Validator.verifyInput( builder, this.callbacks.builder );
+		LoaderWorker.prototype.setCallbacks = function ( meshBuilder, onLoad ) {
+			this.callbacks.meshBuilder = Validator.verifyInput( meshBuilder, this.callbacks.meshBuilder );
 			this.callbacks.onLoad = Validator.verifyInput( onLoad, this.callbacks.onLoad );
 		};
 
@@ -201,7 +201,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 				this.started = true;
 
 			}
-			if ( ! Validator.isValid( this.callbacks.builder ) ) throw 'Unable to run as no "builder" callback is set.';
+			if ( ! Validator.isValid( this.callbacks.meshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
 			if ( ! Validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 			if ( payload.cmd !== 'run' ) payload.cmd = 'run';
 			if ( Validator.isValid( payload.logging ) ) {
@@ -377,11 +377,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 	 * Specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
 	 * @memberOf THREE.LoaderSupport.WorkerSupport
 	 *
-	 * @param {Function} builder The builder function. Default is {@link THREE.LoaderSupport.Builder}.
+	 * @param {Function} meshBuilder The mesh builder function. Default is {@link THREE.LoaderSupport.MeshBuilder}.
 	 * @param {Function} onLoad The function that is called when parsing is complete.
 	 */
-	WorkerSupport.prototype.setCallbacks = function ( builder, onLoad ) {
-		this.loaderWorker.setCallbacks( builder, onLoad );
+	WorkerSupport.prototype.setCallbacks = function ( meshBuilder, onLoad ) {
+		this.loaderWorker.setCallbacks( meshBuilder, onLoad );
 	};
 
 	/**

@@ -3,14 +3,14 @@
  * Supports vertex, vertexColor, normal, uv and index buffers.
  * @class
  */
-THREE.LoaderSupport.Builder = (function () {
+THREE.LoaderSupport.MeshBuilder = (function () {
 
-	var LOADER_BUILDER_VERSION = '1.2.0';
+	var LOADER_MESH_BUILDER_VERSION = '1.2.0';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
-	function Builder() {
-		console.info( 'Using THREE.LoaderSupport.Builder version: ' + LOADER_BUILDER_VERSION );
+	function MeshBuilder() {
+		console.info( 'Using THREE.LoaderSupport.MeshBuilder version: ' + LOADER_MESH_BUILDER_VERSION );
 		this.logging = {
 			enabled: true,
 			debug: false
@@ -22,22 +22,22 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
 	 */
-	Builder.prototype.setLogging = function ( enabled, debug ) {
+	MeshBuilder.prototype.setLogging = function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 	};
 
 	/**
-	 *
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * Initializes the MeshBuilder (currently only default material initialisation).
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 */
-	Builder.prototype.init = function () {
+	MeshBuilder.prototype.init = function () {
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
@@ -71,11 +71,11 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
-	Builder.prototype.setMaterials = function ( materials ) {
+	MeshBuilder.prototype.setMaterials = function ( materials ) {
 		var payload = {
 			cmd: 'materialData',
 			materials: {
@@ -87,7 +87,7 @@ THREE.LoaderSupport.Builder = (function () {
 		this.updateMaterials( payload );
 	};
 
-	Builder.prototype._setCallbacks = function ( callbacks ) {
+	MeshBuilder.prototype._setCallbacks = function ( callbacks ) {
 		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
 		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
 		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
@@ -96,12 +96,12 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} payload Raw Mesh or Material descriptions.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
 	 */
-	Builder.prototype.processPayload = function ( payload ) {
+	MeshBuilder.prototype.processPayload = function ( payload ) {
 		if ( payload.cmd === 'meshData' ) {
 
 			return this.buildMeshes( payload );
@@ -116,12 +116,12 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
 	 */
-	Builder.prototype.buildMeshes = function ( meshPayload ) {
+	MeshBuilder.prototype.buildMeshes = function ( meshPayload ) {
 		var meshName = meshPayload.params.meshName;
 
 		var bufferGeometry = new THREE.BufferGeometry();
@@ -254,7 +254,7 @@ THREE.LoaderSupport.Builder = (function () {
 		var callbackOnProgress = this.callbacks.onProgress;
 		if ( Validator.isValid( callbackOnProgress ) ) {
 
-			var event = new CustomEvent( 'BuilderEvent', {
+			var event = new CustomEvent( 'MeshBuilderEvent', {
 				detail: {
 					type: 'progress',
 					modelName: meshPayload.params.meshName,
@@ -271,11 +271,11 @@ THREE.LoaderSupport.Builder = (function () {
 
 	/**
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
-	 * @memberOf THREE.LoaderSupport.Builder
+	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} materialPayload Material update instructions
 	 */
-	Builder.prototype.updateMaterials = function ( materialPayload ) {
+	MeshBuilder.prototype.updateMaterials = function ( materialPayload ) {
 		var material, materialName;
 		var materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
 		if ( Validator.isValid( materialCloneInstructions ) ) {
@@ -343,7 +343,7 @@ THREE.LoaderSupport.Builder = (function () {
 	 *
 	 * @returns {Object} Map of Materials in JSON representation
 	 */
-	Builder.prototype.getMaterialsJSON = function () {
+	MeshBuilder.prototype.getMaterialsJSON = function () {
 		var materialsJSON = {};
 		var material;
 		for ( var materialName in this.materials ) {
@@ -360,9 +360,9 @@ THREE.LoaderSupport.Builder = (function () {
 	 *
 	 * @returns {Object} Map of {@link THREE.Material}
 	 */
-	Builder.prototype.getMaterials = function () {
+	MeshBuilder.prototype.getMaterials = function () {
 		return this.materials;
 	};
 
-	return Builder;
+	return MeshBuilder;
 })();

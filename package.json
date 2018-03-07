@@ -5,13 +5,13 @@
     "loader_obj2": "2.4.0",
     "loader_worker_director": "2.2.0",
     "loader_worker_support": "2.2.0",
-    "loader_builder": "1.2.0"
+    "loader_mesh_builder": "1.2.0"
   },
   "previous_versions": {
     "loader_obj2": "2.3.1",
     "loader_worker_director": "2.1.0",
     "loader_worker_support": "2.1.2",
-    "loader_builder": "1.1.1"
+    "loader_mesh_builder": "1.1.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/OBJLoader2.js",

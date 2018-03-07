@@ -18,7 +18,7 @@ var MeshSpray = (function () {
 		this.instanceNo = 0;
 		this.loaderRootNode = new THREE.Group();
 
-		this.builder = new THREE.LoaderSupport.Builder();
+		this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = null;
 	}
@@ -26,7 +26,7 @@ var MeshSpray = (function () {
 	MeshSpray.prototype.setLogging = function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
 	};
 
 	MeshSpray.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
@@ -54,11 +54,11 @@ var MeshSpray = (function () {
 
 		this._applyPrepData( prepData );
 
-		this.builder.init();
+		this.meshBuilder.init();
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {
-			var meshes = scope.builder.processPayload( payload );
+			var meshes = scope.meshBuilder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
@@ -101,7 +101,7 @@ var MeshSpray = (function () {
 					globalObjectCount: prepData.globalObjectCount
 				},
 				materials: {
-					serializedMaterials: this.builder.getMaterialsJSON()
+					serializedMaterials: this.meshBuilder.getMaterialsJSON()
 				},
 				logging: {
 					enabled: this.logging.enabled,
@@ -120,7 +120,7 @@ var MeshSpray = (function () {
 
 			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
 			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			this.builder.setMaterials( prepData.materials );
+			this.meshBuilder.setMaterials( prepData.materials );
 			this._setCallbacks( prepData.getCallbacks() );
 
 		}
@@ -132,7 +132,7 @@ var MeshSpray = (function () {
 		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
 		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
 
-		this.builder._setCallbacks( this.callbacks );
+		this.meshBuilder._setCallbacks( this.callbacks );
 	};
 
 
@@ -146,7 +146,7 @@ var MeshSpray = (function () {
 			this.debug = false;
 			this.dimension = 200;
 			this.quantity = 1;
-			this.callbackBuilder = null;
+			this.callbackMeshBuilder = null;
 			this.callbackProgress = null;
 			this.serializedMaterials = null;
 			this.logging = {
@@ -246,10 +246,10 @@ var MeshSpray = (function () {
 					serializedMaterials: newSerializedMaterials
 				}
 			};
-			this.callbackBuilder( payload );
+			this.callbackMeshBuilder( payload );
 
 			this.globalObjectCount++;
-			this.callbackBuilder(
+			this.callbackMeshBuilder(
 				{
 					cmd: 'meshData',
 					progress: {

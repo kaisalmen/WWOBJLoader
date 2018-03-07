@@ -30,7 +30,7 @@ THREE.OBJLoader2 = (function () {
 		this.materialPerSmoothingGroup = false;
 		this.loaderRootNode = new THREE.Group();
 
-		this.builder = new THREE.LoaderSupport.Builder();
+		this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 		this.terminateWorkerOnLoad = true;
@@ -46,7 +46,7 @@ THREE.OBJLoader2 = (function () {
 	OBJLoader2.prototype.setLogging = function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-		this.builder.setLogging( this.logging.enabled, this.logging.debug );
+		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
 	};
 
 	/**
@@ -86,7 +86,7 @@ THREE.OBJLoader2 = (function () {
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
 	OBJLoader2.prototype.setMaterials = function ( materials ) {
-		this.builder.setMaterials( materials );
+		this.meshBuilder.setMaterials( materials );
 	};
 
 	/**
@@ -125,7 +125,7 @@ THREE.OBJLoader2 = (function () {
 		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
 		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
 
-		this.builder._setCallbacks( this.callbacks );
+		this.meshBuilder._setCallbacks( this.callbacks );
 	};
 
 	/**
@@ -273,7 +273,7 @@ THREE.OBJLoader2 = (function () {
 		}
 		var scope = this;
 		var onMaterialsLoaded = function ( materials ) {
-			if ( materials !== null ) scope.builder.setMaterials( materials );
+			if ( materials !== null ) scope.meshBuilder.setMaterials( materials );
 			scope._loadObj( available.obj, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
 
 		};
@@ -286,7 +286,7 @@ THREE.OBJLoader2 = (function () {
 			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
 			this.setModelName( prepData.modelName );
 			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			this.builder.setMaterials( prepData.materials );
+			this.meshBuilder.setMaterials( prepData.materials );
 			this.setUseIndices( prepData.useIndices );
 			this.setDisregardNormals( prepData.disregardNormals );
 			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
@@ -311,7 +311,7 @@ THREE.OBJLoader2 = (function () {
 
 		}
 		if ( this.logging.enabled ) console.time( 'OBJLoader2 parse: ' + this.modelName );
-		this.builder.init();
+		this.meshBuilder.init();
 
 		var parser = new Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -319,18 +319,18 @@ THREE.OBJLoader2 = (function () {
 		parser.setUseIndices( this.useIndices );
 		parser.setDisregardNormals( this.disregardNormals );
 		// sync code works directly on the material references
-		parser.setMaterials( this.builder.getMaterials() );
+		parser.setMaterials( this.meshBuilder.getMaterials() );
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.processPayload( payload );
+			var meshes = scope.meshBuilder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
 				scope.loaderRootNode.add( mesh );
 			}
 		};
-		parser.setCallbackBuilder( onMeshLoaded );
+		parser.setCallbackMeshBuilder( onMeshLoaded );
 		var onProgressScoped = function ( text, numericalValue ) {
 			scope.onProgress( 'progressParse', text, numericalValue );
 		};
@@ -390,10 +390,10 @@ THREE.OBJLoader2 = (function () {
 
 		}
 		if ( measureTime && this.logging.enabled ) console.time( 'OBJLoader2 parseAsync: ' + this.modelName );
-		this.builder.init();
+		this.meshBuilder.init();
 
 		var scopedOnMeshLoaded = function ( payload ) {
-			var meshes = scope.builder.processPayload( payload );
+			var meshes = scope.meshBuilder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
@@ -416,7 +416,7 @@ THREE.OBJLoader2 = (function () {
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
 		var materialNames = {};
-		var materials = this.builder.getMaterials();
+		var materials = this.meshBuilder.getMaterials();
 		for ( var materialName in materials ) {
 
 			materialNames[ materialName ] = materialName;
@@ -455,7 +455,7 @@ THREE.OBJLoader2 = (function () {
 
 		function Parser() {
 			this.callbackProgress = null;
-			this.callbackBuilder = null;
+			this.callbackMeshBuilder = null;
 			this.contentRef = null;
 			this.legacyMode = false;
 
@@ -547,9 +547,9 @@ THREE.OBJLoader2 = (function () {
 			this.materials = THREE.LoaderSupport.Validator.verifyInput( this.materials, {} );
 		};
 
-		Parser.prototype.setCallbackBuilder = function ( callbackBuilder ) {
-			if ( ! THREE.LoaderSupport.Validator.isValid( callbackBuilder ) ) throw 'Unable to run as no "builder" callback is set.';
-			this.callbackBuilder = callbackBuilder;
+		Parser.prototype.setCallbackMeshBuilder = function ( callbackMeshBuilder ) {
+			if ( ! THREE.LoaderSupport.Validator.isValid( callbackMeshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
+			this.callbackMeshBuilder = callbackMeshBuilder;
 		};
 
 		Parser.prototype.setCallbackProgress = function ( callbackProgress ) {
@@ -574,7 +574,7 @@ THREE.OBJLoader2 = (function () {
 					+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 					+ '\n\tuseIndices: ' + this.useIndices
 					+ '\n\tdisregardNormals: ' + this.disregardNormals
-					+ '\n\tcallbackBuilderName: ' + this.callbackBuilder.name
+					+ '\n\tcallbackMeshBuilderName: ' + this.callbackMeshBuilder.name
 					+ '\n\tcallbackProgressName: ' + this.callbackProgress.name;
 				console.info( printedConfig );
 			}
@@ -1068,7 +1068,7 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		/**
-		 * SubGroups are transformed to too intermediate format that is forwarded to the Builder.
+		 * SubGroups are transformed to too intermediate format that is forwarded to the MeshBuilder.
 		 * It is ensured that SubGroups only contain objects with vertices (no need to check).
 		 *
 		 * @param result
@@ -1160,7 +1160,7 @@ THREE.OBJLoader2 = (function () {
 							materialCloneInstructions: materialCloneInstructions
 						}
 					};
-					this.callbackBuilder( payload );
+					this.callbackMeshBuilder( payload );
 
 					// fake entry for async; sync Parser always works on material references (Builder update directly visible here)
 					if ( this.useAsync ) this.materials[ materialName ] = materialCloneInstructions;
@@ -1245,7 +1245,7 @@ THREE.OBJLoader2 = (function () {
 			}
 
 			this.outputObjectCount++;
-			this.callbackBuilder(
+			this.callbackMeshBuilder(
 				{
 					cmd: 'meshData',
 					progress: {

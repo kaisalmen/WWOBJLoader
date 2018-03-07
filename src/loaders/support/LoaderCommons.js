@@ -28,7 +28,7 @@ THREE.LoaderSupport.Validator = {
 
 
 /**
- * Callbacks utilized by loaders and builder.
+ * Callbacks utilized by loaders and builders.
  * @class
  */
 THREE.LoaderSupport.Callbacks = (function () {
@@ -169,7 +169,7 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 	}
 
 	/**
-	 * Set the content of this resource (String)
+	 * Set the content of this resource
 	 * @memberOf THREE.LoaderSupport.ResourceDescriptor
 	 *
 	 * @param {Object} content The file content as arraybuffer or text
@@ -226,14 +226,14 @@ THREE.LoaderSupport.PrepData = (function () {
 	 * Add a resource description.
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
-	 * @param {THREE.LoaderSupport.ResourceDescriptor}
+	 * @param {THREE.LoaderSupport.ResourceDescriptor} Adds a {@link THREE.LoaderSupport.ResourceDescriptor}
 	 */
 	PrepData.prototype.addResource = function ( resource ) {
 		this.resources.push( resource );
 	};
 
 	/**
-	 * Clones this object and returns it afterwards.
+	 * Clones this object and returns it afterwards. Callbacks and resources are not cloned deep (references!).
 	 * @memberOf THREE.LoaderSupport.PrepData
 	 *
 	 * @returns {@link THREE.LoaderSupport.PrepData}

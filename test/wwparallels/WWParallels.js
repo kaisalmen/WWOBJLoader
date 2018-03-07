@@ -29,7 +29,7 @@ var WWParallels = (function () {
 		this.logging = {
 			enabled: false,
 			debug: false
-		}
+		};
 		this.workerDirector.setLogging( this.logging.enabled, this.logging.debug );
 		this.workerDirector.setCrossOrigin( 'anonymous' );
 		this.workerDirector.setForceWorkerDataCopy( true );

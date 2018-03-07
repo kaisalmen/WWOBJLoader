@@ -76,8 +76,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-			match: /var LOADER_BUILDER_VERSION.*/g,
-			replacement: "var LOADER_BUILDER_VERSION = '"+ packageContent.versions.loader_builder + "';"
+			match: /var LOADER_MESH_BUILDER_VERSION.*/g,
+			replacement: "var LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.loader_mesh_builder + "';"
 		} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders/support" ) );

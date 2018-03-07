@@ -1,7 +1,20 @@
 # Changelog
 
-## 2.3.2-dev
+## 2.4.0
+- three.js issue 13197:
+  - Added forceWorkerDataCopy to THREE.LoaderSupport.WorkerSupport and THREE.LoaderSupport.WorkerDirector
+  - THREE.OBJLoader2 handles cached resources properly. This increases overall performance as no unnecessary reloads are requested.
+- THREE.OBJLoader2: Reduced Parser complexity:
+  - Simplified slash counting used for face type detection
+  - One buildFace function is used for all four face types, lines and points including indices (=vertex reduction) creation if wanted.
+  - String processing (o, g, mtllib and usemtl) just concatenates chars
+  - Overall speed improvements due simpler code paths
+- Removed THREE.LoaderSupport.ConsoleLogger: Added setLogging function as replacement where. Console logging is behind boolean flags.
+- Removed THREE.LoaderSupport.LoaderBase: Many functions are coupled with OBJLoader2. It was simply not generic enough and added unneeded complexity. 
+- Reduced THREE.LoaderSupport.PrepData to minimum set of generic functions. Simple properties are added by demand and are no longer enforced.
+- Renamed THREE.LoaderSupport.Builder to THREE.LoaderSupport.MeshBuilder
 - Added objverify to npm package
+- Updated documentation
 
 ## 2.3.1
 - Issue #10: Moved load and checkResourceDescriptorFiles from OBJLoader2 to LoaderBase. Re-use generic functions in other loaders
