@@ -9,7 +9,7 @@
   - One buildFace function is used for all four face types, lines and points including indices (=vertex reduction) creation if wanted.
   - String processing (o, g, mtllib and usemtl) just concatenates chars
   - Overall speed improvements due simpler code paths
-- Removed THREE.LoaderSupport.ConsoleLogger: Added setLogging function as replacement where. Console logging is behind boolean flags.
+- Removed THREE.LoaderSupport.ConsoleLogger: Added setLogging function as replacement where required. Console logging is behind boolean flags. **Important:** Code adjustments are required. 
 - Removed THREE.LoaderSupport.LoaderBase: Many functions are coupled with OBJLoader2. It was simply not generic enough and added unneeded complexity. 
 - Reduced THREE.LoaderSupport.PrepData to minimum set of generic functions. Simple properties are added by demand and are no longer enforced.
 - Renamed THREE.LoaderSupport.Builder to THREE.LoaderSupport.MeshBuilder

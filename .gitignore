@@ -1,5 +1,6 @@
 .idea
 
+/archive
 /build
 /node_modules
 
@@ -17,8 +18,6 @@
 /resource/obj/zomax
 /resource/pcd
 
-/screenshots
-
 /test/meshspray/main.html
 /test/meshspray/main.min.html
 /test/meshspray/webgl_*.html
@@ -35,8 +34,6 @@
 /test/wwparallels/main.min.html
 /test/wwparallels/webgl_*.html
 
-/*.log
-/*.tgz
 /docs/styles
 /docs/fonts
 /docs/img
