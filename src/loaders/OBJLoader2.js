@@ -32,7 +32,6 @@ THREE.OBJLoader2 = (function () {
 
 		this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
-		this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 		this.terminateWorkerOnLoad = true;
 	}
 
@@ -175,14 +174,13 @@ THREE.OBJLoader2 = (function () {
 	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
-	 * @param {boolean} [useAsync] If true, uses async loading with worker, if false loads data synchronously.
 	 */
-	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+	OBJLoader2.prototype.load = function ( url, onLoad, onProgress, onError, onMeshAlter ) {
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ' );
-		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter, useAsync );
+		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter );
 	};
 
-	OBJLoader2.prototype._loadObj = function ( resource, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+	OBJLoader2.prototype._loadObj = function ( resource, onLoad, onProgress, onError, onMeshAlter ) {
 		if ( ! Validator.isValid( onError ) ) onError = this._onError;
 
 		// fast-fail
@@ -191,26 +189,18 @@ THREE.OBJLoader2 = (function () {
 		var fileLoaderOnLoad = function ( content ) {
 
 			resource.content = content;
-			if ( useAsync ) {
-
-				scope.parseAsync( content, onLoad );
-
-			} else {
-
-				var callbacks = new THREE.LoaderSupport.Callbacks();
-				callbacks.setCallbackOnMeshAlter( onMeshAlter );
-				scope._setCallbacks( callbacks );
-				onLoad(
-					{
-						detail: {
-							loaderRootNode: scope.parse( content ),
-							modelName: scope.modelName,
-							instanceNo: scope.instanceNo
-						}
+			var callbacks = new THREE.LoaderSupport.Callbacks();
+			callbacks.setCallbackOnMeshAlter( onMeshAlter );
+			scope._setCallbacks( callbacks );
+			onLoad(
+				{
+					detail: {
+						loaderRootNode: scope.parse( content ),
+						modelName: scope.modelName,
+						instanceNo: scope.instanceNo
 					}
-				);
-
-			}
+				}
+			);
 		};
 
 		// fast-fail
@@ -246,39 +236,6 @@ THREE.OBJLoader2 = (function () {
 		}
 	};
 
-
-	/**
-	 * Run the loader according the provided instructions.
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {THREE.LoaderSupport.PrepData} prepData All parameters and resources required for execution
-	 * @param {THREE.LoaderSupport.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
-	 */
-	OBJLoader2.prototype.run = function ( prepData, workerSupportExternal ) {
-		this._applyPrepData( prepData );
-		var available = prepData.checkResourceDescriptorFiles( prepData.resources,
-			[
-				{ ext: "obj", type: "ArrayBuffer", ignore: false },
-				{ ext: "mtl", type: "String", ignore: false },
-				{ ext: "zip", type: "String", ignore: true }
-			]
-		);
-		if ( Validator.isValid( workerSupportExternal ) ) {
-
-			this.terminateWorkerOnLoad = false;
-			this.workerSupport = workerSupportExternal;
-			this.logging.enabled = this.workerSupport.logging.enabled;
-			this.logging.debug = this.workerSupport.logging.debug;
-
-		}
-		var scope = this;
-		var onMaterialsLoaded = function ( materials ) {
-			if ( materials !== null ) scope.meshBuilder.setMaterials( materials );
-			scope._loadObj( available.obj, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
-
-		};
-		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin, prepData.materialOptions );
-	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
 		if ( Validator.isValid( prepData ) ) {
@@ -357,97 +314,6 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	/**
-	 * Parses OBJ content asynchronously from arraybuffer.
-	 * @memberOf THREE.OBJLoader2
-	 *
-	 * @param {arraybuffer} content OBJ data as Uint8Array
-	 * @param {callback} onLoad Called after worker successfully completed loading
-	 */
-	OBJLoader2.prototype.parseAsync = function ( content, onLoad ) {
-		var scope = this;
-		var measureTime = false;
-		var scopedOnLoad = function () {
-			onLoad(
-				{
-					detail: {
-						loaderRootNode: scope.loaderRootNode,
-						modelName: scope.modelName,
-						instanceNo: scope.instanceNo
-					}
-				}
-			);
-			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
-		};
-		// fast-fail in case of illegal data
-		if ( ! Validator.isValid( content ) ) {
-
-			console.warn( 'Provided content is not a valid ArrayBuffer.' );
-			scopedOnLoad()
-
-		} else {
-
-			measureTime = true;
-
-		}
-		if ( measureTime && this.logging.enabled ) console.time( 'OBJLoader2 parseAsync: ' + this.modelName );
-		this.meshBuilder.init();
-
-		var scopedOnMeshLoaded = function ( payload ) {
-			var meshes = scope.meshBuilder.processPayload( payload );
-			var mesh;
-			for ( var i in meshes ) {
-				mesh = meshes[ i ];
-				scope.loaderRootNode.add( mesh );
-			}
-		};
-		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
-			var workerCode = '';
-			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by OBJLoader2 buildCode.\n';
-			workerCode += '  */\n\n';
-			workerCode += 'THREE = { LoaderSupport: {} };\n\n';
-			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', Validator );
-			workerCode += funcBuildSingleton( 'Parser', Parser );
-
-			return workerCode;
-		};
-		this.workerSupport.validate( buildCode, 'Parser' );
-		this.workerSupport.setCallbacks( scopedOnMeshLoaded, scopedOnLoad );
-		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
-
-		var materialNames = {};
-		var materials = this.meshBuilder.getMaterials();
-		for ( var materialName in materials ) {
-
-			materialNames[ materialName ] = materialName;
-
-		}
-		this.workerSupport.run(
-			{
-				params: {
-					useAsync: true,
-					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-					useIndices: this.useIndices,
-					disregardNormals: this.disregardNormals
-				},
-				logging: {
-					enabled: this.logging.enabled,
-					debug: this.logging.debug
-				},
-				materials: {
-					// in async case only material names are supplied to parser
-					materials: materialNames
-				},
-				data: {
-					input: content,
-					options: null
-				}
-			}
-		);
-	};
-
-
-	/**
 	 * Parse OBJ data either from ArrayBuffer or string
 	 * @class
 	 */
@@ -460,7 +326,6 @@ THREE.OBJLoader2 = (function () {
 			this.legacyMode = false;
 
 			this.materials = {};
-			this.useAsync = false;
 			this.materialPerSmoothingGroup = false;
 			this.useIndices = false;
 			this.disregardNormals = false;
@@ -526,10 +391,6 @@ THREE.OBJLoader2 = (function () {
 			this.rawMesh.counts.smoothingGroupCount = 0;
 		};
 
-		Parser.prototype.setUseAsync = function ( useAsync ) {
-			this.useAsync = useAsync;
-		};
-
 		Parser.prototype.setMaterialPerSmoothingGroup = function ( materialPerSmoothingGroup ) {
 			this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 		};
@@ -570,7 +431,6 @@ THREE.OBJLoader2 = (function () {
 				var matNames = ( matKeys.length > 0 ) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
 				var printedConfig = 'OBJLoader2.Parser configuration:'
 					+ matNames
-					+ '\n\tuseAsync: ' + this.useAsync
 					+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 					+ '\n\tuseIndices: ' + this.useIndices
 					+ '\n\tdisregardNormals: ' + this.disregardNormals
@@ -1162,8 +1022,13 @@ THREE.OBJLoader2 = (function () {
 					};
 					this.callbackMeshBuilder( payload );
 
-					// fake entry for async; sync Parser always works on material references (Builder update directly visible here)
-					if ( this.useAsync ) this.materials[ materialName ] = materialCloneInstructions;
+					// only set materials if they don't exist, yet
+					var matCheck = this.materials[ materialName ];
+					if ( matCheck === undefined || matCheck === null ) {
+
+						this.materials[ materialName ] = materialCloneInstructions;
+
+					}
 
 				}
 
