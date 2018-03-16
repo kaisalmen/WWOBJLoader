@@ -16,7 +16,11 @@ THREE.LoaderSupport.MeshBuilder = (function () {
 			debug: false
 		};
 
-		this.callbacks = new THREE.LoaderSupport.Callbacks();
+		this.callbacks = {
+			onProgress: null,
+			onMeshAlter: null,
+			onLoadMaterials: null
+		};
 		this.materials = [];
 	}
 
@@ -87,11 +91,10 @@ THREE.LoaderSupport.MeshBuilder = (function () {
 		this.updateMaterials( payload );
 	};
 
-	MeshBuilder.prototype._setCallbacks = function ( callbacks ) {
-		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
-		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
-		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
-		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
+	MeshBuilder.prototype._setCallbacks = function ( onProgress, onMeshAlter, onLoadMaterials ) {
+		if ( Validator.isValid( onProgress ) ) this.callbacks.onProgress = onProgress;
+		if ( Validator.isValid( onMeshAlter ) ) this.callbacks.onMeshAlter = onMeshAlter;
+		if ( Validator.isValid( onLoadMaterials ) ) this.callbacks.onLoadMaterials = onLoadMaterials;
 	};
 
 	/**

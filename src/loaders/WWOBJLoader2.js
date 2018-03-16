@@ -7,14 +7,14 @@
 THREE.WWOBJLoader2 = function ( manager ) {
 	THREE.OBJLoader2.call( this, manager );
 
-	var WW_OBJLOADER2_VERSION = '1.0.0.-dev';
-	console.info( 'Using THREE.WWOBJLoader2 version: ' + WW_OBJLOADER2_VERSION );
+	console.info( 'Using THREE.WWOBJLoader2 version: ' + THREE.WWOBJLoader2.WW_OBJLOADER2_VERSION );
 
 	this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 };
 
 THREE.WWOBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
 THREE.WWOBJLoader2.prototype.constructor = THREE.WWOBJLoader2;
+THREE.WWOBJLoader2.WW_OBJLOADER2_VERSION = '1.0.0-dev';
 
 
 /**
