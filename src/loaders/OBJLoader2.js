@@ -1,8 +1,5 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
 
-if ( THREE.LoaderSupport === undefined ) console.error( '"THREE.LoaderSupport" is not available. "THREE.OBJLoader2" requires it. Please include "LoaderSupport.js" in your HTML.' );
-
-
 THREE.OBJLoader2 = function ( manager ) {
 
 	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
@@ -23,7 +20,7 @@ THREE.OBJLoader2 = function ( manager ) {
 	this.materialPerSmoothingGroup = false;
 	this.loaderRootNode = new THREE.Group();
 
-	this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
+	this.meshBuilder = new THREE.OBJLoader2.MeshBuilder();
 	this.callbacks = {
 		onProgress: null
 	};
@@ -177,9 +174,7 @@ THREE.OBJLoader2.prototype = {
 				numericalValue: numericalValue
 			}
 		};
-
 		if ( this.validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
-
 		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
 	},
 
@@ -191,7 +186,11 @@ THREE.OBJLoader2.prototype = {
 			output += '\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
 
 		}
-		this._onProgress( 'error', output, - 1 );
+		var scope = this;
+		var onProgressScoped = function ( text, numericalValue ) {
+			scope._onProgress( 'error', text, numericalValue );
+		};
+		onProgressScoped( output, - 1 );
 		throw output;
 	},
 
@@ -206,7 +205,7 @@ THREE.OBJLoader2.prototype = {
 	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
 	 */
 	load: function ( url, onLoad, onProgress, onError, onMeshAlter ) {
-		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'OBJ' );
+		var resource = new THREE.OBJLoader2.ResourceDescriptor( url, 'OBJ' );
 		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter );
 	},
 
@@ -219,9 +218,7 @@ THREE.OBJLoader2.prototype = {
 		var fileLoaderOnLoad = function ( content ) {
 
 			resource.content = content;
-			var callbacks = new THREE.LoaderSupport.Callbacks();
-			callbacks.setCallbackOnMeshAlter( onMeshAlter );
-			scope._setCallbacks( callbacks );
+			scope._setCallbacks( null, onMeshAlter, null );
 			onLoad(
 				{
 					detail: {
@@ -347,8 +344,6 @@ THREE.OBJLoader2.prototype = {
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += 'THREE = { LoaderSupport: {} };\n\n';
-		workerCode += funcBuildObject( 'THREE.OBJLoader2.Validator', THREE.OBJLoader2.Validator );
 		workerCode += funcBuildSingleton( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
 
 		return workerCode;
@@ -365,7 +360,7 @@ THREE.OBJLoader2.prototype = {
 	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
 	loadMtl: function ( url, content, callbackOnLoad, crossOrigin, materialOptions ) {
-		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'MTL' );
+		var resource = new THREE.OBJLoader2.ResourceDescriptor( url, 'MTL' );
 		resource.setContent( content );
 		this._loadMtl( resource, callbackOnLoad, crossOrigin, materialOptions );
 	},
@@ -415,19 +410,75 @@ THREE.OBJLoader2.prototype = {
 
 			} else if ( this.validator.isValid( resource.url ) ) {
 
+				var onProgressScoped = function ( text, numericalValue ) {
+					scope._onProgress( 'progressLoadMtl', text, numericalValue );
+				};
+
 				var fileLoader = new THREE.FileLoader( this.manager );
 				fileLoader.load( resource.url, function ( text ) {
 
 					resource.content = text;
 					processMaterials( mtlLoader.parse( text ) );
 
-				}, this._onProgress, this._onError );
+				}, onProgressScoped, this._onError );
 
 			}
 		}
 	}
 };
 
+
+/**
+ * A resource description used by {@link THREE.OBJLoader2}.
+ * @class
+ *
+ * @param {string} url URL to the file
+ * @param {string} extension The file extension (type)
+ */
+THREE.OBJLoader2.ResourceDescriptor = function ( url, extension ) {
+	var urlParts = url.split( '/' );
+
+	this.path = null;
+	this.name = null;
+	this.url = url;
+	if ( urlParts.length < 2 ) {
+
+		this.name = url;
+
+	} else {
+
+		var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
+		if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
+		var urlPartsName = urlParts[ urlParts.length - 1 ];
+		if ( urlPartsName !== undefined && urlPartsName !== null ) this.name = urlPartsName;
+
+	}
+	this.extension = "default";
+	if ( extension !== undefined && extension !== null ) this.extension = extension;
+	this.extension = this.extension.trim();
+	this.content = null;
+};
+
+THREE.OBJLoader2.ResourceDescriptor.prototype = {
+
+	constructor: THREE.OBJLoader2.ResourceDescriptor,
+
+	/**
+	 * Set the content of this resource
+	 * @memberOf THREE.OBJLoader2.ResourceDescriptor
+	 *
+	 * @param {Object} content The file content as arraybuffer or text
+	 */
+	setContent: function ( content ) {
+		if ( content !== undefined && content !== null ) this.content = content;
+	}
+};
+
+
+/**
+ * Parse OBJ data either from ArrayBuffer or string
+ * @class
+ */
 THREE.OBJLoader2.Parser = function() {
 	this.callbackProgress = null;
 	this.callbackMeshBuilder = null;
@@ -482,14 +533,8 @@ THREE.OBJLoader2.Parser = function() {
 		enabled: true,
 		debug: false
 	};
-
-	this.validator = THREE.OBJLoader2.Validator;
 };
 
-/**
- * Parse OBJ data either from ArrayBuffer or string
- * @class
- */
 THREE.OBJLoader2.Parser.prototype = {
 
 	constructor: THREE.OBJLoader2.Parser,
@@ -523,12 +568,10 @@ THREE.OBJLoader2.Parser.prototype = {
 	},
 
 	setMaterials: function ( materials ) {
-		this.materials = this.validator.verifyInput( materials, this.materials );
-		this.materials = this.validator.verifyInput( this.materials, {} );
+		this.materials = materials;
 	},
 
 	setCallbackMeshBuilder: function ( callbackMeshBuilder ) {
-		if ( ! this.validator.isValid( callbackMeshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
 		this.callbackMeshBuilder = callbackMeshBuilder;
 	},
 
@@ -542,6 +585,8 @@ THREE.OBJLoader2.Parser.prototype = {
 	},
 
 	configure: function () {
+		if ( this.callbackMeshBuilder === undefined || this.callbackMeshBuilder === null ) throw 'Unable to run as no callback for building meshes is set.';
+
 		this.pushSmoothingGroup( 1 );
 		if ( this.logging.enabled ) {
 
@@ -863,7 +908,7 @@ THREE.OBJLoader2.Parser.prototype = {
 		var index = this.rawMesh.activeMtlName + '|' + this.rawMesh.smoothingGroup.normalized;
 		this.rawMesh.subGroupInUse = this.rawMesh.subGroups[ index ];
 
-		if ( ! this.validator.isValid( this.rawMesh.subGroupInUse ) ) {
+		if ( this.rawMesh.subGroupInUse === undefined || this.rawMesh.subGroupInUse === null ) {
 
 			this.rawMesh.subGroupInUse = {
 				index: index,
@@ -885,14 +930,14 @@ THREE.OBJLoader2.Parser.prototype = {
 	},
 
 	buildFace: function ( faceIndexV, faceIndexU, faceIndexN ) {
-		if ( this.disregardNormals ) faceIndexN = undefined;
+		var subGroupInUse = this.rawMesh.subGroupInUse;
 		var scope = this;
 		var updateSubGroupInUse = function () {
 
 			var faceIndexVi = parseInt( faceIndexV );
 			var indexPointerV = 3 * (faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3);
 
-			var vertices = scope.rawMesh.subGroupInUse.vertices;
+			var vertices = subGroupInUse.vertices;
 			vertices.push( scope.vertices[ indexPointerV ++ ] );
 			vertices.push( scope.vertices[ indexPointerV ++ ] );
 			vertices.push( scope.vertices[ indexPointerV ] );
@@ -900,7 +945,7 @@ THREE.OBJLoader2.Parser.prototype = {
 			var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 			if ( indexPointerC !== null ) {
 
-				var colors = scope.rawMesh.subGroupInUse.colors;
+				var colors = subGroupInUse.colors;
 				colors.push( scope.colors[ indexPointerC ++ ] );
 				colors.push( scope.colors[ indexPointerC ++ ] );
 				colors.push( scope.colors[ indexPointerC ] );
@@ -910,16 +955,16 @@ THREE.OBJLoader2.Parser.prototype = {
 
 				var faceIndexUi = parseInt( faceIndexU );
 				var indexPointerU = 2 * (faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.uvs.length / 2);
-				var uvs = scope.rawMesh.subGroupInUse.uvs;
+				var uvs = subGroupInUse.uvs;
 				uvs.push( scope.uvs[ indexPointerU ++ ] );
 				uvs.push( scope.uvs[ indexPointerU ] );
 
 			}
-			if ( faceIndexN ) {
+			if ( faceIndexN && ! scope.disregardNormals ) {
 
 				var faceIndexNi = parseInt( faceIndexN );
 				var indexPointerN = 3 * (faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.normals.length / 3);
-				var normals = scope.rawMesh.subGroupInUse.normals;
+				var normals = subGroupInUse.normals;
 				normals.push( scope.normals[ indexPointerN ++ ] );
 				normals.push( scope.normals[ indexPointerN ++ ] );
 				normals.push( scope.normals[ indexPointerN ] );
@@ -929,21 +974,22 @@ THREE.OBJLoader2.Parser.prototype = {
 
 		if ( this.useIndices ) {
 
-			var mappingName = faceIndexV + (faceIndexU ? '_' + faceIndexU : '_n') + (faceIndexN ? '_' + faceIndexN : '_n');
-			var indicesPointer = this.rawMesh.subGroupInUse.indexMappings[ mappingName ];
-			if ( this.validator.isValid( indicesPointer ) ) {
-
-				this.rawMesh.counts.doubleIndicesCount ++;
-
-			} else {
+			if ( this.disregardNormals ) faceIndexN = undefined;
+			var mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
+			var indicesPointer = subGroupInUse.indexMappings[ mappingName ];
+			if ( indicesPointer === undefined || indicesPointer === null ) {
 
 				indicesPointer = this.rawMesh.subGroupInUse.vertices.length / 3;
 				updateSubGroupInUse();
-				this.rawMesh.subGroupInUse.indexMappings[ mappingName ] = indicesPointer;
-				this.rawMesh.subGroupInUse.indexMappingsCount ++;
+				subGroupInUse.indexMappings[ mappingName ] = indicesPointer;
+				subGroupInUse.indexMappingsCount++;
+
+			} else {
+
+				this.rawMesh.counts.doubleIndicesCount++;
 
 			}
-			this.rawMesh.subGroupInUse.indices.push( indicesPointer );
+			subGroupInUse.indices.push( indicesPointer );
 
 		} else {
 
@@ -1023,7 +1069,8 @@ THREE.OBJLoader2.Parser.prototype = {
 
 	processCompletedMesh: function () {
 		var result = this.finalizeRawMesh();
-		if ( this.validator.isValid( result ) ) {
+		var haveMesh = result !== null;
+		if ( haveMesh ) {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
@@ -1037,12 +1084,9 @@ THREE.OBJLoader2.Parser.prototype = {
 			var progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
 			this.callbackProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
 			this.resetRawMesh();
-			return true;
 
-		} else {
-
-			return false;
 		}
+		return haveMesh;
 	},
 
 	/**
@@ -1062,7 +1106,7 @@ THREE.OBJLoader2.Parser.prototype = {
 		var colorFA = (result.absoluteColorCount > 0) ? new Float32Array( result.absoluteColorCount ) : null;
 		var normalFA = (result.absoluteNormalCount > 0) ? new Float32Array( result.absoluteNormalCount ) : null;
 		var uvFA = (result.absoluteUvCount > 0) ? new Float32Array( result.absoluteUvCount ) : null;
-		var haveVertexColors = this.validator.isValid( colorFA );
+		var haveVertexColors = colorFA !== null;
 
 		var meshOutputGroup;
 		var materialNames = [];
@@ -1104,7 +1148,7 @@ THREE.OBJLoader2.Parser.prototype = {
 			material = this.materials[ materialName ];
 
 			// both original and derived names do not lead to an existing material => need to use a default material
-			if ( ! this.validator.isValid( materialOrg ) && ! this.validator.isValid( material ) ) {
+			if ( ( materialOrg === undefined || materialOrg === null ) && ( material === undefined || material === null ) ) {
 
 				var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				materialOrg = this.materials[ defaultMaterialName ];
@@ -1122,7 +1166,7 @@ THREE.OBJLoader2.Parser.prototype = {
 				}
 
 			}
-			if ( ! this.validator.isValid( material ) ) {
+			if ( material === undefined || material === null ) {
 
 				var materialCloneInstructions = {
 					materialNameOrg: materialNameOrg,
@@ -1208,7 +1252,8 @@ THREE.OBJLoader2.Parser.prototype = {
 			}
 
 			if ( this.logging.enabled && this.logging.debug ) {
-				var materialIndexLine = this.validator.isValid( selectedMaterialIndex ) ? '\n\t\tmaterialIndex: ' + selectedMaterialIndex : '';
+
+				var materialIndexLine = ( selectedMaterialIndex === undefined || selectedMaterialIndex === null ) ? '' : '\n\t\tmaterialIndex: ' + selectedMaterialIndex;
 				var createdReport = '\tOutput Object no.: ' + this.outputObjectCount +
 					'\n\t\tgroupName: ' + meshOutputGroup.groupName +
 					'\n\t\tIndex: ' + meshOutputGroup.index +
@@ -1223,10 +1268,10 @@ THREE.OBJLoader2.Parser.prototype = {
 					'\n\t\t#uvs: ' + meshOutputGroup.uvs.length / 2 +
 					'\n\t\t#normals: ' + meshOutputGroup.normals.length / 3;
 				console.debug( createdReport );
+
 			}
 
 		}
-
 		this.outputObjectCount ++;
 		this.callbackMeshBuilder(
 			{
@@ -1253,10 +1298,10 @@ THREE.OBJLoader2.Parser.prototype = {
 				geometryType: this.rawMesh.faceType < 4 ? 0 : (this.rawMesh.faceType === 6) ? 2 : 1
 			},
 			[ vertexFA.buffer ],
-			this.validator.isValid( indexUA ) ? [ indexUA.buffer ] : null,
-			this.validator.isValid( colorFA ) ? [ colorFA.buffer ] : null,
-			this.validator.isValid( normalFA ) ? [ normalFA.buffer ] : null,
-			this.validator.isValid( uvFA ) ? [ uvFA.buffer ] : null
+			indexUA !== null ?  [ indexUA.buffer ] : null,
+			colorFA !== null ? [ colorFA.buffer ] : null,
+			normalFA !== null ? [ normalFA.buffer ] : null,
+			uvFA !== null ? [ uvFA.buffer ] : null
 		);
 	},
 
@@ -1273,3 +1318,376 @@ THREE.OBJLoader2.Parser.prototype = {
 		}
 	}
 };
+
+
+THREE.OBJLoader2.MeshBuilder = function() {
+	console.info( 'Using THREE.OBJLoader2.MeshBuilder version: ' + THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION );
+
+	this.validator = THREE.OBJLoader2.Validator;
+
+	this.logging = {
+		enabled: true,
+		debug: false
+	};
+
+	this.callbacks = {
+		onProgress: null,
+		onMeshAlter: null,
+		onLoadMaterials: null
+	};
+	this.materials = [];
+};
+THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION = '2.0.0-dev';
+
+
+THREE.OBJLoader2.MeshBuilder.prototype = {
+
+	constructor: THREE.OBJLoader2.MeshBuilder,
+
+		/**
+		 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+		 * @memberOf THREE.OBJLoader2.MeshBuilder
+		 *
+		 * @param {boolean} enabled True or false.
+		 * @param {boolean} debug True or false.
+		 */
+	setLogging:	function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+	},
+
+	/**
+	 * Initializes the MeshBuilder (currently only default material initialisation).
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 */
+	init: function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+
+		var defaultVertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
+		defaultVertexColorMaterial.vertexColors = THREE.VertexColors;
+
+		var defaultLineMaterial = new THREE.LineBasicMaterial();
+		defaultLineMaterial.name = 'defaultLineMaterial';
+
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 1 } );
+		defaultPointMaterial.name = 'defaultPointMaterial';
+
+		var runtimeMaterials = {};
+		runtimeMaterials[ defaultMaterial.name ] = defaultMaterial;
+		runtimeMaterials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
+		runtimeMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
+		runtimeMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
+
+		this.updateMaterials(
+			{
+				cmd: 'materialData',
+				materials: {
+					materialCloneInstructions: null,
+					serializedMaterials: null,
+					runtimeMaterials: runtimeMaterials
+				}
+			}
+		);
+	},
+
+	/**
+	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 */
+	setMaterials: function ( materials ) {
+		var payload = {
+			cmd: 'materialData',
+			materials: {
+				materialCloneInstructions: null,
+				serializedMaterials: null,
+				runtimeMaterials: this.validator.isValid( this.callbacks.onLoadMaterials ) ? this.callbacks.onLoadMaterials( materials ) : materials
+			}
+		};
+		this.updateMaterials( payload );
+	},
+
+	_setCallbacks: function ( onProgress, onMeshAlter, onLoadMaterials ) {
+		if ( this.validator.isValid( onProgress ) ) this.callbacks.onProgress = onProgress;
+		if ( this.validator.isValid( onMeshAlter ) ) this.callbacks.onMeshAlter = onMeshAlter;
+		if ( this.validator.isValid( onLoadMaterials ) ) this.callbacks.onLoadMaterials = onLoadMaterials;
+	},
+
+	/**
+	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @param {Object} payload Raw Mesh or Material descriptions.
+	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
+	 */
+	processPayload: function ( payload ) {
+		if ( payload.cmd === 'meshData' ) {
+
+			return this.buildMeshes( payload );
+
+		} else if ( payload.cmd === 'materialData' ) {
+
+			this.updateMaterials( payload );
+			return null;
+
+		}
+	},
+
+	/**
+	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
+	 */
+	buildMeshes: function ( meshPayload ) {
+		var meshName = meshPayload.params.meshName;
+
+		var bufferGeometry = new THREE.BufferGeometry();
+		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
+		if ( this.validator.isValid( meshPayload.buffers.indices ) ) {
+
+			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ) );
+
+		}
+		var haveVertexColors = this.validator.isValid( meshPayload.buffers.colors );
+		if ( haveVertexColors ) {
+
+			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
+
+		}
+		if ( this.validator.isValid( meshPayload.buffers.normals ) ) {
+
+			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.normals ), 3 ) );
+
+		} else {
+
+			bufferGeometry.computeVertexNormals();
+
+		}
+		if ( this.validator.isValid( meshPayload.buffers.uvs ) ) {
+
+			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
+
+		}
+
+		var material, materialName, key;
+		var materialNames = meshPayload.materials.materialNames;
+		var createMultiMaterial = meshPayload.materials.multiMaterial;
+		var multiMaterials = [];
+		for ( key in materialNames ) {
+
+			materialName = materialNames[ key ];
+			material = this.materials[ materialName ];
+			if ( createMultiMaterial ) multiMaterials.push( material );
+
+		}
+		if ( createMultiMaterial ) {
+
+			material = multiMaterials;
+			var materialGroups = meshPayload.materials.materialGroups;
+			var materialGroup;
+			for ( key in materialGroups ) {
+
+				materialGroup = materialGroups[ key ];
+				bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+
+			}
+
+		}
+
+		var meshes = [];
+		var mesh;
+		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
+		var callbackOnMeshAlterResult;
+		var useOrgMesh = true;
+		var geometryType = this.validator.verifyInput( meshPayload.geometryType, 0 );
+		if ( this.validator.isValid( callbackOnMeshAlter ) ) {
+
+			callbackOnMeshAlterResult = callbackOnMeshAlter(
+				{
+					detail: {
+						meshName: meshName,
+						bufferGeometry: bufferGeometry,
+						material: material,
+						geometryType: geometryType
+					}
+				}
+			);
+			if ( this.validator.isValid( callbackOnMeshAlterResult ) ) {
+
+				if ( ! callbackOnMeshAlterResult.isDisregardMesh() && callbackOnMeshAlterResult.providesAlteredMeshes() ) {
+
+					for ( var i in callbackOnMeshAlterResult.meshes ) {
+
+						meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
+
+					}
+
+				}
+				useOrgMesh = false;
+
+			}
+
+		}
+		if ( useOrgMesh ) {
+
+			if ( meshPayload.computeBoundingSphere ) bufferGeometry.computeBoundingSphere();
+			if ( geometryType === 0 ) {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+
+			} else if ( geometryType === 1 ) {
+
+				mesh = new THREE.LineSegments( bufferGeometry, material );
+
+			} else {
+
+				mesh = new THREE.Points( bufferGeometry, material );
+
+			}
+			mesh.name = meshName;
+			meshes.push( mesh );
+
+		}
+
+		var progressMessage;
+		if ( this.validator.isValid( meshes ) && meshes.length > 0 ) {
+
+			var meshNames = [];
+			for ( var i in meshes ) {
+
+				mesh = meshes[ i ];
+				meshNames[ i ] = mesh.name;
+
+			}
+			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
+			progressMessage += ' (' + (meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+
+		} else {
+
+			progressMessage = 'Not adding mesh: ' + meshName;
+			progressMessage += ' (' + (meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+
+		}
+		var callbackOnProgress = this.callbacks.onProgress;
+		if ( this.validator.isValid( callbackOnProgress ) ) {
+
+			var event = new CustomEvent( 'MeshBuilderEvent', {
+				detail: {
+					type: 'progress',
+					modelName: meshPayload.params.meshName,
+					text: progressMessage,
+					numericalValue: meshPayload.progress.numericalValue
+				}
+			} );
+			callbackOnProgress( event );
+
+		}
+
+		return meshes;
+	},
+
+	/**
+	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @param {Object} materialPayload Material update instructions
+	 */
+	updateMaterials: function ( materialPayload ) {
+		var material, materialName;
+		var materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
+		if ( this.validator.isValid( materialCloneInstructions ) ) {
+
+			var materialNameOrg = materialCloneInstructions.materialNameOrg;
+			var materialOrg = this.materials[ materialNameOrg ];
+
+			if ( this.validator.isValid( materialNameOrg ) ) {
+
+				material = materialOrg.clone();
+
+				materialName = materialCloneInstructions.materialName;
+				material.name = materialName;
+
+				var materialProperties = materialCloneInstructions.materialProperties;
+				for ( var key in materialProperties ) {
+
+					if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) material[ key ] = materialProperties[ key ];
+
+				}
+				this.materials[ materialName ] = material;
+
+			} else {
+
+				console.warn( 'Requested material "' + materialNameOrg + '" is not available!' );
+
+			}
+		}
+
+		var materials = materialPayload.materials.serializedMaterials;
+		if ( this.validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+
+			var loader = new THREE.MaterialLoader();
+			var materialJson;
+			for ( materialName in materials ) {
+
+				materialJson = materials[ materialName ];
+				if ( this.validator.isValid( materialJson ) ) {
+
+					material = loader.parse( materialJson );
+					if ( this.logging.enabled ) console.info( 'De-serialized material with name "' + materialName + '" will be added.' );
+					this.materials[ materialName ] = material;
+				}
+
+			}
+
+		}
+
+		materials = materialPayload.materials.runtimeMaterials;
+		if ( this.validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+
+			for ( materialName in materials ) {
+
+				material = materials[ materialName ];
+				if ( this.logging.enabled ) console.info( 'Material with name "' + materialName + '" will be added.' );
+				this.materials[ materialName ] = material;
+
+			}
+
+		}
+	},
+
+	/**
+	 * Returns the mapping object of material name and corresponding jsonified material.
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @returns {Object} Map of Materials in JSON representation
+	 */
+	getMaterialsJSON: function () {
+		var materialsJSON = {};
+		var material;
+		for ( var materialName in this.materials ) {
+
+			material = this.materials[ materialName ];
+			materialsJSON[ materialName ] = material.toJSON();
+		}
+
+		return materialsJSON;
+	},
+
+	/**
+	 * Returns the mapping object of material name and corresponding material.
+	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 *
+	 * @returns {Object} Map of {@link THREE.Material}
+	 */
+	getMaterials: function () {
+		return this.materials;
+	}
+
+};
+

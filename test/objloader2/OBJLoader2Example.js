@@ -62,7 +62,7 @@ var OBJLoader2Example = (function () {
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
-		var objLoader = new THREE.WWOBJLoader2();
+		var objLoader = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( event ) {
 			scope.scene.add( event.detail.loaderRootNode );
 			console.log( 'Loading complete: ' + event.detail.modelName );

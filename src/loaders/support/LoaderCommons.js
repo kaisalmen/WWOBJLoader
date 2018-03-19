@@ -137,52 +137,6 @@ THREE.LoaderSupport.LoadedMeshUserOverride = (function () {
 
 
 /**
- * A resource description used by {@link THREE.LoaderSupport.PrepData} and others.
- * @class
- *
- * @param {string} url URL to the file
- * @param {string} extension The file extension (type)
- */
-THREE.LoaderSupport.ResourceDescriptor = (function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	function ResourceDescriptor( url, extension ) {
-		var urlParts = url.split( '/' );
-
-		if ( urlParts.length < 2 ) {
-
-			this.path = null;
-			this.name = url;
-			this.url = url;
-
-		} else {
-
-			this.path = Validator.verifyInput( urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/', null );
-			this.name = Validator.verifyInput( urlParts[ urlParts.length - 1 ], null );
-			this.url = url;
-
-		}
-		this.extension = Validator.verifyInput( extension, "default" );
-		this.extension = this.extension.trim();
-		this.content = null;
-	}
-
-	/**
-	 * Set the content of this resource
-	 * @memberOf THREE.LoaderSupport.ResourceDescriptor
-	 *
-	 * @param {Object} content The file content as arraybuffer or text
-	 */
-	ResourceDescriptor.prototype.setContent = function ( content ) {
-		this.content = Validator.verifyInput( content, null );
-	};
-
-	return ResourceDescriptor;
-})();
-
-
-/**
  * Configuration instructions to be used by run method.
  * @class
  */
