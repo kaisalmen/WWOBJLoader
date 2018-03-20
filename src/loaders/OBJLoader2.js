@@ -1,10 +1,10 @@
-if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
+if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
 
-THREE.OBJLoader2 = function ( manager ) {
+THREE.OBJLoader = function ( manager ) {
 
-	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
+	console.info( 'Using THREE.OBJLoader version: ' + THREE.OBJLoader.OBJLOADER2_VERSION );
 
-	this.validator = THREE.OBJLoader2.Validator;
+	this.validator = THREE.OBJLoader.Validator;
 
 	this.manager = ( manager === null || manager === undefined ) ? THREE.DefaultLoadingManager : manager;
 	this.logging = {
@@ -20,19 +20,19 @@ THREE.OBJLoader2 = function ( manager ) {
 	this.materialPerSmoothingGroup = false;
 	this.loaderRootNode = new THREE.Group();
 
-	this.meshBuilder = new THREE.OBJLoader2.MeshBuilder();
+	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.callbacks = {
 		onProgress: null
 	};
 	this.terminateWorkerOnLoad = true;
 };
 
-THREE.OBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
-THREE.OBJLoader2.prototype.constructor = THREE.OBJLoader2;
-THREE.OBJLoader2.OBJLOADER2_VERSION = '3.0.0-dev';
+THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
+THREE.OBJLoader.prototype.constructor = THREE.OBJLoader;
+THREE.OBJLoader.OBJLOADER2_VERSION = '3.0.0-dev';
 
 
-THREE.OBJLoader2.Validator = {
+THREE.OBJLoader.Validator = {
 
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -62,13 +62,13 @@ THREE.OBJLoader2.Validator = {
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
-THREE.OBJLoader2.prototype = {
+THREE.OBJLoader.prototype = {
 
-	constructor: THREE.OBJLoader2,
+	constructor: THREE.OBJLoader,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -81,7 +81,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Set the name of the model.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string} modelName
 	 */
@@ -91,7 +91,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * The URL of the base path.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string} path URL
 	 */
@@ -101,7 +101,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Set the node where the loaded objects will be attached directly.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
 	 */
@@ -111,17 +111,23 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
-	setMaterials: function ( materials ) {
+	setMaterials: function ( materialsOrmaterialCreator ) {
+		var materials = [];
+		if ( materialsOrmaterialCreator instanceof THREE.MTLLoader.MaterialCreator ) {
+
+			materials = this._handleMtlMaterials( materialsOrmaterialCreator );
+
+		}
 		this.meshBuilder.setMaterials( materials );
 	},
 
 	/**
 	 * Instructs loaders to create indexed {@link THREE.BufferGeometry}.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} useIndices=false
 	 */
@@ -131,7 +137,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Tells whether normals should be completely disregarded and regenerated.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} disregardNormals=false
 	 */
@@ -141,7 +147,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false
 	 */
@@ -156,7 +162,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Announce feedback which is give to the registered callbacks.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 * @private
 	 *
 	 * @param {string} type The type of event
@@ -196,7 +202,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
@@ -205,7 +211,7 @@ THREE.OBJLoader2.prototype = {
 	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
 	 */
 	load: function ( url, onLoad, onProgress, onError, onMeshAlter ) {
-		var resource = new THREE.OBJLoader2.ResourceDescriptor( url, 'OBJ' );
+		var resource = new THREE.OBJLoader.ResourceDescriptor( url, 'OBJ' );
 		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter );
 	},
 
@@ -219,15 +225,7 @@ THREE.OBJLoader2.prototype = {
 
 			resource.content = content;
 			scope._setCallbacks( null, onMeshAlter, null );
-			onLoad(
-				{
-					detail: {
-						loaderRootNode: scope.parse( content ),
-						modelName: scope.modelName,
-						instanceNo: scope.instanceNo
-					}
-				}
-			);
+			onLoad( scope.parse( content ) );
 		};
 
 		// fast-fail
@@ -281,7 +279,7 @@ THREE.OBJLoader2.prototype = {
 
 	/**
 	 * Parses OBJ data synchronously from arraybuffer or string.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 */
@@ -293,10 +291,10 @@ THREE.OBJLoader2.prototype = {
 			return this.loaderRootNode;
 
 		}
-		if ( this.logging.enabled ) console.time( 'OBJLoader2 parse: ' + this.modelName );
+		if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
 		this.meshBuilder.init();
 
-		var parser = new THREE.OBJLoader2.Parser();
+		var parser = new THREE.OBJLoader.Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseIndices( this.useIndices );
@@ -334,7 +332,7 @@ THREE.OBJLoader2.prototype = {
 			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
 
 		}
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2 parse: ' + this.modelName );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse: ' + this.modelName );
 
 		return this.loaderRootNode;
 	},
@@ -342,16 +340,16 @@ THREE.OBJLoader2.prototype = {
 	buildWorkerCode: function ( funcBuildObject, funcBuildSingleton ) {
 		var workerCode = '';
 		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
+		workerCode += '  * This code was constructed by THREE.OBJLoader.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += funcBuildSingleton( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
+		workerCode += funcBuildSingleton( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
 
 		return workerCode;
 	},
 
 	/**
 	 * Utility method for loading an mtl file according resource description. Provide url or content.
-	 * @memberOf THREE.OBJLoader2
+	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string} url URL to the file
 	 * @param {Object} content The file content as arraybuffer or text
@@ -360,31 +358,22 @@ THREE.OBJLoader2.prototype = {
 	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
 	loadMtl: function ( url, content, callbackOnLoad, crossOrigin, materialOptions ) {
-		var resource = new THREE.OBJLoader2.ResourceDescriptor( url, 'MTL' );
+		var resource = new THREE.OBJLoader.ResourceDescriptor( url, 'MTL' );
 		resource.setContent( content );
 		this._loadMtl( resource, callbackOnLoad, crossOrigin, materialOptions );
 	},
 
 	_loadMtl: function ( resource, callbackOnLoad, crossOrigin, materialOptions ) {
-		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
+		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader" requires it for loading MTL files.' );
 		if ( this.validator.isValid( resource ) && this.logging.enabled ) console.time( 'Loading MTL: ' + resource.name );
 
-		var materials = [];
 		var scope = this;
 		var processMaterials = function ( materialCreator ) {
-			var materialCreatorMaterials = [];
+			var materials = [];
 			if ( scope.validator.isValid( materialCreator ) ) {
 
 				materialCreator.preload();
-				materialCreatorMaterials = materialCreator.materials;
-				for ( var materialName in materialCreatorMaterials ) {
-
-					if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
-
-						materials[ materialName ] = materialCreatorMaterials[ materialName ];
-
-					}
-				}
+				materials = this._handleMtlMaterials( materialCreator );
 			}
 
 			if ( scope.validator.isValid( resource ) && scope.logging.enabled ) console.timeEnd( 'Loading MTL: ' + resource.name );
@@ -424,18 +413,32 @@ THREE.OBJLoader2.prototype = {
 
 			}
 		}
+	},
+
+	_handleMtlMaterials: function ( materialCreator ) {
+		var materialCreatorMaterials = materialCreator.materials;
+		var materials = [];
+		for ( var materialName in materialCreatorMaterials ) {
+
+			if ( materialCreatorMaterials.hasOwnProperty( materialName ) ) {
+
+				materials[ materialName ] = materialCreatorMaterials[ materialName ];
+
+			}
+		}
+		return materials;
 	}
 };
 
 
 /**
- * A resource description used by {@link THREE.OBJLoader2}.
+ * A resource description used by {@link THREE.OBJLoader}.
  * @class
  *
  * @param {string} url URL to the file
  * @param {string} extension The file extension (type)
  */
-THREE.OBJLoader2.ResourceDescriptor = function ( url, extension ) {
+THREE.OBJLoader.ResourceDescriptor = function ( url, extension ) {
 	var urlParts = url.split( '/' );
 
 	this.path = null;
@@ -459,13 +462,13 @@ THREE.OBJLoader2.ResourceDescriptor = function ( url, extension ) {
 	this.content = null;
 };
 
-THREE.OBJLoader2.ResourceDescriptor.prototype = {
+THREE.OBJLoader.ResourceDescriptor.prototype = {
 
-	constructor: THREE.OBJLoader2.ResourceDescriptor,
+	constructor: THREE.OBJLoader.ResourceDescriptor,
 
 	/**
 	 * Set the content of this resource
-	 * @memberOf THREE.OBJLoader2.ResourceDescriptor
+	 * @memberOf THREE.OBJLoader.ResourceDescriptor
 	 *
 	 * @param {Object} content The file content as arraybuffer or text
 	 */
@@ -479,7 +482,7 @@ THREE.OBJLoader2.ResourceDescriptor.prototype = {
  * Parse OBJ data either from ArrayBuffer or string
  * @class
  */
-THREE.OBJLoader2.Parser = function() {
+THREE.OBJLoader.Parser = function() {
 	this.callbackProgress = null;
 	this.callbackMeshBuilder = null;
 	this.contentRef = null;
@@ -535,9 +538,9 @@ THREE.OBJLoader2.Parser = function() {
 	};
 };
 
-THREE.OBJLoader2.Parser.prototype = {
+THREE.OBJLoader.Parser.prototype = {
 
-	constructor: THREE.OBJLoader2.Parser,
+	constructor: THREE.OBJLoader.Parser,
 
 	resetRawMesh: function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
@@ -592,7 +595,7 @@ THREE.OBJLoader2.Parser.prototype = {
 
 			var matKeys = Object.keys( this.materials );
 			var matNames = (matKeys.length > 0) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
-			var printedConfig = 'OBJLoader2.Parser configuration:'
+			var printedConfig = 'OBJLoader.Parser configuration:'
 				+ matNames
 				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 				+ '\n\tuseIndices: ' + this.useIndices
@@ -610,7 +613,7 @@ THREE.OBJLoader2.Parser.prototype = {
 	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
 	parse: function ( arrayBuffer ) {
-		if ( this.logging.enabled ) console.time( 'OBJLoader2.Parser.parse' );
+		if ( this.logging.enabled ) console.time( 'OBJLoader.Parser.parse' );
 		this.configure();
 
 		var arrayBufferView = new Uint8Array( arrayBuffer );
@@ -656,7 +659,7 @@ THREE.OBJLoader2.Parser.prototype = {
 			}
 		}
 		this.finalizeParsing();
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2.Parser.parse' );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader.Parser.parse' );
 	},
 
 	/**
@@ -666,7 +669,7 @@ THREE.OBJLoader2.Parser.prototype = {
 	 * @param {string} text OBJ data as string
 	 */
 	parseText: function ( text ) {
-		if ( this.logging.enabled ) console.time( 'OBJLoader2.Parser.parseText' );
+		if ( this.logging.enabled ) console.time( 'OBJLoader.Parser.parseText' );
 		this.configure();
 		this.legacyMode = true;
 		this.contentRef = text;
@@ -707,7 +710,7 @@ THREE.OBJLoader2.Parser.prototype = {
 			}
 		}
 		this.finalizeParsing();
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2.Parser.parseText' );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader.Parser.parseText' );
 	},
 
 	processLine: function ( buffer, bufferPointer, slashesCount ) {
@@ -1320,10 +1323,10 @@ THREE.OBJLoader2.Parser.prototype = {
 };
 
 
-THREE.OBJLoader2.MeshBuilder = function() {
-	console.info( 'Using THREE.OBJLoader2.MeshBuilder version: ' + THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION );
+THREE.OBJLoader.MeshBuilder = function() {
+	console.info( 'Using THREE.OBJLoader.MeshBuilder version: ' + THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION );
 
-	this.validator = THREE.OBJLoader2.Validator;
+	this.validator = THREE.OBJLoader.Validator;
 
 	this.logging = {
 		enabled: true,
@@ -1337,16 +1340,16 @@ THREE.OBJLoader2.MeshBuilder = function() {
 	};
 	this.materials = [];
 };
-THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION = '2.0.0-dev';
+THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION = '2.0.0-dev';
 
 
-THREE.OBJLoader2.MeshBuilder.prototype = {
+THREE.OBJLoader.MeshBuilder.prototype = {
 
-	constructor: THREE.OBJLoader2.MeshBuilder,
+	constructor: THREE.OBJLoader.MeshBuilder,
 
 		/**
 		 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-		 * @memberOf THREE.OBJLoader2.MeshBuilder
+		 * @memberOf THREE.OBJLoader.MeshBuilder
 		 *
 		 * @param {boolean} enabled True or false.
 		 * @param {boolean} debug True or false.
@@ -1358,7 +1361,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Initializes the MeshBuilder (currently only default material initialisation).
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 */
 	init: function () {
@@ -1395,7 +1398,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
@@ -1419,7 +1422,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {Object} payload Raw Mesh or Material descriptions.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
@@ -1439,7 +1442,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
@@ -1594,7 +1597,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {Object} materialPayload Material update instructions
 	 */
@@ -1663,7 +1666,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Returns the mapping object of material name and corresponding jsonified material.
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @returns {Object} Map of Materials in JSON representation
 	 */
@@ -1681,7 +1684,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 
 	/**
 	 * Returns the mapping object of material name and corresponding material.
-	 * @memberOf THREE.OBJLoader2.MeshBuilder
+	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @returns {Object} Map of {@link THREE.Material}
 	 */
