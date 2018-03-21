@@ -117,8 +117,6 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var scope = this;
-		var objLoader = new THREE.OBJLoader2();
-		objLoader.setModelName( modelName );
 
 		var fileLoader = new THREE.FileLoader();
 		fileLoader.setPath( '../../' );
@@ -126,7 +124,10 @@ var WWOBJLoader2Example = (function () {
 		var filename = 'resource/obj/female02/female02_vertex_colors.obj';
 		fileLoader.load( filename,
 			function ( content ) {
-				objLoader.parseAsync( content, callbackOnLoad );
+				var objLoader = new THREE.OBJLoader();
+				objLoader.setModelName( modelName );
+				var workerLoader = new THREE.WorkerLoader( null, objLoader, scope.pivot );
+				workerLoader.parse( content, callbackOnLoad );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
 		);

@@ -31,31 +31,6 @@ THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 THREE.OBJLoader.prototype.constructor = THREE.OBJLoader;
 THREE.OBJLoader.OBJLOADER2_VERSION = '3.0.0-dev';
 
-
-THREE.OBJLoader.Validator = {
-
-	/**
-	 * If given input is null or undefined, false is returned otherwise true.
-	 *
-	 * @param input Can be anything
-	 * @returns {boolean}
-	 */
-	isValid: function( input ) {
-		return ( input !== null && input !== undefined );
-	},
-
-	/**
-	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
-	 *
-	 * @param input Can be anything
-	 * @param defaultValue Can be anything
-	 * @returns {*}
-	 */
-	verifyInput: function( input, defaultValue ) {
-		return ( input === null || input === undefined ) ? defaultValue : input;
-	}
-};
-
 /**
  * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
  * @class
@@ -430,6 +405,29 @@ THREE.OBJLoader.prototype = {
 	}
 };
 
+THREE.OBJLoader.Validator = {
+
+	/**
+	 * If given input is null or undefined, false is returned otherwise true.
+	 *
+	 * @param input Can be anything
+	 * @returns {boolean}
+	 */
+	isValid: function( input ) {
+		return ( input !== null && input !== undefined );
+	},
+
+	/**
+	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
+	 *
+	 * @param input Can be anything
+	 * @param defaultValue Can be anything
+	 * @returns {*}
+	 */
+	verifyInput: function( input, defaultValue ) {
+		return ( input === null || input === undefined ) ? defaultValue : input;
+	}
+};
 
 /**
  * A resource description used by {@link THREE.OBJLoader}.
@@ -1323,7 +1321,7 @@ THREE.OBJLoader.Parser.prototype = {
 };
 
 
-THREE.OBJLoader.MeshBuilder = function() {
+THREE.OBJLoader.MeshBuilder = function( loaderRootNode ) {
 	console.info( 'Using THREE.OBJLoader.MeshBuilder version: ' + THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION );
 
 	this.validator = THREE.OBJLoader.Validator;
@@ -1364,7 +1362,9 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 */
-	init: function () {
+	init: function ( loaderRootNode ) {
+		this.loaderRootNode = loaderRootNode;
+
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
@@ -1592,7 +1592,17 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 		}
 
-		return meshes;
+		this.addToLoaderRootNode( meshes );
+	},
+
+	addToLoaderRootNode: function( meshes ) {
+		var mesh;
+		for ( var i in meshes ) {
+
+			mesh = meshes[ i ];
+			this.loaderRootNode.add( mesh );
+
+		}
 	},
 
 	/**

@@ -29,6 +29,7 @@
 		<script src="../../src/loaders/support/LoaderCommons.js"></script>
 		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
+		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script src="./WWOBJLoader2Example.js"></script>
 		<script>
 
@@ -80,13 +81,13 @@
 			// kick render loop
 			render();
 
-
+/*
 			// Load a file with OBJLoader.parse synchronously
 			app.useParseSync();
-
+*/
 			// Load a file with OBJLoader.parseAsync asynchronously using a worker
 			app.useParseAsync();
-
+/*
 			// Load a file with OBJLoader.load synchronously
 			app.useLoadSync();
 
@@ -98,7 +99,7 @@
 
 			// Load a file with OBJLoader.run asynchronously and add normals during onMeshAlter
 			app.useRunAsyncMeshAlter();
-
+*/
 			app.finalize();
 
 		</script>
