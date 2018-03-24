@@ -126,7 +126,7 @@ var WWOBJLoader2Example = (function () {
 			function ( content ) {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
-				var workerLoader = new THREE.WorkerLoader( null, objLoader, scope.pivot );
+				var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
 				workerLoader.parse( content, callbackOnLoad );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}

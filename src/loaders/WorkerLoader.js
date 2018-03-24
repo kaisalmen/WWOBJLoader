@@ -7,7 +7,7 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
  * @param loaderRootNode
  * @constructor
  */
-THREE.WorkerLoader = function ( manager, loader, loaderRootNode ) {
+THREE.WorkerLoader = function ( manager, loader, parserName, loaderRootNode ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 
@@ -23,6 +23,7 @@ THREE.WorkerLoader = function ( manager, loader, loaderRootNode ) {
 	this.fileLoader.setResponseType( 'arraybuffer' );
 
 	this.loader = loader;
+	this.parserName = parserName;
 	this.loaderRootNode = loaderRootNode;
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
@@ -111,7 +112,7 @@ THREE.WorkerLoader.prototype = {
 		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse: ' + this.loader.modelName );
 
 		this.meshBuilder.init( this.loaderRootNode );
-		this.workerSupport.validate( this.loader.buildWorkerCode, 'Parser' );
+		this.workerSupport.validate( this.loader.buildWorkerCode, this.parserName );
 		this.workerSupport.setCallbacks( this.meshBuilder.processPayload, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
@@ -224,6 +225,7 @@ THREE.WorkerLoader.WorkerSupport = function () {
 	if ( typeof window.URL.createObjectURL !== 'function' ) throw "This browser does not support Object creation from URL!";
 
 	this.nativeWorkerWrapper = new THREE.WorkerLoader.WorkerSupport._NativeWorkerWrapper();
+	this.codeSerializer = THREE.WorkerLoader.WorkerSupport.CodeSerializer;
 };
 THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-dev';
 
@@ -284,16 +286,11 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 		}
 		var scope = this;
-		var scopedSerializeObject = function ( fullName, object ) {
-			scope.serializeObject( fullName, object );
-		};
-		var scopedSerializeClass = function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
-			scope.serializeClass( fullName, object, internalName, basePrototypeName, ignoreFunctions );
-		};
-		var userWorkerCode = functionCodeBuilder( scopedSerializeObject, scopedSerializeClass );
+		var userWorkerCode = functionCodeBuilder( this.codeSerializer );
 		userWorkerCode += 'var Parser = '+ parserName +  ';\n\n';
-		userWorkerCode += this.serializeClass( runnerImpl.name, runnerImpl );
-		userWorkerCode += 'new ' + runnerImpl.name + '();\n\n';
+		userWorkerCode += 'THREE.WorkerLoader = { WorkerSupport: {} };\n\n';
+		userWorkerCode += this.codeSerializer.serializeClass( 'THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl', runnerImpl );
+		userWorkerCode += 'new THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl();\n\n';
 
 
 		if ( this.validator.isValid( libLocations ) && libLocations.length > 0 ) {
@@ -359,7 +356,11 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 */
 	setTerminateRequested: function ( terminateRequested ) {
 		this.nativeWorkerWrapper.setTerminateRequested( terminateRequested );
-	},
+	}
+
+};
+
+THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 	/**
 	 *
@@ -403,64 +404,58 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 *
 	 * @param fullName
 	 * @param object
-	 * @param internalName
 	 * @param basePrototypeName
 	 * @param ignoreFunctions
 	 * @returns {string}
 	 */
-	serializeClass: function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
-		var objectString = '';
-		var objectName = ( this.validator.isValid( internalName ) ) ? internalName : object.name;
-
+	serializeClass: function ( fullName, object, basePrototypeName, ignoreFunctions ) {
 		var funcString, objectPart, constructorString;
-		ignoreFunctions = this.validator.verifyInput( ignoreFunctions, [] );
+		var prototypeFunctions = '';
+
+		if ( ! Array.isArray( ignoreFunctions ) ) ignoreFunctions = [];
+
 		for ( var name in object.prototype ) {
 
 			objectPart = object.prototype[ name ];
 			if ( name === 'constructor' ) {
 
 				funcString = objectPart.toString();
-				funcString = funcString.replace( 'function', '' );
-				constructorString = '\tfunction ' + objectName + funcString + ';\n\n';
+				constructorString = fullName + ' = ' + funcString + ';\n\n';
 
 			} else if ( typeof objectPart === 'function' ) {
 
 				if ( ignoreFunctions.indexOf( name ) < 0 ) {
 
 					funcString = objectPart.toString();
-					objectString += '\t' + objectName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
+					prototypeFunctions += '\t' + name + ': ' + funcString + ',\n\n';
 
 				}
 
 			}
 
 		}
-		objectString += '\treturn ' + objectName + ';\n';
-		objectString += '})();\n\n';
 
-		var inheritanceBlock = '';
-		if ( this.validator.isValid( basePrototypeName ) ) {
+		var objectString = constructorString;
+		objectString += fullName + '.prototype = {\n\n';
+		objectString += '\tconstructor: ' + fullName + ',\n\n';
+		objectString += prototypeFunctions;
+		objectString += '\n};\n\n';
 
-			inheritanceBlock += '\n';
-			inheritanceBlock += objectName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
-			inheritanceBlock += objectName + '.constructor = ' + objectName + ';\n';
-			inheritanceBlock += '\n';
-		}
-		if ( ! this.validator.isValid( constructorString ) ) {
+		if ( basePrototypeName !== null && basePrototypeName !== undefined ) {
 
-			constructorString = fullName + ' = (function () {\n\n';
-			constructorString += inheritanceBlock + '\t' + object.prototype.constructor.toString() + '\n\n';
-			objectString = constructorString + objectString;
-
-		} else {
-
-			objectString = fullName + ' = (function () {\n\n' + inheritanceBlock + constructorString + objectString;
-
+			objectString += '\n';
+			objectString += fullName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
+			objectString += fullName + '.constructor = ' + fullName + ';\n';
+			objectString += '\n';
 		}
 
 		return objectString;
 	}
 
+
+	serializeSingleton: function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
+		return '';
+	},
 };
 
 

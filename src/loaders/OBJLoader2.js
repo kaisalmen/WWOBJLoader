@@ -312,12 +312,13 @@ THREE.OBJLoader.prototype = {
 		return this.loaderRootNode;
 	},
 
-	buildWorkerCode: function ( funcBuildObject, funcBuildSingleton ) {
+	buildWorkerCode: function ( codeSerializer ) {
 		var workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by THREE.OBJLoader.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += funcBuildSingleton( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
+		workerCode += 'THREE = { OBJLoader: {} };\n\n';
+		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
 
 		return workerCode;
 	},
