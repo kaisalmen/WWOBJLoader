@@ -7,7 +7,7 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
  * @param loaderRootNode
  * @constructor
  */
-THREE.WorkerLoader = function ( manager, loader, parserName, loaderRootNode ) {
+THREE.WorkerLoader = function ( manager, loader, parserName ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 
@@ -18,13 +18,12 @@ THREE.WorkerLoader = function ( manager, loader, parserName, loaderRootNode ) {
 		debug: false
 	};
 
-
 	this.fileLoader = new THREE.FileLoader( this.manager );
 	this.fileLoader.setResponseType( 'arraybuffer' );
 
 	this.loader = loader;
 	this.parserName = parserName;
-	this.loaderRootNode = loaderRootNode;
+	this.loaderRootNode = new THREE.Group();
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 };
@@ -96,7 +95,7 @@ THREE.WorkerLoader.prototype = {
 					}
 				}
 			);
-			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WWOBJLoader2 parseAsync: ' + scope.loader.modelName );
+			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse: ' + scope.loader.modelName );
 		};
 		// fast-fail in case of illegal data
 		if ( ! this.validator.isValid( content ) ) {
@@ -109,11 +108,15 @@ THREE.WorkerLoader.prototype = {
 			measureTime = true;
 
 		}
+
 		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse: ' + this.loader.modelName );
 
+		var scopedOnMesh = function ( payload ) {
+			scope.meshBuilder.processPayload( payload );
+		};
 		this.meshBuilder.init( this.loaderRootNode );
 		this.workerSupport.validate( this.loader.buildWorkerCode, this.parserName );
-		this.workerSupport.setCallbacks( this.meshBuilder.processPayload, scopedOnLoad );
+		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
 		var materialNames = {};
@@ -264,7 +267,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {String} parserName Name of the Parser object
 	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
 	 * @param {String} libPath Base path used for loading libraries
-	 * @param {THREE.WorkerLoader.WorkerRunnerRefImpl} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
+	 * @param {Object} runnerImpl The default worker parser wrapper implementation (communication and execution). An extended class could be passed here.
 	 */
 	validate: function ( functionCodeBuilder, parserName, libLocations, libPath, runnerImpl ) {
 		if ( this.validator.isValid( this.nativeWorkerWrapper.worker ) ) return;
@@ -277,20 +280,21 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		}
 		if ( this.validator.isValid( runnerImpl ) ) {
 
-			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runner class for worker.' );
+			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + runnerImpl.prototype.name + '" as Runner class for worker.' );
 
 		} else {
 
 			runnerImpl = THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl;
-			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "THREE.WorkerLoader.WorkerRunnerRefImpl" as Runner class for worker.' );
+			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "' + runnerImpl.prototype.name + '" as Runner class for worker.' );
 
 		}
+
 		var scope = this;
 		var userWorkerCode = functionCodeBuilder( this.codeSerializer );
 		userWorkerCode += 'var Parser = '+ parserName +  ';\n\n';
 		userWorkerCode += 'THREE.WorkerLoader = { WorkerSupport: {} };\n\n';
-		userWorkerCode += this.codeSerializer.serializeClass( 'THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl', runnerImpl );
-		userWorkerCode += 'new THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl();\n\n';
+		userWorkerCode += this.codeSerializer.serializeClass( runnerImpl.prototype.name, runnerImpl );
+		userWorkerCode += 'new ' + runnerImpl.prototype.name + '();\n\n';
 
 
 		if ( this.validator.isValid( libLocations ) && libLocations.length > 0 ) {
@@ -450,12 +454,11 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 		}
 
 		return objectString;
-	}
-
+	},
 
 	serializeSingleton: function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
 		return '';
-	},
+	}
 };
 
 
@@ -474,6 +477,8 @@ THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl = function () {
 THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl.prototype = {
 
 	constructor: THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl,
+
+	name: 'THREE.WorkerLoader.WorkerSupport.WorkerRunnerRefImpl',
 
 	/**
 	 * Applies values from parameter object via set functions or via direct assignment.
