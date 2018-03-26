@@ -180,6 +180,14 @@ THREE.WorkerLoader.prototype = {
 		};
 		if ( this.validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
 		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
+	},
+
+	/**
+	 * Returns the WorkerSupport for e.g. configuration purposes
+	 * @returns {THREE.WorkerLoader.WorkerSupport}
+	 */
+	getWorkerSupport: function () {
+		return this.workerSupport;
 	}
 };
 
@@ -236,23 +244,27 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		};
 		this.validator = THREE.WorkerLoader.Validator;
 
+		var scope = this;
+		var scopeTerminate = function (  ) {
+			scope._terminate();
+		};
 		this.worker = {
 			native: null,
-			runtimeRef: null
-		};
-		this.callbacks = {
-			meshBuilder: null,
-			onLoad: null
-		};
-		this.terminateRequested = false;
-		this.queuedMessage = null;
-		this.started = false;
-		this.forceWorkerDataCopy = false;
-
-		this.workerRunner = {
-			haveUserImpl: false,
-			name: 'THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl',
-			impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl
+			logging: true,
+			workerRunner: {
+				haveUserImpl: false,
+				name: 'THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl',
+				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl
+			},
+			terminateRequested: false,
+			forceWorkerDataCopy: false,
+			started: false,
+			queuedMessage: null,
+			callbacks: {
+				meshBuilder: null,
+				onLoad: null,
+				terminate: scopeTerminate
+			}
 		};
 	},
 
@@ -266,6 +278,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
+		this.worker.logging = enabled === true;
 	},
 
 	/**
@@ -275,7 +288,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {boolean} forceWorkerDataCopy True or false.
 	 */
 	setForceWorkerDataCopy: function ( forceWorkerDataCopy ) {
-		this.forceWorkerDataCopy = forceWorkerDataCopy === true;
+		this.worker.forceWorkerDataCopy = forceWorkerDataCopy === true;
 	},
 
 	/**
@@ -286,10 +299,9 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {Function} onLoad The function that is called when parsing is complete.
 	 */
 	setCallbacks: function ( meshBuilder, onLoad ) {
-		this.callbacks.meshBuilder = this.validator.verifyInput( meshBuilder, this.callbacks.meshBuilder );
-		this.callbacks.onLoad = this.validator.verifyInput( onLoad, this.callbacks.onLoad );
+		this.worker.callbacks.meshBuilder = this.validator.verifyInput( meshBuilder, this.worker.callbacks.meshBuilder );
+		this.worker.callbacks.onLoad = this.validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
 	},
-
 
 	/**
 	 * Request termination of worker once parser is finished.
@@ -298,8 +310,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {boolean} terminateRequested True or false.
 	 */
 	setTerminateRequested: function ( terminateRequested ) {
-		this.terminateRequested = terminateRequested === true;
-		if ( this.terminateRequested && this.validator.isValid( this.worker.native ) && ! this.validator.isValid( this.queuedMessage ) && this.started ) {
+		this.worker.terminateRequested = terminateRequested === true;
+		if ( this.worker.terminateRequested && this.validator.isValid( this.worker.native ) && ! this.validator.isValid( this.worker.queuedMessage ) && this.worker.started ) {
 
 			if ( this.logging.enabled ) console.info( 'Worker is terminated immediately as it is not running!' );
 			this._terminate();
@@ -317,9 +329,9 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	setUserRunnerImpl: function ( userRunnerImpl, userRunnerImplName ) {
 		if ( this.validator.isValid( userRunnerImpl ) && this.validator.isValid( userRunnerImplName ) ) {
 
-			this.workerRunner.haveUserImpl = true;
-			this.workerRunner.impl = userRunnerImpl;
-			this.workerRunner.name = userRunnerImplName;
+			this.worker.workerRunner.haveUserImpl = true;
+			this.worker.workerRunner.impl = userRunnerImpl;
+			this.worker.workerRunner.name = userRunnerImplName;
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + userRunnerImplName + '" as Runner class for worker.' );
 
 		}
@@ -341,16 +353,13 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 			console.info( 'WorkerSupport: Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
-			if ( ! this.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.workerRunner.name + '" as Runner class for worker.' );
+			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
 		var userWorkerCode = functionCodeBuilder( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + parserName + '\n};\n\n';
-		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.workerRunner.name, this.workerRunner.impl );
-		userWorkerCode += 'new ' + this.workerRunner.name + '();\n\n';
-
-		// set referemce to this, then processing in worker scope within "_receiveWorkerMessage" can access members
-		this.worker.runtimeRef = this;
+		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
+		userWorkerCode += 'new ' + this.worker.workerRunner.name + '();\n\n';
 
 		var scope = this;
 		var scopedReceiveWorkerMessage = function ( event ) {
@@ -408,38 +417,38 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			case 'meshData':
 			case 'materialData':
 			case 'imageData':
-				this.worker.runtimeRef.callbacks.meshBuilder( payload );
+				this.worker.callbacks.meshBuilder( payload );
 				break;
 
 			case 'complete':
-				this.worker.runtimeRef.queuedMessage = null;
-				this.started = false;
-				this.worker.runtimeRef.callbacks.onLoad( payload.msg );
+				this.worker.queuedMessage = null;
+				this.worker.started = false;
+				this.worker.callbacks.onLoad( payload.msg );
 
-				if ( this.worker.runtimeRef.terminateRequested ) {
+				if ( this.worker.terminateRequested ) {
 
-					if ( this.worker.runtimeRef.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.runtimeRef.runnerImplName + ']: Run is complete. Terminating application on request!' );
-					this.worker.runtimeRef._terminate();
+					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run is complete. Terminating application on request!' );
+					this.worker.callbacks.terminate();
 
 				}
 				break;
 
 			case 'error':
-				console.error( 'WorkerSupport [' + this.worker.runtimeRef.runnerImplName + ']: Reported error: ' + payload.msg );
-				this.worker.runtimeRef.queuedMessage = null;
-				this.started = false;
-				this.worker.runtimeRef.callbacks.onLoad( payload.msg );
+				console.error( 'WorkerSupport [' + this.worker.workerRunner.namee + ']: Reported error: ' + payload.msg );
+				this.worker.queuedMessage = null;
+				this.worker.started = false;
+				this.worker.callbacks.onLoad( payload.msg );
 
-				if ( this.worker.runtimeRef.terminateRequested ) {
+				if ( this.worker.terminateRequested ) {
 
-					if ( this.worker.runtimeRef.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.runtimeRef.runnerImplName + ']: Run reported error. Terminating application on request!' );
-					this.worker.runtimeRef._terminate();
+					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run reported error. Terminating application on request!' );
+					this.worker.callbacks.terminate();
 
 				}
 				break;
 
 			default:
-				console.error( 'WorkerSupport [' + this.worker.runtimeRef.runnerImplName + ']: Received unknown command: ' + payload.cmd );
+				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Received unknown command: ' + payload.cmd );
 				break;
 
 		}
@@ -452,19 +461,19 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	run: function( payload ) {
-		if ( this.validator.isValid( this.queuedMessage ) ) {
+		if ( this.validator.isValid( this.worker.queuedMessage ) ) {
 
 			console.warn( 'Already processing message. Rejecting new run instruction' );
 			return;
 
 		} else {
 
-			this.queuedMessage = payload;
-			this.started = true;
+			this.worker.queuedMessage = payload;
+			this.worker.started = true;
 
 		}
-		if ( ! this.validator.isValid( this.callbacks.meshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
-		if ( ! this.validator.isValid( this.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
+		if ( ! this.validator.isValid( this.worker.callbacks.meshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
+		if ( ! this.validator.isValid( this.worker.callbacks.onLoad ) ) throw 'Unable to run as no "onLoad" callback is set.';
 		if ( payload.cmd !== 'run' ) payload.cmd = 'run';
 		if ( this.validator.isValid( payload.logging ) ) {
 
@@ -483,25 +492,25 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	},
 
 	_postMessage: function () {
-		if ( this.validator.isValid( this.queuedMessage ) && this.validator.isValid( this.worker.native ) ) {
+		if ( this.validator.isValid( this.worker.queuedMessage ) && this.validator.isValid( this.worker.native ) ) {
 
-			if ( this.queuedMessage.data.input instanceof ArrayBuffer ) {
+			if ( this.worker.queuedMessage.data.input instanceof ArrayBuffer ) {
 
 				var content;
-				if ( this.forceWorkerDataCopy ) {
+				if ( this.worker.forceWorkerDataCopy ) {
 
-					content = this.queuedMessage.data.input.slice( 0 );
+					content = this.worker.queuedMessage.data.input.slice( 0 );
 
 				} else {
 
-					content = this.queuedMessage.data.input;
+					content = this.worker.queuedMessage.data.input;
 
 				}
-				this.worker.native.postMessage( this.queuedMessage, [ content ] );
+				this.worker.native.postMessage( this.worker.queuedMessage, [ content ] );
 
 			} else {
 
-				this.worker.native.postMessage( this.queuedMessage );
+				this.worker.native.postMessage( this.worker.queuedMessage );
 
 			}
 
