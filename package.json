@@ -3,14 +3,16 @@
   "version": "3.0.0-dev",
   "versions": {
     "loader_obj2": "3.0.0-dev",
-    "loader_worker_director": "3.0.0-dev",
+    "loader_worker_loader": "1.0.0-dev",
     "loader_worker_support": "3.0.0-dev",
+    "loader_worker_director": "3.0.0-dev",
     "loader_mesh_builder": "2.0.0-dev"
   },
   "previous_versions": {
     "loader_obj2": "2.4.0",
-    "loader_worker_director": "2.2.0",
+    "loader_worker_loader": "n.a.",
     "loader_worker_support": "2.2.0",
+    "loader_worker_director": "2.2.0",
     "loader_mesh_builder": "1.2.0"
   },
   "description": "New OBJLoader utilizing web worker for three.js",

@@ -54,15 +54,19 @@ gulp.task( 'set-versions', function () {
 	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
-		[ 'src/loaders/support/LoaderWorkerSupport.js' ]
+		[ 'src/loaders/WorkerLoader.js' ]
 	)
 	.pipe( replace( {
-		patterns: [	{
+		patterns: [ {
+				match: /var WORKER_LOADER_VERSION.*/g,
+				replacement: "THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.loader_worker_loader + "';"
+			},
+			{
 				match: /var WORKER_SUPPORT_VERSION.*/g,
-				replacement: "var WORKER_SUPPORT_VERSION = '"+ packageContent.versions.loader_worker_support + "';"
+				replacement: "THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.loader_worker_support + "';"
 			} ]
 	} ) )
-	.pipe( gulp.dest( "src/loaders/support" ) );
+	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
 		[ 'src/loaders/support/LoaderWorkerDirector.js' ]
@@ -81,17 +85,16 @@ gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
-			'src/loaders/support/LoaderCommons.js',
-			'src/loaders/support/LoaderWorkerSupport.js',
+			'src/loaders/WorkerLoader',
 			'src/loaders/support/LoaderWorkerDirector.js'
 		]
 	)
-	.pipe( concat( 'LoaderSupport.js' ) )
+	.pipe( concat( 'WorkerLoader.js' ) )
 	.pipe( header( builtHeader ) )
 	.pipe( gulp.dest( DIR.BUILD ) )
 
 	.pipe( uglify( { mangle: { toplevel: true } } ) )
-	.pipe( rename( { basename: 'LoaderSupport.min' } ) )
+	.pipe( rename( { basename: 'WorkerLoader.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
 } );
 
@@ -123,10 +126,9 @@ gulp.task( 'create-docs', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
-				'src/loaders/support/LoaderCommons.js',
-				'src/loaders/support/LoaderWorkerSupport.js',
-				'src/loaders/support/LoaderWorkerDirector.js',
-				'src/loaders/OBJLoader2.js'
+				'src/loaders/WorkerLoader.js',
+				'src/loaders/OBJLoader2.js',
+				'src/loaders/support/LoaderWorkerDirector.js'
 			],
 			{
 				read: false
@@ -198,8 +200,8 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';
@@ -212,8 +214,8 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -222,17 +224,16 @@ gulp.task( 'create-obj2-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -246,8 +247,8 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2/WWOBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
@@ -260,8 +261,8 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.css.link_all = "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -270,17 +271,16 @@ gulp.task( 'create-wwobj2-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -295,8 +295,8 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwparallels/WWParallels.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwparallels/template/main.three.html';
@@ -309,8 +309,9 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.css.link_all = exampleDef.css.link_all_ref;
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -319,17 +320,16 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";;
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
@@ -344,8 +344,8 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/wwobjloader2stage/WWOBJLoader2Stage.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2stage/template/main.three.html';
@@ -358,8 +358,8 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.css.link_all = "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -368,17 +368,16 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -393,7 +392,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/meshspray/MeshSpray.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/meshspray/template/main.three.html';
@@ -406,7 +405,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -415,15 +414,14 @@ gulp.task( 'create-meshspray-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.min.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderCommons.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerSupport.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
