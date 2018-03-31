@@ -96,6 +96,10 @@ THREE.OBJLoader.prototype = {
 
 			materials = this._handleMtlMaterials( materialsOrmaterialCreator );
 
+		} else if ( Array.isArray( materialsOrmaterialCreator ) ) {
+
+			materials = materialsOrmaterialCreator
+
 		}
 		this.meshBuilder.setMaterials( materials );
 	},
@@ -267,7 +271,7 @@ THREE.OBJLoader.prototype = {
 
 		}
 		if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
-		this.meshBuilder.init();
+		this.meshBuilder.init( this.loaderRootNode );
 
 		var parser = new THREE.OBJLoader.Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -349,7 +353,7 @@ THREE.OBJLoader.prototype = {
 			if ( scope.validator.isValid( materialCreator ) ) {
 
 				materialCreator.preload();
-				materials = this._handleMtlMaterials( materialCreator );
+				materials = scope._handleMtlMaterials( materialCreator );
 			}
 
 			if ( scope.validator.isValid( resource ) && scope.logging.enabled ) console.timeEnd( 'Loading MTL: ' + resource.name );
@@ -1322,7 +1326,7 @@ THREE.OBJLoader.Parser.prototype = {
 };
 
 
-THREE.OBJLoader.MeshBuilder = function( loaderRootNode ) {
+THREE.OBJLoader.MeshBuilder = function() {
 	console.info( 'Using THREE.OBJLoader.MeshBuilder version: ' + THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION );
 
 	this.validator = THREE.OBJLoader.Validator;

@@ -24,6 +24,7 @@ THREE.WorkerLoader = function ( manager, loader, parserName ) {
 	this.loader = loader;
 	this.parserName = parserName;
 	this.loaderRootNode = new THREE.Group();
+	this.instanceNo = 0;
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 };
@@ -90,7 +91,7 @@ THREE.WorkerLoader.prototype = {
 				{
 					detail: {
 						loaderRootNode: scope.loaderRootNode,
-						modelName: scope.modelName,
+						modelName: scope.loader.modelName,
 						instanceNo: scope.instanceNo
 					}
 				}
@@ -172,7 +173,7 @@ THREE.WorkerLoader.prototype = {
 		var event = {
 			detail: {
 				type: type,
-				modelName: this.modelName,
+				modelName: this.loader.modelName,
 				instanceNo: this.instanceNo,
 				text: content,
 				numericalValue: numericalValue

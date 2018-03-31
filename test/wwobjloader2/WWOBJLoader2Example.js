@@ -6,7 +6,7 @@
 
 var WWOBJLoader2Example = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
+	var Validator = THREE.OBJLoader.Validator;
 
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -77,10 +77,11 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'female02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
+		var objLoader = new THREE.OBJLoader();
+		objLoader.setModelName( modelName );
+
 		var scope = this;
-		var objLoader = new THREE.OBJLoader2();
 		var onLoadMtl = function ( materials ) {
-			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
 
 			var fileLoader = new THREE.FileLoader();
@@ -138,23 +139,24 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'male02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
+		var objLoader = new THREE.OBJLoader();
+		objLoader.setModelName( modelName );
+		objLoader.setUseIndices( true );
+
 		var scope = this;
-		var objLoader = new THREE.OBJLoader2();
-		var callbackOnLoad = function ( event ) {
+		var callbackOnLoad = function ( object3d ) {
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_male02';
 			local.position.set( 0, 0, -75 );
 			scope.pivot.add( local );
-			local.add( event.detail.loaderRootNode );
+			local.add( object3d );
 
-			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + objLoader.modelName } } );
 		};
 
 		var onLoadMtl = function ( materials ) {
-			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
-			objLoader.setUseIndices( true );
-			objLoader.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null, false );
+			objLoader.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 		};
 		objLoader.loadMtl( '../../resource/obj/male02/male02.mtl', null, onLoadMtl );
 	};
@@ -164,7 +166,7 @@ var WWOBJLoader2Example = (function () {
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 		var scope = this;
-		var objLoader = new THREE.OBJLoader2();
+		var objLoader = new THREE.OBJLoader();
 		var callbackOnLoad = function ( event ) {
 			objLoader.workerSupport.setTerminateRequested( true );
 
@@ -206,7 +208,7 @@ var WWOBJLoader2Example = (function () {
 		callbacks.setCallbackOnProgress( this._reportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 
-		var objLoader = new THREE.OBJLoader2();
+		var objLoader = new THREE.OBJLoader();
 		objLoader.run( prepData );
 	};
 
@@ -244,7 +246,7 @@ var WWOBJLoader2Example = (function () {
 		callbacks.setCallbackOnProgress( this._reportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 
-		var objLoader = new THREE.OBJLoader2();
+		var objLoader = new THREE.OBJLoader();
 		objLoader.run( prepData );
 	};
 
