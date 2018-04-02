@@ -26,7 +26,12 @@ THREE.WorkerLoader = function ( manager, loader, parserName ) {
 	this.loaderRootNode = new THREE.Group();
 	this.instanceNo = 0;
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
+	this.terminateWorkerOnLoad = false;
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
+
+	this.callbacks = {
+		onProgress: null
+	}
 };
 THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 
@@ -56,7 +61,7 @@ THREE.WorkerLoader.prototype = {
 
 					numericalValueRef = numericalValue;
 					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					scope.onProgress( 'progressLoad', output, numericalValue );
+					scope._onProgress( 'progressLoad', output, numericalValue );
 
 				}
 			};
@@ -66,7 +71,7 @@ THREE.WorkerLoader.prototype = {
 			onError = function ( event ) {
 				var output = 'Error occurred while downloading "' + url + '"';
 				console.error( output + ': ' + event );
-				scope.onProgress( 'error', output, - 1 );
+				scope._onProgress( 'error', output, - 1 );
 			};
 		}
 
@@ -189,6 +194,10 @@ THREE.WorkerLoader.prototype = {
 	 */
 	getWorkerSupport: function () {
 		return this.workerSupport;
+	},
+
+	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
+		this.terminateWorkerOnLoad = terminateWorkerOnLoad;
 	}
 };
 

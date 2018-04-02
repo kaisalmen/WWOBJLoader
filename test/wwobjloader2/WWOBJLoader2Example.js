@@ -165,11 +165,11 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'WaltHead';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var scope = this;
 		var objLoader = new THREE.OBJLoader();
-		var callbackOnLoad = function ( event ) {
-			objLoader.workerSupport.setTerminateRequested( true );
+		objLoader.setModelName( modelName );
 
+		var scope = this;
+		var callbackOnLoad = function ( event ) {
 			var local = new THREE.Object3D();
 			local.name = 'Pivot_WaltHead';
 			local.position.set( -125, 50, 0 );
@@ -182,10 +182,11 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( materials ) {
-			objLoader.setModelName( modelName );
 			objLoader.setMaterials( materials );
-			objLoader.terminateWorkerOnLoad = false;
-			objLoader.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null, true );
+
+			var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
+			workerLoader.setTerminateWorkerOnLoad( false );
+			workerLoader.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
 
 		};
 		objLoader.loadMtl( '../../resource/obj/walt/WaltHead.mtl', null, onLoadMtl );
