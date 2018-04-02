@@ -128,7 +128,7 @@ var WWOBJLoader2Example = (function () {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
 				var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
-				workerLoader.parse( content, callbackOnLoad );
+				workerLoader.parseAsync( content, callbackOnLoad );
 				workerLoader.getWorkerSupport().setTerminateRequested( true );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
@@ -186,7 +186,7 @@ var WWOBJLoader2Example = (function () {
 
 			var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
 			workerLoader.setTerminateWorkerOnLoad( false );
-			workerLoader.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
+			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
 
 		};
 		objLoader.loadMtl( '../../resource/obj/walt/WaltHead.mtl', null, onLoadMtl );
@@ -214,19 +214,7 @@ var WWOBJLoader2Example = (function () {
 	};
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
-		var scope = this;
-		var callbackOnLoad = function ( event ) {
-			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-		};
-
-		var prepData = new THREE.LoaderSupport.PrepData( 'vive-controller' );
-		var local = new THREE.Object3D();
-		local.position.set( 125, 50, 0 );
-		local.name = 'Pivot_vive-controller';
-		this.pivot.add( local );
-		prepData.streamMeshesTo = local;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-		prepData.useAsync = true;
+/*
 		var callbacks = prepData.getCallbacks();
 		var callbackMeshAlter = function ( event ) {
 			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
@@ -246,9 +234,26 @@ var WWOBJLoader2Example = (function () {
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 		callbacks.setCallbackOnProgress( this._reportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
-
+*/
 		var objLoader = new THREE.OBJLoader();
-		objLoader.run( prepData );
+		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', this.pivot );
+		workerLoader.setTerminateWorkerOnLoad( false );
+
+		var files = [ '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' ];
+		var scope = this;
+		var callbackOnLoad = function ( event ) {
+			var local = new THREE.Object3D();
+			local.position.set( 125, 50, 0 );
+			local.name = 'Pivot_vive-controller';
+			scope.pivot.add( local );
+
+			var mesh = event.detail.loaderRootNode;
+			var scale = 200.0;
+			mesh.scale.set( scale, scale, scale );
+			local.add( mesh );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
+		};
+		workerLoader.loadAsnycAutomated( files, {}, callbackOnLoad );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {

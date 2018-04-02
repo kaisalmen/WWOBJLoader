@@ -48,7 +48,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
 	 * @param {callback} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
-	load: function ( url, onLoad, onProgress, onError, onMesh ) {
+	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
 		var scope = this;
 		if ( ! this.validator.isValid( onProgress ) ) {
 			var numericalValueRef = 0;
@@ -77,7 +77,7 @@ THREE.WorkerLoader.prototype = {
 
 		this.fileLoader.setPath( this.loader.path );
 		this.fileLoader.load( url, function ( content ) {
-			scope.parse( content, onLoad );
+			scope.parseAsync( content, onLoad );
 
 		}, onProgress, onError );
 	},
@@ -88,7 +88,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {callback} onLoad Called after worker successfully completed loading
 	 */
-	parse: function ( content, onLoad ) {
+	parseAsync: function ( content, onLoad ) {
 		var scope = this;
 		var measureTime = false;
 		var scopedOnLoad = function () {
@@ -154,14 +154,36 @@ THREE.WorkerLoader.prototype = {
 	},
 
 	/**
-	 * Run the loader according the provided instructions.
+	 * Run parsing according the provided instructions.
 	 * @memberOf THREE.WorkerLoader
 	 *
-	 * @param {THREE.WorkerLoader.PrepData} prepData All parameters and resources required for execution
-	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupportExternal] Use pre-existing WorkerSupport
 	 */
-	execute: function ( prepData, workerSupportExternal ) {
+	parseAsnycAutomated: function ( contents, loaderConfiguration ) {
+		this._applyConfiguration( loaderConfiguration );
 
+	},
+
+	/**
+	 * Run loading according the provided instructions.
+	 * @memberOf THREE.WorkerLoader
+	 *
+	 */
+	loadAsnycAutomated: function ( files, loaderConfiguration, callbackOnLoad ) {
+		this._applyConfiguration( loaderConfiguration );
+		this.loadAsync( files[ 0 ], callbackOnLoad );
+	},
+
+	_applyConfiguration: function ( loaderConfiguration ) {
+		var property, value;
+		for ( property in loaderConfiguration ) {
+
+			value = loaderConfiguration[ property ];
+			if ( this.loader.hasOwnProperty( property ) ) {
+
+				this.loader[ property ] = value;
+
+			}
+		}
 	},
 
 	/**

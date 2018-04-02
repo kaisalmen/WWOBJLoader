@@ -85,7 +85,7 @@ gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
-			'src/loaders/WorkerLoader',
+			'src/loaders/WorkerLoader.js',
 			'src/loaders/support/LoaderWorkerDirector.js'
 		]
 	)
@@ -106,12 +106,12 @@ gulp.task( 'bundle-objloader2', function () {
 				'src/loaders/OBJLoader2.js'
 			]
 		)
-		.pipe( concat( 'OBJLoader2.js' ) )
+		.pipe( concat( 'OBJLoader.js' ) )
 		.pipe( header( builtHeader ) )
 		.pipe( gulp.dest( DIR.BUILD ) )
 
 		.pipe( uglify( { mangle: { toplevel: true } } ) )
-		.pipe( rename( { basename: 'OBJLoader2.min' } ) )
+		.pipe( rename( { basename: 'OBJLoader.min' } ) )
 		.pipe( gulp.dest( DIR.BUILD ) );
 } );
 
