@@ -112,7 +112,7 @@ var WWOBJLoader2Example = (function () {
 			local.name = 'Pivot_female02_vertex';
 			local.position.set( -75, 0, 0 );
 			scope.pivot.add( local );
-			local.add( event.detail.loaderRootNode );
+			local.add( event.detail.object3d );
 
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
@@ -128,7 +128,7 @@ var WWOBJLoader2Example = (function () {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
 				var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
-				workerLoader.parseAsync( content, callbackOnLoad );
+				workerLoader.parseAsync( content, null, callbackOnLoad );
 				workerLoader.getWorkerSupport().setTerminateRequested( true );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
@@ -168,16 +168,15 @@ var WWOBJLoader2Example = (function () {
 		var objLoader = new THREE.OBJLoader();
 		objLoader.setModelName( modelName );
 
+		var local = new THREE.Object3D();
+		local.name = 'Pivot_WaltHead';
+		local.position.set( -125, 50, 0 );
+		var scale = 0.5;
+		local.scale.set( scale, scale, scale );
+		this.pivot.add( local );
+
 		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			var local = new THREE.Object3D();
-			local.name = 'Pivot_WaltHead';
-			local.position.set( -125, 50, 0 );
-			var scale = 0.5;
-			local.scale.set( scale, scale, scale );
-			scope.pivot.add( local );
-			local.add( event.detail.loaderRootNode );
-
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
@@ -186,7 +185,7 @@ var WWOBJLoader2Example = (function () {
 
 			var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
 			workerLoader.setTerminateWorkerOnLoad( false );
-			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
+			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', local, callbackOnLoad, null, null, null );
 
 		};
 		objLoader.loadMtl( '../../resource/obj/walt/WaltHead.mtl', null, onLoadMtl );
@@ -240,20 +239,21 @@ var WWOBJLoader2Example = (function () {
 		workerLoader.setTerminateWorkerOnLoad( false );
 
 		var files = [ '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' ];
+
+		var local = new THREE.Object3D();
+		local.position.set( 125, 50, 0 );
+		local.name = 'Pivot_vive-controller';
+		this.pivot.add( local );
+
 		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			var local = new THREE.Object3D();
-			local.position.set( 125, 50, 0 );
-			local.name = 'Pivot_vive-controller';
-			scope.pivot.add( local );
-
-			var mesh = event.detail.loaderRootNode;
+			var mesh = event.detail.object3d;
 			var scale = 200.0;
 			mesh.scale.set( scale, scale, scale );
 			local.add( mesh );
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
-		workerLoader.loadAsnycAutomated( files, {}, callbackOnLoad );
+		workerLoader.loadAsnycAutomated( files, {}, null, callbackOnLoad );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {
