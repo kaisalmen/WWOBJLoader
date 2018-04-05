@@ -87,7 +87,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {callback} onLoad Called after worker successfully completed loading
 	 */
-	parseAsync: function ( content, attachObject3d, onLoad ) {
+	parseAsync: function ( content, attachObject3d, onLoad, onMesh ) {
 		var scope = this;
 		if ( attachObject3d === undefined || attachObject3d === null ) attachObject3d = new THREE.Group();
 
@@ -154,24 +154,28 @@ THREE.WorkerLoader.prototype = {
 		)
 	},
 
-	/**
-	 * Run parsing according the provided instructions.
-	 * @memberOf THREE.WorkerLoader
-	 *
-	 */
-	parseAsnycAutomated: function ( contents, loaderConfiguration, attachObject3d, callbackOnLoad ) {
-		this._applyConfiguration( loaderConfiguration );
-		this.parseAsync( contents[ 0 ], attachObject3d, callbackOnLoad );
+	setBaseObject3d: function ( baseObject3d ) {
+
 	},
 
 	/**
-	 * Run loading according the provided instructions.
+	 * Run loader async according the provided instructions.
 	 * @memberOf THREE.WorkerLoader
 	 *
 	 */
-	loadAsnycAutomated: function ( files, loaderConfiguration, attachObject3d, callbackOnLoad ) {
+	execute: function ( resourceDescriptors, loaderConfiguration, attachObject3d, callbackOnLoad ) {
 		this._applyConfiguration( loaderConfiguration );
-		this.loadAsync( files[ 0 ], attachObject3d, callbackOnLoad );
+
+		var resourceDescriptor = resourceDescriptors[ 0 ];
+		if ( resourceDescriptors.type === 'Buffer' || resourceDescriptors.type === 'String' ) {
+
+			this.parseAsync( resourceDescriptor.payload, attachObject3d, callbackOnLoad );
+
+		} else if ( resourceDescriptors.type === 'URL' ) {
+
+			this.loadAsync( resourceDescriptor.url, attachObject3d, callbackOnLoad );
+
+		}
 	},
 
 	_applyConfiguration: function ( loaderConfiguration ) {
@@ -222,6 +226,78 @@ THREE.WorkerLoader.prototype = {
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.terminateWorkerOnLoad = terminateWorkerOnLoad;
 	}
+};
+
+THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
+	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
+	this.type = resourceType;
+	this.payload = content;
+	this.url = null;
+	this.path = null;
+	this.extension = null;
+
+	this._init();
+};
+
+THREE.WorkerLoader.ResourceDescriptor.prototype = {
+
+	constructor: THREE.WorkerLoader.ResourceDescriptor,
+
+	_init: function () {
+
+		if ( this.type === 'Buffer' ) {
+
+			if ( ! ( this.payload instanceof ArrayBuffer ||
+				this.payload instanceof Int8Array ||
+				this.payload instanceof Uint8Array ||
+				this.payload instanceof Uint8ClampedArray ||
+				this.payload instanceof Int16Array ||
+				this.payload instanceof Uint16Array ||
+				this.payload instanceof Int32Array ||
+				this.payload instanceof Uint32Array ||
+				this.payload instanceof Float32Array ||
+				this.payload instanceof Float64Array ) ) {
+
+				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
+
+			}
+
+		} else if ( this.type === 'String' ) {
+
+			if ( ! ( typeof( this.payload ) === 'string' || this.payload instanceof String ) ) throw 'Provided content is not of type "String"! Aborting...';
+
+		} else if ( this.type === 'URL' ) {
+
+			this.url = this.payload;
+
+			var urlParts = this.payload.split( '/' );
+			if ( urlParts.length < 2 ) {
+
+				if ( this.name !== this.payload ) throw 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match. Aborting...';
+				this.name = this.payload;
+				this.path = '';
+
+			} else {
+
+				var urlPartsName = urlParts[ urlParts.length - 1 ];
+				if ( this.name !== urlPartsName ) throw 'Provided name "' + this.name + '" and the filename "' + urlPartsName + '" do not match. Aborting...';
+				this.name = urlPartsName;
+
+				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
+				if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
+
+			}
+
+			var filenameParts = this.name.split( '.' );
+			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
+
+		} else {
+
+			throw 'An unsupported resourceType "' + this.type + '" was provided! Aborting...'
+
+		}
+	}
+
 };
 
 

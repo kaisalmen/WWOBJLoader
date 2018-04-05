@@ -238,7 +238,7 @@ var WWOBJLoader2Example = (function () {
 		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', this.pivot );
 		workerLoader.setTerminateWorkerOnLoad( false );
 
-		var files = [ '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' ];
+		var files = [  ];
 
 		var local = new THREE.Object3D();
 		local.position.set( 125, 50, 0 );
@@ -253,7 +253,14 @@ var WWOBJLoader2Example = (function () {
 			local.add( mesh );
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
-		workerLoader.loadAsnycAutomated( files, {}, null, callbackOnLoad );
+		var resourceDescriptors = [];
+		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', 'vr_controller_vive_1_5.obj' );
+		resourceDescriptors.push( rd );
+		rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
+		resourceDescriptors.push( rd );
+		rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'data', new Uint8Array( 1024 ) );
+		resourceDescriptors.push( rd );
+		workerLoader.execute( resourceDescriptors, {}, null, callbackOnLoad );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {
