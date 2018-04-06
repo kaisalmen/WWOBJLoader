@@ -145,26 +145,10 @@ THREE.LoaderSupport.PrepData = (function () {
 	var Validator = THREE.LoaderSupport.Validator;
 
 	function PrepData( modelName ) {
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
 		this.modelName = Validator.verifyInput( modelName, '' );
 		this.resources = [];
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 	}
-
-	/**
-	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.PrepData
-	 *
-	 * @param {boolean} enabled True or false.
-	 * @param {boolean} debug True or false.
-	 */
-	PrepData.prototype.setLogging = function ( enabled, debug ) {
-		this.logging.enabled = enabled === true;
-		this.logging.debug = debug === true;
-	};
 
 	/**
 	 * Returns all callbacks as {@link THREE.LoaderSupport.Callbacks}
@@ -194,8 +178,6 @@ THREE.LoaderSupport.PrepData = (function () {
 	 */
 	PrepData.prototype.clone = function () {
 		var clone = new THREE.LoaderSupport.PrepData( this.modelName );
-		clone.logging.enabled = this.logging.enabled;
-		clone.logging.debug = this.logging.debug;
 		clone.resources = this.resources;
 		clone.callbacks = this.callbacks;
 

@@ -128,7 +128,7 @@ var WWOBJLoader2Example = (function () {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
 				var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
-				workerLoader.parseAsync( content, null, callbackOnLoad );
+				workerLoader.parseAsync( content, callbackOnLoad );
 				workerLoader.getWorkerSupport().setTerminateRequested( true );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
@@ -185,61 +185,38 @@ var WWOBJLoader2Example = (function () {
 
 			var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', scope.pivot );
 			workerLoader.setTerminateWorkerOnLoad( false );
-			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', local, callbackOnLoad, null, null, null );
+			workerLoader.setBaseObject3d( local );
+			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
 
 		};
 		objLoader.loadMtl( '../../resource/obj/walt/WaltHead.mtl', null, onLoadMtl );
 	};
 
 	WWOBJLoader2Example.prototype.useRunSync = function () {
-		var scope = this;
-		var callbackOnLoad = function ( event ) {
-			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-		};
-
-		var prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		var local = new THREE.Object3D();
 		local.position.set( 0, 0, 100 );
 		local.scale.set( 50.0, 50.0, 50.0 );
 		this.pivot.add( local );
-		prepData.streamMeshesTo = local;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
-		var callbacks = prepData.getCallbacks();
-		callbacks.setCallbackOnProgress( this._reportProgress );
-		callbacks.setCallbackOnLoad( callbackOnLoad );
+
+		var scope = this;
+		var callbackOnLoad = function ( event ) {
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
+		};
+		var callbackOnProgress = function ( event ) {
+			scope._reportProgress( event );
+		};
 
 		var objLoader = new THREE.OBJLoader();
-		objLoader.run( prepData );
+		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+
+		var resourceDescriptors = [];
+		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
+		resourceDescriptors.push( rd );
+		
+		workerLoader.execute( resourceDescriptors, { baseObject3d: local }, {}, callbackOnLoad, callbackOnProgress );
 	};
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
-/*
-		var callbacks = prepData.getCallbacks();
-		var callbackMeshAlter = function ( event ) {
-			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
-
-			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
-			var scale = 200.0;
-			mesh.scale.set( scale, scale, scale );
-			mesh.name = event.detail.meshName;
-			var helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
-			helper.name = 'VertexNormalsHelper';
-
-			override.addMesh( mesh );
-			override.addMesh( helper );
-
-			return override;
-		};
-		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
-		callbacks.setCallbackOnProgress( this._reportProgress );
-		callbacks.setCallbackOnLoad( callbackOnLoad );
-*/
-		var objLoader = new THREE.OBJLoader();
-		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser', this.pivot );
-		workerLoader.setTerminateWorkerOnLoad( false );
-
-		var files = [  ];
-
 		var local = new THREE.Object3D();
 		local.position.set( 125, 50, 0 );
 		local.name = 'Pivot_vive-controller';
@@ -253,14 +230,16 @@ var WWOBJLoader2Example = (function () {
 			local.add( mesh );
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
+
+		var objLoader = new THREE.OBJLoader();
+		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+		workerLoader.setTerminateWorkerOnLoad( false );
+
 		var resourceDescriptors = [];
-		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', 'vr_controller_vive_1_5.obj' );
+		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
 		resourceDescriptors.push( rd );
-		rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
-		resourceDescriptors.push( rd );
-		rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'data', new Uint8Array( 1024 ) );
-		resourceDescriptors.push( rd );
-		workerLoader.execute( resourceDescriptors, {}, null, callbackOnLoad );
+
+		workerLoader.execute( resourceDescriptors, {}, {}, callbackOnLoad );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {

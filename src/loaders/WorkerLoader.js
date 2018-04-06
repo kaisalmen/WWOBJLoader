@@ -27,6 +27,7 @@ THREE.WorkerLoader = function ( manager, loader, parserName ) {
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.terminateWorkerOnLoad = false;
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
+	this.baseObject3d = new THREE.Group();
 
 	this.callbacks = {
 		onProgress: null
@@ -39,6 +40,10 @@ THREE.WorkerLoader.prototype = {
 
 	constructor: THREE.WorkerLoader,
 
+	setBaseObject3d: function ( baseObject3d ) {
+		if ( baseObject3d !== undefined && baseObject3d !== null ) this.baseObject3d = baseObject3d;
+	},
+
 	/**
 	 * Use this method to load a file from the given URL and parse it asynchronously.
 	 * @memberOf THREE.WorkerLoader
@@ -47,7 +52,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
 	 * @param {callback} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
-	loadAsync: function ( url, attachObject3d, onLoad, onProgress, onError, onMesh ) {
+	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
 		var scope = this;
 		if ( ! this.validator.isValid( onProgress ) ) {
 			var numericalValueRef = 0;
@@ -66,19 +71,19 @@ THREE.WorkerLoader.prototype = {
 			};
 		}
 
-		if ( ! this.validator.isValid( onProgress ) ) {
+		if ( ! this.validator.isValid( onError ) ) {
 			onError = function ( event ) {
 				var output = 'Error occurred while downloading "' + url + '"';
 				console.error( output + ': ' + event );
 				scope._onProgress( 'error', output, - 1 );
 			};
 		}
+		var resourceDescripton = {
+			items: [ new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) ],
+			processing: false
+		};
+		this._loadResources( resourceDescripton, 0, onLoad, onProgress, onError );
 
-		this.fileLoader.setPath( this.loader.path );
-		this.fileLoader.load( url, function ( content ) {
-			scope.parseAsync( content, attachObject3d, onLoad );
-
-		}, onProgress, onError );
 	},
 
 	/**
@@ -86,17 +91,17 @@ THREE.WorkerLoader.prototype = {
 	 *
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {callback} onLoad Called after worker successfully completed loading
+	 * @param {callback} [onLoad] Called after worker successfully completed loading
 	 */
-	parseAsync: function ( content, attachObject3d, onLoad, onMesh ) {
+	parseAsync: function ( content, onLoad, onMesh ) {
 		var scope = this;
-		if ( attachObject3d === undefined || attachObject3d === null ) attachObject3d = new THREE.Group();
 
 		var measureTime = false;
 		var scopedOnLoad = function () {
 			onLoad(
 				{
 					detail: {
-						object3d: attachObject3d,
+						object3d: scope.baseObject3d,
 						modelName: scope.loader.modelName,
 						instanceNo: scope.instanceNo
 					}
@@ -121,7 +126,7 @@ THREE.WorkerLoader.prototype = {
 		var scopedOnMesh = function ( payload ) {
 			scope.meshBuilder.processPayload( payload );
 		};
-		this.meshBuilder.init( attachObject3d );
+		this.meshBuilder.init( scope.baseObject3d );
 		this.workerSupport.validate( this.loader.buildWorkerCode, this.parserName );
 		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
@@ -154,40 +159,67 @@ THREE.WorkerLoader.prototype = {
 		)
 	},
 
-	setBaseObject3d: function ( baseObject3d ) {
-
-	},
-
 	/**
 	 * Run loader async according the provided instructions.
 	 * @memberOf THREE.WorkerLoader
 	 *
 	 */
-	execute: function ( resourceDescriptors, loaderConfiguration, attachObject3d, callbackOnLoad ) {
-		this._applyConfiguration( loaderConfiguration );
+	execute: function ( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
+		if ( resourceDescriptors === undefined || resourceDescriptors === null ) return;
+		this._applyConfiguration( this, localConfig );
+		this._applyConfiguration( this.loader, loaderConfig );
 
-		var resourceDescriptor = resourceDescriptors[ 0 ];
-		if ( resourceDescriptors.type === 'Buffer' || resourceDescriptors.type === 'String' ) {
-
-			this.parseAsync( resourceDescriptor.payload, attachObject3d, callbackOnLoad );
-
-		} else if ( resourceDescriptors.type === 'URL' ) {
-
-			this.loadAsync( resourceDescriptor.url, attachObject3d, callbackOnLoad );
-
-		}
+		var resourceDescripton = {
+			items: resourceDescriptors,
+			processing: false
+		};
+		this._loadResources( resourceDescripton, 0, callbackOnLoad, callbackOnProgress, callbackOnError );
 	},
 
-	_applyConfiguration: function ( loaderConfiguration ) {
+	_applyConfiguration: function ( scope, loaderConfiguration ) {
 		var property, value;
 		for ( property in loaderConfiguration ) {
 
 			value = loaderConfiguration[ property ];
-			if ( this.loader.hasOwnProperty( property ) ) {
+			if ( scope.hasOwnProperty( property ) ) {
 
-				this.loader[ property ] = value;
+				scope[ property ] = value;
 
 			}
+		}
+	},
+
+	_loadResources: function ( resourceDescripton, index, onLoad, onProgress, onError ) {
+		if ( index === resourceDescripton.items.length ) {
+
+			this._executeParseSteps( resourceDescripton, onLoad );
+			return;
+
+		} else {
+
+			resourceDescripton.processing = true;
+
+		}
+		var resourceDescriptor = resourceDescripton.items[ index ];
+		this.fileLoader.setResponseType( resourceDescriptor.payloadType );
+		this.fileLoader.setPath( this.loader.path );
+
+		var scope = this;
+		var processResourcesProxy = function ( content ) {
+			resourceDescriptor.payload = content;
+			index++;
+			scope._loadResources( resourceDescripton, index, onLoad, onProgress, onError );
+		};
+		this.fileLoader.load( resourceDescriptor.url, processResourcesProxy, onProgress, onError );
+	},
+
+	_executeParseSteps: function ( resourceDescripton, onLoad ) {
+		var items = resourceDescripton.items;
+		for ( var index in items ) {
+
+			var resourceDescriptor = items[ index ];
+			this.parseAsync( resourceDescriptor.payload, onLoad );
+
 		}
 	},
 
@@ -232,7 +264,9 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.type = resourceType;
 	this.payload = content;
+	this.payloadType = 'arraybuffer';
 	this.url = null;
+	this.filename = null;
 	this.path = null;
 	this.extension = null;
 
@@ -269,27 +303,24 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		} else if ( this.type === 'URL' ) {
 
 			this.url = this.payload;
-
 			var urlParts = this.payload.split( '/' );
 			if ( urlParts.length < 2 ) {
 
-				if ( this.name !== this.payload ) throw 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match. Aborting...';
-				this.name = this.payload;
+				this.filename = this.url;
 				this.path = '';
 
 			} else {
 
-				var urlPartsName = urlParts[ urlParts.length - 1 ];
-				if ( this.name !== urlPartsName ) throw 'Provided name "' + this.name + '" and the filename "' + urlPartsName + '" do not match. Aborting...';
-				this.name = urlPartsName;
+				var urlPartLast = urlParts[ urlParts.length - 1 ];
+				this.filename = urlPartLast;
 
 				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
 				if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 			}
-
 			var filenameParts = this.name.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
+			if ( this.name !== this.filename ) console.warn( 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match. Aborting...' );
 
 		} else {
 
