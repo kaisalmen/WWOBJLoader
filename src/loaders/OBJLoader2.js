@@ -22,7 +22,7 @@ THREE.OBJLoader = function ( manager ) {
 
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.callbacks = {
-		onProgress: null
+		onParseProgress: null
 	};
 	this.terminateWorkerOnLoad = true;
 };
@@ -134,9 +134,9 @@ THREE.OBJLoader.prototype = {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
 	},
 
-	_setCallbacks: function ( onProgress, onMeshAlter, onLoadMaterials ) {
-		if ( this.validator.isValid( onProgress ) ) this.callbacks.onProgress = onProgress;
-		this.meshBuilder._setCallbacks( onProgress, onMeshAlter, onLoadMaterials );
+	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
+		if ( this.validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
+		this.meshBuilder._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
 	},
 
 	/**
@@ -159,7 +159,7 @@ THREE.OBJLoader.prototype = {
 				numericalValue: numericalValue
 			}
 		};
-		if ( this.validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
+		if ( this.validator.isValid( this.callbacks.onParseProgress ) ) this.callbacks.onParseProgress( event );
 		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
 	},
 
@@ -173,10 +173,10 @@ THREE.OBJLoader.prototype = {
 		}
 		var scope = this;
 		var onProgressScoped = function ( text, numericalValue ) {
-			scope._onProgress( 'error', text, numericalValue );
+//			scope._onProgress( 'error', text, numericalValue );
 		};
 		onProgressScoped( output, - 1 );
-		throw output;
+//		throw output;
 	},
 
 	/**
@@ -184,60 +184,78 @@ THREE.OBJLoader.prototype = {
 	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
-	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
-	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
-	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {callback} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
+	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+	 * @param {function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {function} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
 	 */
-	load: function ( url, onLoad, onProgress, onError, onMeshAlter ) {
-		var resource = new THREE.OBJLoader.ResourceDescriptor( url, 'OBJ' );
-		this._loadObj( resource, onLoad, onProgress, onError, onMeshAlter );
-	},
+	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
-	_loadObj: function ( resource, onLoad, onProgress, onError, onMeshAlter ) {
 		if ( ! this.validator.isValid( onError ) ) onError = this._onError;
+		if ( ! this.validator.isValid( url ) ) onError( 'An invalid url was provided. Unable to continue!' );
 
-		// fast-fail
-		if ( ! this.validator.isValid( resource ) ) onError( 'An invalid ResourceDescriptor was provided. Unable to continue!' );
-		var scope = this;
-		var fileLoaderOnLoad = function ( content ) {
+		// find out if we have obj or mtl extension
+		var urlParts = url.split( '/' );
+		var filename = url;
+		var path = '';
+		if ( urlParts.length > 2 ) {
 
-			resource.content = content;
-			scope._setCallbacks( null, onMeshAlter, null );
-			onLoad( scope.parse( content ) );
-		};
-
-		// fast-fail
-		if ( ! this.validator.isValid( resource.url ) || this.validator.isValid( resource.content ) ) {
-
-			fileLoaderOnLoad( this.validator.isValid( resource.content ) ? resource.content : null );
-
-		} else {
-
-			if ( ! this.validator.isValid( onProgress ) ) {
-				var numericalValueRef = 0;
-				var numericalValue = 0;
-				onProgress = function ( event ) {
-					if ( ! event.lengthComputable ) return;
-
-					numericalValue = event.loaded / event.total;
-					if ( numericalValue > numericalValueRef ) {
-
-						numericalValueRef = numericalValue;
-						var output = 'Download of "' + resource.url + '": ' + (numericalValue * 100).toFixed( 2 ) + '%';
-						scope._onProgress( 'progressLoad', output, numericalValue );
-
-					}
-				};
-			}
-
-
-			var fileLoader = new THREE.FileLoader( this.manager );
-			fileLoader.setPath( this.path );
-			fileLoader.setResponseType( 'arraybuffer' );
-			fileLoader.load( resource.url, fileLoaderOnLoad, onProgress, onError );
+			filename = urlParts[ urlParts.length - 1 ];
+			var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
+			if ( urlPartsPath !== undefined && urlPartsPath !== null ) path = urlPartsPath;
 
 		}
+
+		var filenameParts = filename.split( '.' );
+		var extension = null;
+		if ( filenameParts.length > 1 ) extension = filenameParts[ filenameParts.length - 1 ];
+
+		// unable to continue
+		if ( extension === null ) onError( 'File with no extension was supplied. Unable to continue!' );
+
+		var scope = this;
+		if ( ! this.validator.isValid( onFileLoadProgress ) ) {
+			var numericalValueRef = 0;
+			var numericalValue = 0;
+			onFileLoadProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
+
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
+
+					numericalValueRef = numericalValue;
+					var output = 'Download of "' + url + '": ' + (numericalValue * 100).toFixed( 2 ) + '%';
+					scope._onProgress( 'progressLoad', output, numericalValue );
+
+				}
+			};
+		}
+		this._setCallbacks( null, onMeshAlter, null );
+
+		var haveObj = extension.toLowerCase() === 'obj';
+		if ( ! haveObj && ( extension.toLowerCase() !== 'mtl' ) ) {
+
+			onError( 'Provided extension "' + extension + '" is not supported by "OBJLoader".' );
+
+		}
+
+		var fileLoaderOnLoad = function ( content ) {
+			if ( haveObj ) {
+
+				onLoad( scope.parse( content ) );
+
+			} else {
+
+				onLoad( scope.parseMtl( content, path, filename ) );
+
+			}
+		};
+
+
+		var fileLoader = new THREE.FileLoader( this.manager );
+		fileLoader.setPath( this.path );
+		fileLoader.setResponseType( haveObj ? 'arraybuffer' : 'text' );
+		fileLoader.load( url, fileLoaderOnLoad, onFileLoadProgress, onError );
 	},
 
 	_applyPrepData: function ( prepData ) {
@@ -330,69 +348,42 @@ THREE.OBJLoader.prototype = {
 	/**
 	 * Utility method for loading an mtl file according resource description. Provide url or content.
 	 * @memberOf THREE.OBJLoader
-	 *
-	 * @param {string} url URL to the file
-	 * @param {Object} content The file content as arraybuffer or text
-	 * @param {function} callbackOnLoad Callback to be called after successful load
+
+	 * @param {String} content The file content as arraybuffer or text*
+	 * @param {String} path Relative path for texture loading
+	 * @param {String} [name] Name given to identify the mtl file
 	 * @param {string} [crossOrigin] CORS value
 	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
-	loadMtl: function ( url, content, callbackOnLoad, crossOrigin, materialOptions ) {
-		var resource = new THREE.OBJLoader.ResourceDescriptor( url, 'MTL' );
-		resource.setContent( content );
-		this._loadMtl( resource, callbackOnLoad, crossOrigin, materialOptions );
-	},
-
-	_loadMtl: function ( resource, callbackOnLoad, crossOrigin, materialOptions ) {
+	parseMtl: function ( content, path, name, crossOrigin, materialOptions ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader" requires it for loading MTL files.' );
-		if ( this.validator.isValid( resource ) && this.logging.enabled ) console.time( 'Loading MTL: ' + resource.name );
-
-		var scope = this;
-		var processMaterials = function ( materialCreator ) {
-			var materials = [];
-			if ( scope.validator.isValid( materialCreator ) ) {
-
-				materialCreator.preload();
-				materials = scope._handleMtlMaterials( materialCreator );
-			}
-
-			if ( scope.validator.isValid( resource ) && scope.logging.enabled ) console.timeEnd( 'Loading MTL: ' + resource.name );
-			callbackOnLoad( materials, materialCreator );
+		var mtlParseResult = {
+			materials: [],
+			materialCreator: null
 		};
 
 		// fast-fail
-		if ( ! this.validator.isValid( resource ) || (! this.validator.isValid( resource.content ) && ! this.validator.isValid( resource.url )) ) {
+		if ( this.validator.isValid( content ) ) {
 
-			processMaterials();
-
-		} else {
-
+			if ( name === undefined || name === null ) name = 'Unknown Filename';
+			if ( this.logging.enabled ) console.time( 'Parsing MTL: ' + name );
 			var mtlLoader = new THREE.MTLLoader( this.manager );
 			crossOrigin = this.validator.verifyInput( crossOrigin, 'anonymous' );
 			mtlLoader.setCrossOrigin( crossOrigin );
-			mtlLoader.setPath( resource.path );
+			mtlLoader.setPath( path );
 			if ( this.validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
 
-			if ( this.validator.isValid( resource.content ) ) {
+			mtlParseResult.materialCreator = mtlLoader.parse( content );
+			if ( this.validator.isValid( mtlParseResult.materialCreator ) ) {
 
-				processMaterials( this.validator.isValid( resource.content ) ? mtlLoader.parse( resource.content ) : null );
-
-			} else if ( this.validator.isValid( resource.url ) ) {
-
-				var onProgressScoped = function ( text, numericalValue ) {
-					scope._onProgress( 'progressLoadMtl', text, numericalValue );
-				};
-
-				var fileLoader = new THREE.FileLoader( this.manager );
-				fileLoader.load( resource.url, function ( text ) {
-
-					resource.content = text;
-					processMaterials( mtlLoader.parse( text ) );
-
-				}, onProgressScoped, this._onError );
+				mtlParseResult.materialCreator.preload();
+				mtlParseResult.materials = this._handleMtlMaterials( mtlParseResult.materialCreator );
 
 			}
+			if ( this.logging.enabled ) console.timeEnd( 'Parsing MTL: ' + name );
+
 		}
+		return mtlParseResult;
 	},
 
 	_handleMtlMaterials: function ( materialCreator ) {
@@ -433,53 +424,6 @@ THREE.OBJLoader.Validator = {
 		return ( input === null || input === undefined ) ? defaultValue : input;
 	}
 };
-
-/**
- * A resource description used by {@link THREE.OBJLoader}.
- * @class
- *
- * @param {string} url URL to the file
- * @param {string} extension The file extension (type)
- */
-THREE.OBJLoader.ResourceDescriptor = function ( url, extension ) {
-	var urlParts = url.split( '/' );
-
-	this.path = null;
-	this.name = null;
-	this.url = url;
-	if ( urlParts.length < 2 ) {
-
-		this.name = url;
-
-	} else {
-
-		var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
-		if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
-		var urlPartsName = urlParts[ urlParts.length - 1 ];
-		if ( urlPartsName !== undefined && urlPartsName !== null ) this.name = urlPartsName;
-
-	}
-	this.extension = "default";
-	if ( extension !== undefined && extension !== null ) this.extension = extension;
-	this.extension = this.extension.trim();
-	this.content = null;
-};
-
-THREE.OBJLoader.ResourceDescriptor.prototype = {
-
-	constructor: THREE.OBJLoader.ResourceDescriptor,
-
-	/**
-	 * Set the content of this resource
-	 * @memberOf THREE.OBJLoader.ResourceDescriptor
-	 *
-	 * @param {Object} content The file content as arraybuffer or text
-	 */
-	setContent: function ( content ) {
-		if ( content !== undefined && content !== null ) this.content = content;
-	}
-};
-
 
 /**
  * Parse OBJ data either from ArrayBuffer or string
@@ -1337,7 +1281,7 @@ THREE.OBJLoader.MeshBuilder = function() {
 	};
 
 	this.callbacks = {
-		onProgress: null,
+		onParseProgress: null,
 		onMeshAlter: null,
 		onLoadMaterials: null
 	};
@@ -1419,8 +1363,8 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 		this.updateMaterials( payload );
 	},
 
-	_setCallbacks: function ( onProgress, onMeshAlter, onLoadMaterials ) {
-		if ( this.validator.isValid( onProgress ) ) this.callbacks.onProgress = onProgress;
+	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
+		if ( this.validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
 		if ( this.validator.isValid( onMeshAlter ) ) this.callbacks.onMeshAlter = onMeshAlter;
 		if ( this.validator.isValid( onLoadMaterials ) ) this.callbacks.onLoadMaterials = onLoadMaterials;
 	},
@@ -1582,8 +1526,8 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 			progressMessage += ' (' + (meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
 
 		}
-		var callbackOnProgress = this.callbacks.onProgress;
-		if ( this.validator.isValid( callbackOnProgress ) ) {
+		var callbackOnParseProgress = this.callbacks.onParseProgress;
+		if ( this.validator.isValid( callbackOnParseProgress ) ) {
 
 			var event = new CustomEvent( 'MeshBuilderEvent', {
 				detail: {
@@ -1593,7 +1537,7 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 					numericalValue: meshPayload.progress.numericalValue
 				}
 			} );
-			callbackOnProgress( event );
+			callbackOnParseProgress( event );
 
 		}
 

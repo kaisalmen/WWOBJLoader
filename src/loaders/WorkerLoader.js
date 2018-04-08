@@ -18,9 +18,6 @@ THREE.WorkerLoader = function ( manager, loader, parserName ) {
 		debug: false
 	};
 
-	this.fileLoader = new THREE.FileLoader( this.manager );
-	this.fileLoader.setResponseType( 'arraybuffer' );
-
 	this.loader = loader;
 	this.parserName = parserName;
 	this.instanceNo = 0;
@@ -49,8 +46,10 @@ THREE.WorkerLoader.prototype = {
 	 * @memberOf THREE.WorkerLoader
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
-	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
-	 * @param {callback} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
+	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+ 	 * @param {function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
 	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
 		var scope = this;
@@ -90,8 +89,8 @@ THREE.WorkerLoader.prototype = {
 	 * Parses content asynchronously from arraybuffer.
 	 *
 	 * @param {arraybuffer} content data as Uint8Array
-	 * @param {callback} onLoad Called after worker successfully completed loading
-	 * @param {callback} [onLoad] Called after worker successfully completed loading
+	 * @param {function} onLoad Called after worker successfully completed loading
+	 * @param {function} [onLoad] Called after worker successfully completed loading
 	 */
 	parseAsync: function ( content, onLoad, onMesh ) {
 		var scope = this;
@@ -201,8 +200,10 @@ THREE.WorkerLoader.prototype = {
 
 		}
 		var resourceDescriptor = resourceDescripton.items[ index ];
-		this.fileLoader.setResponseType( resourceDescriptor.payloadType );
-		this.fileLoader.setPath( this.loader.path );
+		var fileLoader = new THREE.FileLoader( this.manager );
+		fileLoader.setResponseType( 'arraybuffer' );
+		fileLoader.setResponseType( resourceDescriptor.payloadType );
+		fileLoader.setPath( this.loader.path );
 
 		var scope = this;
 		var processResourcesProxy = function ( content ) {
@@ -210,7 +211,7 @@ THREE.WorkerLoader.prototype = {
 			index++;
 			scope._loadResources( resourceDescripton, index, onLoad, onProgress, onError );
 		};
-		this.fileLoader.load( resourceDescriptor.url, processResourcesProxy, onProgress, onError );
+		fileLoader.load( resourceDescriptor.url, processResourcesProxy, onProgress, onError );
 	},
 
 	_executeParseSteps: function ( resourceDescripton, onLoad ) {
@@ -267,7 +268,7 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.payloadType = 'arraybuffer';
 	this.url = null;
 	this.filename = null;
-	this.path = null;
+	this.path = '';
 	this.extension = null;
 
 	this._init();
@@ -303,22 +304,16 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		} else if ( this.type === 'URL' ) {
 
 			this.url = this.payload;
-			var urlParts = this.payload.split( '/' );
-			if ( urlParts.length < 2 ) {
+			this.filename = this.url;
+			var urlParts = this.url.split( '/' );
+			if ( urlParts.length > 2 ) {
 
-				this.filename = this.url;
-				this.path = '';
-
-			} else {
-
-				var urlPartLast = urlParts[ urlParts.length - 1 ];
-				this.filename = urlPartLast;
-
+				this.filename = urlParts[ urlParts.length - 1 ];
 				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
 				if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 			}
-			var filenameParts = this.name.split( '.' );
+			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
 			if ( this.name !== this.filename ) console.warn( 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match. Aborting...' );
 

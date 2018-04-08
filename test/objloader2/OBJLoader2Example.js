@@ -6,7 +6,7 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
+	var Validator = THREE.OBJLoader.Validator;
 
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -63,19 +63,19 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		var objLoader = new THREE.OBJLoader();
-		var callbackOnLoad = function ( event ) {
-			scope.scene.add( event.detail.loaderRootNode );
-			console.log( 'Loading complete: ' + event.detail.modelName );
+		var callbackOnLoad = function ( object3d ) {
+			scope.scene.add( object3d );
+			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( { detail: { text: '' } } );
 		};
 
-		var onLoadMtl = function ( materials ) {
+		var onLoadMtl = function ( mtlParseResult ) {
 			objLoader.setModelName( modelName );
-			objLoader.setMaterials( materials );
+			objLoader.setMaterials( mtlParseResult.materials );
 			objLoader.setLogging( true, true );
 			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl );
+		objLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {
