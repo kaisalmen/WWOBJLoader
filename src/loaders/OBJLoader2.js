@@ -173,10 +173,10 @@ THREE.OBJLoader.prototype = {
 		}
 		var scope = this;
 		var onProgressScoped = function ( text, numericalValue ) {
-//			scope._onProgress( 'error', text, numericalValue );
+			scope._onProgress( 'error', text, numericalValue );
 		};
 		onProgressScoped( output, - 1 );
-//		throw output;
+		throw output;
 	},
 
 	/**

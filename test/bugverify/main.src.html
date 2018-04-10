@@ -26,17 +26,15 @@
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-		<script src="../../src/loaders/support/LoaderCommons.js"></script>
-		<script src="../../src/loaders/support/LoaderBuilder.js"></script>
-		<script src="../../src/loaders/support/LoaderWorkerSupport.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
+		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script>
 
 			'use strict';
 
 			var OBJLoader2BugVerify = (function () {
 
-				var Validator = THREE.LoaderSupport.Validator;
+				var Validator = THREE.OBJLoader.Validator;
 
 				function OBJLoader2BugVerify( elementToBindTo ) {
 					this.renderer = null;
@@ -57,7 +55,7 @@
 
 					this.controls = null;
 
-					this.objs2Load = [];
+					this.loadInstructions = [];
 					this.processing = false;
 				}
 
@@ -90,12 +88,12 @@
 					this.scene.add( helper );
 				};
 
-				OBJLoader2BugVerify.prototype.updateAssets = function ( prepData ) {
-					if ( Validator.isValid( prepData ) ) this.objs2Load.push( prepData );
+				OBJLoader2BugVerify.prototype.updateAssets = function ( loadInstructions ) {
+					this.loadInstructions.push( loadInstructions );
 				};
 
 				OBJLoader2BugVerify.prototype.loadAssets = function () {
-					if ( this.objs2Load.length === 0 || this.processing ) {
+					if ( this.loadInstructions.length === 0 || this.processing ) {
 
 						return;
 
@@ -105,29 +103,31 @@
 
 					}
 
-					var objLoader2 = new THREE.OBJLoader2();
-					var prepData = this.objs2Load[ 0 ];
-					this.objs2Load.shift();
-					var streamMeshes = prepData.streamMeshesTo;
-					if ( Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
+					var objLoader = new THREE.OBJLoader();
+					var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+
+					var loadInstruction = this.loadInstructions[ 0 ];
+					this.loadInstructions.shift();
 
 					var scope = this;
 					var loadAssetsProxy = function ( event ) {
-						if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
+						if ( ! Validator.isValid( loadInstruction.wlConfig.baseObject3d ) ) {
+							scope.scene.add( event.detail.object3d );
+						}
 						scope.processing = false;
 						scope.loadAssets();
 						scope._reportProgress( { detail: { text: '' } } );
 					};
-					var callbacks = prepData.getCallbacks();
-					callbacks.setCallbackOnLoad( loadAssetsProxy );
-					callbacks.setCallbackOnProgress( this._reportProgress );
-
 					this._reportProgress( { detail: { text: '' } } );
-					objLoader2.run( prepData );
+
+					workerLoader.execute( loadInstruction.resourceDescriptors, loadInstruction.wlConfig, loadInstruction.loaderConfig, loadAssetsProxy, this._reportProgress );
 				};
 
 				OBJLoader2BugVerify.prototype._reportProgress = function( event ) {
-					var output = Validator.verifyInput( event.detail.text, '' );
+					var output = '';
+					if ( Validator.isValid( event.detail ) && Validator.isValid( event.detail.text ) ) {
+						output = event.detail.text;
+					}
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
 				};
@@ -186,16 +186,19 @@
 			app.resizeDisplayGL();
 
 
-			var prepData = new THREE.LoaderSupport.PrepData( 'Issue14' );
 			var pivot = new THREE.Object3D();
 			pivot.position.set( -325, 0, 0 );
 			var scale = 5.0;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
 
+			var resourceDescriptors = [];
+			var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.mtl', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl', 'text', false );
+			resourceDescriptors.push( rd );
+			var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj', 'arraybuffer', false );
+			resourceDescriptors.push( rd );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { loaderRootNode: pivot } } );
+/*
 
 			prepData = new THREE.LoaderSupport.PrepData( 'Issue21' );
 			pivot = new THREE.Object3D();
@@ -273,7 +276,7 @@
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.obj', 'OBJ' ) );
 			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.mtl', 'MTL' ) );
 			app.updateAssets( prepData );
-
+*/
 			app.loadAssets();
 
 			render();

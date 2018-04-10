@@ -201,7 +201,6 @@ THREE.WorkerLoader.prototype = {
 		}
 		var resourceDescriptor = resourceDescripton.items[ index ];
 		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setResponseType( 'arraybuffer' );
 		fileLoader.setResponseType( resourceDescriptor.payloadType );
 		fileLoader.setPath( this.loader.path );
 
@@ -219,8 +218,16 @@ THREE.WorkerLoader.prototype = {
 		for ( var index in items ) {
 
 			var resourceDescriptor = items[ index ];
-			this.parseAsync( resourceDescriptor.payload, onLoad );
+			if ( resourceDescriptor.async ) {
 
+				this.parseAsync( resourceDescriptor.payload, onLoad );
+
+			} else {
+
+				onLoad( this.loader.parse( resourceDescriptor.payload ) );
+
+			}
+			
 		}
 	},
 
@@ -261,11 +268,12 @@ THREE.WorkerLoader.prototype = {
 	}
 };
 
-THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
+THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content, payloadType, async ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.type = resourceType;
 	this.payload = content;
-	this.payloadType = 'arraybuffer';
+	this.payloadType = ( payloadType === undefined || payloadType === null ) ? 'text' : payloadType;
+	this.async = async === true;
 	this.url = null;
 	this.filename = null;
 	this.path = '';
@@ -296,10 +304,12 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
 
 			}
+			this.payloadType = 'arraybuffer';
 
 		} else if ( this.type === 'String' ) {
 
 			if ( ! ( typeof( this.payload ) === 'string' || this.payload instanceof String ) ) throw 'Provided content is not of type "String"! Aborting...';
+			this.payloadType = 'text';
 
 		} else if ( this.type === 'URL' ) {
 
@@ -315,7 +325,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			}
 			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-			if ( this.name !== this.filename ) console.warn( 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match. Aborting...' );
+			if ( this.name !== this.filename ) console.warn( 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match.' );
 
 		} else {
 
