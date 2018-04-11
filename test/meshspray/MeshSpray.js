@@ -16,7 +16,7 @@ var MeshSpray = (function () {
 		};
 
 		this.instanceNo = 0;
-		this.loaderRootNode = new THREE.Group();
+		this.baseObject3d = new THREE.Group();
 
 		this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
@@ -29,8 +29,8 @@ var MeshSpray = (function () {
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
 	};
 
-	MeshSpray.prototype.setStreamMeshesTo = function ( streamMeshesTo ) {
-		this.loaderRootNode = Validator.verifyInput( streamMeshesTo, this.loaderRootNode );
+	MeshSpray.prototype.setBaseObject3d = function ( baseObject3d ) {
+		this.baseObject3d = Validator.verifyInput( baseObject3d, this.baseObject3d );
 	};
 
 	MeshSpray.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy  ) {
@@ -52,8 +52,6 @@ var MeshSpray = (function () {
 		}
 		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.instanceNo );
 
-		this._applyPrepData( prepData );
-
 		this.meshBuilder.init();
 
 		var scope = this;
@@ -62,7 +60,7 @@ var MeshSpray = (function () {
 			var mesh;
 			for ( var i in meshes ) {
 				mesh = meshes[ i ];
-				scope.loaderRootNode.add( mesh );
+				scope.baseObject3d.add( mesh );
 			}
 		};
 		var scopeFuncComplete = function ( message ) {
@@ -70,7 +68,7 @@ var MeshSpray = (function () {
 			if ( THREE.LoaderSupport.Validator.isValid( callback ) ) callback(
 				{
 					detail: {
-						loaderRootNode: scope.loaderRootNode,
+						baseObject3d: scope.baseObject3d,
 						modelName: scope.modelName,
 						instanceNo: scope.instanceNo
 					}
@@ -113,17 +111,6 @@ var MeshSpray = (function () {
 				}
 			}
 		);
-	};
-
-	MeshSpray.prototype._applyPrepData = function ( prepData ) {
-		if ( Validator.isValid( prepData ) ) {
-
-			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
-			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			this.meshBuilder.setMaterials( prepData.materials );
-			this._setCallbacks( prepData.getCallbacks() );
-
-		}
 	};
 
 	MeshSpray.prototype._setCallbacks = function ( callbacks ) {
@@ -408,7 +395,7 @@ var MeshSprayApp = (function () {
 			z = r * Math.cos( t );
 			pivot.position.set( x, y, z );
 			this.scene.add( pivot );
-			prepData.streamMeshesTo = pivot;
+			prepData.baseObject3d = pivot;
 			prepData.setLogging( false, false );
 
 			prepData.quantity = 8192;

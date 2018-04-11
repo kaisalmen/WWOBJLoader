@@ -96,7 +96,7 @@
 					var objLoader2 = new THREE.OBJLoader2();
 
 					var callbackOnLoad = function ( event ) {
-						scope.scene.add( event.detail.loaderRootNode );
+						scope.scene.add( event.detail.baseObject3d );
 						console.log( 'Loading complete: ' + event.detail.modelName );
 						scope._reportProgress( { detail: { text: '' } } );
 					};

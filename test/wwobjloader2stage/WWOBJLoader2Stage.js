@@ -295,9 +295,9 @@ var WWOBJLoader2Stage = (function () {
 
 		var scope = this;
 		var reloadAssetsProxy = function ( event ) {
-			if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
+			if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.baseObject3d );
 			scope.processing = false;
-			scope.allAssets[ prepData.modelName ] = event.detail.loaderRootNode;
+			scope.allAssets[ prepData.modelName ] = event.detail.baseObject3d;
 			scope.reloadAssets();
 			scope._reportProgress( { detail: { text: '' } } );
 		};
@@ -365,7 +365,7 @@ var WWOBJLoader2Stage = (function () {
 
 		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			scope.scene.add( event.detail.loaderRootNode );
+			scope.scene.add( event.detail.baseObject3d );
 			console.log( 'Loading complete: ' + event.detail.modelName );
 			scope._reportProgress( { detail: { text: '' } } );
 		};

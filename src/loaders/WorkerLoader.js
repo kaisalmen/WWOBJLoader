@@ -4,7 +4,7 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
  *
  * @param manager
  * @param loader
- * @param loaderRootNode
+ * @param parserName
  * @constructor
  */
 THREE.WorkerLoader = function ( manager, loader, parserName ) {
@@ -90,9 +90,10 @@ THREE.WorkerLoader.prototype = {
 	 *
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {function} onLoad Called after worker successfully completed loading
-	 * @param {function} [onLoad] Called after worker successfully completed loading
+	 * @param {function} [onMesh] Called after worker successfully delivered a single mesh
+	 * @param {Object} [additionalInstructions] Provide additional instructions to the parser
 	 */
-	parseAsync: function ( content, onLoad, onMesh ) {
+	parseAsync: function ( content, onLoad, onMesh, additionalInstructions ) {
 		var scope = this;
 
 		var measureTime = false;
@@ -137,11 +138,13 @@ THREE.WorkerLoader.prototype = {
 		this.workerSupport.run(
 			{
 				params: {
-					useAsync: true,
-					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-					useIndices: this.useIndices,
-					disregardNormals: this.disregardNormals
+					useAsync: true
 				},
+				// this is only applicable to OBJLoader
+				// materialPerSmoothingGroup: this.materialPerSmoothingGroup,
+				// useIndices: this.useIndices,
+				// disregardNormals: this.disregardNormals
+				additionalInstructions: additionalInstructions,
 				logging: {
 					enabled: this.logging.enabled,
 					debug: this.logging.debug
@@ -175,12 +178,15 @@ THREE.WorkerLoader.prototype = {
 		this._loadResources( resourceDescripton, 0, callbackOnLoad, callbackOnProgress, callbackOnError );
 	},
 
-	_applyConfiguration: function ( scope, loaderConfiguration ) {
-		var property, value;
-		for ( property in loaderConfiguration ) {
+	_applyConfiguration: function ( scope, applicableConfiguration, forceCreation ) {
+		// fast-fail
+		if ( scope === undefined || scope === null || applicableConfiguration === undefined || applicableConfiguration === null ) return;
 
-			value = loaderConfiguration[ property ];
-			if ( scope.hasOwnProperty( property ) ) {
+		var property, value;
+		for ( property in applicableConfiguration ) {
+
+			value = applicableConfiguration[ property ];
+			if ( scope.hasOwnProperty( property ) || forceCreation ) {
 
 				scope[ property ] = value;
 
@@ -201,7 +207,7 @@ THREE.WorkerLoader.prototype = {
 		}
 		var resourceDescriptor = resourceDescripton.items[ index ];
 		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setResponseType( resourceDescriptor.payloadType );
+		fileLoader.setResponseType( resourceDescriptor.additionalInstructions.payloadType );
 		fileLoader.setPath( this.loader.path );
 
 		var scope = this;
@@ -218,16 +224,16 @@ THREE.WorkerLoader.prototype = {
 		for ( var index in items ) {
 
 			var resourceDescriptor = items[ index ];
-			if ( resourceDescriptor.async ) {
+			if ( resourceDescriptor.additionalInstructions.async ) {
 
 				this.parseAsync( resourceDescriptor.payload, onLoad );
 
 			} else {
 
-				onLoad( this.loader.parse( resourceDescriptor.payload ) );
+				onLoad( this.loader.parse( resourceDescriptor.payload, resourceDescriptor.additionalInstructions ) );
 
 			}
-			
+
 		}
 	},
 
@@ -268,16 +274,18 @@ THREE.WorkerLoader.prototype = {
 	}
 };
 
-THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content, payloadType, async ) {
+THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.type = resourceType;
 	this.payload = content;
-	this.payloadType = ( payloadType === undefined || payloadType === null ) ? 'text' : payloadType;
-	this.async = async === true;
 	this.url = null;
 	this.filename = null;
 	this.path = '';
 	this.extension = null;
+	this.additionalInstructions = {
+		async: true,
+		payloadType: 'arraybuffer'
+	};
 
 	this._init();
 };
@@ -304,12 +312,12 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
 
 			}
-			this.payloadType = 'arraybuffer';
+			this.additionalInstructions.payloadType = 'arraybuffer';
 
 		} else if ( this.type === 'String' ) {
 
 			if ( ! ( typeof( this.payload ) === 'string' || this.payload instanceof String ) ) throw 'Provided content is not of type "String"! Aborting...';
-			this.payloadType = 'text';
+			this.additionalInstructions.payloadType = 'text';
 
 		} else if ( this.type === 'URL' ) {
 
@@ -332,6 +340,11 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			throw 'An unsupported resourceType "' + this.type + '" was provided! Aborting...'
 
 		}
+	},
+
+	setAdditionalInstructions: function ( additionalInstructions ) {
+		THREE.WorkerLoader.prototype._applyConfiguration( this.additionalInstructions, additionalInstructions, true );
+		if ( this.additionalInstructions.name === undefined || this.additionalInstructions.name === null ) this.additionalInstructions.name = this.name;
 	}
 
 };

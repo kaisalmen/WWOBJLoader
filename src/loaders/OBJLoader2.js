@@ -18,13 +18,12 @@ THREE.OBJLoader = function ( manager ) {
 	this.useIndices = false;
 	this.disregardNormals = false;
 	this.materialPerSmoothingGroup = false;
-	this.loaderRootNode = new THREE.Group();
+	this.baseObject3d = new THREE.Group();
 
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.callbacks = {
 		onParseProgress: null
 	};
-	this.terminateWorkerOnLoad = true;
 };
 
 THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
@@ -78,10 +77,10 @@ THREE.OBJLoader.prototype = {
 	 * Set the node where the loaded objects will be attached directly.
 	 * @memberOf THREE.OBJLoader
 	 *
-	 * @param {THREE.Object3D} streamMeshesTo Object already attached to scenegraph where new meshes will be attached to
+	 * @param {THREE.Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
 	 */
-	setStreamMeshesTo: function ( streamMeshesTo ) {
-		this.loaderRootNode = this.validator.verifyInput( streamMeshesTo, this.loaderRootNode );
+	setBaseObject3d: function ( baseObject3d ) {
+		this.baseObject3d = this.validator.verifyInput( baseObject3d, this.baseObject3d );
 	},
 
 	/**
@@ -187,9 +186,14 @@ THREE.OBJLoader.prototype = {
 	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
 	 * @param {function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {function} [onMeshAlter] A function to be called after a new mesh raw data becomes available for alteration.
+	 * @param {function} [onMeshAlter] Called after worker successfully delivered a single mesh
+	 * * @param {Object} additionalInstructions Provide additional instructions for MTL parsing:
+	 * 	- {String} path Relative path for texture loading
+	 *  - {String} [name] Name given to identify the mtl file
+	 *  - {string} [crossOrigin] CORS value
+	 *  - {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
-	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
+	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter, additionalInstructions ) {
 
 		if ( ! this.validator.isValid( onError ) ) onError = this._onError;
 		if ( ! this.validator.isValid( url ) ) onError( 'An invalid url was provided. Unable to continue!' );
@@ -197,14 +201,7 @@ THREE.OBJLoader.prototype = {
 		// find out if we have obj or mtl extension
 		var urlParts = url.split( '/' );
 		var filename = url;
-		var path = '';
-		if ( urlParts.length > 2 ) {
-
-			filename = urlParts[ urlParts.length - 1 ];
-			var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
-			if ( urlPartsPath !== undefined && urlPartsPath !== null ) path = urlPartsPath;
-
-		}
+		if ( urlParts.length > 2 ) filename = urlParts[ urlParts.length - 1 ];
 
 		var filenameParts = filename.split( '.' );
 		var extension = null;
@@ -240,17 +237,26 @@ THREE.OBJLoader.prototype = {
 		}
 
 		var fileLoaderOnLoad = function ( content ) {
-			if ( haveObj ) {
+			if ( ! scope.validator.isValid( additionalInstructions ) && ! haveObj ) {
 
-				onLoad( scope.parse( content ) );
+				var texturePath = '';
+				if ( urlParts.length > 2 ) {
 
-			} else {
+					var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
+					if ( urlPartsPath !== undefined && urlPartsPath !== null ) texturePath = urlPartsPath;
 
-				onLoad( scope.parseMtl( content, path, filename ) );
+				}
+				additionalInstructions = {
+					haveMtl: true,
+					filename: filename,
+					texturePath: texturePath,
+					crossOrigin: null,
+					materialOptions: {}
+				};
 
 			}
+			onLoad( scope.parse( content, additionalInstructions ) );
 		};
-
 
 		var fileLoader = new THREE.FileLoader( this.manager );
 		fileLoader.setPath( this.path );
@@ -258,129 +264,109 @@ THREE.OBJLoader.prototype = {
 		fileLoader.load( url, fileLoaderOnLoad, onFileLoadProgress, onError );
 	},
 
-	_applyPrepData: function ( prepData ) {
-		if ( this.validator.isValid( prepData ) ) {
-
-			this.setLogging( prepData.logging.enabled, prepData.logging.debug );
-			this.setModelName( prepData.modelName );
-			this.setStreamMeshesTo( prepData.streamMeshesTo );
-			this.meshBuilder.setMaterials( prepData.materials );
-			this.setUseIndices( prepData.useIndices );
-			this.setDisregardNormals( prepData.disregardNormals );
-			this.setMaterialPerSmoothingGroup( prepData.materialPerSmoothingGroup );
-
-			this._setCallbacks( prepData.getCallbacks() );
-
-		}
-	},
-
 	/**
 	 * Parses OBJ data synchronously from arraybuffer or string.
 	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
+	 * @param {Object} additionalInstructions Provide additional instructions for MTL parsing:
+	 * 	- {String} path Relative path for texture loading
+	 *  - {String} [name] Name given to identify the mtl file
+	 *  - {string} [crossOrigin] CORS value
+	 *  - {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
-	parse: function ( content ) {
+	parse: function ( content, additionalInstructions ) {
 		// fast-fail in case of illegal data
 		if ( ! this.validator.isValid( content ) ) {
 
 			console.warn( 'Provided content is not a valid ArrayBuffer or String.' );
-			return this.loaderRootNode;
+			return this.baseObject3d;
 
 		}
-		if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
-		this.meshBuilder.init( this.loaderRootNode );
 
-		var parser = new THREE.OBJLoader.Parser();
-		parser.setLogging( this.logging.enabled, this.logging.debug );
-		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
-		parser.setUseIndices( this.useIndices );
-		parser.setDisregardNormals( this.disregardNormals );
-		// sync code works directly on the material references
-		parser.setMaterials( this.meshBuilder.getMaterials() );
+		var parseResult;
+		if ( this.validator.isValid( additionalInstructions ) && additionalInstructions.haveMtl ) {
 
-		var scope = this;
-		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.meshBuilder.processPayload( payload );
-			var mesh;
-			for ( var i in meshes ) {
-				mesh = meshes[ i ];
-				scope.loaderRootNode.add( mesh );
-			}
-		};
-		parser.setCallbackMeshBuilder( onMeshLoaded );
-		var onProgressScoped = function ( text, numericalValue ) {
-			scope._onProgress( 'progressParse', text, numericalValue );
-		};
-		parser.setCallbackProgress( onProgressScoped );
-
-		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
-
-			if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
-			parser.parse( content );
-
-		} else if ( typeof(content) === 'string' || content instanceof String ) {
-
-			if ( this.logging.enabled ) console.info( 'Parsing text...' );
-			parser.parseText( content );
+			if ( this.logging.enabled ) console.time( 'OBJLoader parse MTL: ' + additionalInstructions.name );
+			parseResult = this._parseMtl( content, additionalInstructions );
+			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse MTL: ' + additionalInstructions.name );
 
 		} else {
 
-			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
+			if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
+			this.meshBuilder.init( this.baseObject3d );
 
+			var parser = new THREE.OBJLoader.Parser();
+			parser.setLogging( this.logging.enabled, this.logging.debug );
+			parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+			parser.setUseIndices( this.useIndices );
+			parser.setDisregardNormals( this.disregardNormals );
+			// sync code works directly on the material references
+			parser.setMaterials( this.meshBuilder.getMaterials() );
+
+			var scope = this;
+			var onMeshLoaded = function ( payload ) {
+				var meshes = scope.meshBuilder.processPayload( payload );
+				var mesh;
+				for ( var i in meshes ) {
+					mesh = meshes[ i ];
+					scope.baseObject3d.add( mesh );
+				}
+			};
+			parser.setCallbackMeshBuilder( onMeshLoaded );
+			var onProgressScoped = function ( text, numericalValue ) {
+				scope._onProgress( 'progressParse', text, numericalValue );
+			};
+			parser.setCallbackProgress( onProgressScoped );
+
+			if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
+
+				if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
+				parser.parse( content );
+
+			} else if ( typeof(content) === 'string' || content instanceof String ) {
+
+				if ( this.logging.enabled ) console.info( 'Parsing text...' );
+				parser.parseText( content );
+
+			} else {
+
+				throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
+
+			}
+			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse: ' + this.modelName );
+
+			parseResult = this.baseObject3d;
 		}
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse: ' + this.modelName );
-
-		return this.loaderRootNode;
-	},
-
-	buildWorkerCode: function ( codeSerializer ) {
-		var workerCode = '';
-		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by THREE.OBJLoader.buildWorkerCode.\n';
-		workerCode += '  */\n\n';
-		workerCode += 'THREE = { OBJLoader: {} };\n\n';
-		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
-
-		return workerCode;
+		return parseResult;
 	},
 
 	/**
-	 * Utility method for loading an mtl file according resource description. Provide url or content.
-	 * @memberOf THREE.OBJLoader
-
-	 * @param {String} content The file content as arraybuffer or text*
-	 * @param {String} path Relative path for texture loading
-	 * @param {String} [name] Name given to identify the mtl file
-	 * @param {string} [crossOrigin] CORS value
-	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
+	 * Utility method for parsing mtl text with MTLLoader
 	 */
-	parseMtl: function ( content, path, name, crossOrigin, materialOptions ) {
+	_parseMtl: function ( content, additionalInstructions ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader" requires it for loading MTL files.' );
+		if ( ! this.validator.isValid( content ) || ! ( typeof( content ) === 'string' || content instanceof String ) ) console.error( 'Provided content is not a String.' );
+
 		var mtlParseResult = {
 			materials: [],
 			materialCreator: null
 		};
+		if ( this.validator.isValid( content ) && this.validator.isValid( additionalInstructions ) ) {
 
-		// fast-fail
-		if ( this.validator.isValid( content ) ) {
-
-			if ( name === undefined || name === null ) name = 'Unknown Filename';
-			if ( this.logging.enabled ) console.time( 'Parsing MTL: ' + name );
 			var mtlLoader = new THREE.MTLLoader( this.manager );
-			crossOrigin = this.validator.verifyInput( crossOrigin, 'anonymous' );
+			var crossOrigin = this.validator.verifyInput( additionalInstructions.crossOrigin, 'anonymous' );
 			mtlLoader.setCrossOrigin( crossOrigin );
-			mtlLoader.setPath( path );
-			if ( this.validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
+			if ( this.validator.isValid( additionalInstructions.texturePath ) ) mtlLoader.setPath( additionalInstructions.texturePath );
+			if ( this.validator.isValid( additionalInstructions.materialOptions ) ) mtlLoader.setMaterialOptions( additionalInstructions.materialOptions );
 
 			mtlParseResult.materialCreator = mtlLoader.parse( content );
 			if ( this.validator.isValid( mtlParseResult.materialCreator ) ) {
 
 				mtlParseResult.materialCreator.preload();
-				mtlParseResult.materials = this._handleMtlMaterials( mtlParseResult.materialCreator );
+				mtlParseResult.materials = this.setMaterials( mtlParseResult.materialCreator );
 
 			}
-			if ( this.logging.enabled ) console.timeEnd( 'Parsing MTL: ' + name );
 
 		}
 		return mtlParseResult;
@@ -398,6 +384,17 @@ THREE.OBJLoader.prototype = {
 			}
 		}
 		return materials;
+	},
+
+	buildWorkerCode: function ( codeSerializer ) {
+		var workerCode = '';
+		workerCode += '/**\n';
+		workerCode += '  * This code was constructed by THREE.OBJLoader.buildWorkerCode.\n';
+		workerCode += '  */\n\n';
+		workerCode += 'THREE = { OBJLoader: {} };\n\n';
+		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
+
+		return workerCode;
 	}
 };
 
@@ -1311,8 +1308,8 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 */
-	init: function ( loaderRootNode ) {
-		this.loaderRootNode = loaderRootNode;
+	init: function ( baseObject3d ) {
+		this.baseObject3d = baseObject3d;
 
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
@@ -1541,15 +1538,15 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 		}
 
-		this.addToLoaderRootNode( meshes );
+		this.addToBaseObject3d( meshes );
 	},
 
-	addToLoaderRootNode: function( meshes ) {
+	addToBaseObject3d: function( meshes ) {
 		var mesh;
 		for ( var i in meshes ) {
 
 			mesh = meshes[ i ];
-			this.loaderRootNode.add( mesh );
+			this.baseObject3d.add( mesh );
 
 		}
 	},

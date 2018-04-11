@@ -149,7 +149,7 @@ var WWParallels = (function () {
 		var callbackOnLoad = function ( event ) {
 			var instanceNo = event.detail.instanceNo;
 			scope.reportDonwload[ instanceNo ] = false;
-			scope.allAssets.push( event.detail.loaderRootNode );
+			scope.allAssets.push( event.detail.baseObject3d );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
 			if ( scope.logging.enabled ) console.info( msg );
