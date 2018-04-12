@@ -52,7 +52,8 @@ var MeshSpray = (function () {
 		}
 		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.instanceNo );
 
-		this.meshBuilder.init();
+		this.meshBuilder.setBaseObject3d( baseObject3d );
+		this.meshBuilder.createDefaultMaterials();
 
 		var scope = this;
 		var scopeBuilderFunc = function ( payload ) {

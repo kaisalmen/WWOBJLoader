@@ -187,17 +187,18 @@
 			app.resizeDisplayGL();
 
 
+			// issue: 14
+			var resourceDescriptors = [];
 			var pivot = new THREE.Object3D();
 			pivot.position.set( -325, 0, 0 );
 			var scale = 5.0;
 			pivot.scale.set( scale, scale, scale );
 			app.scene.add( pivot );
 
-			var resourceDescriptors = [];
 			var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.mtl', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl' );
 			var additionalInstructionsMtl = {
 				payloadType: 'text',
-				async: false,
+				useAsync: false,
 				haveMtl: true,
 				texturePath: '../../resource/obj/14/',
 				materialOptions: {}
@@ -208,106 +209,144 @@
 			var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' );
 			var additionalInstructionsObj = {
 				payloadType: 'arraybuffer',
-				async: false
+				useAsync: false
 			};
 			rdObj.setAdditionalInstructions( additionalInstructionsObj );
 			resourceDescriptors.push( rdObj );
 			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
 
+			// issue: 21
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( -225, 0, 0 );
 			scale = 25.0;
 			pivot.scale.set( scale, scale, scale );
 			app.scene.add( pivot );
 
-			resourceDescriptors = [];
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue21.mtl', '../../resource/obj/21/Table_Photo_Frame_03.mtl' );
-			var additionalInstructionsMtl = {
-				payloadType: 'text',
-				async: false,
-				haveMtl: true,
-				texturePath: '../../resource/obj/21/',
-				materialOptions: { invertTrProperty: true }
-			};
+			additionalInstructionsMtl.texturePath = '../../resource/obj/21/';
+			additionalInstructionsMtl.materialOptions = { invertTrProperty: true };
 			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
 			resourceDescriptors.push( rdMtl );
 
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue21.obj', '../../resource/obj/21/Table_Photo_Frame_03.obj' );
-			var additionalInstructionsObj = {
-				payloadType: 'arraybuffer',
-				async: false
-			};
 			rdObj.setAdditionalInstructions( additionalInstructionsObj );
 			resourceDescriptors.push( rdObj );
 			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
-/*
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue12120' );
+
+			// issue: 12120
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( -325, 0, -100 );
 			scale = 0.01;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12120/zjej_abm_f01_out_T005.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12120/zjej_abm_f01_out_T005.mtl', 'MTL' ) );
-			prepData.materialOptions = { invertTrProperty: true };
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
+
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12120.mtl', '../../resource/obj/12120/zjej_abm_f01_out_T005.mtl' );
+			additionalInstructionsMtl.texturePath = '../../resource/obj/12120/';
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12120.obj', '../../resource/obj/12120/zjej_abm_f01_out_T005.obj' );
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
 
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue12324' );
+			// issue: 12324
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( -50, 0, 0 );
 			scale = 1.0;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12324/rampanueva.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/12324/rampanueva.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
+
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12324.mtl', '../../resource/obj/12324/rampanueva.mtl' );
+			additionalInstructionsMtl.texturePath = '../../resource/obj/12324/';
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12324.obj', '../../resource/obj/12324/rampanueva.obj');
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
 
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue11811a' );
+			// issue: 11811a
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( 50, 0, 0 );
 			scale = 0.25;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbpo10518T.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbpo10518T.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
+
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811a.mtl', '../../resource/obj/11811/3dbpo10518T.mtl' );
+			additionalInstructionsMtl.texturePath = '../../resource/obj/11811/';
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811a.obj', '../../resource/obj/11811/3dbpo10518T.obj' );
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
 
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue11811b' );
+			// issue: 11811b
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( 150, 0, 0 );
 			scale = 0.25;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/11811/3dbts103601T.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
+
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811b.mtl', '../../resource/obj/11811/3dbts103601T.mtl' );
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811b.obj', '../../resource/obj/11811/3dbts103601T.obj' );
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
 
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue27door' );
+			// Issue: 27 door
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( 250, 0, 0 );
 			scale = 0.5;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/door.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/door.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
+			app.scene.add( pivot );
 
-			prepData = new THREE.LoaderSupport.PrepData( 'Issue27wall2' );
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27door.mtl', '../../resource/obj/27/door.mtl' );
+			additionalInstructionsMtl.texturePath = '../../resource/obj/27/';
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27door.obj', '../../resource/obj/27/door.obj' );
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
+
+
+			// Issue: 27 wall2
+			resourceDescriptors = [];
 			pivot = new THREE.Object3D();
 			pivot.position.set( 350, 0, 0 );
 			scale = 0.5;
 			pivot.scale.set( scale, scale, scale );
-			prepData.streamMeshesTo = pivot;
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.obj', 'OBJ' ) );
-			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/27/wall2.mtl', 'MTL' ) );
-			app.updateAssets( prepData );
-*/
+			app.scene.add( pivot );
+
+			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27wall2.mtl', '../../resource/obj/27/wall2.mtl' );
+			rdMtl.setAdditionalInstructions( additionalInstructionsMtl );
+			resourceDescriptors.push( rdMtl );
+
+			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27wall2.obj', '../../resource/obj/27/wall2.obj' );
+			rdObj.setAdditionalInstructions( additionalInstructionsObj );
+			resourceDescriptors.push( rdObj );
+			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
+
 			app.loadAssets();
 
 			render();

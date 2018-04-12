@@ -2,24 +2,23 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
 
 /**
  *
- * @param manager
- * @param loader
- * @param parserName
+ * @param {THREE.DefaultLoadingManager} manager
+ * @param {object} [loader]
+ * @param {string} [parserName]
  * @constructor
  */
 THREE.WorkerLoader = function ( manager, loader, parserName ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
-
-	this.validator = THREE.WorkerLoader.Validator;
-	this.manager = this.validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.logging = {
 		enabled: true,
 		debug: false
 	};
-
+	this.validator = THREE.WorkerLoader.Validator;
+	this.manager = this.validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.loader = loader;
 	this.parserName = parserName;
+
 	this.instanceNo = 0;
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.terminateWorkerOnLoad = false;
@@ -94,8 +93,18 @@ THREE.WorkerLoader.prototype = {
 	 * @param {Object} [additionalInstructions] Provide additional instructions to the parser
 	 */
 	parseAsync: function ( content, onLoad, onMesh, additionalInstructions ) {
-		var scope = this;
+		if ( ! this.validator.isValid( this.loader ) ) {
 
+			throw 'Unable to run "executeWithOverride" without proper "loader"!';
+
+		}
+		if ( ! this.validator.isValid( this.parserName ) ) {
+
+			throw 'Unable to run "executeWithOverride" without proper "parserName"!';
+
+		}
+
+		var scope = this;
 		var measureTime = false;
 		var scopedOnLoad = function () {
 			onLoad(
@@ -126,7 +135,14 @@ THREE.WorkerLoader.prototype = {
 		var scopedOnMesh = function ( payload ) {
 			scope.meshBuilder.processPayload( payload );
 		};
-		this.meshBuilder.init( scope.baseObject3d );
+
+		this.meshBuilder.setBaseObject3d( scope.baseObject3d );
+		this.meshBuilder.createDefaultMaterials();
+		if ( this.validator.isValid( this.loader.meshBuilder ) && this.loader.meshBuilder instanceof  THREE.OBJLoader.MeshBuilder ) {
+
+			this.meshBuilder.setMaterials( this.loader.meshBuilder.getMaterials() );
+
+		}
 		this.workerSupport.validate( this.loader.buildWorkerCode, this.parserName );
 		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
@@ -135,16 +151,24 @@ THREE.WorkerLoader.prototype = {
 		var materials = this.meshBuilder.getMaterials();
 		for ( var materialName in materials ) materialNames[ materialName ] = materialName;
 
+
+		var params = {
+			useAsync: true
+		};
+		if ( this.validator.isValid( additionalInstructions ) ) {
+
+			params = additionalInstructions;
+			// enforce async param
+			params.useAsync = true;
+
+		}
 		this.workerSupport.run(
 			{
-				params: {
-					useAsync: true
-				},
 				// this is only applicable to OBJLoader
 				// materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 				// useIndices: this.useIndices,
 				// disregardNormals: this.disregardNormals
-				additionalInstructions: additionalInstructions,
+				params: params,
 				logging: {
 					enabled: this.logging.enabled,
 					debug: this.logging.debug
@@ -162,9 +186,30 @@ THREE.WorkerLoader.prototype = {
 	},
 
 	/**
+	 * Execute according the provided instructions including loader and parser override.
+	 * @param {object} loader
+	 * @param {string} parserName
+	 * @param {Array} resourceDescriptors
+	 * @param {object} localConfig
+	 * @param {object} loaderConfig
+	 * @param {function} callbackOnLoad
+	 * @param {function} callbackOnProgress
+	 * @param {function} callbackOnError
+	 */
+	executeWithOverride: function ( loader, parserName, resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
+		this.loader = loader;
+		this.parserName = parserName;
+		this.execute( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError );
+	},
+
+	/**
 	 * Run loader async according the provided instructions.
-	 * @memberOf THREE.WorkerLoader
-	 *
+	 * @param {Array} resourceDescriptors
+	 * @param {object} localConfig
+	 * @param {object} loaderConfig
+	 * @param {function} callbackOnLoad
+	 * @param {function} [callbackOnProgress]
+	 * @param {function} [callbackOnError]
 	 */
 	execute: function ( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
 		if ( resourceDescriptors === undefined || resourceDescriptors === null ) return;
@@ -224,9 +269,9 @@ THREE.WorkerLoader.prototype = {
 		for ( var index in items ) {
 
 			var resourceDescriptor = items[ index ];
-			if ( resourceDescriptor.additionalInstructions.async ) {
+			if ( resourceDescriptor.additionalInstructions.useAsync ) {
 
-				this.parseAsync( resourceDescriptor.payload, onLoad );
+				this.parseAsync( resourceDescriptor.payload, onLoad, resourceDescriptor.additionalInstructions );
 
 			} else {
 
@@ -283,7 +328,7 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.path = '';
 	this.extension = null;
 	this.additionalInstructions = {
-		async: true,
+		useAsync: true,
 		payloadType: 'arraybuffer'
 	};
 
@@ -333,7 +378,6 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			}
 			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-			if ( this.name !== this.filename ) console.warn( 'Provided name "' + this.name + '" and the filename "' + this.payload + '" do not match.' );
 
 		} else {
 

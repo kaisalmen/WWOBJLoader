@@ -294,7 +294,8 @@ THREE.OBJLoader.prototype = {
 		} else {
 
 			if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
-			this.meshBuilder.init( this.baseObject3d );
+			this.meshBuilder.setBaseObject3d( this.baseObject3d );
+			this.meshBuilder.createDefaultMaterials();
 
 			var parser = new THREE.OBJLoader.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -1308,9 +1309,11 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 */
-	init: function ( baseObject3d ) {
+	setBaseObject3d: function ( baseObject3d ) {
 		this.baseObject3d = baseObject3d;
+	},
 
+	createDefaultMaterials: function () {
 		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
@@ -1563,10 +1566,9 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 		if ( this.validator.isValid( materialCloneInstructions ) ) {
 
 			var materialNameOrg = materialCloneInstructions.materialNameOrg;
-			var materialOrg = this.materials[ materialNameOrg ];
-
 			if ( this.validator.isValid( materialNameOrg ) ) {
 
+				var materialOrg = this.materials[ materialNameOrg ];
 				material = materialOrg.clone();
 
 				materialName = materialCloneInstructions.materialName;
