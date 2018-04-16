@@ -201,7 +201,6 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';
@@ -215,7 +214,6 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
 	exampleDef.js.inline_tabs = "";
@@ -225,7 +223,6 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.min.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
 	buildExample();
@@ -233,7 +230,6 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader2.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
