@@ -189,7 +189,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
 		prepData.useIndices = true;
 		prepData.useAsync = true;
-		prepData.materialOptions = { invertTrProperty: true };
+		prepData.materialOptions = { invertTrProperty: false };
 		this.assetsDef.objsPtv1Zip = prepData;
 
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
@@ -305,7 +305,7 @@ var WWOBJLoader2Stage = (function () {
 		callbacks.setCallbackOnLoad( reloadAssetsProxy );
 		callbacks.setCallbackOnProgress( this._reportProgress );
 
-		var objLoader2 = new THREE.OBJLoader2();
+		var objLoader2 = new THREE.OBJLoader();
 		var resourceZip = prepData.resources[ 0 ];
 		if ( resourceZip.extension === 'ZIP' ) {
 			var resourceObj = prepData.resources[ 1 ];
@@ -400,7 +400,7 @@ var WWOBJLoader2Stage = (function () {
 				resourceMTL.setContent( fileDataMtl.target.result );
 				prepData.addResource( resourceMTL );
 
-				var objLoader = new THREE.OBJLoader2();
+				var objLoader = new THREE.OBJLoader();
 				objLoader.run( prepData );
 			};
 			fileReader.readAsText( fileMtl );

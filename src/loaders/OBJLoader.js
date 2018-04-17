@@ -51,6 +51,7 @@ THREE.OBJLoader.prototype = {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
+		return this;
 	},
 
 	/**
@@ -61,6 +62,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setModelName: function ( modelName ) {
 		this.modelName = this.validator.verifyInput( modelName, this.modelName );
+		return this;
 	},
 
 	/**
@@ -71,6 +73,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setPath: function ( path ) {
 		this.path = this.validator.verifyInput( path, this.path );
+		return this;
 	},
 
 	/**
@@ -81,6 +84,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setBaseObject3d: function ( baseObject3d ) {
 		this.baseObject3d = this.validator.verifyInput( baseObject3d, this.baseObject3d );
+		return this;
 	},
 
 	/**
@@ -101,6 +105,7 @@ THREE.OBJLoader.prototype = {
 
 		}
 		this.meshBuilder.setMaterials( materials );
+		return this;
 	},
 
 	/**
@@ -111,6 +116,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setUseIndices: function ( useIndices ) {
 		this.useIndices = useIndices === true;
+		return this;
 	},
 
 	/**
@@ -121,6 +127,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setDisregardNormals: function ( disregardNormals ) {
 		this.disregardNormals = disregardNormals === true;
+		return this;
 	},
 
 	/**
@@ -131,6 +138,7 @@ THREE.OBJLoader.prototype = {
 	 */
 	setMaterialPerSmoothingGroup: function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
+		return this;
 	},
 
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
