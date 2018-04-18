@@ -172,8 +172,8 @@ var WWParallels = (function () {
 			}
 		};
 
-		var callbackMeshAlter = function ( event ) {
-			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
+		var callbackMeshAlter = function ( event, override ) {
+			if ( ! Validator.isValid( override ) ) override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
 			var meshName = event.detail.meshName;
@@ -191,10 +191,16 @@ var WWParallels = (function () {
 			return override;
 		};
 
+		var callbackOnLoadMaterials = function ( materials ) {
+			console.log( 'Materials loaded' );
+			return materials;
+		};
+
 		var callbacks = new THREE.LoaderSupport.Callbacks();
 		callbacks.setCallbackOnProgress( callbackReportProgress );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
+		callbacks.setCallbackOnLoadMaterials( callbackOnLoadMaterials );
 
 		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 		if ( this.logging.enabled ) console.info( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
