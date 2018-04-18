@@ -189,7 +189,6 @@ var WWOBJLoader2Stage = (function () {
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
 		prepData.useIndices = true;
 		prepData.useAsync = true;
-		prepData.materialOptions = { invertTrProperty: true };
 		this.assetsDef.objsPtv1Zip = prepData;
 
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
