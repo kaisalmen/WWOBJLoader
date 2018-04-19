@@ -211,9 +211,16 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
 		};
 
-		var wrapperOnMeshAlter = function ( event ) {
-			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) globalCallbacks.onMeshAlter( event );
-			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) prepDataCallbacks.onMeshAlter( event );
+		var wrapperOnMeshAlter = function ( event, override ) {
+			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
+			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
+			return override;
+		};
+
+		var wrapperOnLoadMaterials = function ( materials ) {
+			if ( Validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
+			if ( Validator.isValid( prepDataCallbacks.onLoadMaterials ) ) materials = prepDataCallbacks.onLoadMaterials( materials );
+			return materials;
 		};
 
 		supportDesc.loader = this._buildLoader( supportDesc.instanceNo );
@@ -222,6 +229,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
 		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
+		updatedCallbacks.setCallbackOnLoadMaterials( wrapperOnLoadMaterials );
 		prepData.callbacks = updatedCallbacks;
 
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );

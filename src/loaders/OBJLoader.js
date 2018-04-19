@@ -1478,18 +1478,22 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 					}
 				}
 			);
-			if ( this.validator.isValid( callbackOnMeshAlterResult ) ) {
+			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
 
-				if ( ! callbackOnMeshAlterResult.isDisregardMesh() && callbackOnMeshAlterResult.providesAlteredMeshes() ) {
+				if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
+
+					useOrgMesh = false;
+
+				} else if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
 
 					for ( var i in callbackOnMeshAlterResult.meshes ) {
 
 						meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
 
 					}
+					useOrgMesh = false;
 
 				}
-				useOrgMesh = false;
 
 			}
 
