@@ -18,6 +18,7 @@ THREE.OBJLoader = function ( manager ) {
 	this.useIndices = false;
 	this.disregardNormals = false;
 	this.materialPerSmoothingGroup = false;
+	this.useOAsMesh = false;
 	this.baseObject3d = new THREE.Group();
 
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
@@ -138,6 +139,17 @@ THREE.OBJLoader.prototype = {
 	 */
 	setMaterialPerSmoothingGroup: function ( materialPerSmoothingGroup ) {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
+		return this;
+	},
+
+	/**
+	 * Usually 'o' is meta-information and does not result in creation of new meshes, but mesh creation on occurrence of "o" can be enforced.
+	 * @memberOf THREE.OBJLoader
+	 *
+	 * @param {boolean} useOAsMesh=false
+	 */
+	setUseOAsMesh: function ( useOAsMesh ) {
+		this.useOAsMesh = useOAsMesh === true;
 		return this;
 	},
 
@@ -308,6 +320,7 @@ THREE.OBJLoader.prototype = {
 			var parser = new THREE.OBJLoader.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
 			parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
+			parser.setUseOAsMesh( this.useOAsMesh );
 			parser.setUseIndices( this.useIndices );
 			parser.setDisregardNormals( this.disregardNormals );
 			// sync code works directly on the material references
@@ -443,6 +456,7 @@ THREE.OBJLoader.Parser = function() {
 
 	this.materials = {};
 	this.materialPerSmoothingGroup = false;
+	this.useOAsMesh = false;
 	this.useIndices = false;
 	this.disregardNormals = false;
 
@@ -515,6 +529,10 @@ THREE.OBJLoader.Parser.prototype = {
 		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
 	},
 
+	setUseOAsMesh: function ( useOAsMesh ) {
+		this.useOAsMesh = useOAsMesh;
+	},
+
 	setUseIndices: function ( useIndices ) {
 		this.useIndices = useIndices;
 	},
@@ -551,6 +569,7 @@ THREE.OBJLoader.Parser.prototype = {
 			var printedConfig = 'OBJLoader.Parser configuration:'
 				+ matNames
 				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
+				+ '\n\tuseOAsMesh: ' + this.useOAsMesh
 				+ '\n\tuseIndices: ' + this.useIndices
 				+ '\n\tdisregardNormals: ' + this.disregardNormals
 				+ '\n\tcallbackMeshBuilderName: ' + this.callbackMeshBuilder.name
@@ -798,7 +817,8 @@ THREE.OBJLoader.Parser.prototype = {
 				break;
 
 			case 'o':
-				// 'o' is pure meta-information and does not result in creation of new meshes
+				// 'o' is meta-information and usually does not result in creation of new meshes, but can be enforced with "useOAsMesh"
+				if ( this.useOAsMesh ) this.processCompletedMesh();
 				this.rawMesh.objectName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 2, this.globalCounts.currentByte );
 				break;
 

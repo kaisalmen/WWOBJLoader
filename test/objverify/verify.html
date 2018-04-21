@@ -102,6 +102,7 @@
 						objLoader.setModelName( modelName );
 						objLoader.setMaterials( materials );
 						objLoader.setLogging( true, false );
+						objLoader.setUseOAsMesh( true );
 						objLoader.load( './verify.obj', callbackOnLoad, null, null, null, false );
 					};
 					objLoader.load( './verify.mtl', onLoadMtl );
