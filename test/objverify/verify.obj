@@ -3,6 +3,7 @@
 mtllib verify.mtl
 
 # Cube no materials. Translated x:-150
+o cube 1
 v -160 60 10
 v -160 40 10
 v -140 40 10
@@ -21,6 +22,7 @@ f 2 6 7 3
 
 
 # Cube with two materials. Translated x:-100
+o cube 2
 v -110 60 10
 v -110 40 10
 v -90 40 10
