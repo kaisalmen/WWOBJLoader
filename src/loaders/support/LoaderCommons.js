@@ -159,7 +159,7 @@ THREE.LoaderSupport.ResourceDescriptor = (function () {
 		} else {
 
 			this.path = Validator.verifyInput( urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/', null );
-			this.name = Validator.verifyInput( urlParts[ urlParts.length - 1 ], null );
+			this.name = Validator.verifyInput( urlParts[ urlParts.length - 1 ], 'Unnamed_Resource' );
 			this.url = url;
 
 		}
