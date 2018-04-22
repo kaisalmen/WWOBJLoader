@@ -10,17 +10,17 @@
  *
  * @param {string} classDef Class definition to be used for construction
  */
-THREE.LoaderSupport.WorkerDirector = (function () {
+THREE.WorkerLoader.WorkerDirector = (function () {
 
 	var LOADER_WORKER_DIRECTOR_VERSION = '3.0.0-dev';
 
-	var Validator = THREE.LoaderSupport.Validator;
+	var Validator = THREE.WorkerLoader.Validator;
 
 	var MAX_WEB_WORKER = 16;
 	var MAX_QUEUE_SIZE = 8192;
 
 	function WorkerDirector( classDef ) {
-		console.info( 'Using THREE.LoaderSupport.WorkerDirector version: ' + LOADER_WORKER_DIRECTOR_VERSION );
+		console.info( 'Using THREE.WorkerLoader.WorkerDirector version: ' + LOADER_WORKER_DIRECTOR_VERSION );
 		this.logging = {
 			enabled: true,
 			debug: false
@@ -47,7 +47,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -59,7 +59,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @returns {number}
 	 */
@@ -69,7 +69,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Returns the maximum number of workers.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @returns {number}
 	 */
@@ -79,7 +79,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
@@ -89,7 +89,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Forces all ArrayBuffers to be transferred to worker to be copied.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @param {boolean} forceWorkerDataCopy True or false.
 	 */
@@ -99,7 +99,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @param {THREE.OBJLoader2.WWOBJLoader2.PrepDataCallbacks} globalCallbacks  Register global callbacks used by all web workers
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
@@ -116,7 +116,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo++ ) {
 
-			var workerSupport = new THREE.LoaderSupport.WorkerSupport();
+			var workerSupport = new THREE.WorkerLoader.WorkerSupport();
 			workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 			workerSupport.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
 			this.workerDescription.workerSupports[ instanceNo ] = {
@@ -132,9 +132,9 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Store run instructions in internal instructionQueue.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
-	 * @param {THREE.LoaderSupport.PrepData} prepData
+	 * @param {THREE.WorkerLoader.PrepData} prepData
 	 */
 	WorkerDirector.prototype.enqueueForRun = function ( prepData ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
@@ -145,7 +145,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 	/**
 	 * Returns if any workers are running.
 	 *
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 * @returns {boolean}
 	 */
 	WorkerDirector.prototype.isRunning = function () {
@@ -155,7 +155,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Process the instructionQueue until it is depleted.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 */
 	WorkerDirector.prototype.processQueue = function () {
 		var prepData, supportDesc;
@@ -225,7 +225,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 		supportDesc.loader = this._buildLoader( supportDesc.instanceNo );
 
-		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
+		var updatedCallbacks = new THREE.WorkerLoader.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
 		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
@@ -252,8 +252,8 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
 		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! Validator.isValid( loader.callbacks ) ) {
 
-			console.warn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.LoaderSupport.Callbacks"' );
-			loader.callbacks = new THREE.LoaderSupport.Callbacks();
+			console.warn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.WorkerLoader.Callbacks"' );
+			loader.callbacks = new THREE.WorkerLoader.Callbacks();
 
 		}
 
@@ -275,7 +275,7 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 
 	/**
 	 * Terminate all workers.
-	 * @memberOf THREE.LoaderSupport.WorkerDirector
+	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 *
 	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */

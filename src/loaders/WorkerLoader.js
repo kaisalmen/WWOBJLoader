@@ -103,6 +103,8 @@ THREE.WorkerLoader.prototype = {
 			throw 'Unable to run "executeWithOverride" without proper "parserName"!';
 
 		}
+		var modelName = ( this.loader.modelName === undefined || this.loader.modelName === null ) ? 'Unnamed_Model' : this.loader.modelName;
+		var instanceNo = ( this.loader.instanceNo === undefined || this.loader.instanceNo === null ) ? 0 : this.loader.instanceNo;
 
 		var scope = this;
 		var measureTime = false;
@@ -111,12 +113,12 @@ THREE.WorkerLoader.prototype = {
 				{
 					detail: {
 						object3d: scope.baseObject3d,
-						modelName: scope.loader.modelName,
+						modelName: modelName,
 						instanceNo: scope.instanceNo
 					}
 				}
 			);
-			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse: ' + scope.loader.modelName );
+			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + instanceNo + '] : ' + modelName );
 		};
 		// fast-fail in case of illegal data
 		if ( ! this.validator.isValid( content ) ) {
@@ -129,8 +131,7 @@ THREE.WorkerLoader.prototype = {
 			measureTime = true;
 
 		}
-
-		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse: ' + this.loader.modelName );
+		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse [' + instanceNo + '] : ' + modelName );
 
 		var scopedOnMesh = function ( payload ) {
 			scope.meshBuilder.processPayload( payload );
@@ -143,7 +144,7 @@ THREE.WorkerLoader.prototype = {
 			this.meshBuilder.setMaterials( this.loader.meshBuilder.getMaterials() );
 
 		}
-		this.workerSupport.validate( this.loader.buildWorkerCode, this.parserName );
+		this.workerSupport.validate( this.loader, this.parserName );
 		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
@@ -543,14 +544,11 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * Validate the status of worker code and the derived worker.
 	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
-	 * @param {Function} functionCodeBuilder Function that is invoked with funcBuildObject and funcBuildSingleton that allows stringification of objects and singletons.
+	 * @param {Object} loader The loader that shall be used to create the parser code.
 	 * @param {String} parserName Name of the Parser object
-	 * @param {String[]} libLocations URL of libraries that shall be added to worker code relative to libPath
-	 * @param {String} libPath Base path used for loading libraries
 	 */
-	validate: function ( functionCodeBuilder, parserName, libLocations, libPath ) {
+	validate: function ( loader, parserName ) {
 		if ( this.validator.isValid( this.worker.native ) ) return;
-
 		if ( this.logging.enabled ) {
 
 			console.info( 'WorkerSupport: Building worker code...' );
@@ -558,7 +556,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
-		var userWorkerCode = functionCodeBuilder( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
+		var codeBuilderInstructions = loader.buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
+		var userWorkerCode = codeBuilderInstructions.code;
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + parserName + '\n};\n\n';
 		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 		userWorkerCode += 'new ' + this.worker.workerRunner.name + '();\n\n';
@@ -576,7 +575,9 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			scope._postMessage();
 		};
 
-		if ( this.validator.isValid( libLocations ) && libLocations.length > 0 ) {
+		if ( this.validator.isValid( codeBuilderInstructions.libs ) &&
+				this.validator.isValid( codeBuilderInstructions.libs.locations ) &&
+				codeBuilderInstructions.libs.locations.length > 0 ) {
 
 			var libsContent = '';
 			var loadAllLibraries = function ( path, locations ) {
@@ -600,7 +601,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 				}
 			};
-			loadAllLibraries( libPath, libLocations );
+			codeBuilderInstructions.libs.path = this.validator.verifyInput( codeBuilderInstructions.libs.path, '' );
+			loadAllLibraries( codeBuilderInstructions.libs.path, codeBuilderInstructions.libs.locations );
 
 		} else {
 

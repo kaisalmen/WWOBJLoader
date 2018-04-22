@@ -416,7 +416,9 @@ THREE.OBJLoader.prototype = {
 		workerCode += 'THREE = { OBJLoader: {} };\n\n';
 		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
 
-		return workerCode;
+		return {
+			code: workerCode
+		}
 	}
 };
 

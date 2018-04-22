@@ -4,59 +4,70 @@
 
 'use strict';
 
-var MeshSpray = (function () {
+var MeshSpray = {};
 
-	var Validator = THREE.LoaderSupport.Validator;
+MeshSpray.Loader = function ( manager ) {
+	this.manager = ( manager === null || manager === undefined ) ? THREE.DefaultLoadingManager : manager;
+	this.logging = {
+		enabled: true,
+		debug: false
+	};
 
-	function MeshSpray( manager ) {
-		this.manager = Validator.verifyInput( manager, THREE.DefaultLoadingManager );
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
+	this.modelName;
+	this.instanceNo = 0;
+	this.baseObject3d = new THREE.Group();
 
-		this.instanceNo = 0;
-		this.baseObject3d = new THREE.Group();
+	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
+};
 
-		this.meshBuilder = new THREE.LoaderSupport.MeshBuilder();
-		this.callbacks = new THREE.LoaderSupport.Callbacks();
-		this.workerSupport = null;
-	}
+MeshSpray.Loader.prototype = {
 
-	MeshSpray.prototype.setLogging = function ( enabled, debug ) {
+	constructor: MeshSpray.Loader,
+
+	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
-	};
+	},
 
-	MeshSpray.prototype.setBaseObject3d = function ( baseObject3d ) {
-		this.baseObject3d = Validator.verifyInput( baseObject3d, this.baseObject3d );
-	};
+	setBaseObject3d: function ( baseObject3d ) {
+		this.baseObject3d = ( baseObject3d === null || baseObject3d === undefined ) ? this.baseObject3d : baseObject3d;
+	},
 
-	MeshSpray.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy  ) {
-		// nothing to do here
-	};
+	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
+		this.meshBuilder._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
+	},
 
-	MeshSpray.prototype.run = function ( prepData, workerSupportExternal ) {
+	buildWorkerCode: function ( codeSerializer ) {
+		var workerCode = '';
+		workerCode += '/**\n';
+		workerCode += '  * This code was constructed by MeshSpray.buildWorkerCode.\n';
+		workerCode += '  */\n\n';
+		workerCode += 'THREE.LoaderSupport = {};\n\n';
+		workerCode += codeSerializer.serializeSingleton( 'MeshSpray.Parser', MeshSpray.Parser );
 
-		if ( THREE.LoaderSupport.Validator.isValid( workerSupportExternal ) ) {
-
-			this.workerSupport = workerSupportExternal;
-			this.logging.enabled = this.workerSupport.logging.enabled;
-			this.logging.debug = this.workerSupport.logging.debug;
-
-		} else {
-
-			this.workerSupport = THREE.LoaderSupport.Validator.verifyInput( this.workerSupport, new THREE.LoaderSupport.WorkerSupport() );
-
+		return {
+			code: workerCode,
+			libs: {
+				locations: [ 'node_modules/three/build/three.min.js' ],
+				path: '../../'
+			}
 		}
-		if ( this.logging.enabled ) console.time( 'MeshSpray' + this.instanceNo );
+	},
 
-		this.meshBuilder.setBaseObject3d( baseObject3d );
+	parse: function ( content, additionalInstructions ) {
+		if ( this.logging.enabled ) console.time( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
+
+		this.meshBuilder.setBaseObject3d( this.baseObject3d );
 		this.meshBuilder.createDefaultMaterials();
 
+		var parser = new MeshSpray.Parser();
+		parser.setLogging( this.logging.enabled, this.logging.debug );
+		parser.setSerializedMaterials( this.meshBuilder.getMaterialsJSON() );
+		THREE.WorkerLoader.prototype._applyConfiguration( parser, additionalInstructions );
+
 		var scope = this;
-		var scopeBuilderFunc = function ( payload ) {
+		var onMeshLoaded = function ( payload ) {
 			var meshes = scope.meshBuilder.processPayload( payload );
 			var mesh;
 			for ( var i in meshes ) {
@@ -64,224 +75,168 @@ var MeshSpray = (function () {
 				scope.baseObject3d.add( mesh );
 			}
 		};
-		var scopeFuncComplete = function ( message ) {
-			var callback = scope.callbacks.onLoad;
-			if ( THREE.LoaderSupport.Validator.isValid( callback ) ) callback(
-				{
-					detail: {
-						baseObject3d: scope.baseObject3d,
-						modelName: scope.modelName,
-						instanceNo: scope.instanceNo
-					}
-				}
-			);
-			if ( scope.logging.enabled ) console.timeEnd( 'MeshSpray' + scope.instanceNo );
-		};
+		parser.setCallbackMeshBuilder( onMeshLoaded );
+		parser.parse();
 
-		var buildCode = function ( funcBuildObject, funcBuildSingleton ) {
-			var workerCode = '';
-			workerCode += '/**\n';
-			workerCode += '  * This code was constructed by MeshSpray buildCode.\n';
-			workerCode += '  */\n\n';
-			workerCode += 'THREE.LoaderSupport = {};\n\n';
-			workerCode += funcBuildObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
-			workerCode += funcBuildSingleton( 'Parser', Parser );
+		if ( this.logging.enabled ) console.timeEnd( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
+		return this.baseObject3d;
+	}
+};
 
-			return workerCode;
+MeshSpray.Parser = ( function () {
+
+	function Parser() {
+		this.sizeFactor = 0.5;
+		this.localOffsetFactor = 1.0;
+		this.globalObjectCount = 0;
+		this.debug = false;
+		this.dimension = 200;
+		this.quantity = 1;
+		this.callbackMeshBuilder = null;
+		this.serializedMaterials = null;
+		this.logging = {
+			enabled: true,
+			debug: false
 		};
-		var libs2Load = [ 'node_modules/three/build/three.min.js' ];
-		this.workerSupport.validate( buildCode, 'Parser', libs2Load, '../../' );
-		this.workerSupport.setCallbacks( scopeBuilderFunc, scopeFuncComplete );
-		this.workerSupport.run(
-			{
-				params: {
-					dimension: prepData.dimension,
-					quantity: prepData.quantity,
-					globalObjectCount: prepData.globalObjectCount
-				},
-				materials: {
-					serializedMaterials: this.meshBuilder.getMaterialsJSON()
-				},
-				logging: {
-					enabled: this.logging.enabled,
-					debug: this.logging.debug
-				},
-				data: {
-					input: null,
-					options: null
-				}
-			}
-		);
+	}
+
+	Parser.prototype.setLogging = function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
 	};
 
-	MeshSpray.prototype._setCallbacks = function ( callbacks ) {
-		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
-		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
-		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
-		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
-
-		this.meshBuilder._setCallbacks( this.callbacks );
+	Parser.prototype.setCallbackMeshBuilder = function ( callbackMeshBuilder ) {
+		this.callbackMeshBuilder = callbackMeshBuilder;
 	};
-
-
-
-	var Parser  = ( function () {
-
-		function Parser() {
-			this.sizeFactor = 0.5;
-			this.localOffsetFactor = 1.0;
-			this.globalObjectCount = 0;
-			this.debug = false;
-			this.dimension = 200;
-			this.quantity = 1;
-			this.callbackMeshBuilder = null;
-			this.callbackProgress = null;
-			this.serializedMaterials = null;
-			this.logging = {
-				enabled: true,
-				debug: false
-			};
-		};
-
-		Parser.prototype.setLogging = function ( enabled, debug ) {
-			this.logging.enabled = enabled === true;
-			this.logging.debug = debug === true;
-		};
-
-		Parser.prototype.parse = function () {
-			var baseTriangle = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
-			var vertices = [];
-			var colors = [];
-			var normals = [];
-			var uvs = [];
-
-			var dimensionHalf = this.dimension / 2;
-			var fixedOffsetX;
-			var fixedOffsetY;
-			var fixedOffsetZ;
-			var s, t;
-			// complete triagle
-			var sizeVaring = this.sizeFactor * Math.random();
-			// local coords offset
-			var localOffsetFactor = this.localOffsetFactor;
-
-			for ( var i = 0; i < this.quantity; i++ ) {
-				sizeVaring = this.sizeFactor * Math.random();
-
-				s = 2 * Math.PI * Math.random();
-				t = Math.PI * Math.random();
-
-				fixedOffsetX = dimensionHalf * Math.random() * Math.cos( s ) * Math.sin( t );
-				fixedOffsetY = dimensionHalf * Math.random() * Math.sin( s ) * Math.sin( t );
-				fixedOffsetZ = dimensionHalf * Math.random() * Math.cos( t );
-				for ( var j = 0; j < baseTriangle.length; j += 3 ) {
-					vertices.push( baseTriangle[ j ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetX );
-					vertices.push( baseTriangle[ j + 1 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetY );
-					vertices.push( baseTriangle[ j + 2 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetZ );
-					colors.push( Math.random() );
-					colors.push( Math.random() );
-					colors.push( Math.random() );
-				}
-			}
-
-			var absoluteVertexCount = vertices.length;
-			var absoluteColorCount = colors.length;
-			var absoluteNormalCount = 0;
-			var absoluteUvCount = 0;
-
-			var vertexFA = new Float32Array( absoluteVertexCount );
-			var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
-			var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-			var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
-
-			vertexFA.set( vertices, 0 );
-			if ( colorFA ) {
-
-				colorFA.set( colors, 0 );
-
-			}
-
-			if ( normalFA ) {
-
-				normalFA.set( normals, 0 );
-
-			}
-			if ( uvFA ) {
-
-				uvFA.set( uvs, 0 );
-
-			}
-
-			/*
-			 * This demonstrates the usage of embedded three.js in the worker blob and
-			 * the serialization of materials back to the Builder outside the worker.
-			 *
-			 * This is not the most effective way, but outlining possibilities
-			 */
-			var materialName = 'defaultVertexColorMaterial_double';
-			var defaultVertexColorMaterialJson = this.serializedMaterials[ 'defaultVertexColorMaterial' ];
-			var loader = new THREE.MaterialLoader();
-
-			var defaultVertexColorMaterialDouble = loader.parse( defaultVertexColorMaterialJson );
-			defaultVertexColorMaterialDouble.name = materialName;
-			defaultVertexColorMaterialDouble.side = THREE.DoubleSide;
-
-			var newSerializedMaterials = {};
-			newSerializedMaterials[ materialName ] = defaultVertexColorMaterialDouble.toJSON();
-			var payload = {
-				cmd: 'materialData',
-				materials: {
-					serializedMaterials: newSerializedMaterials
-				}
-			};
-			this.callbackMeshBuilder( payload );
-
-			this.globalObjectCount++;
-			this.callbackMeshBuilder(
-				{
-					cmd: 'meshData',
-					progress: {
-						numericalValue: 1.0
-					},
-					params: {
-						meshName: 'Gen' + this.globalObjectCount
-					},
-					materials: {
-						multiMaterial: false,
-						materialNames: [ materialName ],
-						materialGroups: []
-					},
-					buffers: {
-						vertices: vertexFA,
-						colors: colorFA,
-						normals: normalFA,
-						uvs: uvFA
-					}
-				},
-				[ vertexFA.buffer ],
-				colorFA !== null ? [ colorFA.buffer ] : null,
-				normalFA !== null ? [ normalFA.buffer ] : null,
-				uvFA !== null ? [ uvFA.buffer ] : null
-			);
-
-			if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.globalObjectCount );
-		};
-
-		return Parser;
-	})();
-
 
 	Parser.prototype.setSerializedMaterials = function ( serializedMaterials ) {
-		if ( THREE.LoaderSupport.Validator.isValid( serializedMaterials ) ) {
-
-			this.serializedMaterials = serializedMaterials;
-
-		}
+		if ( serializedMaterials !== undefined && serializedMaterials !== null ) this.serializedMaterials = serializedMaterials;
 	};
 
-	return MeshSpray;
+	Parser.prototype.parse = function () {
+		var baseTriangle = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
+		var vertices = [];
+		var colors = [];
+		var normals = [];
+		var uvs = [];
 
+		var dimensionHalf = this.dimension / 2;
+		var fixedOffsetX;
+		var fixedOffsetY;
+		var fixedOffsetZ;
+		var s, t;
+		// complete triagle
+		var sizeVaring = this.sizeFactor * Math.random();
+		// local coords offset
+		var localOffsetFactor = this.localOffsetFactor;
+
+		for ( var i = 0; i < this.quantity; i++ ) {
+			sizeVaring = this.sizeFactor * Math.random();
+
+			s = 2 * Math.PI * Math.random();
+			t = Math.PI * Math.random();
+
+			fixedOffsetX = dimensionHalf * Math.random() * Math.cos( s ) * Math.sin( t );
+			fixedOffsetY = dimensionHalf * Math.random() * Math.sin( s ) * Math.sin( t );
+			fixedOffsetZ = dimensionHalf * Math.random() * Math.cos( t );
+			for ( var j = 0; j < baseTriangle.length; j += 3 ) {
+				vertices.push( baseTriangle[ j ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetX );
+				vertices.push( baseTriangle[ j + 1 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetY );
+				vertices.push( baseTriangle[ j + 2 ] * sizeVaring + localOffsetFactor * Math.random() + fixedOffsetZ );
+				colors.push( Math.random() );
+				colors.push( Math.random() );
+				colors.push( Math.random() );
+			}
+		}
+
+		var absoluteVertexCount = vertices.length;
+		var absoluteColorCount = colors.length;
+		var absoluteNormalCount = 0;
+		var absoluteUvCount = 0;
+
+		var vertexFA = new Float32Array( absoluteVertexCount );
+		var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
+		var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
+		var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+
+		vertexFA.set( vertices, 0 );
+		if ( colorFA ) {
+
+			colorFA.set( colors, 0 );
+
+		}
+
+		if ( normalFA ) {
+
+			normalFA.set( normals, 0 );
+
+		}
+		if ( uvFA ) {
+
+			uvFA.set( uvs, 0 );
+
+		}
+
+		/*
+		 * This demonstrates the usage of embedded three.js in the worker blob and
+		 * the serialization of materials back to the Builder outside the worker.
+		 *
+		 * This is not the most effective way, but outlining possibilities
+		 */
+		var materialName = 'defaultVertexColorMaterial_double';
+		var defaultVertexColorMaterialJson = this.serializedMaterials[ 'defaultVertexColorMaterial' ];
+		var loader = new THREE.MaterialLoader();
+
+		var defaultVertexColorMaterialDouble = loader.parse( defaultVertexColorMaterialJson );
+		defaultVertexColorMaterialDouble.name = materialName;
+		defaultVertexColorMaterialDouble.side = THREE.DoubleSide;
+
+		var newSerializedMaterials = {};
+		newSerializedMaterials[ materialName ] = defaultVertexColorMaterialDouble.toJSON();
+		var payload = {
+			cmd: 'materialData',
+			materials: {
+				serializedMaterials: newSerializedMaterials
+			}
+		};
+		this.callbackMeshBuilder( payload );
+
+		this.globalObjectCount++;
+		this.callbackMeshBuilder(
+			{
+				cmd: 'meshData',
+				progress: {
+					numericalValue: 1.0
+				},
+				params: {
+					meshName: 'Gen' + this.globalObjectCount
+				},
+				materials: {
+					multiMaterial: false,
+					materialNames: [ materialName ],
+					materialGroups: []
+				},
+				buffers: {
+					vertices: vertexFA,
+					colors: colorFA,
+					normals: normalFA,
+					uvs: uvFA
+				}
+			},
+			[ vertexFA.buffer ],
+			colorFA !== null ? [ colorFA.buffer ] : null,
+			normalFA !== null ? [ normalFA.buffer ] : null,
+			uvFA !== null ? [ uvFA.buffer ] : null
+		);
+
+		if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.globalObjectCount );
+
+		return this.baseObject3d;
+	};
+
+	return Parser;
 })();
+
 
 var MeshSprayApp = (function () {
 
@@ -348,6 +303,7 @@ var MeshSprayApp = (function () {
 	};
 
 	MeshSprayApp.prototype.initContent = function () {
+		/*
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
@@ -406,6 +362,9 @@ var MeshSprayApp = (function () {
 			workerDirector.enqueueForRun( prepData );
 		}
 		workerDirector.processQueue();
+		*/
+		var meshSpray = new MeshSpray.Loader();
+		this.pivot.add( meshSpray.parse( null, { quantity: 8192 } ) );
 	};
 
 	MeshSprayApp.prototype.resizeDisplayGL = function () {
