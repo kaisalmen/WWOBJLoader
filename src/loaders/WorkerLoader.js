@@ -7,7 +7,7 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
  * @param {string} [parserName]
  * @constructor
  */
-THREE.WorkerLoader = function ( manager, loader, parserName ) {
+THREE.WorkerLoader = function ( manager ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.logging = {
@@ -16,10 +16,12 @@ THREE.WorkerLoader = function ( manager, loader, parserName ) {
 	};
 	this.validator = THREE.WorkerLoader.Validator;
 	this.manager = this.validator.verifyInput( manager, THREE.DefaultLoadingManager );
-	this.loader = loader;
-	this.parserName = parserName;
 
+	this.modelName = 'Unnamed_Model';
 	this.instanceNo = 0;
+	this.loader = null;
+	this.parserName = null;
+
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.terminateWorkerOnLoad = false;
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
@@ -36,8 +38,46 @@ THREE.WorkerLoader.prototype = {
 
 	constructor: THREE.WorkerLoader,
 
+	/**
+	 *
+	 * @param baseObject3d
+	 * @returns {THREE.WorkerLoader}
+	 */
 	setBaseObject3d: function ( baseObject3d ) {
 		if ( baseObject3d !== undefined && baseObject3d !== null ) this.baseObject3d = baseObject3d;
+		return this;
+	},
+
+	/**
+	 *
+	 * @param instanceNo
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setInstanceNo: function ( instanceNo ) {
+		this.instanceNo = instanceNo;
+		return this;
+	},
+
+	/**
+	 *
+	 * @param loader
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setLoader: function ( loader ) {
+		if ( loader === undefined || loader === null ) throw 'Please provide a valid "loader".';
+		this.loader = loader;
+		return this;
+	},
+
+	/**
+	 *
+	 * @param parserName
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setParserName: function ( parserName ) {
+		if ( parserName === undefined || parserName === null ) throw 'Please provide a valid "parserName".';
+		this.parserName = parserName;
+		return this;
 	},
 
 	/**
@@ -51,6 +91,13 @@ THREE.WorkerLoader.prototype = {
 	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
 	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
+		var resourceDescriptor = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url )
+		var resourceDescripton = {
+			items: [ resourceDescriptor ],
+			processing: false,
+		};
+		this.modelName = resourceDescriptor.name;
+
 		var scope = this;
 		if ( ! this.validator.isValid( onProgress ) ) {
 			var numericalValueRef = 0;
@@ -76,12 +123,8 @@ THREE.WorkerLoader.prototype = {
 				scope._onProgress( 'error', output, - 1 );
 			};
 		}
-		var resourceDescripton = {
-			items: [ new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) ],
-			processing: false
-		};
-		this._loadResources( resourceDescripton, 0, onLoad, onProgress, onError );
 
+		this._loadResources( resourceDescripton, 0, onLoad, onProgress, onError );
 	},
 
 	/**
@@ -103,8 +146,11 @@ THREE.WorkerLoader.prototype = {
 			throw 'Unable to run "executeWithOverride" without proper "parserName"!';
 
 		}
-		var modelName = ( this.loader.modelName === undefined || this.loader.modelName === null ) ? 'Unnamed_Model' : this.loader.modelName;
-		var instanceNo = ( this.loader.instanceNo === undefined || this.loader.instanceNo === null ) ? 0 : this.loader.instanceNo;
+		if ( this.loader.modelName === undefined || this.loader.modelName === null ) {
+
+			this.modelName = loader.modelName;
+
+		}
 
 		var scope = this;
 		var measureTime = false;
@@ -113,12 +159,12 @@ THREE.WorkerLoader.prototype = {
 				{
 					detail: {
 						object3d: scope.baseObject3d,
-						modelName: modelName,
+						modelName: scope.modelName,
 						instanceNo: scope.instanceNo
 					}
 				}
 			);
-			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + instanceNo + '] : ' + modelName );
+			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + scope.instanceNo + '] : ' + scope.modelName );
 		};
 		// fast-fail in case of illegal data
 		if ( ! this.validator.isValid( content ) ) {
@@ -131,7 +177,7 @@ THREE.WorkerLoader.prototype = {
 			measureTime = true;
 
 		}
-		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse [' + instanceNo + '] : ' + modelName );
+		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse [' + this.instanceNo + '] : ' + this.modelName );
 
 		var scopedOnMesh = function ( payload ) {
 			scope.meshBuilder.processPayload( payload );
@@ -198,8 +244,8 @@ THREE.WorkerLoader.prototype = {
 	 * @param {function} callbackOnError
 	 */
 	executeWithOverride: function ( loader, parserName, resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
-		this.loader = loader;
-		this.parserName = parserName;
+		this.setLoader( loader );
+		this.setParserName( parserName );
 		this.execute( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError );
 	},
 
@@ -297,7 +343,7 @@ THREE.WorkerLoader.prototype = {
 		var event = {
 			detail: {
 				type: type,
-				modelName: this.loader.modelName,
+				modelName: this.modelName,
 				instanceNo: this.instanceNo,
 				text: content,
 				numericalValue: numericalValue

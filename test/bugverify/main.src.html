@@ -104,7 +104,7 @@
 					}
 
 					var objLoader = new THREE.OBJLoader();
-					var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+					var workerLoader = new THREE.WorkerLoader().setLoader( objLoader ).setParserName( 'THREE.OBJLoader.Parser' );
 
 					var loadInstruction = this.loadInstructions[ 0 ];
 					this.loadInstructions.shift();

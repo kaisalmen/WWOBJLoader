@@ -10,40 +10,44 @@
  *
  * @param {string} classDef Class definition to be used for construction
  */
-THREE.WorkerLoader.WorkerDirector = (function () {
+THREE.WorkerLoader.WorkerDirector = function ( classDef ) {
 
-	var LOADER_WORKER_DIRECTOR_VERSION = '3.0.0-dev';
+	console.info( 'Using THREE.WorkerLoader.WorkerDirector version: ' + THREE.WorkerLoader.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION );
 
-	var Validator = THREE.WorkerLoader.Validator;
+	this.validator = THREE.WorkerLoader.Validator;
 
-	var MAX_WEB_WORKER = 16;
-	var MAX_QUEUE_SIZE = 8192;
+	this.logging = {
+		enabled: true,
+		debug: false
+	};
 
-	function WorkerDirector( classDef ) {
-		console.info( 'Using THREE.WorkerLoader.WorkerDirector version: ' + LOADER_WORKER_DIRECTOR_VERSION );
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
+	this.maxQueueSize = THREE.WorkerLoader.WorkerDirector.MAX_QUEUE_SIZE ;
+	this.maxWebWorkers = THREE.WorkerLoader.WorkerDirector.MAX_WEB_WORKER;
+	this.crossOrigin = null;
 
-		this.maxQueueSize = MAX_QUEUE_SIZE ;
-		this.maxWebWorkers = MAX_WEB_WORKER;
-		this.crossOrigin = null;
+	if ( ! this.validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
 
-		if ( ! Validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
+	this.workerDescription = {
+		classDef: classDef,
+		globalCallbacks: {},
+		workerSupports: {},
+		forceWorkerDataCopy: true
+	};
+	this.objectsCompleted = 0;
+	this.instructionQueue = [];
+	this.instructionQueuePointer = 0;
 
-		this.workerDescription = {
-			classDef: classDef,
-			globalCallbacks: {},
-			workerSupports: {},
-			forceWorkerDataCopy: true
-		};
-		this.objectsCompleted = 0;
-		this.instructionQueue = [];
-		this.instructionQueuePointer = 0;
+	this.callbackOnFinishedProcessing = null;
+};
 
-		this.callbackOnFinishedProcessing = null;
-	}
+THREE.WorkerLoader.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION = '3.0.0-dev';
+THREE.WorkerLoader.WorkerDirector.MAX_WEB_WORKER = 16;
+THREE.WorkerLoader.WorkerDirector.MAX_QUEUE_SIZE = 8192;
+
+
+THREE.WorkerLoader.WorkerDirector.prototype = {
+
+	constructor: THREE.WorkerLoader.WorkerDirector,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -52,10 +56,10 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
 	 */
-	WorkerDirector.prototype.setLogging = function ( enabled, debug ) {
+	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-	};
+	},
 
 	/**
 	 * Returns the maximum length of the instruction queue.
@@ -63,9 +67,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @returns {number}
 	 */
-	WorkerDirector.prototype.getMaxQueueSize = function () {
+	getMaxQueueSize: function () {
 		return this.maxQueueSize;
-	};
+	},
 
 	/**
 	 * Returns the maximum number of workers.
@@ -73,9 +77,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @returns {number}
 	 */
-	WorkerDirector.prototype.getMaxWebWorkers = function () {
+	getMaxWebWorkers: function () {
 		return this.maxWebWorkers;
-	};
+	},
 
 	/**
 	 * Sets the CORS string to be used.
@@ -83,9 +87,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @param {string} crossOrigin CORS value
 	 */
-	WorkerDirector.prototype.setCrossOrigin = function ( crossOrigin ) {
+	setCrossOrigin: function ( crossOrigin ) {
 		this.crossOrigin = crossOrigin;
-	};
+	},
 
 	/**
 	 * Forces all ArrayBuffers to be transferred to worker to be copied.
@@ -93,9 +97,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @param {boolean} forceWorkerDataCopy True or false.
 	 */
-	WorkerDirector.prototype.setForceWorkerDataCopy = function ( forceWorkerDataCopy ) {
+	setForceWorkerDataCopy: function ( forceWorkerDataCopy ) {
 		this.workerDescription.forceWorkerDataCopy = forceWorkerDataCopy === true;
-	};
+	},
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
@@ -105,8 +109,8 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
 	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 */
-	WorkerDirector.prototype.prepareWorkers = function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
-		if ( Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
+	prepareWorkers: function ( globalCallbacks, maxQueueSize, maxWebWorkers ) {
+		if ( this.validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
 		this.maxQueueSize = Math.min( maxQueueSize, MAX_QUEUE_SIZE );
 		this.maxWebWorkers = Math.min( maxWebWorkers, MAX_WEB_WORKER );
 		this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
@@ -114,7 +118,7 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 		this.instructionQueue = [];
 		this.instructionQueuePointer = 0;
 
-		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo++ ) {
+		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
 			var workerSupport = new THREE.WorkerLoader.WorkerSupport();
 			workerSupport.setLogging( this.logging.enabled, this.logging.debug );
@@ -128,7 +132,7 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 			};
 
 		}
-	};
+	},
 
 	/**
 	 * Store run instructions in internal instructionQueue.
@@ -136,11 +140,11 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @param {THREE.WorkerLoader.PrepData} prepData
 	 */
-	WorkerDirector.prototype.enqueueForRun = function ( prepData ) {
+	enqueueForRun: function ( prepData ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
 			this.instructionQueue.push( prepData );
 		}
-	};
+	},
 
 	/**
 	 * Returns if any workers are running.
@@ -148,16 +152,16 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 * @returns {boolean}
 	 */
-	WorkerDirector.prototype.isRunning = function () {
+	isRunning: function () {
 		var wsKeys = Object.keys( this.workerDescription.workerSupports );
-		return ( ( this.instructionQueue.length > 0 && this.instructionQueuePointer < this.instructionQueue.length ) || wsKeys.length > 0 );
-	};
+		return ((this.instructionQueue.length > 0 && this.instructionQueuePointer < this.instructionQueue.length) || wsKeys.length > 0);
+	},
 
 	/**
 	 * Process the instructionQueue until it is depleted.
 	 * @memberOf THREE.WorkerLoader.WorkerDirector
 	 */
-	WorkerDirector.prototype.processQueue = function () {
+	processQueue: function () {
 		var prepData, supportDesc;
 		for ( var instanceNo in this.workerDescription.workerSupports ) {
 
@@ -168,7 +172,7 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 
 					prepData = this.instructionQueue[ this.instructionQueuePointer ];
 					this._kickWorkerRun( prepData, supportDesc );
-					this.instructionQueuePointer++;
+					this.instructionQueuePointer ++;
 
 				} else {
 
@@ -186,9 +190,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 			this.callbackOnFinishedProcessing = null;
 
 		}
-	};
+	},
 
-	WorkerDirector.prototype._kickWorkerRun = function( prepData, supportDesc ) {
+	_kickWorkerRun: function ( prepData, supportDesc ) {
 		supportDesc.inUse = true;
 		supportDesc.workerSupport.setTerminateRequested( supportDesc.terminateRequested );
 
@@ -198,28 +202,28 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var wrapperOnLoad = function ( event ) {
-			if ( Validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
-			if ( Validator.isValid( prepDataCallbacks.onLoad ) ) prepDataCallbacks.onLoad( event );
-			scope.objectsCompleted++;
+			if ( scope.validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
+			if ( scope.validator.isValid( prepDataCallbacks.onLoad ) ) prepDataCallbacks.onLoad( event );
+			scope.objectsCompleted ++;
 			supportDesc.inUse = false;
 
 			scope.processQueue();
 		};
 
 		var wrapperOnProgress = function ( event ) {
-			if ( Validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
-			if ( Validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
+			if ( scope.validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
+			if ( scope.validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
 		};
 
 		var wrapperOnMeshAlter = function ( event, override ) {
-			if ( Validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
-			if ( Validator.isValid( prepDataCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
+			if ( scope.validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
+			if ( scope.validator.isValid( prepDataCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
 			return override;
 		};
 
 		var wrapperOnLoadMaterials = function ( materials ) {
-			if ( Validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
-			if ( Validator.isValid( prepDataCallbacks.onLoadMaterials ) ) materials = prepDataCallbacks.onLoadMaterials( materials );
+			if ( scope.validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
+			if ( scope.validator.isValid( prepDataCallbacks.onLoadMaterials ) ) materials = prepDataCallbacks.onLoadMaterials( materials );
 			return materials;
 		};
 
@@ -233,9 +237,9 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 		prepData.callbacks = updatedCallbacks;
 
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );
-	};
+	},
 
-	WorkerDirector.prototype._buildLoader = function ( instanceNo ) {
+	_buildLoader: function ( instanceNo ) {
 		var classDef = this.workerDescription.classDef;
 		var loader = Object.create( classDef.prototype );
 		classDef.call( loader, THREE.DefaultLoadingManager );
@@ -249,8 +253,8 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 			throw classDef.name + ' has no property "workerSupport".';
 
 		}
-		if ( typeof loader.run !== 'function'  ) throw classDef.name + ' has no function "run".';
-		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! Validator.isValid( loader.callbacks ) ) {
+		if ( typeof loader.run !== 'function' ) throw classDef.name + ' has no function "run".';
+		if ( ! loader.hasOwnProperty( 'callbacks' ) || ! this.validator.isValid( loader.callbacks ) ) {
 
 			console.warn( classDef.name + ' has an invalid property "callbacks". Will change to "THREE.WorkerLoader.Callbacks"' );
 			loader.callbacks = new THREE.WorkerLoader.Callbacks();
@@ -258,20 +262,20 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 		}
 
 		return loader;
-	};
+	},
 
-	WorkerDirector.prototype._deregister = function ( supportDesc ) {
-		if ( Validator.isValid( supportDesc ) ) {
+	_deregister: function ( supportDesc ) {
+		if ( this.validator.isValid( supportDesc ) ) {
 
 			supportDesc.workerSupport.setTerminateRequested( true );
 			if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
 
 			var loaderCallbacks = supportDesc.loader.callbacks;
-			if ( Validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
+			if ( this.validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
 			delete this.workerDescription.workerSupports[ supportDesc.instanceNo ];
 
 		}
-	};
+	}
 
 	/**
 	 * Terminate all workers.
@@ -279,19 +283,16 @@ THREE.WorkerLoader.WorkerDirector = (function () {
 	 *
 	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */
-	WorkerDirector.prototype.tearDown = function ( callbackOnFinishedProcessing ) {
+	tearDown: function ( callbackOnFinishedProcessing ) {
 		if ( this.logging.enabled ) console.info( 'WorkerDirector received the deregister call. Terminating all workers!' );
 
 		this.instructionQueuePointer = this.instructionQueue.length;
-		this.callbackOnFinishedProcessing = Validator.verifyInput( callbackOnFinishedProcessing, null );
+		this.callbackOnFinishedProcessing = this.validator.verifyInput( callbackOnFinishedProcessing, null );
 
 		for ( var name in this.workerDescription.workerSupports ) {
 
 			this.workerDescription.workerSupports[ name ].terminateRequested = true;
 
 		}
-	};
-
-	return WorkerDirector;
-
-})();
+	}
+};

@@ -1,5 +1,11 @@
 if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
 
+/**
+ * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
+ * @class
+ *
+ * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
+ */
 THREE.OBJLoader = function ( manager ) {
 
 	console.info( 'Using THREE.OBJLoader version: ' + THREE.OBJLoader.OBJLOADER2_VERSION );
@@ -31,12 +37,7 @@ THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 THREE.OBJLoader.prototype.constructor = THREE.OBJLoader;
 THREE.OBJLoader.OBJLOADER2_VERSION = '3.0.0-dev';
 
-/**
- * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
- * @class
- *
- * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
- */
+
 THREE.OBJLoader.prototype = {
 
 	constructor: THREE.OBJLoader,

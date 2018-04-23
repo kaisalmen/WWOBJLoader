@@ -127,7 +127,7 @@ var WWOBJLoader2Example = (function () {
 			function ( content ) {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
-				var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+				var workerLoader = new THREE.WorkerLoader().setLoader( objLoader ).setParserName( 'THREE.OBJLoader.Parser' );
 				workerLoader.parseAsync( content, callbackOnLoad );
 				workerLoader.getWorkerSupport().setTerminateRequested( true );
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
@@ -183,7 +183,7 @@ var WWOBJLoader2Example = (function () {
 		var onLoadMtl = function ( mtlParseResult ) {
 			objLoader.setMaterials( mtlParseResult.materials );
 
-			var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+			var workerLoader = new THREE.WorkerLoader().setLoader( objLoader ).setParserName( 'THREE.OBJLoader.Parser' );
 			workerLoader.setTerminateWorkerOnLoad( false );
 			workerLoader.setBaseObject3d( local );
 			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
@@ -236,7 +236,7 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var objLoader = new THREE.OBJLoader();
-		var workerLoader = new THREE.WorkerLoader( null, objLoader, 'THREE.OBJLoader.Parser' );
+		var workerLoader = new THREE.WorkerLoader().setLoader( objLoader ).setParserName( 'THREE.OBJLoader.Parser' );
 		workerLoader.setTerminateWorkerOnLoad( false );
 
 		var resourceDescriptors = [];
