@@ -303,16 +303,14 @@ var MeshSprayApp = (function () {
 	};
 
 	MeshSprayApp.prototype.initContent = function () {
-		/*
+
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		var workerDirector = new THREE.LoaderSupport.WorkerDirector( MeshSpray );
-		workerDirector.setLogging( false, false );
-		workerDirector.setCrossOrigin( 'anonymous' );
-
+		var workerLoaderDirector = new THREE.WorkerLoader.Director().setLogging( false, false ).setCrossOrigin( 'anonymous' );
+		/*
 		var callbackOnLoad = function ( event ) {
-			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerDirector.objectsCompleted + ')' );
+			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerLoaderDirector.objectsCompleted + ')' );
 		};
 		var reportProgress = function( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
@@ -329,13 +327,13 @@ var MeshSprayApp = (function () {
 			return override;
 		};
 
-
 		var callbacks = new THREE.LoaderSupport.Callbacks();
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
-		workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
-
+*/
+		workerLoaderDirector.prepareWorkers( maxQueueSize, maxWebWorkers, MeshSpray.Loader, "MeshSpray.Parser" );
+/*
 		var prepData;
 		var pivot;
 		var s, t, r, x, y, z;
@@ -359,9 +357,9 @@ var MeshSprayApp = (function () {
 			prepData.dimension = Math.max( Math.random() * 500, 100 );
 			prepData.globalObjectCount = globalObjectCount++;
 
-			workerDirector.enqueueForRun( prepData );
+			workerLoaderDirector.enqueueForRun( prepData );
 		}
-		workerDirector.processQueue();
+		workerLoaderDirector.processQueue();
 		*/
 		var meshSpray = new MeshSpray.Loader();
 		this.pivot.add( meshSpray.parse( null, { quantity: 8192 } ) );

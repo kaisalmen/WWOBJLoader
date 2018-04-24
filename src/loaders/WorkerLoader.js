@@ -39,6 +39,21 @@ THREE.WorkerLoader.prototype = {
 	constructor: THREE.WorkerLoader,
 
 	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 * @memberOf THREE.OBJLoader
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setLogging: function ( enabled, debug ) {
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
+		return this;
+	},
+
+	/**
 	 *
 	 * @param baseObject3d
 	 * @returns {THREE.WorkerLoader}
