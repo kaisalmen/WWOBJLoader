@@ -43,12 +43,12 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-				match: /THREE\.OBJLoader\.OBJLOADER2_VERSION\s*=.*/g,
-				replacement: "THREE.OBJLoader.OBJLOADER2_VERSION = '"+ packageContent.versions.loader_obj2 + "';"
+				match: /THREE\.OBJLoader\.OBJLOADER_VERSION\s*=.*/g,
+				replacement: "THREE.OBJLoader.OBJLOADER_VERSION = '"+ packageContent.versions.obj_loader + "';"
 			},
 			{
 				match: /THREE\.OBJLoader\.LOADER_MESH_BUILDER_VERSION\s*=.*/g,
-				replacement: "THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.loader_mesh_builder + "';"
+				replacement: "THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.mesh_builder + "';"
 			} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders" ) );
@@ -59,25 +59,25 @@ gulp.task( 'set-versions', function () {
 	.pipe( replace( {
 		patterns: [ {
 				match: /var WORKER_LOADER_VERSION.*/g,
-				replacement: "THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.loader_worker_loader + "';"
+				replacement: "THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.worker_loader + "';"
 			},
 			{
 				match: /var WORKER_SUPPORT_VERSION.*/g,
-				replacement: "THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.loader_worker_support + "';"
+				replacement: "THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.worker_support + "';"
 			} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
-		[ 'src/loaders/support/LoaderWorkerDirector.js' ]
+		[ 'src/loaders/WorkerLoaderDirector.js' ]
 	)
 	.pipe( replace( {
 		patterns: [	{
-			match: /var LOADER_WORKER_DIRECTOR_VERSION.*/g,
-			replacement: "var LOADER_WORKER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_worker_director + "';"
+			match: /var WORKER_LOADER_DIRECTOR_VERSION.*/g,
+			replacement: "var WORKER_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.worker_loader_director + "';"
 		} ]
 	} ) )
-	.pipe( gulp.dest( "src/loaders/support" ) );
+	.pipe( gulp.dest( "src/loaders" ) );
 } );
 
 
@@ -86,7 +86,7 @@ gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 	gulp.src(
 		[
 			'src/loaders/WorkerLoader.js',
-			'src/loaders/support/LoaderWorkerDirector.js'
+			'src/loaders/WorkerLoaderDirector.js'
 		]
 	)
 	.pipe( concat( 'WorkerLoader.js' ) )
@@ -126,9 +126,9 @@ gulp.task( 'create-docs', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
-				'src/loaders/WorkerLoader.js',
 				'src/loaders/OBJLoader.js',
-				'src/loaders/support/LoaderWorkerDirector.js'
+				'src/loaders/WorkerLoader.js',
+				'src/loaders/WorkerLoaderDirector.js'
 			],
 			{
 				read: false
@@ -326,7 +326,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";;
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerDirector.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
@@ -388,6 +388,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.link_tabs = "";
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/meshspray/MeshSpray.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
@@ -401,6 +402,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.css.link_all =  "<link href=\"../common/Common.css\" type=\"text/css\" rel=\"stylesheet\"/\>";
 	exampleDef.css.link_tabs = "\t\t";
 	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.js.inline_code = "";
@@ -410,6 +412,7 @@ gulp.task( 'create-meshspray-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.min.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../build/WorkerLoader.min.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.min';
@@ -417,8 +420,9 @@ gulp.task( 'create-meshspray-examples', function () {
 
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/OBJLoader.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoader.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../src/loaders/support/LoaderWorkerDirector.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../src/loaders/WorkerLoaderDirector.js\"\>\</script\>\n";
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();

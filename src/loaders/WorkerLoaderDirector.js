@@ -40,7 +40,7 @@ THREE.WorkerLoader.WorkerDirector = function ( classDef ) {
 	this.callbackOnFinishedProcessing = null;
 };
 
-THREE.WorkerLoader.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION = '3.0.0-dev';
+THREE.WorkerLoader.WorkerDirector.WORKER_LOADER_DIRECTOR_VERSION = '3.0.0-dev';
 THREE.WorkerLoader.WorkerDirector.MAX_WEB_WORKER = 16;
 THREE.WorkerLoader.WorkerDirector.MAX_QUEUE_SIZE = 8192;
 
@@ -275,7 +275,7 @@ THREE.WorkerLoader.WorkerDirector.prototype = {
 			delete this.workerDescription.workerSupports[ supportDesc.instanceNo ];
 
 		}
-	}
+	},
 
 	/**
 	 * Terminate all workers.

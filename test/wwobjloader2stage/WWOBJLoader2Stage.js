@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Validator = THREE.LoaderSupport.Validator;
+var Validator = THREE.OBJLoader.Validator;
 
 var WWOBJLoader2Stage = (function () {
 
@@ -414,7 +414,7 @@ var WWOBJLoader2Stage = (function () {
 
 var ZipTools = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
+	var Validator = THREE.OBJLoader.Validator;
 
 	function ZipTools( path ) {
 		this.zip = new JSZip();

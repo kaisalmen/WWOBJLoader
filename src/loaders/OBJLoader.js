@@ -8,7 +8,7 @@ if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
  */
 THREE.OBJLoader = function ( manager ) {
 
-	console.info( 'Using THREE.OBJLoader version: ' + THREE.OBJLoader.OBJLOADER2_VERSION );
+	console.info( 'Using THREE.OBJLoader version: ' + THREE.OBJLoader.OBJLOADER_VERSION );
 
 	this.validator = THREE.OBJLoader.Validator;
 
@@ -35,7 +35,7 @@ THREE.OBJLoader = function ( manager ) {
 
 THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
 THREE.OBJLoader.prototype.constructor = THREE.OBJLoader;
-THREE.OBJLoader.OBJLOADER2_VERSION = '3.0.0-dev';
+THREE.OBJLoader.OBJLOADER_VERSION = '3.0.0-dev';
 
 
 THREE.OBJLoader.prototype = {
@@ -1687,3 +1687,52 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 };
 
+
+/**
+ * Object to return by callback onMeshAlter. Used to disregard a certain mesh or to return one to many meshes.
+ * @class
+ *
+ * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
+ * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
+ */
+THREE.OBJLoader.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+	this.disregardMesh = disregardMesh === true;
+	this.alteredMesh = alteredMesh === true;
+	this.meshes = [];
+};
+
+
+THREE.OBJLoader.LoadedMeshUserOverride.prototype = {
+
+	constructor: THREE.OBJLoader.LoadedMeshUserOverride,
+
+	/**
+	 * Add a mesh created within callback.
+	 *
+	 * @memberOf THREE.OBJLoader2.LoadedMeshUserOverride
+	 *
+	 * @param {THREE.Mesh} mesh
+	 */
+	addMesh: function ( mesh ) {
+		this.meshes.push( mesh );
+		this.alteredMesh = true;
+	},
+
+	/**
+	 * Answers if mesh shall be disregarded completely.
+	 *
+	 * @returns {boolean}
+	 */
+	isDisregardMesh: function () {
+		return this.disregardMesh;
+	},
+
+	/**
+	 * Answers if new mesh(es) were created.
+	 *
+	 * @returns {boolean}
+	 */
+	providesAlteredMeshes: function () {
+		return this.alteredMesh;
+	}
+};
