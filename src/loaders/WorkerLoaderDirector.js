@@ -8,11 +8,12 @@
  *
  * @class
  *
- * @param {string} classDef Class definition to be used for construction
+ * @param {number} [maxQueueSize] Set the maximum size of the instruction queue (1-8192)
+ * @param {number} [maxWebWorkers] Set the maximum amount of workers (1-16)
  */
-THREE.WorkerLoader.Director = function () {
+THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 
-	console.info( 'Using THREE.WorkerLoader.Director version: ' + THREE.WorkerLoader.Director.LOADER_WORKER_DIRECTOR_VERSION );
+	console.info( 'Using THREE.WorkerLoader.Director version: ' + THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION );
 
 	this.validator = THREE.WorkerLoader.Validator;
 
@@ -21,8 +22,9 @@ THREE.WorkerLoader.Director = function () {
 		debug: false
 	};
 
-	this.maxQueueSize = THREE.WorkerLoader.Director.MAX_QUEUE_SIZE ;
-	this.maxWebWorkers = THREE.WorkerLoader.Director.MAX_WEB_WORKER;
+	this.maxQueueSize = Math.min( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
+	this.maxWebWorkers = Math.min( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
+	this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
 	this.crossOrigin = null;
 
 	this.workerDescription = {
@@ -119,25 +121,16 @@ THREE.WorkerLoader.Director.prototype = {
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 * @memberOf THREE.WorkerLoader.Director
 	 *
-	 * @param {number} maxQueueSize Set the maximum size of the instruction queue (1-1024)
-	 * @param {number} maxWebWorkers Set the maximum amount of workers (1-16)
 	 * @param {Object} classDef The loader to be used
-	 * @param {String} parserName The name corresponding to the loader
 	 */
-	prepareWorkers: function ( maxQueueSize, maxWebWorkers, classDef, parserName ) {
-		this.maxQueueSize = Math.min( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
-		this.maxWebWorkers = Math.min( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
-		this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
-
+	prepareWorkers: function ( classDef ) {
 		if ( ! this.validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
-		if ( ! ( typeof( parserName ) === 'string' || parserName instanceof String ) ) throw 'Provided invalid classDef: ' + classDef;
 
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
 			var workerLoader = new THREE.WorkerLoader()
 				.setLogging( this.logging.enabled, this.logging.debug )
-				.setInstanceNo( instanceNo )
-				.setParserName( parserName );
+				.setInstanceNo( instanceNo );
 			workerLoader.getWorkerSupport().setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
 			this.workerDescription.workerLoaders[ instanceNo ] = {
 				inUse: false,
@@ -260,9 +253,10 @@ THREE.WorkerLoader.Director.prototype = {
 		var loader = Object.create( classDef.prototype );
 		classDef.call( loader, THREE.DefaultLoadingManager );
 
+		if ( typeof loader.buildWorkerCode !== 'function' ) throw classDef.name + ' has no function "buildWorkerCode".';
 		if ( typeof loader.execute !== 'function' ) throw classDef.name + ' has no function "execute".';
 
-		supportDesc.workerLoader.setLoader( loader );
+		supportDesc.workerLoader.updateLoader( loader );
 	},
 
 	_deregister: function ( supportDesc ) {

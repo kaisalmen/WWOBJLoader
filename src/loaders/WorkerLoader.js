@@ -4,10 +4,10 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
  *
  * @param {THREE.DefaultLoadingManager} manager
  * @param {object} [loader]
- * @param {string} [parserName]
+ * @param {object} [loaderConfig]
  * @constructor
  */
-THREE.WorkerLoader = function ( manager ) {
+THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.logging = {
@@ -19,8 +19,7 @@ THREE.WorkerLoader = function ( manager ) {
 
 	this.modelName = 'Unnamed_Model';
 	this.instanceNo = 0;
-	this.loader = null;
-	this.parserName = null;
+	this.updateLoader( loader, loaderConfig );
 
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.terminateWorkerOnLoad = false;
@@ -75,23 +74,19 @@ THREE.WorkerLoader.prototype = {
 
 	/**
 	 *
-	 * @param loader
+	 * @param {object} [loader]
+	 * @param {object} [loaderConfig]
 	 * @returns {THREE.WorkerLoader}
 	 */
-	setLoader: function ( loader ) {
-		if ( loader === undefined || loader === null ) throw 'Please provide a valid "loader".';
-		this.loader = loader;
-		return this;
-	},
+	updateLoader: function ( loader, loaderConfig ) {
+		if ( loader === undefined || loader === null ) {
 
-	/**
-	 *
-	 * @param parserName
-	 * @returns {THREE.WorkerLoader}
-	 */
-	setParserName: function ( parserName ) {
-		if ( parserName === undefined || parserName === null ) throw 'Please provide a valid "parserName".';
-		this.parserName = parserName;
+			if ( this.logging.enabled ) console.warn( "Provided loader is not valid" );
+			return this;
+
+		}
+		this.loader = loader;
+		this._applyConfiguration( this.loader, loaderConfig );
 		return this;
 	},
 
@@ -156,11 +151,6 @@ THREE.WorkerLoader.prototype = {
 			throw 'Unable to run "executeWithOverride" without proper "loader"!';
 
 		}
-		if ( ! this.validator.isValid( this.parserName ) ) {
-
-			throw 'Unable to run "executeWithOverride" without proper "parserName"!';
-
-		}
 		if ( this.loader.modelName === undefined || this.loader.modelName === null ) {
 
 			this.modelName = loader.modelName;
@@ -205,7 +195,7 @@ THREE.WorkerLoader.prototype = {
 			this.meshBuilder.setMaterials( this.loader.meshBuilder.getMaterials() );
 
 		}
-		this.workerSupport.validate( this.loader, this.parserName );
+		this.workerSupport.validate( this.loader );
 		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
 		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
 
@@ -250,7 +240,6 @@ THREE.WorkerLoader.prototype = {
 	/**
 	 * Execute according the provided instructions including loader and parser override.
 	 * @param {object} loader
-	 * @param {string} parserName
 	 * @param {Array} resourceDescriptors
 	 * @param {object} localConfig
 	 * @param {object} loaderConfig
@@ -258,10 +247,8 @@ THREE.WorkerLoader.prototype = {
 	 * @param {function} callbackOnProgress
 	 * @param {function} callbackOnError
 	 */
-	executeWithOverride: function ( loader, parserName, resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
-		this.setLoader( loader );
-		this.setParserName( parserName );
-		this.execute( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError );
+	executeWithOverride: function ( loader, resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
+		this.updateLoader( loader, loaderConfig ).execute( resourceDescriptors, localConfig, null, callbackOnLoad, callbackOnProgress, callbackOnError );
 	},
 
 	/**
@@ -276,7 +263,7 @@ THREE.WorkerLoader.prototype = {
 	execute: function ( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
 		if ( resourceDescriptors === undefined || resourceDescriptors === null ) return;
 		this._applyConfiguration( this, localConfig );
-		this._applyConfiguration( this.loader, loaderConfig );
+		this.updateLoader( this.loader, loaderConfig );
 
 		var resourceDescripton = {
 			items: resourceDescriptors,
@@ -606,9 +593,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {Object} loader The loader that shall be used to create the parser code.
-	 * @param {String} parserName Name of the Parser object
 	 */
-	validate: function ( loader, parserName ) {
+	validate: function ( loader ) {
 		if ( this.validator.isValid( this.worker.native ) ) return;
 		if ( this.logging.enabled ) {
 
@@ -619,7 +605,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		}
 		var codeBuilderInstructions = loader.buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		var userWorkerCode = codeBuilderInstructions.code;
-		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + parserName + '\n};\n\n';
+		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
 		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 		userWorkerCode += 'new ' + this.worker.workerRunner.name + '();\n\n';
 

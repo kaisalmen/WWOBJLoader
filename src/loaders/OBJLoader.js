@@ -418,7 +418,8 @@ THREE.OBJLoader.prototype = {
 		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
 
 		return {
-			code: workerCode
+			code: workerCode,
+			parserName: 'THREE.OBJLoader.Parser'
 		}
 	}
 };

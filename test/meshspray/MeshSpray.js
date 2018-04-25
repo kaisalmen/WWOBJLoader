@@ -48,6 +48,7 @@ MeshSpray.Loader.prototype = {
 
 		return {
 			code: workerCode,
+			parserName: 'MeshSpray.Parser',
 			libs: {
 				locations: [ 'node_modules/three/build/three.min.js' ],
 				path: '../../'
@@ -307,7 +308,9 @@ var MeshSprayApp = (function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		var workerLoaderDirector = new THREE.WorkerLoader.Director().setLogging( false, false ).setCrossOrigin( 'anonymous' );
+		var workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
+			.setLogging( false, false )
+			.setCrossOrigin( 'anonymous' );
 		/*
 		var callbackOnLoad = function ( event ) {
 			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerLoaderDirector.objectsCompleted + ')' );
@@ -332,7 +335,7 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
 */
-		workerLoaderDirector.prepareWorkers( maxQueueSize, maxWebWorkers, MeshSpray.Loader, "MeshSpray.Parser" );
+		workerLoaderDirector.prepareWorkers( MeshSpray.Loader );
 /*
 		var prepData;
 		var pivot;
