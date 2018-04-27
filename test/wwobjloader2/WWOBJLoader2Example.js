@@ -213,9 +213,9 @@ var WWOBJLoader2Example = (function () {
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
 		resourceDescriptors.push( rd );
 
+		workerLoader.updateLoader( new THREE.OBJLoader(), {} );
 		workerLoader.executeWithOverride(
-			new THREE.OBJLoader(), resourceDescriptors, { baseObject3d: local }, {},
-			callbackOnLoad, callbackOnProgress
+			resourceDescriptors, { baseObject3d: local }, callbackOnLoad, callbackOnProgress
 		);
 	};
 

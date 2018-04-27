@@ -122,8 +122,9 @@ THREE.WorkerLoader.Director.prototype = {
 	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @param {Object} classDef The loader to be used
+	 * @param {String} fileType Use this instance only for specified file type
 	 */
-	prepareWorkers: function ( classDef ) {
+	prepareWorkers: function ( classDef, fileType ) {
 		if ( ! this.validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
 
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
@@ -135,6 +136,7 @@ THREE.WorkerLoader.Director.prototype = {
 			this.workerDescription.workerLoaders[ instanceNo ] = {
 				inUse: false,
 				terminateRequested: false,
+				fileType: fileType,
 				classDef: classDef,
 				workerLoader: workerLoader
 			};

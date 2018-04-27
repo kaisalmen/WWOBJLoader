@@ -56,7 +56,7 @@ MeshSpray.Loader.prototype = {
 		}
 	},
 
-	parse: function ( content, additionalInstructions ) {
+	parse: function ( content, parserInstructions ) {
 		if ( this.logging.enabled ) console.time( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
 
 		this.meshBuilder.setBaseObject3d( this.baseObject3d );
@@ -65,7 +65,7 @@ MeshSpray.Loader.prototype = {
 		var parser = new MeshSpray.Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
 		parser.setSerializedMaterials( this.meshBuilder.getMaterialsJSON() );
-		THREE.WorkerLoader.prototype._applyConfiguration( parser, additionalInstructions );
+		THREE.WorkerLoader.prototype._applyConfiguration( parser, parserInstructions );
 
 		var scope = this;
 		var onMeshLoaded = function ( payload ) {
@@ -336,13 +336,36 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnProgress( reportProgress );
 */
 		workerLoaderDirector.prepareWorkers( MeshSpray.Loader );
-/*
+
 		var prepData;
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
 		for ( var i = 0; i < maxQueueSize; i++ ) {
-			prepData = new THREE.LoaderSupport.PrepData( 'Triangles_' + i );
+			prepData = new THREE.LoaderSupport.PrepData(  );
+
+			var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'Metadata', 'Triangles_' + i );
+			var parserInstructionsMtl = {
+				payloadType: 'text',
+				useAsync: false,
+				haveMtl: true,
+				texturePath: '../../resource/obj/14/',
+				materialOptions: {}
+			};
+			rdMtl.setParserInstructions( parserInstructionsMtl );
+
+			var enqueueForRun = {
+				fileType: 'MeshSpray',
+				resourceDescriptions: {},
+				loaderConfig: {},
+				workerLoaderConfig: {},
+				callbacks: {
+					onLoad: null,
+					onProgress: null,
+					onError: null
+				}
+			}
+
 
 			pivot = new THREE.Object3D();
 			s = 2 * Math.PI * Math.random();
@@ -363,7 +386,7 @@ var MeshSprayApp = (function () {
 			workerLoaderDirector.enqueueForRun( prepData );
 		}
 		workerLoaderDirector.processQueue();
-		*/
+
 		var meshSpray = new MeshSpray.Loader();
 		this.pivot.add( meshSpray.parse( null, { quantity: 8192 } ) );
 	};

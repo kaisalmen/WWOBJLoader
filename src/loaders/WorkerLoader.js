@@ -26,6 +26,8 @@ THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.baseObject3d = new THREE.Group();
 
+	this.processingQueue = [];
+
 	this.callbacks = {
 		onProgress: null
 	}
@@ -104,7 +106,6 @@ THREE.WorkerLoader.prototype = {
 		var resourceDescriptor = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url )
 		var resourceDescripton = {
 			items: [ resourceDescriptor ],
-			processing: false,
 		};
 		this.modelName = resourceDescriptor.name;
 
@@ -134,7 +135,7 @@ THREE.WorkerLoader.prototype = {
 			};
 		}
 
-		this._loadResources( resourceDescripton, 0, onLoad, onProgress, onError );
+		this._processQueue( resourceDescripton, 0, onLoad, onProgress, onError );
 	},
 
 	/**
@@ -143,9 +144,9 @@ THREE.WorkerLoader.prototype = {
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {function} onLoad Called after worker successfully completed loading
 	 * @param {function} [onMesh] Called after worker successfully delivered a single mesh
-	 * @param {Object} [additionalInstructions] Provide additional instructions to the parser
+	 * @param {Object} [parserInstructions] Provide additional instructions to the parser
 	 */
-	parseAsync: function ( content, onLoad, onMesh, additionalInstructions ) {
+	parseAsync: function ( content, onLoad, onMesh, parserInstructions ) {
 		if ( ! this.validator.isValid( this.loader ) ) {
 
 			throw 'Unable to run "executeWithOverride" without proper "loader"!';
@@ -207,9 +208,9 @@ THREE.WorkerLoader.prototype = {
 		var params = {
 			useAsync: true
 		};
-		if ( this.validator.isValid( additionalInstructions ) ) {
+		if ( this.validator.isValid( parserInstructions ) ) {
 
-			params = additionalInstructions;
+			params = parserInstructions;
 			// enforce async param
 			params.useAsync = true;
 
@@ -237,39 +238,20 @@ THREE.WorkerLoader.prototype = {
 		)
 	},
 
-	/**
-	 * Execute according the provided instructions including loader and parser override.
-	 * @param {object} loader
-	 * @param {Array} resourceDescriptors
-	 * @param {object} localConfig
-	 * @param {object} loaderConfig
-	 * @param {function} callbackOnLoad
-	 * @param {function} callbackOnProgress
-	 * @param {function} callbackOnError
-	 */
-	executeWithOverride: function ( loader, resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
-		this.updateLoader( loader, loaderConfig ).execute( resourceDescriptors, localConfig, null, callbackOnLoad, callbackOnProgress, callbackOnError );
+	enqueue: function ( resourceDescriptor ) {
+		this.processingQueue.push( resourceDescriptor );
 	},
 
 	/**
 	 * Run loader async according the provided instructions.
-	 * @param {Array} resourceDescriptors
 	 * @param {object} localConfig
-	 * @param {object} loaderConfig
 	 * @param {function} callbackOnLoad
 	 * @param {function} [callbackOnProgress]
 	 * @param {function} [callbackOnError]
 	 */
-	execute: function ( resourceDescriptors, localConfig, loaderConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
-		if ( resourceDescriptors === undefined || resourceDescriptors === null ) return;
+	execute: function ( localConfig, callbackOnLoad, callbackOnProgress, callbackOnError ) {
 		this._applyConfiguration( this, localConfig );
-		this.updateLoader( this.loader, loaderConfig );
-
-		var resourceDescripton = {
-			items: resourceDescriptors,
-			processing: false
-		};
-		this._loadResources( resourceDescripton, 0, callbackOnLoad, callbackOnProgress, callbackOnError );
+		this._processQueue( 0, callbackOnLoad, callbackOnProgress, callbackOnError );
 	},
 
 	_applyConfiguration: function ( scope, applicableConfiguration, forceCreation ) {
@@ -288,43 +270,39 @@ THREE.WorkerLoader.prototype = {
 		}
 	},
 
-	_loadResources: function ( resourceDescripton, index, onLoad, onProgress, onError ) {
-		if ( index === resourceDescripton.items.length ) {
+	_processQueue: function ( index, onLoad, onProgress, onError ) {
+		if ( index === this.processingQueue.length ) {
 
-			this._executeParseSteps( resourceDescripton, onLoad );
+			this._executeParseSteps( this.processingQueue[ index ], onLoad );
 			return;
 
-		} else {
-
-			resourceDescripton.processing = true;
-
 		}
-		var resourceDescriptor = resourceDescripton.items[ index ];
+
+		var resourceDescriptor = this.processingQueue[ index ];
 		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setResponseType( resourceDescriptor.additionalInstructions.payloadType );
+		fileLoader.setResponseType( resourceDescriptor.parserInstructions.payloadType );
 		fileLoader.setPath( this.loader.path );
 
 		var scope = this;
 		var processResourcesProxy = function ( content ) {
 			resourceDescriptor.payload = content;
 			index++;
-			scope._loadResources( resourceDescripton, index, onLoad, onProgress, onError );
+			scope._processQueue( index, onLoad, onProgress, onError );
 		};
 		fileLoader.load( resourceDescriptor.url, processResourcesProxy, onProgress, onError );
 	},
 
-	_executeParseSteps: function ( resourceDescripton, onLoad ) {
-		var items = resourceDescripton.items;
-		for ( var index in items ) {
+	_executeParseSteps: function ( onLoad ) {
+		for ( var index in this.processingQueue ) {
 
-			var resourceDescriptor = items[ index ];
-			if ( resourceDescriptor.additionalInstructions.useAsync ) {
+			var resourceDescriptor = this.processingQueue[ index ];
+			if ( resourceDescriptor.parserInstructions.useAsync ) {
 
-				this.parseAsync( resourceDescriptor.payload, onLoad, resourceDescriptor.additionalInstructions );
+				this.parseAsync( resourceDescriptor.payload, onLoad, resourceDescriptor.parserInstructions );
 
 			} else {
 
-				onLoad( this.loader.parse( resourceDescriptor.payload, resourceDescriptor.additionalInstructions ) );
+				onLoad( this.loader.parse( resourceDescriptor.payload, resourceDescriptor.parserInstructions ) );
 
 			}
 
@@ -376,7 +354,7 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.filename = null;
 	this.path = '';
 	this.extension = null;
-	this.additionalInstructions = {
+	this.parserInstructions = {
 		useAsync: true,
 		payloadType: 'arraybuffer'
 	};
@@ -406,12 +384,12 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
 
 			}
-			this.additionalInstructions.payloadType = 'arraybuffer';
+			this.parserInstructions.payloadType = 'arraybuffer';
 
 		} else if ( this.type === 'String' ) {
 
 			if ( ! ( typeof( this.payload ) === 'string' || this.payload instanceof String ) ) throw 'Provided content is not of type "String"! Aborting...';
-			this.additionalInstructions.payloadType = 'text';
+			this.parserInstructions.payloadType = 'text';
 
 		} else if ( this.type === 'URL' ) {
 
@@ -428,6 +406,10 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
 
+		} else if ( this.type === 'Metadata' ) {
+
+			this.payload = 'noPayload';
+
 		} else {
 
 			throw 'An unsupported resourceType "' + this.type + '" was provided! Aborting...'
@@ -435,9 +417,9 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		}
 	},
 
-	setAdditionalInstructions: function ( additionalInstructions ) {
-		THREE.WorkerLoader.prototype._applyConfiguration( this.additionalInstructions, additionalInstructions, true );
-		if ( this.additionalInstructions.name === undefined || this.additionalInstructions.name === null ) this.additionalInstructions.name = this.name;
+	setParserInstructions: function ( parserInstructions ) {
+		THREE.WorkerLoader.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
+		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
 	}
 
 };
