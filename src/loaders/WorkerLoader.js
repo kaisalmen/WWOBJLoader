@@ -1,84 +1,74 @@
 if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
 
-/**
- *
- * @param {THREE.DefaultLoadingManager} manager
- * @param {object} [loader]
- * @param {object} [loaderConfig]
- * @constructor
- */
-THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
-
-	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
+THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.logging = {
 		enabled: true,
 		debug: false
 	};
-	this.validator = THREE.WorkerLoader.Validator;
-	this.manager = this.validator.verifyInput( manager, THREE.DefaultLoadingManager );
-
-	this.modelName = 'Unnamed_Model';
-	this.instanceNo = 0;
-	this.updateLoader( loader, loaderConfig );
+	this.description = description;
 
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.terminateWorkerOnLoad = false;
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.baseObject3d = new THREE.Group();
 
-	this.processingQueue = [];
+	this.loader = null;
+	this.loaderConfig = null;
+	this.resourceDescriptors = [];
 
 	this.callbacks = {
-		onProgress: null
-	}
+		parse: {
+			onLoad: null,
+			onMesh: null
+		},
+		load: {
+			onProgress: null,
+			onError: null
+		}
+	};
 };
-THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 
+THREE.WorkerLoader.LoadingTask.prototype = {
 
-THREE.WorkerLoader.prototype = {
-
-	constructor: THREE.WorkerLoader,
+	constructor: THREE.WorkerLoader.LoadingTask,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.OBJLoader
 	 *
-	 * @param {boolean} enabled True or false.
-	 * @param {boolean} debug True or false.
-	 * @returns {THREE.WorkerLoader}
+	 * @param enabled
+	 * @param debug
+	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
+		this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 		return this;
 	},
 
 	/**
+	 * The instance number.
 	 *
-	 * @param baseObject3d
-	 * @returns {THREE.WorkerLoader}
-	 */
-	setBaseObject3d: function ( baseObject3d ) {
-		if ( baseObject3d !== undefined && baseObject3d !== null ) this.baseObject3d = baseObject3d;
-		return this;
-	},
-
-	/**
-	 *
-	 * @param instanceNo
-	 * @returns {THREE.WorkerLoader}
+	 * @param {number} instanceNo
 	 */
 	setInstanceNo: function ( instanceNo ) {
 		this.instanceNo = instanceNo;
-		return this;
+	},
+
+	/**
+	 * Defines where meshes shall be attached to.
+	 *
+	 * @param {THREE.Object3D} baseObject3d
+	 */
+	setBaseObject3d: function ( baseObject3d ) {
+		if ( baseObject3d !== undefined && baseObject3d !== null ) this.baseObject3d = baseObject3d;
 	},
 
 	/**
 	 *
-	 * @param {object} [loader]
-	 * @param {object} [loaderConfig]
-	 * @returns {THREE.WorkerLoader}
+	 * @param loader
+	 * @param loaderConfig
 	 */
 	updateLoader: function ( loader, loaderConfig ) {
 		if ( loader === undefined || loader === null ) {
@@ -89,28 +79,13 @@ THREE.WorkerLoader.prototype = {
 		}
 		this.loader = loader;
 		this._applyConfiguration( this.loader, loaderConfig );
-		return this;
 	},
 
-	/**
-	 * Use this method to load a file from the given URL and parse it asynchronously.
-	 * @memberOf THREE.WorkerLoader
-	 *
-	 * @param {string}  url A string containing the path/URL of the file to be loaded.
-	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
- 	 * @param {function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
-	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
-	 */
-	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
-		var resourceDescriptor = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url )
-		var resourceDescripton = {
-			items: [ resourceDescriptor ],
-		};
-		this.modelName = resourceDescriptor.name;
-
+	updateCallbacks: function ( onLoad, onMesh, onProgress, onError ) {
+		this.callbacks.parse.onMesh = onMesh;
+		this.callbacks.parse.onLoad = onLoad;
 		var scope = this;
-		if ( ! this.validator.isValid( onProgress ) ) {
+		if ( onProgress === null || onProgress === undefined ) {
 			var numericalValueRef = 0;
 			var numericalValue = 0;
 			onProgress = function ( event ) {
@@ -126,16 +101,158 @@ THREE.WorkerLoader.prototype = {
 				}
 			};
 		}
+		this.callbacks.load.onProgress = onProgress;
 
-		if ( ! this.validator.isValid( onError ) ) {
+		if ( onError === null || onError === undefined ) {
 			onError = function ( event ) {
 				var output = 'Error occurred while downloading "' + url + '"';
 				console.error( output + ': ' + event );
 				scope._onProgress( 'error', output, - 1 );
 			};
 		}
+		this.callbacks.load.onError = onError;
 
-		this._processQueue( resourceDescripton, 0, onLoad, onProgress, onError );
+		/**
+		 * Announce feedback which is give to the registered callbacks.
+		 * @memberOf THREE.WorkerLoader
+		 * @private
+		 *
+		 * @param {string} type The type of event
+		 * @param {string} text Textual description of the event
+		 * @param {number} numericalValue Numerical value describing the progress
+		 */
+		var scope = this;
+		var reportProgress = function ( type, text, numericalValue ) {
+			var content = THREE.WorkerLoader.Validator.isValid( text ) ? text : '';
+			var event = {
+				detail: {
+					type: type,
+					modelName: scope.description,
+					instanceNo: scope.instanceNo,
+					text: content,
+					numericalValue: numericalValue
+				}
+			};
+//			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
+			if ( this.logging.enabled && this.logging.debug ) console.debug( content );
+		};
+
+		this.meshBuilder._setCallbacks( reportProgress, onMesh, onLoad );
+	},
+
+	_processQueue: function ( index ) {
+		if ( index === this.resourceDescriptors.length ) {
+
+			this._executeParseSteps();
+			return;
+
+		}
+		var resourceDescriptor = this.resourceDescriptors[ index ];
+		var fileLoader = new THREE.FileLoader( this.manager );
+		fileLoader.setResponseType( resourceDescriptor.parserInstructions.resourceType );
+		fileLoader.setPath( this.loader.path );
+
+		var scope = this;
+		var processResourcesProxy = function ( content ) {
+			resourceDescriptor.content = content;
+			index++;
+			scope._processQueue( index );
+		};
+		fileLoader.load( resourceDescriptor.url, processResourcesProxy, this.callbacks.load.onProgress, this.callbacks.load.onError );
+	},
+
+	_executeParseSteps: function () {
+		for ( var index in this.resourceDescriptors ) {
+
+			var resourceDescriptor = this.resourceDescriptors[ index ];
+			if ( resourceDescriptor.parserInstructions.useAsync ) {
+
+				this.parseAsync( resourceDescriptor.payload, onLoad, resourceDescriptor.parserInstructions );
+
+			} else {
+
+				onLoad( this.loader.parse( resourceDescriptor.payload, resourceDescriptor.parserInstructions ) );
+
+			}
+
+		}
+	}
+};
+
+/**
+ *
+ * @param {THREE.DefaultLoadingManager} manager
+ * @param {object} [loader]
+ * @param {object} [loaderConfig]
+ * @constructor
+ */
+THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
+
+	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
+	this.manager = this.validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	this.validator = THREE.WorkerLoader.Validator;
+
+	this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'default' );
+	this.loadingTask.updateLoader( loader, loaderConfig );
+
+	this.callbacks = {
+		onProgress: null
+	}
+};
+THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
+
+
+THREE.WorkerLoader.prototype = {
+
+	constructor: THREE.WorkerLoader,
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setLogging: function ( enabled, debug ) {
+		this.loadingTask.setLogging( enabled, debug );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {THREE.Object3D} baseObject3d
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setBaseObject3d: function ( baseObject3d ) {
+		this.loadingTask.setBaseObject3d( baseObject3d );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {object} [loader]
+	 * @param {object} [loaderConfig]
+	 * @returns {THREE.WorkerLoader}
+	 */
+	updateLoader: function ( loader, loaderConfig ) {
+		this.loadingTask.updateLoader( loader, loaderConfig );
+		return this;
+	},
+
+	/**
+	 * Use this method to load a file from the given URL and parse it asynchronously.
+	 * @memberOf THREE.WorkerLoader
+	 *
+	 * @param {string}  url A string containing the path/URL of the file to be loaded.
+	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+ 	 * @param {function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
+	 */
+	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
+		this.loadingTask.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) );
+		this.loadingTask.updateCallbacks( onLoad, onMesh, onProgress, onError );
+		this.loadingTask._processQueue();
 	},
 
 	/**
@@ -147,33 +264,46 @@ THREE.WorkerLoader.prototype = {
 	 * @param {Object} [parserInstructions] Provide additional instructions to the parser
 	 */
 	parseAsync: function ( content, onLoad, onMesh, parserInstructions ) {
-		if ( ! this.validator.isValid( this.loader ) ) {
+		var resDesc = THREE.WorkerLoader.ResourceDescriptor( 'Buffer', null, content );
+		resDesc.setParserInstructions( parserInstructions );
+		this.loadingTask.resourceDescriptors.push( resDesc );
+		this.loadingTask.updateCallbacks( onLoad, onMesh );
+		this._parseAsync( this.loadingTask );
+	},
+
+	/**
+	 *
+	 * @param {THREE.WorkerLoader.LoadingTask} loadingTask
+	 * @private
+	 */
+	_parseAsync: function ( loadingTask ) {
+		var resDesc = loadingTask.resourceDescriptor;
+		if ( ! THREE.WorkerLoader.Validator.isValid( loadingTask.loader ) ) {
 
 			throw 'Unable to run "executeWithOverride" without proper "loader"!';
 
 		}
-		if ( this.loader.modelName === undefined || this.loader.modelName === null ) {
+		if ( loadingTask.loader.modelName !== undefined || loadingTask.loader.modelName !== null ) {
 
-			this.modelName = loader.modelName;
+			resDesc.name = loadingTask.loader.modelName;
 
 		}
 
-		var scope = this;
 		var measureTime = false;
 		var scopedOnLoad = function () {
 			onLoad(
 				{
 					detail: {
-						object3d: scope.baseObject3d,
-						modelName: scope.modelName,
-						instanceNo: scope.instanceNo
+						object3d: loadingTask.baseObject3d,
+						modelName: resDesc.name,
+						instanceNo: resDesc.instanceNo
 					}
 				}
 			);
-			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + scope.instanceNo + '] : ' + scope.modelName );
+			if ( measureTime && loadingTask.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + resDesc.instanceNo + '] : ' + resDesc.name );
 		};
 		// fast-fail in case of illegal data
-		if ( ! this.validator.isValid( content ) ) {
+		if ( ! THREE.WorkerLoader.Validator.isValid( resDesc.content ) ) {
 
 			console.warn( 'Provided content is not a valid ArrayBuffer.' );
 			scopedOnLoad()
@@ -183,39 +313,33 @@ THREE.WorkerLoader.prototype = {
 			measureTime = true;
 
 		}
-		if ( measureTime && this.logging.enabled ) console.time( 'WorkerLoader parse [' + this.instanceNo + '] : ' + this.modelName );
+		if ( measureTime && loadingTask.logging.enabled ) console.time( 'WorkerLoader parse [' + resDesc.instanceNo + '] : ' + resDesc.name );
 
 		var scopedOnMesh = function ( payload ) {
-			scope.meshBuilder.processPayload( payload );
+			loadingTask.meshBuilder.processPayload( payload );
 		};
 
-		this.meshBuilder.setBaseObject3d( scope.baseObject3d );
-		this.meshBuilder.createDefaultMaterials();
-		if ( this.validator.isValid( this.loader.meshBuilder ) && this.loader.meshBuilder instanceof  THREE.OBJLoader.MeshBuilder ) {
+		loadingTask.meshBuilder.setBaseObject3d( loadingTask.baseObject3d );
+		loadingTask.meshBuilder.createDefaultMaterials();
+		if ( THREE.WorkerLoader.Validator.isValid( loadingTask.loader.meshBuilder ) && loadingTask.loader.meshBuilder instanceof THREE.OBJLoader.MeshBuilder ) {
 
-			this.meshBuilder.setMaterials( this.loader.meshBuilder.getMaterials() );
+			loadingTask.meshBuilder.setMaterials( loadingTask.loader.meshBuilder.getMaterials() );
 
 		}
-		this.workerSupport.validate( this.loader );
-		this.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
-		if ( scope.terminateWorkerOnLoad ) this.workerSupport.setTerminateRequested( true );
+		loadingTask.workerSupport.validate( loadingTask.loader );
+		loadingTask.workerSupport.setCallbacks( scopedOnMesh, scopedOnLoad );
+		if ( loadingTask.terminateWorkerOnLoad ) loadingTask.workerSupport.setTerminateRequested( true );
 
 		var materialNames = {};
-		var materials = this.meshBuilder.getMaterials();
+		var materials = loadingTask.meshBuilder.getMaterials();
 		for ( var materialName in materials ) materialNames[ materialName ] = materialName;
 
 
-		var params = {
-			useAsync: true
-		};
-		if ( this.validator.isValid( parserInstructions ) ) {
+		var params = ( THREE.WorkerLoader.Validator.isValid( resDesc.parserInstructions ) ) ? resDesc.parserInstructions : {};
+		// enforce async param
+		params.useAsync = true;
 
-			params = parserInstructions;
-			// enforce async param
-			params.useAsync = true;
-
-		}
-		this.workerSupport.run(
+		loadingTask.workerSupport.run(
 			{
 				// this is only applicable to OBJLoader
 				// materialPerSmoothingGroup: this.materialPerSmoothingGroup,
@@ -223,8 +347,8 @@ THREE.WorkerLoader.prototype = {
 				// disregardNormals: this.disregardNormals
 				params: params,
 				logging: {
-					enabled: this.logging.enabled,
-					debug: this.logging.debug
+					enabled: loadingTask.logging.enabled,
+					debug: loadingTask.logging.debug
 				},
 				materials: {
 					// in async case only material names are supplied to parser
@@ -236,10 +360,6 @@ THREE.WorkerLoader.prototype = {
 				}
 			}
 		)
-	},
-
-	enqueue: function ( resourceDescriptor ) {
-		this.processingQueue.push( resourceDescriptor );
 	},
 
 	/**
@@ -270,69 +390,6 @@ THREE.WorkerLoader.prototype = {
 		}
 	},
 
-	_processQueue: function ( index, onLoad, onProgress, onError ) {
-		if ( index === this.processingQueue.length ) {
-
-			this._executeParseSteps( this.processingQueue[ index ], onLoad );
-			return;
-
-		}
-
-		var resourceDescriptor = this.processingQueue[ index ];
-		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setResponseType( resourceDescriptor.parserInstructions.payloadType );
-		fileLoader.setPath( this.loader.path );
-
-		var scope = this;
-		var processResourcesProxy = function ( content ) {
-			resourceDescriptor.payload = content;
-			index++;
-			scope._processQueue( index, onLoad, onProgress, onError );
-		};
-		fileLoader.load( resourceDescriptor.url, processResourcesProxy, onProgress, onError );
-	},
-
-	_executeParseSteps: function ( onLoad ) {
-		for ( var index in this.processingQueue ) {
-
-			var resourceDescriptor = this.processingQueue[ index ];
-			if ( resourceDescriptor.parserInstructions.useAsync ) {
-
-				this.parseAsync( resourceDescriptor.payload, onLoad, resourceDescriptor.parserInstructions );
-
-			} else {
-
-				onLoad( this.loader.parse( resourceDescriptor.payload, resourceDescriptor.parserInstructions ) );
-
-			}
-
-		}
-	},
-
-	/**
-	 * Announce feedback which is give to the registered callbacks.
-	 * @memberOf THREE.WorkerLoader
-	 * @private
-	 *
-	 * @param {string} type The type of event
-	 * @param {string} text Textual description of the event
-	 * @param {number} numericalValue Numerical value describing the progress
-	 */
-	_onProgress: function ( type, text, numericalValue ) {
-		var content = this.validator.isValid( text ) ? text : '';
-		var event = {
-			detail: {
-				type: type,
-				modelName: this.modelName,
-				instanceNo: this.instanceNo,
-				text: content,
-				numericalValue: numericalValue
-			}
-		};
-		if ( this.validator.isValid( this.callbacks.onProgress ) ) this.callbacks.onProgress( event );
-		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
-	},
-
 	/**
 	 * Returns the WorkerSupport for e.g. configuration purposes
 	 * @returns {THREE.WorkerLoader.WorkerSupport}
@@ -346,10 +403,18 @@ THREE.WorkerLoader.prototype = {
 	}
 };
 
+/**
+ *
+ * @param {String} resourceType
+ * @param {String} name
+ * @param {Object} content
+ * @constructor
+ */
 THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
-	this.type = resourceType;
-	this.payload = content;
+	this.instanceNo = 0;
+	this.resourceType = resourceType;
+	this.content = content;
 	this.url = null;
 	this.filename = null;
 	this.path = '';
@@ -368,32 +433,32 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	_init: function () {
 
-		if ( this.type === 'Buffer' ) {
+		if ( this.resourceType === 'Buffer' ) {
 
-			if ( ! ( this.payload instanceof ArrayBuffer ||
-				this.payload instanceof Int8Array ||
-				this.payload instanceof Uint8Array ||
-				this.payload instanceof Uint8ClampedArray ||
-				this.payload instanceof Int16Array ||
-				this.payload instanceof Uint16Array ||
-				this.payload instanceof Int32Array ||
-				this.payload instanceof Uint32Array ||
-				this.payload instanceof Float32Array ||
-				this.payload instanceof Float64Array ) ) {
+			if ( ! ( this.content instanceof ArrayBuffer ||
+				this.content instanceof Int8Array ||
+				this.content instanceof Uint8Array ||
+				this.content instanceof Uint8ClampedArray ||
+				this.content instanceof Int16Array ||
+				this.content instanceof Uint16Array ||
+				this.content instanceof Int32Array ||
+				this.content instanceof Uint32Array ||
+				this.content instanceof Float32Array ||
+				this.content instanceof Float64Array ) ) {
 
 				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
 
 			}
 			this.parserInstructions.payloadType = 'arraybuffer';
 
-		} else if ( this.type === 'String' ) {
+		} else if ( this.resourceType === 'String' ) {
 
-			if ( ! ( typeof( this.payload ) === 'string' || this.payload instanceof String ) ) throw 'Provided content is not of type "String"! Aborting...';
+			if ( ! ( typeof( this.content ) === 'string' || this.content instanceof String ) ) throw 'Provided content is not of resourceType "String"! Aborting...';
 			this.parserInstructions.payloadType = 'text';
 
-		} else if ( this.type === 'URL' ) {
+		} else if ( this.resourceType === 'URL' ) {
 
-			this.url = this.payload;
+			this.url = this.content;
 			this.filename = this.url;
 			var urlParts = this.url.split( '/' );
 			if ( urlParts.length > 2 ) {
@@ -406,22 +471,25 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
 
-		} else if ( this.type === 'Metadata' ) {
+		} else if ( this.resourceType === 'Metadata' ) {
 
-			this.payload = 'noPayload';
+			this.content = 'no_content';
 
 		} else {
 
-			throw 'An unsupported resourceType "' + this.type + '" was provided! Aborting...'
+			throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...'
 
 		}
+	},
+
+	setInstanceNo: function ( instanceNo ) {
+		this.instanceNo = instanceNo;
 	},
 
 	setParserInstructions: function ( parserInstructions ) {
 		THREE.WorkerLoader.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
 		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
 	}
-
 };
 
 
