@@ -206,17 +206,18 @@ var WWOBJLoader2Example = (function () {
 			scope._reportProgress( event );
 		};
 
+		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
 
 		var workerLoader = new THREE.WorkerLoader();
-
-		var resourceDescriptors = [];
-		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
-		resourceDescriptors.push( rd );
-
-		workerLoader.updateLoader( new THREE.OBJLoader(), {} );
-		workerLoader.executeWithOverride(
-			resourceDescriptors, { baseObject3d: local }, callbackOnLoad, callbackOnProgress
-		);
+		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig()
+			.setLoaderConfig( THREE.OBJLoader )
+			.addResourceDescriptor( rd )
+			.setCallbacksParsingAndApp( callbackOnLoad, null, null, callbackOnProgress )
+			.setLoadingTaskConfig( {
+				instanceNo: 42,
+				baseObject3d: local
+			} );
+		workerLoader.execute( loadingTaskConfig );
 	};
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
@@ -234,15 +235,17 @@ var WWOBJLoader2Example = (function () {
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
-		var objLoader = new THREE.OBJLoader();
-		var workerLoader = new THREE.WorkerLoader().updateLoader( objLoader );
-		workerLoader.setTerminateWorkerOnLoad( false );
-
-		var resourceDescriptors = [];
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
-		resourceDescriptors.push( rd );
 
-		workerLoader.execute( resourceDescriptors, {}, {}, callbackOnLoad );
+		var workerLoader = new THREE.WorkerLoader();
+		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig()
+			.setLoaderConfig( THREE.OBJLoader )
+			.addResourceDescriptor( rd )
+			.setCallbacksParsingAndApp( callbackOnLoad, null, null )
+			.setLoadingTaskConfig( {
+				terminateWorkerOnLoad: false
+			} );
+		workerLoader.execute( loadingTaskConfig );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {
