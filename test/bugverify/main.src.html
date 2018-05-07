@@ -55,7 +55,7 @@
 
 					this.controls = null;
 
-					this.loadInstructions = [];
+					this.loadingTaskConfigs = [];
 					this.processing = false;
 				}
 
@@ -89,11 +89,11 @@
 				};
 
 				OBJLoader2BugVerify.prototype.updateAssets = function ( loadInstructions ) {
-					this.loadInstructions.push( loadInstructions );
+					this.loadingTaskConfigs.push( loadInstructions );
 				};
 
 				OBJLoader2BugVerify.prototype.loadAssets = function () {
-					if ( this.loadInstructions.length === 0 || this.processing ) {
+					if ( this.loadingTaskConfigs.length === 0 || this.processing ) {
 
 						return;
 
@@ -102,17 +102,14 @@
 						this.processing = true;
 
 					}
-
-					var objLoader = new THREE.OBJLoader();
-					var workerLoader = new THREE.WorkerLoader().updateLoader( objLoader );
-
-					var loadInstruction = this.loadInstructions[ 0 ];
-					this.loadInstructions.shift();
+					var workerLoader = new THREE.WorkerLoader();
+					var loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
+					this.loadingTaskConfigs.shift();
 
 					var scope = this;
-					var loadAssetsProxy = function ( event ) {
-						if ( ! Validator.isValid( loadInstruction.wlConfig.baseObject3d ) ) {
-							scope.scene.add( event.detail.object3d );
+					var loadAssetsProxy = function ( object3d ) {
+						if ( ! Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
+							scope.scene.add( object3d );
 						}
 						scope.processing = false;
 						scope.loadAssets();
@@ -121,7 +118,9 @@
 					this._reportProgress( { detail: { text: '' } } );
 
 					console.log( '\n\nloadAssets: Processing next resourceDescriptors' );
-					workerLoader.execute( loadInstruction.resourceDescriptors, loadInstruction.wlConfig, loadInstruction.loaderConfig, loadAssetsProxy, this._reportProgress );
+
+					loadingTaskConfig.setCallbacksParsingAndApp( loadAssetsProxy, null, null, this._reportProgress );
+					workerLoader.execute( loadingTaskConfig );
 				};
 
 				OBJLoader2BugVerify.prototype._reportProgress = function( event ) {
@@ -188,7 +187,6 @@
 
 
 			// issue: 14
-			var resourceDescriptors = [];
 			var pivot = new THREE.Object3D();
 			pivot.position.set( -325, 0, 0 );
 			var scale = 5.0;
@@ -204,7 +202,6 @@
 				materialOptions: {}
 			};
 			rdMtl.setParserInstructions( parserInstructionsMtl );
-			resourceDescriptors.push( rdMtl );
 
 			var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' );
 			var parserInstructionsObj = {
@@ -212,9 +209,16 @@
 				useAsync: false
 			};
 			rdObj.setParserInstructions( parserInstructionsObj );
-			resourceDescriptors.push( rdObj );
-			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
 
+			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+					instanceNo:  'issue_14',
+					baseObject3d: pivot
+				} )
+				.setLoaderConfig( THREE.OBJLoader )
+				.addResourceDescriptor( rdMtl )
+				.addResourceDescriptor( rdObj );
+			app.updateAssets( loadingTaskConfig );
+/*
 
 			// issue: 21
 			resourceDescriptors = [];
@@ -346,7 +350,7 @@
 			rdObj.setParserInstructions( parserInstructionsObj );
 			resourceDescriptors.push( rdObj );
 			app.updateAssets( { resourceDescriptors: resourceDescriptors, wlConfig: { baseObject3d: pivot }, loaderConfig: { baseObject3d: pivot } } );
-
+*/
 			app.loadAssets();
 
 			render();

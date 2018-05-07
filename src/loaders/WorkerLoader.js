@@ -156,8 +156,8 @@ THREE.WorkerLoader.prototype = {
 		}
 		if ( measureTime && loadingTask.logging.enabled ) console.time( 'WorkerLoader parse [' + resourceDescriptor.instanceNo + '] : ' + resourceDescriptor.name );
 
-		var scopedOnMesh = function ( payload ) {
-			loadingTask.meshBuilder.processPayload( payload );
+		var scopedOnMesh = function ( content ) {
+			loadingTask.meshBuilder.processPayload( content );
 		};
 
 		loadingTask.meshBuilder.setBaseObject3d( loadingTask.baseObject3d );
@@ -208,24 +208,8 @@ THREE.WorkerLoader.prototype = {
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} LoadingTaskConfig
 	 */
 	execute: function ( loadingTaskConfig ) {
-		var executeLoadingTask = new THREE.WorkerLoader.LoadingTask( this, 'execute_loading_task' );
-		this._applyConfiguration( executeLoadingTask, loadingTaskConfig.loadingTask.config );
-
-		var classDef = loadingTaskConfig.loader.classDef;
-		var loader = Object.create( classDef.prototype );
-		classDef.call( loader );
-		executeLoadingTask.updateLoader( loader, loadingTaskConfig.loader.config )
-			.updateCallbacksParsingAndApp(
-				loadingTaskConfig.callbacks.parse.onLoad,
-				loadingTaskConfig.callbacks.parse.onMesh,
-				loadingTaskConfig.callbacks.parse.onMaterials,
-				loadingTaskConfig.callbacks.app.onReport
-			)
-			.updateCallbacksFileLoading(
-				loadingTaskConfig.callbacks.load.onProgress,
-				loadingTaskConfig.callbacks.load.onError
-			)
-			.resetResourceDescriptors( loadingTaskConfig.resourceDescriptors )
+		var executeLoadingTask = new THREE.WorkerLoader.LoadingTask( this, 'execute_loading_task', this );
+		executeLoadingTask.applyConfig( loadingTaskConfig )
 			._configureExecute()
 			._processQueue( 0 );
 	},
@@ -262,16 +246,18 @@ THREE.WorkerLoader.LoadingTask = function ( workerLoaderRef, description ) {
 		debug: false
 	};
 	this.workerLoaderRef = workerLoaderRef;
+	this.description = description;
+	this.loadingTaskConfig = null;
+
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 
-	this.description = description;
 	this.baseObject3d = new THREE.Group();
 	this.instanceNo = 0;
 	this.terminateWorkerOnLoad = true;
 
 	this.loader = null;
-	this.loaderConfig = null;
+	this.loaderConfig = {};
 
 	this.resourceDescriptors = [];
 	this.resourceDescriptorCurrent = null;
@@ -302,6 +288,30 @@ THREE.WorkerLoader.LoadingTask = function ( workerLoaderRef, description ) {
 THREE.WorkerLoader.LoadingTask.prototype = {
 
 	constructor: THREE.WorkerLoader.LoadingTask,
+
+	applyConfig: function ( loadingTaskConfig ) {
+		this.loadingTaskConfig = THREE.WorkerLoader.Validator.verifyInput( loadingTaskConfig, null);
+		if ( this.loadingTaskConfig !== null ) THREE.WorkerLoader.prototype._applyConfiguration( this, this.loadingTaskConfig.config );
+
+		var classDef = this.loadingTaskConfig.loader.classDef;
+		var loader = Object.create( classDef.prototype );
+		classDef.call( loader );
+
+		this.updateLoader( loader, this.loadingTaskConfig.loader.config )
+			.updateCallbacksParsingAndApp(
+				this.loadingTaskConfig.callbacks.parse.onLoad,
+				this.loadingTaskConfig.callbacks.parse.onMesh,
+				this.loadingTaskConfig.callbacks.parse.onMaterials,
+				this.loadingTaskConfig.callbacks.app.onReport
+			)
+			.updateCallbacksFileLoading(
+				this.loadingTaskConfig.callbacks.load.onProgress,
+				this.loadingTaskConfig.callbacks.load.onError
+			)
+			.resetResourceDescriptors( this.loadingTaskConfig.resourceDescriptors );
+
+		return this;
+	},
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -364,7 +374,15 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		} else {
 
 			this.loader = loader;
-			THREE.WorkerLoader.prototype._applyConfiguration( this.loader, loaderConfig );
+			this.loaderConfig = THREE.WorkerLoader.Validator.verifyInput( loaderConfig, this.loaderConfig );
+
+			// this will ensure that any base configuration on LoadingTask and Loader are aligned
+			if ( this.loadingTaskConfig !== null && this.loadingTaskConfig.config !== null ) {
+
+				THREE.WorkerLoader.prototype._applyConfiguration( this.loader, this.loadingTaskConfig.config );
+
+			}
+			THREE.WorkerLoader.prototype._applyConfiguration( this.loader, this.loaderConfig );
 
 		}
 		return this;
@@ -517,7 +535,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			} else {
 
-				onLoad( this.loader.parse( this.resourceDescriptorCurrent.payload, this.resourceDescriptorCurrent.parserInstructions ) );
+				this.callbacks.parse.onLoad( this.loader.parse( this.resourceDescriptorCurrent.content, this.resourceDescriptorCurrent.parserInstructions ) );
 
 			}
 
@@ -530,15 +548,12 @@ THREE.WorkerLoader.LoadingTask.prototype = {
  * Encapsulates the configuration for a complete {@link THREE.WorkerLoader.LoadingTask}.
  * @constructor
  */
-THREE.WorkerLoader.LoadingTaskConfig = function () {
+THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 	this.loader = {
 		classDef: '',
 		config: {}
 	};
-
-	this.loadingTask = {
-		config: {}
-	};
+	this.config = THREE.WorkerLoader.Validator.verifyInput( loadingTaskConfig, {} );
 	this.resourceDescriptors = [];
 
 	this.callbacks = {
@@ -570,16 +585,6 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	setLoaderConfig: function ( loaderClassDef, loaderConfig ) {
 		this.loader.classDef = THREE.WorkerLoader.Validator.verifyInput( loaderClassDef, this.loader.classDef );
 		this.loader.config = THREE.WorkerLoader.Validator.verifyInput( loaderConfig, this.loader.config );
-		return this;
-	},
-
-	/**
-	 *
-	 * @param {Object} loadingTaskConfig
-	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
-	 */
-	setLoadingTaskConfig: function ( loadingTaskConfig ) {
-		this.loadingTask.config = loadingTaskConfig;
 		return this;
 	},
 
