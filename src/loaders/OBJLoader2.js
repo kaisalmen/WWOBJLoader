@@ -1370,19 +1370,31 @@ THREE.OBJLoader2 = (function () {
 			mtlLoader.setPath( resource.path );
 			if ( Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
 
+			var parseTextWithMtlLoader = function ( content ) {
+				var contentAsText = content;
+				if ( typeof( content ) !== 'string' && ! ( content instanceof String ) ) {
+
+					if ( content.length > 0 || content.byteLength > 0 ) {
+
+						contentAsText = THREE.LoaderUtils.decodeText( content );
+
+					} else {
+
+						throw 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
+					}
+
+				}
+				processMaterials( mtlLoader.parse( contentAsText ) );
+			};
+
 			if ( Validator.isValid( resource.content ) ) {
 
-				processMaterials( Validator.isValid( resource.content ) ? mtlLoader.parse( resource.content ) : null );
+				parseTextWithMtlLoader( resource.content );
 
 			} else if ( Validator.isValid( resource.url ) ) {
 
 				var fileLoader = new THREE.FileLoader( this.manager );
-				fileLoader.load( resource.url, function ( text ) {
-
-					resource.content = text;
-					processMaterials( mtlLoader.parse( text ) );
-
-				}, this._onProgress, this._onError );
+				fileLoader.load( resource.url, parseTextWithMtlLoader, this._onProgress, this._onError );
 
 			}
 		}
