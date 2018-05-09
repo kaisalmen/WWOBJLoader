@@ -188,7 +188,7 @@
 
 			var prepData = new THREE.LoaderSupport.PrepData( 'Issue14' );
 			var pivot = new THREE.Object3D();
-			pivot.position.set( -325, 0, 0 );
+			pivot.position.set( -400, 0, 0 );
 			var scale = 5.0;
 			pivot.scale.set( scale, scale, scale );
 			prepData.streamMeshesTo = pivot;
@@ -197,6 +197,16 @@
 			app.updateAssets( prepData );
 
 
+			prepData = new THREE.LoaderSupport.PrepData( 'Issue14032' );
+			pivot = new THREE.Object3D();
+			pivot.position.set( -325, 50, 0 );
+			app.scene.add( pivot );
+			prepData.streamMeshesTo = pivot;
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14032/union.obj', 'OBJ' ) );
+			prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/14032/union.mtl', 'MTL' ) );
+			app.updateAssets( prepData );
+
+			
 			prepData = new THREE.LoaderSupport.PrepData( 'Issue21' );
 			pivot = new THREE.Object3D();
 			pivot.position.set( -225, 0, 0 );
