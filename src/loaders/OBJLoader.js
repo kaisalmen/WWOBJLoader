@@ -922,7 +922,7 @@ THREE.OBJLoader.Parser.prototype = {
 			vertices.push( scope.vertices[ indexPointerV ++ ] );
 			vertices.push( scope.vertices[ indexPointerV ] );
 
-			var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
+			var indexPointerC = scope.colors.length > 0 ? indexPointerV + 1 : null;
 			if ( indexPointerC !== null ) {
 
 				var colors = subGroupInUse.colors;
