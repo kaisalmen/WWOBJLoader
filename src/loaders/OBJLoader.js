@@ -383,7 +383,20 @@ THREE.OBJLoader.prototype = {
 			if ( this.validator.isValid( parserInstructions.texturePath ) ) mtlLoader.setPath( parserInstructions.texturePath );
 			if ( this.validator.isValid( parserInstructions.materialOptions ) ) mtlLoader.setMaterialOptions( parserInstructions.materialOptions );
 
-			mtlParseResult.materialCreator = mtlLoader.parse( content );
+			var contentAsText = content;
+			if ( typeof( content ) !== 'string' && ! ( content instanceof String ) ) {
+
+				if ( content.length > 0 || content.byteLength > 0 ) {
+
+					contentAsText = THREE.LoaderUtils.decodeText( content );
+
+				} else {
+
+					throw 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
+				}
+
+			}
+			mtlParseResult.materialCreator = mtlLoader.parse( contentAsText );
 			if ( this.validator.isValid( mtlParseResult.materialCreator ) ) {
 
 				mtlParseResult.materialCreator.preload();
