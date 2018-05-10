@@ -68,7 +68,7 @@ var WWParallels = (function () {
 		this.scene.add( directionalLight2 );
 		this.scene.add( ambientLight );
 
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+		var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
@@ -205,6 +205,7 @@ var WWParallels = (function () {
 		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
 		if ( this.logging.enabled ) console.info( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
 
+		var prepData;
 		var modelPrepDatas = [];
 		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
 		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
@@ -241,7 +242,6 @@ var WWParallels = (function () {
 		var distributionMax = 1000;
 		var modelPrepDataIndex = 0;
 		var modelPrepData;
-		var prepData;
 		var scale;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
