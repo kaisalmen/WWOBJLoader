@@ -255,6 +255,7 @@ THREE.WorkerLoader.LoadingTask = function ( workerLoaderRef, description ) {
 	this.baseObject3d = new THREE.Group();
 	this.instanceNo = 0;
 	this.terminateWorkerOnLoad = true;
+	this.forceWorkerDataCopy = false;
 
 	this.loader = null;
 	this.loaderConfig = {};
@@ -296,6 +297,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		var classDef = this.loadingTaskConfig.loader.classDef;
 		var loader = Object.create( classDef.prototype );
 		classDef.call( loader );
+
+		if ( typeof loader.buildWorkerCode !== 'function' ) throw classDef.name + ' has no function "buildWorkerCode".';
+		if ( typeof loader.execute !== 'function' ) throw classDef.name + ' has no function "execute".';
 
 		this.updateLoader( loader, this.loadingTaskConfig.loader.config )
 			.updateCallbacksParsingAndApp(
@@ -357,6 +361,17 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
+		return this;
+	},
+
+	/**
+	 * Forces all ArrayBuffers to be transferred to worker to be copied.
+	 * @memberOf THREE.WorkerLoader.WorkerSupport
+	 *
+	 * @param {boolean} forceWorkerDataCopy True or false.
+	 */
+	setForceWorkerDataCopy: function ( forceWorkerDataCopy ) {
+		this.forceWorkerDataCopy = forceWorkerDataCopy === true;
 		return this;
 	},
 
@@ -492,6 +507,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	_configureExecute: function () {
 		this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
+		this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 		return this;
 	},
 

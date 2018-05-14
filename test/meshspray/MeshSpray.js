@@ -56,7 +56,7 @@ MeshSpray.Loader.prototype = {
 		}
 	},
 
-	parse: function ( content, parserInstructions ) {
+	execute: function ( content, parserInstructions ) {
 		if ( this.logging.enabled ) console.time( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
 
 		this.meshBuilder.setBaseObject3d( this.baseObject3d );
@@ -335,37 +335,12 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
 */
-		workerLoaderDirector.prepareWorkers( MeshSpray.Loader );
+		workerLoaderDirector.prepareWorkers();
 
-		var prepData;
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
 		for ( var i = 0; i < maxQueueSize; i++ ) {
-			prepData = new THREE.LoaderSupport.PrepData(  );
-
-			var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'Metadata', 'Triangles_' + i );
-			var parserInstructionsMtl = {
-				payloadType: 'text',
-				useAsync: false,
-				haveMtl: true,
-				texturePath: '../../resource/obj/14/',
-				materialOptions: {}
-			};
-			rdMtl.setParserInstructions( parserInstructionsMtl );
-
-			var enqueueForRun = {
-				fileType: 'MeshSpray',
-				resourceDescriptions: {},
-				loaderConfig: {},
-				workerLoaderConfig: {},
-				callbacks: {
-					onLoad: null,
-					onProgress: null,
-					onError: null
-				}
-			}
-
 
 			pivot = new THREE.Object3D();
 			s = 2 * Math.PI * Math.random();
@@ -376,14 +351,19 @@ var MeshSprayApp = (function () {
 			z = r * Math.cos( t );
 			pivot.position.set( x, y, z );
 			this.scene.add( pivot );
-			prepData.baseObject3d = pivot;
-			prepData.setLogging( false, false );
 
-			prepData.quantity = 8192;
-			prepData.dimension = Math.max( Math.random() * 500, 100 );
-			prepData.globalObjectCount = globalObjectCount++;
+			var rdMeshSpray = new THREE.WorkerLoader.ResourceDescriptor( 'Metadata', 'Triangles_' + i );
+			var parserInstructions = {
+				quantity: 8192,
+				dimension: Math.max( Math.random() * 500, 100 ),
+				globalObjectCount: globalObjectCount++
+			};
+			rdMeshSpray.setParserInstructions( parserInstructions );
+			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( { baseObject3d: pivot } )
+				.setLoaderConfig( MeshSpray.Loader )
+				.addResourceDescriptor( rdMeshSpray );
 
-			workerLoaderDirector.enqueueForRun( prepData );
+			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
 		workerLoaderDirector.processQueue();
 

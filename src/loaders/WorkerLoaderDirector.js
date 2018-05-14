@@ -50,7 +50,6 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -64,7 +63,6 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Sets the CORS string to be used.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @param {string} crossOrigin CORS value
 	 * @returns {THREE.WorkerLoader.Director}
@@ -76,7 +74,6 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Forces all ArrayBuffers to be transferred to worker to be copied.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @param {boolean} forceWorkerDataCopy True or false.
 	 * @returns {THREE.WorkerLoader.Director}
@@ -99,7 +96,6 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Returns the maximum length of the instruction queue.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @returns {number}
 	 */
@@ -109,7 +105,6 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Returns the maximum number of workers.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @returns {number}
 	 */
@@ -119,47 +114,36 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
-	 * @param {Object} classDef The loader to be used
-	 * @param {String} fileType Use this instance only for specified file type
+	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig The configuration that should be applied to the loading task
 	 */
-	prepareWorkers: function ( classDef, fileType ) {
-		if ( ! this.validator.isValid( classDef ) ) throw 'Provided invalid classDef: ' + classDef;
-
+	prepareWorkers: function ( loadingTaskConfig ) {
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
-			var workerLoader = new THREE.WorkerLoader()
-				.setLogging( this.logging.enabled, this.logging.debug )
-				.setInstanceNo( instanceNo );
-			workerLoader.getWorkerSupport().setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
-			this.workerDescription.workerLoaders[ instanceNo ] = {
+			var supportDesc = {
+				instanceNo: instanceNo,
 				inUse: false,
-				terminateRequested: false,
-				fileType: fileType,
-				classDef: classDef,
-				workerLoader: workerLoader
+				loadingTaskConfig: null
 			};
+			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 
 		}
 	},
 
 	/**
 	 * Store run instructions in internal instructionQueue.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
-	 * @param {THREE.WorkerLoader.PrepData} prepData
+	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig
 	 */
-	enqueueForRun: function ( prepData ) {
+	enqueueForRun: function ( loadingTaskConfig ) {
 		if ( this.instructionQueue.length < this.maxQueueSize ) {
-			this.instructionQueue.push( prepData );
+			this.instructionQueue.push( loadingTaskConfig );
 		}
 	},
 
 	/**
 	 * Returns if any workers are running.
 	 *
-	 * @memberOf THREE.WorkerLoader.Director
 	 * @returns {boolean}
 	 */
 	isRunning: function () {
@@ -169,10 +153,9 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Process the instructionQueue until it is depleted.
-	 * @memberOf THREE.WorkerLoader.Director
 	 */
 	processQueue: function () {
-		var prepData, supportDesc;
+		var loadingTaskConfig, supportDesc;
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
 			supportDesc = this.workerDescription.workerLoaders[ instanceNo ];
@@ -180,8 +163,9 @@ THREE.WorkerLoader.Director.prototype = {
 
 				if ( this.instructionQueuePointer < this.instructionQueue.length ) {
 
-					prepData = this.instructionQueue[ this.instructionQueuePointer ];
-					this._kickWorkerRun( prepData, supportDesc );
+					loadingTaskConfig = this.instructionQueue[ this.instructionQueuePointer ];
+
+					this._kickWorkerRun( loadingTaskConfig, supportDesc );
 					this.instructionQueuePointer ++;
 
 				} else {
@@ -202,81 +186,64 @@ THREE.WorkerLoader.Director.prototype = {
 		}
 	},
 
-	_kickWorkerRun: function ( prepData, supportDesc ) {
+	_kickWorkerRun: function ( loadingTaskConfig, supportDesc ) {
 		supportDesc.inUse = true;
-		supportDesc.workerLoader.getWorkerSupport().setTerminateRequested( supportDesc.terminateRequested );
+		loadingTaskConfig.config.instanceNo = supportDesc.instanceNo;
+		loadingTaskConfig.config.terminateWorkerOnLoad = false;
 
 		if ( this.logging.enabled ) console.info( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
 		var scope = this;
-		var prepDataCallbacks = prepData.getCallbacks();
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var wrapperOnLoad = function ( event ) {
 			if ( scope.validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
-			if ( scope.validator.isValid( prepDataCallbacks.onLoad ) ) prepDataCallbacks.onLoad( event );
+			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onLoad ) ) loadingTaskConfig.callbacks.parse.onLoad( event );
 			scope.objectsCompleted ++;
 			supportDesc.inUse = false;
 
 			scope.processQueue();
 		};
 
-		var wrapperOnProgress = function ( event ) {
-			if ( scope.validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
-			if ( scope.validator.isValid( prepDataCallbacks.onProgress ) ) prepDataCallbacks.onProgress( event );
-		};
-
 		var wrapperOnMeshAlter = function ( event, override ) {
 			if ( scope.validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
-			if ( scope.validator.isValid( prepDataCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
+			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMeshAlter ) ) override = loadingTaskConfig.callbacks.parse.onMeshAlter( event, override );
 			return override;
 		};
 
 		var wrapperOnLoadMaterials = function ( materials ) {
 			if ( scope.validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
-			if ( scope.validator.isValid( prepDataCallbacks.onLoadMaterials ) ) materials = prepDataCallbacks.onLoadMaterials( materials );
+			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMaterials ) ) materials = loadingTaskConfig.callbacks.parse.onMaterials( materials );
 			return materials;
 		};
 
-		this._buildLoader( supportDesc );
+		var wrapperOnReport = function ( event ) {
+			if ( scope.validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
+			if ( scope.validator.isValid( loadingTaskConfig.callbacks.app.onReport ) ) loadingTaskConfig.callbacks.app.onReport( event );
+		};
 
-		var updatedCallbacks = new THREE.WorkerLoader.Callbacks();
-		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
-		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
-		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
-		updatedCallbacks.setCallbackOnLoadMaterials( wrapperOnLoadMaterials );
-		prepData.callbacks = updatedCallbacks;
 
-		supportDesc.loader.run( prepData, supportDesc.workerLoader.getWorkerSupport() );
-	},
+		loadingTaskConfig.callbacks.parse.onLoad = wrapperOnLoad;
+		loadingTaskConfig.callbacks.parse.onMeshAlter = wrapperOnMeshAlter;
+		loadingTaskConfig.callbacks.parse.onLoadMaterials = wrapperOnLoadMaterials;
+		loadingTaskConfig.callbacks.app.onReport = wrapperOnReport;
 
-	_buildLoader: function ( supportDesc ) {
-		// create loader instance from given prototype
-		var classDef = supportDesc.classDef;
-		var loader = Object.create( classDef.prototype );
-		classDef.call( loader, THREE.DefaultLoadingManager );
-
-		if ( typeof loader.buildWorkerCode !== 'function' ) throw classDef.name + ' has no function "buildWorkerCode".';
-		if ( typeof loader.execute !== 'function' ) throw classDef.name + ' has no function "execute".';
-
-		supportDesc.workerLoader.updateLoader( loader );
+		new THREE.WorkerLoader().execute( loadingTaskConfig );
 	},
 
 	_deregister: function ( supportDesc ) {
 		if ( this.validator.isValid( supportDesc ) ) {
 
-			supportDesc.workerLoader.getWorkerSupport().setTerminateRequested( true );
+			supportDesc.loadingTaskConfig.terminateWorkerOnLoad = true;
 			if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
 
-			var loaderCallbacks = supportDesc.loader.callbacks;
-			if ( this.validator.isValid( loaderCallbacks.onProgress ) ) loaderCallbacks.onProgress( { detail: { text: '' } } );
-			delete this.workerDescription.workerLoaders[ supportDesc.workerLoader.instanceNo ];
+			if ( this.validator.isValid( loadingTaskConfig.callbacks.app.onReport ) ) loadingTaskConfig.callbacks.app.onReport( { detail: { text: '' } } );
+			delete this.workerDescription.workerLoaders[ supportDesc.instanceNo ];
 
 		}
 	},
 
 	/**
 	 * Terminate all workers.
-	 * @memberOf THREE.WorkerLoader.Director
 	 *
 	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */
@@ -288,7 +255,8 @@ THREE.WorkerLoader.Director.prototype = {
 
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
-			this.workerDescription.workerLoaders[ instanceNo ].terminateRequested = true;
+			var supportDesc = this.workerDescription.workerLoaders[ instanceNo ];
+			supportDesc.loadingTaskConfig.terminateWorkerOnLoad = true;
 
 		}
 	}
