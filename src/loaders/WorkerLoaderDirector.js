@@ -197,7 +197,7 @@ THREE.WorkerLoader.Director.prototype = {
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var wrapperOnLoad = function ( event ) {
 			if ( scope.validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
-			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onLoad ) ) loadingTaskConfig.callbacks.parse.onLoad( event );
+//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onLoad ) ) loadingTaskConfig.callbacks.parse.onLoad( event );
 			scope.objectsCompleted ++;
 			supportDesc.inUse = false;
 
@@ -206,19 +206,19 @@ THREE.WorkerLoader.Director.prototype = {
 
 		var wrapperOnMeshAlter = function ( event, override ) {
 			if ( scope.validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
-			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMeshAlter ) ) override = loadingTaskConfig.callbacks.parse.onMeshAlter( event, override );
+//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMeshAlter ) ) override = loadingTaskConfig.callbacks.parse.onMeshAlter( event, override );
 			return override;
 		};
 
 		var wrapperOnLoadMaterials = function ( materials ) {
 			if ( scope.validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
-			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMaterials ) ) materials = loadingTaskConfig.callbacks.parse.onMaterials( materials );
+//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMaterials ) ) materials = loadingTaskConfig.callbacks.parse.onMaterials( materials );
 			return materials;
 		};
 
 		var wrapperOnReport = function ( event ) {
 			if ( scope.validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
-			if ( scope.validator.isValid( loadingTaskConfig.callbacks.app.onReport ) ) loadingTaskConfig.callbacks.app.onReport( event );
+//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.app.onReport ) ) loadingTaskConfig.callbacks.app.onReport( event );
 		};
 
 

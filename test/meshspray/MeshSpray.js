@@ -44,6 +44,7 @@ MeshSpray.Loader.prototype = {
 		workerCode += '  * This code was constructed by MeshSpray.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
 		workerCode += 'THREE.LoaderSupport = {};\n\n';
+		workerCode += 'MeshSpray = {};\n\n';
 		workerCode += codeSerializer.serializeSingleton( 'MeshSpray.Parser', MeshSpray.Parser );
 
 		return {
@@ -94,7 +95,7 @@ MeshSpray.Parser = ( function () {
 		this.dimension = 200;
 		this.quantity = 1;
 		this.callbackMeshBuilder = null;
-		this.serializedMaterials = null;
+		this.serializedMaterials = [];
 		this.logging = {
 			enabled: true,
 			debug: false
@@ -359,16 +360,17 @@ var MeshSprayApp = (function () {
 				globalObjectCount: globalObjectCount++
 			};
 			rdMeshSpray.setParserInstructions( parserInstructions );
-			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( { baseObject3d: pivot } )
+			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+					baseObject3d: pivot,
+					sendMaterials: true,
+					sendMaterialsJson: true
+				} )
 				.setLoaderConfig( MeshSpray.Loader )
 				.addResourceDescriptor( rdMeshSpray );
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
 		workerLoaderDirector.processQueue();
-
-		var meshSpray = new MeshSpray.Loader();
-		this.pivot.add( meshSpray.parse( null, { quantity: 8192 } ) );
 	};
 
 	MeshSprayApp.prototype.resizeDisplayGL = function () {
