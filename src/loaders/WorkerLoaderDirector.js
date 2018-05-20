@@ -28,7 +28,12 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 	this.crossOrigin = null;
 
 	this.workerDescription = {
-		globalCallbacks: {},
+		globalCallbacks: {
+			onLoad: null,
+			onMesh: null,
+			onMaterials: null,
+			onProgress: null
+		},
 		workerLoaders: {},
 		forceWorkerDataCopy: true
 	};
@@ -117,13 +122,13 @@ THREE.WorkerLoader.Director.prototype = {
 	 *
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig The configuration that should be applied to the loading task
 	 */
-	prepareWorkers: function ( loadingTaskConfig ) {
+	prepareWorkers: function () {
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
 			var supportDesc = {
 				instanceNo: instanceNo,
 				inUse: false,
-				loadingTaskConfig: null
+				workerLoader: new THREE.WorkerLoader( null, null, null, false )
 			};
 			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 
@@ -136,8 +141,14 @@ THREE.WorkerLoader.Director.prototype = {
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig
 	 */
 	enqueueForRun: function ( loadingTaskConfig ) {
-		if ( this.instructionQueue.length < this.maxQueueSize ) {
-			this.instructionQueue.push( loadingTaskConfig );
+		var overallNo = this.instructionQueue.length;
+		var loadingTask;
+		if ( overallNo < this.maxQueueSize ) {
+
+			loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader.Director.No' + overallNo )
+				.applyConfig( loadingTaskConfig );
+			this.instructionQueue.push( loadingTask );
+
 		}
 	},
 
@@ -154,8 +165,8 @@ THREE.WorkerLoader.Director.prototype = {
 	/**
 	 * Process the instructionQueue until it is depleted.
 	 */
-	processQueue: function () {
-		var loadingTaskConfig, supportDesc;
+	processQueue: function ( oldLoadingTask ) {
+		var loadingTask, supportDesc;
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
 			supportDesc = this.workerDescription.workerLoaders[ instanceNo ];
@@ -163,9 +174,9 @@ THREE.WorkerLoader.Director.prototype = {
 
 				if ( this.instructionQueuePointer < this.instructionQueue.length ) {
 
-					loadingTaskConfig = this.instructionQueue[ this.instructionQueuePointer ];
+					loadingTask = this.instructionQueue[ this.instructionQueuePointer ];
 
-					this._kickWorkerRun( loadingTaskConfig, supportDesc );
+					this._kickWorkerRun( loadingTask, oldLoadingTask, supportDesc );
 					this.instructionQueuePointer ++;
 
 				} else {
@@ -186,48 +197,50 @@ THREE.WorkerLoader.Director.prototype = {
 		}
 	},
 
-	_kickWorkerRun: function ( loadingTaskConfig, supportDesc ) {
+	_kickWorkerRun: function ( loadingTask, oldLoadingTask, supportDesc ) {
 		supportDesc.inUse = true;
-		loadingTaskConfig.config.instanceNo = supportDesc.instanceNo;
-		loadingTaskConfig.config.terminateWorkerOnLoad = false;
-
 		if ( this.logging.enabled ) console.info( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
 		var scope = this;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
+		var orgTaskOnLoad = loadingTask.callbacks.parse.onLoad;
 		var wrapperOnLoad = function ( event ) {
 			if ( scope.validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
-//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onLoad ) ) loadingTaskConfig.callbacks.parse.onLoad( event );
-			scope.objectsCompleted ++;
+			if ( scope.validator.isValid( orgTaskOnLoad ) ) orgTaskOnLoad( event );
+			scope.objectsCompleted++;
 			supportDesc.inUse = false;
 
-			scope.processQueue();
+			scope.processQueue( loadingTask );
 		};
 
-		var wrapperOnMeshAlter = function ( event, override ) {
-			if ( scope.validator.isValid( globalCallbacks.onMeshAlter ) ) override = globalCallbacks.onMeshAlter( event, override );
-//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMeshAlter ) ) override = loadingTaskConfig.callbacks.parse.onMeshAlter( event, override );
+		var orgTaskOnMesh = loadingTask.callbacks.parse.onMesh;
+		var wrapperOnMesh = function ( event, override ) {
+			if ( scope.validator.isValid( globalCallbacks.onMesh ) ) override = globalCallbacks.onMesh( event, override );
+			if ( scope.validator.isValid( orgTaskOnMesh ) ) override = orgTaskOnMesh( event, override );
 			return override;
 		};
 
+		var orgTaskOnMaterials = loadingTask.callbacks.parse.onMaterials;
 		var wrapperOnLoadMaterials = function ( materials ) {
-			if ( scope.validator.isValid( globalCallbacks.onLoadMaterials ) ) materials = globalCallbacks.onLoadMaterials( materials );
-//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.parse.onMaterials ) ) materials = loadingTaskConfig.callbacks.parse.onMaterials( materials );
+			if ( scope.validator.isValid( globalCallbacks.onMaterials ) ) materials = globalCallbacks.onMaterials( materials );
+			if ( scope.validator.isValid( orgTaskOnMaterials ) ) materials = orgTaskOnMaterials( materials );
 			return materials;
 		};
 
+		var orgTaskOnProgress = loadingTask.callbacks.parse.onProgress;
 		var wrapperOnReport = function ( event ) {
 			if ( scope.validator.isValid( globalCallbacks.onProgress ) ) globalCallbacks.onProgress( event );
-//			if ( scope.validator.isValid( loadingTaskConfig.callbacks.app.onReport ) ) loadingTaskConfig.callbacks.app.onReport( event );
+			if ( scope.validator.isValid( orgTaskOnProgress ) ) orgTaskOnProgress( event );
 		};
 
-
-		loadingTaskConfig.callbacks.parse.onLoad = wrapperOnLoad;
-		loadingTaskConfig.callbacks.parse.onMeshAlter = wrapperOnMeshAlter;
-		loadingTaskConfig.callbacks.parse.onLoadMaterials = wrapperOnLoadMaterials;
-		loadingTaskConfig.callbacks.app.onReport = wrapperOnReport;
-
-		new THREE.WorkerLoader().execute( loadingTaskConfig );
+		var workerSupport = scope.validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
+		loadingTask
+			.updateCallbacksParsingAndApp( wrapperOnLoad, wrapperOnMesh, wrapperOnLoadMaterials, wrapperOnReport )
+			.setInstanceNo( supportDesc.instanceNo )
+			.setTerminateWorkerOnLoad( false )
+			.setWorkerLoaderRef( supportDesc.workerLoader )
+			._configureExecute( workerSupport )
+			._processQueue( 0 );
 	},
 
 	_deregister: function ( supportDesc ) {

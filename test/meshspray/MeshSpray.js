@@ -336,8 +336,6 @@ var MeshSprayApp = (function () {
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnProgress( reportProgress );
 */
-		workerLoaderDirector.prepareWorkers();
-
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
@@ -370,6 +368,7 @@ var MeshSprayApp = (function () {
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
+		workerLoaderDirector.prepareWorkers();
 		workerLoaderDirector.processQueue();
 	};
 
