@@ -55,33 +55,6 @@ MeshSpray.Loader.prototype = {
 				path: '../../'
 			}
 		}
-	},
-
-	execute: function ( content, parserInstructions ) {
-		if ( this.logging.enabled ) console.time( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
-
-		this.meshBuilder.setBaseObject3d( this.baseObject3d );
-		this.meshBuilder.createDefaultMaterials();
-
-		var parser = new MeshSpray.Parser();
-		parser.setLogging( this.logging.enabled, this.logging.debug );
-		parser.setSerializedMaterials( this.meshBuilder.getMaterialsJSON() );
-		THREE.WorkerLoader.prototype._applyConfiguration( parser, parserInstructions );
-
-		var scope = this;
-		var onMeshLoaded = function ( payload ) {
-			var meshes = scope.meshBuilder.processPayload( payload );
-			var mesh;
-			for ( var i in meshes ) {
-				mesh = meshes[ i ];
-				scope.baseObject3d.add( mesh );
-			}
-		};
-		parser.setCallbackMeshBuilder( onMeshLoaded );
-		parser.parse();
-
-		if ( this.logging.enabled ) console.timeEnd( 'MeshSpray parse [' + this.instanceNo + '] : ' + this.modelName );
-		return this.baseObject3d;
 	}
 };
 
@@ -312,16 +285,16 @@ var MeshSprayApp = (function () {
 		var workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
 			.setLogging( false, false )
 			.setCrossOrigin( 'anonymous' );
-		/*
+
 		var callbackOnLoad = function ( event ) {
 			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerLoaderDirector.objectsCompleted + ')' );
 		};
-		var reportProgress = function( event ) {
+		var callbackOnReport = function( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
 			console.info( event.detail.text );
 		};
-		var callbackMeshAlter = function ( event ) {
-			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
+		var callbackOnMesh = function ( event ) {
+			var override = new THREE.OBJLoader.LoadedMeshUserOverride( false, true );
 
 			event.detail.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
@@ -331,11 +304,6 @@ var MeshSprayApp = (function () {
 			return override;
 		};
 
-		var callbacks = new THREE.LoaderSupport.Callbacks();
-		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
-		callbacks.setCallbackOnLoad( callbackOnLoad );
-		callbacks.setCallbackOnProgress( reportProgress );
-*/
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
@@ -364,7 +332,9 @@ var MeshSprayApp = (function () {
 					sendMaterialsJson: true
 				} )
 				.setLoaderConfig( MeshSpray.Loader )
-				.addResourceDescriptor( rdMeshSpray );
+				.addResourceDescriptor( rdMeshSpray )
+				.setCallbacksParsingAndApp( callbackOnLoad, callbackOnMesh, null, callbackOnReport );
+
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}

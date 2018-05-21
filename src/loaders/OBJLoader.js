@@ -1515,7 +1515,7 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 					}
 				}
 			);
-			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
+			if ( this.validator.isValid( callbackOnMeshAlterResult ) ) {
 
 				if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
 
@@ -1556,7 +1556,7 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 		}
 
-		var progressMessage;
+		var progressMessage = meshPayload.params.meshName;
 		if ( this.validator.isValid( meshes ) && meshes.length > 0 ) {
 
 			var meshNames = [];
@@ -1566,27 +1566,19 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 				meshNames[ i ] = mesh.name;
 
 			}
-			progressMessage = 'Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
-			progressMessage += ' (' + (meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+			progressMessage += ': Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
 
 		} else {
 
-			progressMessage = 'Not adding mesh: ' + meshName;
-			progressMessage += ' (' + (meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+			progressMessage += ': Not adding mesh: ' + meshName;
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
 
 		}
 		var callbackOnParseProgress = this.callbacks.onParseProgress;
 		if ( this.validator.isValid( callbackOnParseProgress ) ) {
 
-			var event = new CustomEvent( 'MeshBuilderEvent', {
-				detail: {
-					type: 'progress',
-					modelName: meshPayload.params.meshName,
-					text: progressMessage,
-					numericalValue: meshPayload.progress.numericalValue
-				}
-			} );
-			callbackOnParseProgress( event );
+			callbackOnParseProgress( 'progress', progressMessage, meshPayload.progress.numericalValue );
 
 		}
 

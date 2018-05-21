@@ -15,7 +15,7 @@ THREE.WorkerLoader = function ( manager, loader, loaderConfig, disableDefaultLoa
 
 	if ( ! disableDefaultLoadingTask ) {
 
-		this.defaultLoadingTask = new THREE.WorkerLoader.LoadingTask( 'default' )
+		this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'default' )
 			.setWorkerLoaderRef( this )
 			.updateLoader( loader, loaderConfig );
 
@@ -36,7 +36,7 @@ THREE.WorkerLoader.prototype = {
 	 * @returns {THREE.WorkerLoader}
 	 */
 	setLogging: function ( enabled, debug ) {
-		this.defaultLoadingTask.setLogging( enabled, debug );
+		this.loadingTask.setLogging( enabled, debug );
 		return this;
 	},
 
@@ -46,7 +46,7 @@ THREE.WorkerLoader.prototype = {
 	 * @returns {THREE.WorkerLoader}
 	 */
 	setBaseObject3d: function ( baseObject3d ) {
-		this.defaultLoadingTask.setBaseObject3d( baseObject3d );
+		this.loadingTask.setBaseObject3d( baseObject3d );
 		return this;
 	},
 
@@ -56,7 +56,7 @@ THREE.WorkerLoader.prototype = {
 	 * @returns {THREE.WorkerLoader}
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
-		this.defaultLoadingTask.setTerminateWorkerOnLoad( terminateWorkerOnLoad );
+		this.loadingTask.setTerminateWorkerOnLoad( terminateWorkerOnLoad );
 		return this;
 	},
 
@@ -65,7 +65,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param callbackReport
 	 */
 	setCallbackReport: function ( callbackReport ) {
-		this.defaultLoadingTask.updateCallbacksParsingAndApp( null, null, null, callbackReport );
+		this.loadingTask.updateCallbacksParsingAndApp( null, null, null, callbackReport );
 	},
 
 	/**
@@ -75,7 +75,7 @@ THREE.WorkerLoader.prototype = {
 	 * @returns {THREE.WorkerLoader}
 	 */
 	updateLoader: function ( loader, loaderConfig ) {
-		if ( loader !== undefined && loader !== null ) this.defaultLoadingTask.updateLoader( loader, loaderConfig );
+		if ( loader !== undefined && loader !== null ) this.loadingTask.updateLoader( loader, loaderConfig );
 		return this;
 	},
 
@@ -90,7 +90,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
 	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
-		this.defaultLoadingTask.resetResourceDescriptors()
+		this.loadingTask.resetResourceDescriptors()
 			.addResourceDescriptor( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) )
 			.updateCallbacksParsingAndApp( onLoad, onMesh )
 			.updateCallbacksFileLoading( onProgress, onError )
@@ -110,7 +110,7 @@ THREE.WorkerLoader.prototype = {
 		var resourceDescriptor = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', null, content );
 		resourceDescriptor.setParserInstructions( parserInstructions );
 
-		this.defaultLoadingTask.resetResourceDescriptors()
+		this.loadingTask.resetResourceDescriptors()
 			.addResourceDescriptor( resourceDescriptor )
 			.updateCallbacksParsingAndApp( onLoad, onMesh )
 			._configureExecute()
@@ -129,7 +129,7 @@ THREE.WorkerLoader.prototype = {
 			throw 'Unable to run "executeWithOverride" without proper "loader"!';
 
 		}
-		if ( loadingTask.loader.modelName !== undefined || loadingTask.loader.modelName !== null ) {
+		if ( loadingTask.loader.modelName !== undefined && loadingTask.loader.modelName !== null ) {
 
 			resourceDescriptor.name = loadingTask.loader.modelName;
 
@@ -217,7 +217,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param {THREE.WorkerLoader.WorkerSupport} workerSupportReuse
 	 */
 	execute: function ( loadingTaskConfig ) {
-		new THREE.WorkerLoader.LoadingTask( 'execute_loading_task' )
+		this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'execute_loading_task' )
 			.setWorkerLoaderRef( this )
 			.applyConfig( loadingTaskConfig )
 			._configureExecute()
@@ -365,7 +365,13 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		return this;
 	},
 
-	applyConfig: function ( loadingTaskConfig ) {
+	/**
+	 *
+	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig
+	 * @param {boolean} ignoreCallbacks
+	 * @returns {THREE.WorkerLoader.LoadingTask}
+	 */
+	applyConfig: function ( loadingTaskConfig, ignoreCallbacks ) {
 		this.loadingTaskConfig = THREE.WorkerLoader.Validator.verifyInput( loadingTaskConfig, null);
 		if ( this.loadingTaskConfig !== null ) THREE.WorkerLoader.prototype._applyConfiguration( this, this.loadingTaskConfig.config );
 
@@ -374,21 +380,25 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		classDef.call( loader );
 
 		if ( typeof loader.buildWorkerCode !== 'function' ) throw classDef.name + ' has no function "buildWorkerCode".';
-		if ( typeof loader.execute !== 'function' ) throw classDef.name + ' has no function "execute".';
+		this
+			.updateLoader( loader, this.loadingTaskConfig.loader.config )
+			.resetResourceDescriptors( this.loadingTaskConfig.resourceDescriptors );
 
-		this.updateLoader( loader, this.loadingTaskConfig.loader.config )
-		.updateCallbacksParsingAndApp(
-			this.loadingTaskConfig.callbacks.parse.onLoad,
-			this.loadingTaskConfig.callbacks.parse.onMesh,
-			this.loadingTaskConfig.callbacks.parse.onMaterials,
-			this.loadingTaskConfig.callbacks.app.onReport
-		)
-		.updateCallbacksFileLoading(
-			this.loadingTaskConfig.callbacks.load.onProgress,
-			this.loadingTaskConfig.callbacks.load.onError
-		)
-		.resetResourceDescriptors( this.loadingTaskConfig.resourceDescriptors );
+		if ( ! ignoreCallbacks ) {
 
+			this
+				.updateCallbacksParsingAndApp(
+					this.loadingTaskConfig.callbacks.parse.onLoad,
+					this.loadingTaskConfig.callbacks.parse.onMesh,
+					this.loadingTaskConfig.callbacks.parse.onMaterials,
+					this.loadingTaskConfig.callbacks.app.onReport
+				)
+				.updateCallbacksFileLoading(
+					this.loadingTaskConfig.callbacks.load.onProgress,
+					this.loadingTaskConfig.callbacks.load.onError
+				);
+
+		}
 		return this;
 	},
 
@@ -679,13 +689,13 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
  *
  * @param {String} resourceType
  * @param {String} name
- * @param {Object} content
+ * @param {Object} [content]
  * @constructor
  */
 THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.resourceType = resourceType;
-	this.content = content;
+	this.content = ( content !== undefined && content !== null ) ? content : null;
 	this.url = null;
 	this.filename = null;
 	this.path = '';
