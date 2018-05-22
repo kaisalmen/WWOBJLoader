@@ -129,7 +129,8 @@ THREE.WorkerLoader.prototype = {
 			throw 'Unable to run "executeWithOverride" without proper "loader"!';
 
 		}
-		if ( loadingTask.loader.modelName !== undefined && loadingTask.loader.modelName !== null ) {
+		var ltModelName = loadingTask.loader.modelName;
+		if ( ltModelName !== undefined && ltModelName !== null && ltModelName.length > 0 ) {
 
 			resourceDescriptor.name = loadingTask.loader.modelName;
 
@@ -652,6 +653,16 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	 */
 	addResourceDescriptor: function ( resourceDescriptor ) {
 		this.resourceDescriptors.push( resourceDescriptor );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param resourceDescriptor
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
+	 */
+	addResourceDescriptors: function ( resourceDescriptors ) {
+		for ( var name in resourceDescriptors ) this.resourceDescriptors.push( resourceDescriptors[ name ] );
 		return this;
 	},
 

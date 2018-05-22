@@ -25,15 +25,10 @@ var WWParallels = (function () {
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-		this.workerDirector = new THREE.LoaderSupport.WorkerDirector( THREE.OBJLoader2 );
 		this.logging = {
 			enabled: false,
 			debug: false
 		};
-		this.workerDirector.setLogging( this.logging.enabled, this.logging.debug );
-		this.workerDirector.setCrossOrigin( 'anonymous' );
-		this.workerDirector.setForceWorkerDataCopy( true );
-
 		this.controls = null;
 		this.cube = null;
 
@@ -128,12 +123,16 @@ var WWParallels = (function () {
 
 		} else {
 
+			this.workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
+				.setLogging( this.logging.enabled, this.logging.debug )
+				.setCrossOrigin( 'anonymous' )
+				.setForceWorkerDataCopy( true );
 			this.running = true;
 
 		}
 
 		var scope = this;
-		scope.workerDirector.objectsCompleted = 0;
+		scope.workerLoaderDirector.objectsCompleted = 0;
 		scope.feedbackArray = [];
 		scope.reportDonwload = [];
 
@@ -151,15 +150,15 @@ var WWParallels = (function () {
 			scope.reportDonwload[ instanceNo ] = false;
 			scope.allAssets.push( event.detail.baseObject3d );
 
-			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerDirector.objectsCompleted + ')';
+			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerLoaderDirector.objectsCompleted + ')';
 			if ( scope.logging.enabled ) console.info( msg );
 			scope.feedbackArray[ instanceNo ] = msg;
 			scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-			if ( scope.workerDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
+			if ( scope.workerLoaderDirector.objectsCompleted + 1 === maxQueueSize ) scope.running = false;
 		};
 
-		var callbackReportProgress = function ( event ) {
+		var callbackOnReport = function ( event ) {
 			var	instanceNo = event.detail.instanceNo;
 			var text = event.detail.text;
 
@@ -172,7 +171,7 @@ var WWParallels = (function () {
 			}
 		};
 
-		var callbackMeshAlter = function ( event, override ) {
+		var callbackOnMesh = function ( event, override ) {
 			if ( ! Validator.isValid( override ) ) override = new THREE.OBJLoader.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
@@ -191,66 +190,91 @@ var WWParallels = (function () {
 			return override;
 		};
 
-		var callbackOnLoadMaterials = function ( materials ) {
+		var callbackOnMaterials = function ( materials ) {
 			console.log( 'Materials loaded' );
 			return materials;
 		};
 
-		var callbacks = new THREE.LoaderSupport.Callbacks();
-		callbacks.setCallbackOnProgress( callbackReportProgress );
-		callbacks.setCallbackOnLoad( callbackOnLoad );
-		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
-		callbacks.setCallbackOnLoadMaterials( callbackOnLoadMaterials );
+		if ( this.logging.enabled ) console.info( 'Configuring WWManager with queue size ' + this.workerLoaderDirector.getMaxQueueSize() + ' and ' + this.workerLoaderDirector.getMaxWebWorkers() + ' workers.' );
 
-		this.workerDirector.prepareWorkers( callbacks, maxQueueSize, maxWebWorkers );
-		if ( this.logging.enabled ) console.info( 'Configuring WWManager with queue size ' + this.workerDirector.getMaxQueueSize() + ' and ' + this.workerDirector.getMaxWebWorkers() + ' workers.' );
+		var prepData, rdMtl;
+		var prepDatas = [];
+		prepData = {
+			name: 'male02',
+			scale: 1.0,
+			resourceDescriptors: []
+		};
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' );
+		var parserInstructionsMtl = {
+			payloadType: 'text',
+			haveMtl: true,
+			texturePath: '../../resource/obj/male02/',
+			materialOptions: {}
+		};
+		rdMtl.setParserInstructions( parserInstructionsMtl );
+		prepData.resourceDescriptors.push( rdMtl );
+		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' ) );
+		prepDatas.push( prepData );
+/*
+		prepData = {
+			name: 'female02',
+			scale: 1.0,
+			resourceDescriptors: []
+		};
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
+		var parserInstructionsMtl = {
+			payloadType: 'text',
+			haveMtl: true,
+			texturePath: '../../resource/obj/female02/',
+			materialOptions: {}
+		};
+		rdMtl.setParserInstructions( parserInstructionsMtl );
+		prepData.resourceDescriptors.push( rdMtl );
+		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' ) );
+		prepDatas.push( prepData );
 
-		var prepData;
-		var modelPrepDatas = [];
-		prepData = new THREE.LoaderSupport.PrepData( 'male02' );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ ') );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-		prepData.setLogging( false, false );
-		modelPrepDatas.push( prepData );
+		prepData = {
+			name: 'viveController',
+			scale: 400.0,
+			resourceDescriptors: []
+		};
+		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' ) );
+		prepDatas.push( prepData );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
-		prepData.setLogging( false, false );
-		modelPrepDatas.push( prepData );
+		prepData = {
+			name: 'cerberus',
+			scale: 50.0,
+			resourceDescriptors: []
+		};
+		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' ) );
+		prepDatas.push( prepData );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'viveController' );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-		prepData.setLogging( false, false );
-		prepData.scale = 400.0;
-		modelPrepDatas.push( prepData );
-
-		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
-		prepData.setLogging( false, false );
-		prepData.scale = 50.0;
-		modelPrepDatas.push( prepData );
-
-		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
-		prepData.setLogging( false, false );
-		modelPrepDatas.push( prepData );
-
+		prepData = {
+			name: 'WaltHead',
+			scale: 1.0,
+			resourceDescriptors: []
+		};
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.mtl', '../../resource/obj/walt/WaltHead.mtl' );
+		var parserInstructionsMtl = {
+			payloadType: 'text',
+			haveMtl: true,
+			texturePath: '../../resource/obj/walt/',
+			materialOptions: {}
+		};
+		rdMtl.setParserInstructions( parserInstructionsMtl );
+		prepData.resourceDescriptors.push( rdMtl );
+		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.obj', '../../resource/obj/walt/WaltHead.obj' ) );
+		prepDatas.push( prepData );
+*/
 		var pivot;
 		var distributionBase = -500;
 		var distributionMax = 1000;
 		var modelPrepDataIndex = 0;
 		var modelPrepData;
-		var scale;
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
-			modelPrepDataIndex = Math.floor( Math.random() * modelPrepDatas.length );
-
-			modelPrepData = modelPrepDatas[ modelPrepDataIndex ];
-			modelPrepData.useAsync = true;
-			scale = Validator.verifyInput( modelPrepData.scale, 0 );
-			modelPrepData = modelPrepData.clone();
+			modelPrepDataIndex = Math.floor( Math.random() * prepDatas.length );
+			modelPrepData = prepDatas[ modelPrepDataIndex ];
 
 			pivot = new THREE.Object3D();
 			pivot.position.set(
@@ -258,13 +282,19 @@ var WWParallels = (function () {
 				distributionBase + distributionMax * Math.random(),
 				distributionBase + distributionMax * Math.random()
 			);
-			if ( scale > 0 ) pivot.scale.set( scale, scale, scale );
+			pivot.scale.set( modelPrepData.scale, modelPrepData.scale, modelPrepData.scale );
 			this.scene.add( pivot );
-			modelPrepData.streamMeshesTo = pivot;
 
-			this.workerDirector.enqueueForRun( modelPrepData );
+			var baseConfig = streamMeshes ? { baseObject3d: pivot } : {};
+			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
+				.setLoaderConfig( THREE.OBJLoader )
+				.addResourceDescriptors( modelPrepData.resourceDescriptors )
+				.setCallbacksParsingAndApp( callbackOnLoad, callbackOnMesh, callbackOnMaterials, callbackOnReport );
+
+			this.workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
-		this.workerDirector.processQueue();
+		this.workerLoaderDirector.prepareWorkers();
+		this.workerLoaderDirector.processQueue();
 	};
 
 	WWParallels.prototype.clearAllAssests = function () {
@@ -308,7 +338,7 @@ var WWParallels = (function () {
 	};
 
 	WWParallels.prototype.terminateManager = function () {
-		this.workerDirector.tearDown();
+		this.workerLoaderDirector.tearDown();
 		this.running = false;
 	};
 
@@ -317,9 +347,9 @@ var WWParallels = (function () {
 		var scopedClearAllAssests = function (){
 			scope.clearAllAssests();
 		};
-		if ( this.workerDirector.isRunning() ) {
+		if ( this.workerLoaderDirector.isRunning() ) {
 
-			this.workerDirector.tearDown( scopedClearAllAssests );
+			this.workerLoaderDirector.tearDown( scopedClearAllAssests );
 
 		} else {
 

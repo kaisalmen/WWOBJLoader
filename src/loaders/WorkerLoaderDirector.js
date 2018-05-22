@@ -20,6 +20,8 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 		debug: false
 	};
 
+	maxQueueSize = THREE.WorkerLoader.Validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
+	maxWebWorkers = THREE.WorkerLoader.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 	this.maxQueueSize = Math.min( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
 	this.maxWebWorkers = Math.min( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 	this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
@@ -126,7 +128,7 @@ THREE.WorkerLoader.Director.prototype = {
 			var supportDesc = {
 				instanceNo: instanceNo,
 				inUse: false,
-				workerLoader: new THREE.WorkerLoader( null, null, null, false )
+				workerLoader: new THREE.WorkerLoader( null, null, null, true )
 			};
 			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 

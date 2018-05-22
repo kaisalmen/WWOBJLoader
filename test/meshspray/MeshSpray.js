@@ -100,7 +100,7 @@ MeshSpray.Parser = ( function () {
 		var fixedOffsetY;
 		var fixedOffsetZ;
 		var s, t;
-		// complete triagle
+		// complete triangle
 		var sizeVaring = this.sizeFactor * Math.random();
 		// local coords offset
 		var localOffsetFactor = this.localOffsetFactor;
@@ -266,7 +266,7 @@ var MeshSprayApp = (function () {
 		var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 		this.scene.add( helper );
 
-		var geometry = new THREE.BoxGeometry( 10, 10, 10 );
+		var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
 		var material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
@@ -278,7 +278,6 @@ var MeshSprayApp = (function () {
 	};
 
 	MeshSprayApp.prototype.initContent = function () {
-
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
