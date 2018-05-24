@@ -224,10 +224,10 @@ THREE.WorkerLoader.Director.prototype = {
 			return materials;
 		};
 
-		var orgTaskOnProgress = loadingTaskConfig.callbacks.app.onReport;
+		var orgTaskOnReport = loadingTaskConfig.callbacks.app.onReport;
 		var wrapperOnReport = function ( event ) {
 			if ( validator.isValid( globalCallbacks.onReport ) ) globalCallbacks.onReport( event );
-			if ( validator.isValid( orgTaskOnProgress ) ) orgTaskOnProgress( event );
+			if ( validator.isValid( orgTaskOnReport ) ) orgTaskOnReport( event );
 		};
 
 		var workerSupport = validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
@@ -238,7 +238,7 @@ THREE.WorkerLoader.Director.prototype = {
 			.setTerminateWorkerOnLoad( false )
 			.setWorkerLoaderRef( supportDesc.workerLoader )
 			._configureExecute( workerSupport )
-			._processQueue( 0 );
+			._processFileLoadingQueue( 0 );
 	},
 
 	_deregister: function ( loadingTask ) {
