@@ -205,23 +205,29 @@ var WWParallels = (function () {
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' );
+		rdMtl.useAsync = false;
 		var parserInstructionsMtl = {
 			payloadType: 'text',
 			haveMtl: true,
 			texturePath: '../../resource/obj/male02/',
 			materialOptions: {}
 		};
-		rdMtl.setParserInstructions( parserInstructionsMtl );
+		var callbackOnProcessResult = function ( objLoader, result ) {
+//			objLoader.setMaterials( result.materials );
+		};
+		rdMtl.setParserInstructions( parserInstructionsMtl )
+			.setCallbackOnProcessResult( callbackOnProcessResult );
 		prepData.resourceDescriptors.push( rdMtl );
 		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' ) );
 		prepDatas.push( prepData );
-/*
+
 		prepData = {
 			name: 'female02',
 			scale: 1.0,
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
+		rdMtl.useAsync = false;
 		var parserInstructionsMtl = {
 			payloadType: 'text',
 			haveMtl: true,
@@ -255,6 +261,7 @@ var WWParallels = (function () {
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.mtl', '../../resource/obj/walt/WaltHead.mtl' );
+		rdMtl.useAsync = false;
 		var parserInstructionsMtl = {
 			payloadType: 'text',
 			haveMtl: true,
@@ -265,7 +272,7 @@ var WWParallels = (function () {
 		prepData.resourceDescriptors.push( rdMtl );
 		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.obj', '../../resource/obj/walt/WaltHead.obj' ) );
 		prepDatas.push( prepData );
-*/
+
 		var pivot;
 		var distributionBase = -500;
 		var distributionMax = 1000;

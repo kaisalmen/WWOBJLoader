@@ -13,6 +13,7 @@ THREE.WorkerLoader = function ( manager, loader, loaderConfig, disableDefaultLoa
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.manager = THREE.WorkerLoader.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 
+	this.loadingTask = null;
 	if ( ! disableDefaultLoadingTask ) {
 
 		this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'default' )
@@ -238,7 +239,6 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.instanceNo = 0;
 	this.terminateWorkerOnLoad = true;
 	this.forceWorkerDataCopy = false;
-	this.dontUseAsync = false;
 
 	this.sendMaterials = true;
 	this.sendMaterialsJson = false;
@@ -247,11 +247,6 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.loaderConfig = {};
 
 	this.resourceDescriptors = [];
-	this.stages = {
-		load: false,
-		parse: false,
-		providedAssets: false
-	};
 	this.resetResourceDescriptors();
 
 	this.callbacks = {
@@ -267,6 +262,9 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 		load: {
 			onProgress: null,
 			onError: null
+		},
+		pipeline: {
+			onComplete: null
 		}
 	};
 };
@@ -338,14 +336,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	setForceWorkerDataCopy: function ( forceWorkerDataCopy ) {
 		this.forceWorkerDataCopy = forceWorkerDataCopy === true;
 		return this;
-	},
-
-	/**
-	 * Force WorkerLoader to work not asynchronously.
-	 * @param {boolean} dontUseAsync
-	 */
-	setDontUseAsync: function ( dontUseAsync ) {
-		this.dontUseAsync = dontUseAsync === true;
 	},
 
 	/**
@@ -429,10 +419,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	resetResourceDescriptors: function ( resourceDescriptors ) {
-		this.resourceDescriptors = Array.isArray( resourceDescriptors ) ? resourceDescriptors : [];
-		this.stages.load = false;
-		this.stages.parse = false;
-		this.stages.providedAssets = false;
+		this.resourceDescriptors = Array.isArray( resourceDescriptors ) ? resourceDescriptors : this.resourceDescriptors;
 		return this;
 	},
 
@@ -587,18 +574,26 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		}
 		var resourceDescriptorCurrent = loadingTask.resourceDescriptors[ index ];
-		if ( loadingTask.dontUseAsync ) {
-
-			loadingTask.baseObject3d.add( loadingTask.loader.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserInstructions ) );
-			index++;
-			loadingTask._executeParseStep( index );
-
-		} else {
+		var result;
+		if ( resourceDescriptorCurrent.useAsync ) {
 
 			var scopedOnLoad = function ( measureTime ) {
 				measureTime = THREE.WorkerLoader.Validator.verifyInput( measureTime, true );
 				if ( measureTime && loadingTask.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + loadingTask.instanceNo + '] : ' + resourceDescriptorCurrent.name );
 
+				result = loadingTask.baseObject3d;
+				var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
+				if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( loadingTask.loader, result );
+/*
+				loadingTask.callbacks.parse.onLoad( {
+					detail: {
+						extension: resourceDescriptorCurrent.extension,
+						result: resourceDescriptorCurrent.result,
+						modelName: resourceDescriptorCurrent.name,
+						instanceNo: loadingTask.instanceNo
+					}
+				} );
+*/
 				index++;
 				loadingTask._executeParseStep( index );
 			};
@@ -608,26 +603,49 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			};
 			loadingTask.workerLoaderRef._parseAsync( loadingTask, resourceDescriptorCurrent, scopedOnLoad, scopedOnMesh );
 
+		} else {
+
+			result = loadingTask.loader.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserInstructions );
+			var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
+			if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( loadingTask.loader, result );
+/*
+			loadingTask.callbacks.parse.onLoad( {
+				detail: {
+					extension: resourceDescriptorCurrent.extension,
+					result: result,
+					modelName: resourceDescriptorCurrent.name,
+					instanceNo: loadingTask.instanceNo
+				}
+			} );
+*/
+			index++;
+			loadingTask._executeParseStep( index );
+
 		}
 	},
 
 	_finalizeParsing: function () {
 		var resourceDescriptorCurrent = this.resourceDescriptors[ this.resourceDescriptors.length - 1 ];
-		if ( this.dontUseAsync ) {
+		if ( resourceDescriptorCurrent.useAsync ) {
 
-			this.callbacks.parse.onLoad( this.baseObject3d );
+			//if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) {
+			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.parse.onLoad ) ) {
 
-		} else {
-
-			this.callbacks.parse.onLoad(
-				{
+//				this.callbacks.pipeline.onComplete( {
+				this.callbacks.parse.onLoad( {
 					detail: {
-						object3d: this.baseObject3d,
+						extension: resourceDescriptorCurrent.extension,
+						object3d: resourceDescriptorCurrent.result,
 						modelName: resourceDescriptorCurrent.name,
 						instanceNo: this.instanceNo
 					}
-				}
-			);
+				} );
+			}
+
+		} else {
+
+			//if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) this.callbacks.pipeline.onComplete( this.baseObject3d );
+			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.parse.onLoad ) ) this.callbacks.parse.onLoad( this.baseObject3d );
 
 		}
 	}
@@ -742,9 +760,11 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.filename = null;
 	this.path = '';
 	this.extension = null;
+	this.useAsync = true;
 	this.parserInstructions = {
 		payloadType: 'arraybuffer'
 	};
+	this.result = null;
 
 	this._init();
 };
@@ -807,6 +827,16 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 	setParserInstructions: function ( parserInstructions ) {
 		THREE.WorkerLoader.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
 		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
+		return this;
+	},
+
+	setCallbackOnProcessResult: function ( callbackOnProcessResult ) {
+		this.callbackOnProcessResult = callbackOnProcessResult;
+		return this;
+	},
+
+	getCallbackOnProcessResult: function ( ) {
+		return this.callbackOnProcessResult;
 	}
 };
 

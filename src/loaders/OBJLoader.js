@@ -400,7 +400,8 @@ THREE.OBJLoader.prototype = {
 			if ( this.validator.isValid( mtlParseResult.materialCreator ) ) {
 
 				mtlParseResult.materialCreator.preload();
-				mtlParseResult.materials = this.setMaterials( mtlParseResult.materialCreator );
+				this.setMaterials( mtlParseResult.materialCreator );
+				mtlParseResult.materials = this.meshBuilder.getMaterials();
 
 			}
 

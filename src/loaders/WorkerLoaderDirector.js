@@ -152,7 +152,7 @@ THREE.WorkerLoader.Director.prototype = {
 	 */
 	isRunning: function () {
 		var wsKeys = Object.keys( this.workerDescription.workerLoaders );
-		return ((this.instructionQueue.length > 0 && this.instructionQueuePointer < this.instructionQueue.length) || wsKeys.length > 0);
+		return ( ( this.instructionQueue.length > 0 && this.instructionQueuePointer < this.instructionQueue.length ) || wsKeys.length > 0 );
 	},
 
 	/**
@@ -231,6 +231,7 @@ THREE.WorkerLoader.Director.prototype = {
 		};
 
 		var workerSupport = validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
+		supportDesc.workerLoader.loadingTask = loadingTask;
 		loadingTask
 			.updateCallbacksParsingAndApp( wrapperOnLoad, wrapperOnMesh, wrapperOnLoadMaterials, wrapperOnReport )
 			.updateCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError )
