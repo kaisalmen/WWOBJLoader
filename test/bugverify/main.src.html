@@ -119,7 +119,8 @@
 
 					console.log( '\n\nloadAssets: Processing next resourceDescriptors' );
 
-					loadingTaskConfig.setCallbacksParsingAndApp( loadAssetsProxy, null, null, this._reportProgress );
+					loadingTaskConfig.setCallbacksPipeline( null, null, loadAssetsProxy )
+						.setCallbacksApp( this._reportProgress );
 					workerLoader.execute( loadingTaskConfig );
 				};
 
@@ -196,18 +197,18 @@
 			var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.mtl', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl' );
 			var parserInstructionsMtl = {
 				payloadType: 'text',
-				useAsync: false,
 				haveMtl: true,
 				texturePath: '../../resource/obj/14/',
 				materialOptions: {}
 			};
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' );
 			var parserInstructionsObj = {
-				payloadType: 'arraybuffer',
-				useAsync: false
+				payloadType: 'arraybuffer'
 			};
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_14', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -223,9 +224,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'union.mtl', '../../resource/obj/14032/union.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/14032/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( { instanceNo:  'issue_14032', baseObject3d: pivot	} )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -243,9 +246,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue21.mtl', '../../resource/obj/21/Table_Photo_Frame_03.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/21/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue21.obj', '../../resource/obj/21/Table_Photo_Frame_03.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_21', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -263,9 +268,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12120.mtl', '../../resource/obj/12120/zjej_abm_f01_out_T005.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/12120/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12120.obj', '../../resource/obj/12120/zjej_abm_f01_out_T005.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_12120', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -281,9 +288,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12324.mtl', '../../resource/obj/12324/rampanueva.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/12324/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue12324.obj', '../../resource/obj/12324/rampanueva.obj');
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_12324', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -301,9 +310,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811a.mtl', '../../resource/obj/11811/3dbpo10518T.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/11811/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811a.obj', '../../resource/obj/11811/3dbpo10518T.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_11811a', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -320,9 +331,11 @@
 			app.scene.add( pivot );
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811b.mtl', '../../resource/obj/11811/3dbts103601T.mtl' );
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue11811b.obj', '../../resource/obj/11811/3dbts103601T.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_11811b', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -340,9 +353,11 @@
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27door.mtl', '../../resource/obj/27/door.mtl' );
 			parserInstructionsMtl.texturePath = '../../resource/obj/27/';
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27door.obj', '../../resource/obj/27/door.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_27_door', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )
@@ -359,9 +374,11 @@
 			app.scene.add( pivot );
 
 			rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27wall2.mtl', '../../resource/obj/27/wall2.mtl' );
-			rdMtl.setParserInstructions( parserInstructionsMtl );
+			rdMtl.setParserInstructions( parserInstructionsMtl )
+				.setUseAsync( false );
 			rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Issue27wall2.obj', '../../resource/obj/27/wall2.obj' );
-			rdObj.setParserInstructions( parserInstructionsObj );
+			rdObj.setParserInstructions( parserInstructionsObj )
+				.setUseAsync( false );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_27_wall2', baseObject3d: pivot } )
 				.setLoaderConfig( THREE.OBJLoader )

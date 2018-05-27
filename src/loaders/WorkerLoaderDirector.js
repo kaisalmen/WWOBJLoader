@@ -233,14 +233,15 @@ THREE.WorkerLoader.Director.prototype = {
 		var workerSupport = validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
 		supportDesc.workerLoader.loadingTask = loadingTask;
 		loadingTask
-			.updateCallbacksParsingAndApp( wrapperOnLoad, wrapperOnMesh, wrapperOnLoadMaterials, wrapperOnReport )
+			.updateCallbacksApp( wrapperOnReport )
+			.updateCallbacksParsing( wrapperOnLoad, wrapperOnMesh, wrapperOnLoadMaterials )
 			.updateCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError )
 			.setInstanceNo( supportDesc.instanceNo )
 			.setTerminateWorkerOnLoad( false )
 			.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy )
 			.setWorkerLoaderRef( supportDesc.workerLoader )
 			._configureExecute( workerSupport )
-			._processFileLoadingQueue( 0 );
+			._executeFileLoadingStep( 0 );
 	},
 
 	_deregister: function ( loadingTask ) {

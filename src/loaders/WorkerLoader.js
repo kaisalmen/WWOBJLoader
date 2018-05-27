@@ -66,7 +66,7 @@ THREE.WorkerLoader.prototype = {
 	 * @param callbackReport
 	 */
 	setCallbackReport: function ( callbackReport ) {
-		this.loadingTask.updateCallbacksParsingAndApp( null, null, null, callbackReport );
+		this.loadingTask.updateCallbacksApp( callbackReport );
 	},
 
 	/**
@@ -86,17 +86,18 @@ THREE.WorkerLoader.prototype = {
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
  	 * @param {function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {function} [onMesh] A function to be called after a new mesh raw data becomes available (e.g. alteration).
 	 */
-	loadAsync: function ( url, onLoad, onProgress, onError, onMesh ) {
+	loadAsync: function ( url, onLoad, onMesh, onProgress, onError ) {
 		this.loadingTask.resetResourceDescriptors()
 			.addResourceDescriptor( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) )
-			.updateCallbacksParsingAndApp( onLoad, onMesh )
+			.updateCallbacksPipeline( null, null, onLoad )
+			.updateCallbacksParsing( onMesh, null )
 			.updateCallbacksFileLoading( onProgress, onError )
 			._configureExecute()
-			._processFileLoadingQueue( 0 );
+			._executeFileLoadingStep( 0 );
 	},
 
 	/**
@@ -113,9 +114,10 @@ THREE.WorkerLoader.prototype = {
 
 		this.loadingTask.resetResourceDescriptors()
 			.addResourceDescriptor( resourceDescriptor )
-			.updateCallbacksParsingAndApp( onLoad, onMesh )
+			.updateCallbacksPipeline( null, null, onLoad )
+			.updateCallbacksParsing( onMesh, null )
 			._configureExecute()
-			._processFileLoadingQueue( 0 );
+			._executeFileLoadingStep( 0 );
 	},
 
 	/**
@@ -197,7 +199,7 @@ THREE.WorkerLoader.prototype = {
 			.setWorkerLoaderRef( this )
 			.applyConfig( loadingTaskConfig )
 			._configureExecute()
-			._processFileLoadingQueue( 0 );
+			._executeFileLoadingStep( 0 );
 	},
 
 	_applyConfiguration: function ( scope, applicableConfiguration, forceCreation ) {
@@ -254,16 +256,16 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 			onReport: null
 		},
 		parse: {
-			onLoad: null,
 			onMesh: null,
-			onMaterials: null,
-			onProgress: null
+			onMaterials: null
 		},
 		load: {
 			onProgress: null,
 			onError: null
 		},
 		pipeline: {
+			onCompleteFileLoading: null,
+			onCompleteParsing: null,
 			onComplete: null
 		}
 	};
@@ -360,15 +362,21 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		if ( ! ignoreCallbacks ) {
 
 			this
-				.updateCallbacksParsingAndApp(
-					this.loadingTaskConfig.callbacks.parse.onLoad,
-					this.loadingTaskConfig.callbacks.parse.onMesh,
-					this.loadingTaskConfig.callbacks.parse.onMaterials,
+				.updateCallbacksApp(
 					this.loadingTaskConfig.callbacks.app.onReport
+				)
+				.updateCallbacksParsing(
+					this.loadingTaskConfig.callbacks.parse.onMesh,
+					this.loadingTaskConfig.callbacks.parse.onMaterials
 				)
 				.updateCallbacksFileLoading(
 					this.loadingTaskConfig.callbacks.load.onProgress,
 					this.loadingTaskConfig.callbacks.load.onError
+				)
+				.updateCallbacksPipeline(
+					this.loadingTaskConfig.callbacks.pipeline.onCompleteFileLoading,
+					this.loadingTaskConfig.callbacks.pipeline.onCompleteParsing,
+					this.loadingTaskConfig.callbacks.pipeline.onComplete
 				);
 
 		}
@@ -425,46 +433,49 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 	/**
 	 *
-	 * @param onLoad
-	 * @param onMesh
-	 * @param onMaterials
-	 * @param onReport
+	 * @param {Function} onMesh
+	 * @param {Function} onMaterials
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
-	updateCallbacksParsingAndApp: function ( onLoad, onMesh, onMaterials, onReport ) {
-		this.callbacks.parse.onLoad = THREE.WorkerLoader.Validator.verifyInput( onLoad, this.callbacks.parse.onLoad );
+	updateCallbacksParsing: function ( onMesh, onMaterials ) {
 		this.callbacks.parse.onMesh = THREE.WorkerLoader.Validator.verifyInput( onMesh, this.callbacks.parse.onMesh );
 		this.callbacks.parse.onMaterials = THREE.WorkerLoader.Validator.verifyInput( onMaterials, this.callbacks.parse.onMaterials );
-		this.callbacks.app.onReport = THREE.WorkerLoader.Validator.verifyInput( onReport, this.callbacks.parse.onReport );
-
-		var scope = this;
-		this.callbacks.parse.onProgress = function ( type, text, numericalValue ) {
-			var content = THREE.WorkerLoader.Validator.isValid( text ) ? text : '';
-			var event = {
-				detail: {
-					type: type,
-					modelName: scope.description,
-					instanceNo: scope.instanceNo,
-					text: content,
-					numericalValue: numericalValue
-				}
-			};
-			if ( THREE.WorkerLoader.Validator.isValid( scope.callbacks.app.onReport ) ) scope.callbacks.app.onReport( event );
-			if ( scope.logging.enabled && scope.logging.debug ) console.debug( content );
-		};
-
 		return this;
 	},
 
 	/**
 	 *
-	 * @param onProgress
-	 * @param onError
+	 * @param {Function} onProgress
+	 * @param {Function} onError
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	updateCallbacksFileLoading: function ( onProgress, onError ) {
 		this.callbacks.load.onProgress = onProgress;
 		this.callbacks.load.onError = onError;
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {Function} onCompleteLoad
+	 * @param {Function} onCompleteParse
+	 * @param {Function} onComplete
+	 * @returns {THREE.WorkerLoader.LoadingTask}
+	 */
+	updateCallbacksPipeline: function ( onCompleteFileLoading, onCompleteParsing, onComplete ) {
+		this.callbacks.pipeline.onCompleteFileLoading = THREE.WorkerLoader.Validator.verifyInput( onCompleteFileLoading, this.callbacks.pipeline.onCompleteFileLoading );
+		this.callbacks.pipeline.onCompleteParsing = THREE.WorkerLoader.Validator.verifyInput( onCompleteParsing, this.callbacks.pipeline.onCompleteParsing );
+		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {Function} onReport
+	 * @returns {THREE.WorkerLoader.LoadingTask}
+	 */
+	updateCallbacksApp: function ( onReport ) {
+		this.callbacks.app.onReport = THREE.WorkerLoader.Validator.verifyInput( onReport, this.callbacks.app.onReport );
 		return this;
 	},
 
@@ -478,7 +489,23 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		this.workerSupport = THREE.WorkerLoader.Validator.verifyInput( workerSupportReuse, new THREE.WorkerLoader.WorkerSupport() );
 		this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
-		this.meshBuilder._setCallbacks( this.callbacks.parse.onProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
+
+		var scope = this;
+		var callbackMeshBuilderProgress = function ( type, text, numericalValue ) {
+			var content = THREE.WorkerLoader.Validator.isValid( text ) ? text : '';
+			var event = {
+				detail: {
+					type: type,
+					modelName: scope.description,
+					instanceNo: scope.instanceNo,
+					text: content,
+					numericalValue: numericalValue
+				}
+			};
+			if ( THREE.WorkerLoader.Validator.isValid( scope.callbacks.app.onReport ) ) scope.callbacks.app.onReport( event );
+			if ( scope.logging.enabled && scope.logging.debug ) console.debug( content );
+		};
+		this.meshBuilder._setCallbacks( callbackMeshBuilderProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
 		this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 		this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
 		this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
@@ -490,11 +517,11 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 * @param index
 	 * @private
 	 */
-	_processFileLoadingQueue: function ( index ) {
+	_executeFileLoadingStep: function ( index ) {
 		var loadingTask = this;
 		if ( index === loadingTask.resourceDescriptors.length ) {
 
-			loadingTask._executeParseStep( 0 );
+			loadingTask._executeParsingStep( 0 );
 			return;
 
 		}
@@ -545,7 +572,12 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			var processResourcesProxy = function ( content ) {
 				loadingTask.resourceDescriptors[ index ].content = content;
 				index ++;
-				loadingTask._processFileLoadingQueue( index );
+				if ( THREE.WorkerLoader.Validator.isValid( loadingTask.callbacks.pipeline.onCompleteFileLoading ) ) {
+
+					loadingTask.callbacks.pipeline.onCompleteFileLoading( content );
+
+				}
+				loadingTask._executeFileLoadingStep( index );
 			};
 
 			var fileLoader = new THREE.FileLoader( loadingTask.manager );
@@ -556,7 +588,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		} else {
 
 			index++;
-			loadingTask._processFileLoadingQueue( index );
+			loadingTask._executeFileLoadingStep( index );
 
 		}
 	},
@@ -565,7 +597,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 *
 	 * @private
 	 */
-	_executeParseStep: function ( index ) {
+	_executeParsingStep: function ( index ) {
 		var loadingTask = this;
 		if ( index === loadingTask.resourceDescriptors.length ) {
 
@@ -585,18 +617,20 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				resourceDescriptorCurrent.setParserResult( result );
 				var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
 				if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
-/*
-				loadingTask.callbacks.parse.onLoad( {
-					detail: {
-						extension: resourceDescriptorCurrent.extension,
-						result: resourceDescriptorCurrent.result,
-						modelName: resourceDescriptorCurrent.name,
-						instanceNo: loadingTask.instanceNo
-					}
-				} );
-*/
+				if ( THREE.WorkerLoader.Validator.isValid( loadingTask.callbacks.pipeline.onCompleteParsing ) ) {
+
+					loadingTask.callbacks.pipeline.onCompleteParsing( {
+						detail: {
+							extension: resourceDescriptorCurrent.extension,
+							result: resourceDescriptorCurrent.result,
+							modelName: resourceDescriptorCurrent.name,
+							instanceNo: loadingTask.instanceNo
+						}
+					} );
+
+				}
 				index++;
-				loadingTask._executeParseStep( index );
+				loadingTask._executeParsingStep( index );
 			};
 
 			var scopedOnMesh = function ( content ) {
@@ -610,18 +644,20 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			resourceDescriptorCurrent.setParserResult( result );
 			var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
 			if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
-/*
-			loadingTask.callbacks.parse.onLoad( {
-				detail: {
-					extension: resourceDescriptorCurrent.extension,
-					result: result,
-					modelName: resourceDescriptorCurrent.name,
-					instanceNo: loadingTask.instanceNo
-				}
-			} );
-*/
+			if ( THREE.WorkerLoader.Validator.isValid( loadingTask.callbacks.pipeline.onCompleteParsing ) ) {
+
+				loadingTask.callbacks.pipeline.onCompleteParsing( {
+					detail: {
+						extension: resourceDescriptorCurrent.extension,
+						result: result,
+						modelName: resourceDescriptorCurrent.name,
+						instanceNo: loadingTask.instanceNo
+					}
+				} );
+
+			}
 			index++;
-			loadingTask._executeParseStep( index );
+			loadingTask._executeParsingStep( index );
 
 		}
 	},
@@ -630,11 +666,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		var resourceDescriptorCurrent = this.resourceDescriptors[ this.resourceDescriptors.length - 1 ];
 		if ( resourceDescriptorCurrent.useAsync ) {
 
-			//if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) {
-			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.parse.onLoad ) ) {
+			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) {
 
-//				this.callbacks.pipeline.onComplete( {
-				this.callbacks.parse.onLoad( {
+				this.callbacks.pipeline.onComplete( {
 					detail: {
 						extension: resourceDescriptorCurrent.extension,
 						result: resourceDescriptorCurrent.result,
@@ -646,8 +680,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		} else {
 
-			//if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) this.callbacks.pipeline.onComplete( this.baseObject3d );
-			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.parse.onLoad ) ) this.callbacks.parse.onLoad( this.baseObject3d );
+			if ( THREE.WorkerLoader.Validator.isValid( this.callbacks.pipeline.onComplete ) ) this.callbacks.pipeline.onComplete( this.baseObject3d );
 
 		}
 	}
@@ -671,13 +704,17 @@ THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 			onReport: null
 		},
 		parse: {
-			onLoad: null,
 			onMesh: null,
 			onMaterials: null
 		},
 		load: {
 			onProgress: null,
 			onError: null
+		},
+		pipeline: {
+			onCompleteFileLoading: null,
+			onCompleteParsing: null,
+			onComplete: null
 		}
 	};
 };
@@ -731,20 +768,39 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 
 	/**
 	 * Sets the callbacks used during parsing and for general reporting to the application context.
-	 * @param {Function} onLoad
 	 * @param {Function} [onMesh]
 	 * @param {Function} [onMaterials]
-	 * @param {Function} [onReport]
 	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
-	setCallbacksParsingAndApp: function ( onLoad, onMesh, onMaterials, onReport ) {
-		this.callbacks.parse.onLoad = THREE.WorkerLoader.Validator.verifyInput( onLoad, this.callbacks.parse.onLoad );
+	setCallbacksParsing: function ( onMesh, onMaterials ) {
 		this.callbacks.parse.onMesh = THREE.WorkerLoader.Validator.verifyInput( onMesh, this.callbacks.parse.onMesh );
 		this.callbacks.parse.onMaterials = THREE.WorkerLoader.Validator.verifyInput( onMaterials, this.callbacks.parse.onMaterials );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {Function} onCompleteLoad
+	 * @param {Function} onCompleteParse
+	 * @param {Function} onComplete
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
+	 */
+	setCallbacksPipeline: function ( onCompleteFileLoading, onCompleteParsing, onComplete ) {
+		this.callbacks.pipeline.onCompleteFileLoading = THREE.WorkerLoader.Validator.verifyInput( onCompleteFileLoading, this.callbacks.pipeline.onCompleteFileLoading );
+		this.callbacks.pipeline.onCompleteParsing = THREE.WorkerLoader.Validator.verifyInput( onCompleteParsing, this.callbacks.pipeline.onCompleteParsing );
+		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param {Function} onReport
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
+	 */
+	setCallbacksApp: function ( onReport ) {
 		this.callbacks.app.onReport = THREE.WorkerLoader.Validator.verifyInput( onReport, this.callbacks.app.onReport );
 		return this;
 	}
-
 };
 
 /**
@@ -824,6 +880,11 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...'
 
 		}
+	},
+
+	setUseAsync: function ( useAsync ) {
+		this.useAsync = useAsync === true;
+		return this;
 	},
 
 	setParserInstructions: function ( parserInstructions ) {
