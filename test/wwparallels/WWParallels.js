@@ -148,7 +148,7 @@ var WWParallels = (function () {
 		var callbackOnLoad = function ( event ) {
 			var instanceNo = event.detail.instanceNo;
 			scope.reportDonwload[ instanceNo ] = false;
-			scope.allAssets.push( event.detail.baseObject3d );
+			scope.allAssets.push( event.detail.result );
 
 			var msg = 'Worker #' + instanceNo + ': Completed loading: ' + event.detail.modelName + ' (#' + scope.workerLoaderDirector.objectsCompleted + ')';
 			if ( scope.logging.enabled ) console.info( msg );
@@ -212,8 +212,8 @@ var WWParallels = (function () {
 			texturePath: '../../resource/obj/male02/',
 			materialOptions: {}
 		};
-		var callbackOnProcessResult = function ( objLoader, result ) {
-//			objLoader.setMaterials( result.materials );
+		var callbackOnProcessResult = function ( resourceDescriptor ) {
+			console.log( resourceDescriptor.name + ' was loaded!' );
 		};
 		rdMtl.setParserInstructions( parserInstructionsMtl )
 			.setCallbackOnProcessResult( callbackOnProcessResult );

@@ -582,8 +582,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				if ( measureTime && loadingTask.logging.enabled ) console.timeEnd( 'WorkerLoader parse [' + loadingTask.instanceNo + '] : ' + resourceDescriptorCurrent.name );
 
 				result = loadingTask.baseObject3d;
+				resourceDescriptorCurrent.setParserResult( result );
 				var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
-				if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( loadingTask.loader, result );
+				if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
 /*
 				loadingTask.callbacks.parse.onLoad( {
 					detail: {
@@ -606,8 +607,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		} else {
 
 			result = loadingTask.loader.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserInstructions );
+			resourceDescriptorCurrent.setParserResult( result );
 			var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
-			if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( loadingTask.loader, result );
+			if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
 /*
 			loadingTask.callbacks.parse.onLoad( {
 				detail: {
@@ -635,7 +637,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				this.callbacks.parse.onLoad( {
 					detail: {
 						extension: resourceDescriptorCurrent.extension,
-						object3d: resourceDescriptorCurrent.result,
+						result: resourceDescriptorCurrent.result,
 						modelName: resourceDescriptorCurrent.name,
 						instanceNo: this.instanceNo
 					}
@@ -828,6 +830,10 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		THREE.WorkerLoader.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
 		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
 		return this;
+	},
+
+	setParserResult: function ( result ) {
+		this.result = result;
 	},
 
 	setCallbackOnProcessResult: function ( callbackOnProcessResult ) {

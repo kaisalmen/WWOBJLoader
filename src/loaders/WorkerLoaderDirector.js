@@ -237,6 +237,7 @@ THREE.WorkerLoader.Director.prototype = {
 			.updateCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError )
 			.setInstanceNo( supportDesc.instanceNo )
 			.setTerminateWorkerOnLoad( false )
+			.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy )
 			.setWorkerLoaderRef( supportDesc.workerLoader )
 			._configureExecute( workerSupport )
 			._processFileLoadingQueue( 0 );
