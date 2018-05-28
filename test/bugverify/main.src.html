@@ -119,7 +119,7 @@
 
 					console.log( '\n\nloadAssets: Processing next resourceDescriptors' );
 
-					loadingTaskConfig.setCallbacksPipeline( null, null, loadAssetsProxy )
+					loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
 						.setCallbacksApp( this._reportProgress );
 					workerLoader.execute( loadingTaskConfig );
 				};

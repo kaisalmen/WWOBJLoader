@@ -264,9 +264,9 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 			onError: null
 		},
 		pipeline: {
+			onComplete: null,
 			onCompleteFileLoading: null,
-			onCompleteParsing: null,
-			onComplete: null
+			onCompleteParsing: null
 		}
 	};
 };
@@ -374,9 +374,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 					this.loadingTaskConfig.callbacks.load.onError
 				)
 				.updateCallbacksPipeline(
+					this.loadingTaskConfig.callbacks.pipeline.onComplete,
 					this.loadingTaskConfig.callbacks.pipeline.onCompleteFileLoading,
-					this.loadingTaskConfig.callbacks.pipeline.onCompleteParsing,
-					this.loadingTaskConfig.callbacks.pipeline.onComplete
+					this.loadingTaskConfig.callbacks.pipeline.onCompleteParsing
 				);
 
 		}
@@ -457,15 +457,15 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 	/**
 	 *
+	 * @param {Function} onComplete
 	 * @param {Function} onCompleteLoad
 	 * @param {Function} onCompleteParse
-	 * @param {Function} onComplete
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
-	updateCallbacksPipeline: function ( onCompleteFileLoading, onCompleteParsing, onComplete ) {
+	updateCallbacksPipeline: function ( onComplete, onCompleteFileLoading, onCompleteParsing ) {
+		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
 		this.callbacks.pipeline.onCompleteFileLoading = THREE.WorkerLoader.Validator.verifyInput( onCompleteFileLoading, this.callbacks.pipeline.onCompleteFileLoading );
 		this.callbacks.pipeline.onCompleteParsing = THREE.WorkerLoader.Validator.verifyInput( onCompleteParsing, this.callbacks.pipeline.onCompleteParsing );
-		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
 		return this;
 	},
 
@@ -712,9 +712,9 @@ THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 			onError: null
 		},
 		pipeline: {
+			onComplete: null,
 			onCompleteFileLoading: null,
-			onCompleteParsing: null,
-			onComplete: null
+			onCompleteParsing: null
 		}
 	};
 };
@@ -780,15 +780,15 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 
 	/**
 	 *
+	 * @param {Function} onComplete
 	 * @param {Function} onCompleteLoad
 	 * @param {Function} onCompleteParse
-	 * @param {Function} onComplete
 	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
-	setCallbacksPipeline: function ( onCompleteFileLoading, onCompleteParsing, onComplete ) {
+	setCallbacksPipeline: function ( onComplete, onCompleteFileLoading, onCompleteParsing ) {
+		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
 		this.callbacks.pipeline.onCompleteFileLoading = THREE.WorkerLoader.Validator.verifyInput( onCompleteFileLoading, this.callbacks.pipeline.onCompleteFileLoading );
 		this.callbacks.pipeline.onCompleteParsing = THREE.WorkerLoader.Validator.verifyInput( onCompleteParsing, this.callbacks.pipeline.onCompleteParsing );
-		this.callbacks.pipeline.onComplete = THREE.WorkerLoader.Validator.verifyInput( onComplete, this.callbacks.pipeline.onComplete );
 		return this;
 	},
 

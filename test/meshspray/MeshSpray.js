@@ -332,7 +332,9 @@ var MeshSprayApp = (function () {
 				} )
 				.setLoaderConfig( MeshSpray.Loader )
 				.addResourceDescriptor( rdMeshSpray )
-				.setCallbacksParsingAndApp( callbackOnLoad, callbackOnMesh, null, callbackOnReport );
+				.setCallbacksApp( callbackOnReport )
+				.setCallbacksParsing( callbackOnMesh )
+			 	.setCallbacksPipeline( callbackOnLoad );
 
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );

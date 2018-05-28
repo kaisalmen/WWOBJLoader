@@ -112,7 +112,7 @@ var WWOBJLoader2Example = (function () {
 			local.name = 'Pivot_female02_vertex';
 			local.position.set( -75, 0, 0 );
 			scope.pivot.add( local );
-			local.add( event.detail.object3d );
+			local.add( event.detail.result );
 
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
@@ -215,7 +215,8 @@ var WWOBJLoader2Example = (function () {
 			} )
 			.setLoaderConfig( THREE.OBJLoader )
 			.addResourceDescriptor( rd )
-			.setCallbacksParsingAndApp( callbackOnLoad, null, null, callbackOnProgress );
+			.setCallbacksPipeline( callbackOnLoad )
+			.setCallbacksApp( callbackOnProgress );
 		workerLoader.execute( loadingTaskConfig );
 	};
 
@@ -227,7 +228,7 @@ var WWOBJLoader2Example = (function () {
 
 		var scope = this;
 		var callbackOnLoad = function ( event ) {
-			var mesh = event.detail.object3d;
+			var mesh = event.detail.result;
 			var scale = 200.0;
 			mesh.scale.set( scale, scale, scale );
 			local.add( mesh );
@@ -242,7 +243,7 @@ var WWOBJLoader2Example = (function () {
 			} )
 			.setLoaderConfig( THREE.OBJLoader )
 			.addResourceDescriptor( rd )
-			.setCallbacksParsingAndApp( callbackOnLoad, null, null );
+			.setCallbacksPipeline( callbackOnLoad );
 		workerLoader.execute( loadingTaskConfig );
 	};
 

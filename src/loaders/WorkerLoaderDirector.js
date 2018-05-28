@@ -29,7 +29,7 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 
 	this.workerDescription = {
 		globalCallbacks: {
-			onLoad: null,
+			onComplete: null,
 			onMesh: null,
 			onMaterials: null,
 			onReport: null
@@ -200,10 +200,10 @@ THREE.WorkerLoader.Director.prototype = {
 
 		var scope = this;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
-		var orgTaskOnLoad = loadingTaskConfig.callbacks.parse.onLoad;
-		var wrapperOnLoad = function ( event ) {
-			if ( validator.isValid( globalCallbacks.onLoad ) ) globalCallbacks.onLoad( event );
-			if ( validator.isValid( orgTaskOnLoad ) ) orgTaskOnLoad( event );
+		var orgTaskOnComplete = loadingTaskConfig.callbacks.pipeline.onComplete;
+		var wrapperOnComplete = function ( event ) {
+			if ( validator.isValid( globalCallbacks.onComplete ) ) globalCallbacks.onComplete( event );
+			if ( validator.isValid( orgTaskOnComplete ) ) orgTaskOnComplete( event );
 			scope.objectsCompleted++;
 			supportDesc.inUse = false;
 
@@ -234,7 +234,8 @@ THREE.WorkerLoader.Director.prototype = {
 		supportDesc.workerLoader.loadingTask = loadingTask;
 		loadingTask
 			.updateCallbacksApp( wrapperOnReport )
-			.updateCallbacksParsing( wrapperOnLoad, wrapperOnMesh, wrapperOnLoadMaterials )
+			.updateCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
+			.updateCallbacksPipeline( wrapperOnComplete )
 			.updateCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError )
 			.setInstanceNo( supportDesc.instanceNo )
 			.setTerminateWorkerOnLoad( false )

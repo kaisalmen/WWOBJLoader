@@ -145,7 +145,7 @@ var WWParallels = (function () {
 		}
 		scope._reportProgress( scope.feedbackArray.join( '\<br\>' ) );
 
-		var callbackOnLoad = function ( event ) {
+		var callbackOnComplete = function ( event ) {
 			var instanceNo = event.detail.instanceNo;
 			scope.reportDonwload[ instanceNo ] = false;
 			scope.allAssets.push( event.detail.result );
@@ -200,7 +200,7 @@ var WWParallels = (function () {
 		var prepData, rdMtl;
 		var prepDatas = [];
 		prepData = {
-			name: 'male02',
+			modelName: 'male02',
 			scale: 1.0,
 			resourceDescriptors: []
 		};
@@ -222,7 +222,7 @@ var WWParallels = (function () {
 		prepDatas.push( prepData );
 
 		prepData = {
-			name: 'female02',
+			modelName: 'female02',
 			scale: 1.0,
 			resourceDescriptors: []
 		};
@@ -240,7 +240,7 @@ var WWParallels = (function () {
 		prepDatas.push( prepData );
 
 		prepData = {
-			name: 'viveController',
+			modelName: 'viveController',
 			scale: 400.0,
 			resourceDescriptors: []
 		};
@@ -248,7 +248,7 @@ var WWParallels = (function () {
 		prepDatas.push( prepData );
 
 		prepData = {
-			name: 'cerberus',
+			modelName: 'cerberus',
 			scale: 50.0,
 			resourceDescriptors: []
 		};
@@ -256,7 +256,7 @@ var WWParallels = (function () {
 		prepDatas.push( prepData );
 
 		prepData = {
-			name: 'WaltHead',
+			modelName: 'WaltHead',
 			scale: 1.0,
 			resourceDescriptors: []
 		};
@@ -294,9 +294,11 @@ var WWParallels = (function () {
 
 			var baseConfig = streamMeshes ? { baseObject3d: pivot } : {};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader, { modelName: modelPrepData.modelName } )
 				.addResourceDescriptors( modelPrepData.resourceDescriptors )
-				.setCallbacksParsingAndApp( callbackOnLoad, callbackOnMesh, callbackOnMaterials, callbackOnReport );
+				.setCallbacksApp( callbackOnReport )
+				.setCallbacksParsing( callbackOnMesh, callbackOnMaterials )
+				.setCallbacksPipeline( callbackOnComplete );
 
 			this.workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
