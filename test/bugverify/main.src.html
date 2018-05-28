@@ -102,7 +102,6 @@
 						this.processing = true;
 
 					}
-					var workerLoader = new THREE.WorkerLoader();
 					var loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
 					this.loadingTaskConfigs.shift();
 
@@ -121,7 +120,8 @@
 
 					loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
 						.setCallbacksApp( this._reportProgress );
-					workerLoader.execute( loadingTaskConfig );
+					new THREE.WorkerLoader()
+						.execute( loadingTaskConfig );
 				};
 
 				OBJLoader2BugVerify.prototype._reportProgress = function( event ) {

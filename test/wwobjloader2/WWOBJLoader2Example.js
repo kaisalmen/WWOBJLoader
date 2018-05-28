@@ -127,9 +127,11 @@ var WWOBJLoader2Example = (function () {
 			function ( content ) {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
-				var workerLoader = new THREE.WorkerLoader().updateLoader( objLoader );
-				workerLoader.parseAsync( content, callbackOnLoad );
-				workerLoader.setTerminateWorkerOnLoad( true );
+				new THREE.WorkerLoader()
+					.setLoader( objLoader )
+					.setTerminateWorkerOnLoad( true )
+					.parseAsync( content, callbackOnLoad );
+
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
 		);
@@ -183,10 +185,11 @@ var WWOBJLoader2Example = (function () {
 		var onLoadMtl = function ( mtlParseResult ) {
 			objLoader.setMaterials( mtlParseResult.materials );
 
-			var workerLoader = new THREE.WorkerLoader().updateLoader( objLoader );
-			workerLoader.setTerminateWorkerOnLoad( false );
-			workerLoader.setBaseObject3d( local );
-			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad, null, null, null );
+			new THREE.WorkerLoader()
+				.setLoader( objLoader )
+				.setTerminateWorkerOnLoad( false )
+				.setBaseObject3d( local )
+				.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
 
 		};
 		objLoader.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
@@ -208,7 +211,6 @@ var WWOBJLoader2Example = (function () {
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
 
-		var workerLoader = new THREE.WorkerLoader();
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				instanceNo: 42,
 				baseObject3d: local
@@ -217,7 +219,8 @@ var WWOBJLoader2Example = (function () {
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad )
 			.setCallbacksApp( callbackOnProgress );
-		workerLoader.execute( loadingTaskConfig );
+		new THREE.WorkerLoader()
+			.execute( loadingTaskConfig );
 	};
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
@@ -237,14 +240,14 @@ var WWOBJLoader2Example = (function () {
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
 
-		var workerLoader = new THREE.WorkerLoader();
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				terminateWorkerOnLoad: false
 			} )
 			.setLoaderConfig( THREE.OBJLoader )
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad );
-		workerLoader.execute( loadingTaskConfig );
+		new THREE.WorkerLoader()
+			.execute( loadingTaskConfig );
 	};
 
 	WWOBJLoader2Example.prototype.finalize = function () {

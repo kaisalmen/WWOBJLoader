@@ -128,7 +128,7 @@ THREE.WorkerLoader.Director.prototype = {
 			var supportDesc = {
 				instanceNo: instanceNo,
 				inUse: false,
-				workerLoader: new THREE.WorkerLoader( null, null, null, true )
+				workerLoader: new THREE.WorkerLoader()
 			};
 			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 
@@ -231,7 +231,6 @@ THREE.WorkerLoader.Director.prototype = {
 		};
 
 		var workerSupport = validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
-		supportDesc.workerLoader.loadingTask = loadingTask;
 		loadingTask
 			.updateCallbacksApp( wrapperOnReport )
 			.updateCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
@@ -240,9 +239,7 @@ THREE.WorkerLoader.Director.prototype = {
 			.setInstanceNo( supportDesc.instanceNo )
 			.setTerminateWorkerOnLoad( false )
 			.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy )
-			.setWorkerLoaderRef( supportDesc.workerLoader )
-			._configureExecute( workerSupport )
-			._executeFileLoadingStep( 0 );
+		supportDesc.workerLoader.executeLoadingTask( loadingTask, null, workerSupport );
 	},
 
 	_deregister: function ( loadingTask ) {
