@@ -123,12 +123,16 @@ THREE.WorkerLoader.Director.prototype = {
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig The configuration that should be applied to the loading task
 	 */
 	prepareWorkers: function () {
+		var workerLoader;
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
+			workerLoader = new THREE.WorkerLoader();
+			workerLoader.workerSupport.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
+			workerLoader.workerSupport.setTerminateRequested( false );
 			var supportDesc = {
 				instanceNo: instanceNo,
 				inUse: false,
-				workerLoader: new THREE.WorkerLoader()
+				workerLoader: workerLoader
 			};
 			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 
@@ -158,7 +162,7 @@ THREE.WorkerLoader.Director.prototype = {
 	/**
 	 * Process the instructionQueue until it is depleted.
 	 */
-	processQueue: function ( oldLoadingTask ) {
+	processQueue: function () {
 		var loadingTaskConfig, supportDesc;
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
@@ -169,12 +173,12 @@ THREE.WorkerLoader.Director.prototype = {
 
 					loadingTaskConfig = this.instructionQueue[ this.instructionQueuePointer ];
 
-					this._kickWorkerRun( loadingTaskConfig, oldLoadingTask, supportDesc );
+					this._kickWorkerRun( loadingTaskConfig, supportDesc );
 					this.instructionQueuePointer++;
 
 				} else {
 
-					this._deregister( oldLoadingTask );
+					this._deregister( supportDesc );
 
 				}
 
@@ -190,14 +194,11 @@ THREE.WorkerLoader.Director.prototype = {
 		}
 	},
 
-	_kickWorkerRun: function ( loadingTaskConfig, oldLoadingTask, supportDesc ) {
+	_kickWorkerRun: function ( loadingTaskConfig, supportDesc ) {
 		supportDesc.inUse = true;
 		if ( this.logging.enabled ) console.info( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
 		var validator = THREE.WorkerLoader.Validator;
-		var loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader.Director.No' + this.instructionQueuePointer )
-			.applyConfig( loadingTaskConfig, false );
-
 		var scope = this;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var orgTaskOnComplete = loadingTaskConfig.callbacks.pipeline.onComplete;
@@ -207,7 +208,7 @@ THREE.WorkerLoader.Director.prototype = {
 			scope.objectsCompleted++;
 			supportDesc.inUse = false;
 
-			scope.processQueue( loadingTask );
+			scope.processQueue();
 		};
 
 		var orgTaskOnMesh = loadingTaskConfig.callbacks.parse.onMesh;
@@ -230,35 +231,36 @@ THREE.WorkerLoader.Director.prototype = {
 			if ( validator.isValid( orgTaskOnReport ) ) orgTaskOnReport( event );
 		};
 
-		var workerSupport = validator.isValid( oldLoadingTask ) ? oldLoadingTask.workerSupport : null;
-		loadingTask
-			.updateCallbacksApp( wrapperOnReport )
-			.updateCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
-			.updateCallbacksPipeline( wrapperOnComplete )
-			.updateCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError )
-			.setInstanceNo( supportDesc.instanceNo )
-			.setTerminateWorkerOnLoad( false )
-			.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy )
-		supportDesc.workerLoader.executeLoadingTask( loadingTask, null, workerSupport );
+		loadingTaskConfig.config[ 'description' ] = 'WorkerLoader.Director.No' + this.instructionQueuePointer;
+		loadingTaskConfig.config[ 'instanceNo' ] = supportDesc.instanceNo;
+		loadingTaskConfig
+			.setCallbacksApp( wrapperOnReport )
+			.setCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
+			.setCallbacksPipeline( wrapperOnComplete )
+			.setCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError );
+		supportDesc.workerLoader.execute( loadingTaskConfig );
 	},
 
-	_deregister: function ( loadingTask ) {
-		if ( THREE.WorkerLoader.Validator.isValid( loadingTask ) ) {
+	_deregister: function ( supportDesc ) {
+		if ( THREE.WorkerLoader.Validator.isValid( supportDesc ) ) {
 
-			loadingTask.workerSupport.setTerminateRequested( true );
-			if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + loadingTask.instanceNo + '.' );
+			if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
 
+				supportDesc.workerLoader.workerSupport.setTerminateRequested( true );
 
-			if ( THREE.WorkerLoader.Validator.isValid( loadingTask.callbacks.app.onReport ) ) {
+				if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
+				if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {
 
-				loadingTask.callbacks.app.onReport( {
-					detail: {
-						text: ''
-					}
-				} );
+					supportDesc.workerLoader.loadingTask.callbacks.app.onReport( {
+						detail: {
+							text: ''
+						}
+					} );
+
+				}
+				delete this.workerDescription.workerLoaders[ supportDesc.instanceNo ];
 
 			}
-			delete this.workerDescription.workerLoaders[ loadingTask.instanceNo ];
 		}
 	},
 

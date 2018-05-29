@@ -10,6 +10,7 @@ THREE.WorkerLoader = function ( manager ) {
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.manager = THREE.WorkerLoader.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this._setLoadingTask();
+	this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 };
 THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 
@@ -135,41 +136,11 @@ THREE.WorkerLoader.prototype = {
 	 */
 	execute: function ( loadingTaskConfig ) {
 		var loadingTask = new THREE.WorkerLoader.LoadingTask( 'execute_loading_task' );
-		this.executeLoadingTask( loadingTask, loadingTaskConfig );
-		return this;
-	},
-
-	/**
-	 * Run loader async from supplied {@link THREE.WorkerLoader.LoadingTask}.
-	 *
-	 * @param {THREE.WorkerLoader.LoadingTask} loadingTask
-	 * @param {THREE.WorkerLoader.LoadingTaskConfig} LoadingTaskConfig
-	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupport]
-	 *
-	 * @returns {THREE.WorkerLoader}
-	 */
-	executeLoadingTask: function ( loadingTask, loadingTaskConfig, workerSupport ) {
 		this._setLoadingTask( loadingTask, loadingTaskConfig );
 		this.loadingTask
-			._configureExecute( workerSupport )
+			._configureExecute( this.workerSupport )
 			._executeFileLoadingStep( 0 );
 		return this;
-	},
-
-	_applyConfiguration: function ( scope, applicableConfiguration, forceCreation ) {
-		// fast-fail
-		if ( scope === undefined || scope === null || applicableConfiguration === undefined || applicableConfiguration === null ) return;
-
-		var property, value;
-		for ( property in applicableConfiguration ) {
-
-			value = applicableConfiguration[ property ];
-			if ( scope.hasOwnProperty( property ) || forceCreation ) {
-
-				scope[ property ] = value;
-
-			}
-		}
 	}
 };
 
@@ -291,7 +262,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	applyConfig: function ( loadingTaskConfig, ignoreCallbacks ) {
 		this.loadingTaskConfig = THREE.WorkerLoader.Validator.verifyInput( loadingTaskConfig, null);
-		if ( this.loadingTaskConfig !== null ) THREE.WorkerLoader.prototype._applyConfiguration( this, this.loadingTaskConfig.config );
+		if ( this.loadingTaskConfig !== null ) this._applyConfiguration( this, this.loadingTaskConfig.config );
 
 		var classDef = this.loadingTaskConfig.loader.classDef;
 		var loader = Object.create( classDef.prototype );
@@ -326,6 +297,22 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		return this;
 	},
 
+	_applyConfiguration: function ( scope, applicableConfiguration, forceCreation ) {
+		// fast-fail
+		if ( scope === undefined || scope === null || applicableConfiguration === undefined || applicableConfiguration === null ) return;
+
+		var property, value;
+		for ( property in applicableConfiguration ) {
+
+			value = applicableConfiguration[ property ];
+			if ( scope.hasOwnProperty( property ) || forceCreation ) {
+
+				scope[ property ] = value;
+
+			}
+		}
+	},
+
 	/**
 	 *
 	 * @param loader
@@ -345,10 +332,10 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			// this will ensure that any base configuration on LoadingTask and Loader are aligned
 			if ( this.loadingTaskConfig !== null && this.loadingTaskConfig.config !== null ) {
 
-				THREE.WorkerLoader.prototype._applyConfiguration( this.loader, this.loadingTaskConfig.config );
+				this._applyConfiguration( this.loader, this.loadingTaskConfig.config );
 
 			}
-			THREE.WorkerLoader.prototype._applyConfiguration( this.loader, this.loaderConfig );
+			this._applyConfiguration( this.loader, this.loaderConfig );
 
 		}
 		return this;
@@ -423,13 +410,24 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	},
 
 	/**
-	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupportReuse]
+	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupport]
 	 * @private
 	 *
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
-	_configureExecute: function ( workerSupportReuse ) {
-		this.workerSupport = THREE.WorkerLoader.Validator.verifyInput( workerSupportReuse, new THREE.WorkerLoader.WorkerSupport() );
+	_configureExecute: function ( workerSupport ) {
+		if ( THREE.WorkerLoader.Validator.isValid( workerSupport ) && workerSupport instanceof THREE.WorkerLoader.WorkerSupport ) {
+
+			this.workerSupport = workerSupport;
+
+		} else {
+
+			this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
+			this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
+			this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
+			this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
+
+		}
 		this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
 
@@ -449,9 +447,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			if ( scope.logging.enabled && scope.logging.debug ) console.debug( content );
 		};
 		this.meshBuilder._setCallbacks( callbackMeshBuilderProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
-		this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
-		this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
-		this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 		return this;
 	},
 
@@ -906,7 +901,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 	},
 
 	setParserInstructions: function ( parserInstructions ) {
-		THREE.WorkerLoader.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
+		THREE.WorkerLoader.LoadingTask.prototype._applyConfiguration( this.parserInstructions, parserInstructions, true );
 		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
 		return this;
 	},
