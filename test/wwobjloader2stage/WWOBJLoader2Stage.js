@@ -28,7 +28,7 @@ var WWOBJLoader2Stage = (function () {
 		this.controls = null;
 		this.cube = null;
 
-		this.objs2Load = [];
+		this.loadingTaskConfigs = [];
 		this.allAssets = [];
 		this.processing = false;
 
@@ -131,26 +131,50 @@ var WWOBJLoader2Stage = (function () {
 			objsZomaxSink: null
 		};
 		this.assetsDef.objsFemaleMale = [];
-		var prepData = new THREE.LoaderSupport.PrepData( 'male02' );
+
 		var pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, -175 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/male02/male02.mtl', 'MTL' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsMale = prepData;
+		this.scene.add( pivot );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'female02' );
+		var parserConfigMtl = {
+			payloadType: 'text',
+			haveMtl: true,
+			texturePath: '../../resource/obj/male02/',
+			materialOptions: {}
+		};
+		var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' )
+			.setParserInstructions( parserConfigMtl )
+			.setUseAsync( false );
+		var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' );
+		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'male02',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdMtl )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsMale = loadingTaskConfig;
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( 200, 0, -75 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/female02/female02.mtl', 'MTL' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsFemale = prepData;
+		this.scene.add( pivot );
 
+		parserConfigMtl.texturePath = '../../resource/obj/female02/';
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' )
+			.setParserInstructions( parserConfigMtl )
+			.setUseAsync( false );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'female02',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdMtl )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsFemale = loadingTaskConfig;
+/*
 		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, -100, 0 );
@@ -212,6 +236,7 @@ var WWOBJLoader2Stage = (function () {
 		prepData.useIndices = true;
 		prepData.useAsync = true;
 		this.assetsDef.objsZomaxSink = prepData;
+*/
 	};
 
 	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
@@ -259,7 +284,7 @@ var WWOBJLoader2Stage = (function () {
 
 			if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
-				this.objs2Load.push( prepData );
+				this.loadingTaskConfigs.push( prepData );
 
 			} else {
 
@@ -277,7 +302,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype.reloadAssets = function () {
-		if ( this.objs2Load.length === 0 || this.processing ) {
+		if ( this.loadingTaskConfigs.length === 0 || this.processing ) {
 
 			return;
 
@@ -287,26 +312,28 @@ var WWOBJLoader2Stage = (function () {
 
 		}
 
-		var prepData = this.objs2Load[ 0 ];
-		this.objs2Load.shift();
-		var streamMeshes = prepData.streamMeshesTo;
-		if ( Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
+		var loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
+		this.loadingTaskConfigs.shift();
 
 		var scope = this;
-		var reloadAssetsProxy = function ( event ) {
-			if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.baseObject3d );
+		var loadAssetsProxy = function ( event ) {
+			if ( ! Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
+				scope.scene.add( event.detail.result );
+			}
 			scope.processing = false;
-			scope.allAssets[ prepData.modelName ] = event.detail.baseObject3d;
+			scope.allAssets[ event.detail.modelName ] = event.detail.result;
 			scope.reloadAssets();
 			scope._reportProgress( { detail: { text: '' } } );
 		};
-		var callbacks = prepData.getCallbacks();
-		callbacks.setCallbackOnLoad( reloadAssetsProxy );
-		callbacks.setCallbackOnProgress( this._reportProgress );
+		this._reportProgress( { detail: { text: '' } } );
 
-		var objLoader2 = new THREE.OBJLoader();
-		var resourceZip = prepData.resources[ 0 ];
+		loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
+			.setCallbacksApp( this._reportProgress );
+
+		var workerLoader = new THREE.WorkerLoader();
+		var resourceZip = loadingTaskConfig.resourceDescriptors[ 0 ];
 		if ( resourceZip.extension === 'ZIP' ) {
+/*
 			var resourceObj = prepData.resources[ 1 ];
 			var resourceMtl = prepData.resources.length === 3 ? prepData.resources[ 2 ] : null;
 
@@ -332,11 +359,11 @@ var WWOBJLoader2Stage = (function () {
 				scope.processing = false;
 			};
 			zipTools.load( resourceZip.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
-
+*/
 		} else {
 
 			this._reportProgress( { detail: { text: '' } } );
-			objLoader2.run( prepData );
+			workerLoader.getLoadingTask().execute( loadingTaskConfig );
 
 		}
 	};
