@@ -127,10 +127,12 @@ var WWOBJLoader2Example = (function () {
 			function ( content ) {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
-				new THREE.WorkerLoader()
+
+				var workerLoader = new THREE.WorkerLoader()
+				workerLoader.getLoadingTask()
 					.setLoader( objLoader )
-					.setTerminateWorkerOnLoad( true )
-					.parseAsync( content, callbackOnLoad );
+					.setTerminateWorkerOnLoad( true );
+				workerLoader.parseAsync( content, callbackOnLoad );
 
 				scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
 			}
@@ -185,11 +187,12 @@ var WWOBJLoader2Example = (function () {
 		var onLoadMtl = function ( mtlParseResult ) {
 			objLoader.setMaterials( mtlParseResult.materials );
 
-			new THREE.WorkerLoader()
+			var workerLoader = new THREE.WorkerLoader()
+			workerLoader.getLoadingTask()
 				.setLoader( objLoader )
 				.setTerminateWorkerOnLoad( false )
-				.setBaseObject3d( local )
-				.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
+				.setBaseObject3d( local );
+			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
 
 		};
 		objLoader.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
@@ -220,6 +223,7 @@ var WWOBJLoader2Example = (function () {
 			.setCallbacksPipeline( callbackOnLoad )
 			.setCallbacksApp( callbackOnProgress );
 		new THREE.WorkerLoader()
+			.getLoadingTask()
 			.execute( loadingTaskConfig );
 	};
 
@@ -247,6 +251,7 @@ var WWOBJLoader2Example = (function () {
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad );
 		new THREE.WorkerLoader()
+			.getLoadingTask()
 			.execute( loadingTaskConfig );
 	};
 

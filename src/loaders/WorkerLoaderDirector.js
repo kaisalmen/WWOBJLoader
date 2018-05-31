@@ -123,16 +123,15 @@ THREE.WorkerLoader.Director.prototype = {
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig The configuration that should be applied to the loading task
 	 */
 	prepareWorkers: function () {
-		var workerLoader;
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo ++ ) {
 
-			workerLoader = new THREE.WorkerLoader();
-			workerLoader.workerSupport.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy );
-			workerLoader.workerSupport.setTerminateRequested( false );
 			var supportDesc = {
 				instanceNo: instanceNo,
 				inUse: false,
-				workerLoader: workerLoader
+				workerLoader: new THREE.WorkerLoader(),
+				workerSupport: new THREE.WorkerLoader.WorkerSupport()
+					.setForceWorkerDataCopy( this.workerDescription.forceWorkerDataCopy )
+					.setTerminateRequested( false )
 			};
 			this.workerDescription.workerLoaders[ instanceNo ] = supportDesc;
 
@@ -238,7 +237,8 @@ THREE.WorkerLoader.Director.prototype = {
 			.setCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
 			.setCallbacksPipeline( wrapperOnComplete )
 			.setCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError );
-		supportDesc.workerLoader.execute( loadingTaskConfig );
+		supportDesc.workerLoader.getLoadingTask()
+			.execute( loadingTaskConfig, supportDesc.workerSupport );
 	},
 
 	_deregister: function ( supportDesc ) {
@@ -246,7 +246,7 @@ THREE.WorkerLoader.Director.prototype = {
 
 			if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
 
-				supportDesc.workerLoader.workerSupport.setTerminateRequested( true );
+				supportDesc.workerSupport.setTerminateRequested( true );
 
 				if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
 				if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {

@@ -121,6 +121,7 @@
 					loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
 						.setCallbacksApp( this._reportProgress );
 					new THREE.WorkerLoader()
+						.getLoadingTask()
 						.execute( loadingTaskConfig );
 				};
 
