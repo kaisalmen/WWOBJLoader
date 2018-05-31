@@ -128,7 +128,7 @@ var WWOBJLoader2Example = (function () {
 				var objLoader = new THREE.OBJLoader();
 				objLoader.setModelName( modelName );
 
-				var workerLoader = new THREE.WorkerLoader()
+				var workerLoader = new THREE.WorkerLoader();
 				workerLoader.getLoadingTask()
 					.setLoader( objLoader )
 					.setTerminateWorkerOnLoad( true );
@@ -188,8 +188,8 @@ var WWOBJLoader2Example = (function () {
 			objLoader.setMaterials( mtlParseResult.materials );
 
 			var workerLoader = new THREE.WorkerLoader()
+				.setLoader( objLoader );
 			workerLoader.getLoadingTask()
-				.setLoader( objLoader )
 				.setTerminateWorkerOnLoad( false )
 				.setBaseObject3d( local );
 			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );

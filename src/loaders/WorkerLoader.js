@@ -3,14 +3,16 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
 /**
  *
  * @param {THREE.DefaultLoadingManager} manager
+ * @param {object} [loader]
+ * @param {object} [loaderConfig]
  * @constructor
  */
-THREE.WorkerLoader = function ( manager ) {
+THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.manager = THREE.WorkerLoader.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
-	this.loadingTask = null;
-	this.resetLoadingTask();
+	this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
+	if ( THREE.WorkerLoader.Validator.isValid( loader ) ) this.loadingTask.setLoader( loader, loaderConfig );
 };
 THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 
@@ -18,6 +20,17 @@ THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 THREE.WorkerLoader.prototype = {
 
 	constructor: THREE.WorkerLoader,
+
+	/**
+	 *
+	 * @param {object} loader
+	 * @param {object} [loaderConfig]
+	 * @returns {THREE.WorkerLoader}
+	 */
+	setLoader: function ( loader, loaderConfig ) {
+		this.loadingTask.setLoader( loader, loaderConfig );
+		return this;
+	},
 
 	/**
 	 *
@@ -65,17 +78,7 @@ THREE.WorkerLoader.prototype = {
 			.updateCallbacksParsing( onMesh, null )
 			.execute();
 		return this;
-	},
-
-	/**
-	 *
-	 * @returns {THREE.WorkerLoader}
-	 */
-	resetLoadingTask: function () {
-		this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
-		return this;
 	}
-
 };
 
 /**
@@ -208,11 +211,12 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	/**
 	 *
 	 * @param {object} loader
-	 * @param {object} loaderConfig
+	 * @param {object} [loaderConfig]
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	setLoader: function ( loader, loaderConfig ) {
-		this.loader.ref = THREE.WorkerLoader.Validator.verifyInput( loader, this.loader.ref );
+		if ( ! THREE.WorkerLoader.Validator.isValid( loader ) ) throw 'Unable to continue. You have not specified a loader!';
+		this.loader.ref = loader;
 		this.loader.config = THREE.WorkerLoader.Validator.verifyInput( loaderConfig, this.loader.config );
 		return this;
 	},
@@ -353,6 +357,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			}
 
 		}
+		if ( ! THREE.WorkerLoader.Validator.isValid( this.loader.ref ) ) throw 'Unable to continue. You have not specified a loader!';
 		if ( typeof this.loader.ref.buildWorkerCode !== 'function' ) {
 
 			throw this.loader.ref.modelName + ' has no function "buildWorkerCode".';
