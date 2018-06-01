@@ -278,7 +278,7 @@ THREE.WorkerLoader.Director.prototype = {
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
 			var supportDesc = this.workerDescription.workerLoaders[ instanceNo ];
-			supportDesc.workerLoader.setTerminateWorkerOnLoad( true );
+			supportDesc.workerLoader.getLoadingTask().setTerminateWorkerOnLoad( true );
 
 		}
 	}

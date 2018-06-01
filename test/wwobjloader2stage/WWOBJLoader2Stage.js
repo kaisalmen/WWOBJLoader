@@ -143,7 +143,7 @@ var WWOBJLoader2Stage = (function () {
 			materialOptions: {}
 		};
 		var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' )
-			.setParserInstructions( parserConfigMtl )
+			.setParserConfiguration( parserConfigMtl )
 			.setUseAsync( false );
 		var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
@@ -162,7 +162,7 @@ var WWOBJLoader2Stage = (function () {
 
 		parserConfigMtl.texturePath = '../../resource/obj/female02/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' )
-			.setParserInstructions( parserConfigMtl )
+			.setParserConfiguration( parserConfigMtl )
 			.setUseAsync( false );
 		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' );
 		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {

@@ -319,12 +319,12 @@ var MeshSprayApp = (function () {
 			this.scene.add( pivot );
 
 			var rdMeshSpray = new THREE.WorkerLoader.ResourceDescriptor( 'Metadata', 'Triangles_' + i );
-			var parserInstructions = {
+			var parserConfiguration = {
 				quantity: 8192,
 				dimension: Math.max( Math.random() * 500, 100 ),
 				globalObjectCount: globalObjectCount++
 			};
-			rdMeshSpray.setParserInstructions( parserInstructions );
+			rdMeshSpray.setParserConfiguration( parserConfiguration );
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 					baseObject3d: pivot,
 					sendMaterials: true,

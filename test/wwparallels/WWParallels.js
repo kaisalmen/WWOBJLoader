@@ -206,7 +206,7 @@ var WWParallels = (function () {
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' );
 		rdMtl.useAsync = false;
-		var parserInstructionsMtl = {
+		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
 			texturePath: '../../resource/obj/male02/',
@@ -215,7 +215,7 @@ var WWParallels = (function () {
 		var callbackOnProcessResult = function ( resourceDescriptor ) {
 			console.log( resourceDescriptor.name + ' was loaded!' );
 		};
-		rdMtl.setParserInstructions( parserInstructionsMtl )
+		rdMtl.setParserConfiguration( parserConfigurationMtl )
 			.setCallbackOnProcessResult( callbackOnProcessResult );
 		prepData.resourceDescriptors.push( rdMtl );
 		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' ) );
@@ -228,13 +228,13 @@ var WWParallels = (function () {
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
 		rdMtl.useAsync = false;
-		var parserInstructionsMtl = {
+		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
 			texturePath: '../../resource/obj/female02/',
 			materialOptions: {}
 		};
-		rdMtl.setParserInstructions( parserInstructionsMtl );
+		rdMtl.setParserConfiguration( parserConfigurationMtl );
 		prepData.resourceDescriptors.push( rdMtl );
 		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' ) );
 		prepDatas.push( prepData );
@@ -262,13 +262,13 @@ var WWParallels = (function () {
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.mtl', '../../resource/obj/walt/WaltHead.mtl' );
 		rdMtl.useAsync = false;
-		var parserInstructionsMtl = {
+		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
 			texturePath: '../../resource/obj/walt/',
 			materialOptions: {}
 		};
-		rdMtl.setParserInstructions( parserInstructionsMtl );
+		rdMtl.setParserConfiguration( parserConfigurationMtl );
 		prepData.resourceDescriptors.push( rdMtl );
 		prepData.resourceDescriptors.push( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.obj', '../../resource/obj/walt/WaltHead.obj' ) );
 		prepDatas.push( prepData );
@@ -293,6 +293,7 @@ var WWParallels = (function () {
 			this.scene.add( pivot );
 
 			var baseConfig = streamMeshes ? { baseObject3d: pivot } : {};
+			baseConfig[ 'enforceSync' ] = false;
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
 				.setLoaderConfig( THREE.OBJLoader, { modelName: modelPrepData.modelName } )
 				.addResourceDescriptors( modelPrepData.resourceDescriptors )

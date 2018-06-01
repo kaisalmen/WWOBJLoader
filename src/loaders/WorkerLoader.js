@@ -34,10 +34,42 @@ THREE.WorkerLoader.prototype = {
 
 	/**
 	 *
+	 * @param {THREE.WorkerLoader.LoadingTask} loadingTask
+	 */
+	setLoadingTask: function ( loadingTask ) {
+		this.loadingTask = THREE.WorkerLoader.Validator.verifyInput( loadingTask, this.loadingTask );
+	},
+
+	/**
+	 *
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	getLoadingTask: function () {
 		return this.loadingTask;
+	},
+
+	/**
+	 * Execute a fully configured {@link THREE.WorkerLoader.LoadingTask}.
+	 *
+	 * @param {THREE.WorkerLoader.LoadingTask} loadingTask
+	 * @returns {THREE.WorkerLoader}
+	 */
+	executeLoadingTask: function ( loadingTask ) {
+		this.setLoadingTask( loadingTask );
+		this.loadingTask.execute();
+		return this;
+	},
+
+	/**
+	 * Configure the existing {@link THREE.WorkerLoader.LoadingTask} with the supplied parameters.
+	 *
+	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig
+	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupport]
+	 * @returns {THREE.WorkerLoader}
+	 */
+	executeLoadingTaskConfig: function ( loadingTaskConfig, workerSupport ) {
+		this.loadingTask.execute( loadingTaskConfig, workerSupport );
+		return this;
 	},
 
 	/**
@@ -66,12 +98,12 @@ THREE.WorkerLoader.prototype = {
 	 * @param {arraybuffer} content data as Uint8Array
 	 * @param {function} onLoad Called after worker successfully completed loading
 	 * @param {function} [onMesh] Called after worker successfully delivered a single mesh
-	 * @param {Object} [parserInstructions] Provide additional instructions to the parser
+	 * @param {Object} [parserConfiguration] Provide additional instructions to the parser
 	 * @returns {THREE.WorkerLoader}
 	 */
-	parseAsync: function ( content, onLoad, onMesh, parserInstructions ) {
+	parseAsync: function ( content, onLoad, onMesh, parserConfiguration ) {
 		var resourceDescriptor = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', null, content );
-		resourceDescriptor.setParserInstructions( parserInstructions );
+		resourceDescriptor.setParserConfiguration( parserConfiguration );
 
 		this.loadingTask.addResourceDescriptor( resourceDescriptor )
 			.updateCallbacksPipeline( null, null, onLoad )
@@ -100,6 +132,7 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.instanceNo = 0;
 	this.terminateWorkerOnLoad = true;
 	this.forceWorkerDataCopy = false;
+	this.enforceSync = false;
 
 	this.sendMaterials = true;
 	this.sendMaterialsJson = false;
@@ -210,6 +243,16 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 	/**
 	 *
+	 * @param {Boolean} enforceSync
+	 * @returns {THREE.WorkerLoader.LoadingTask}
+	 */
+	setEnforceSync: function ( enforceSync ) {
+		this.enforceSync = enforceSync === true;
+		return this;
+	},
+
+	/**
+	 *
 	 * @param {object} loader
 	 * @param {object} [loaderConfig]
 	 * @returns {THREE.WorkerLoader.LoadingTask}
@@ -292,7 +335,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	/**
 	 * @param {THREE.WorkerLoader.LoadingTaskConfig} loadingTaskConfig
 	 * @param {THREE.WorkerLoader.WorkerSupport} [workerSupport]
-	 * @private
 	 *
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
@@ -472,7 +514,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			};
 
 			var fileLoader = new THREE.FileLoader( loadingTask.manager );
-			fileLoader.setResponseType( resourceDescriptorCurrent.parserInstructions.payloadType );
+			fileLoader.setResponseType( resourceDescriptorCurrent.parserConfiguration.payloadType );
 			fileLoader.setPath( loadingTask.loader.ref.path );
 			fileLoader.load( resourceDescriptorCurrent.url, processResourcesProxy, loadingTask.callbacks.load.onProgress, loadingTask.callbacks.load.onError );
 
@@ -498,7 +540,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		}
 		var resourceDescriptorCurrent = loadingTask.resourceDescriptors[ index ];
 		var result;
-		if ( resourceDescriptorCurrent.useAsync ) {
+		var useAsync = resourceDescriptorCurrent.useAsync && ! loadingTask.enforceSync;
+		if ( useAsync ) {
 
 			var scopedOnLoad = function ( measureTime ) {
 				measureTime = THREE.WorkerLoader.Validator.verifyInput( measureTime, true );
@@ -531,7 +574,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		} else {
 
-			result = loadingTask.loader.ref.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserInstructions );
+			result = loadingTask.loader.ref.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserConfiguration );
 			resourceDescriptorCurrent.setParserResult( result );
 			var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
 			if ( THREE.WorkerLoader.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
@@ -597,7 +640,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			if ( this.sendMaterialsJson ) materialsContainer.serializedMaterials = this.meshBuilder.getMaterialsJSON();
 
 		}
-		var params = ( THREE.WorkerLoader.Validator.isValid( resourceDescriptor.parserInstructions ) ) ? resourceDescriptor.parserInstructions : {};
+		var params = ( THREE.WorkerLoader.Validator.isValid( resourceDescriptor.parserConfiguration ) ) ? resourceDescriptor.parserConfiguration : {};
 		// enforce async param
 		params.useAsync = true;
 
@@ -766,7 +809,7 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
  *
  * @param {String} resourceType
  * @param {String} name
- * @param {Object} [content]
+ * @param {Object} content
  * @constructor
  */
 THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
@@ -778,7 +821,7 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content )
 	this.path = '';
 	this.extension = null;
 	this.useAsync = true;
-	this.parserInstructions = {
+	this.parserConfiguration = {
 		payloadType: 'arraybuffer'
 	};
 	this.result = null;
@@ -808,12 +851,12 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
 
 			}
-			this.parserInstructions.payloadType = 'arraybuffer';
+			this.parserConfiguration.payloadType = 'arraybuffer';
 
 		} else if ( this.resourceType === 'String' ) {
 
 			if ( ! ( typeof( this.content ) === 'string' || this.content instanceof String ) ) throw 'Provided content is not of resourceType "String"! Aborting...';
-			this.parserInstructions.payloadType = 'text';
+			this.parserConfiguration.payloadType = 'text';
 
 		} else if ( this.resourceType === 'URL' ) {
 
@@ -846,9 +889,9 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		return this;
 	},
 
-	setParserInstructions: function ( parserInstructions ) {
-		THREE.WorkerLoader.LoadingTask.applyConfiguration( this.parserInstructions, parserInstructions, true );
-		if ( this.parserInstructions.name === undefined || this.parserInstructions.name === null ) this.parserInstructions.name = this.name;
+	setParserConfiguration: function ( parserConfiguration ) {
+		THREE.WorkerLoader.LoadingTask.applyConfiguration( this.parserConfiguration, parserConfiguration, true );
+		if ( this.parserConfiguration.name === undefined || this.parserConfiguration.name === null ) this.parserConfiguration.name = this.name;
 		return this;
 	},
 
