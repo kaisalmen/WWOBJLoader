@@ -116,7 +116,7 @@ var WWParallels = (function () {
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};
 
-	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, streamMeshes ) {
+	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, enforceSync ) {
 		if ( this.running ) {
 
 			return;
@@ -292,8 +292,10 @@ var WWParallels = (function () {
 			pivot.scale.set( modelPrepData.scale, modelPrepData.scale, modelPrepData.scale );
 			this.scene.add( pivot );
 
-			var baseConfig = streamMeshes ? { baseObject3d: pivot } : {};
-			baseConfig[ 'enforceSync' ] = false;
+			var baseConfig = {
+				baseObject3d: pivot,
+				enforceSync: enforceSync === true
+			};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
 				.setLoaderConfig( THREE.OBJLoader, { modelName: modelPrepData.modelName } )
 				.addResourceDescriptors( modelPrepData.resourceDescriptors )

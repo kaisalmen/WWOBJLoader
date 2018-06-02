@@ -40,9 +40,9 @@
 			var wwParallelsControl = {
 				queueLength: 128,
 				workerCount: 4,
-				streamMeshes: true,
+				enforceSync: false,
 				run: function () {
-					app.enqueueAllAssests( this.queueLength, this.workerCount, this.streamMeshes );
+					app.enqueueAllAssests( this.queueLength, this.workerCount, this.enforceSync );
 				},
 				terminate: function () {
 					app.terminateManager();
@@ -61,7 +61,7 @@
 			var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
 			folderQueue.add( wwParallelsControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
 			folderQueue.add( wwParallelsControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
-			folderQueue.add( wwParallelsControl, 'streamMeshes' );
+			folderQueue.add( wwParallelsControl, 'enforceSync' );
 			folderQueue.add( wwParallelsControl, 'run' ).name( 'Run Queue' );
 			folderQueue.open();
 
