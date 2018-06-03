@@ -452,7 +452,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		}
 		var resourceDescriptorCurrent = loadingTask.resourceDescriptors[ index ];
-		if ( resourceDescriptorCurrent.resourceType === 'URL' ) {
+		if ( THREE.WorkerLoader.Validator.isValid( resourceDescriptorCurrent ) && resourceDescriptorCurrent.resourceType === 'URL' ) {
 
 			if ( ! THREE.WorkerLoader.Validator.isValid( loadingTask.callbacks.load.onProgress ) ) {
 				var numericalValueRef = 0;
@@ -751,8 +751,13 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	 * @param resourceDescriptor
 	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
-	addResourceDescriptors: function ( resourceDescriptors ) {
-		for ( var name in resourceDescriptors ) this.resourceDescriptors.push( resourceDescriptors[ name ] );
+	setResourceDescriptors: function ( resourceDescriptors ) {
+		this.resourceDescriptors = [];
+		for ( var name in resourceDescriptors ) {
+
+			this.resourceDescriptors.push( resourceDescriptors[ name ] );
+
+		}
 		return this;
 	},
 
@@ -809,13 +814,14 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
  *
  * @param {String} resourceType
  * @param {String} name
- * @param {Object} content
+ * @param {Object} input
  * @constructor
  */
-THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, content ) {
+THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.resourceType = resourceType;
-	this.content = ( content !== undefined && content !== null ) ? content : null;
+	this.input = ( input !== undefined && input !== null ) ? input : null;
+	this.content;
 	this.url = null;
 	this.filename = null;
 	this.path = '';
@@ -835,43 +841,31 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	_init: function () {
 
-		if ( this.resourceType === 'Buffer' ) {
+		if ( this.resourceType === 'URL' ) {
 
-			if ( ! ( this.content instanceof ArrayBuffer ||
-				this.content instanceof Int8Array ||
-				this.content instanceof Uint8Array ||
-				this.content instanceof Uint8ClampedArray ||
-				this.content instanceof Int16Array ||
-				this.content instanceof Uint16Array ||
-				this.content instanceof Int32Array ||
-				this.content instanceof Uint32Array ||
-				this.content instanceof Float32Array ||
-				this.content instanceof Float64Array ) ) {
-
-				throw 'Provided content is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
-
-			}
-			this.parserConfiguration.payloadType = 'arraybuffer';
-
-		} else if ( this.resourceType === 'String' ) {
-
-			if ( ! ( typeof( this.content ) === 'string' || this.content instanceof String ) ) throw 'Provided content is not of resourceType "String"! Aborting...';
-			this.parserConfiguration.payloadType = 'text';
-
-		} else if ( this.resourceType === 'URL' ) {
-
-			this.url = this.content;
+			this.url = ( this.input !== null ) ? this.input : this.name;
 			this.filename = this.url;
 			var urlParts = this.url.split( '/' );
 			if ( urlParts.length > 2 ) {
 
 				this.filename = urlParts[ urlParts.length - 1 ];
-				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
+				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
 				if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 			}
 			var filenameParts = this.filename.split( '.' );
 			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
+			this.content = null;
+
+		} else if ( this.resourceType === 'Buffer' ) {
+
+			this.parserConfiguration.payloadType = 'arraybuffer';
+			this.setBuffer( this.input );
+
+		} else if ( this.resourceType === 'String' ) {
+
+			this.parserConfiguration.payloadType = 'text';
+			this.setString( this.input );
 
 		} else if ( this.resourceType === 'Metadata' ) {
 
@@ -882,6 +876,29 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 			throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...'
 
 		}
+	},
+
+	setString: function ( input ) {
+		if ( ! ( typeof( input ) === 'string' || input instanceof String) ) throw 'Provided input is not of resourceType "String"! Aborting...';
+		this.content = input;
+	},
+
+	setBuffer: function ( buffer ) {
+		if ( ! ( buffer instanceof ArrayBuffer ||
+			buffer instanceof Int8Array ||
+			buffer instanceof Uint8Array ||
+			buffer instanceof Uint8ClampedArray ||
+			buffer instanceof Int16Array ||
+			buffer instanceof Uint16Array ||
+			buffer instanceof Int32Array ||
+			buffer instanceof Uint32Array ||
+			buffer instanceof Float32Array ||
+			buffer instanceof Float64Array ) ) {
+
+			throw 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...';
+
+		}
+		this.content = buffer;
 	},
 
 	setUseAsync: function ( useAsync ) {

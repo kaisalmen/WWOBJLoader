@@ -298,7 +298,7 @@ var WWParallels = (function () {
 			};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
 				.setLoaderConfig( THREE.OBJLoader, { modelName: modelPrepData.modelName } )
-				.addResourceDescriptors( modelPrepData.resourceDescriptors )
+				.setResourceDescriptors( modelPrepData.resourceDescriptors )
 				.setCallbacksApp( callbackOnReport )
 				.setCallbacksParsing( callbackOnMesh, callbackOnMaterials )
 				.setCallbacksPipeline( callbackOnComplete );

@@ -132,6 +132,7 @@ var WWOBJLoader2Stage = (function () {
 		};
 		this.assetsDef.objsFemaleMale = [];
 
+
 		var pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, -175 );
 		this.scene.add( pivot );
@@ -156,6 +157,7 @@ var WWOBJLoader2Stage = (function () {
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsMale = loadingTaskConfig;
 
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( 200, 0, -75 );
 		this.scene.add( pivot );
@@ -174,69 +176,116 @@ var WWOBJLoader2Stage = (function () {
 			.addResourceDescriptor( rdMtl )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsFemale = loadingTaskConfig;
-/*
-		prepData = new THREE.LoaderSupport.PrepData( 'cerberus' );
+
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, -100, 0 );
 		pivot.scale.set( 50.0, 50.0, 50.0 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/cerberus/Cerberus.obj', 'OBJ' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsCerberus = prepData;
+		this.scene.add( pivot );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'Cerberus',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsCerberus = loadingTaskConfig;
 
-		prepData = new THREE.LoaderSupport.PrepData( 'WaltHead' );
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 75 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/walt/WaltHead.mtl', 'MTL' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsWaltHead = prepData;
+		this.scene.add( pivot );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'Vive Controller' );
+		parserConfigMtl.texturePath = '../../resource/obj/walt/';
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.mtl', '../../resource/obj/walt/WaltHead.mtl' )
+			.setParserConfiguration( parserConfigMtl )
+			.setUseAsync( false );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/walt/WaltHead.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'WaltHead',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdMtl )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsWaltHead = loadingTaskConfig;
+
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( 0, 0, 200 );
 		pivot.scale.set( 400.0, 400.0, 400.0 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', 'OBJ' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsViveController = prepData;
+		this.scene.add( pivot );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'PTV1' );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'vr_controller_vive_1_5',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsViveController = loadingTaskConfig;
+
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( -250, 0, -200 );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.zip', 'ZIP' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.obj', 'OBJ' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/PTV1/PTV1.mtl', 'MTL' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsPtv1Zip = prepData;
+		this.scene.add( pivot );
+
+		var rdZip = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.zip', '../../resource/obj/PTV1/PTV1.zip' );
+		parserConfigMtl.texturePath = '../../resource/PTV1/walt/';
+		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.mtl' )
+			.setParserConfiguration( parserConfigMtl )
+			.setUseAsync( false );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.obj' );
+
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'PTV1',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdZip )
+			.addResourceDescriptor( rdMtl )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsPtv1Zip = loadingTaskConfig;
+
 
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 		// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
-		prepData = new THREE.LoaderSupport.PrepData( 'oven' );
 		pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, 50 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip', 'ZIP' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-oven-scene.obj', 'OBJ' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsZomaxOven = prepData;
+		this.scene.add( pivot );
 
-		prepData = new THREE.LoaderSupport.PrepData( 'sink' );
+		rdZip = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.zip', '../../resource/obj/zomax/zomax-net_haze-oven-scene.zip' );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'oven',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdZip )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsZomaxOven = loadingTaskConfig;
+
+
 		pivot = new THREE.Object3D();
 		pivot.position.set( -200, 0, 200 );
-		prepData.streamMeshesTo = pivot;
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip', 'ZIP' ) );
-		prepData.addResource( new THREE.LoaderSupport.ResourceDescriptor( '../../resource/obj/zomax/zomax-net_haze-sink-scene.obj', 'OBJ' ) );
-		prepData.useIndices = true;
-		prepData.useAsync = true;
-		this.assetsDef.objsZomaxSink = prepData;
-*/
+		this.scene.add( pivot );
+
+		rdZip = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.zip', '../../resource/obj/zomax/zomax-net_haze-sink-scene.zip' );
+		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.obj' );
+		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+				name: 'sink',
+				instanceNo: 0,
+				baseObject3d: pivot
+			} )
+			.setLoaderConfig( THREE.OBJLoader, { useIndices: true } )
+			.addResourceDescriptor( rdZip )
+			.addResourceDescriptor( rdObj );
+		this.assetsDef.objsZomaxSink = loadingTaskConfig;
 	};
 
 	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
@@ -330,28 +379,62 @@ var WWOBJLoader2Stage = (function () {
 		loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
 			.setCallbacksApp( this._reportProgress );
 
-		var workerLoader = new THREE.WorkerLoader();
-		var resourceZip = loadingTaskConfig.resourceDescriptors[ 0 ];
-		if ( resourceZip.extension === 'ZIP' ) {
-/*
-			var resourceObj = prepData.resources[ 1 ];
-			var resourceMtl = prepData.resources.length === 3 ? prepData.resources[ 2 ] : null;
+		var findFile = function ( expectedExtension ) {
+			var resourceFound = null;
+			for ( var i = 0, resourceSearch; i < loadingTaskConfig.resourceDescriptors.length; i++ ) {
 
-			var zipTools = new ZipTools( resourceZip.pathBase );
+				resourceSearch = loadingTaskConfig.resourceDescriptors[ i ];
+				if ( resourceSearch.extension === expectedExtension ) {
+
+					resourceFound = resourceSearch;
+					break;
+
+				}
+
+			}
+			return resourceFound;
+		};
+
+		var workerLoader = new THREE.WorkerLoader();
+		var resourceZip = findFile( 'zip' );
+		var resourceMtl = findFile( 'mtl' );
+		var resourceObj = findFile( 'obj' );
+
+		if ( resourceZip !== null && resourceZip.extension === 'zip' ) {
+
+			var zipTools = new ZipTools();
+			var wsResourceArray = [];
 			var setObjAsArrayBuffer = function ( data ) {
+				resourceObj.setBuffer( data );
+				resourceObj.resourceType = 'Buffer';
+				wsResourceArray.push( resourceObj );
+
 				scope._reportProgress( { detail: { text: '' } } );
-				prepData.resources[ 1 ].content = data;
-				objLoader2.run( prepData );
+
+				loadingTaskConfig.setResourceDescriptors( wsResourceArray );
+				workerLoader.executeLoadingTaskConfig( loadingTaskConfig );
 			};
 
 			var setMtlAsString = function ( data ) {
-				if ( prepData.resources.length > 2 ) resourceMtl.content = data;
+				resourceMtl.setString( data );
+				resourceMtl.resourceType = 'String';
+				wsResourceArray.push( resourceMtl );
+
 				scope._reportProgress( { detail: { text: 'Unzipping: ' + resourceObj.name } } );
 				zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
 			};
 
 			var doneUnzipping = function () {
-				zipTools.unpackAsString( Validator.isValid( resourceMtl ) ? resourceMtl.name : null, setMtlAsString );
+				if ( resourceMtl !== null ) {
+
+					zipTools.unpackAsString( resourceMtl.name, setMtlAsString );
+
+				} else {
+
+					scope._reportProgress( { detail: { text: 'Unzipping: ' + resourceObj.name } } );
+					zipTools.unpackAsUint8Array( resourceObj.name, setObjAsArrayBuffer );
+
+				}
 			};
 
 			var errorCase = function ( text ) {
@@ -359,7 +442,7 @@ var WWOBJLoader2Stage = (function () {
 				scope.processing = false;
 			};
 			zipTools.load( resourceZip.url, { success: doneUnzipping, progress: this._reportProgress, error: errorCase } );
-*/
+
 		} else {
 
 			this._reportProgress( { detail: { text: '' } } );
@@ -373,7 +456,7 @@ var WWOBJLoader2Stage = (function () {
 		var fileMtl = null;
 		var files = event.target.files;
 
-		for ( var i = 0, file; file = files[ i ]; i++) {
+		for ( var i = 0, file; file = files[ i ]; i++ ) {
 
 			if ( file.name.indexOf( '\.obj' ) > 0 && fileObj === null ) {
 				fileObj = file;
