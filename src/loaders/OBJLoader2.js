@@ -35,6 +35,8 @@ THREE.OBJLoader2 = (function () {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 		this.terminateWorkerOnLoad = true;
+
+		this.genericErrorHandler = null;
 	}
 
 	/**
@@ -174,7 +176,27 @@ THREE.OBJLoader2 = (function () {
 
 		}
 		this.onProgress( 'error', output, -1 );
-		throw output;
+		this._throwError( output );
+	};
+
+	/**
+	 * Register an generic error handler that is called if available instead of throwing an exception
+	 * @param {Function} genericErrorHandler
+	 */
+	OBJLoader2.prototype.setGenericErrorHandler = function ( genericErrorHandler ) {
+		this.genericErrorHandler = Validator.verifyInput( genericErrorHandler, null );
+	};
+
+	OBJLoader2.prototype._throwError = function ( errorMessage ) {
+		if ( Validator.isValid( this.genericErrorHandler ) )  {
+
+			this.genericErrorHandler( errorMessage );
+
+		} else {
+
+			throw errorMessage;
+
+		}
 	};
 
 	/**
@@ -194,7 +216,11 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	OBJLoader2.prototype._loadObj = function ( resource, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
-		if ( ! Validator.isValid( onError ) ) onError = this._onError;
+		if ( ! Validator.isValid( onError ) ) {
+			onError = function ( event ) {
+				this._onError( event );
+			}
+		}
 
 		// fast-fail
 		if ( ! Validator.isValid( resource ) ) onError( 'An invalid ResourceDescriptor was provided. Unable to continue!' );
@@ -361,7 +387,7 @@ THREE.OBJLoader2 = (function () {
 
 		} else {
 
-			throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
+			this._throwError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
 
 		}
 		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2 parse: ' + this.modelName );
@@ -567,7 +593,11 @@ THREE.OBJLoader2 = (function () {
 		};
 
 		Parser.prototype.setCallbackMeshBuilder = function ( callbackMeshBuilder ) {
-			if ( ! THREE.LoaderSupport.Validator.isValid( callbackMeshBuilder ) ) throw 'Unable to run as no "MeshBuilder" callback is set.';
+			if ( ! THREE.LoaderSupport.Validator.isValid( callbackMeshBuilder ) ) {
+
+				this._throwError( 'Unable to run as no "MeshBuilder" callback is set.' );
+
+			}
 			this.callbackMeshBuilder = callbackMeshBuilder;
 		};
 
@@ -1070,7 +1100,7 @@ THREE.OBJLoader2 = (function () {
 
 				if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
-					throw 'Vertex Colors were detected, but vertex count and color count do not match!';
+					this._throwError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
 
 				}
 				if ( this.logging.enabled && this.logging.debug ) console.debug( this.createRawMeshReport( this.inputObjectCount ) );
@@ -1380,7 +1410,7 @@ THREE.OBJLoader2 = (function () {
 
 					} else {
 
-						throw 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
+						this._throwError( 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!' );
 					}
 
 				}
@@ -1394,7 +1424,13 @@ THREE.OBJLoader2 = (function () {
 			} else if ( Validator.isValid( resource.url ) ) {
 
 				var fileLoader = new THREE.FileLoader( this.manager );
-				fileLoader.load( resource.url, parseTextWithMtlLoader, this._onProgress, this._onError );
+				var scopedOnError = function ( event ) {
+					scope._onError( event );
+				};
+				var scopedOnProgress = function ( type, text, numericalValue ) {
+					scope.onProgress( type, text, numericalValue );
+				};
+				fileLoader.load( resource.url, parseTextWithMtlLoader, scopedOnProgress, scopedOnError );
 
 			}
 		}

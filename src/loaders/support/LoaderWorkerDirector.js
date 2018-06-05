@@ -232,6 +232,15 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 		updatedCallbacks.setCallbackOnLoadMaterials( wrapperOnLoadMaterials );
 		prepData.callbacks = updatedCallbacks;
 
+		if ( typeof supportDesc.loader.setGenericErrorHandler === 'function'  ) {
+			supportDesc.loader.setGenericErrorHandler( function ( errorMessage ) {
+				console.error( 'Loader reported an error: ' );
+				console.error( errorMessage );
+
+				supportDesc.inUse = false;
+				scope.processQueue();
+			} );
+		}
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );
 	};
 
