@@ -139,7 +139,8 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 
 	this.loader = {
 		ref: null,
-		config: {}
+		config: {},
+		buildWorkerCode: null
 	};
 	this.resourceDescriptors = [];
 	this.resetResourceDescriptors();
@@ -259,6 +260,14 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		this.loader.ref = loader;
 		this.loader.config = THREE.WorkerLoader.Validator.verifyInput( loaderConfig, this.loader.config );
 		return this;
+	},
+
+	/**
+	 * Funtion that is invoked to build the worker code. This overrules anything the loader already supplies.
+	 * @param buildWorkerCode
+	 */
+	setBuildWorkerCodeFunction: function ( buildWorkerCode ) {
+		this.loader.buildWorkerCode = buildWorkerCode;
 	},
 
 	/**
@@ -395,10 +404,17 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				classDef.call( loader );
 				this.setLoader( loader, loadingTaskConfig.loader.config );
 			}
+			this.setBuildWorkerCodeFunction( loadingTaskConfig.loader.buildWorkerCode );
 
 		}
 		if ( ! THREE.WorkerLoader.Validator.isValid( this.loader.ref ) ) this._throwError( 'Unable to continue. You have not specified a loader!' );
-		if ( typeof this.loader.ref.buildWorkerCode !== 'function' ) this._throwError( this.loader.ref.modelName + ' has no function "buildWorkerCode".' );
+
+		if ( typeof this.loader.buildWorkerCode !== 'function' && typeof this.loader.ref.buildWorkerCode === 'function' ) {
+
+			this.loader.buildWorkerCode = this.loader.ref.buildWorkerCode;
+
+		}
+		if ( typeof this.loader.buildWorkerCode !== 'function' ) this._throwError( 'No buildWorkerCode function is available for: ' + this.loader.ref.modelName );
 
 		THREE.WorkerLoader.LoadingTask.applyConfiguration( this, ownConfig );
 		if ( loadingTaskConfig !== null ) {
@@ -554,7 +570,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			var scopedOnReportError = function ( errorMessage ) {
 				loadingTask._throwError( errorMessage );
 			};
-			loadingTask._parseAsync( resourceDescriptorCurrent, scopedOnLoad, scopedOnMesh, scopedOnReportError );
+			loadingTask._parseAsync( resourceDescriptorCurrent, scopedOnMesh, scopedOnLoad, scopedOnReportError );
 
 		} else {
 
@@ -585,7 +601,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 * @param {THREE.WorkerLoader.LoadingTask} loadingTask
 	 * @private
 	 */
-	_parseAsync: function ( resourceDescriptor, scopedOnLoad, scopedOnMesh, scopedOnReportError ) {
+	_parseAsync: function ( resourceDescriptor, scopedOnMesh, scopedOnLoad, scopedOnReportError ) {
 		if ( ! THREE.WorkerLoader.Validator.isValid( this.loader.ref ) ) this._throwError( 'Unable to run "executeWithOverride" without proper "loader"!' );
 
 		var ltModelName = this.loader.ref.modelName;
@@ -607,7 +623,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			this.meshBuilder.setMaterials( this.loader.ref.meshBuilder.getMaterials() );
 
 		}
-		this.workerSupport.validate( this.loader.ref, scopedOnMesh, scopedOnLoad, scopedOnReportError );
+		this.workerSupport.validate( this.loader.buildWorkerCode, scopedOnMesh, scopedOnLoad, scopedOnReportError );
 
 		var materialsContainer = {
 			materials: {},
@@ -676,7 +692,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 	this.loader = {
 		classDef: '',
-		config: {}
+		config: {},
+		buildWorkerCode: null
 	};
 	this.config = THREE.WorkerLoader.Validator.verifyInput( loadingTaskConfig, {} );
 	this.resourceDescriptors = [];
@@ -712,6 +729,14 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 		this.loader.classDef = THREE.WorkerLoader.Validator.verifyInput( loaderClassDef, this.loader.classDef );
 		this.loader.config = THREE.WorkerLoader.Validator.verifyInput( loaderConfig, this.loader.config );
 		return this;
+	},
+
+	/**
+	 * Funtion that is invoked to build the worker code. This overrules anything the loader already supplies.
+	 * @param buildWorkerCode
+	 */
+	setBuildWorkerCodeFunction: function ( buildWorkerCode ) {
+		this.loader.buildWorkerCode = buildWorkerCode;
 	},
 
 	/**
@@ -1035,12 +1060,12 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * Validate the status of worker code and the derived worker and specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
 	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
-	 * @param {Object} loader The loader that shall be used to create the parser code.
+	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 * @param {Function} meshBuilder The mesh builder function. Default is {@link THREE.WorkerLoader.MeshBuilder}.
 	 * @param {Function} onLoad The function that is called when parsing is complete.
 	 * @param {Function} onReportError callback function that either throws error or invokes callback
 	 */
-	validate: function ( loader, meshBuilder, onLoad, onReportError ) {
+	validate: function ( buildWorkerCode, meshBuilder, onLoad, onReportError ) {
 		this.worker.callbacks.meshBuilder = THREE.WorkerLoader.Validator.verifyInput( meshBuilder, this.worker.callbacks.meshBuilder );
 		this.worker.callbacks.onLoad = THREE.WorkerLoader.Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
 		if ( ! THREE.WorkerLoader.Validator.isValid( this.worker.callbacks.meshBuilder ) ) onReportError( 'Unable to run as no "MeshBuilder" callback is set.' );
@@ -1054,7 +1079,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
-		var codeBuilderInstructions = loader.buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
+		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		var userWorkerCode = codeBuilderInstructions.code;
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
 		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
