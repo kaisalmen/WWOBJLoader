@@ -229,14 +229,20 @@ THREE.WorkerLoader.Director.prototype = {
 			if ( validator.isValid( globalCallbacks.onReport ) ) globalCallbacks.onReport( event );
 			if ( validator.isValid( orgTaskOnReport ) ) orgTaskOnReport( event );
 		};
+		var genericErrorHandler = function ( errorMessage ) {
+			console.error( 'Loader reported an error: ' );
+			console.error( errorMessage );
+
+			supportDesc.inUse = false;
+			scope.processQueue();
+		};
 
 		loadingTaskConfig.config[ 'description' ] = 'WorkerLoader.Director.No' + this.instructionQueuePointer;
 		loadingTaskConfig.config[ 'instanceNo' ] = supportDesc.instanceNo;
 		loadingTaskConfig
-			.setCallbacksApp( wrapperOnReport )
+			.setCallbacksApp( wrapperOnReport, genericErrorHandler )
 			.setCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
-			.setCallbacksPipeline( wrapperOnComplete )
-			.setCallbacksFileLoading( loadingTaskConfig.callbacks.load.onProgress, loadingTaskConfig.callbacks.load.onError );
+			.setCallbacksPipeline( wrapperOnComplete );
 		supportDesc.workerLoader.getLoadingTask()
 			.execute( loadingTaskConfig, supportDesc.workerSupport );
 	},

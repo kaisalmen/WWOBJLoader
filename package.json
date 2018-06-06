@@ -9,11 +9,11 @@
     "mesh_builder": "2.0.0-dev"
   },
   "previous_versions": {
-    "obj_loader": "2.4.0",
+    "obj_loader": "2.4.1",
     "worker_loader": "n.a.",
-    "worker_support": "2.2.0",
+    "worker_support": "2.2.1",
     "worker_loader_director": "2.2.0",
-    "mesh_builder": "1.2.0"
+    "mesh_builder": "1.2.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/OBJLoader2.js",
@@ -76,7 +76,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.92.0"
+    "three": "^0.93.0"
   },
   "devDependencies": {
     "jszip": "^3.1.5",

@@ -29,7 +29,8 @@ THREE.OBJLoader = function ( manager ) {
 
 	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
 	this.callbacks = {
-		onParseProgress: null
+		onParseProgress: null,
+		genericErrorHandler: null
 	};
 };
 
@@ -154,6 +155,15 @@ THREE.OBJLoader.prototype = {
 		return this;
 	},
 
+	/**
+	 * Register an generic error handler that is called if available instead of throwing an exception
+	 * @param {Function} genericErrorHandler
+	 */
+	setGenericErrorHandler: function ( genericErrorHandler ) {
+		this.callbacks.genericErrorHandler = this.validator.verifyInput( genericErrorHandler, null );
+	},
+
+
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
 		if ( this.validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
 		this.meshBuilder._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
@@ -196,7 +206,7 @@ THREE.OBJLoader.prototype = {
 			scope._onProgress( 'error', text, numericalValue );
 		};
 		onProgressScoped( output, - 1 );
-		throw output;
+		if ( this.validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( output );
 	},
 
 	/**
@@ -354,7 +364,8 @@ THREE.OBJLoader.prototype = {
 
 			} else {
 
-				throw 'Provided content was neither of type String nor Uint8Array! Aborting...';
+				var errorMessage = 'Provided content was neither of type String nor Uint8Array! Aborting...';
+				if ( this.validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 
 			}
 			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse: ' + this.modelName );
@@ -392,7 +403,8 @@ THREE.OBJLoader.prototype = {
 
 				} else {
 
-					throw 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
+					var errorMessage = 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
+					if ( this.validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 				}
 
 			}
@@ -577,8 +589,12 @@ THREE.OBJLoader.Parser.prototype = {
 	},
 
 	configure: function () {
-		if ( this.callbackMeshBuilder === undefined || this.callbackMeshBuilder === null ) throw 'Unable to run as no callback for building meshes is set.';
+		if ( this.callbackMeshBuilder === undefined || this.callbackMeshBuilder === null ) {
 
+			var errorMessage = 'Unable to run as no callback for building meshes is set.';
+			if ( this.validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
+
+		}
 		this.pushSmoothingGroup( 1 );
 		if ( this.logging.enabled ) {
 
@@ -1068,7 +1084,8 @@ THREE.OBJLoader.Parser.prototype = {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
-				throw 'Vertex Colors were detected, but vertex count and color count do not match!';
+				var errorMessage = 'Vertex Colors were detected, but vertex count and color count do not match!';
+				if ( this.validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 
 			}
 			if ( this.logging.enabled && this.logging.debug ) console.debug( this.createRawMeshReport( this.inputObjectCount ) );

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.2-dev
+- Issue #43: `OBJLoader2` allows to register a generic error handler. If this callback is available it will be used instead of a throw. `LoaderWorkerDirector` uses this callback to report a problem, but continue with the next loading task.
+
+## 2.4.1
+- three.js issue 14010: `TRHEE.OBJLoader2.loadMtl` transforms an ArrayBuffer to String `THREE.LoaderUtils.decodeText` if content is provided as ArrayBuffer
+- three.js issue 14032: Vertex Color value was not correctly initialized. Vertex colors are now correctly used
+- Issue #40: Added function `TRHEE.OBJLoader2.setUseOAsMesh` to enforce mesh creation on occurrence of "o". The default is false (spec compliant).
+- Issue #39: Ensure name of `THREE.LoaderSupport.ResourceDescriptor` always has a default name
+- Issue #38: Fixed onMeshAlter and onLoadMaterials callback usage in `THREE.LoaderSupport.WorkerDirector` and fixed handling of returned objects in `THREE.LoaderSupport.MeshBuilder`
+
 ## 2.4.0
 - three.js issue 13197:
   - Added forceWorkerDataCopy to THREE.LoaderSupport.WorkerSupport and THREE.LoaderSupport.WorkerDirector
