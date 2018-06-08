@@ -117,21 +117,28 @@ var WWParallels = (function () {
 	};
 
 	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, enforceSync ) {
+		var scope = this;
 		if ( this.running ) {
 
 			return;
 
 		} else {
 
+			var scopedOnReportError = function ( supportDesc, errorMessage ) {
+
+				console.error( 'workerLoaderDirector reported an error: ' );
+				console.error( errorMessage );
+				return true;
+
+			};
 			this.workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
 				.setLogging( this.logging.enabled, this.logging.debug )
 				.setCrossOrigin( 'anonymous' )
-				.setForceWorkerDataCopy( true );
+				.setForceWorkerDataCopy( true )
+				.setGlobalCallbacks( null, null, null, null, scopedOnReportError );
 			this.running = true;
 
 		}
-
-		var scope = this;
 		scope.workerLoaderDirector.objectsCompleted = 0;
 		scope.feedbackArray = [];
 		scope.reportDonwload = [];
@@ -356,19 +363,19 @@ var WWParallels = (function () {
 
 	WWParallels.prototype.terminateManagerAndClearScene = function () {
 		var scope = this;
-		var scopedClearAllAssests = function (){
+		var scopedClearAllAssests = function () {
 			scope.clearAllAssests();
 		};
 		if ( this.workerLoaderDirector.isRunning() ) {
 
-			this.workerLoaderDirector.tearDown( scopedClearAllAssests );
+			this.workerLoaderDirector.setGlobalCallbacks( null, null, null, null, null, scopedClearAllAssests );
 
 		} else {
 
 			scopedClearAllAssests();
-		}
 
-		this.running = false;
+		}
+		this.terminateManager();
 	};
 
 	return WWParallels;

@@ -20,8 +20,9 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 		debug: false
 	};
 
-	maxQueueSize = THREE.WorkerLoader.Validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
-	maxWebWorkers = THREE.WorkerLoader.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
+	this.validator = THREE.WorkerLoader.Validator;
+	maxQueueSize = this.validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
+	maxWebWorkers = this.validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 	this.maxQueueSize = Math.min( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
 	this.maxWebWorkers = Math.min( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 	this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
@@ -32,7 +33,9 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 			onComplete: null,
 			onMesh: null,
 			onMaterials: null,
-			onReport: null
+			onReport: null,
+			onReportError: null,
+			onQueueComplete: null
 		},
 		workerLoaders: {},
 		forceWorkerDataCopy: true
@@ -40,8 +43,6 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 	this.objectsCompleted = 0;
 	this.instructionQueue = [];
 	this.instructionQueuePointer = 0;
-
-	this.callbackOnFinishedProcessing = null;
 };
 
 THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '3.0.0-dev';
@@ -89,13 +90,23 @@ THREE.WorkerLoader.Director.prototype = {
 	},
 
 	/**
-	 * @param {object} globalCallbacks  Register global callbacks used by all web workers
+	 * Register global callbacks used by all web workers.
 	 *
-	 * @param globalCallbacks
+	 * @param {function} onComplete
+	 * @param {function} onMesh
+	 * @param {function} onMaterials
+	 * @param {function} onReport
+	 * @param {function} onReportError Receives supportDesc object and the error messsage
+	 * * @param {function} onQueueComplete Called when WorkerLoader queue processing is done
 	 * @returns {THREE.WorkerLoader.Director}
 	 */
-	setGlobalCallbacks: function ( globalCallbacks ) {
-		if ( THREE.WorkerLoader.Validator.isValid( globalCallbacks ) ) this.workerDescription.globalCallbacks = globalCallbacks;
+	setGlobalCallbacks: function ( onComplete, onMesh, onMaterials, onReport, onReportError, onQueueComplete ) {
+		this.workerDescription.globalCallbacks.onComplete = this.validator.verifyInput( onComplete, this.workerDescription.globalCallbacks.onComplete );
+		this.workerDescription.globalCallbacks.onMesh = this.validator.verifyInput( onMesh, this.workerDescription.globalCallbacks.onMesh );
+		this.workerDescription.globalCallbacks.onMaterials = this.validator.verifyInput( onMaterials, this.workerDescription.globalCallbacks.onMaterials );
+		this.workerDescription.globalCallbacks.onReport = this.validator.verifyInput( onReport, this.workerDescription.globalCallbacks.onReport );
+		this.workerDescription.globalCallbacks.onReportError = this.validator.verifyInput( onReportError, this.workerDescription.globalCallbacks.onReportError );
+		this.workerDescription.globalCallbacks.onQueueComplete = this.validator.verifyInput( onQueueComplete, this.workerDescription.globalCallbacks.onQueueComplete );
 		return this;
 	},
 
@@ -185,10 +196,9 @@ THREE.WorkerLoader.Director.prototype = {
 
 		}
 
-		if ( ! this.isRunning() && this.callbackOnFinishedProcessing !== null ) {
+		if ( ! this.isRunning() && this.validator.isValid( this.workerDescription.globalCallbacks.onQueueComplete ) ) {
 
-			this.callbackOnFinishedProcessing();
-			this.callbackOnFinishedProcessing = null;
+			this.workerDescription.globalCallbacks.onQueueComplete();
 
 		}
 	},
@@ -197,8 +207,8 @@ THREE.WorkerLoader.Director.prototype = {
 		supportDesc.inUse = true;
 		if ( this.logging.enabled ) console.info( '\nAssigning next item from queue to worker (queue length: ' + this.instructionQueue.length + ')\n\n' );
 
-		var validator = THREE.WorkerLoader.Validator;
 		var scope = this;
+		var validator = scope.validator;
 		var globalCallbacks = this.workerDescription.globalCallbacks;
 		var orgTaskOnComplete = loadingTaskConfig.callbacks.pipeline.onComplete;
 		var wrapperOnComplete = function ( event ) {
@@ -229,18 +239,34 @@ THREE.WorkerLoader.Director.prototype = {
 			if ( validator.isValid( globalCallbacks.onReport ) ) globalCallbacks.onReport( event );
 			if ( validator.isValid( orgTaskOnReport ) ) orgTaskOnReport( event );
 		};
-		var genericErrorHandler = function ( errorMessage ) {
-			console.error( 'Loader reported an error: ' );
-			console.error( errorMessage );
 
-			supportDesc.inUse = false;
-			scope.processQueue();
+		var orgTaskOnReportError = loadingTaskConfig.callbacks.app.onReportError;
+		var wrapperOnReportError = function ( errorMessage ) {
+			var continueProcessing = true;
+			if ( validator.isValid( globalCallbacks.onReportError ) ) {
+
+				continueProcessing = globalCallbacks.onReportError( supportDesc, errorMessage );
+
+			} else {
+
+				console.error( 'Loader reported an error: ' );
+				console.error( errorMessage );
+			}
+
+			if ( continueProcessing ) {
+
+				supportDesc.inUse = false;
+				scope.processQueue();
+
+			}
+			if ( validator.isValid( orgTaskOnReportError ) ) orgTaskOnReportError( event );
 		};
+
 
 		loadingTaskConfig.config[ 'description' ] = 'WorkerLoader.Director.No' + this.instructionQueuePointer;
 		loadingTaskConfig.config[ 'instanceNo' ] = supportDesc.instanceNo;
 		loadingTaskConfig
-			.setCallbacksApp( wrapperOnReport, genericErrorHandler )
+			.setCallbacksApp( wrapperOnReport, wrapperOnReportError )
 			.setCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
 			.setCallbacksPipeline( wrapperOnComplete );
 		supportDesc.workerLoader.getLoadingTask()
@@ -248,14 +274,14 @@ THREE.WorkerLoader.Director.prototype = {
 	},
 
 	_deregister: function ( supportDesc ) {
-		if ( THREE.WorkerLoader.Validator.isValid( supportDesc ) ) {
+		if ( this.validator.isValid( supportDesc ) ) {
 
-			if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
+			if ( this.validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
 
 				supportDesc.workerSupport.setTerminateRequested( true );
 
 				if ( this.logging.enabled ) console.info( 'Requested termination of worker #' + supportDesc.instanceNo + '.' );
-				if ( THREE.WorkerLoader.Validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {
+				if ( this.validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {
 
 					supportDesc.workerLoader.loadingTask.callbacks.app.onReport( {
 						detail: {
@@ -272,15 +298,11 @@ THREE.WorkerLoader.Director.prototype = {
 
 	/**
 	 * Terminate all workers.
-	 *
-	 * @param {callback} callbackOnFinishedProcessing Function called once all workers finished processing.
 	 */
-	tearDown: function ( callbackOnFinishedProcessing ) {
+	tearDown: function () {
 		if ( this.logging.enabled ) console.info( 'Director received the deregister call. Terminating all workers!' );
 
 		this.instructionQueuePointer = this.instructionQueue.length;
-		this.callbackOnFinishedProcessing = THREE.WorkerLoader.Validator.verifyInput( callbackOnFinishedProcessing, null );
-
 		for ( var instanceNo in this.workerDescription.workerLoaders ) {
 
 			var supportDesc = this.workerDescription.workerLoaders[ instanceNo ];
