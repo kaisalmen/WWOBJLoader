@@ -172,6 +172,14 @@ var WWParallels = (function () {
 			}
 		};
 
+		var callbackReportError = function ( supportDesc, errorMessage ) {
+
+			console.error( 'LoaderWorkerDirector reported an error: ' );
+			console.error( errorMessage );
+			return true;
+
+		};
+
 		var callbackMeshAlter = function ( event, override ) {
 			if ( ! Validator.isValid( override ) ) override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
@@ -198,6 +206,7 @@ var WWParallels = (function () {
 
 		var callbacks = new THREE.LoaderSupport.Callbacks();
 		callbacks.setCallbackOnProgress( callbackReportProgress );
+		callbacks.setCallbackOnReportError( callbackReportError );
 		callbacks.setCallbackOnLoad( callbackOnLoad );
 		callbacks.setCallbackOnMeshAlter( callbackMeshAlter );
 		callbacks.setCallbackOnLoadMaterials( callbackOnLoadMaterials );

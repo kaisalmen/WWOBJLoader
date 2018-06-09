@@ -37,6 +37,7 @@ THREE.LoaderSupport.Callbacks = (function () {
 
 	function Callbacks() {
 		this.onProgress = null;
+		this.onReportError = null;
 		this.onMeshAlter = null;
 		this.onLoad = null;
 		this.onLoadMaterials = null;
@@ -50,6 +51,16 @@ THREE.LoaderSupport.Callbacks = (function () {
 	 */
 	Callbacks.prototype.setCallbackOnProgress = function ( callbackOnProgress ) {
 		this.onProgress = Validator.verifyInput( callbackOnProgress, this.onProgress );
+	};
+
+	/**
+	 * Register callback function that is invoked when an error is reported.
+	 * @memberOf THREE.LoaderSupport.Callbacks
+	 *
+	 * @param {callback} callbackOnReportError Callback function for described functionality
+	 */
+	Callbacks.prototype.setCallbackOnReportError = function ( callbackOnReportError ) {
+		this.onReportError = Validator.verifyInput( callbackOnReportError, this.onReportError );
 	};
 
 	/**
