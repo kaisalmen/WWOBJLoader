@@ -135,7 +135,7 @@ var WWParallels = (function () {
 				.setLogging( this.logging.enabled, this.logging.debug )
 				.setCrossOrigin( 'anonymous' )
 				.setForceWorkerDataCopy( true )
-				.setGlobalCallbacks( null, null, null, null, scopedOnReportError );
+				.setGlobalAppCallbacks( null, scopedOnReportError, null );
 			this.running = true;
 
 		}
@@ -368,7 +368,7 @@ var WWParallels = (function () {
 		};
 		if ( this.workerLoaderDirector.isRunning() ) {
 
-			this.workerLoaderDirector.setGlobalCallbacks( null, null, null, null, null, scopedClearAllAssests );
+			this.workerLoaderDirector.setGlobalAppCallbacks( null, null, scopedClearAllAssests );
 
 		} else {
 

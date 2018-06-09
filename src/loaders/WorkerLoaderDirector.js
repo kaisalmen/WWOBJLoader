@@ -90,20 +90,29 @@ THREE.WorkerLoader.Director.prototype = {
 	},
 
 	/**
-	 * Register global callbacks used by all web workers.
+	 * Register global callbacks used by all web workers during parsing.
 	 *
 	 * @param {function} onComplete
 	 * @param {function} onMesh
 	 * @param {function} onMaterials
-	 * @param {function} onReport
-	 * @param {function} onReportError Receives supportDesc object and the error messsage
-	 * * @param {function} onQueueComplete Called when WorkerLoader queue processing is done
 	 * @returns {THREE.WorkerLoader.Director}
 	 */
-	setGlobalCallbacks: function ( onComplete, onMesh, onMaterials, onReport, onReportError, onQueueComplete ) {
+	setGlobalParseCallbacks: function ( onComplete, onMesh, onMaterials ) {
 		this.workerDescription.globalCallbacks.onComplete = this.validator.verifyInput( onComplete, this.workerDescription.globalCallbacks.onComplete );
 		this.workerDescription.globalCallbacks.onMesh = this.validator.verifyInput( onMesh, this.workerDescription.globalCallbacks.onMesh );
 		this.workerDescription.globalCallbacks.onMaterials = this.validator.verifyInput( onMaterials, this.workerDescription.globalCallbacks.onMaterials );
+		return this;
+	},
+
+	/**
+	 * Register global callbacks used on application level for feedback.
+	 *
+	 * @param {function} onReport
+	 * @param {function} onReportError Receives supportDesc object and the error messsage
+	 * @param {function} onQueueComplete Called when WorkerLoader queue processing is done
+	 * @returns {THREE.WorkerLoader.Director}
+	 */
+	setGlobalAppCallbacks: function ( onReport, onReportError, onQueueComplete ) {
 		this.workerDescription.globalCallbacks.onReport = this.validator.verifyInput( onReport, this.workerDescription.globalCallbacks.onReport );
 		this.workerDescription.globalCallbacks.onReportError = this.validator.verifyInput( onReportError, this.workerDescription.globalCallbacks.onReportError );
 		this.workerDescription.globalCallbacks.onQueueComplete = this.validator.verifyInput( onQueueComplete, this.workerDescription.globalCallbacks.onQueueComplete );
@@ -243,11 +252,10 @@ THREE.WorkerLoader.Director.prototype = {
 		var orgTaskOnReportError = loadingTaskConfig.callbacks.app.onReportError;
 		var wrapperOnReportError = function ( errorMessage ) {
 			var continueProcessing = true;
-			if ( validator.isValid( globalCallbacks.onReportError ) ) {
+			if ( validator.isValid( globalCallbacks.onReportError ) ) continueProcessing = globalCallbacks.onReportError( supportDesc, errorMessage );
+			if ( validator.isValid( orgTaskOnReportError ) ) continueProcessing = orgTaskOnReportError( supportDesc, errorMessage );
 
-				continueProcessing = globalCallbacks.onReportError( supportDesc, errorMessage );
-
-			} else {
+			if ( ! validator.isValid( globalCallbacks.onReportError ) && ! validator.isValid( orgTaskOnReportError ) ) {
 
 				console.error( 'Loader reported an error: ' );
 				console.error( errorMessage );
@@ -259,9 +267,7 @@ THREE.WorkerLoader.Director.prototype = {
 				scope.processQueue();
 
 			}
-			if ( validator.isValid( orgTaskOnReportError ) ) orgTaskOnReportError( event );
 		};
-
 
 		loadingTaskConfig.config[ 'description' ] = 'WorkerLoader.Director.No' + this.instructionQueuePointer;
 		loadingTaskConfig.config[ 'instanceNo' ] = supportDesc.instanceNo;
