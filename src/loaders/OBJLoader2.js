@@ -35,8 +35,6 @@ THREE.OBJLoader2 = (function () {
 		this.callbacks = new THREE.LoaderSupport.Callbacks();
 		this.workerSupport = new THREE.LoaderSupport.WorkerSupport();
 		this.terminateWorkerOnLoad = true;
-
-		this.genericErrorHandler = null;
 	}
 
 	/**
@@ -134,6 +132,7 @@ THREE.OBJLoader2 = (function () {
 
 	OBJLoader2.prototype._setCallbacks = function ( callbacks ) {
 		if ( Validator.isValid( callbacks.onProgress ) ) this.callbacks.setCallbackOnProgress( callbacks.onProgress );
+		if ( Validator.isValid( callbacks.onReportError ) ) this.callbacks.setCallbackOnReportError( callbacks.onReportError );
 		if ( Validator.isValid( callbacks.onMeshAlter ) ) this.callbacks.setCallbackOnMeshAlter( callbacks.onMeshAlter );
 		if ( Validator.isValid( callbacks.onLoad ) ) this.callbacks.setCallbackOnLoad( callbacks.onLoad );
 		if ( Validator.isValid( callbacks.onLoadMaterials ) ) this.callbacks.setCallbackOnLoadMaterials( callbacks.onLoadMaterials );
@@ -179,18 +178,10 @@ THREE.OBJLoader2 = (function () {
 		this._throwError( output );
 	};
 
-	/**
-	 * Register an generic error handler that is called if available instead of throwing an exception
-	 * @param {Function} genericErrorHandler
-	 */
-	OBJLoader2.prototype.setGenericErrorHandler = function ( genericErrorHandler ) {
-		this.genericErrorHandler = Validator.verifyInput( genericErrorHandler, null );
-	};
-
 	OBJLoader2.prototype._throwError = function ( errorMessage ) {
-		if ( Validator.isValid( this.genericErrorHandler ) )  {
+		if ( Validator.isValid( this.callbacks.onReportError ) )  {
 
-			this.genericErrorHandler( errorMessage );
+			this.callbacks.onReportError( errorMessage );
 
 		} else {
 

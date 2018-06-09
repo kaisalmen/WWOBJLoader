@@ -223,24 +223,35 @@ THREE.LoaderSupport.WorkerDirector = (function () {
 			return materials;
 		};
 
+		var wrapperOnReportError = function ( errorMessage ) {
+			var continueProcessing = true;
+			if ( Validator.isValid( globalCallbacks.onReportError ) ) continueProcessing = globalCallbacks.onReportError( supportDesc, errorMessage );
+			if ( Validator.isValid( prepDataCallbacks.onReportError ) )	continueProcessing = prepDataCallbacks.onReportError( supportDesc, errorMessage );
+
+			if ( ! Validator.isValid( globalCallbacks.onReportError ) && ! Validator.isValid( prepDataCallbacks.onReportError ) ) {
+
+				console.error( 'Loader reported an error: ' );
+				console.error( errorMessage );
+
+			}
+			if ( continueProcessing ) {
+
+				supportDesc.inUse = false;
+				scope.processQueue();
+
+			}
+		};
+
 		supportDesc.loader = this._buildLoader( supportDesc.instanceNo );
 
 		var updatedCallbacks = new THREE.LoaderSupport.Callbacks();
 		updatedCallbacks.setCallbackOnLoad( wrapperOnLoad );
 		updatedCallbacks.setCallbackOnProgress( wrapperOnProgress );
+		updatedCallbacks.setCallbackOnReportError( wrapperOnReportError );
 		updatedCallbacks.setCallbackOnMeshAlter( wrapperOnMeshAlter );
 		updatedCallbacks.setCallbackOnLoadMaterials( wrapperOnLoadMaterials );
 		prepData.callbacks = updatedCallbacks;
 
-		if ( typeof supportDesc.loader.setGenericErrorHandler === 'function'  ) {
-			supportDesc.loader.setGenericErrorHandler( function ( errorMessage ) {
-				console.error( 'Loader reported an error: ' );
-				console.error( errorMessage );
-
-				supportDesc.inUse = false;
-				scope.processQueue();
-			} );
-		}
 		supportDesc.loader.run( prepData, supportDesc.workerSupport );
 	};
 
