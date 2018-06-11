@@ -43,7 +43,6 @@ MeshSpray.Loader.prototype = {
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by MeshSpray.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += 'THREE.LoaderSupport = {};\n\n';
 		workerCode += 'MeshSpray = {};\n\n';
 		workerCode += codeSerializer.serializeSingleton( 'MeshSpray.Parser', MeshSpray.Parser );
 

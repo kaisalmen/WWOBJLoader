@@ -734,14 +734,17 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	/**
 	 * Funtion that is invoked to build the worker code. This overrules anything the loader already supplies.
 	 * @param buildWorkerCode
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
 	setBuildWorkerCodeFunction: function ( buildWorkerCode ) {
 		this.loader.buildWorkerCode = buildWorkerCode;
+		return this;
 	},
 
 	/**
 	 *
 	 * @param {THREE.WorkerLoader.ResourceDescriptor} resourceDescriptor
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
 	addResourceDescriptor: function ( resourceDescriptor ) {
 		this.resourceDescriptors.push( resourceDescriptor );
@@ -1082,6 +1085,16 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		var userWorkerCode = codeBuilderInstructions.code;
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
+		if ( codeBuilderInstructions.useMeshDisassembler ) {
+
+			userWorkerCode += 'THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = true;\n\n';
+			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.WorkerExchangeTools', THREE.WorkerLoader.WorkerExchangeTools );
+
+		} else {
+
+			userWorkerCode += 'THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;\n\n';
+
+		}
 		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 		userWorkerCode += 'new ' + this.worker.workerRunner.name + '();\n\n';
 
@@ -1376,6 +1389,8 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	}
 };
 
+THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;
+
 
 /**
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
@@ -1442,8 +1457,22 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 			this.applyProperties( parser, payload.params );
 			this.applyProperties( parser, payload.materials );
 			this.applyProperties( parser, callbacks );
-			parser.workerScope = self;
-			parser.parse( payload.data.input, payload.data.options );
+
+			if ( THREE.WorkerLoader.WorkerSupport.useMeshDisassembler ) {
+
+				var object3d = parser.parse( payload.data.input, payload.data.options );
+				var workerExchangeTools = new THREE.WorkerLoader.WorkerExchangeTools();
+
+				workerExchangeTools.setCallbackMeshBuilder( callbacks.callbackMeshBuilder );
+				workerExchangeTools.walkMesh( object3d );
+
+
+			} else {
+
+				parser.parse( payload.data.input, payload.data.options );
+
+			}
+
 
 			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 

@@ -1373,7 +1373,7 @@ THREE.OBJLoader2.MeshBuilder.prototype = {
 		var defaultLineMaterial = new THREE.LineBasicMaterial();
 		defaultLineMaterial.name = 'defaultLineMaterial';
 
-		var defaultPointMaterial = new THREE.PointsMaterial( { size: 1 } );
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 0.1 } );
 		defaultPointMaterial.name = 'defaultPointMaterial';
 
 		var runtimeMaterials = {};

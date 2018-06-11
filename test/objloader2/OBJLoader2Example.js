@@ -63,38 +63,6 @@ var OBJLoader2Example = (function () {
 
 
 		var scope = this;
-		var meshWalker = function ( object3d ) {
-
-			console.info( 'Walking: ' + object3d.name );
-
-			var bufferGeometry;
-			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof THREE.BufferGeometry ) {
-
-				bufferGeometry = object3d[ 'geometry' ];
-				console.log ( bufferGeometry.attributes );
-
-			}
-			if ( object3d.hasOwnProperty( 'material' ) ) {
-
-				var mat = object3d.material;
-				if ( mat.hasOwnProperty( 'materials' ) ) {
-
-					var materials = mat.materials;
-					for ( var name in materials ) {
-
-						if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
-
-					}
-				}
-
-			} else {
-
-
-
-			}
-		};
-
-
 		var objLoader2 = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( object3d ) {
 

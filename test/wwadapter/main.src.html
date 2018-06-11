@@ -16,7 +16,7 @@
 
 		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 performance
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - WorkerLoader loader adapter
 			<div id="feedback"></div>
 		</div>
 
@@ -25,36 +25,38 @@
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+        <script src="../../node_modules/three/examples/js/loaders/PCDLoader.js"></script>
 
-		<script src="../../src/loaders/OBJLoader.js"></script>
+		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
+		<script src="../../src/loaders/WorkerExchangeTools.js"></script>
 		<script>
 
-			var OBJLoader2Perf = (function () {
+			WWLoaderAdapter = function ( elementToBindTo ) {
+				this.renderer = null;
+				this.canvas = elementToBindTo;
+				this.aspectRatio = 1;
+				this.recalcAspectRatio();
 
-				var Validator = THREE.OBJLoader2.Validator;
+				this.scene = null;
+				this.cameraDefaults = {
+					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+					near: 0.1,
+					far: 10000,
+					fov: 45
+				};
+				this.camera = null;
+				this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-				function OBJLoader2Perf( elementToBindTo ) {
-					this.renderer = null;
-					this.canvas = elementToBindTo;
-					this.aspectRatio = 1;
-					this.recalcAspectRatio();
+				this.controls = null;
+			};
 
-					this.scene = null;
-					this.cameraDefaults = {
-						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
-						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-						near: 0.1,
-						far: 10000,
-						fov: 45
-					};
-					this.camera = null;
-					this.cameraTarget = this.cameraDefaults.posCameraTarget;
+			WWLoaderAdapter.prototype = {
 
-					this.controls = null;
-				}
+				constructor: WWLoaderAdapter,
 
-				OBJLoader2Perf.prototype.initGL = function () {
+				initGL: function () {
 					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
 						antialias: true,
@@ -81,73 +83,88 @@
 
 					var helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 					this.scene.add( helper );
-				};
+				},
 
-				OBJLoader2Perf.prototype.initContent = function () {
-					var modelName = 'PerfTestModel';
-					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
+				initContent: function () {
+					var local = new THREE.Object3D();
+					local.position.set( 0, 0, 100 );
+					local.scale.set( 50.0, 50.0, 50.0 );
+					this.scene.add( local );
 
 					var scope = this;
-					var objLoader2 = new THREE.OBJLoader2();
 					var callbackOnLoad = function ( event ) {
-						scope.scene.add( event.detail.baseObject3d );
-						console.log( 'Loading complete: ' + event.detail.modelName );
-						scope._reportProgress( { detail: { text: '' } } );
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
-
-					var onLoadMtl = function ( materials ) {
-						objLoader2.setModelName( modelName );
-						objLoader2.setMaterials( materials );
-						objLoader2.setLogging( true, false );
-						objLoader2.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
+					var buildWorkerCode = function ( codeSerializer ) {
+						return {
+							code: '',
+							parserName: 'THREE.PCDLoader',
+							useMeshDisassembler: true,
+							libs: {
+								locations: [
+									'node_modules/three/build/three.min.js',
+									'node_modules/three/examples/js/loaders/PCDLoader.js'
+								],
+								path: '../../'
+							}
+						}
 					};
-					objLoader2.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', null, onLoadMtl, null );
-				};
+					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Zaghetto.pcd', '../../resource/pcd/binary/Zaghetto.pcd' );
 
-				OBJLoader2Perf.prototype._reportProgress = function( event ) {
-					var output = Validator.verifyInput( event.detail.text, '' );
+					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+						baseObject3d: local
+					} )
+						.setLoaderConfig( THREE.PCDLoader )
+						.setBuildWorkerCodeFunction( buildWorkerCode )
+						.addResourceDescriptor( rd )
+						.setCallbacksPipeline( callbackOnLoad );
+					new THREE.WorkerLoader()
+						.getLoadingTask()
+						.execute( loadingTaskConfig );
+				},
+
+				_reportProgress: function( event ) {
+					var output = THREE.WorkerLoader.Validator.verifyInput( event.detail.text, '' );
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
-				};
+				},
 
-				OBJLoader2Perf.prototype.resizeDisplayGL = function () {
+				resizeDisplayGL: function () {
 					this.controls.handleResize();
 
 					this.recalcAspectRatio();
 					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 					this.updateCamera();
-				};
+				},
 
-				OBJLoader2Perf.prototype.recalcAspectRatio = function () {
+				recalcAspectRatio: function () {
 					this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-				};
+				},
 
-				OBJLoader2Perf.prototype.resetCamera = function () {
+				resetCamera: function () {
 					this.camera.position.copy( this.cameraDefaults.posCamera );
 					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 					this.updateCamera();
-				};
+				},
 
-				OBJLoader2Perf.prototype.updateCamera = function () {
+				updateCamera: function () {
 					this.camera.aspect = this.aspectRatio;
 					this.camera.lookAt( this.cameraTarget );
 					this.camera.updateProjectionMatrix();
-				};
+				},
 
-				OBJLoader2Perf.prototype.render = function () {
+				render: function () {
 					if ( ! this.renderer.autoClear ) this.renderer.clear();
 					this.controls.update();
 					this.renderer.render( this.scene, this.camera );
-				};
+				}
 
-				return OBJLoader2Perf;
-
-			})();
+			};
 
 
-			var app = new OBJLoader2Perf( document.getElementById( 'example' ) );
+			var app = new WWLoaderAdapter( document.getElementById( 'example' ) );
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();
