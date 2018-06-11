@@ -6,7 +6,7 @@
 
 var WWOBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader.Validator;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -77,7 +77,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'female02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader();
+		var objLoader = new THREE.OBJLoader2();
 		objLoader.setModelName( modelName );
 
 		var scope = this;
@@ -125,7 +125,7 @@ var WWOBJLoader2Example = (function () {
 		var filename = 'resource/obj/female02/female02_vertex_colors.obj';
 		fileLoader.load( filename,
 			function ( content ) {
-				var objLoader = new THREE.OBJLoader();
+				var objLoader = new THREE.OBJLoader2();
 				objLoader.setModelName( modelName );
 
 				var workerLoader = new THREE.WorkerLoader();
@@ -143,7 +143,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'male02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader();
+		var objLoader = new THREE.OBJLoader2();
 		objLoader.setModelName( modelName );
 		objLoader.setUseIndices( true );
 
@@ -169,7 +169,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'WaltHead';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader();
+		var objLoader = new THREE.OBJLoader2();
 		objLoader.setModelName( modelName );
 
 		var local = new THREE.Object3D();
@@ -218,7 +218,7 @@ var WWOBJLoader2Example = (function () {
 				instanceNo: 42,
 				baseObject3d: local
 			} )
-			.setLoaderConfig( THREE.OBJLoader )
+			.setLoaderConfig( THREE.OBJLoader2 )
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad )
 			.setCallbacksApp( callbackOnProgress );
@@ -247,7 +247,7 @@ var WWOBJLoader2Example = (function () {
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				terminateWorkerOnLoad: false
 			} )
-			.setLoaderConfig( THREE.OBJLoader )
+			.setLoaderConfig( THREE.OBJLoader2 )
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad );
 		new THREE.WorkerLoader()

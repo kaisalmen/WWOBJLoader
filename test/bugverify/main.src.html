@@ -26,7 +26,7 @@
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-		<script src="../../src/loaders/OBJLoader.js"></script>
+		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script>
 
@@ -34,7 +34,7 @@
 
 			var OBJLoader2BugVerify = (function () {
 
-				var Validator = THREE.OBJLoader.Validator;
+				var Validator = THREE.OBJLoader2.Validator;
 
 				function OBJLoader2BugVerify( elementToBindTo ) {
 					this.renderer = null;
@@ -211,7 +211,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_14', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -229,7 +229,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( { instanceNo:  'issue_14032', baseObject3d: pivot	} )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -249,7 +249,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_21', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -269,7 +269,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_12120', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -287,7 +287,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_12324', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -307,7 +307,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_11811a', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -326,7 +326,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_11811b', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -346,7 +346,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_27_door', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );
@@ -365,7 +365,7 @@
 			rdObj.setParserConfiguration( parserConfigurationObj );
 
 			loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {	instanceNo:  'issue_27_wall2', baseObject3d: pivot } )
-				.setLoaderConfig( THREE.OBJLoader )
+				.setLoaderConfig( THREE.OBJLoader2 )
 				.addResourceDescriptor( rdMtl )
 				.addResourceDescriptor( rdObj );
 			app.updateAssets( loadingTaskConfig );

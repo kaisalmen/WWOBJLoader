@@ -179,7 +179,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackOnMesh = function ( event, override ) {
-			if ( ! Validator.isValid( override ) ) override = new THREE.OBJLoader.LoadedMeshUserOverride( false, false );
+			if ( ! Validator.isValid( override ) ) override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
 			var meshName = event.detail.meshName;
@@ -304,7 +304,7 @@ var WWParallels = (function () {
 				enforceSync: enforceSync === true
 			};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
-				.setLoaderConfig( THREE.OBJLoader, { modelName: modelPrepData.modelName } )
+				.setLoaderConfig( THREE.OBJLoader2, { modelName: modelPrepData.modelName } )
 				.setResourceDescriptors( modelPrepData.resourceDescriptors )
 				.setCallbacksApp( callbackOnReport )
 				.setCallbacksParsing( callbackOnMesh, callbackOnMaterials )

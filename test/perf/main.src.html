@@ -32,7 +32,7 @@
 
 			var OBJLoader2Perf = (function () {
 
-				var Validator = THREE.OBJLoader.Validator;
+				var Validator = THREE.OBJLoader2.Validator;
 
 				function OBJLoader2Perf( elementToBindTo ) {
 					this.renderer = null;
@@ -88,7 +88,7 @@
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					var scope = this;
-					var objLoader = new THREE.OBJLoader();
+					var objLoader2 = new THREE.OBJLoader2();
 					var callbackOnLoad = function ( event ) {
 						scope.scene.add( event.detail.baseObject3d );
 						console.log( 'Loading complete: ' + event.detail.modelName );
@@ -96,12 +96,12 @@
 					};
 
 					var onLoadMtl = function ( materials ) {
-						objLoader.setModelName( modelName );
-						objLoader.setMaterials( materials );
-						objLoader.setLogging( true, false );
-						objLoader.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
+						objLoader2.setModelName( modelName );
+						objLoader2.setMaterials( materials );
+						objLoader2.setLogging( true, false );
+						objLoader2.load( '../../resource/obj/PTV1/PTV1.obj', callbackOnLoad, null, null, null, false );
 					};
-					objLoader.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', null, onLoadMtl, null );
+					objLoader2.loadMtl( '../../resource/obj/PTV1/PTV1.mtl', null, onLoadMtl, null );
 				};
 
 				OBJLoader2Perf.prototype._reportProgress = function( event ) {

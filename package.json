@@ -2,14 +2,14 @@
   "name": "wwobjloader2",
   "version": "3.0.0-dev",
   "versions": {
-    "obj_loader": "3.0.0-dev",
+    "obj_loader2": "3.0.0-dev",
     "worker_loader": "1.0.0-dev",
     "worker_support": "3.0.0-dev",
     "worker_loader_director": "3.0.0-dev",
     "mesh_builder": "2.0.0-dev"
   },
   "previous_versions": {
-    "obj_loader": "2.4.1",
+    "obj_loader2": "2.4.1",
     "worker_loader": "n.a.",
     "worker_support": "2.2.1",
     "worker_loader_director": "2.2.0",

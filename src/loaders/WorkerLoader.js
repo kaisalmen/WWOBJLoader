@@ -360,7 +360,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 
 		}
-		this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
+		this.meshBuilder = new THREE.OBJLoader2.MeshBuilder();
 		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
 
 		var scope = this;
@@ -618,7 +618,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		this.meshBuilder.setBaseObject3d( this.baseObject3d );
 		this.meshBuilder.createDefaultMaterials();
-		if ( THREE.WorkerLoader.Validator.isValid( this.loader.ref.meshBuilder ) && this.loader.ref.meshBuilder instanceof THREE.OBJLoader.MeshBuilder ) {
+		if ( THREE.WorkerLoader.Validator.isValid( this.loader.ref.meshBuilder ) && this.loader.ref.meshBuilder instanceof THREE.OBJLoader2.MeshBuilder ) {
 
 			this.meshBuilder.setMaterials( this.loader.ref.meshBuilder.getMaterials() );
 

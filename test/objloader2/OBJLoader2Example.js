@@ -6,7 +6,7 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader.Validator;
+	var Validator = THREE.OBJLoader2.Validator;
 
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -61,21 +61,57 @@ var OBJLoader2Example = (function () {
 		var modelName = 'female02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
+
 		var scope = this;
-		var objLoader = new THREE.OBJLoader();
+		var meshWalker = function ( object3d ) {
+
+			console.info( 'Walking: ' + object3d.name );
+
+			var bufferGeometry;
+			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof THREE.BufferGeometry ) {
+
+				bufferGeometry = object3d[ 'geometry' ];
+				console.log ( bufferGeometry.attributes );
+
+			}
+			if ( object3d.hasOwnProperty( 'material' ) ) {
+
+				var mat = object3d.material;
+				if ( mat.hasOwnProperty( 'materials' ) ) {
+
+					var materials = mat.materials;
+					for ( var name in materials ) {
+
+						if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
+
+					}
+				}
+
+			} else {
+
+
+
+			}
+		};
+
+
+		var objLoader2 = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( object3d ) {
+
+			object3d.traverse( meshWalker );
+
 			scope.scene.add( object3d );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( { detail: { text: '' } } );
 		};
 
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader.setModelName( modelName );
-			objLoader.setMaterials( mtlParseResult.materials );
-			objLoader.setLogging( true, true );
-			objLoader.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
+			objLoader2.setModelName( modelName );
+			objLoader2.setMaterials( mtlParseResult.materials );
+			objLoader2.setLogging( true, true );
+			objLoader2.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
 		};
-		objLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
+		objLoader2.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {

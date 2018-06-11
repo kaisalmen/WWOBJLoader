@@ -1,4 +1,4 @@
-if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
+if ( THREE.OBJLoader22 === undefined ) { THREE.OBJLoader2 = {} }
 
 /**
  * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
@@ -6,11 +6,11 @@ if ( THREE.OBJLoader === undefined ) { THREE.OBJLoader = {} }
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
-THREE.OBJLoader = function ( manager ) {
+THREE.OBJLoader2 = function ( manager ) {
 
-	console.info( 'Using THREE.OBJLoader version: ' + THREE.OBJLoader.OBJLOADER_VERSION );
+	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
 
-	this.validator = THREE.OBJLoader.Validator;
+	this.validator = THREE.OBJLoader2.Validator;
 
 	this.manager = ( manager === null || manager === undefined ) ? THREE.DefaultLoadingManager : manager;
 	this.logging = {
@@ -27,25 +27,24 @@ THREE.OBJLoader = function ( manager ) {
 	this.useOAsMesh = false;
 	this.baseObject3d = new THREE.Group();
 
-	this.meshBuilder = new THREE.OBJLoader.MeshBuilder();
+	this.meshBuilder = new THREE.OBJLoader2.MeshBuilder();
 	this.callbacks = {
 		onParseProgress: null,
 		genericErrorHandler: null
 	};
 };
 
-THREE.OBJLoader.prototype = Object.create( THREE.OBJLoader.prototype );
-THREE.OBJLoader.prototype.constructor = THREE.OBJLoader;
-THREE.OBJLoader.OBJLOADER_VERSION = '3.0.0-dev';
+THREE.OBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
+THREE.OBJLoader2.prototype.constructor = THREE.OBJLoader2;
+THREE.OBJLoader2.OBJLOADER2_VERSION = '3.0.0-dev';
 
 
-THREE.OBJLoader.prototype = {
+THREE.OBJLoader2.prototype = {
 
-	constructor: THREE.OBJLoader,
+	constructor: THREE.OBJLoader2,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -59,7 +58,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Set the name of the model.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string} modelName
 	 */
@@ -70,7 +68,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * The URL of the base path.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string} path URL
 	 */
@@ -81,7 +78,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Set the node where the loaded objects will be attached directly.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {THREE.Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
 	 */
@@ -92,7 +88,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
@@ -113,7 +108,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Instructs loaders to create indexed {@link THREE.BufferGeometry}.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} useIndices=false
 	 */
@@ -124,7 +118,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Tells whether normals should be completely disregarded and regenerated.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} disregardNormals=false
 	 */
@@ -135,7 +128,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Tells whether a material shall be created per smoothing group.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} materialPerSmoothingGroup=false
 	 */
@@ -146,7 +138,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Usually 'o' is meta-information and does not result in creation of new meshes, but mesh creation on occurrence of "o" can be enforced.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {boolean} useOAsMesh=false
 	 */
@@ -171,7 +162,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Announce feedback which is give to the registered callbacks.
-	 * @memberOf THREE.OBJLoader
 	 * @private
 	 *
 	 * @param {string} type The type of event
@@ -211,7 +201,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
@@ -297,7 +286,6 @@ THREE.OBJLoader.prototype = {
 
 	/**
 	 * Parses OBJ data synchronously from arraybuffer or string.
-	 * @memberOf THREE.OBJLoader
 	 *
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 * @param {Object} parserConfiguration Provide additional instructions for MTL parsing:
@@ -328,7 +316,7 @@ THREE.OBJLoader.prototype = {
 			this.meshBuilder.setBaseObject3d( this.baseObject3d );
 			this.meshBuilder.createDefaultMaterials();
 
-			var parser = new THREE.OBJLoader.Parser();
+			var parser = new THREE.OBJLoader2.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
 			parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 			parser.setUseOAsMesh( this.useOAsMesh );
@@ -379,7 +367,7 @@ THREE.OBJLoader.prototype = {
 	 * Utility method for parsing mtl text with MTLLoader
 	 */
 	_parseMtl: function ( content, parserConfiguration ) {
-		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader" requires it for loading MTL files.' );
+		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
 		if ( ! this.validator.isValid( content ) || ! ( typeof( content ) === 'string' || content instanceof String ) ) console.error( 'Provided content is not a String.' );
 
 		var mtlParseResult = {
@@ -438,19 +426,19 @@ THREE.OBJLoader.prototype = {
 	buildWorkerCode: function ( codeSerializer ) {
 		var workerCode = '';
 		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by THREE.OBJLoader.buildWorkerCode.\n';
+		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += 'THREE = { OBJLoader: {} };\n\n';
-		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader.Parser', THREE.OBJLoader.Parser );
+		workerCode += 'THREE = { OBJLoader2: {} };\n\n';
+		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
 
 		return {
 			code: workerCode,
-			parserName: 'THREE.OBJLoader.Parser'
+			parserName: 'THREE.OBJLoader2.Parser'
 		}
 	}
 };
 
-THREE.OBJLoader.Validator = {
+THREE.OBJLoader2.Validator = {
 
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -478,7 +466,7 @@ THREE.OBJLoader.Validator = {
  * Parse OBJ data either from ArrayBuffer or string
  * @class
  */
-THREE.OBJLoader.Parser = function() {
+THREE.OBJLoader2.Parser = function() {
 	this.callbackProgress = null;
 	this.callbackMeshBuilder = null;
 	this.contentRef = null;
@@ -535,9 +523,9 @@ THREE.OBJLoader.Parser = function() {
 	};
 };
 
-THREE.OBJLoader.Parser.prototype = {
+THREE.OBJLoader2.Parser.prototype = {
 
-	constructor: THREE.OBJLoader.Parser,
+	constructor: THREE.OBJLoader2.Parser,
 
 	resetRawMesh: function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
@@ -1331,10 +1319,10 @@ THREE.OBJLoader.Parser.prototype = {
 };
 
 
-THREE.OBJLoader.MeshBuilder = function() {
-	console.info( 'Using THREE.OBJLoader.MeshBuilder version: ' + THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION );
+THREE.OBJLoader2.MeshBuilder = function() {
+	console.info( 'Using THREE.OBJLoader2.MeshBuilder version: ' + THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION );
 
-	this.validator = THREE.OBJLoader.Validator;
+	this.validator = THREE.OBJLoader2.Validator;
 
 	this.logging = {
 		enabled: true,
@@ -1348,20 +1336,19 @@ THREE.OBJLoader.MeshBuilder = function() {
 	};
 	this.materials = [];
 };
-THREE.OBJLoader.LOADER_MESH_BUILDER_VERSION = '2.0.0-dev';
+THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION = '2.0.0-dev';
 
 
-THREE.OBJLoader.MeshBuilder.prototype = {
+THREE.OBJLoader2.MeshBuilder.prototype = {
 
-	constructor: THREE.OBJLoader.MeshBuilder,
+	constructor: THREE.OBJLoader2.MeshBuilder,
 
-		/**
-		 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-		 * @memberOf THREE.OBJLoader.MeshBuilder
-		 *
-		 * @param {boolean} enabled True or false.
-		 * @param {boolean} debug True or false.
-		 */
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
 	setLogging:	function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
@@ -1369,7 +1356,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Initializes the MeshBuilder (currently only default material initialisation).
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 */
 	setBaseObject3d: function ( baseObject3d ) {
@@ -1410,7 +1396,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
@@ -1434,7 +1419,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {Object} payload Raw Mesh or Material descriptions.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
@@ -1454,7 +1438,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
@@ -1615,8 +1598,7 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
-	 * @memberOf THREE.OBJLoader.MeshBuilder
-	 *
+s	 *
 	 * @param {Object} materialPayload Material update instructions
 	 */
 	updateMaterials: function ( materialPayload ) {
@@ -1683,7 +1665,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Returns the mapping object of material name and corresponding jsonified material.
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @returns {Object} Map of Materials in JSON representation
 	 */
@@ -1701,7 +1682,6 @@ THREE.OBJLoader.MeshBuilder.prototype = {
 
 	/**
 	 * Returns the mapping object of material name and corresponding material.
-	 * @memberOf THREE.OBJLoader.MeshBuilder
 	 *
 	 * @returns {Object} Map of {@link THREE.Material}
 	 */
@@ -1719,21 +1699,19 @@ THREE.OBJLoader.MeshBuilder.prototype = {
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
-THREE.OBJLoader.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+THREE.OBJLoader2.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
 	this.disregardMesh = disregardMesh === true;
 	this.alteredMesh = alteredMesh === true;
 	this.meshes = [];
 };
 
 
-THREE.OBJLoader.LoadedMeshUserOverride.prototype = {
+THREE.OBJLoader2.LoadedMeshUserOverride.prototype = {
 
-	constructor: THREE.OBJLoader.LoadedMeshUserOverride,
+	constructor: THREE.OBJLoader2.LoadedMeshUserOverride,
 
 	/**
 	 * Add a mesh created within callback.
-	 *
-	 * @memberOf THREE.OBJLoader2.LoadedMeshUserOverride
 	 *
 	 * @param {THREE.Mesh} mesh
 	 */
