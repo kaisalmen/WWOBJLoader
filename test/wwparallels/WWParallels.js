@@ -6,7 +6,7 @@
 
 var WWParallels = (function () {
 
-	var Validator = THREE.WorkerLoader.Validator;
+	var Validator = THREE.WorkerLoaderTools.Validator;
 
 	function WWParallels( elementToBindTo ) {
 		this.renderer = null;
@@ -179,7 +179,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackOnMesh = function ( event, override ) {
-			if ( ! Validator.isValid( override ) ) override = new THREE.OBJLoader2.LoadedMeshUserOverride( false, false );
+			if ( ! Validator.isValid( override ) ) override = new THREE.WorkerLoaderTools.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
 			var meshName = event.detail.meshName;

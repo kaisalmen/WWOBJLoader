@@ -6,7 +6,7 @@
 
 var WWOBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.WorkerLoaderTools.Validator;
 
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;

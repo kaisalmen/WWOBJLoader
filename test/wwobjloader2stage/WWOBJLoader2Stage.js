@@ -4,8 +4,6 @@
 
 'use strict';
 
-var Validator = THREE.OBJLoader2.Validator;
-
 var WWOBJLoader2Stage = (function () {
 
 	function WWOBJLoader2Stage( elementToBindTo ) {
@@ -317,7 +315,7 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			if ( Validator.isValid( storedObject3d ) ) {
+			if ( THREE.WorkerLoaderTools.Validator.isValid( storedObject3d ) ) {
 
 				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
 				storedObject3d.traverse( remover );
@@ -329,7 +327,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype.updateAssets = function ( prepData ) {
-		if ( Validator.isValid( prepData ) ) {
+		if ( THREE.WorkerLoaderTools.Validator.isValid( prepData ) ) {
 
 			if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
@@ -345,7 +343,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype._reportProgress = function( event ) {
-		var output = Validator.verifyInput( event.detail.text, '' );
+		var output = THREE.WorkerLoaderTools.Validator.verifyInput( event.detail.text, '' );
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};
@@ -366,7 +364,7 @@ var WWOBJLoader2Stage = (function () {
 
 		var scope = this;
 		var loadAssetsProxy = function ( event ) {
-			if ( ! Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
+			if ( ! THREE.WorkerLoaderTools.Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
 				scope.scene.add( event.detail.result );
 			}
 			scope.processing = false;
@@ -468,7 +466,7 @@ var WWOBJLoader2Stage = (function () {
 
 		}
 
-		if ( ! Validator.isValid( fileObj ) ) {
+		if ( ! THREE.WorkerLoaderTools.Validator.isValid( fileObj ) ) {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 
@@ -524,8 +522,6 @@ var WWOBJLoader2Stage = (function () {
 
 var ZipTools = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
-
 	function ZipTools( path ) {
 		this.zip = new JSZip();
 
@@ -560,7 +556,7 @@ var ZipTools = (function () {
 
 				numericalValueRef = numericalValue;
 				output = 'Download of "' + filename + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
+				if ( THREE.WorkerLoaderTools.Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
 
 			}
 		};
@@ -599,7 +595,7 @@ var ZipTools = (function () {
 	};
 
 	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
-		if ( Validator.isValid( filename ) ) {
+		if ( THREE.WorkerLoaderTools.Validator.isValid( filename ) ) {
 
 			this.zipContent.file( filename ).async( 'string' )
 			.then( function ( dataAsString ) {

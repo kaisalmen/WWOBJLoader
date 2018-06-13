@@ -45,10 +45,21 @@ gulp.task( 'set-versions', function () {
 		patterns: [	{
 				match: /THREE\.OBJLoader2\.OBJLOADER2_VERSION\s*=.*/g,
 				replacement: "THREE.OBJLoader2.OBJLOADER2_VERSION = '"+ packageContent.versions.obj_loader2 + "';"
+			} ]
+	} ) )
+	.pipe( gulp.dest( "src/loaders" ) );
+
+	gulp.src(
+		[ 'src/loaders/WorkerLoaderTools.js' ]
+	)
+	.pipe( replace( {
+		patterns: [ {
+				match: /THREE\.WorkerLoaderTools\.MeshReceiver\.MESH_RECEIVER_VERSION\s*=.*/g,
+				replacement: "THREE.WorkerLoaderTools.MeshReceiver.MESH_RECEIVER_VERSION = '"+ packageContent.versions.mesh_receiver + "';"
 			},
 			{
-				match: /THREE\.OBJLoader2\.LOADER_MESH_BUILDER_VERSION\s*=.*/g,
-				replacement: "THREE.OBJLoader2.LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.mesh_builder + "';"
+				match: /THREE\.WorkerLoaderTools\.MeshTransmitter\.MESH_TRANSMITTER_VERSION\s*=.*/g,
+				replacement: "THREE.WorkerLoaderTools.MeshTransmitter.MESH_TRANSMITTER_VERSION = '"+ packageContent.versions.mesh_transmitter + "';"
 			} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders" ) );
@@ -58,11 +69,11 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [ {
-				match: /var WORKER_LOADER_VERSION.*/g,
+				match: /THREE\.WorkerLoader\.WORKER_LOADER_VERSION\s*=.*/g,
 				replacement: "THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.worker_loader + "';"
 			},
 			{
-				match: /var WORKER_SUPPORT_VERSION.*/g,
+				match: /THREE\.WorkerLoader\.WorkerSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
 				replacement: "THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.worker_support + "';"
 			} ]
 	} ) )
@@ -73,8 +84,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-			match: /var WORKER_LOADER_DIRECTOR_VERSION.*/g,
-			replacement: "var WORKER_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.worker_loader_director + "';"
+			match: /THREE\.WorkerLoader\.Director\.WORKER_LOADER_DIRECTOR_VERSION\s*=.*/g,
+			replacement: "THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.worker_loader_director + "';"
 		} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders" ) );
@@ -85,6 +96,7 @@ gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
+			'src/loaders/WorkerLoaderTools.js',
 			'src/loaders/WorkerLoader.js',
 			'src/loaders/WorkerLoaderDirector.js'
 		]
@@ -126,6 +138,7 @@ gulp.task( 'create-docs', function ( cb ) {
 	gulp.src(
 			[
 				'README.md',
+				'src/loaders/WorkerLoaderTools.js',
 				'src/loaders/OBJLoader2.js',
 				'src/loaders/WorkerLoader.js',
 				'src/loaders/WorkerLoaderDirector.js'

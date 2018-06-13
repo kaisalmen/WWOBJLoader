@@ -6,7 +6,7 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.OBJLoader2.Validator;
+	var Validator = THREE.WorkerLoaderTools.Validator;
 
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
@@ -65,9 +65,6 @@ var OBJLoader2Example = (function () {
 		var scope = this;
 		var objLoader2 = new THREE.OBJLoader2();
 		var callbackOnLoad = function ( object3d ) {
-
-			object3d.traverse( meshWalker );
-
 			scope.scene.add( object3d );
 			console.log( 'Loading complete: ' + modelName );
 			scope._reportProgress( { detail: { text: '' } } );

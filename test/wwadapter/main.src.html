@@ -27,9 +27,9 @@
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
         <script src="../../node_modules/three/examples/js/loaders/PCDLoader.js"></script>
 
+		<script src="../../src/loaders/WorkerLoaderTools.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
-		<script src="../../src/loaders/WorkerExchangeTools.js"></script>
 		<script>
 
 			WWLoaderAdapter = function ( elementToBindTo ) {
@@ -124,7 +124,7 @@
 				},
 
 				_reportProgress: function( event ) {
-					var output = THREE.WorkerLoader.Validator.verifyInput( event.detail.text, '' );
+					var output = THREE.WorkerLoaderTools.Validator.verifyInput( event.detail.text, '' );
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
 				},

@@ -6,7 +6,8 @@
     "worker_loader": "1.0.0-dev",
     "worker_support": "3.0.0-dev",
     "worker_loader_director": "3.0.0-dev",
-    "mesh_builder": "2.0.0-dev"
+    "mesh_receiver": "2.0.0-dev",
+    "mesh_transmitter": "1.0.0-dev"
   },
   "previous_versions": {
     "obj_loader2": "2.4.1",
