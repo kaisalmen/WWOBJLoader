@@ -1,7 +1,7 @@
 if ( THREE.OBJLoader2 === undefined ) { THREE.OBJLoader2 = {} }
-if ( THREE.WorkerLoaderTools === undefined || THREE.WorkerLoaderTools.MeshReceiver === undefined ) {
+if ( THREE.LoaderSupport === undefined || THREE.LoaderSupport.MeshReceiver === undefined ) {
 
-	console.error( '"THREE.WorkerLoaderTools.MeshReceiver" is not available, but "THREE.OBJLoader2" requires it. Please include "WorkerLoaderTools.js" in your HTML.' );
+	console.error( '"THREE.LoaderSupport.MeshReceiver" is not available, but "THREE.OBJLoader2" requires it. Please include "LoaderSupport.js" in your HTML.' );
 
 }
 
@@ -16,7 +16,7 @@ THREE.OBJLoader2 = function ( manager ) {
 
 	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
 
-	this.validator = THREE.WorkerLoaderTools.Validator;
+	this.validator = THREE.LoaderSupport.Validator;
 
 	this.manager = ( manager === null || manager === undefined ) ? THREE.DefaultLoadingManager : manager;
 	this.logging = {
@@ -33,7 +33,7 @@ THREE.OBJLoader2 = function ( manager ) {
 	this.useOAsMesh = false;
 	this.baseObject3d = new THREE.Group();
 
-	this.meshBuilder = new THREE.WorkerLoaderTools.MeshReceiver();
+	this.meshBuilder = new THREE.LoaderSupport.MeshReceiver();
 	this.callbacks = {
 		onParseProgress: null,
 		genericErrorHandler: null

@@ -1,8 +1,8 @@
 
-if ( THREE.WorkerLoaderTools === undefined ) { THREE.WorkerLoaderTools = {} }
+if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
 
 
-THREE.WorkerLoaderTools.Validator = {
+THREE.LoaderSupport.Validator = {
 
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -27,10 +27,10 @@ THREE.WorkerLoaderTools.Validator = {
 };
 
 
-THREE.WorkerLoaderTools.MeshReceiver = function() {
-	console.info( 'Using THREE.WorkerLoaderTools.MeshReceiver version: ' + THREE.WorkerLoaderTools.MeshReceiver.MESH_RECEIVER_VERSION );
+THREE.LoaderSupport.MeshReceiver = function() {
+	console.info( 'Using THREE.LoaderSupport.MeshReceiver version: ' + THREE.LoaderSupport.MeshReceiver.MESH_RECEIVER_VERSION );
 
-	this.validator = THREE.WorkerLoaderTools.Validator;
+	this.validator = THREE.LoaderSupport.Validator;
 
 	this.logging = {
 		enabled: true,
@@ -44,12 +44,12 @@ THREE.WorkerLoaderTools.MeshReceiver = function() {
 	};
 	this.materials = [];
 };
-THREE.WorkerLoaderTools.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-dev';
+THREE.LoaderSupport.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-dev';
 
 
-THREE.WorkerLoaderTools.MeshReceiver.prototype = {
+THREE.LoaderSupport.MeshReceiver.prototype = {
 
-	constructor: THREE.WorkerLoaderTools.MeshReceiver,
+	constructor: THREE.LoaderSupport.MeshReceiver,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -407,16 +407,16 @@ THREE.WorkerLoaderTools.MeshReceiver.prototype = {
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
-THREE.WorkerLoaderTools.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+THREE.LoaderSupport.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
 	this.disregardMesh = disregardMesh === true;
 	this.alteredMesh = alteredMesh === true;
 	this.meshes = [];
 };
 
 
-THREE.WorkerLoaderTools.LoadedMeshUserOverride.prototype = {
+THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
 
-	constructor: THREE.WorkerLoaderTools.LoadedMeshUserOverride,
+	constructor: THREE.LoaderSupport.LoadedMeshUserOverride,
 
 	/**
 	 * Add a mesh created within callback.
@@ -452,16 +452,16 @@ THREE.WorkerLoaderTools.LoadedMeshUserOverride.prototype = {
  *
  * @constructor
  */
-THREE.WorkerLoaderTools.MeshTransmitter = function () {
+THREE.LoaderSupport.MeshTransmitter = function () {
 	this.callbackMeshBuilder = null;
 };
 
-THREE.WorkerLoaderTools.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
+THREE.LoaderSupport.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
 
 
-THREE.WorkerLoaderTools.MeshTransmitter.prototype = {
+THREE.LoaderSupport.MeshTransmitter.prototype = {
 
-	constructor: THREE.WorkerLoaderTools.MeshTransmitter,
+	constructor: THREE.LoaderSupport.MeshTransmitter,
 
 	setCallbackMeshBuilder: function ( callbackMeshBuilder ) {
 		this.callbackMeshBuilder = callbackMeshBuilder;

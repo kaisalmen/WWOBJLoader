@@ -315,7 +315,7 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			if ( THREE.WorkerLoaderTools.Validator.isValid( storedObject3d ) ) {
+			if ( THREE.LoaderSupport.Validator.isValid( storedObject3d ) ) {
 
 				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
 				storedObject3d.traverse( remover );
@@ -327,7 +327,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype.updateAssets = function ( prepData ) {
-		if ( THREE.WorkerLoaderTools.Validator.isValid( prepData ) ) {
+		if ( THREE.LoaderSupport.Validator.isValid( prepData ) ) {
 
 			if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
@@ -343,7 +343,7 @@ var WWOBJLoader2Stage = (function () {
 	};
 
 	WWOBJLoader2Stage.prototype._reportProgress = function( event ) {
-		var output = THREE.WorkerLoaderTools.Validator.verifyInput( event.detail.text, '' );
+		var output = THREE.LoaderSupport.Validator.verifyInput( event.detail.text, '' );
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};
@@ -364,7 +364,7 @@ var WWOBJLoader2Stage = (function () {
 
 		var scope = this;
 		var loadAssetsProxy = function ( event ) {
-			if ( ! THREE.WorkerLoaderTools.Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
+			if ( ! THREE.LoaderSupport.Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
 				scope.scene.add( event.detail.result );
 			}
 			scope.processing = false;
@@ -466,7 +466,7 @@ var WWOBJLoader2Stage = (function () {
 
 		}
 
-		if ( ! THREE.WorkerLoaderTools.Validator.isValid( fileObj ) ) {
+		if ( ! THREE.LoaderSupport.Validator.isValid( fileObj ) ) {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 
@@ -556,7 +556,7 @@ var ZipTools = (function () {
 
 				numericalValueRef = numericalValue;
 				output = 'Download of "' + filename + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-				if ( THREE.WorkerLoaderTools.Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
+				if ( THREE.LoaderSupport.Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
 
 			}
 		};
@@ -595,7 +595,7 @@ var ZipTools = (function () {
 	};
 
 	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
-		if ( THREE.WorkerLoaderTools.Validator.isValid( filename ) ) {
+		if ( THREE.LoaderSupport.Validator.isValid( filename ) ) {
 
 			this.zipContent.file( filename ).async( 'string' )
 			.then( function ( dataAsString ) {

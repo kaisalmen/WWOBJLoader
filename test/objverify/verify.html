@@ -27,7 +27,7 @@
 		<script src="../../node_modules/three/examples/js/loaders/OBJLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-		<script src="../../src/loaders/WorkerLoaderTools.js"></script>
+		<script src="../../src/loaders/LoaderSupport.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script>
 
@@ -35,7 +35,7 @@
 
 			var OBJLoaderVerify = (function () {
 
-				var Validator = THREE.WorkerLoaderTools.Validator;
+				var Validator = THREE.LoaderSupport.Validator;
 
 				function OBJLoaderVerify( elementToBindTo ) {
 					this.renderer = null;

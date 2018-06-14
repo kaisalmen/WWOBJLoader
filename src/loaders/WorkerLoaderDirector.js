@@ -20,7 +20,7 @@ THREE.WorkerLoader.Director = function ( maxQueueSize, maxWebWorkers ) {
 		debug: false
 	};
 
-	this.validator = THREE.WorkerLoaderTools.Validator;
+	this.validator = THREE.LoaderSupport.Validator;
 	maxQueueSize = this.validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
 	maxWebWorkers = this.validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 	this.maxQueueSize = Math.min( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
