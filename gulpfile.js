@@ -230,7 +230,7 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.ext_three = "<script src=\"../../node_modules/three/build/three.js\"\>\</script\>";
 	exampleDef.js.ext_code = "";
 	exampleDef.js.ext_code += "<script src=\"../../build/LoaderSupport.js\"\>\</script\>\n";
-	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader.js\"\>\</script\>\n";
+	exampleDef.js.ext_code += "<script src=\"../../build/OBJLoader2.js\"\>\</script\>\n";
 	exampleDef.js.inline_code = fs.readFileSync( 'test/objloader2/OBJLoader2Example.js', 'utf8' );
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';

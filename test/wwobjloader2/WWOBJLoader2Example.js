@@ -77,12 +77,12 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'female02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader2();
-		objLoader.setModelName( modelName );
+		var objLoader2 = new THREE.OBJLoader2();
+		objLoader2.setModelName( modelName );
 
 		var scope = this;
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader.setMaterials( mtlParseResult.materials );
+			objLoader2.setMaterials( mtlParseResult.materials );
 
 			var fileLoader = new THREE.FileLoader();
 			fileLoader.setPath( '../../' );
@@ -93,13 +93,13 @@ var WWOBJLoader2Example = (function () {
 					local.name = 'Pivot_female02';
 					local.position.set( 75, 0, 0 );
 					scope.pivot.add( local );
-					local.add( objLoader.parse( content ) );
+					local.add( objLoader2.parse( content ) );
 
 					scope._reportProgress( { detail: { text: 'Loading complete: ' + modelName } } );
 				}
 			);
 		};
-		objLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
+		objLoader2.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
 	};
 
 
@@ -143,9 +143,9 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'male02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader2();
-		objLoader.setModelName( modelName );
-		objLoader.setUseIndices( true );
+		var objLoader2 = new THREE.OBJLoader2();
+		objLoader2.setModelName( modelName );
+		objLoader2.setUseIndices( true );
 
 		var scope = this;
 		var callbackOnLoad = function ( object3d ) {
@@ -155,22 +155,22 @@ var WWOBJLoader2Example = (function () {
 			scope.pivot.add( local );
 			local.add( object3d );
 
-			scope._reportProgress( { detail: { text: 'Loading complete: ' + objLoader.modelName } } );
+			scope._reportProgress( { detail: { text: 'Loading complete: ' + objLoader2.modelName } } );
 		};
 
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader.setMaterials( mtlParseResult.materials );
-			objLoader.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
+			objLoader2.setMaterials( mtlParseResult.materials );
+			objLoader2.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 		};
-		objLoader.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
+		objLoader2.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
 	};
 
 	WWOBJLoader2Example.prototype.useLoadAsync = function () {
 		var modelName = 'WaltHead';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader = new THREE.OBJLoader2();
-		objLoader.setModelName( modelName );
+		var objLoader2 = new THREE.OBJLoader2();
+		objLoader2.setModelName( modelName );
 
 		var local = new THREE.Object3D();
 		local.name = 'Pivot_WaltHead';
@@ -185,17 +185,17 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader.setMaterials( mtlParseResult.materials );
+			objLoader2.setMaterials( mtlParseResult.materials );
 
 			var workerLoader = new THREE.WorkerLoader()
-				.setLoader( objLoader );
+				.setLoader( objLoader2 );
 			workerLoader.getLoadingTask()
 				.setTerminateWorkerOnLoad( false )
 				.setBaseObject3d( local );
 			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
 
 		};
-		objLoader.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
+		objLoader2.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
 	};
 
 	WWOBJLoader2Example.prototype.useRunSync = function () {
@@ -213,7 +213,6 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
-
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				instanceNo: 42,
 				baseObject3d: local

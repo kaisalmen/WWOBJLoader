@@ -697,6 +697,7 @@ THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 	};
 	this.config = THREE.LoaderSupport.Validator.verifyInput( loadingTaskConfig, {} );
 	this.resourceDescriptors = [];
+	this.extension = 'unknown';
 
 	this.callbacks = {
 		app: {
@@ -728,6 +729,16 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	setLoaderConfig: function ( loaderClassDef, loaderConfig ) {
 		this.loader.classDef = THREE.LoaderSupport.Validator.verifyInput( loaderClassDef, this.loader.classDef );
 		this.loader.config = THREE.LoaderSupport.Validator.verifyInput( loaderConfig, this.loader.config );
+		return this;
+	},
+
+	/**
+	 * Set the overall file extension associated with this LoaderTaskConfig
+	 * @param extension
+	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
+	 */
+	setExtension: function ( extension ) {
+		this.extension = extension;
 		return this;
 	},
 

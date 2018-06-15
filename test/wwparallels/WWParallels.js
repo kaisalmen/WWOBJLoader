@@ -131,7 +131,7 @@ var WWParallels = (function () {
 				return true;
 
 			};
-			this.workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
+			this.workerLoaderDirector = new THREE.WorkerLoader.Director()
 				.setLogging( this.logging.enabled, this.logging.debug )
 				.setCrossOrigin( 'anonymous' )
 				.setForceWorkerDataCopy( true )
@@ -285,6 +285,13 @@ var WWParallels = (function () {
 		var distributionMax = 1000;
 		var modelPrepDataIndex = 0;
 		var modelPrepData;
+
+		this.workerLoaderDirector.prepareWorkers( {
+			'obj': {
+				maxQueueSize: maxQueueSize,
+				maxWebWorkers: maxWebWorkers
+			}
+		} );
 		for ( i = 0; i < maxQueueSize; i++ ) {
 
 			modelPrepDataIndex = Math.floor( Math.random() * prepDatas.length );
@@ -305,6 +312,7 @@ var WWParallels = (function () {
 			};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
 				.setLoaderConfig( THREE.OBJLoader2, { modelName: modelPrepData.modelName } )
+				.setExtension( 'obj' )
 				.setResourceDescriptors( modelPrepData.resourceDescriptors )
 				.setCallbacksApp( callbackOnReport )
 				.setCallbacksParsing( callbackOnMesh, callbackOnMaterials )
@@ -312,7 +320,6 @@ var WWParallels = (function () {
 
 			this.workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
-		this.workerLoaderDirector.prepareWorkers();
 		this.workerLoaderDirector.processQueue();
 	};
 
