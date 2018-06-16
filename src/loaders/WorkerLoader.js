@@ -74,7 +74,6 @@ THREE.WorkerLoader.prototype = {
 
 	/**
 	 * Use this method to load a file from the given URL and parse it asynchronously.
-	 * @memberOf THREE.WorkerLoader
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
@@ -193,6 +192,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
+		if ( THREE.LoaderSupport.Validator.isValid( this.workerSupport ) ) this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 		return this;
 	},
 
@@ -225,6 +225,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
+		if ( THREE.LoaderSupport.Validator.isValid( this.workerSupport ) ) this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
 		return this;
 	},
 
@@ -236,6 +237,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	setForceWorkerDataCopy: function ( forceWorkerDataCopy ) {
 		this.forceWorkerDataCopy = forceWorkerDataCopy === true;
+		if ( THREE.LoaderSupport.Validator.isValid( this.workerSupport ) ) this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 		return this;
 	},
 
@@ -356,7 +358,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			this.workerSupport = new THREE.WorkerLoader.WorkerSupport();
 			this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
-			this.workerSupport.setTerminateRequested( this.terminateWorkerOnLoad );
+			this.workerSupport.setTerminateWorkerOnLoad( this.terminateWorkerOnLoad );
 			this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 
 		}
@@ -738,7 +740,7 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
 	setExtension: function ( extension ) {
-		this.extension = extension;
+this.extension = extension;
 		return this;
 	},
 
@@ -986,7 +988,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -1000,7 +1001,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Forces all ArrayBuffers to be transferred to worker to be copied.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {boolean} forceWorkerDataCopy True or false.
 	 */
@@ -1011,7 +1011,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Request termination of worker once parser is finished.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {boolean} terminateRequested True or false.
 	 */
@@ -1029,7 +1028,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Set a user-defined runner embedding the worker code and  handling communication and execution with main.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param userRunnerImpl The object reference
 	 * @param userRunnerImplName The name of the object
@@ -1048,7 +1046,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Validate the status of worker code and the derived worker and specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 * @param {Function} meshBuilder The mesh builder function. Default is {@link THREE.WorkerLoader.MeshBuilder}.
@@ -1184,7 +1181,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 	/**
 	 * Runs the parser with the provided configuration.
-	 * @memberOf THREE.WorkerLoader.WorkerSupport
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
@@ -1397,7 +1393,6 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 
 	/**
 	 * Applies values from parameter object via set functions or via direct assignment.
-	 * @memberOf THREE.WorkerLoader.WorkerRunnerRefImpl
 	 *
 	 * @param {Object} parser The parser instance
 	 * @param {Object} params The parameter object
@@ -1422,7 +1417,6 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 
 	/**
 	 * Configures the Parser implementation according the supplied configuration object.
-	 * @memberOf THREE.WorkerLoader.WorkerRunnerRefImpl
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
