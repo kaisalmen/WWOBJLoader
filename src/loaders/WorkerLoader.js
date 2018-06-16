@@ -740,7 +740,7 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 	 * @returns {THREE.WorkerLoader.LoadingTaskConfig}
 	 */
 	setExtension: function ( extension ) {
-this.extension = extension;
+		this.extension = extension;
 		return this;
 	},
 

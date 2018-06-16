@@ -4,41 +4,41 @@
 
 'use strict';
 
-var WWParallels = (function () {
+var WWParallels = function ( elementToBindTo ) {
+	this.renderer = null;
+	this.canvas = elementToBindTo;
+	this.aspectRatio = 1;
+	this.recalcAspectRatio();
 
-	var Validator = THREE.LoaderSupport.Validator;
+	this.scene = null;
+	this.cameraDefaults = {
+		posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+		posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+		near: 0.1,
+		far: 10000,
+		fov: 45
+	};
+	this.camera = null;
+	this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-	function WWParallels( elementToBindTo ) {
-		this.renderer = null;
-		this.canvas = elementToBindTo;
-		this.aspectRatio = 1;
-		this.recalcAspectRatio();
+	this.logging = {
+		enabled: false,
+		debug: false
+	};
+	this.controls = null;
+	this.cube = null;
 
-		this.scene = null;
-		this.cameraDefaults = {
-			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
-			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-			near: 0.1,
-			far: 10000,
-			fov: 45
-		};
-		this.camera = null;
-		this.cameraTarget = this.cameraDefaults.posCameraTarget;
+	this.allAssets = [];
+	this.feedbackArray = null;
 
-		this.logging = {
-			enabled: false,
-			debug: false
-		};
-		this.controls = null;
-		this.cube = null;
+	this.running = false;
+};
 
-		this.allAssets = [];
-		this.feedbackArray = null;
+WWParallels.prototype = {
 
-		this.running = false;
-	}
+	constructor: WWParallels,
 
-	WWParallels.prototype.initGL = function () {
+	initGL: function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
@@ -56,8 +56,8 @@ var WWParallels = (function () {
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
 		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
-		directionalLight1.position.set( -100, -50, 100 );
-		directionalLight2.position.set( 100, 50, -100 );
+		directionalLight1.position.set( - 100, - 50, 100 );
+		directionalLight2.position.set( 100, 50, - 100 );
 
 		this.scene.add( directionalLight1 );
 		this.scene.add( directionalLight2 );
@@ -68,35 +68,35 @@ var WWParallels = (function () {
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
-	};
+	},
 
-	WWParallels.prototype.resizeDisplayGL = function () {
+	resizeDisplayGL: function () {
 		this.controls.handleResize();
 
 		this.recalcAspectRatio();
 		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 		this.updateCamera();
-	};
+	},
 
-	WWParallels.prototype.recalcAspectRatio = function () {
-		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-	};
+	recalcAspectRatio: function () {
+		this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	},
 
-	WWParallels.prototype.resetCamera = function () {
+	resetCamera: function () {
 		this.camera.position.copy( this.cameraDefaults.posCamera );
 		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 		this.updateCamera();
-	};
+	},
 
-	WWParallels.prototype.updateCamera = function () {
+	updateCamera: function () {
 		this.camera.aspect = this.aspectRatio;
 		this.camera.lookAt( this.cameraTarget );
 		this.camera.updateProjectionMatrix();
-	};
+	},
 
-	WWParallels.prototype.render = function () {
+	render: function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
 		this.controls.update();
@@ -105,18 +105,18 @@ var WWParallels = (function () {
 		this.cube.rotation.y += 0.05;
 
 		this.renderer.render( this.scene, this.camera );
-	};
+	},
 
-	WWParallels.prototype._reportProgress = function( content ) {
+	_reportProgress: function ( content ) {
 		var output = content;
-		if ( Validator.isValid( content ) && Validator.isValid( content.detail ) ) output = content.detail.text;
+		if ( THREE.LoaderSupport.Validator.isValid( content ) && THREE.LoaderSupport.Validator.isValid( content.detail ) ) output = content.detail.text;
 
-		output = Validator.verifyInput( output, '' );
-		if ( this.logging.enabled ) console.info( 'Progress:\n\t' + output.replace(/\<br\>/g, '\n\t' ) );
+		output = THREE.LoaderSupport.Validator.verifyInput( output, '' );
+		if ( this.logging.enabled ) console.info( 'Progress:\n\t' + output.replace( /\<br\>/g, '\n\t' ) );
 		document.getElementById( 'feedback' ).innerHTML = output;
-	};
+	},
 
-	WWParallels.prototype.enqueueAllAssests = function ( maxQueueSize, maxWebWorkers, enforceSync ) {
+	enqueueAllAssests: function ( maxQueueSize, maxWebWorkers, enforceSync ) {
 		var scope = this;
 		if ( this.running ) {
 
@@ -144,7 +144,7 @@ var WWParallels = (function () {
 		scope.reportDonwload = [];
 
 		var i;
-		for ( i = 0; i < maxWebWorkers; i++ ) {
+		for ( i = 0; i < maxWebWorkers; i ++ ) {
 
 			scope.feedbackArray[ i ] = 'Worker #' + i + ': Awaiting feedback';
 			scope.reportDonwload[ i ] = true;
@@ -166,7 +166,7 @@ var WWParallels = (function () {
 		};
 
 		var callbackOnReport = function ( event ) {
-			var	instanceNo = event.detail.instanceNo;
+			var instanceNo = event.detail.instanceNo;
 			var text = event.detail.text;
 
 			if ( scope.reportDonwload[ instanceNo ] ) {
@@ -179,11 +179,11 @@ var WWParallels = (function () {
 		};
 
 		var callbackOnMesh = function ( event, override ) {
-			if ( ! Validator.isValid( override ) ) override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
+			if ( ! THREE.LoaderSupport.Validator.isValid( override ) ) override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
 			var meshName = event.detail.meshName;
-			if ( Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
+			if ( THREE.LoaderSupport.Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
 				var materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
@@ -281,18 +281,14 @@ var WWParallels = (function () {
 		prepDatas.push( prepData );
 
 		var pivot;
-		var distributionBase = -500;
+		var distributionBase = - 500;
 		var distributionMax = 1000;
 		var modelPrepDataIndex = 0;
 		var modelPrepData;
 
-		this.workerLoaderDirector.prepareWorkers( {
-			'obj': {
-				maxQueueSize: maxQueueSize,
-				maxWebWorkers: maxWebWorkers
-			}
-		} );
-		for ( i = 0; i < maxQueueSize; i++ ) {
+		this.workerLoaderDirector.createWorkerPool( 'obj', maxQueueSize );
+		this.workerLoaderDirector.updateWorkerPool( 'obj', maxWebWorkers );
+		for ( i = 0; i < maxQueueSize; i ++ ) {
 
 			modelPrepDataIndex = Math.floor( Math.random() * prepDatas.length );
 			modelPrepData = prepDatas[ modelPrepDataIndex ];
@@ -321,9 +317,13 @@ var WWParallels = (function () {
 			this.workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
 		this.workerLoaderDirector.processQueue();
-	};
+	},
 
-	WWParallels.prototype.clearAllAssests = function () {
+	updateWorkerPoolSize: function ( maxWebWorkers ) {
+		if ( THREE.LoaderSupport.Validator.isValid( this.workerLoaderDirector ) ) this.workerLoaderDirector.updateWorkerPool( 'obj', maxWebWorkers );
+	},
+
+	clearAllAssests: function () {
 		var storedObject3d;
 		for ( var asset in this.allAssets ) {
 
@@ -350,9 +350,9 @@ var WWParallels = (function () {
 						}
 					}
 				}
-				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
+				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
 			};
-			if ( Validator.isValid( storedObject3d ) ) {
+			if ( THREE.LoaderSupport.Validator.isValid( storedObject3d ) ) {
 
 				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
 				storedObject3d.traverse( remover );
@@ -361,14 +361,14 @@ var WWParallels = (function () {
 			}
 		}
 		this.allAssets = [];
-	};
+	},
 
-	WWParallels.prototype.terminateManager = function () {
+	terminateManager: function () {
 		this.workerLoaderDirector.tearDown();
 		this.running = false;
-	};
+	},
 
-	WWParallels.prototype.terminateManagerAndClearScene = function () {
+	terminateManagerAndClearScene: function () {
 		var scope = this;
 		var scopedClearAllAssests = function () {
 			scope.clearAllAssests();
@@ -383,8 +383,5 @@ var WWParallels = (function () {
 
 		}
 		this.terminateManager();
-	};
-
-	return WWParallels;
-
-})();
+	}
+};

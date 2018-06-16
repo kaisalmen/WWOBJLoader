@@ -9,9 +9,7 @@
  * @class
  */
 THREE.WorkerLoader.Director = function () {
-
 	console.info( 'Using THREE.WorkerLoader.Director version: ' + THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION );
-
 	this.logging = {
 		enabled: true,
 		debug: false
@@ -132,20 +130,23 @@ THREE.WorkerLoader.Director.prototype = {
 		return maxWebWorkers;
 	},
 
+	createWorkerPool: function ( extension, maxQueueSize ) {
+		var workerLoaderPool = this.workerLoaderPools[ extension ];
+		if ( ! this.validator.isValid( workerLoaderPool ) ) {
+
+			workerLoaderPool = new THREE.WorkerLoader.Director.Pool( this, extension, maxQueueSize );
+			this.workerLoaderPools[ extension ] = workerLoaderPool;
+
+		}
+	},
+
 	/**
 	 * Create or destroy workers according limits. Set the name and register callbacks for dynamically created web workers.
 	 *
 	 */
-	prepareWorkers: function ( workerPoolDescriptions ) {
-		var workerPoolDescription, workerLoaderPool;
-		for ( var extension in workerPoolDescriptions ) {
-
-			workerPoolDescription = workerPoolDescriptions[ extension ];
-			workerLoaderPool = new THREE.WorkerLoader.Director.Pool( workerPoolDescription.maxQueueSize, workerPoolDescription.maxWebWorkers )
-				.init( this, extension );
-			this.workerLoaderPools[ extension ] = workerLoaderPool;
-
-		}
+	updateWorkerPool: function ( extension, maxWebWorkers ) {
+		var workerLoaderPool = this.workerLoaderPools[ extension ];
+		if ( this.validator.isValid( workerLoaderPool ) ) workerLoaderPool.init( maxWebWorkers );
 	},
 
 	/**
@@ -206,20 +207,20 @@ THREE.WorkerLoader.Director.prototype = {
 };
 
 /**
+ *
+ * @param directorRef
+ * @param {string} [extension] Set the file extension
  * @param {number} [maxQueueSize] Set the maximum size of the instruction queue (1-2048)
- * @param {number} [maxWebWorkers] Set the maximum amount of workers (1-16)
  * @constructor
  */
-THREE.WorkerLoader.Director.Pool = function ( maxQueueSize, maxWebWorkers ) {
+THREE.WorkerLoader.Director.Pool = function ( directorRef, extension, maxQueueSize ) {
+	this.directorRef = directorRef;
+	this.extenstion = extension;
 	this.maxQueueSize = THREE.LoaderSupport.Validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
-	this.maxWebWorkers = THREE.LoaderSupport.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
-	this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
+	this.maxWebWorkers = THREE.WorkerLoader.Director.MAX_WEB_WORKER;
 	this.instructionQueue = [];
 	this.instructionQueuePointer = 0;
 	this.workerLoaders = {};
-
-	this.directorRef = null;
-	this.extenstion = 'unknown';
 };
 
 
@@ -241,27 +242,49 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 	},
 
 	/**
-	 *
-	 * @param directorRef
-	 * @param {string} [extension] Set the file extension
+
+	 * @param {number} [maxWebWorkers] Set the maximum amount of workers (1-16)
 	 * @returns {THREE.WorkerLoader.Director.Pool}
 	 */
-	init: function ( directorRef, extension ) {
-		this.directorRef = directorRef;
-		this.extenstion = extension;
-		var workerSupport;
+	init: function ( maxWebWorkers ) {
+		var oldMaxWebWorkers = this.maxWebWorkers;
+		this.maxWebWorkers = THREE.LoaderSupport.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
+		this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
+
+		var workerSupport, supportDesc;
+/*
+		if ( oldMaxWebWorkers > this.maxWebWorkers ) {
+
+			for ( var instanceNo = this.maxWebWorkers; instanceNo < oldMaxWebWorkers; instanceNo++ ) {
+
+				supportDesc = this.workerLoaders[ instanceNo ];
+				if ( this.directorRef.validator.isValid( supportDesc ) ) {
+
+					this._deregister( supportDesc );
+
+				}
+
+			}
+
+		}
+*/
 		for ( var instanceNo = 0; instanceNo < this.maxWebWorkers; instanceNo++ ) {
 
-			workerSupport = new THREE.WorkerLoader.WorkerSupport()
-				.setForceWorkerDataCopy( this.directorRef.forceWorkerDataCopy )
-				.setTerminateRequested( false );
-			var supportDesc = {
-				instanceNo: instanceNo,
-				inUse: false,
-				workerLoader: new THREE.WorkerLoader(),
-				workerSupport: workerSupport
-			};
-			this.workerLoaders[ instanceNo ] = supportDesc;
+			supportDesc = this.workerLoaders[ instanceNo ];
+			if ( ! this.directorRef.validator.isValid( supportDesc ) ) {
+
+				workerSupport = new THREE.WorkerLoader.WorkerSupport()
+					.setForceWorkerDataCopy( this.directorRef.forceWorkerDataCopy )
+					.setTerminateRequested( false );
+				var supportDesc = {
+					instanceNo: instanceNo,
+					inUse: false,
+					workerLoader: new THREE.WorkerLoader(),
+					workerSupport: workerSupport
+				};
+				this.workerLoaders[ instanceNo ] = supportDesc;
+
+			}
 
 		}
 		return this;
@@ -296,7 +319,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 		}
 		if ( ! this.isRunning() ) {
 
-			this.directorRef._requestPoolDelete( this.extension )
+			this.directorRef._requestPoolDelete( this.extension );
 			if ( this.directorRef.validator.isValid( this.directorRef.globalCallbacks.onQueueComplete ) ) this.directorRef.globalCallbacks.onQueueComplete();
 
 		}
@@ -315,8 +338,15 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 			if ( validator.isValid( orgTaskOnComplete ) ) orgTaskOnComplete( event );
 			directorRef.objectsCompleted++;
 			supportDesc.inUse = false;
+			if ( supportDesc.instanceNo < scope.maxWebWorkers ) {
 
-			scope.processQueue();
+				scope.processQueue();
+
+			} else {
+
+				scope._deregister( supportDesc );
+
+			}
 		};
 
 		var orgTaskOnMesh = loadingTaskConfig.callbacks.parse.onMesh;
@@ -374,9 +404,8 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 
 			if ( this.directorRef.validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
 
-				supportDesc.workerSupport.setTerminateRequested( true );
-
 				var instanceNo = supportDesc.instanceNo;
+				supportDesc.workerSupport.setTerminateRequested( true );
 				if ( this.directorRef.logging.enabled ) console.info( 'Requested termination of worker #' + instanceNo + '.' );
 				if ( this.directorRef.validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {
 
@@ -387,7 +416,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 					} );
 
 				}
-				delete this.workerLoaders[ instanceNo ];
+				if ( ! supportDesc.inUse ) delete this.workerLoaders[ supportDesc.instanceNo ];
 
 			}
 		}
