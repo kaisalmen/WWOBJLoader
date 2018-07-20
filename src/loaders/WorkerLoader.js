@@ -644,10 +644,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		this.workerSupport.run(
 			{
-				// this is only applicable to OBJLoader
-				// materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-				// useIndices: this.useIndices,
-				// disregardNormals: this.disregardNormals
+				cmd: 'parse',
+				// specific parser instructions need to be set here
 				params: params,
 				logging: {
 					enabled: this.logging.enabled,
@@ -974,7 +972,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				name: 'THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl',
 				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl
 			},
-			terminateRequested: false,
+			terminateWorkerOnLoad: false,
 			forceWorkerDataCopy: false,
 			started: false,
 			queuedMessage: null,
@@ -1012,11 +1010,11 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	/**
 	 * Request termination of worker once parser is finished.
 	 *
-	 * @param {boolean} terminateRequested True or false.
+	 * @param {boolean} terminateWorkerOnLoad True or false.
 	 */
-	setTerminateRequested: function ( terminateRequested ) {
-		this.worker.terminateRequested = terminateRequested === true;
-		if ( this.worker.terminateRequested && THREE.LoaderSupport.Validator.isValid( this.worker.native ) &&
+	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
+		this.worker.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
+		if ( this.worker.terminateWorkerOnLoad && THREE.LoaderSupport.Validator.isValid( this.worker.native ) &&
 				! THREE.LoaderSupport.Validator.isValid( this.worker.queuedMessage ) && this.worker.started ) {
 
 			if ( this.logging.enabled ) console.info( 'Worker is terminated immediately as it is not running!' );
@@ -1150,7 +1148,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				this.worker.started = false;
 				this.worker.callbacks.onLoad( payload.msg );
 
-				if ( this.worker.terminateRequested ) {
+				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run is complete. Terminating application on request!' );
 					this.worker.callbacks.terminate();
@@ -1164,7 +1162,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				this.worker.started = false;
 				this.worker.callbacks.onLoad( payload.msg );
 
-				if ( this.worker.terminateRequested ) {
+				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run reported error. Terminating application on request!' );
 					this.worker.callbacks.terminate();
@@ -1196,7 +1194,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			this.worker.started = true;
 
 		}
-		if ( payload.cmd !== 'run' ) payload.cmd = 'run';
 		if ( THREE.LoaderSupport.Validator.isValid( payload.logging ) ) {
 
 			payload.logging.enabled = payload.logging.enabled === true;
@@ -1421,7 +1418,11 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	processMessage: function ( payload ) {
-		if ( payload.cmd === 'run' ) {
+		if ( payload.cmd === 'load' ) {
+
+			// TODO: support load directly in worker
+
+		} else if ( payload.cmd === 'parse' ) {
 
 			var callbacks = {
 				callbackMeshBuilder: function ( payload ) {
