@@ -382,7 +382,14 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		};
 		this.meshBuilder._setCallbacks( callbackMeshBuilderProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
 
-		this._executeFileLoadingStep( 0 );
+		var scope = this;
+		var performParsing = function () {
+			scope._executeParsingStep( 0 );
+		};
+		var fileLoadingExecutor = new THREE.WorkerLoader.FileLoadingExecutor( this.instanceNo, this.description );
+		fileLoadingExecutor.setPath( this.loader.ref.path )
+			.setCallbacks( performParsing, this.callbacks.app.onReport, this.callbacks.pipeline.onCompleteFileLoading, this._throwError )
+			.loadAllResources( this.resourceDescriptors );
 		return this;
 	},
 
@@ -449,80 +456,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		}
 
 		return this;
-	},
-
-	/**
-	 *
-	 * @param index
-	 * @private
-	 */
-	_executeFileLoadingStep: function ( index ) {
-		var loadingTask = this;
-		if ( index === loadingTask.resourceDescriptors.length ) {
-
-			loadingTask._executeParsingStep( 0 );
-			return;
-
-		}
-		var resourceDescriptorCurrent = loadingTask.resourceDescriptors[ index ];
-		if ( THREE.LoaderSupport.Validator.isValid( resourceDescriptorCurrent ) && resourceDescriptorCurrent.resourceType === 'URL' ) {
-
-			 var numericalValueRef = 0;
-			 var numericalValue = 0;
-			 var scopedOnReportProgress = function ( event ) {
-				if ( ! event.lengthComputable ) return;
-
-				numericalValue = event.loaded / event.total;
-				if ( numericalValue > numericalValueRef ) {
-
-					numericalValueRef = numericalValue;
-					var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
-					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					if ( THREE.LoaderSupport.Validator.isValid( loadingTask.callbacks.app.onReport ) ) {
-
-						loadingTask.callbacks.app.onReport( {
-							detail: {
-								type: 'progressLoad',
-								modelName: loadingTask.description,
-								text: output,
-								instanceNo: loadingTask.instanceNo,
-								numericalValue: numericalValue
-
-							}
-						} );
-
-					}
-				}
-			};
-
-			var scopedOnReportError = function ( errorMessage ) {
-				var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
-				var errorMessage = 'Error occurred while downloading "' + url + '"';
-				loadingTask._throwError( errorMessage, event );
-			};
-
-			var processResourcesProxy = function ( content ) {
-				loadingTask.resourceDescriptors[ index ].content = content;
-				index ++;
-				if ( THREE.LoaderSupport.Validator.isValid( loadingTask.callbacks.pipeline.onCompleteFileLoading ) ) {
-
-					loadingTask.callbacks.pipeline.onCompleteFileLoading( content );
-
-				}
-				loadingTask._executeFileLoadingStep( index );
-			};
-
-			var fileLoader = new THREE.FileLoader( loadingTask.manager );
-			fileLoader.setResponseType( resourceDescriptorCurrent.parserConfiguration.payloadType );
-			fileLoader.setPath( loadingTask.loader.ref.path );
-			fileLoader.load( resourceDescriptorCurrent.url, processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
-
-		} else {
-
-			index++;
-			loadingTask._executeFileLoadingStep( index );
-
-		}
 	},
 
 	/**
@@ -684,6 +617,122 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	}
 };
 
+THREE.WorkerLoader.FileLoadingExecutor = function ( instanceNo, description ) {
+	this.callbacks = {
+		nextPipelineStep: null,
+		report: null,
+		onError: null,
+		onFileComplete: null
+	};
+	this.resourceDescriptors = [];
+	this.instanceNo = instanceNo;
+	this.description = description;
+	this.path;
+};
+
+THREE.WorkerLoader.FileLoadingExecutor.prototype = {
+
+	constructor: THREE.WorkerLoader.FileLoadingExecutor,
+
+	setPath: function ( path ) {
+		this.path = path;
+		return this;
+	},
+
+	setCallbacks: function ( callbackNextPipelineStep, callbackAppReport, callbackOnFileComplete, callbackOnError  ) {
+		this.callbacks.nextPipelineStep = callbackNextPipelineStep;
+		this.callbacks.report = callbackAppReport;
+		this.callbacks.onFileComplete = callbackOnFileComplete;
+		this.callbacks.onError = callbackOnError;
+		return this;
+	},
+
+	setManager: function ( manager ) {
+		this.manager = THREE.LoaderSupport.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+		return this;
+	},
+
+	loadAllResources: function ( resourceDescriptors ) {
+		this.resourceDescriptors = Array.isArray( resourceDescriptors ) ? resourceDescriptors : this.resourceDescriptors;
+		this._execute( 0 );
+		return this;
+	},
+
+	/**
+	 *
+	 * @param index
+	 * @private
+	 */
+	_execute: function ( index ) {
+		if ( index === this.resourceDescriptors.length ) {
+
+			this.callbacks.nextPipelineStep();
+			return;
+
+		}
+		var resourceDescriptorCurrent = this.resourceDescriptors[ index ];
+		if ( THREE.LoaderSupport.Validator.isValid( resourceDescriptorCurrent ) && resourceDescriptorCurrent.resourceType === 'URL' ) {
+
+			var numericalValueRef = 0;
+			var numericalValue = 0;
+			var scope = this;
+			var scopedOnReportProgress = function ( event ) {
+				if ( ! event.lengthComputable ) return;
+
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
+
+					numericalValueRef = numericalValue;
+					var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
+					var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+					if ( THREE.LoaderSupport.Validator.isValid( scope.callbacks.report ) ) {
+
+						scope.callbacks.report( {
+							detail: {
+								type: 'progressLoad',
+								modelName: this.description,
+								text: output,
+								instanceNo: this.instanceNo,
+								numericalValue: numericalValue
+
+							}
+						} );
+
+					}
+				}
+			};
+
+			var scopedOnReportError = function ( event ) {
+				var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
+				var errorMessage = 'Error occurred while downloading "' + url + '"';
+				scope.callbacks.onError( errorMessage, event );
+			};
+
+			var processResourcesProxy = function ( content ) {
+				scope.resourceDescriptors[ index ].content = content;
+				index ++;
+				if ( THREE.LoaderSupport.Validator.isValid( scope.callbacks.onFileComplete ) ) {
+
+					scope.callbacks.onFileComplete( content );
+
+				}
+				scope._execute( index );
+			};
+
+			var fileLoader = new THREE.FileLoader( this.manager );
+			fileLoader.setResponseType( resourceDescriptorCurrent.parserConfiguration.payloadType );
+			fileLoader.setPath( this.path );
+			fileLoader.load( resourceDescriptorCurrent.url, processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
+
+		} else {
+
+			index++;
+			this._execute( index );
+
+		}
+	}
+
+};
 
 /**
  * Encapsulates the configuration for a complete {@link THREE.WorkerLoader.LoadingTask}.
