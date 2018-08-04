@@ -275,7 +275,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 
 				workerSupport = new THREE.WorkerLoader.WorkerSupport()
 					.setForceWorkerDataCopy( this.directorRef.forceWorkerDataCopy )
-					.setTerminateRequested( false );
+					.setTerminateWorkerOnLoad( false );
 				var supportDesc = {
 					instanceNo: instanceNo,
 					inUse: false,
@@ -405,7 +405,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 			if ( this.directorRef.validator.isValid( supportDesc.workerLoader.loadingTask ) ) {
 
 				var instanceNo = supportDesc.instanceNo;
-				supportDesc.workerSupport.setTerminateRequested( true );
+				supportDesc.workerSupport.setTerminateWorkerOnLoad( true );
 				if ( this.directorRef.logging.enabled ) console.info( 'Requested termination of worker #' + instanceNo + '.' );
 				if ( this.directorRef.validator.isValid( supportDesc.workerLoader.loadingTask.callbacks.app.onReport ) ) {
 
