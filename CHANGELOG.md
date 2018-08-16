@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.2-dev
+## 2.4.2
 - Issue #43: `OBJLoader2` allows to register a generic error handler. If this callback is available it will be used instead of a throw. `LoaderWorkerDirector` uses this callback to report a problem, but continue with the next loading task. `loadMtl` now allows to pass onProgress and onError as well.
 
 ## 2.4.1

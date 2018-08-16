@@ -12,7 +12,7 @@
  */
 THREE.LoaderSupport.WorkerDirector = (function () {
 
-	var LOADER_WORKER_DIRECTOR_VERSION = '2.2.1';
+	var LOADER_WORKER_DIRECTOR_VERSION = '2.2.2';
 
 	var Validator = THREE.LoaderSupport.Validator;
 

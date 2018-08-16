@@ -5,7 +5,7 @@
  */
 THREE.LoaderSupport.MeshBuilder = (function () {
 
-	var LOADER_MESH_BUILDER_VERSION = '1.2.1';
+	var LOADER_MESH_BUILDER_VERSION = '1.2.2';
 
 	var Validator = THREE.LoaderSupport.Validator;
 
