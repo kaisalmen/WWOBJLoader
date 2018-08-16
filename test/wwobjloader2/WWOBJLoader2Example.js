@@ -98,7 +98,10 @@ var WWOBJLoader2Example = (function () {
 				}
 			);
 		};
-		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl );
+		var onError = function ( event ) {
+			console.error( 'Error occurred: ' + event );
+		};
+		objLoader.loadMtl( '../../resource/obj/female02/female02.mtl', null, onLoadMtl, null, onError );
 	};
 
 

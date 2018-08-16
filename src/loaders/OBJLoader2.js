@@ -207,15 +207,15 @@ THREE.OBJLoader2 = (function () {
 	};
 
 	OBJLoader2.prototype._loadObj = function ( resource, onLoad, onProgress, onError, onMeshAlter, useAsync ) {
+		var scope = this;
 		if ( ! Validator.isValid( onError ) ) {
 			onError = function ( event ) {
-				this._onError( event );
+				scope._onError( event );
 			}
 		}
 
 		// fast-fail
 		if ( ! Validator.isValid( resource ) ) onError( 'An invalid ResourceDescriptor was provided. Unable to continue!' );
-		var scope = this;
 		var fileLoaderOnLoad = function ( content ) {
 
 			resource.content = content;
@@ -305,7 +305,7 @@ THREE.OBJLoader2 = (function () {
 			scope._loadObj( available.obj, scope.callbacks.onLoad, null, null, scope.callbacks.onMeshAlter, prepData.useAsync );
 
 		};
-		this._loadMtl( available.mtl, onMaterialsLoaded, prepData.crossOrigin, prepData.materialOptions );
+		this._loadMtl( available.mtl, onMaterialsLoaded, null, null, prepData.crossOrigin, prepData.materialOptions );
 	};
 
 	OBJLoader2.prototype._applyPrepData = function ( prepData ) {
@@ -1341,18 +1341,20 @@ THREE.OBJLoader2 = (function () {
 	 *
 	 * @param {string} url URL to the file
 	 * @param {Object} content The file content as arraybuffer or text
-	 * @param {function} callbackOnLoad Callback to be called after successful load
+	 * @param {function} onLoad Callback to be called after successful load
+	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {string} [crossOrigin] CORS value
  	 * @param {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
-	OBJLoader2.prototype.loadMtl = function ( url, content, callbackOnLoad, crossOrigin, materialOptions ) {
+	OBJLoader2.prototype.loadMtl = function ( url, content, onLoad, onProgress, onError, crossOrigin, materialOptions ) {
 		var resource = new THREE.LoaderSupport.ResourceDescriptor( url, 'MTL' );
 		resource.setContent( content );
-		this._loadMtl( resource, callbackOnLoad, crossOrigin, materialOptions );
+		this._loadMtl( resource, onLoad, onProgress, onError, crossOrigin, materialOptions );
 	};
 
 
-	OBJLoader2.prototype._loadMtl = function ( resource, callbackOnLoad, crossOrigin, materialOptions ) {
+	OBJLoader2.prototype._loadMtl = function ( resource, onLoad, onProgress, onError, crossOrigin, materialOptions ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
 		if ( Validator.isValid( resource ) && this.logging.enabled ) console.time( 'Loading MTL: ' + resource.name );
 
@@ -1375,7 +1377,7 @@ THREE.OBJLoader2 = (function () {
 			}
 
 			if ( Validator.isValid( resource ) && scope.logging.enabled ) console.timeEnd( 'Loading MTL: ' + resource.name );
-			callbackOnLoad( materials, materialCreator );
+			onLoad( materials, materialCreator );
 		};
 
 		// fast-fail
@@ -1415,13 +1417,29 @@ THREE.OBJLoader2 = (function () {
 			} else if ( Validator.isValid( resource.url ) ) {
 
 				var fileLoader = new THREE.FileLoader( this.manager );
-				var scopedOnError = function ( event ) {
-					scope._onError( event );
-				};
-				var scopedOnProgress = function ( type, text, numericalValue ) {
-					scope.onProgress( type, text, numericalValue );
-				};
-				fileLoader.load( resource.url, parseTextWithMtlLoader, scopedOnProgress, scopedOnError );
+				if ( ! Validator.isValid( onError ) ) {
+					onError = function ( event ) {
+						scope._onError( event );
+					}
+				}
+				if ( ! Validator.isValid( onProgress ) ) {
+					var numericalValueRef = 0;
+					var numericalValue = 0;
+					onProgress = function ( event ) {
+						if ( ! event.lengthComputable ) return;
+
+						numericalValue = event.loaded / event.total;
+						if ( numericalValue > numericalValueRef ) {
+
+							numericalValueRef = numericalValue;
+							var output = 'Download of "' + resource.url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+							scope.onProgress( 'progressLoad', output, numericalValue );
+
+						}
+					};
+				}
+
+				fileLoader.load( resource.url, parseTextWithMtlLoader, onProgress, onError );
 
 			}
 		}
