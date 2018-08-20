@@ -92,7 +92,8 @@ THREE.LoaderSupport.MeshReceiver.prototype = {
 
 		this.updateMaterials(
 			{
-				cmd: 'materialData',
+				cmd: 'data',
+				type: 'material',
 				materials: {
 					materialCloneInstructions: null,
 					serializedMaterials: null,
@@ -109,7 +110,8 @@ THREE.LoaderSupport.MeshReceiver.prototype = {
 	 */
 	setMaterials: function ( materials ) {
 		var payload = {
-			cmd: 'materialData',
+			cmd: 'data',
+			type: 'material',
 			materials: {
 				materialCloneInstructions: null,
 				serializedMaterials: null,
@@ -132,11 +134,11 @@ THREE.LoaderSupport.MeshReceiver.prototype = {
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
 	 */
 	processPayload: function ( payload ) {
-		if ( payload.cmd === 'meshData' ) {
+		if ( payload.type === 'mesh' ) {
 
 			return this.buildMeshes( payload );
 
-		} else if ( payload.cmd === 'materialData' ) {
+		} else if ( payload.type === 'material' ) {
 
 			this.updateMaterials( payload );
 			return null;
@@ -491,7 +493,8 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 
 				scope.callbackMeshBuilder(
 					{
-						cmd: 'meshData',
+						cmd: 'data',
+						type: 'mesh',
 						progress: {
 							numericalValue: 0
 						},

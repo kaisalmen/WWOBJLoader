@@ -1158,7 +1158,8 @@ THREE.OBJLoader2.Parser.prototype = {
 					}
 				};
 				var payload = {
-					cmd: 'materialData',
+					cmd: 'data',
+					type: 'material',
 					materials: {
 						materialCloneInstructions: materialCloneInstructions
 					}
@@ -1256,7 +1257,8 @@ THREE.OBJLoader2.Parser.prototype = {
 		this.outputObjectCount ++;
 		this.callbackMeshBuilder(
 			{
-				cmd: 'meshData',
+				cmd: 'data',
+				type: 'mesh',
 				progress: {
 					numericalValue: this.globalCounts.currentByte / this.globalCounts.totalBytes
 				},
