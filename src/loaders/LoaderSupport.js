@@ -455,7 +455,7 @@ THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
  * @constructor
  */
 THREE.LoaderSupport.MeshTransmitter = function () {
-	this.callbackMeshBuilder = null;
+	this.callbackDataReceiver = null;
 };
 
 THREE.LoaderSupport.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
@@ -465,8 +465,8 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 
 	constructor: THREE.LoaderSupport.MeshTransmitter,
 
-	setCallbackMeshBuilder: function ( callbackMeshBuilder ) {
-		this.callbackMeshBuilder = callbackMeshBuilder;
+	setCallbackDataReceiver: function ( callbackDataReceiver ) {
+		this.callbackDataReceiver = callbackDataReceiver;
 	},
 
 	walkMesh: function ( rootNode ) {
@@ -491,7 +491,7 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 				var normalFA = ( normalBA !== null && normalBA !== undefined ) ? normalBA.array: null;
 				var uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
 
-				scope.callbackMeshBuilder(
+				scope.callbackDataReceiver(
 					{
 						cmd: 'data',
 						type: 'mesh',

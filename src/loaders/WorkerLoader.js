@@ -125,14 +125,13 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.description = description;
 
 	this.workerSupport = null;
-	this.meshBuilder = null;
+	this.dataRecveiver = null;
 
 	this.baseObject3d = new THREE.Group();
 	this.instanceNo = 0;
 	this.terminateWorkerOnLoad = true;
 	this.forceWorkerDataCopy = false;
 	this.enforceSync = false;
-	this.enforceAsync = false;
 
 	this.sendMaterials = true;
 	this.sendMaterialsJson = false;
@@ -249,18 +248,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	setEnforceSync: function ( enforceSync ) {
 		this.enforceSync = enforceSync === true;
-		if ( this.enforceSync ) this.enforceAsync = false;
-		return this;
-	},
-
-	/**
-	 *
-	 * @param {Boolean} enforceAsync
-	 * @returns {THREE.WorkerLoader.LoadingTask}
-	 */
-	setEnforceAsync: function ( enforceAsync ) {
-		this.enforceAsync = enforceAsync === true;
-		if ( this.enforceAsync ) this.enforceSync = false;
 		return this;
 	},
 
@@ -362,13 +349,16 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 * @returns {THREE.WorkerLoader.LoadingTask}
 	 */
 	execute: function ( loadingTaskConfig, workerSupport ) {
-		this._initExecute( loadingTaskConfig, workerSupport );
-		this._executeLoadAssets();
+		var scope = this;
+		var scopedLoadFiles = function ( payload ) {
+			scope._executeLoadFiles( payload );
+		};
+		this._initExecute( scopedLoadFiles, loadingTaskConfig, workerSupport );
 
 		return this;
 	},
 
-	_initExecute: function ( loadingTaskConfig, workerSupport ) {
+	_initExecute: function ( callbackLoadFiles, loadingTaskConfig, workerSupport ) {
 		this._applyConfig( loadingTaskConfig );
 		if ( THREE.LoaderSupport.Validator.isValid( workerSupport ) && workerSupport instanceof THREE.WorkerLoader.WorkerSupport ) {
 
@@ -384,11 +374,11 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		}
 		this.workerSupport.validate( this.loader.buildWorkerCode );
 
-		this.meshBuilder = new THREE.LoaderSupport.MeshReceiver();
-		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
+		this.dataRecveiver = new THREE.LoaderSupport.MeshReceiver();
+		this.dataRecveiver.setLogging( this.logging.enabled, this.logging.debug );
 
 		var scope = this;
-		var callbackMeshBuilderProgress = function ( type, text, numericalValue ) {
+		var callbackDataReceiverProgress = function ( type, text, numericalValue ) {
 			var content = THREE.LoaderSupport.Validator.isValid( text ) ? text : '';
 			var event = {
 				detail: {
@@ -403,9 +393,40 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			if ( scope.logging.enabled && scope.logging.debug ) console.debug( content );
 		};
 
-		this.meshBuilder._setCallbacks( callbackMeshBuilderProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
-		this.meshBuilder.setBaseObject3d( this.baseObject3d );
-		this.meshBuilder.createDefaultMaterials();
+		this.dataRecveiver._setCallbacks( callbackDataReceiverProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
+		this.dataRecveiver.setBaseObject3d( this.baseObject3d );
+		this.dataRecveiver.createDefaultMaterials();
+
+		// do we need to provide ResourceDescriptors to Worker?
+		var resourceDescriptor;
+		var provideRds = false;
+		for ( var name in this.resourceDescriptors ) {
+
+			resourceDescriptor = this.resourceDescriptors[ name ];
+			if ( ( resourceDescriptor.async.load || resourceDescriptor.async.parse ) && ! this.enforceSync ) {
+
+				provideRds = true;
+				break;
+
+			}
+
+		}
+		if ( provideRds ) {
+
+			this.workerSupport.updateCallbacks( callbackLoadFiles );
+			this.workerSupport.runAsyncProvideResourceDesctiptors(
+				{
+					data: {
+						resourceDescriptors: this.resourceDescriptors
+					}
+				}
+			);
+
+		} else {
+
+			callbackLoadFiles();
+
+		}
 	},
 
 	/**
@@ -473,11 +494,11 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		return this;
 	},
 
-	_executeLoadAssets: function () {
+	_executeLoadFiles: function () {
 		var loadingTask = this;
 
-		// TODO: All async load must be done in worker!
-		if ( this.enforceAsync ) {
+		// TODO: to async loads in worker if load and parse are performed async!
+		if ( false ) {
 
 			var scopedOnLoad = function () {
 
@@ -554,7 +575,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			}
 			var resourceDescriptorCurrent = loadingTask.resourceDescriptors[ index ];
 			var result;
-			var useAsync = resourceDescriptorCurrent.useAsync && ! loadingTask.enforceSync;
+			var useAsync = resourceDescriptorCurrent.async.parse && ! loadingTask.enforceSync;
 			if ( useAsync ) {
 
 				var scopedOnLoad = function ( measureTime ) {
@@ -582,10 +603,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				};
 
 				var scopedOnMesh = function ( content ) {
-					loadingTask.meshBuilder.processPayload( content );
-				};
-				var scopedOnReportError = function ( errorMessage ) {
-					loadingTask._throwError( errorMessage );
+					loadingTask.dataRecveiver.processPayload( content );
 				};
 
 				// fast-fail in case of illegal data
@@ -596,7 +614,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 				} else {
 
-					loadingTask.workerSupport.updateCallbacks( scopedOnMesh, scopedOnLoad, scopedOnReportError );
+					loadingTask.workerSupport.updateCallbacks( scopedOnMesh, scopedOnLoad );
 					loadingTask._parseAsync( resourceDescriptorCurrent );
 
 				}
@@ -634,15 +652,13 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	 */
 	_parseAsync: function ( resourceDescriptor ) {
 		if ( ! THREE.LoaderSupport.Validator.isValid( this.loader.ref ) ) this._throwError( 'Unable to run "executeWithOverride" without proper "loader"!' );
+		if ( this.logging.enabled ) console.time( 'WorkerLoader parse [' + this.instanceNo + '] : ' + resourceDescriptor.name );
 
 		var ltModelName = this.loader.ref.modelName;
 		if ( ltModelName !== undefined && ltModelName !== null && ltModelName.length > 0 ) resourceDescriptor.name = this.loader.ref.modelName;
+		if ( THREE.LoaderSupport.Validator.isValid( this.loader.ref.dataRecveiver ) && this.loader.ref.dataRecveiver instanceof THREE.LoaderSupport.MeshReceiver ) {
 
-		if ( this.logging.enabled ) console.time( 'WorkerLoader parse [' + this.instanceNo + '] : ' + resourceDescriptor.name );
-
-		if ( THREE.LoaderSupport.Validator.isValid( this.loader.ref.meshBuilder ) && this.loader.ref.meshBuilder instanceof THREE.LoaderSupport.MeshReceiver ) {
-
-			this.meshBuilder.setMaterials( this.loader.ref.meshBuilder.getMaterials() );
+			this.dataRecveiver.setMaterials( this.loader.ref.dataRecveiver.getMaterials() );
 
 		}
 
@@ -652,15 +668,12 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		};
 		if ( this.sendMaterials ) {
 
-			var materials = this.meshBuilder.getMaterials();
+			var materials = this.dataRecveiver.getMaterials();
 			for ( var materialName in materials ) materialsContainer.materials[ materialName ] = materialName;
-			if ( this.sendMaterialsJson ) materialsContainer.serializedMaterials = this.meshBuilder.getMaterialsJSON();
+			if ( this.sendMaterialsJson ) materialsContainer.serializedMaterials = this.dataRecveiver.getMaterialsJSON();
 
 		}
 		var params = ( THREE.LoaderSupport.Validator.isValid( resourceDescriptor.parserConfiguration ) ) ? resourceDescriptor.parserConfiguration : {};
-		// enforce async param
-		params.useAsync = true;
-
 		this.workerSupport.runAsyncParse(
 			{
 				// specific parser instructions need to be set here
@@ -680,7 +693,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 	_finalizeParsing: function () {
 		var resourceDescriptorCurrent = this.resourceDescriptors[ this.resourceDescriptors.length - 1 ];
-		if ( resourceDescriptorCurrent.useAsync ) {
+		if ( resourceDescriptorCurrent.async.parse ) {
 
 			if ( THREE.LoaderSupport.Validator.isValid( this.callbacks.pipeline.onComplete ) ) {
 
@@ -933,7 +946,10 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	this.filename = null;
 	this.path = '';
 	this.extension = null;
-	this.useAsync = true;
+	this.async = {
+		load: false,
+		parse: true
+	};
 	this.parserConfiguration = {
 		payloadType: 'arraybuffer'
 	};
@@ -1008,8 +1024,11 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		this.content = buffer;
 	},
 
-	setUseAsync: function ( useAsync ) {
-		this.useAsync = useAsync === true;
+	configureAsync: function ( loadAsync, parseAsync ) {
+		this.async.parse = parseAsync === true;
+		// Loading in Worker is curretnly only allowed when async parse is performed!!!!
+		this.async.load = loadAsync === true && this.async.parse;
+
 		return this;
 	},
 
@@ -1078,7 +1097,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			started: false,
 			queuedMessage: null,
 			callbacks: {
-				meshBuilder: null,
+				dataReceiver: null,
 				onLoad: null,
 				terminate: scopeTerminate
 			}
@@ -1128,8 +1147,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	/**
 	 * Set a user-defined runner embedding the worker code and  handling communication and execution with main.
 	 *
-	 * @param userRunnerImpl The object reference
-	 * @param userRunnerImplName The name of the object
+	 * @param {object} userRunnerImpl The object reference
+	 * @param {string} userRunnerImplName The name of the object
 	 */
 	setUserRunnerImpl: function ( userRunnerImpl, userRunnerImplName ) {
 		if ( THREE.LoaderSupport.Validator.isValid( userRunnerImpl ) && THREE.LoaderSupport.Validator.isValid( userRunnerImplName ) ) {
@@ -1146,15 +1165,17 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	/**
 	 * Update all callbacks.
 	 *
-	 * @param {Function} meshBuilder The mesh builder function. Default is {@link THREE.WorkerLoader.MeshBuilder}.
-	 * @param {Function} onLoad The function that is called when parsing is complete.
-	 * @param {Function} onReportError callback function that either throws error or invokes callback
+	 * @param {Function} dataReceiver The function for processing the data, e.g. {@link THREE.LoaderSupport.MeshReceiver}.
+	 * @param {Function} [onLoad] The function that is called when parsing is complete.
 	 */
-	updateCallbacks: function ( meshBuilder, onLoad, onReportError ) {
-		this.worker.callbacks.meshBuilder = THREE.LoaderSupport.Validator.verifyInput( meshBuilder, this.worker.callbacks.meshBuilder );
+	updateCallbacks: function ( dataReceiver, onLoad ) {
+		this.worker.callbacks.dataReceiver = THREE.LoaderSupport.Validator.verifyInput( dataReceiver, this.worker.callbacks.dataReceiver );
 		this.worker.callbacks.onLoad = THREE.LoaderSupport.Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
-		if ( ! THREE.LoaderSupport.Validator.isValid( this.worker.callbacks.meshBuilder ) ) onReportError( 'Unable to run as no "MeshBuilder" callback is set.' );
-		if ( ! THREE.LoaderSupport.Validator.isValid( this.worker.callbacks.onLoad ) ) onReportError( 'Unable to run as no "onLoad" callback is set.' );
+		this._verifyCallbacks();
+	},
+
+	_verifyCallbacks: function () {
+		if ( ! THREE.LoaderSupport.Validator.isValid( this.worker.callbacks.dataReceiver ) ) throw 'Unable to run as no "dataReceiver" callback is set.';
 	},
 
 	/**
@@ -1245,13 +1266,25 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		var payload = event.data;
 		switch ( payload.cmd ) {
 			case 'data':
-				this.worker.callbacks.meshBuilder( payload );
+				this.worker.callbacks.dataReceiver( payload );
 				break;
 
-			case 'complete':
+			case 'confirm':
+				if ( payload.type === 'resourcesAvailable' ) {
+
+					this.worker.queuedMessage = null;
+					this.worker.callbacks.dataReceiver( payload );
+
+				} else if ( payload.type === 'fileLoaded' ) {
+
+
+				}
+				break;
+
+			case 'completeOverall':
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				this.worker.callbacks.onLoad( payload.msg );
+				if ( THREE.LoaderSupport.Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
 
 				if ( this.worker.terminateWorkerOnLoad ) {
 
@@ -1262,10 +1295,10 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				break;
 
 			case 'error':
-				console.error( 'WorkerSupport [' + this.worker.workerRunner.namee + ']: Reported error: ' + payload.msg );
+				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Reported error: ' + payload.msg );
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				this.worker.callbacks.onLoad( payload.msg );
+				if ( THREE.LoaderSupport.Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
 
 				if ( this.worker.terminateWorkerOnLoad ) {
 
@@ -1280,6 +1313,13 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				break;
 
 		}
+	},
+
+	runAsyncProvideResourceDesctiptors: function ( payload ) {
+		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
+
+		payload.cmd = 'provideResourceDescriptors';
+		this._postMessage();
 	},
 
 	/**
@@ -1307,6 +1347,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	},
 
 	_verifyWorkerIsAvailable: function ( payload ) {
+		this._verifyCallbacks();
 		var ready = true;
 		if ( THREE.LoaderSupport.Validator.isValid( this.worker.queuedMessage ) ) {
 
@@ -1502,6 +1543,7 @@ THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;
  * @constructor
  */
 THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl = function () {
+	this.resourceDescriptors = [];
 	var scope = this;
 	var scopedRunner = function( event ) {
 		scope.processMessage( event.data );
@@ -1543,20 +1585,37 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	processMessage: function ( payload ) {
-		if ( payload.cmd === 'load' ) {
+		var callbacks = {
+			callbackDataReceiver: function ( payload ) {
+				self.postMessage( payload );
+			},
+			callbackProgress: function ( text ) {
+				if ( payload.logging.enabled && payload.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+			}
+		};
 
-			// TODO: support load directly in worker
+		if ( payload.cmd === 'provideResourceDescriptors' ) {
+
+			this.resourceDescriptors = [];
+			for ( var name in payload.data.resourceDescriptors ) this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
+
+			callbacks.callbackDataReceiver( {
+				cmd: 'confirm',
+				type: 'resourcesAvailable',
+				msg: 'ResourceDescriptors have been successfully received.'
+			} );
+
+		} else if ( payload.cmd === 'load' ) {
+
+			callbacks.callbackDataReceiver( {
+				cmd: 'confirm',
+				type: 'fileLoaded',
+				params: {
+					index: 0
+				}
+			} );
 
 		} else if ( payload.cmd === 'parse' ) {
-
-			var callbacks = {
-				callbackMeshBuilder: function ( payload ) {
-					self.postMessage( payload );
-				},
-				callbackProgress: function ( text ) {
-					if ( payload.logging.enabled && payload.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
-				}
-			};
 
 			// Parser is expected to be named as such
 			var parser = new THREE.WorkerLoader.Parser();
@@ -1570,7 +1629,7 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				var object3d = parser.parse( payload.data.input, payload.data.options );
 				var workerExchangeTools = new THREE.LoaderSupport.MeshTransmitter();
 
-				workerExchangeTools.setCallbackMeshBuilder( callbacks.callbackMeshBuilder );
+				workerExchangeTools.setCallbackDataReceiver( callbacks.callbackDataReceiver );
 				workerExchangeTools.walkMesh( object3d );
 
 
@@ -1579,12 +1638,10 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				parser.parse( payload.data.input, payload.data.options );
 
 			}
-
-
 			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 
-			callbacks.callbackMeshBuilder( {
-				cmd: 'complete',
+			callbacks.callbackDataReceiver( {
+				cmd: 'completeOverall',
 				msg: 'WorkerRunner completed run.'
 			} );
 

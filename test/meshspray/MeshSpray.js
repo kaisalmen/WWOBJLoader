@@ -17,7 +17,7 @@ MeshSpray.Loader = function ( manager ) {
 	this.instanceNo = 0;
 	this.baseObject3d = new THREE.Group();
 
-	this.meshBuilder = new THREE.LoaderSupport.MeshReceiver();
+	this.dataReceiver = new THREE.LoaderSupport.MeshReceiver();
 };
 
 MeshSpray.Loader.prototype = {
@@ -27,7 +27,7 @@ MeshSpray.Loader.prototype = {
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-		this.meshBuilder.setLogging( this.logging.enabled, this.logging.debug );
+		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
 	},
 
 	setBaseObject3d: function ( baseObject3d ) {
@@ -35,7 +35,7 @@ MeshSpray.Loader.prototype = {
 	},
 
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
-		this.meshBuilder._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
+		this.dataReceiver._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
 	},
 
 	buildWorkerCode: function ( codeSerializer ) {
@@ -66,7 +66,7 @@ MeshSpray.Parser = ( function () {
 		this.debug = false;
 		this.dimension = 200;
 		this.quantity = 1;
-		this.callbackMeshBuilder = null;
+		this.callbackDataReceiver = null;
 		this.serializedMaterials = [];
 		this.logging = {
 			enabled: true,
@@ -79,8 +79,8 @@ MeshSpray.Parser = ( function () {
 		this.logging.debug = debug === true;
 	};
 
-	Parser.prototype.setCallbackMeshBuilder = function ( callbackMeshBuilder ) {
-		this.callbackMeshBuilder = callbackMeshBuilder;
+	Parser.prototype.setCallbackDataReceiver = function ( callbackDataReceiver ) {
+		this.callbackDataReceiver = callbackDataReceiver;
 	};
 
 	Parser.prototype.setSerializedMaterials = function ( serializedMaterials ) {
@@ -173,12 +173,12 @@ MeshSpray.Parser = ( function () {
 				serializedMaterials: newSerializedMaterials
 			}
 		};
-		this.callbackMeshBuilder( payload );
+		this.callbackDataReceiver( payload );
 
 		this.globalObjectCount++;
-		this.callbackMeshBuilder(
+		this.callbackDataReceiver(
 			{
-				cmd: 'meshData',
+				cmd: 'data',
 				progress: {
 					numericalValue: 1.0
 				},

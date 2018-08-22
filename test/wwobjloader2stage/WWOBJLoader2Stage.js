@@ -143,7 +143,7 @@ var WWOBJLoader2Stage = (function () {
 		};
 		var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' )
 			.setParserConfiguration( parserConfigMtl )
-			.setUseAsync( false );
+			.configureAsync( false, false );
 		var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				name: 'male02',
@@ -163,7 +163,7 @@ var WWOBJLoader2Stage = (function () {
 		parserConfigMtl.texturePath = '../../resource/obj/female02/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' )
 			.setParserConfiguration( parserConfigMtl )
-			.setUseAsync( false );
+			.configureAsync( false, false );
 		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' );
 		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				name: 'female02',
@@ -198,7 +198,7 @@ var WWOBJLoader2Stage = (function () {
 		parserConfigMtl.texturePath = '../../resource/obj/walt/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.mtl', '../../resource/obj/walt/WaltHead.mtl' )
 			.setParserConfiguration( parserConfigMtl )
-			.setUseAsync( false );
+			.configureAsync( false, false );
 		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/walt/WaltHead.obj' );
 		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				name: 'WaltHead',
@@ -235,7 +235,7 @@ var WWOBJLoader2Stage = (function () {
 		parserConfigMtl.texturePath = '../../resource/PTV1/walt/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.mtl' )
 			.setParserConfiguration( parserConfigMtl )
-			.setUseAsync( false );
+			.configureAsync( false, false );
 		rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.obj' );
 
 		loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
