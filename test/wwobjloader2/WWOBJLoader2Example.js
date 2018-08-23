@@ -213,6 +213,7 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
+		rd.configureAsync( true, true );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				instanceNo: 42,
 				baseObject3d: local
@@ -242,7 +243,6 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
-
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				terminateWorkerOnLoad: false
 			} )
