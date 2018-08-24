@@ -144,7 +144,8 @@ var WWOBJLoader2Stage = (function () {
 		var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' )
 			.setParserConfiguration( parserConfigMtl )
 			.configureAsync( false, false );
-		var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' );
+		var rdObj = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.obj', '../../resource/obj/male02/male02.obj' )
+			.configureAsync( false, true );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				name: 'male02',
 				instanceNo: 0,

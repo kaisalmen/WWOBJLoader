@@ -125,7 +125,7 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 	this.description = description;
 
 	this.workerSupport = null;
-	this.dataRecveiver = null;
+	this.dataReceiver = null;
 
 	this.baseObject3d = new THREE.Group();
 	this.instanceNo = 0;
@@ -374,8 +374,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		}
 
 
-		this.dataRecveiver = new THREE.LoaderSupport.MeshReceiver();
-		this.dataRecveiver.setLogging( this.logging.enabled, this.logging.debug );
+		this.dataReceiver = new THREE.LoaderSupport.MeshReceiver();
+		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
 
 		var loadingTask = this;
 		var callbackDataReceiverProgress = function ( type, text, numericalValue ) {
@@ -393,9 +393,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			if ( loadingTask.logging.enabled && loadingTask.logging.debug ) console.debug( content );
 		};
 
-		this.dataRecveiver._setCallbacks( callbackDataReceiverProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
-		this.dataRecveiver.setBaseObject3d( this.baseObject3d );
-		this.dataRecveiver.createDefaultMaterials();
+		this.dataReceiver._setCallbacks( callbackDataReceiverProgress, this.callbacks.parse.onMesh, this.callbacks.parse.onMaterials );
+		this.dataReceiver.setBaseObject3d( this.baseObject3d );
+		this.dataReceiver.createDefaultMaterials();
 
 
 		// do we need to provide ResourceDescriptors to Worker?
@@ -545,7 +545,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			} else {
 
-				onCompleteFileLoading( null );
+				onCompleteFileLoading( null, index );
 
 			}
 
@@ -592,7 +592,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				};
 
 				var scopedOnMesh = function ( content ) {
-					loadingTask.dataRecveiver.processPayload( content );
+					loadingTask.dataReceiver.processPayload( content );
 				};
 
 				// fast-fail in case of illegal data
@@ -645,9 +645,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		var ltModelName = this.loader.ref.modelName;
 		if ( ltModelName !== undefined && ltModelName !== null && ltModelName.length > 0 ) resourceDescriptor.name = this.loader.ref.modelName;
-		if ( THREE.LoaderSupport.Validator.isValid( this.loader.ref.dataRecveiver ) && this.loader.ref.dataRecveiver instanceof THREE.LoaderSupport.MeshReceiver ) {
+		if ( THREE.LoaderSupport.Validator.isValid( this.loader.ref.dataReceiver ) && this.loader.ref.dataReceiver instanceof THREE.LoaderSupport.MeshReceiver ) {
 
-			this.dataRecveiver.setMaterials( this.loader.ref.dataRecveiver.getMaterials() );
+			this.dataReceiver.setMaterials( this.loader.ref.dataReceiver.getMaterials() );
 
 		}
 
@@ -657,9 +657,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		};
 		if ( this.sendMaterials ) {
 
-			var materials = this.dataRecveiver.getMaterials();
+			var materials = this.dataReceiver.getMaterials();
 			for ( var materialName in materials ) materialsContainer.materials[ materialName ] = materialName;
-			if ( this.sendMaterialsJson ) materialsContainer.serializedMaterials = this.dataRecveiver.getMaterialsJSON();
+			if ( this.sendMaterialsJson ) materialsContainer.serializedMaterials = this.dataReceiver.getMaterialsJSON();
 
 		}
 		var params = ( THREE.LoaderSupport.Validator.isValid( resourceDescriptor.parserConfiguration ) ) ? resourceDescriptor.parserConfiguration : {};
