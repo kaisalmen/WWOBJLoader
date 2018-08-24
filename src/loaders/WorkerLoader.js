@@ -1185,6 +1185,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		}
 		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		var userWorkerCode = codeBuilderInstructions.code;
+
+		// TODO: Enforce codeBuilderInstructions flag for availability of three code
 		userWorkerCode += 'THREE.LoaderSupport = {};\n\n';
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
 		if ( codeBuilderInstructions.useMeshDisassembler ) {
@@ -1199,8 +1201,11 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		}
 		if ( containFileLoadingCode ) {
 			userWorkerCode += 'var loading = {};\n\n';
-			userWorkerCode += 'var Cache = { get: function ( key ) { return undefined; }, add: function ( url, response ) {} };\n\n';
-			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader );
+			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.Cache', THREE.Cache );
+			userWorkerCode += THREE.DefaultLoadingManager.constructor.toString();
+			userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
+			userWorkerCode += 'var Cache = THREE.Cache;\n\n';
+			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, null, [], 'FileLoader' );
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.ResourceDescriptor', THREE.WorkerLoader.ResourceDescriptor );
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.FileLoadingExecutor', THREE.WorkerLoader.FileLoadingExecutor );
@@ -1419,7 +1424,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	 * @returns {string}
 	 */
 	serializeObject: function ( fullName, object ) {
-		var objectString = fullName + ' = {\n';
+		var objectString = fullName + ' = {\n\n';
 		var part;
 		for ( var name in object ) {
 
@@ -1434,11 +1439,12 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 				objectString += '\t' + name + ': [' + part + '],\n';
 
-			} else if ( Number.isInteger( part ) ) {
+			} else if ( typeof part === 'object' ) {
 
-				objectString += '\t' + name + ': ' + part + ',\n';
+				// TODO: Short-cut for now. Re-cursive needed?
+				objectString += '\t' + name + ': {},\n';
 
-			} else if ( typeof part === 'function' ) {
+			} else {
 
 				objectString += '\t' + name + ': ' + part + ',\n';
 
@@ -1458,7 +1464,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	 * @param ignoreFunctions
 	 * @returns {string}
 	 */
-	serializeClass: function ( fullName, object, basePrototypeName, ignoreFunctions ) {
+	serializeClass: function ( fullName, object, basePrototypeName, ignoreFunctions, constructorName ) {
 		var funcString, objectPart, constructorString;
 		var prototypeFunctions = '';
 
@@ -1486,7 +1492,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 		}
 		if ( constructorString === undefined && typeof object.prototype.constructor === 'function' ) {
 
-			constructorString = object.prototype.constructor.toString();
+			constructorString = fullName + ' = ' + object.prototype.constructor.toString().replace( constructorName, '' );
 
 		}
 		var objectString = constructorString + '\n\n';
