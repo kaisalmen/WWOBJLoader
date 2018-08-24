@@ -1187,6 +1187,15 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		var userWorkerCode = codeBuilderInstructions.code;
 
 		// TODO: Enforce codeBuilderInstructions flag for availability of three code
+		if ( THREE.LoaderSupport.Validator.isValid( codeBuilderInstructions.provideThree ) ) {
+
+			codeBuilderInstructions.provideThree = codeBuilderInstructions.provideThree === true;
+
+		} else {
+
+			throw '"buildWorkerCode" did not define boolean "provideThree" which tells "WorkerSupport" whether three.js is already contained in worker code.'
+
+		}
 		userWorkerCode += 'THREE.LoaderSupport = {};\n\n';
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
 		if ( codeBuilderInstructions.useMeshDisassembler ) {
@@ -1199,14 +1208,19 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			userWorkerCode += 'THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;\n\n';
 
 		}
+		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
 		if ( containFileLoadingCode ) {
-			userWorkerCode += 'var loading = {};\n\n';
-			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.Cache', THREE.Cache );
-			userWorkerCode += THREE.DefaultLoadingManager.constructor.toString();
-			userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
-			userWorkerCode += 'var Cache = THREE.Cache;\n\n';
-			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, null, [], 'FileLoader' );
-			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
+
+			if ( ! codeBuilderInstructions.provideThree ) {
+
+				userWorkerCode += 'var loading = {};\n\n';
+				userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.Cache', THREE.Cache );
+				userWorkerCode += THREE.DefaultLoadingManager.constructor.toString();
+				userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
+				userWorkerCode += 'var Cache = THREE.Cache;\n\n';
+				userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, null, [], 'FileLoader' );
+
+			}
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.ResourceDescriptor', THREE.WorkerLoader.ResourceDescriptor );
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.FileLoadingExecutor', THREE.WorkerLoader.FileLoadingExecutor );
 
@@ -1441,7 +1455,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 			} else if ( typeof part === 'object' ) {
 
-				// TODO: Short-cut for now. Re-cursive needed?
+				// TODO: Short-cut for now. Recursion required?
 				objectString += '\t' + name + ': {},\n';
 
 			} else {

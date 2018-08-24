@@ -439,7 +439,8 @@ THREE.OBJLoader2.prototype = {
 
 		return {
 			code: workerCode,
-			parserName: 'THREE.OBJLoader2.Parser'
+			parserName: 'THREE.OBJLoader2.Parser',
+			provideThree: false
 		}
 	}
 };

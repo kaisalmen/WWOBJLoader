@@ -52,7 +52,8 @@ MeshSpray.Loader.prototype = {
 			libs: {
 				locations: [ 'node_modules/three/build/three.min.js' ],
 				path: '../../'
-			}
+			},
+			provideThree: true
 		}
 	}
 };
