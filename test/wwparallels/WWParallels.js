@@ -212,7 +212,7 @@ WWParallels.prototype = {
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' );
-		rdMtl.useAsync = false;
+		rdMtl.configureAsync( false, false );
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
@@ -234,7 +234,7 @@ WWParallels.prototype = {
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
-		rdMtl.useAsync = false;
+		rdMtl.configureAsync( false, false );
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
@@ -268,7 +268,7 @@ WWParallels.prototype = {
 			resourceDescriptors: []
 		};
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'WaltHead.mtl', '../../resource/obj/walt/WaltHead.mtl' );
-		rdMtl.useAsync = false;
+		rdMtl.configureAsync( false, false );
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,

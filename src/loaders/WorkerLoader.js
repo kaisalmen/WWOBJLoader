@@ -2,17 +2,14 @@ if ( THREE.WorkerLoader === undefined ) { THREE.WorkerLoader = {} }
 
 /**
  *
- * @param {THREE.DefaultLoadingManager} manager
- * @param {object} [loader]
- * @param {object} [loaderConfig]
+ * @param {THREE.DefaultLoadingManager} [manager]
  * @constructor
  */
-THREE.WorkerLoader = function ( manager, loader, loaderConfig ) {
+THREE.WorkerLoader = function ( manager ) {
 
 	console.info( 'Using THREE.WorkerLoader version: ' + THREE.WorkerLoader.WORKER_LOADER_VERSION );
 	this.manager = THREE.LoaderSupport.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
-	if ( THREE.LoaderSupport.Validator.isValid( loader ) ) this.loadingTask.setLoader( loader, loaderConfig );
 };
 THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
 
@@ -38,6 +35,7 @@ THREE.WorkerLoader.prototype = {
 	 */
 	setLoadingTask: function ( loadingTask ) {
 		this.loadingTask = THREE.LoaderSupport.Validator.verifyInput( loadingTask, this.loadingTask );
+		return this;
 	},
 
 	/**
@@ -412,17 +410,20 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			}
 
 		}
-		this.workerSupport.validate( this.loader.buildWorkerCode, provideRds );
+		var rdForWorkerInit = null;
 		if ( provideRds ) {
 
+			rdForWorkerInit = [];
+			for ( var name in this.resourceDescriptors ) {
+
+				resourceDescriptor = this.resourceDescriptors[ name ];
+				rdForWorkerInit.push( resourceDescriptor.createSendable() );
+
+			}
+
+			this.workerSupport.validate( this.loader.buildWorkerCode, provideRds );
 			this.workerSupport.updateCallbacks( callbackLoadFiles );
-			this.workerSupport.runAsyncProvideResourceDesctiptors(
-				{
-					data: {
-						resourceDescriptors: this.resourceDescriptors
-					}
-				}
-			);
+			this.workerSupport.runAsyncInitWorker( rdForWorkerInit );
 
 		} else {
 
@@ -532,8 +533,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 								instanceNo: loadingTask.instanceNo,
 								description: loadingTask.description,
 								path: loadingTask.loader.ref.path
-							},
-							data: {}
+							}
 						}
 					)
 
@@ -668,10 +668,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			{
 				// specific parser instructions need to be set here
 				params: params,
-				logging: {
-					enabled: this.logging.enabled,
-					debug: this.logging.debug
-				},
 				materials: materialsContainer,
 				data: {
 					input: resourceDescriptor.content,
@@ -924,7 +920,7 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
  *
  * @param {String} resourceType
  * @param {String} name
- * @param {Object} input
+ * @param {Object} [input]
  * @constructor
  */
 THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
@@ -1040,6 +1036,18 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	getCallbackOnProcessResult: function ( ) {
 		return this.callbackOnProcessResult;
+	},
+
+	createSendable: function () {
+		var copy = new THREE.WorkerLoader.ResourceDescriptor( this.resourceType, this.name );
+		copy.url = this.url;
+		copy.filename = this.filename;
+		copy.path = this.path;
+		copy.extension = this.extension;
+		copy.async.load = this.async.load;
+		copy.async.parse = this.async.parse;
+		copy.parserConfiguration.payloadType = this.parserConfiguration.payloadType;
+		this.result = null;
 	}
 };
 
@@ -1186,7 +1194,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
 		var userWorkerCode = codeBuilderInstructions.code;
 
-		// TODO: Enforce codeBuilderInstructions flag for availability of three code
+		// Enforce codeBuilderInstructions flag for availability of three code
 		if ( THREE.LoaderSupport.Validator.isValid( codeBuilderInstructions.provideThree ) ) {
 
 			codeBuilderInstructions.provideThree = codeBuilderInstructions.provideThree === true;
@@ -1289,7 +1297,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				break;
 
 			case 'confirm':
-				if ( payload.type === 'resourcesAvailable' ) {
+				if ( payload.type === 'initWorkerDone' ) {
 
 					this.worker.queuedMessage = null;
 					this.worker.callbacks.dataReceiver( payload );
@@ -1335,10 +1343,19 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		}
 	},
 
-	runAsyncProvideResourceDesctiptors: function ( payload ) {
+	runAsyncInitWorker: function ( resourceDescriptors ) {
+		var payload = {
+			cmd: 'initWorker',
+			logging: {
+				enabled: this.logging.enabled,
+				debug: this.logging.debug
+			},
+			data: {
+				resourceDescriptors: resourceDescriptors
+			}
+		};
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
 
-		payload.cmd = 'provideResourceDescriptors';
 		this._postMessage();
 	},
 
@@ -1348,9 +1365,10 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {Object} payload configuration required for loading files.
 	 */
 	runAsyncLoad: function ( payload ) {
+		payload.cmd = 'loadFile';
+		payload.data = {};
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
 
-		payload.cmd = 'loadFile';
 		this._postMessage();
 	},
 
@@ -1360,9 +1378,9 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	runAsyncParse: function( payload ) {
+		payload.cmd = 'parse';
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
 
-		payload.cmd = 'parse';
 		this._postMessage();
 	},
 
@@ -1376,19 +1394,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 		} else {
 
-			if ( THREE.LoaderSupport.Validator.isValid( payload.logging ) ) {
-
-				payload.logging.enabled = payload.logging.enabled === true;
-				payload.logging.debug = payload.logging.debug === true;
-
-			} else {
-
-				payload.logging = {
-					enabled: true,
-					debug: false
-				}
-
-			}
 			this.worker.queuedMessage = payload;
 			this.worker.started = true;
 
@@ -1569,6 +1574,11 @@ THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;
  */
 THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl = function () {
 	this.resourceDescriptors = [];
+	this.logging = {
+		enabled: false,
+		debug: false
+	};
+
 	var scope = this;
 	var scopedRunner = function( event ) {
 		scope.processMessage( event.data );
@@ -1610,38 +1620,40 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	processMessage: function ( payload ) {
-		var callbacks = {
-			callbackDataReceiver: function ( payload ) {
-				self.postMessage( payload );
-			},
-			callbackProgress: function ( text ) {
-				if ( payload.logging.enabled && payload.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+		var scope = this;
+		if ( payload.cmd === 'initWorker' ) {
+
+			this.logging.enabled = payload.logging.enabled === true;
+			this.logging.debug = payload.logging.debug === true;
+			if ( payload.data.resourceDescriptors !== null && this.resourceDescriptors.length === 0 ) {
+
+				for ( var name in payload.data.resourceDescriptors ) this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
+
 			}
-		};
-
-		if ( payload.cmd === 'provideResourceDescriptors' ) {
-
-			this.resourceDescriptors = [];
-			for ( var name in payload.data.resourceDescriptors ) this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
-
-			callbacks.callbackDataReceiver( {
+			self.postMessage( {
 				cmd: 'confirm',
-				type: 'resourcesAvailable',
-				msg: 'ResourceDescriptors have been successfully received.'
+				type: 'initWorkerDone',
+				msg: 'Worker init has been successfully performed.'
 			} );
 
 		} else if ( payload.cmd === 'loadFile' ) {
 
 			var resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
 			var fileLoadingExecutor = new THREE.WorkerLoader.FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
+
+			var callbackProgress = function ( text ) {
+				if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+			};
+			var callbackError = function ( message ) {
+				console.error( message );
+			};
 			fileLoadingExecutor
 				.setPath( payload.params.path )
-				.setCallbacks( callbacks.callbackProgress, function ( message ) { console.error( message ); } );
+				.setCallbacks( callbackProgress, callbackError );
 
-			var scope = this;
 			var confirmFileLoaded = function ( content, completedIndex ) {
 				if ( THREE.LoaderSupport.Validator.isValid( content ) ) scope.resourceDescriptors[ completedIndex ].content = content;
-				callbacks.callbackDataReceiver( {
+				self.postMessage( {
 					cmd: 'confirm',
 					type: 'fileLoaded',
 					params: {
@@ -1653,9 +1665,22 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 
 		} else if ( payload.cmd === 'parse' ) {
 
+			var callbacks = {
+				callbackDataReceiver: function ( payload ) {
+					self.postMessage( payload );
+				},
+				callbackProgress: function ( text ) {
+					if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+				}
+			};
+
 			// Parser is expected to be named as such
 			var parser = new THREE.WorkerLoader.Parser();
-			if ( typeof parser[ 'setLogging' ] === 'function' ) parser.setLogging( payload.logging.enabled, payload.logging.debug );
+			if ( typeof parser[ 'setLogging' ] === 'function' ) {
+
+				parser.setLogging( this.logging.enabled, this.logging.debug );
+
+			}
 			this.applyProperties( parser, payload.params );
 			this.applyProperties( parser, payload.materials );
 			this.applyProperties( parser, callbacks );
@@ -1684,9 +1709,9 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				parser.parse( arraybuffer, payload.data.options );
 
 			}
-			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
+			if ( this.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 
-			callbacks.callbackDataReceiver( {
+			self.postMessage( {
 				cmd: 'completeOverall',
 				msg: 'WorkerRunner completed run.'
 			} );

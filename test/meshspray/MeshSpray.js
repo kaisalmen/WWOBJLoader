@@ -281,7 +281,7 @@ var MeshSprayApp = (function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		var workerLoaderDirector = new THREE.WorkerLoader.Director( maxQueueSize, maxWebWorkers )
+		var workerLoaderDirector = new THREE.WorkerLoader.Director()
 			.setLogging( false, false )
 			.setCrossOrigin( 'anonymous' );
 
@@ -303,6 +303,8 @@ var MeshSprayApp = (function () {
 			return override;
 		};
 
+		workerLoaderDirector.createWorkerPool( 'meshspray', maxQueueSize );
+		workerLoaderDirector.updateWorkerPool( 'meshspray', maxWebWorkers );
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
@@ -339,7 +341,6 @@ var MeshSprayApp = (function () {
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
-		workerLoaderDirector.prepareWorkers();
 		workerLoaderDirector.processQueue();
 	};
 

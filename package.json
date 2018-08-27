@@ -72,7 +72,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "http": "http-server -p 8085",
+    "http-three": "http-server ../three.js -p 8081"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
@@ -80,17 +82,19 @@
     "three": "^0.95.0"
   },
   "devDependencies": {
-    "jszip": "^3.1.5",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.1",
+    "gulp-decompress": "^2.0.2",
     "gulp-header": "^2.0.5",
     "gulp-jsdoc3": "^2.0.0",
+    "gulp-remote-src": "^0.4.3",
     "gulp-rename": "^1.4.0",
     "gulp-replace-task": "^0.11.0",
     "gulp-uglify": "^3.0.1",
-    "gulp-remote-src": "^0.4.3",
     "gulp-util": "^3.0.8",
-    "gulp-decompress": "^2.0.2"
+    "jszip": "^3.1.5",
+    "http-server": "^0.11.1",
+    "npm-run-all": "^4.1.3"
   }
 }
