@@ -983,17 +983,21 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 		} else {
 
-			this._throwError( 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...' );
+			throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...';
 
 		}
 	},
 
 	setString: function ( input ) {
+		// fast-fail on unset input
+		if ( input === null ) return;
 		if ( ! ( typeof( input ) === 'string' || input instanceof String) ) this._throwError( 'Provided input is not of resourceType "String"! Aborting...' );
 		this.content = input;
 	},
 
 	setBuffer: function ( buffer ) {
+		// fast-fail on unset input
+		if ( buffer === null ) return;
 		if ( ! ( buffer instanceof ArrayBuffer ||
 			buffer instanceof Int8Array ||
 			buffer instanceof Uint8Array ||
@@ -1048,6 +1052,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		copy.async.parse = this.async.parse;
 		copy.parserConfiguration.payloadType = this.parserConfiguration.payloadType;
 		this.result = null;
+		return copy;
 	}
 };
 

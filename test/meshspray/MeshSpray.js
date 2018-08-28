@@ -169,7 +169,8 @@ MeshSpray.Parser = ( function () {
 		var newSerializedMaterials = {};
 		newSerializedMaterials[ materialName ] = defaultVertexColorMaterialDouble.toJSON();
 		var payload = {
-			cmd: 'materialData',
+			cmd: 'data',
+			type: 'material',
 			materials: {
 				serializedMaterials: newSerializedMaterials
 			}
@@ -180,6 +181,7 @@ MeshSpray.Parser = ( function () {
 		this.callbackDataReceiver(
 			{
 				cmd: 'data',
+				type: 'mesh',
 				progress: {
 					numericalValue: 1.0
 				},
@@ -333,6 +335,7 @@ var MeshSprayApp = (function () {
 					sendMaterialsJson: true
 				} )
 				.setLoaderConfig( MeshSpray.Loader )
+				.setExtension( 'meshspray' )
 				.addResourceDescriptor( rdMeshSpray )
 				.setCallbacksApp( callbackOnReport )
 				.setCallbacksParsing( callbackOnMesh )
