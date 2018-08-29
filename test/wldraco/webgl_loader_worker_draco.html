@@ -98,6 +98,7 @@
 					var buildWorkerCode = function ( codeSerializer ) {
 						var WLDracoWrapper = function () {
 							this.callbackDataReceiver = null;
+							this.url = 'js/libs/draco/';
 						};
 
 						WLDracoWrapper.prototype = {
@@ -107,9 +108,13 @@
 							setCallbackDataReceiver: function ( callbackDataReceiver ) {
 								this.callbackDataReceiver = callbackDataReceiver;
 							},
+							
+							setUrl: function ( url ) {
+								this.url = url;
+							},
 
-							parse: function ( arrayBuffer ) {
-								THREE.DRACOLoader.setDecoderPath( '../../node_modules/three/examples/js/libs/draco' );
+							parse: function ( arrayBuffer, options ) {
+								THREE.DRACOLoader.setDecoderPath( this.url );
 								THREE.DRACOLoader.setDecoderConfig( { type: 'js' } );
 
 								var dracoLoader = new THREE.DRACOLoader();
@@ -145,7 +150,13 @@
 							provideThree: true
 						}
 					};
+					
+					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'bunny.drc', '../../resource/draco/bunny.drc' );
+					var parserConfiguration = {
+						url: url
+					};
+					rd.setParserConfiguration( parserConfiguration );
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
