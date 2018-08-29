@@ -953,7 +953,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		if ( this.resourceType === 'URL' ) {
 
 			this.url = ( this.input !== null ) ? this.input : this.name;
-			this.url = new URL( this.url, window.location.href).href;
+			this.url = new URL( this.url, window.location.href ).href;
 			this.filename = this.url;
 			var urlParts = this.url.split( '/' );
 			if ( urlParts.length > 2 ) {
@@ -1017,7 +1017,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	configureAsync: function ( loadAsync, parseAsync ) {
 		this.async.parse = parseAsync === true;
-		// Loading in Worker is curretnly only allowed when async parse is performed!!!!
+		// Loading in Worker is currently only allowed when async parse is performed!!!!
 		this.async.load = loadAsync === true && this.async.parse;
 
 		return this;
@@ -1094,7 +1094,10 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			workerRunner: {
 				haveUserImpl: false,
 				name: 'THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl',
-				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl
+				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl,
+				parserName: null,
+				parseFunction: null,
+				usesMeshDisassembler: null
 			},
 			terminateWorkerOnLoad: false,
 			forceWorkerDataCopy: false,
@@ -1197,7 +1200,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 		}
 		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
-		var userWorkerCode = codeBuilderInstructions.code;
 
 		// Enforce codeBuilderInstructions flag for availability of three code
 		if ( THREE.LoaderSupport.Validator.isValid( codeBuilderInstructions.provideThree ) ) {
@@ -1209,16 +1211,12 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			throw '"buildWorkerCode" did not define boolean "provideThree" which tells "WorkerSupport" whether three.js is already contained in worker code.'
 
 		}
+		var userWorkerCode = codeBuilderInstructions.code;
 		userWorkerCode += 'THREE.LoaderSupport = {};\n\n';
 		userWorkerCode += 'THREE.WorkerLoader = {\n\tWorkerSupport: {},\n\tParser: ' + codeBuilderInstructions.parserName + '\n};\n\n';
-		if ( codeBuilderInstructions.useMeshDisassembler ) {
+		if ( codeBuilderInstructions.containsMeshDisassembler === true || codeBuilderInstructions.usesMeshDisassembler === true ) {
 
-			userWorkerCode += 'THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = true;\n\n';
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.LoaderSupport.MeshTransmitter', THREE.LoaderSupport.MeshTransmitter );
-
-		} else {
-
-			userWorkerCode += 'THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;\n\n';
 
 		}
 		userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeObject( 'THREE.LoaderSupport.Validator', THREE.LoaderSupport.Validator );
@@ -1249,6 +1247,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			var blob = new Blob( [ stringifiedCode ], { type: 'application/javascript' } );
 			scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
 			scope.worker.native.onmessage = scopedReceiveWorkerMessage;
+			scope.worker.workerRunner.parseFunction = THREE.LoaderSupport.Validator.verifyInput( codeBuilderInstructions.parseFunction, 'parse' );
+			scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler === true;
 
 			// process stored queuedMessage
 			scope._postMessage();
@@ -1384,6 +1384,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 */
 	runAsyncParse: function( payload ) {
 		payload.cmd = 'parse';
+		payload.parseFunction = this.worker.workerRunner.parseFunction;
+		payload.usesMeshDisassembler = this.worker.workerRunner.usesMeshDisassembler;
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
 
 		this._postMessage();
@@ -1570,8 +1572,6 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	}
 };
 
-THREE.WorkerLoader.WorkerSupport.useMeshDisassembler = false;
-
 
 /**
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
@@ -1700,18 +1700,17 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				arraybuffer = payload.data.input;
 
 			}
-			if ( THREE.WorkerLoader.WorkerSupport.useMeshDisassembler ) {
+			if ( payload.usesMeshDisassembler ) {
 
-				var object3d = parser.parse( arraybuffer, payload.data.options );
+				var object3d = parser[ payload.parseFunction ] ( arraybuffer, payload.data.options );
 				var workerExchangeTools = new THREE.LoaderSupport.MeshTransmitter();
 
 				workerExchangeTools.setCallbackDataReceiver( callbacks.callbackDataReceiver );
 				workerExchangeTools.walkMesh( object3d );
 
-
 			} else {
 
-				parser.parse( arraybuffer, payload.data.options );
+				parser[ payload.parseFunction ] ( arraybuffer, payload.data.options );
 
 			}
 			if ( this.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );

@@ -223,8 +223,7 @@ var WWOBJLoader2Example = (function () {
 			.setCallbacksPipeline( callbackOnLoad )
 			.setCallbacksApp( callbackOnProgress );
 		new THREE.WorkerLoader()
-			.getLoadingTask()
-			.execute( loadingTaskConfig );
+			.executeLoadingTaskConfig( loadingTaskConfig );
 	};
 
 	WWOBJLoader2Example.prototype.useRunAsyncMeshAlter = function () {
