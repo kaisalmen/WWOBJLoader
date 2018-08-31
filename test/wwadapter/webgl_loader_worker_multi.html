@@ -28,13 +28,12 @@
         <script src="../../node_modules/three/examples/js/loaders/PCDLoader.js"></script>
 
 		<script src="../../src/loaders/LoaderSupport.js"></script>
-		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script>
 
 			'use strict';
 
-			WWLoaderAdapter = function ( elementToBindTo ) {
+			var WWLoaderAdapter = function ( elementToBindTo ) {
 				this.renderer = null;
 				this.canvas = elementToBindTo;
 				this.aspectRatio = 1;
@@ -98,8 +97,16 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 					var buildWorkerCode = function ( codeSerializer ) {
+
+						THREE.PCDLoader.prototype._parse = THREE.PCDLoader.prototype.parse;
+
+						THREE.PCDLoader.prototype.parse = function ( data ) {
+							return this._parse( data, '../../resource/pcd/binary/Zaghetto.pcd' )
+						};
+
+						var workerCode = codeSerializer.serializeClass( 'THREE.PCDLoader', THREE.PCDLoader );
 						return {
-							code: '',
+							code: workerCode,
 							parserName: 'THREE.PCDLoader',
 							usesMeshDisassembler: true,
 							libs: {
@@ -122,8 +129,7 @@
 						.addResourceDescriptor( rd )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
-						.getLoadingTask()
-						.execute( loadingTaskConfig );
+						.executeLoadingTaskConfig( loadingTaskConfig );
 				},
 
 				_reportProgress: function( event ) {

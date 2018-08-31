@@ -189,8 +189,7 @@
 //						.addResourceDescriptor( rdHannibal2 )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
-						.getLoadingTask()
-						.execute( loadingTaskConfig );
+						.executeLoadingTaskConfig( loadingTaskConfig );
 				},
 
 				_reportProgress: function( event ) {
