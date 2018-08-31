@@ -791,7 +791,7 @@ THREE.WorkerLoader.FileLoadingExecutor.prototype = {
  */
 THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
 	this.loader = {
-		classDef: '',
+		classDef: null,
 		config: {},
 		buildWorkerCode: null
 	};
@@ -1491,27 +1491,70 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	 * @returns {string}
 	 */
 	serializeClass: function ( fullName, object, basePrototypeName, ignoreFunctions, constructorName ) {
-		var funcString, objectPart, constructorString;
-		var prototypeFunctions = '';
+		var valueString, objectPart, constructorString, i;
+		var prototypeFunctions = [];
+		var objectProperties = [];
+		var objectFunctions = [];
+		var isExtended = ( basePrototypeName !== null && basePrototypeName !== undefined );
 
 		if ( ! Array.isArray( ignoreFunctions ) ) ignoreFunctions = [];
 
 		for ( var name in object.prototype ) {
 
 			objectPart = object.prototype[ name ];
+			valueString = objectPart.toString();
 			if ( name === 'constructor' ) {
 
-				funcString = objectPart.toString();
-				constructorString = fullName + ' = ' + funcString + ';\n\n';
+				constructorString = fullName + ' = ' + valueString + ';\n\n';
 
 			} else if ( typeof objectPart === 'function' ) {
 
 				if ( ignoreFunctions.indexOf( name ) < 0 ) {
 
-					funcString = objectPart.toString();
-					prototypeFunctions += '\t' + name + ': ' + funcString + ',\n\n';
+					if ( isExtended ) {
+
+						prototypeFunctions.push( fullName + '.prototype.' + name + ' = ' + valueString + ';\n\n' );
+
+					} else {
+
+						prototypeFunctions.push( '\t' + name + ': ' + valueString + ',\n\n' );
+
+					}
+				}
+
+			}
+
+		}
+		for ( var name in object ) {
+
+			objectPart = object[ name ];
+
+			if ( typeof objectPart === 'function' ) {
+
+				if ( ignoreFunctions.indexOf( name ) < 0 ) {
+
+					valueString = objectPart.toString();
+					objectFunctions.push( fullName + '.' + name + ' = ' + objectPart + ';\n\n' );
 
 				}
+
+			} else {
+
+				if ( typeof( objectPart ) === 'string' || objectPart instanceof String) {
+
+					valueString = '\"' + objectPart.toString() + '\"';
+
+				} else if ( typeof objectPart === 'object' ) {
+
+					// TODO: Short-cut for now. Recursion required?
+					valueString = "{}";
+
+				} else {
+
+					valueString = objectPart;
+
+				}
+				objectProperties.push( fullName + '.' + name + ' = ' + valueString + ';\n' );
 
 			}
 
@@ -1522,18 +1565,32 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 		}
 		var objectString = constructorString + '\n\n';
-		objectString += fullName + '.prototype = {\n\n';
-		objectString += '\tconstructor: ' + fullName + ',\n\n';
-		objectString += prototypeFunctions;
-		objectString += '\n};\n\n';
+		if ( isExtended ) {
 
-		if ( basePrototypeName !== null && basePrototypeName !== undefined ) {
-
-			objectString += '\n';
 			objectString += fullName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
-			objectString += fullName + '.constructor = ' + fullName + ';\n';
-			objectString += '\n';
+
 		}
+		objectString += fullName + '.prototype.constructor = ' + fullName + ';\n';
+		objectString += '\n\n';
+
+		for ( i = 0; i < objectProperties.length; i ++ ) objectString += objectProperties[ i ];
+		objectString += '\n\n';
+
+		for ( i = 0; i < objectFunctions.length; i ++ ) objectString += objectFunctions[ i ];
+		objectString += '\n\n';
+
+		if ( isExtended ) {
+
+			for ( i = 0; i < prototypeFunctions.length; i ++ ) objectString += prototypeFunctions[ i ];
+
+		} else {
+
+			objectString += fullName + '.prototype = {\n\n';
+			for ( i = 0; i < prototypeFunctions.length; i ++ ) objectString += prototypeFunctions[ i ];
+			objectString += '\n};';
+
+		}
+		objectString += '\n\n';
 
 		return objectString;
 	},
