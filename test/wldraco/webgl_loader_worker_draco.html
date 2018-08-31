@@ -142,10 +142,11 @@
 							var dracoLoader = new THREE.DRACOLoader();
 							var scope = this;
 							var scopedOnLoad = function ( bufferGeometry ) {
-								var workerExchangeTools = new THREE.LoaderSupport.MeshTransmitter();
+								var meshTransmitter = new THREE.LoaderSupport.MeshTransmitter();
 
-								workerExchangeTools.setCallbackDataReceiver( scope.callbackDataReceiver );
-								workerExchangeTools.handleBufferGeometry( bufferGeometry, 'bunny.drc', [ 'defaultMaterial' ] );
+								meshTransmitter.setCallbackDataReceiver( scope.callbackDataReceiver );
+								meshTransmitter.setDefaultGeometryType( 0 );
+								meshTransmitter.handleBufferGeometry( bufferGeometry, 'bunny.drc' );
 
 								// Release decoder resources.
 								THREE.DRACOLoader.releaseDecoderModule();

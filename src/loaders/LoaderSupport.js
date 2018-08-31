@@ -456,6 +456,8 @@ THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
  */
 THREE.LoaderSupport.MeshTransmitter = function () {
 	this.callbackDataReceiver = null;
+	this.defaultGeometryType = 2;
+	this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
 };
 
 THREE.LoaderSupport.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
@@ -469,6 +471,10 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 		this.callbackDataReceiver = callbackDataReceiver;
 	},
 
+	setDefaultGeometryType: function ( defaultGeometryType ) {
+		this.defaultGeometryType = defaultGeometryType;
+	},
+
 	walkMesh: function ( rootNode ) {
 		var scope = this;
 		var _walk_ = function ( object3d ) {
@@ -476,7 +482,7 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof THREE.BufferGeometry ) {
 
-				scope.handleBufferGeometry( object3d[ 'geometry' ] );
+				scope.handleBufferGeometry( object3d[ 'geometry' ], object3d.name );
 
 			}
 			if ( object3d.hasOwnProperty( 'material' ) ) {
@@ -506,7 +512,7 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 
 	},
 
-	handleBufferGeometry: function ( bufferGeometry, objectName, materialNames ) {
+	handleBufferGeometry: function ( bufferGeometry, objectName ) {
 //			console.log ( bufferGeometry.attributes );
 		var vertexBA = bufferGeometry.getAttribute( 'position' ) ;
 		var indexBA = bufferGeometry.getIndex();
@@ -519,6 +525,7 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 		var normalFA = ( normalBA !== null && normalBA !== undefined ) ? normalBA.array: null;
 		var uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
 
+		var materialNames = [ this.defaultMaterials[ this.defaultGeometryType ] ];
 		this.callbackDataReceiver(
 			{
 				cmd: 'data',
@@ -542,7 +549,7 @@ THREE.LoaderSupport.MeshTransmitter.prototype = {
 					uvs: uvFA
 				},
 				// 0: mesh, 1: line, 2: point
-				geometryType: 0
+				geometryType: this.defaultGeometryType
 			},
 			vertexFA !== null ?  [ vertexFA.buffer ] : null,
 			indexUA !== null ?  [ indexUA.buffer ] : null,

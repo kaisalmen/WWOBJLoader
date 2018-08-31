@@ -1097,7 +1097,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl,
 				parserName: null,
 				parseFunction: null,
-				usesMeshDisassembler: null
+				usesMeshDisassembler: null,
+				defaultGeometryType: null
 			},
 			terminateWorkerOnLoad: false,
 			forceWorkerDataCopy: false,
@@ -1248,7 +1249,8 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
 			scope.worker.native.onmessage = scopedReceiveWorkerMessage;
 			scope.worker.workerRunner.parseFunction = THREE.LoaderSupport.Validator.verifyInput( codeBuilderInstructions.parseFunction, 'parse' );
-			scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler === true;
+			scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler;
+			scope.worker.workerRunner.defaultGeometryType = THREE.LoaderSupport.Validator.verifyInput( codeBuilderInstructions.defaultGeometryType, 0 );
 
 			// process stored queuedMessage
 			scope._postMessage();
@@ -1386,6 +1388,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		payload.cmd = 'parse';
 		payload.parseFunction = this.worker.workerRunner.parseFunction;
 		payload.usesMeshDisassembler = this.worker.workerRunner.usesMeshDisassembler;
+		payload.defaultGeometryType = this.worker.workerRunner.defaultGeometryType;
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
 
 		this._postMessage();
@@ -1760,10 +1763,11 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 			if ( payload.usesMeshDisassembler ) {
 
 				var object3d = parser[ payload.parseFunction ] ( arraybuffer, payload.data.options );
-				var workerExchangeTools = new THREE.LoaderSupport.MeshTransmitter();
+				var meshTransmitter = new THREE.LoaderSupport.MeshTransmitter();
 
-				workerExchangeTools.setCallbackDataReceiver( callbacks.callbackDataReceiver );
-				workerExchangeTools.walkMesh( object3d );
+				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
+				meshTransmitter.setCallbackDataReceiver( callbacks.callbackDataReceiver );
+				meshTransmitter.walkMesh( object3d );
 
 			} else {
 
