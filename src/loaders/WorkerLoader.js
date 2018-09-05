@@ -1597,39 +1597,6 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 		return objectString;
 	},
-
-	serializeSingleton: function ( fullName, object, internalName, basePrototypeName, ignoreFunctions ) {
-		var objectName = ( THREE.LoaderSupport.Validator.isValid( internalName ) ) ? internalName : object.name;
-
-		var objectString = fullName + ' = (function () {\n\n';
-		var inheritanceBlock = '\n';
-		if ( THREE.LoaderSupport.Validator.isValid( basePrototypeName ) ) {
-
-			inheritanceBlock += '\t' + objectName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
-			inheritanceBlock += '\t' + objectName + '.constructor = ' + objectName + ';\n\n';
-
-		}
-		objectString += inheritanceBlock;
-		objectString += '\t' + object.prototype.constructor.toString() + '\n\n';
-
-		var funcString, objectPart;
-		ignoreFunctions = THREE.LoaderSupport.Validator.verifyInput( ignoreFunctions, [] );
-		for ( var name in object.prototype ) {
-
-			objectPart = object.prototype[ name ];
-			if ( typeof objectPart === 'function' && ignoreFunctions.indexOf( name ) < 0 ) {
-
-				funcString = objectPart.toString();
-				objectString += '\t' + objectName + '.prototype.' + name + ' = ' + funcString + ';\n\n';
-
-			}
-
-		}
-		objectString += '\treturn ' + objectName + ';\n';
-		objectString += '})();\n\n';
-
-		return objectString;
-	}
 };
 
 

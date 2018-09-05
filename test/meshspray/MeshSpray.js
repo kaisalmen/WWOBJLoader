@@ -44,7 +44,7 @@ MeshSpray.Loader.prototype = {
 		workerCode += '  * This code was constructed by MeshSpray.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
 		workerCode += 'MeshSpray = {};\n\n';
-		workerCode += codeSerializer.serializeSingleton( 'MeshSpray.Parser', MeshSpray.Parser );
+		workerCode += codeSerializer.serializeClass( 'MeshSpray.Parser', MeshSpray.Parser );
 
 		return {
 			code: workerCode,
@@ -58,38 +58,40 @@ MeshSpray.Loader.prototype = {
 	}
 };
 
-MeshSpray.Parser = ( function () {
+MeshSpray.Parser = function () {
+	this.sizeFactor = 0.5;
+	this.localOffsetFactor = 1.0;
+	this.globalObjectCount = 0;
+	this.debug = false;
+	this.dimension = 200;
+	this.quantity = 1;
+	this.callbackDataReceiver = null;
+	this.serializedMaterials = [];
+	this.logging = {
+		enabled: true,
+		debug: false
+	};
+}
 
-	function Parser() {
-		this.sizeFactor = 0.5;
-		this.localOffsetFactor = 1.0;
-		this.globalObjectCount = 0;
-		this.debug = false;
-		this.dimension = 200;
-		this.quantity = 1;
-		this.callbackDataReceiver = null;
-		this.serializedMaterials = [];
-		this.logging = {
-			enabled: true,
-			debug: false
-		};
-	}
+MeshSpray.Parser.prototype = {
 
-	Parser.prototype.setLogging = function ( enabled, debug ) {
+	constructor: MeshSpray.Parser,
+
+	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-	};
+	},
 
-	Parser.prototype.setCallbackDataReceiver = function ( callbackDataReceiver ) {
+	setCallbackDataReceiver: function ( callbackDataReceiver ) {
 		this.callbackDataReceiver = callbackDataReceiver;
-	};
+	},
 
-	Parser.prototype.setSerializedMaterials = function ( serializedMaterials ) {
+	setSerializedMaterials: function ( serializedMaterials ) {
 		if ( serializedMaterials !== undefined && serializedMaterials !== null ) this.serializedMaterials = serializedMaterials;
-	};
+	},
 
-	Parser.prototype.parse = function () {
-		var baseTriangle = [ 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 1.0 ];
+	parse: function () {
+		var baseTriangle = [ 1.0, 1.0, 1.0, - 1.0, 1.0, 1.0, 0.0, - 1.0, 1.0 ];
 		var vertices = [];
 		var colors = [];
 		var normals = [];
@@ -105,7 +107,7 @@ MeshSpray.Parser = ( function () {
 		// local coords offset
 		var localOffsetFactor = this.localOffsetFactor;
 
-		for ( var i = 0; i < this.quantity; i++ ) {
+		for ( var i = 0; i < this.quantity; i ++ ) {
 			sizeVaring = this.sizeFactor * Math.random();
 
 			s = 2 * Math.PI * Math.random();
@@ -130,9 +132,9 @@ MeshSpray.Parser = ( function () {
 		var absoluteUvCount = 0;
 
 		var vertexFA = new Float32Array( absoluteVertexCount );
-		var colorFA = ( absoluteColorCount > 0 ) ? new Float32Array( absoluteColorCount ) : null;
-		var normalFA = ( absoluteNormalCount > 0 ) ? new Float32Array( absoluteNormalCount ) : null;
-		var uvFA = ( absoluteUvCount > 0 ) ? new Float32Array( absoluteUvCount ) : null;
+		var colorFA = (absoluteColorCount > 0) ? new Float32Array( absoluteColorCount ) : null;
+		var normalFA = (absoluteNormalCount > 0) ? new Float32Array( absoluteNormalCount ) : null;
+		var uvFA = (absoluteUvCount > 0) ? new Float32Array( absoluteUvCount ) : null;
 
 		vertexFA.set( vertices, 0 );
 		if ( colorFA ) {
@@ -177,7 +179,7 @@ MeshSpray.Parser = ( function () {
 		};
 		this.callbackDataReceiver( payload );
 
-		this.globalObjectCount++;
+		this.globalObjectCount ++;
 		this.callbackDataReceiver(
 			{
 				cmd: 'data',
@@ -209,38 +211,38 @@ MeshSpray.Parser = ( function () {
 		if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.globalObjectCount );
 
 		return this.baseObject3d;
-	};
-
-	return Parser;
-})();
-
-
-var MeshSprayApp = (function () {
-
-	function MeshSprayApp( elementToBindTo ) {
-		this.renderer = null;
-		this.canvas = elementToBindTo;
-		this.aspectRatio = 1;
-		this.recalcAspectRatio();
-
-		this.scene = null;
-		this.cameraDefaults = {
-			posCamera: new THREE.Vector3( 500.0, 500.0, 1000.0 ),
-			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-			near: 0.1,
-			far: 10000,
-			fov: 45
-		};
-		this.camera = null;
-		this.cameraTarget = this.cameraDefaults.posCameraTarget;
-
-		this.controls = null;
-
-		this.cube = null;
-		this.pivot = null;
 	}
+};
 
-	MeshSprayApp.prototype.initGL = function () {
+var MeshSprayApp = function ( elementToBindTo ) {
+	this.renderer = null;
+	this.canvas = elementToBindTo;
+	this.aspectRatio = 1;
+	this.recalcAspectRatio();
+
+	this.scene = null;
+	this.cameraDefaults = {
+		posCamera: new THREE.Vector3( 500.0, 500.0, 1000.0 ),
+		posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+		near: 0.1,
+		far: 10000,
+		fov: 45
+	};
+	this.camera = null;
+	this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+	this.controls = null;
+
+	this.cube = null;
+	this.pivot = null;
+}
+
+
+MeshSprayApp.prototype = {
+
+	constructor: MeshSprayApp,
+
+	initGL: function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
@@ -258,8 +260,8 @@ var MeshSprayApp = (function () {
 		var directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
 		var directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
-		directionalLight1.position.set( -100, -50, 100 );
-		directionalLight2.position.set( 100, 50, -100 );
+		directionalLight1.position.set( - 100, - 50, 100 );
+		directionalLight2.position.set( 100, 50, - 100 );
 
 		this.scene.add( directionalLight1 );
 		this.scene.add( directionalLight2 );
@@ -277,20 +279,18 @@ var MeshSprayApp = (function () {
 		this.pivot = new THREE.Object3D();
 		this.pivot.name = 'Pivot';
 		this.scene.add( this.pivot );
-	};
+	},
 
-	MeshSprayApp.prototype.initContent = function () {
+	initContent: function () {
 		var maxQueueSize = 1024;
 		var maxWebWorkers = 4;
 		var radius = 640;
-		var workerLoaderDirector = new THREE.WorkerLoader.Director()
-			.setLogging( false, false )
-			.setCrossOrigin( 'anonymous' );
+		var workerLoaderDirector = new THREE.WorkerLoader.Director().setLogging( false, false ).setCrossOrigin( 'anonymous' );
 
 		var callbackOnLoad = function ( event ) {
 			console.info( 'Worker #' + event.detail.instanceNo + ': Completed loading. (#' + workerLoaderDirector.objectsCompleted + ')' );
 		};
-		var callbackOnReport = function( event ) {
+		var callbackOnReport = function ( event ) {
 			document.getElementById( 'feedback' ).innerHTML = event.detail.text;
 			console.info( event.detail.text );
 		};
@@ -310,7 +310,7 @@ var MeshSprayApp = (function () {
 		var pivot;
 		var s, t, r, x, y, z;
 		var globalObjectCount = 0;
-		for ( var i = 0; i < maxQueueSize; i++ ) {
+		for ( var i = 0; i < maxQueueSize; i ++ ) {
 
 			pivot = new THREE.Object3D();
 			s = 2 * Math.PI * Math.random();
@@ -326,54 +326,48 @@ var MeshSprayApp = (function () {
 			var parserConfiguration = {
 				quantity: 8192,
 				dimension: Math.max( Math.random() * 500, 100 ),
-				globalObjectCount: globalObjectCount++
+				globalObjectCount: globalObjectCount ++
 			};
 			rdMeshSpray.setParserConfiguration( parserConfiguration );
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-					baseObject3d: pivot,
-					sendMaterials: true,
-					sendMaterialsJson: true
-				} )
-				.setLoaderConfig( MeshSpray.Loader )
-				.setExtension( 'meshspray' )
-				.addResourceDescriptor( rdMeshSpray )
-				.setCallbacksApp( callbackOnReport )
-				.setCallbacksParsing( callbackOnMesh )
-			 	.setCallbacksPipeline( callbackOnLoad );
+				baseObject3d: pivot,
+				sendMaterials: true,
+				sendMaterialsJson: true
+			} ).setLoaderConfig( MeshSpray.Loader ).setExtension( 'meshspray' ).addResourceDescriptor( rdMeshSpray ).setCallbacksApp( callbackOnReport ).setCallbacksParsing( callbackOnMesh ).setCallbacksPipeline( callbackOnLoad );
 
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}
 		workerLoaderDirector.processQueue();
-	};
+	},
 
-	MeshSprayApp.prototype.resizeDisplayGL = function () {
+	resizeDisplayGL: function () {
 		this.controls.handleResize();
 
 		this.recalcAspectRatio();
 		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 		this.updateCamera();
-	};
+	},
 
-	MeshSprayApp.prototype.recalcAspectRatio = function () {
-		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-	};
+	recalcAspectRatio: function () {
+		this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+	},
 
-	MeshSprayApp.prototype.resetCamera = function () {
+	resetCamera: function () {
 		this.camera.position.copy( this.cameraDefaults.posCamera );
 		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 		this.updateCamera();
-	};
+	},
 
-	MeshSprayApp.prototype.updateCamera = function () {
+	updateCamera: function () {
 		this.camera.aspect = this.aspectRatio;
 		this.camera.lookAt( this.cameraTarget );
 		this.camera.updateProjectionMatrix();
-	};
+	},
 
-	MeshSprayApp.prototype.render = function () {
+	render: function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 
 		this.controls.update();
@@ -382,8 +376,5 @@ var MeshSprayApp = (function () {
 		this.cube.rotation.y += 0.05;
 
 		this.renderer.render( this.scene, this.camera );
-	};
-
-	return MeshSprayApp;
-
-})();
+	}
+};
