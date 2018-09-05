@@ -1230,7 +1230,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				userWorkerCode += THREE.DefaultLoadingManager.constructor.toString();
 				userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
 				userWorkerCode += 'var Cache = THREE.Cache;\n\n';
-				userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, null, [], 'FileLoader' );
+				userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, 'FileLoader' );
 
 			}
 			userWorkerCode += THREE.WorkerLoader.WorkerSupport.CodeSerializer.serializeClass( 'THREE.WorkerLoader.ResourceDescriptor', THREE.WorkerLoader.ResourceDescriptor );
@@ -1493,7 +1493,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	 * @param ignoreFunctions
 	 * @returns {string}
 	 */
-	serializeClass: function ( fullName, object, basePrototypeName, ignoreFunctions, constructorName ) {
+	serializeClass: function ( fullName, object, constructorName, basePrototypeName, ignoreFunctions, includeFunctions ) {
 		var valueString, objectPart, constructorString, i;
 		var prototypeFunctions = [];
 		var objectProperties = [];
@@ -1501,6 +1501,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 		var isExtended = ( basePrototypeName !== null && basePrototypeName !== undefined );
 
 		if ( ! Array.isArray( ignoreFunctions ) ) ignoreFunctions = [];
+		if ( ! Array.isArray( includeFunctions ) ) includeFunctions = null;
 
 		for ( var name in object.prototype ) {
 
@@ -1512,7 +1513,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 			} else if ( typeof objectPart === 'function' ) {
 
-				if ( ignoreFunctions.indexOf( name ) < 0 ) {
+				if ( ignoreFunctions.indexOf( name ) < 0 && ( includeFunctions === null || includeFunctions.indexOf( name ) >= 0 ) ) {
 
 					if ( isExtended ) {
 
@@ -1534,7 +1535,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 			if ( typeof objectPart === 'function' ) {
 
-				if ( ignoreFunctions.indexOf( name ) < 0 ) {
+				if ( ignoreFunctions.indexOf( name ) < 0 && ( includeFunctions === null || includeFunctions.indexOf( name ) >= 0 ) ) {
 
 					valueString = objectPart.toString();
 					objectFunctions.push( fullName + '.' + name + ' = ' + objectPart + ';\n\n' );
@@ -1562,7 +1563,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 			}
 
 		}
-		if ( constructorString === undefined && typeof object.prototype.constructor === 'function' ) {
+		if ( ( constructorString === undefined || constructorString === null ) && typeof object.prototype.constructor === 'function' ) {
 
 			constructorString = fullName + ' = ' + object.prototype.constructor.toString().replace( constructorName, '' );
 

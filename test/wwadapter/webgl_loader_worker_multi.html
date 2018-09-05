@@ -29,6 +29,7 @@
 
 		<script src="../../src/loaders/LoaderSupport.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
+		<script src="../../src/loaders/wrapper/WLPCDLoader.js"></script>
 		<script>
 
 			'use strict';
@@ -96,37 +97,16 @@
 					var callbackOnLoad = function ( event ) {
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
-					var buildWorkerCode = function ( codeSerializer ) {
 
-						THREE.PCDLoader.prototype._parse = THREE.PCDLoader.prototype.parse;
-
-						THREE.PCDLoader.prototype.parse = function ( data ) {
-							return this._parse( data, '../../resource/pcd/binary/Zaghetto.pcd' )
-						};
-
-						var workerCode = codeSerializer.serializeClass( 'THREE.PCDLoader', THREE.PCDLoader );
-						return {
-							code: workerCode,
-							parserName: 'THREE.PCDLoader',
-							usesMeshDisassembler: true,
-							defaultGeometryType: 2,
-							libs: {
-								locations: [
-									'node_modules/three/build/three.min.js',
-									'node_modules/three/examples/js/loaders/PCDLoader.js'
-								],
-								path: '../../'
-							},
-							provideThree: true
-						}
-					};
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Zaghetto.pcd', '../../resource/pcd/binary/Zaghetto.pcd' );
+					var parserConfiguration = {	url: rd.url };
+					rd.setParserConfiguration( parserConfiguration );
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( THREE.PCDLoader )
-						.setBuildWorkerCodeFunction( buildWorkerCode )
+						.setLoaderConfig( WLPCDLoader )
+						.setBuildWorkerCodeFunction( WLPCDLoader.buildWorkerCode )
 						.addResourceDescriptor( rd )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
