@@ -30,12 +30,17 @@ THREE.DRACOLoader.getDecoderModule = function ( callback ) {
 
 var WLDRACOLoader = function ( manager ) {
 	THREE.DRACOLoader.call( this, manager );
+	this.basePath = '../';
 	this.callbackDataReceiver = null;
 	this.url = 'js/libs/draco/';
 };
 
 WLDRACOLoader.prototype = Object.create( THREE.DRACOLoader.prototype );
 WLDRACOLoader.prototype.constructor = WLDRACOLoader;
+
+WLDRACOLoader.prototype.setBasePath = function ( basePath ) {
+	this.basePath = basePath;
+};
 
 WLDRACOLoader.prototype.setCallbackDataReceiver = function ( callbackDataReceiver ) {
 	this.callbackDataReceiver = callbackDataReceiver;
@@ -64,9 +69,9 @@ WLDRACOLoader.prototype.parse = function ( arrayBuffer, options ) {
 	this.decodeDracoFile( arrayBuffer, scopedOnLoad );
 };
 
-WLDRACOLoader.buildWorkerCode = function ( codeSerializer ) {
+WLDRACOLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
 	var workerCode = codeSerializer.serializeClass( 'THREE.DRACOLoader', THREE.DRACOLoader );
-	workerCode += codeSerializer.serializeClass( 'WLDracoWrapper', WLDRACOLoader, 'WLDracoWrapper', 'THREE.DRACOLoader', null, [ 'parse', 'setUrl', 'setCallbackDataReceiver' ] );
+	workerCode += codeSerializer.serializeClass( 'WLDracoWrapper', WLDRACOLoader, 'WLDracoWrapper', 'THREE.DRACOLoader', null, [ 'setBasePath', 'setUrl', 'setCallbackDataReceiver', 'parse' ] );
 	return {
 		code: workerCode,
 		parserName: 'WLDracoWrapper',
@@ -77,7 +82,7 @@ WLDRACOLoader.buildWorkerCode = function ( codeSerializer ) {
 				'node_modules/three/build/three.min.js',
 				'node_modules/three/examples/js/libs/draco/draco_decoder.js'
 			],
-			path: '../../'
+			path: this.basePath
 		},
 		provideThree: true
 	}
