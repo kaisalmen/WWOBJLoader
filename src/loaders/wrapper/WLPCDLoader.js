@@ -21,19 +21,23 @@ WLPCDLoader.prototype.setUrl = function ( url ) {
 	this.url = url;
 };
 
+WLPCDLoader.prototype.getParseFunctionName = function () {
+	return '_parse';
+};
+
 WLPCDLoader.prototype._parse = function ( data ) {
 	return this.parse( data, this.url );
 };
 
 WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
 	var workerCode = codeSerializer.serializeClass( 'THREE.PCDLoader', THREE.PCDLoader );
-	workerCode += codeSerializer.serializeClass( 'WLPCDLoader', WLPCDLoader, 'WLPCDLoader', 'THREE.PCDLoader', null, [ 'setBasePath', 'setUrl', '_parse' ] );
+	var pcdInclude = [ 'setBasePath', 'setUrl', 'getParseFunctionName', '_parse' ];
+	workerCode += codeSerializer.serializeClass( 'WLPCDLoader', WLPCDLoader, 'WLPCDLoader', 'THREE.PCDLoader', null, pcdInclude );
 	return {
 		code: workerCode,
 		parserName: 'WLPCDLoader',
 		usesMeshDisassembler: true,
 		defaultGeometryType: 2,
-		parseFunction: '_parse',
 		libs: {
 			locations: [
 				'node_modules/three/build/three.min.js'

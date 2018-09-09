@@ -610,7 +610,16 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			} else {
 
-				result = loadingTask.loader.ref.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserConfiguration );
+				if ( typeof loadingTask.loader.ref.getParseFunctionName === 'function' ) {
+
+					var parseFunctionName = loadingTask.loader.ref.getParseFunctionName();
+					result = loadingTask.loader.ref[ parseFunctionName ]( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserConfiguration );
+
+				} else {
+
+					result = loadingTask.loader.ref.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserConfiguration );
+
+				}
 				resourceDescriptorCurrent.setParserResult( result );
 				var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
 				if ( THREE.LoaderSupport.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
@@ -1096,7 +1105,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 				name: 'THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl',
 				impl: THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl,
 				parserName: null,
-				parseFunction: null,
 				usesMeshDisassembler: null,
 				defaultGeometryType: null
 			},
@@ -1248,7 +1256,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			var blob = new Blob( [ stringifiedCode ], { type: 'application/javascript' } );
 			scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
 			scope.worker.native.onmessage = scopedReceiveWorkerMessage;
-			scope.worker.workerRunner.parseFunction = THREE.LoaderSupport.Validator.verifyInput( codeBuilderInstructions.parseFunction, 'parse' );
 			scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler;
 			scope.worker.workerRunner.defaultGeometryType = THREE.LoaderSupport.Validator.verifyInput( codeBuilderInstructions.defaultGeometryType, 0 );
 
@@ -1386,7 +1393,6 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 */
 	runAsyncParse: function( payload ) {
 		payload.cmd = 'parse';
-		payload.parseFunction = this.worker.workerRunner.parseFunction;
 		payload.usesMeshDisassembler = this.worker.workerRunner.usesMeshDisassembler;
 		payload.defaultGeometryType = this.worker.workerRunner.defaultGeometryType;
 		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
@@ -1728,9 +1734,12 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				arraybuffer = payload.data.input;
 
 			}
+
+			var parseFunctionName = 'parse';
+			if ( typeof parser.getParseFunctionName === 'function' ) parseFunctionName = parser.getParseFunctionName();
 			if ( payload.usesMeshDisassembler ) {
 
-				var object3d = parser[ payload.parseFunction ] ( arraybuffer, payload.data.options );
+				var object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
 				var meshTransmitter = new THREE.LoaderSupport.MeshTransmitter();
 
 				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
@@ -1739,7 +1748,7 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 
 			} else {
 
-				parser[ payload.parseFunction ] ( arraybuffer, payload.data.options );
+				parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
 
 			}
 			if ( this.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );

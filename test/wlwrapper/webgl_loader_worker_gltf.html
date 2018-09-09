@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - WorkerLoader: PCDLoader</title>
+		<title>three.js webgl - WorkerLoader: GLTFLoader</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
@@ -16,25 +16,25 @@
 
 		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - WorkerLoader: PCDLoader
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - WorkerLoader: GLTFLoader
 			<div id="feedback"></div>
 		</div>
 
 		<script src="../../node_modules/three/examples/js/Detector.js"></script>
 		<script src="../../node_modules/three/build/three.js"></script>
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
-        <script src="../../node_modules/three/examples/js/loaders/PCDLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/loaders/DRACOLoader.js"></script>
+		<script src="../../node_modules/three/examples/js/loaders/GLTFLoader.js"></script>
 
 		<script src="../../src/loaders/LoaderSupport.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
-		<script src="../../src/loaders/wrapper/WLPCDLoader.js"></script>
+		<script src="../../src/loaders/wrapper/WLGLTFLoader.js"></script>
 		<script>
 
 			'use strict';
 
-			var WWLoaderAdapter = function ( elementToBindTo ) {
+			var WLGLTF = function ( elementToBindTo ) {
 				this.renderer = null;
 				this.canvas = elementToBindTo;
 				this.aspectRatio = 1;
@@ -54,9 +54,9 @@
 				this.controls = null;
 			};
 
-			WWLoaderAdapter.prototype = {
+			WLGLTF.prototype = {
 
-				constructor: WWLoaderAdapter,
+				constructor: WLGLTF,
 
 				initGL: function () {
 					this.renderer = new THREE.WebGLRenderer( {
@@ -98,23 +98,24 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 
-					var wlPCDLoader = new WLPCDLoader();
-					wlPCDLoader.setBasePath( '../../' );
+					var wlGLTFLoader = new WLGLTFLoader();
+					wlGLTFLoader.setBasePath( '../../' );
 					var scopedBuilderFunc = function ( codeSerializer ) {
-						return wlPCDLoader.buildWorkerCode( codeSerializer )
+						return wlGLTFLoader.buildWorkerCode( codeSerializer )
 					};
 
-					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Zaghetto.pcd', '../../resource/pcd/binary/Zaghetto.pcd' );
-					var parserConfiguration = {	url: rd.url };
-					rd.setParserConfiguration( parserConfiguration );
-//					rd.configureAsync( false, false );
+					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
+					var rdDuck = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Duck.gltf', '../../resource/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf' );
+					var parserConfiguration = {	url: url };
+					rdDuck.setParserConfiguration( parserConfiguration );
+					rdDuck.configureAsync( false, false );
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( WLPCDLoader )
+						.setLoaderConfig( WLGLTFLoader )
 						.setBuildWorkerCodeFunction( scopedBuilderFunc )
-						.addResourceDescriptor( rd )
+						.addResourceDescriptor( rdDuck )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );
@@ -161,7 +162,7 @@
 			};
 
 
-			var app = new WWLoaderAdapter( document.getElementById( 'example' ) );
+			var app = new WLGLTF( document.getElementById( 'example' ) );
 
 			var resizeWindow = function () {
 				app.resizeDisplayGL();

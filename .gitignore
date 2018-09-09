@@ -4,6 +4,8 @@
 /build
 /node_modules
 
+/resource/draco
+/resource/gltf
 /resource/obj/1*
 /resource/obj/2*
 /resource/obj/capsule
