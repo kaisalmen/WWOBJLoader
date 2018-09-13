@@ -333,8 +333,13 @@ MeshSprayApp.prototype = {
 				baseObject3d: pivot,
 				sendMaterials: true,
 				sendMaterialsJson: true
-			} ).setLoaderConfig( MeshSpray.Loader ).setExtension( 'meshspray' ).addResourceDescriptor( rdMeshSpray ).setCallbacksApp( callbackOnReport ).setCallbacksParsing( callbackOnMesh ).setCallbacksPipeline( callbackOnLoad );
-
+			} )
+				.setLoaderConfig( MeshSpray.Loader )
+				.setExtension( 'meshspray' )
+				.addResourceDescriptor( rdMeshSpray )
+				.setCallbacksApp( callbackOnReport )
+				.setCallbacksParsing( callbackOnMesh )
+				.setCallbacksPipeline( callbackOnLoad );
 
 			workerLoaderDirector.enqueueForRun( loadingTaskConfig );
 		}

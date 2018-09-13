@@ -4,30 +4,6 @@
 
 'use strict';
 
-THREE.DRACOLoader.prototype.decodeDracoFile = function(rawBuffer, callback, attributeUniqueIdMap, attributeTypeMap) {
-	var scope = this;
-	var oldFashioned = function ( module ) {
-		scope.decodeDracoFileInternal( rawBuffer, module.decoder, callback,
-			attributeUniqueIdMap || {}, attributeTypeMap || {});
-	};
-	THREE.DRACOLoader.getDecoderModule( oldFashioned );
-};
-
-THREE.DRACOLoader.getDecoderModule = function ( callback ) {
-	var scope = this;
-	var config = THREE.DRACOLoader.decoderConfig;
-
-	config.onModuleLoaded = function ( decoder ) {
-		scope.timeLoaded = performance.now();
-
-		console.log( "Decoder module loaded in: " + scope.timeLoaded );
-		// Module is Promise-like. Wrap before resolving to avoid loop.
-		callback( { decoder: decoder } );
-	};
-	DracoDecoderModule( config );
-};
-
-
 var WLDRACOLoader = function ( manager ) {
 	THREE.DRACOLoader.call( this, manager );
 };
@@ -40,15 +16,15 @@ WLDRACOLoader.prototype.constructor = WLDRACOLoader;
 var WLGLTFLoader = function ( manager ) {
 	THREE.GLTFLoader.call( this, manager );
 	this.callbackDataReceiver = null;
-	this.basePath = '../';
+	this.builderPath = '../';
 	this.url = 'js/libs/draco/';
 };
 
 WLGLTFLoader.prototype = Object.create( THREE.GLTFLoader.prototype );
 WLGLTFLoader.prototype.constructor = WLGLTFLoader;
 
-WLGLTFLoader.prototype.setBasePath = function ( basePath ) {
-	this.basePath = basePath;
+WLGLTFLoader.prototype.setBuilderPath = function ( builderPath ) {
+	this.builderPath = builderPath;
 };
 
 WLGLTFLoader.prototype.setUrl = function ( url ) {
@@ -87,8 +63,41 @@ WLGLTFLoader.prototype._parse = function ( arrayBuffer, options ) {
 };
 
 
-WLGLTFLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
-	var workerCode = codeSerializer.serializeClass( 'THREE.DRACOLoader', THREE.DRACOLoader );
+WLGLTFLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
+	scope = ( scope === null || scope === undefined ) ? this : scope;
+	var decodeDracoFile = function(rawBuffer, callback, attributeUniqueIdMap, attributeTypeMap) {
+		var scope = this;
+		var oldFashioned = function ( module ) {
+			scope.decodeDracoFileInternal( rawBuffer, module.decoder, callback,
+				attributeUniqueIdMap || {}, attributeTypeMap || {});
+		};
+		THREE.DRACOLoader.getDecoderModule( oldFashioned );
+	};
+
+	var getDecoderModule = function ( callback ) {
+		var scope = this;
+		var config = THREE.DRACOLoader.decoderConfig;
+
+		config.onModuleLoaded = function ( decoder ) {
+			scope.timeLoaded = performance.now();
+
+			console.log( "Decoder module loaded in: " + scope.timeLoaded );
+			// Module is Promise-like. Wrap before resolving to avoid loop.
+			callback( { decoder: decoder } );
+		};
+		DracoDecoderModule( config );
+	};
+
+	var overrideFunctions = [];
+	overrideFunctions[ 'decodeDracoFile' ] = {
+		fullName: 'THREE.DRACOLoader.prototype.decodeDracoFile',
+		code: decodeDracoFile.toString()
+	};
+	overrideFunctions[ 'getDecoderModule' ] = {
+		fullName: 'THREE.DRACOLoader.getDecoderModule',
+		code: getDecoderModule.toString()
+	};
+	var workerCode = codeSerializer.serializeClass( 'THREE.DRACOLoader', THREE.DRACOLoader, 'THREE.DRACOLoader', null, null, null, overrideFunctions );
 	workerCode += codeSerializer.serializeClass( 'WLDRACOLoader', WLDRACOLoader, 'WLDRACOLoader', 'THREE.DRACOLoader', null, [] );
 	var gltfInclude = [ 'setBasePath', 'setUrl', 'setCallbackDataReceiver', 'getParseFunctionName', '_parse' ];
 	workerCode += codeSerializer.serializeClass( 'WLGLTFLoader', WLGLTFLoader, 'WLGLTFLoader', 'THREE.GLTFLoader', null, gltfInclude );
@@ -104,7 +113,7 @@ WLGLTFLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
 				'node_modules/three/examples/js/libs/draco/draco_decoder.js',
 				'node_modules/three/examples/js/loaders/GLTFLoader.js'
 			],
-			path: this.basePath
+			path: scope.builderPath
 		},
 		provideThree: true
 	}

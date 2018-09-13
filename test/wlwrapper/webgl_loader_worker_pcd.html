@@ -98,22 +98,17 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 
-					var wlPCDLoader = new WLPCDLoader();
-					wlPCDLoader.setBasePath( '../../' );
-					var scopedBuilderFunc = function ( codeSerializer ) {
-						return wlPCDLoader.buildWorkerCode( codeSerializer )
-					};
-
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Zaghetto.pcd', '../../resource/pcd/binary/Zaghetto.pcd' );
 					var parserConfiguration = {	url: rd.url };
 					rd.setParserConfiguration( parserConfiguration );
-//					rd.configureAsync( false, false );
+					rd.configureAsync( false, true );
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( WLPCDLoader )
-						.setBuildWorkerCodeFunction( scopedBuilderFunc )
+						.setLoaderConfig( WLPCDLoader, {
+							builderPath: '../../'
+						} )
 						.addResourceDescriptor( rd )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()

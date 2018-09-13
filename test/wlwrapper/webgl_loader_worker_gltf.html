@@ -29,7 +29,10 @@
 
 		<script src="../../src/loaders/LoaderSupport.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
+		<script src="../../src/loaders/wrapper/WLDRACOLoader.js"></script>
+<!--
 		<script src="../../src/loaders/wrapper/WLGLTFLoader.js"></script>
+-->
 		<script>
 
 			'use strict';
@@ -98,27 +101,37 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 
-					var wlGLTFLoader = new WLGLTFLoader();
-					wlGLTFLoader.setBasePath( '../../' );
-					var scopedBuilderFunc = function ( codeSerializer ) {
-						return wlGLTFLoader.buildWorkerCode( codeSerializer )
-					};
-
 					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
-					var rdDuck = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Duck.gltf', '../../resource/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf' );
-					var parserConfiguration = {	url: url };
-					rdDuck.setParserConfiguration( parserConfiguration );
-					rdDuck.configureAsync( false, false );
+//					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
+					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
+					var parserConfiguration = {
+						url: url,
+						path: '../../resource/gltf/Monster/glTF-Draco/'
+					};
+					rd.setParserConfiguration( parserConfiguration );
+
+					var onCompleteFileLoading = function ( content, completedIndex ) {
+						var wwDRACOLoader = new WWDRACOLoader();
+						wwDRACOLoader.decodeDracoFile( content, function ( event ) {
+							console.log( 'Hello' )
+						} );
+					};
+					var fle = new THREE.WorkerLoader.FileLoadingExecutor();
+					fle.loadFile( rd, 0, onCompleteFileLoading );
+/*
+					rdDuck.configureAsync( false, true );
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( WLGLTFLoader )
-						.setBuildWorkerCodeFunction( scopedBuilderFunc )
+						.setLoaderConfig( WLGLTFLoader, {
+							builderPath: '../../'
+						} )
 						.addResourceDescriptor( rdDuck )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );
+*/
 				},
 
 				_reportProgress: function( event ) {

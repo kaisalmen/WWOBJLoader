@@ -421,7 +421,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			}
 
-			this.workerSupport.validate( this.loader.buildWorkerCode, provideRds );
+			this.workerSupport.validate( this.loader.ref, this.loader.buildWorkerCode, provideRds );
 			this.workerSupport.updateCallbacks( callbackLoadFiles );
 			this.workerSupport.runAsyncInitWorker( rdForWorkerInit );
 
@@ -610,6 +610,7 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 			} else {
 
+				THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( loadingTask.loader.ref, resourceDescriptorCurrent.parserConfiguration );
 				if ( typeof loadingTask.loader.ref.getParseFunctionName === 'function' ) {
 
 					var parseFunctionName = loadingTask.loader.ref.getParseFunctionName();
@@ -798,13 +799,13 @@ THREE.WorkerLoader.FileLoadingExecutor.prototype = {
  * Encapsulates the configuration for a complete {@link THREE.WorkerLoader.LoadingTask}.
  * @constructor
  */
-THREE.WorkerLoader.LoadingTaskConfig = function ( loadingTaskConfig ) {
+THREE.WorkerLoader.LoadingTaskConfig = function ( ownConfig ) {
 	this.loader = {
 		classDef: null,
 		config: {},
 		buildWorkerCode: null
 	};
-	this.config = THREE.LoaderSupport.Validator.verifyInput( loadingTaskConfig, {} );
+	this.config = THREE.LoaderSupport.Validator.verifyInput( ownConfig, {} );
 	this.resourceDescriptors = [];
 	this.extension = 'unknown';
 
@@ -935,7 +936,7 @@ THREE.WorkerLoader.LoadingTaskConfig.prototype = {
 THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.resourceType = resourceType;
-	this.input = ( input !== undefined && input !== null ) ? input : null;
+
 	this.content;
 	this.url = null;
 	this.filename = null;
@@ -950,18 +951,19 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	};
 	this.result = null;
 
-	this._init();
+	this._init( input );
 };
 
 THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	constructor: THREE.WorkerLoader.ResourceDescriptor,
 
-	_init: function () {
+	_init: function ( input ) {
+		input = ( input !== undefined && input !== null ) ? input : null;
 
 		if ( this.resourceType === 'URL' ) {
 
-			this.url = ( this.input !== null ) ? this.input : this.name;
+			this.url = ( input !== null ) ? input : this.name;
 			this.url = new URL( this.url, window.location.href ).href;
 			this.filename = this.url;
 			var urlParts = this.url.split( '/' );
@@ -979,12 +981,12 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		} else if ( this.resourceType === 'Buffer' ) {
 
 			this.parserConfiguration.payloadType = 'arraybuffer';
-			this.setBuffer( this.input );
+			this.setBuffer( input );
 
 		} else if ( this.resourceType === 'String' ) {
 
 			this.parserConfiguration.payloadType = 'text';
-			this.setString( this.input );
+			this.setString( input );
 
 		} else if ( this.resourceType === 'Metadata' ) {
 
@@ -1199,7 +1201,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 *
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
-	validate: function ( buildWorkerCode, containFileLoadingCode ) {
+	validate: function ( loaderRef, buildWorkerCode, containFileLoadingCode ) {
 		if ( THREE.LoaderSupport.Validator.isValid( this.worker.native ) ) return;
 		if ( this.logging.enabled ) {
 
@@ -1208,7 +1210,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
-		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer );
+		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer, loaderRef );
 
 		// Enforce codeBuilderInstructions flag for availability of three code
 		if ( THREE.LoaderSupport.Validator.isValid( codeBuilderInstructions.provideThree ) ) {
@@ -1499,8 +1501,8 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 	 * @param ignoreFunctions
 	 * @returns {string}
 	 */
-	serializeClass: function ( fullName, object, constructorName, basePrototypeName, ignoreFunctions, includeFunctions ) {
-		var valueString, objectPart, constructorString, i;
+	serializeClass: function ( fullName, object, constructorName, basePrototypeName, ignoreFunctions, includeFunctions, overrideFunctions ) {
+		var valueString, objectPart, constructorString, i, funcOverride;
 		var prototypeFunctions = [];
 		var objectProperties = [];
 		var objectFunctions = [];
@@ -1508,6 +1510,7 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 		if ( ! Array.isArray( ignoreFunctions ) ) ignoreFunctions = [];
 		if ( ! Array.isArray( includeFunctions ) ) includeFunctions = null;
+		if ( ! Array.isArray( overrideFunctions ) ) overrideFunctions = [];
 
 		for ( var name in object.prototype ) {
 
@@ -1521,6 +1524,12 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 				if ( ignoreFunctions.indexOf( name ) < 0 && ( includeFunctions === null || includeFunctions.indexOf( name ) >= 0 ) ) {
 
+					funcOverride = overrideFunctions[ name ];
+					if ( funcOverride && funcOverride.fullName === fullName + '.prototype.' + name ) {
+
+						valueString = funcOverride.code;
+
+					}
 					if ( isExtended ) {
 
 						prototypeFunctions.push( fullName + '.prototype.' + name + ' = ' + valueString + ';\n\n' );
@@ -1543,8 +1552,17 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 				if ( ignoreFunctions.indexOf( name ) < 0 && ( includeFunctions === null || includeFunctions.indexOf( name ) >= 0 ) ) {
 
-					valueString = objectPart.toString();
-					objectFunctions.push( fullName + '.' + name + ' = ' + objectPart + ';\n\n' );
+					funcOverride = overrideFunctions[ name ];
+					if ( funcOverride && funcOverride.fullName === fullName + '.' + name ) {
+
+						valueString = funcOverride.code;
+
+					} else {
+
+						valueString = objectPart.toString();
+
+					}
+					objectFunctions.push( fullName + '.' + name + ' = ' + valueString + ';\n\n' );
 
 				}
 

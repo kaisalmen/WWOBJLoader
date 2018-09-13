@@ -97,12 +97,6 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 
-					var wlDRACOLoader = new WLDRACOLoader();
-					wlDRACOLoader.setBasePath( '../../' );
-					var scopedBuilderFunc = function ( codeSerializer ) {
-						return wlDRACOLoader.buildWorkerCode( codeSerializer )
-					};
-
 					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
 //					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'bunny.drc', '../../resource/draco/bunny.drc' );
 					var rdCaesar = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
@@ -114,10 +108,10 @@
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( WLDRACOLoader )
-						.setBuildWorkerCodeFunction( scopedBuilderFunc )
+						.setLoaderConfig( WLDRACOLoader, {
+							builderPath: '../../'
+						} )
 						.addResourceDescriptor( rdCaesar )
-//						.addResourceDescriptor( rdHannibal2 )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );

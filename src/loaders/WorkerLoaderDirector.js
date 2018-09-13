@@ -395,8 +395,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 			.setCallbacksApp( wrapperOnReport, wrapperOnReportError )
 			.setCallbacksParsing( wrapperOnMesh, wrapperOnLoadMaterials )
 			.setCallbacksPipeline( wrapperOnComplete );
-		supportDesc.workerLoader.getLoadingTask()
-			.execute( loadingTaskConfig, supportDesc.workerSupport );
+		supportDesc.workerLoader.executeLoadingTaskConfig( loadingTaskConfig, supportDesc.workerSupport );
 	},
 
 	_deregister: function ( supportDesc ) {

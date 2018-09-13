@@ -6,15 +6,15 @@
 
 var WLPCDLoader = function ( manager ) {
 	THREE.PCDLoader.call( this, manager );
-	this.basePath = '../';
+	this.builderPath = '../';
 	this.url = '';
 };
 
 WLPCDLoader.prototype = Object.create( THREE.PCDLoader.prototype );
 WLPCDLoader.prototype.constructor = WLPCDLoader;
 
-WLPCDLoader.prototype.setBasePath = function ( basePath ) {
-	this.basePath = basePath;
+WLPCDLoader.prototype.setBuilderPath = function ( builderPath ) {
+	this.builderPath = builderPath;
 };
 
 WLPCDLoader.prototype.setUrl = function ( url ) {
@@ -29,7 +29,8 @@ WLPCDLoader.prototype._parse = function ( data ) {
 	return this.parse( data, this.url );
 };
 
-WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
+WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
+	scope = ( scope === null || scope === undefined ) ? this : scope;
 	var workerCode = codeSerializer.serializeClass( 'THREE.PCDLoader', THREE.PCDLoader );
 	var pcdInclude = [ 'setBasePath', 'setUrl', 'getParseFunctionName', '_parse' ];
 	workerCode += codeSerializer.serializeClass( 'WLPCDLoader', WLPCDLoader, 'WLPCDLoader', 'THREE.PCDLoader', null, pcdInclude );
@@ -42,7 +43,7 @@ WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer ) {
 			locations: [
 				'node_modules/three/build/three.min.js'
 			],
-			path: this.basePath
+			path: scope.builderPath
 		},
 		provideThree: true
 	}
