@@ -38,8 +38,8 @@ WLDRACOLoader.prototype.parse = function ( arrayBuffer, options ) {
 		meshTransmitter.setDefaultGeometryType( 0 );
 		meshTransmitter.handleBufferGeometry( bufferGeometry, 'bunny.drc' );
 
-		// Release decoder resources.
-		THREE.DRACOLoader.releaseDecoderModule();
+		// Do not release decoder resources as it prevents re-use of Worker
+//		THREE.DRACOLoader.releaseDecoderModule();
 	};
 
 	this.decodeDracoFile( arrayBuffer, scopedOnLoad );
@@ -100,6 +100,8 @@ WLDRACOLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
 
 
 var WWDRACOLoader = function () {
+	this.dracoBuilderPath = '../../';
+	this.dracoLibsPath = '';
 	this.workerLoader = new THREE.WorkerLoader();
 	this.workerSupport = new THREE.WorkerLoader.WorkerSupport()
 		.setTerminateWorkerOnLoad( false );
@@ -109,20 +111,30 @@ WWDRACOLoader.prototype = {
 
 	constructor: WWDRACOLoader,
 
+	setDracoBuilderPath: function ( dracoBuilderPath ) {
+		this.dracoBuilderPath = dracoBuilderPath;
+	},
+
+	setDracoLibsPath: function ( dracoLibsPath ) {
+		this.dracoLibsPath = dracoLibsPath;
+	},
+
 	decodeDracoFile: function ( rawBuffer, callback, attributeUniqueIdMap, attributeTypeMap ) {
 		var wrapperOnMesh = function ( event, override ) {
-			console.log( 'wrapperOnMesh' );
+			console.log( 'WWDRACOLoader delivered BufferGeometry!' );
+			callback( event.detail.bufferGeometry );
 		};
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'DracoLoaderArrayBuffer', rawBuffer );
+		var parserConfiguration = {	url: this.dracoLibsPath };
+		rd.setParserConfiguration( parserConfiguration );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig();
 		loadingTaskConfig
 			.setLoaderConfig( WLDRACOLoader, {
-				builderPath: '../../'
+				builderPath: this.dracoBuilderPath
 			} )
 			.addResourceDescriptor( rd )
-			.setCallbacksParsing( wrapperOnMesh )
-			.setCallbacksPipeline( callback );
+			.setCallbacksParsing( wrapperOnMesh );
 
 		this.workerLoader.executeLoadingTaskConfig( loadingTaskConfig, this.workerSupport );
 	}

@@ -160,22 +160,6 @@ THREE.WorkerLoader.LoadingTask = function ( description ) {
 };
 
 
-THREE.WorkerLoader.LoadingTask.applyConfiguration = function ( scope, applicableConfiguration, forceCreation ) {
-	// fast-fail
-	if ( scope === undefined || scope === null || applicableConfiguration === undefined || applicableConfiguration === null ) return;
-
-	var property, value;
-	for ( property in applicableConfiguration ) {
-
-		value = applicableConfiguration[ property ];
-		if ( scope.hasOwnProperty( property ) || forceCreation ) {
-
-			scope[ property ] = value;
-
-		}
-	}
-};
-
 THREE.WorkerLoader.LoadingTask.prototype = {
 
 	constructor: THREE.WorkerLoader.LoadingTask,
@@ -462,9 +446,9 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			this.loader.buildWorkerCode = this.loader.ref.buildWorkerCode;
 
 		}
-		if ( typeof this.loader.buildWorkerCode !== 'function' ) this._throwError( 'No buildWorkerCode function is available for: ' + this.loader.ref.modelName );
+		if ( typeof this.loader.buildWorkerCode !== 'function' ) console.warn( 'No buildWorkerCode function is available for: ' + this.loader.ref.modelName );
 
-		THREE.WorkerLoader.LoadingTask.applyConfiguration( this, ownConfig );
+		THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this, ownConfig );
 		if ( loadingTaskConfig !== null ) {
 
 			this.resetResourceDescriptors( loadingTaskConfig.resourceDescriptors );
@@ -488,8 +472,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 		} else {
 
 			// this will ensure that any base configuration on LoadingTask and Loader are aligned
-			THREE.WorkerLoader.LoadingTask.applyConfiguration( this.loader.ref, ownConfig );
-			THREE.WorkerLoader.LoadingTask.applyConfiguration( this.loader.ref, this.loader.config );
+			THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this.loader.ref, ownConfig );
+			THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this.loader.ref, this.loader.config );
 			if ( typeof this.loader.ref.setGenericErrorHandler === 'function' ) this.loader.ref.setGenericErrorHandler( this.callbacks.app.onReportError );
 
 		}
@@ -500,10 +484,8 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 	_executeLoadFiles: function () {
 		var loadingTask = this;
 
-		// TODO: loop needs to be done within FileLoadingExecutor, then it can be used as is in Worker, otherwise duplicated code is required
 		var fileLoadingExecutor = new THREE.WorkerLoader.FileLoadingExecutor( loadingTask.instanceNo, loadingTask.description );
 		fileLoadingExecutor
-			.setPath( loadingTask.loader.ref.path )
 			.setCallbacks( loadingTask.callbacks.app.onReport, loadingTask._throwError );
 
 		var loadAllResources = function ( index ) {
@@ -621,6 +603,11 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 					result = loadingTask.loader.ref.parse( resourceDescriptorCurrent.content, resourceDescriptorCurrent.parserConfiguration );
 
 				}
+				if ( typeof loadingTask.loader.ref.setBaseObject3d === 'function' ) {
+
+					loadingTask.loader.ref[ 'setBaseObject3d' ]( loadingTask.baseObject3d );
+
+				}
 				resourceDescriptorCurrent.setParserResult( result );
 				var callbackOnProcessResult = resourceDescriptorCurrent.getCallbackOnProcessResult();
 				if ( THREE.LoaderSupport.Validator.isValid( callbackOnProcessResult ) ) callbackOnProcessResult( resourceDescriptorCurrent );
@@ -705,7 +692,11 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 
 		} else {
 
-			if ( THREE.LoaderSupport.Validator.isValid( this.callbacks.pipeline.onComplete ) ) this.callbacks.pipeline.onComplete( this.baseObject3d );
+			if ( THREE.LoaderSupport.Validator.isValid( this.callbacks.pipeline.onComplete ) ) {
+
+				this.callbacks.pipeline.onComplete( this.baseObject3d );
+
+			}
 
 		}
 	}
@@ -718,7 +709,7 @@ THREE.WorkerLoader.FileLoadingExecutor = function ( instanceNo, description ) {
 	};
 	this.instanceNo = instanceNo;
 	this.description = description;
-	this.path;
+	this.path = '';
 };
 
 THREE.WorkerLoader.FileLoadingExecutor.prototype = {
@@ -726,7 +717,7 @@ THREE.WorkerLoader.FileLoadingExecutor.prototype = {
 	constructor: THREE.WorkerLoader.FileLoadingExecutor,
 
 	setPath: function ( path ) {
-		this.path = path;
+		this.path = THREE.LoaderSupport.Validator.verifyInput( path, this.path );
 		return this;
 	},
 
@@ -1035,7 +1026,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 	},
 
 	setParserConfiguration: function ( parserConfiguration ) {
-		THREE.WorkerLoader.LoadingTask.applyConfiguration( this.parserConfiguration, parserConfiguration, true );
+		THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this.parserConfiguration, parserConfiguration, true );
 		if ( this.parserConfiguration.name === undefined || this.parserConfiguration.name === null ) this.parserConfiguration.name = this.name;
 		return this;
 	},
@@ -1210,8 +1201,16 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
-		var codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer, loaderRef );
+		var codeBuilderInstructions = {
+			code: '',
+			parserName: 'Parser',
+			provideThree: false
+		};
+		if ( THREE.LoaderSupport.Validator.isValid( buildWorkerCode ) ) {
 
+			codeBuilderInstructions = buildWorkerCode( THREE.WorkerLoader.WorkerSupport.CodeSerializer, loaderRef );
+
+		}
 		// Enforce codeBuilderInstructions flag for availability of three code
 		if ( THREE.LoaderSupport.Validator.isValid( codeBuilderInstructions.provideThree ) ) {
 
@@ -1653,7 +1652,10 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 	 * @param {Object} parser The parser instance
 	 * @param {Object} params The parameter object
 	 */
-	applyProperties: function ( parser, params ) {
+	applyProperties: function ( parser, params, forceCreation ) {
+		// fast-fail
+		if ( parser === undefined || parser === null || params === undefined || params === null ) return;
+
 		var property, funcName, values;
 		for ( property in params ) {
 			funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
@@ -1663,7 +1665,7 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 
 				parser[ funcName ]( values );
 
-			} else if ( parser.hasOwnProperty( property ) ) {
+			} else if ( parser.hasOwnProperty( property ) || forceCreation ) {
 
 				parser[ property ] = values;
 

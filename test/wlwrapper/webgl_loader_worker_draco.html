@@ -97,11 +97,11 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 					};
 
-					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
+					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
 //					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'bunny.drc', '../../resource/draco/bunny.drc' );
 					var rdCaesar = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
 					var rdHannibal2 = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'hannibal2.drc', '../../resource/draco/hannibal2.drc' );
-					var parserConfiguration = {	url: url };
+					var parserConfiguration = {	url: dracoLibsPath };
 					rdCaesar.setParserConfiguration( parserConfiguration );
 					rdHannibal2.setParserConfiguration( parserConfiguration );
 

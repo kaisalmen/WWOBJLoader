@@ -182,6 +182,8 @@ THREE.LoaderSupport.MeshReceiver.prototype = {
 			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
 
 		}
+//		bufferGeometry.addAttribute( 'skinWeight', new THREE.BufferAttribute( new Float32Array( [ 0, 0, 0, 0 ] ), 4 ) );
+//		bufferGeometry.addAttribute( 'skinIndex', new THREE.BufferAttribute( new Float32Array( [ 0, 0, 0, 0 ] ), 4 ) );
 
 		var material, materialName, key;
 		var materialNames = meshPayload.materials.materialNames;

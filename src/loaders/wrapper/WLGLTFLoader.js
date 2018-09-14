@@ -4,117 +4,55 @@
 
 'use strict';
 
-var WLDRACOLoader = function ( manager ) {
-	THREE.DRACOLoader.call( this, manager );
-};
-
-WLDRACOLoader.prototype = Object.create( THREE.DRACOLoader.prototype );
-WLDRACOLoader.prototype.constructor = WLDRACOLoader;
-
-
-
 var WLGLTFLoader = function ( manager ) {
 	THREE.GLTFLoader.call( this, manager );
-	this.callbackDataReceiver = null;
-	this.builderPath = '../';
-	this.url = 'js/libs/draco/';
+	this.dracoBuilderPath = '../../';
+	this.dracoLibsPath = '';
+	this.baseObject3d = null;
 };
 
 WLGLTFLoader.prototype = Object.create( THREE.GLTFLoader.prototype );
 WLGLTFLoader.prototype.constructor = WLGLTFLoader;
 
-WLGLTFLoader.prototype.setBuilderPath = function ( builderPath ) {
-	this.builderPath = builderPath;
+WLGLTFLoader.prototype.setDracoBuilderPath = function ( dracoBuilderPath ) {
+	this.dracoBuilderPath = dracoBuilderPath;
 };
 
-WLGLTFLoader.prototype.setUrl = function ( url ) {
-	this.url = url;
-};
-
-WLGLTFLoader.prototype.setCallbackDataReceiver = function ( callbackDataReceiver ) {
-	this.callbackDataReceiver = callbackDataReceiver;
+WLGLTFLoader.prototype.setDracoLibsPath = function ( dracoLibsPath ) {
+	this.dracoLibsPath = dracoLibsPath;
 };
 
 WLGLTFLoader.prototype.getParseFunctionName = function () {
 	return '_parse';
 };
 
-WLGLTFLoader.prototype._parse = function ( arrayBuffer, options ) {
-	THREE.DRACOLoader.setDecoderPath( this.url );
-	THREE.DRACOLoader.setDecoderConfig( { type: 'js' } );
+WLGLTFLoader.prototype.setBaseObject3d = function ( baseObject3d ) {
+	this.baseObject3d = baseObject3d;
+};
 
-	var dracoLoader = new WLDRACOLoader();
+WLGLTFLoader.prototype._parse = function ( arrayBuffer, options ) {
+	var dracoLoader = new WWDRACOLoader();
+	dracoLoader.setDracoBuilderPath( this.dracoBuilderPath );
+	dracoLoader.setDracoLibsPath( this.dracoLibsPath );
 	this.setDRACOLoader( dracoLoader );
 
 	var scope = this;
-	var scopedOnLoad = function ( glTF ) {
+	var scopedOnLoad = function ( gltf ) {
 		console.log( 'Hello WLGLTFLoader' );
-//		var meshTransmitter = new THREE.LoaderSupport.MeshTransmitter();
 
-//		meshTransmitter.setCallbackDataReceiver( scope.callbackDataReceiver );
-//		meshTransmitter.setDefaultGeometryType( 0 );
-//		meshTransmitter.handleBufferGeometry( bufferGeometry, 'bunny.drc' );
+		scope.baseObject3d.add( gltf.scene.children[ 0 ] );
+/*
+		var meshes = gltf.scene.children;
+		var mesh;
+		for ( var i in meshes ) {
 
+			mesh = meshes[ i ];
+			scope.baseObject3d.add( mesh );
+
+		}
+*/
 	};
 
 	this.parse( arrayBuffer, this.path, scopedOnLoad );
-
-//	this.decodeDracoFile( arrayBuffer, scopedOnLoad );
 };
 
-
-WLGLTFLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
-	scope = ( scope === null || scope === undefined ) ? this : scope;
-	var decodeDracoFile = function(rawBuffer, callback, attributeUniqueIdMap, attributeTypeMap) {
-		var scope = this;
-		var oldFashioned = function ( module ) {
-			scope.decodeDracoFileInternal( rawBuffer, module.decoder, callback,
-				attributeUniqueIdMap || {}, attributeTypeMap || {});
-		};
-		THREE.DRACOLoader.getDecoderModule( oldFashioned );
-	};
-
-	var getDecoderModule = function ( callback ) {
-		var scope = this;
-		var config = THREE.DRACOLoader.decoderConfig;
-
-		config.onModuleLoaded = function ( decoder ) {
-			scope.timeLoaded = performance.now();
-
-			console.log( "Decoder module loaded in: " + scope.timeLoaded );
-			// Module is Promise-like. Wrap before resolving to avoid loop.
-			callback( { decoder: decoder } );
-		};
-		DracoDecoderModule( config );
-	};
-
-	var overrideFunctions = [];
-	overrideFunctions[ 'decodeDracoFile' ] = {
-		fullName: 'THREE.DRACOLoader.prototype.decodeDracoFile',
-		code: decodeDracoFile.toString()
-	};
-	overrideFunctions[ 'getDecoderModule' ] = {
-		fullName: 'THREE.DRACOLoader.getDecoderModule',
-		code: getDecoderModule.toString()
-	};
-	var workerCode = codeSerializer.serializeClass( 'THREE.DRACOLoader', THREE.DRACOLoader, 'THREE.DRACOLoader', null, null, null, overrideFunctions );
-	workerCode += codeSerializer.serializeClass( 'WLDRACOLoader', WLDRACOLoader, 'WLDRACOLoader', 'THREE.DRACOLoader', null, [] );
-	var gltfInclude = [ 'setBasePath', 'setUrl', 'setCallbackDataReceiver', 'getParseFunctionName', '_parse' ];
-	workerCode += codeSerializer.serializeClass( 'WLGLTFLoader', WLGLTFLoader, 'WLGLTFLoader', 'THREE.GLTFLoader', null, gltfInclude );
-	return {
-		code: workerCode,
-		parserName: 'WLGLTFLoader',
-		containsMeshDisassembler: true,
-		usesMeshDisassembler: false,
-		parseFunction: '_parse',
-		libs: {
-			locations: [
-				'node_modules/three/build/three.min.js',
-				'node_modules/three/examples/js/libs/draco/draco_decoder.js',
-				'node_modules/three/examples/js/loaders/GLTFLoader.js'
-			],
-			path: scope.builderPath
-		},
-		provideThree: true
-	}
-};

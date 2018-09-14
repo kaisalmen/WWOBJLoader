@@ -30,9 +30,8 @@
 		<script src="../../src/loaders/LoaderSupport.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script src="../../src/loaders/wrapper/WLDRACOLoader.js"></script>
-<!--
 		<script src="../../src/loaders/wrapper/WLGLTFLoader.js"></script>
--->
+
 		<script>
 
 			'use strict';
@@ -97,19 +96,11 @@
 					this.scene.add( local );
 
 					var scope = this;
-					var callbackOnLoad = function ( event ) {
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
+					var callbackOnLoad = function ( object3d ) {
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + object3d.name } } );
 					};
-
-					var url = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
-//					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
+/*
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
-					var parserConfiguration = {
-						url: url,
-						path: '../../resource/gltf/Monster/glTF-Draco/'
-					};
-					rd.setParserConfiguration( parserConfiguration );
-
 					var onCompleteFileLoading = function ( content, completedIndex ) {
 						var wwDRACOLoader = new WWDRACOLoader();
 						wwDRACOLoader.decodeDracoFile( content, function ( event ) {
@@ -118,20 +109,23 @@
 					};
 					var fle = new THREE.WorkerLoader.FileLoadingExecutor();
 					fle.loadFile( rd, 0, onCompleteFileLoading );
-/*
-					rdDuck.configureAsync( false, true );
+*/
+					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
+					rd.configureAsync( false, false );
 
+					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
 						.setLoaderConfig( WLGLTFLoader, {
-							builderPath: '../../'
+							dracoBuilderPath: '../../',
+							dracoLibsPath: dracoLibsPath,
+							path: '../../resource/gltf/Monster/glTF-Draco/'
 						} )
-						.addResourceDescriptor( rdDuck )
+						.addResourceDescriptor( rd )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );
-*/
 				},
 
 				_reportProgress: function( event ) {
