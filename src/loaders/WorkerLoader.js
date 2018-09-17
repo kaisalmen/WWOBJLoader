@@ -668,9 +668,10 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				materials: materialsContainer,
 				data: {
 					input: resourceDescriptor.content,
-					options: null
+					options: resourceDescriptor.dataOptions
 				}
-			}
+			},
+			resourceDescriptor.transferables
 		)
 	},
 
@@ -940,6 +941,8 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	this.parserConfiguration = {
 		payloadType: 'arraybuffer'
 	};
+	this.dataOptions = {};
+	this.transferables = [];
 	this.result = null;
 
 	this._init( input );
@@ -1029,6 +1032,19 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this.parserConfiguration, parserConfiguration, true );
 		if ( this.parserConfiguration.name === undefined || this.parserConfiguration.name === null ) this.parserConfiguration.name = this.name;
 		return this;
+	},
+
+	setDataOption: function ( name, object, transferables ) {
+		if ( ! Array.isArray( transferables ) ) transferables = [];
+		this.dataOptions[ name ] = {
+			name: name,
+			object: object
+		};
+		if ( transferables.length > 0 ) {
+
+			this.transferables = this.transferables.concat( transferables );
+
+		}
 	},
 
 	setParserResult: function ( result ) {
@@ -1392,16 +1408,16 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
-	runAsyncParse: function( payload ) {
+	runAsyncParse: function( payload, transferables ) {
 		payload.cmd = 'parse';
 		payload.usesMeshDisassembler = this.worker.workerRunner.usesMeshDisassembler;
 		payload.defaultGeometryType = this.worker.workerRunner.defaultGeometryType;
-		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
+		if ( ! this._verifyWorkerIsAvailable( payload, transferables ) ) return;
 
 		this._postMessage();
 	},
 
-	_verifyWorkerIsAvailable: function ( payload ) {
+	_verifyWorkerIsAvailable: function ( payload, transferables ) {
 		this._verifyCallbacks();
 		var ready = true;
 		if ( THREE.LoaderSupport.Validator.isValid( this.worker.queuedMessage ) ) {
@@ -1411,7 +1427,10 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 
 		} else {
 
-			this.worker.queuedMessage = payload;
+			this.worker.queuedMessage = {
+				payload: payload,
+				transferables: transferables
+			};
 			this.worker.started = true;
 
 		}
@@ -1421,23 +1440,28 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	_postMessage: function () {
 		if ( THREE.LoaderSupport.Validator.isValid( this.worker.queuedMessage ) && THREE.LoaderSupport.Validator.isValid( this.worker.native ) ) {
 
-			if ( this.worker.queuedMessage.data.input instanceof ArrayBuffer ) {
+			if ( this.worker.queuedMessage.payload.data.input instanceof ArrayBuffer ) {
 
-				var content;
+				var transferables = [];
 				if ( this.worker.forceWorkerDataCopy ) {
 
-					content = this.worker.queuedMessage.data.input.slice( 0 );
+					transferables.push( this.worker.queuedMessage.payload.data.input.slice( 0 ) );
 
 				} else {
 
-					content = this.worker.queuedMessage.data.input;
+					transferables.push( this.worker.queuedMessage.payload.data.input );
 
 				}
-				this.worker.native.postMessage( this.worker.queuedMessage, [ content ] );
+				if ( this.worker.queuedMessage.transferables.length > 0 ) {
+
+					transferables = transferables.concat( this.worker.queuedMessage.transferables );
+
+				}
+				this.worker.native.postMessage( this.worker.queuedMessage.payload, transferables );
 
 			} else {
 
-				this.worker.native.postMessage( this.worker.queuedMessage );
+				this.worker.native.postMessage( this.worker.queuedMessage.payload );
 
 			}
 

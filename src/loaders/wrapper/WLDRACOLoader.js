@@ -42,7 +42,56 @@ WLDRACOLoader.prototype.parse = function ( arrayBuffer, options ) {
 //		THREE.DRACOLoader.releaseDecoderModule();
 	};
 
-	this.decodeDracoFile( arrayBuffer, scopedOnLoad );
+	var attributeUniqueIdMap = options[ 'attributeUniqueIdMap' ];
+	var attributeTypeMap = options[ 'attributeTypeMap' ];
+	var value, attributeTypeMapObject, attributeUniqueIdMapObject;
+
+	if ( attributeTypeMap ) {
+
+		attributeTypeMapObject = attributeTypeMap.object;
+		for ( var name in attributeTypeMapObject ) {
+
+			value = attributeTypeMapObject[ name ];
+			switch ( value ) {
+				case 'Int8Array':
+					attributeTypeMapObject[ name ] = Int8Array;
+					break;
+				case 'Uint8Array':
+					attributeTypeMapObject[ name ] = Uint8Array;
+					break;
+				case 'Uint8ClampedArray':
+					attributeTypeMapObject[ name ] = Uint8ClampedArray;
+					break;
+				case 'Int16Array':
+					attributeTypeMapObject[ name ] = Int16Array;
+					break;
+				case 'Uint16Array':
+					attributeTypeMapObject[ name ] = Uint16Array;
+					break;
+				case 'Int32Array':
+					attributeTypeMapObject[ name ] = Int32Array;
+					break;
+				case 'Uint32Array':
+					attributeTypeMapObject[ name ] = Uint32Array;
+					break;
+				case 'Float32Array':
+					attributeTypeMapObject[ name ] = Float32Array;
+					break;
+				case 'Float64Array':
+					attributeTypeMapObject[ name ] = Float64Array;
+					break;
+			}
+
+		}
+
+	}
+	if ( attributeUniqueIdMap ) {
+
+		attributeUniqueIdMapObject = attributeUniqueIdMap.object;
+
+	}
+	this.decodeDracoFile( arrayBuffer, scopedOnLoad, attributeUniqueIdMapObject, attributeTypeMapObject );
+
 };
 
 WLDRACOLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
@@ -125,9 +174,46 @@ WWDRACOLoader.prototype = {
 			callback( event.detail.bufferGeometry );
 		};
 
+		var value;
+		for ( var name in attributeTypeMap ) {
+
+			value = attributeTypeMap[ name ];
+			switch ( value ) {
+				case Int8Array:
+					attributeTypeMap[ name ] = 'Int8Array';
+					break;
+				case Uint8Array:
+					attributeTypeMap[ name ] = 'Uint8Array';
+					break;
+				case Uint8ClampedArray:
+					attributeTypeMap[ name ] = 'Uint8ClampedArray';
+					break;
+				case Int16Array:
+					attributeTypeMap[ name ] = 'Int16Array';
+					break;
+				case Uint16Array:
+					attributeTypeMap[ name ] = 'Uint16Array';
+					break;
+				case Int32Array:
+					attributeTypeMap[ name ] = 'Int32Array';
+					break;
+				case Uint32Array:
+					attributeTypeMap[ name ] = 'Uint32Array';
+					break;
+				case Float32Array:
+					attributeTypeMap[ name ] = 'Float32Array';
+					break;
+				case Float64Array:
+					attributeTypeMap[ name ] = 'Float64Array';
+					break;
+			}
+
+		}
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'DracoLoaderArrayBuffer', rawBuffer );
 		var parserConfiguration = {	url: this.dracoLibsPath };
 		rd.setParserConfiguration( parserConfiguration );
+		rd.setDataOption( 'attributeUniqueIdMap', attributeUniqueIdMap );
+		rd.setDataOption( 'attributeTypeMap', attributeTypeMap );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig();
 		loadingTaskConfig
 			.setLoaderConfig( WLDRACOLoader, {

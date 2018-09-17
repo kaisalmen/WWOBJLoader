@@ -38,10 +38,6 @@ WLGLTFLoader.prototype._parse = function ( arrayBuffer, options ) {
 
 	var scope = this;
 	var scopedOnLoad = function ( gltf ) {
-		console.log( 'Hello WLGLTFLoader' );
-
-		scope.baseObject3d.add( gltf.scene.children[ 0 ] );
-/*
 		var meshes = gltf.scene.children;
 		var mesh;
 		for ( var i in meshes ) {
@@ -50,7 +46,6 @@ WLGLTFLoader.prototype._parse = function ( arrayBuffer, options ) {
 			scope.baseObject3d.add( mesh );
 
 		}
-*/
 	};
 
 	this.parse( arrayBuffer, this.path, scopedOnLoad );

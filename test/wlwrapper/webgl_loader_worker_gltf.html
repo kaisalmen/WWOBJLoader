@@ -66,7 +66,7 @@
 						antialias: true,
 						autoClear: true
 					} );
-					this.renderer.setClearColor( 0x050505 );
+					this.renderer.setClearColor( 0xA5A5A5 );
 
 					this.scene = new THREE.Scene();
 
@@ -91,29 +91,19 @@
 
 				initContent: function () {
 					var local = new THREE.Object3D();
-					local.position.set( 0, 0, 100 );
-					local.scale.set( 50.0, 50.0, 50.0 );
+					local.position.set( 0, 0, 0 );
+					local.scale.set( 1.0, 1.0, 1.0 );
 					this.scene.add( local );
 
 					var scope = this;
 					var callbackOnLoad = function ( object3d ) {
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + object3d.name } } );
 					};
-/*
-					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
-					var onCompleteFileLoading = function ( content, completedIndex ) {
-						var wwDRACOLoader = new WWDRACOLoader();
-						wwDRACOLoader.decodeDracoFile( content, function ( event ) {
-							console.log( 'Hello' )
-						} );
-					};
-					var fle = new THREE.WorkerLoader.FileLoadingExecutor();
-					fle.loadFile( rd, 0, onCompleteFileLoading );
-*/
+
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
 					rd.configureAsync( false, false );
+					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco/', window.location.href ).href;
 
-					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
@@ -126,6 +116,14 @@
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );
+/*
+					var gltfLoader = new THREE.GLTFLoader();
+					gltfLoader.setPath( '../../resource/gltf/Monster/glTF-Draco/' );
+					THREE.DRACOLoader.setDecoderPath( dracoLibsPath );
+
+					gltfLoader.setDRACOLoader( new THREE.DRACOLoader() );
+					gltfLoader.load( rd.url );
+*/
 				},
 
 				_reportProgress: function( event ) {
