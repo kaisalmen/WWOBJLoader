@@ -30,7 +30,7 @@ THREE.WLDRACOLoader.prototype.parse = function ( arrayBuffer, options ) {
 
 	var scope = this;
 	var scopedOnLoad = function ( bufferGeometry ) {
-		var meshTransmitter = new THREE.LoaderSupport.MeshTransmitter();
+		var meshTransmitter = new THREE.MeshTransfer.MeshTransmitter();
 
 		meshTransmitter.setCallbackDataReceiver( scope.callbackDataReceiver );
 		meshTransmitter.setDefaultGeometryType( 0 );

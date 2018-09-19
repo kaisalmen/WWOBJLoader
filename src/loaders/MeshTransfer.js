@@ -1,8 +1,8 @@
 
-if ( THREE.LoaderSupport === undefined ) { THREE.LoaderSupport = {} }
+if ( THREE.MeshTransfer === undefined ) { THREE.MeshTransfer = {} }
 
 
-THREE.LoaderSupport.Validator = {
+THREE.MeshTransfer.Validator = {
 
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -27,10 +27,10 @@ THREE.LoaderSupport.Validator = {
 };
 
 
-THREE.LoaderSupport.MeshReceiver = function() {
-	console.info( 'Using THREE.LoaderSupport.MeshReceiver version: ' + THREE.LoaderSupport.MeshReceiver.MESH_RECEIVER_VERSION );
+THREE.MeshTransfer.MeshReceiver = function() {
+	console.info( 'Using THREE.MeshTransfer.MeshReceiver version: ' + THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION );
 
-	this.validator = THREE.LoaderSupport.Validator;
+	this.validator = THREE.MeshTransfer.Validator;
 
 	this.logging = {
 		enabled: true,
@@ -44,12 +44,12 @@ THREE.LoaderSupport.MeshReceiver = function() {
 	};
 	this.materials = [];
 };
-THREE.LoaderSupport.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-dev';
+THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-dev';
 
 
-THREE.LoaderSupport.MeshReceiver.prototype = {
+THREE.MeshTransfer.MeshReceiver.prototype = {
 
-	constructor: THREE.LoaderSupport.MeshReceiver,
+	constructor: THREE.MeshTransfer.MeshReceiver,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -419,16 +419,16 @@ THREE.LoaderSupport.MeshReceiver.prototype = {
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
-THREE.LoaderSupport.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+THREE.MeshTransfer.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
 	this.disregardMesh = disregardMesh === true;
 	this.alteredMesh = alteredMesh === true;
 	this.meshes = [];
 };
 
 
-THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
+THREE.MeshTransfer.LoadedMeshUserOverride.prototype = {
 
-	constructor: THREE.LoaderSupport.LoadedMeshUserOverride,
+	constructor: THREE.MeshTransfer.LoadedMeshUserOverride,
 
 	/**
 	 * Add a mesh created within callback.
@@ -464,18 +464,18 @@ THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
  *
  * @constructor
  */
-THREE.LoaderSupport.MeshTransmitter = function () {
+THREE.MeshTransfer.MeshTransmitter = function () {
 	this.callbackDataReceiver = null;
 	this.defaultGeometryType = 2;
 	this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
 };
 
-THREE.LoaderSupport.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
+THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-dev';
 
 
-THREE.LoaderSupport.MeshTransmitter.prototype = {
+THREE.MeshTransfer.MeshTransmitter.prototype = {
 
-	constructor: THREE.LoaderSupport.MeshTransmitter,
+	constructor: THREE.MeshTransfer.MeshTransmitter,
 
 	setCallbackDataReceiver: function ( callbackDataReceiver ) {
 		this.callbackDataReceiver = callbackDataReceiver;

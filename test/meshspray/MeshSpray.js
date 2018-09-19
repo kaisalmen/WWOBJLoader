@@ -17,7 +17,7 @@ MeshSpray.Loader = function ( manager ) {
 	this.instanceNo = 0;
 	this.baseObject3d = new THREE.Group();
 
-	this.dataReceiver = new THREE.LoaderSupport.MeshReceiver();
+	this.dataReceiver = new THREE.MeshTransfer.MeshReceiver();
 };
 
 MeshSpray.Loader.prototype = {
@@ -295,7 +295,7 @@ MeshSprayApp.prototype = {
 			console.info( event.detail.text );
 		};
 		var callbackOnMesh = function ( event ) {
-			var override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, true );
+			var override = new THREE.MeshTransfer.LoadedMeshUserOverride( false, true );
 
 			event.detail.side = THREE.DoubleSide;
 			var mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );

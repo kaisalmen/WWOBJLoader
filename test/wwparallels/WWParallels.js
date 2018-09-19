@@ -109,9 +109,9 @@ WWParallels.prototype = {
 
 	_reportProgress: function ( content ) {
 		var output = content;
-		if ( THREE.LoaderSupport.Validator.isValid( content ) && THREE.LoaderSupport.Validator.isValid( content.detail ) ) output = content.detail.text;
+		if ( THREE.MeshTransfer.Validator.isValid( content ) && THREE.MeshTransfer.Validator.isValid( content.detail ) ) output = content.detail.text;
 
-		output = THREE.LoaderSupport.Validator.verifyInput( output, '' );
+		output = THREE.MeshTransfer.Validator.verifyInput( output, '' );
 		if ( this.logging.enabled ) console.info( 'Progress:\n\t' + output.replace( /\<br\>/g, '\n\t' ) );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	},
@@ -179,11 +179,11 @@ WWParallels.prototype = {
 		};
 
 		var callbackOnMesh = function ( event, override ) {
-			if ( ! THREE.LoaderSupport.Validator.isValid( override ) ) override = new THREE.LoaderSupport.LoadedMeshUserOverride( false, false );
+			if ( ! THREE.MeshTransfer.Validator.isValid( override ) ) override = new THREE.MeshTransfer.LoadedMeshUserOverride( false, false );
 
 			var material = event.detail.material;
 			var meshName = event.detail.meshName;
-			if ( THREE.LoaderSupport.Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
+			if ( THREE.MeshTransfer.Validator.isValid( material ) && material.name === 'defaultMaterial' || meshName === 'Mesh_Mesh_head_geo.001_lambert2SG.001' ) {
 
 				var materialOverride = material;
 				materialOverride.color = new THREE.Color( Math.random(), Math.random(), Math.random() );
@@ -320,7 +320,7 @@ WWParallels.prototype = {
 	},
 
 	updateWorkerPoolSize: function ( maxWebWorkers ) {
-		if ( THREE.LoaderSupport.Validator.isValid( this.workerLoaderDirector ) ) this.workerLoaderDirector.updateWorkerPool( 'obj', maxWebWorkers );
+		if ( THREE.MeshTransfer.Validator.isValid( this.workerLoaderDirector ) ) this.workerLoaderDirector.updateWorkerPool( 'obj', maxWebWorkers );
 	},
 
 	clearAllAssests: function () {
@@ -352,7 +352,7 @@ WWParallels.prototype = {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) ) object3d.texture.dispose();
 			};
-			if ( THREE.LoaderSupport.Validator.isValid( storedObject3d ) ) {
+			if ( THREE.MeshTransfer.Validator.isValid( storedObject3d ) ) {
 
 				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
 				storedObject3d.traverse( remover );

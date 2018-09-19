@@ -27,7 +27,7 @@
 		<script src="../../node_modules/three/examples/js/loaders/OBJLoader.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-		<script src="../../src/loaders/LoaderSupport.js"></script>
+		<script src="../../src/loaders/MeshTransfer.js"></script>
 		<script src="../../src/loaders/OBJLoader2.js"></script>
 		<script>
 
@@ -35,7 +35,7 @@
 
 			var OBJLoaderVerify = (function () {
 
-				var Validator = THREE.LoaderSupport.Validator;
+				var Validator = THREE.MeshTransfer.Validator;
 
 				function OBJLoaderVerify( elementToBindTo ) {
 					this.renderer = null;

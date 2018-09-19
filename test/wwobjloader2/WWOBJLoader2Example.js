@@ -6,8 +6,6 @@
 
 var WWOBJLoader2Example = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
-
 	function WWOBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -259,7 +257,7 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype._reportProgress = function( event ) {
 		var output = '';
-		if ( Validator.isValid( event.detail ) && Validator.isValid( event.detail.text ) ) {
+		if ( THREE.MeshTransfer.Validator.isValid( event.detail ) && THREE.MeshTransfer.Validator.isValid( event.detail.text ) ) {
 			output = event.detail.text;
 		}
 		console.log( 'Progress: ' + output );

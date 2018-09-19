@@ -27,7 +27,7 @@
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
         <script src="../../node_modules/three/examples/js/loaders/PCDLoader.js"></script>
 
-		<script src="../../src/loaders/LoaderSupport.js"></script>
+		<script src="../../src/loaders/MeshTransfer.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script src="../../src/loaders/wrapper/WLPCDLoader.js"></script>
 		<script>
@@ -116,7 +116,7 @@
 				},
 
 				_reportProgress: function( event ) {
-					var output = THREE.LoaderSupport.Validator.verifyInput( event.detail.text, '' );
+					var output = THREE.MeshTransfer.Validator.verifyInput( event.detail.text, '' );
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
 				},

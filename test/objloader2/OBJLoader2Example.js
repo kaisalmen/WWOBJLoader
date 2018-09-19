@@ -6,8 +6,6 @@
 
 var OBJLoader2Example = (function () {
 
-	var Validator = THREE.LoaderSupport.Validator;
-
 	function OBJLoader2Example( elementToBindTo ) {
 		this.renderer = null;
 		this.canvas = elementToBindTo;
@@ -80,7 +78,7 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {
-		var output = Validator.verifyInput( event.detail.text, '' );
+		var output = THREE.MeshTransfer.Validator.verifyInput( event.detail.text, '' );
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};

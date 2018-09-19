@@ -15,7 +15,7 @@ THREE.WorkerLoader.Director = function () {
 		debug: false
 	};
 
-	this.validator = THREE.LoaderSupport.Validator;
+	this.validator = THREE.MeshTransfer.Validator;
 	this.crossOrigin = null;
 
 	this.globalCallbacks = {
@@ -216,7 +216,7 @@ THREE.WorkerLoader.Director.prototype = {
 THREE.WorkerLoader.Director.Pool = function ( directorRef, extension, maxQueueSize ) {
 	this.directorRef = directorRef;
 	this.extenstion = extension;
-	this.maxQueueSize = THREE.LoaderSupport.Validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
+	this.maxQueueSize = THREE.MeshTransfer.Validator.verifyInput( maxQueueSize, THREE.WorkerLoader.Director.MAX_QUEUE_SIZE );
 	this.maxWebWorkers = THREE.WorkerLoader.Director.MAX_WEB_WORKER;
 	this.instructionQueue = [];
 	this.instructionQueuePointer = 0;
@@ -248,7 +248,7 @@ THREE.WorkerLoader.Director.Pool.prototype = {
 	 */
 	init: function ( maxWebWorkers ) {
 		var oldMaxWebWorkers = this.maxWebWorkers;
-		this.maxWebWorkers = THREE.LoaderSupport.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
+		this.maxWebWorkers = THREE.MeshTransfer.Validator.verifyInput( maxWebWorkers, THREE.WorkerLoader.Director.MAX_WEB_WORKER );
 		this.maxWebWorkers = Math.min( this.maxWebWorkers, this.maxQueueSize );
 
 		var workerSupport, supportDesc;
