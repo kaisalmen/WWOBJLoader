@@ -4,39 +4,39 @@
 
 'use strict';
 
-var WLPCDLoader = function ( manager ) {
+THREE.WLPCDLoader = function ( manager ) {
 	THREE.PCDLoader.call( this, manager );
 	this.builderPath = '../';
 	this.url = '';
 };
 
-WLPCDLoader.prototype = Object.create( THREE.PCDLoader.prototype );
-WLPCDLoader.prototype.constructor = WLPCDLoader;
+THREE.WLPCDLoader.prototype = Object.create( THREE.PCDLoader.prototype );
+THREE.WLPCDLoader.prototype.constructor = THREE.WLPCDLoader;
 
-WLPCDLoader.prototype.setBuilderPath = function ( builderPath ) {
+THREE.WLPCDLoader.prototype.setBuilderPath = function ( builderPath ) {
 	this.builderPath = builderPath;
 };
 
-WLPCDLoader.prototype.setUrl = function ( url ) {
+THREE.WLPCDLoader.prototype.setUrl = function ( url ) {
 	this.url = url;
 };
 
-WLPCDLoader.prototype.getParseFunctionName = function () {
+THREE.WLPCDLoader.prototype.getParseFunctionName = function () {
 	return '_parse';
 };
 
-WLPCDLoader.prototype._parse = function ( data ) {
+THREE.WLPCDLoader.prototype._parse = function ( data ) {
 	return this.parse( data, this.url );
 };
 
-WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
+THREE.WLPCDLoader.prototype.buildWorkerCode = function ( codeSerializer, scope ) {
 	scope = ( scope === null || scope === undefined ) ? this : scope;
 	var workerCode = codeSerializer.serializeClass( 'THREE.PCDLoader', THREE.PCDLoader );
 	var pcdInclude = [ 'setBasePath', 'setUrl', 'getParseFunctionName', '_parse' ];
-	workerCode += codeSerializer.serializeClass( 'WLPCDLoader', WLPCDLoader, 'WLPCDLoader', 'THREE.PCDLoader', null, pcdInclude );
+	workerCode += codeSerializer.serializeClass( 'THREE.WLPCDLoader', THREE.WLPCDLoader, 'THREE.WLPCDLoader', 'THREE.PCDLoader', null, pcdInclude );
 	return {
 		code: workerCode,
-		parserName: 'WLPCDLoader',
+		parserName: 'THREE.WLPCDLoader',
 		usesMeshDisassembler: true,
 		defaultGeometryType: 2,
 		libs: {

@@ -102,12 +102,12 @@
 
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
 					rd.configureAsync( false, false );
-					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco/', window.location.href ).href;
+					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco/gltf', window.location.href ).href;
 
 					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 						baseObject3d: local
 					} )
-						.setLoaderConfig( WLGLTFLoader, {
+						.setLoaderConfig( THREE.WLGLTFLoader, {
 							dracoBuilderPath: '../../',
 							dracoLibsPath: dracoLibsPath,
 							path: '../../resource/gltf/Monster/glTF-Draco/'
