@@ -427,12 +427,21 @@ THREE.OBJLoader2.prototype = {
 	},
 
 	buildWorkerCode: function ( codeSerializer ) {
+		var tester = {};
+		tester.prototype = {
+
+			getParserDef: function () {
+				return THREE.OBJLoader2.Parser;
+			}
+		};
+		var words = codeSerializer.extractObjectNamesArray( 'getParserDef', tester  );
+
 		var workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += 'THREE = { OBJLoader2: {} };\n\n';
-		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
+		workerCode += words[ 0 ] + ' = { ' + words[ 1 ] + ': {} };\n\n';
+		workerCode += codeSerializer.serializeClass( words[ 0 ] + '.' + words[ 1 ] + '.' + words[ 2 ], THREE.OBJLoader2.Parser );
 
 		return {
 			code: workerCode,
@@ -506,6 +515,10 @@ THREE.OBJLoader2.Parser = function() {
 THREE.OBJLoader2.Parser.prototype = {
 
 	constructor: THREE.OBJLoader2.Parser,
+
+	getOwnDefinition: function () {
+		return THREE.OBJLoader2.Parser;
+	},
 
 	resetRawMesh: function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)

@@ -1650,6 +1650,32 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 
 		return objectString;
 	},
+
+	extractObjectNamesArray: function ( methodName, additionalProto ) {
+		var funcGetOwnDefinition = '';
+		var words = [];
+		if ( typeof additionalProto.prototype[ methodName ] === 'function' ) {
+
+			funcGetOwnDefinition = additionalProto.prototype[ methodName ] + '';
+			words = funcGetOwnDefinition.match( /\w+/g );
+
+			if ( words.length > 2 ) {
+
+				words = words.slice( 2 );
+
+			} else {
+
+				throw 'Unable to extract names properly from "' + methodName + '"!';
+
+			}
+
+		} else {
+
+			throw 'Prototype method "' + methodName + '" is not available!';
+
+		}
+		return words;
+	}
 };
 
 
