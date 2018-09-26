@@ -1651,12 +1651,12 @@ THREE.WorkerLoader.WorkerSupport.CodeSerializer = {
 		return objectString;
 	},
 
-	extractObjectNamesArray: function ( methodName, additionalProto ) {
+	extractObjectNamesArray: function ( methodName, protoMinifyDef ) {
 		var funcGetOwnDefinition = '';
 		var words = [];
-		if ( typeof additionalProto.prototype[ methodName ] === 'function' ) {
+		if ( typeof protoMinifyDef.prototype[ methodName ] === 'function' ) {
 
-			funcGetOwnDefinition = additionalProto.prototype[ methodName ] + '';
+			funcGetOwnDefinition = protoMinifyDef.prototype[ methodName ] + '';
 			words = funcGetOwnDefinition.match( /\w+/g );
 
 			if ( words.length > 2 ) {

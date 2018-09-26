@@ -427,21 +427,26 @@ THREE.OBJLoader2.prototype = {
 	},
 
 	buildWorkerCode: function ( codeSerializer ) {
-		var tester = {};
-		tester.prototype = {
+		var MinifySafeDef = {};
+		MinifySafeDef.prototype = {
 
 			getParserDef: function () {
 				return THREE.OBJLoader2.Parser;
+			},
+
+			getWorkerLoaderDef: function () {
+				return THREE.WorkerLoader;
 			}
 		};
-		var words = codeSerializer.extractObjectNamesArray( 'getParserDef', tester  );
+		var partsParser = codeSerializer.extractObjectNamesArray( 'getParserDef', MinifySafeDef  );
+		var partsWorkerLoaderDef = codeSerializer.extractObjectNamesArray( 'getWorkerLoaderDef', MinifySafeDef  );
 
 		var workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += words[ 0 ] + ' = { ' + words[ 1 ] + ': {} };\n\n';
-		workerCode += codeSerializer.serializeClass( words[ 0 ] + '.' + words[ 1 ] + '.' + words[ 2 ], THREE.OBJLoader2.Parser );
+		workerCode += partsParser[ 0 ] + ' = { ' + partsParser[ 1 ] + ': {} };\n\n';
+		workerCode += codeSerializer.serializeClass( partsParser[ 0 ] + '.' + partsParser[ 1 ] + '.' + partsParser[ 2 ], THREE.OBJLoader2.Parser );
 
 		return {
 			code: workerCode,
