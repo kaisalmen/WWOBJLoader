@@ -355,11 +355,16 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runner class for worker.' );
 
-		} else {
+		} else if ( typeof "window" !== undefined ) { //Browser implementation
 
 			runnerImpl = THREE.LoaderSupport.WorkerRunnerRefImpl;
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runner class for worker.' );
 
+		} else { //NodeJS implementation
+
+			runnerImpl = THREE.LoaderSupport.NodeWorkerRunnerRefImpl;
+			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.NodeWorkerRunnerRefImpl" as Runner class for worker.' );
+		
 		}
 
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingleton );
