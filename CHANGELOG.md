@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.5.0-dev
+- Pull Request #46: Add nodejs support by @Cobertos
+- three.js issue 12942: Align `setPath` and `setResourcePath` meaning and handling
+
 ## 2.4.2
 - Issue #43: `OBJLoader2` allows to register a generic error handler. If this callback is available it will be used instead of a throw. `LoaderWorkerDirector` uses this callback to report a problem, but continue with the next loading task. `loadMtl` now allows to pass onProgress and onError as well.
 

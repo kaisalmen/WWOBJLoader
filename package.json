@@ -1,17 +1,17 @@
 {
   "name": "wwobjloader2",
-  "version": "2.4.2",
+  "version": "2.5.0-dev",
   "versions": {
+    "loader_obj2": "2.5.0-dev",
+    "loader_worker_director": "2.2.2",
+    "loader_worker_support": "2.3.0-dev",
+    "loader_mesh_builder": "1.2.2"
+  },
+  "previous_versions": {
     "loader_obj2": "2.4.2",
     "loader_worker_director": "2.2.2",
     "loader_worker_support": "2.2.1",
     "loader_mesh_builder": "1.2.2"
-  },
-  "previous_versions": {
-    "loader_obj2": "2.4.1",
-    "loader_worker_director": "2.2.1",
-    "loader_worker_support": "2.2.0",
-    "loader_mesh_builder": "1.2.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/OBJLoader2.js",
@@ -69,12 +69,14 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "http": "http-server -p 8085",
+    "http-three": "http-server ../three.js -p 8081"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.95.0"
+    "three": "^0.97.0"
   },
   "devDependencies": {
     "jszip": "^3.1.5",
@@ -88,6 +90,8 @@
     "gulp-uglify": "^3.0.1",
     "gulp-remote-src": "^0.4.3",
     "gulp-util": "^3.0.8",
-    "gulp-decompress": "^2.0.2"
+    "gulp-decompress": "^2.0.2",
+    "http-server": "^0.11.1",
+    "npm-run-all": "^4.1.3"
   }
 }
