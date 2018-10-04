@@ -1390,7 +1390,7 @@ THREE.OBJLoader2 = (function () {
 			var mtlLoader = new THREE.MTLLoader( this.manager );
 			crossOrigin = Validator.verifyInput( crossOrigin, 'anonymous' );
 			mtlLoader.setCrossOrigin( crossOrigin );
-			mtlLoader.setPath( resource.path );
+			mtlLoader.setResourcePath( resource.path );
 			if ( Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
 
 			var parseTextWithMtlLoader = function ( content ) {
