@@ -91,6 +91,7 @@ gulp.task( 'bundle-loader-support', [ 'bundle-objloader2' ], function() {
 			'src/loaders/support/LoaderCommons.js',
 			'src/loaders/support/LoaderBuilder.js',
 			'src/loaders/support/LoaderWorkerSupport.js',
+			'src/loaders/support/NodeLoaderWorkerSupport.js',
 			'src/loaders/support/LoaderWorkerDirector.js'
 		]
 	)
@@ -134,6 +135,7 @@ gulp.task( 'create-docs', function ( cb ) {
 				'src/loaders/support/LoaderCommons.js',
 				'src/loaders/support/LoaderBuilder.js',
 				'src/loaders/support/LoaderWorkerSupport.js',
+				'src/loaders/support/NodeLoaderWorkerSupport.js',
 				'src/loaders/support/LoaderWorkerDirector.js',
 				'src/loaders/OBJLoader2.js'
 			],
