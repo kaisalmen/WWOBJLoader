@@ -7,21 +7,21 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 	function WorkerRunnerRefImpl() {
 		var scopedRunner = function( event ) {
-			this.processMessage( event.data ); 
+			this.processMessage( event.data );
 		};
-		this.getParentScope().addEventListener("message", scopedRunner.bind(this));
+		this.getParentScope().addEventListener( 'message', scopedRunner.bind( this ) );
 	}
 
 	/**
 	 * Returns the parent scope that this worker was spawned in.
 	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
-	 * 
+	 *
 	 * @returns {WorkerGlobalScope|Object} Returns a references
 	 * to the parent global scope or compatible type.
 	 */
 	WorkerRunnerRefImpl.prototype.getParentScope = function() {
 		return self;
-	}
+	};
 
 	/**
 	 * Applies values from parameter object via set functions or via direct assignment.
@@ -114,7 +114,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		 * Check support for Workers and other necessary features returning
 		 * reason if the environment is unsupported
 		 * @memberOf THREE.LoaderSupport.WorkerSupport
-		 * 
+		 *
 		 * @returns {string|undefined} Returns undefined if supported, or
 		 * string with error if not supported
 		 */
@@ -122,7 +122,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			if ( window.Worker === undefined ) return "This browser does not support web workers!";
 			if ( window.Blob === undefined  ) return "This browser does not support Blob!";
 			if ( typeof window.URL.createObjectURL !== 'function'  ) return "This browser does not support Object creation from URL!";
-		}
+		};
 
 		LoaderWorker.prototype._reset = function () {
 			this.logging = {
@@ -152,10 +152,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
 			var supportError = LoaderWorker.checkSupport();
-			if(supportError) {
-				throw supportError;
-			}
+			if ( supportError ) {
 
+				throw supportError;
+
+			}
 			this.runnerImplName = runnerImplName;
 
 			var blob = new Blob( [ code ], { type: 'application/javascript' } );
@@ -297,6 +298,60 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 	})();
 
+	/**
+	 * This class provides the NodeJS implementation of LoaderWorker
+	 * @class
+	 * @extends LoaderWorker
+	 */
+	var NodeLoaderWorker = (function(){
+
+		function NodeLoaderWorker(){
+			LoaderWorker.call( this );
+		}
+		//Inherit from LoaderWorker
+		Object.setPrototypeOf( NodeLoaderWorker.prototype, LoaderWorker );
+
+		/**
+		 * @inheritdoc
+		 * @memberOf NodeLoaderWorker
+		 */
+		NodeLoaderWorker.checkSupport = function() {
+			try {
+				_require.resolve( 'worker_threads' );
+			}
+			catch(e) {
+				return 'This version of Node does not support web workers!';
+			}
+		};
+
+		/**
+		 * @inheritdoc
+		 * @memberOf NodeLoaderWorker
+		 */
+		NodeLoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
+			var supportError = NodeLoaderWorker.checkSupport();
+			if( supportError ) {
+
+				throw supportError;
+
+			}
+			this.runnerImplName = runnerImplName;
+
+			var Worker = _require( 'worker_threads' ).Worker;
+			this.worker = new Worker( code, { eval: true } );
+
+			this.worker.onmessage = this._receiveWorkerMessage;
+
+			// set referemce to this, then processing in worker scope within "_receiveWorkerMessage" can access members
+			this.worker.runtimeRef = this;
+
+			// process stored queuedMessage
+			this._postMessage();
+		};
+
+		return NodeLoaderWorker;
+	})();
+
 	function WorkerSupport() {
 		console.info( 'Using THREE.LoaderSupport.WorkerSupport version: ' + WORKER_SUPPORT_VERSION );
 		this.logging = {
@@ -305,8 +360,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		//Choose implementation of worker based on environment
-		this.loaderWorker = typeof "window" === undefined ? new LoaderWorker()
-			: new THREE.NodeLoaderWorker();
+		this.loaderWorker = typeof "window" !== undefined ? new LoaderWorker() : new NodeLoaderWorker();
 	}
 
 	/**
@@ -364,7 +418,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			runnerImpl = THREE.LoaderSupport.NodeWorkerRunnerRefImpl;
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.NodeWorkerRunnerRefImpl" as Runner class for worker.' );
-		
+
 		}
 
 		var userWorkerCode = functionCodeBuilder( buildObject, buildSingleton );
