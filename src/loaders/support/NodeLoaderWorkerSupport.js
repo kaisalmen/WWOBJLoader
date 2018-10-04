@@ -62,6 +62,11 @@ THREE.LoaderSupport.NodeLoaderWorker = (function(){
 	 * @memberOf THREE.LoaderSupport.NodeLoaderWorker
 	 */
 	NodeLoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
+		var supportError = NodeLoaderWorker.checkSupport();
+		if(supportError) {
+			throw supportError;
+		}
+			
 		this.runnerImplName = runnerImplName;
 
 		var Worker = _require("worker_threads").Worker;

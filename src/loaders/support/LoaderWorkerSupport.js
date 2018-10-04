@@ -151,6 +151,11 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
+			var supportError = LoaderWorker.checkSupport();
+			if(supportError) {
+				throw supportError;
+			}
+
 			this.runnerImplName = runnerImplName;
 
 			var blob = new Blob( [ code ], { type: 'application/javascript' } );
@@ -299,12 +304,9 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			debug: false
 		};
 
-		var supportError = LoaderWorker.checkSupport();
-		if(supportError) {
-			throw supportError;
-		}
-
-		this.loaderWorker = new LoaderWorker();
+		//Choose implementation of worker based on environment
+		this.loaderWorker = typeof "window" === undefined ? new LoaderWorker()
+			: new THREE.NodeLoaderWorker();
 	}
 
 	/**
