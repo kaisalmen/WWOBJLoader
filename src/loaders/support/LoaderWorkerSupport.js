@@ -6,11 +6,21 @@
 THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 
 	function WorkerRunnerRefImpl() {
-		var scope = this;
 		var scopedRunner = function( event ) {
-			scope.processMessage( event.data );
+			this.processMessage( event.data ); 
 		};
-		self.addEventListener( 'message', scopedRunner, false );
+		this.getParentScope().addEventListener("message", scopedRunner.bind(this));
+	}
+
+	/**
+	 * Returns the parent scope that this worker was spawned in.
+	 * @memberOf THREE.LoaderSupport.WorkerRunnerRefImpl
+	 * 
+	 * @returns {WorkerGlobalScope|Object} Returns a references
+	 * to the parent global scope or compatible type.
+	 */
+	WorkerRunnerRefImpl.prototype.getParentScope = function() {
+		return self;
 	}
 
 	/**
@@ -47,6 +57,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl = (function () {
 	WorkerRunnerRefImpl.prototype.processMessage = function ( payload ) {
 		if ( payload.cmd === 'run' ) {
 
+			var self = this.getParentScope();
 			var callbacks = {
 				callbackMeshBuilder: function ( payload ) {
 					self.postMessage( payload );
@@ -99,6 +110,20 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			this._reset();
 		}
 
+		/**
+		 * Check support for Workers and other necessary features returning
+		 * reason if the environment is unsupported
+		 * @memberOf THREE.LoaderSupport.WorkerSupport
+		 * 
+		 * @returns {string|undefined} Returns undefined if supported, or
+		 * string with error if not supported
+		 */
+		LoaderWorker.checkSupport = function() {
+			if ( window.Worker === undefined ) return "This browser does not support web workers!";
+			if ( window.Blob === undefined  ) return "This browser does not support Blob!";
+			if ( typeof window.URL.createObjectURL !== 'function'  ) return "This browser does not support Object creation from URL!";
+		}
+
 		LoaderWorker.prototype._reset = function () {
 			this.logging = {
 				enabled: true,
@@ -127,8 +152,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 		LoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
 			this.runnerImplName = runnerImplName;
+
 			var blob = new Blob( [ code ], { type: 'application/javascript' } );
 			this.worker = new Worker( window.URL.createObjectURL( blob ) );
+
 			this.worker.onmessage = this._receiveWorkerMessage;
 
 			// set referemce to this, then processing in worker scope within "_receiveWorkerMessage" can access members
@@ -272,10 +299,10 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			debug: false
 		};
 
-		// check worker support first
-		if ( window.Worker === undefined ) throw "This browser does not support web workers!";
-		if ( window.Blob === undefined  ) throw "This browser does not support Blob!";
-		if ( typeof window.URL.createObjectURL !== 'function'  ) throw "This browser does not support Object creation from URL!";
+		var supportError = LoaderWorker.checkSupport();
+		if(supportError) {
+			throw supportError;
+		}
 
 		this.loaderWorker = new LoaderWorker();
 	}
