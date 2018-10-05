@@ -43,8 +43,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-				match: /var OBJLOADER2_VERSION.*/g,
-				replacement: "var OBJLOADER2_VERSION = '"+ packageContent.versions.loader_obj2 + "';"
+				match: /THREE\.OBJLoader2\.OBJLOADER2_VERSION\s*=.*/g,
+				replacement: "THREE.OBJLoader2.OBJLOADER2_VERSION = '" + packageContent.versions.loader_obj2 + "';"
 			} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders" ) );
@@ -54,8 +54,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-				match: /var WORKER_SUPPORT_VERSION.*/g,
-				replacement: "var WORKER_SUPPORT_VERSION = '"+ packageContent.versions.loader_worker_support + "';"
+				match: /THREE\.LoaderSupport\.WorkerSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
+				replacement: "THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION = '"+ packageContent.versions.loader_worker_support + "';"
 			} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders/support" ) );
@@ -65,8 +65,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-			match: /var LOADER_WORKER_DIRECTOR_VERSION.*/g,
-			replacement: "var LOADER_WORKER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_worker_director + "';"
+			match: /THREE\.LoaderSupport\.WorkerDirector\.LOADER_WORKER_DIRECTOR_VERSION\s*=.*/g,
+			replacement: "THREE.LoaderSupport.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION = '"+ packageContent.versions.loader_worker_director + "';"
 		} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders/support" ) );
@@ -76,8 +76,8 @@ gulp.task( 'set-versions', function () {
 	)
 	.pipe( replace( {
 		patterns: [	{
-			match: /var LOADER_MESH_BUILDER_VERSION.*/g,
-			replacement: "var LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.loader_mesh_builder + "';"
+			match: /THREE\.LoaderSupport\.MeshBuilder\.LOADER_MESH_BUILDER_VERSION\s*=.*/g,
+			replacement: "THREE.LoaderSupport.MeshBuilder.LOADER_MESH_BUILDER_VERSION = '"+ packageContent.versions.loader_mesh_builder + "';"
 		} ]
 	} ) )
 	.pipe( gulp.dest( "src/loaders/support" ) );
