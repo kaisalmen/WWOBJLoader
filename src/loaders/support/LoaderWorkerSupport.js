@@ -14,7 +14,7 @@ THREE.LoaderSupport.WorkerSupport = function () {
 	this.loaderWorker = typeof "window" !== undefined ? new THREE.LoaderSupport.WorkerSupport.LoaderWorker() : new THREE.LoaderSupport.WorkerSupport.NodeLoaderWorker();
 };
 
-THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION = '2.2.1';
+THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION = '2.3.0-dev';
 
 THREE.LoaderSupport.WorkerSupport.prototype = {
 
