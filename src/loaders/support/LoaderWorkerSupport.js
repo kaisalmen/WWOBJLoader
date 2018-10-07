@@ -1,6 +1,3 @@
-//Work around webpack builds failing with NodeJS requires
-var _require = eval( 'require' );
-
 /**
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
  *
@@ -320,6 +317,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		 */
 		NodeLoaderWorker.checkSupport = function() {
 			try {
+				var _require = eval( 'require' ); //Work around webpack builds failing with NodeJS requires
 				_require.resolve( 'worker_threads' );
 			}
 			catch(e) {
@@ -340,6 +338,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			}
 			this.runnerImplName = runnerImplName;
 
+			var _require = eval( 'require' ); //Work around webpack builds failing with NodeJS requires
 			var Worker = _require( 'worker_threads' ).Worker;
 			this.worker = new Worker( code, { eval: true } );
 
