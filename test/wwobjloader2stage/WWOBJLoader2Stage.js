@@ -4,49 +4,49 @@
 
 'use strict';
 
-var Validator = THREE.LoaderSupport.Validator;
+var WWOBJLoader2Stage = function ( elementToBindTo ) {
+	this.renderer = null;
+	this.canvas = elementToBindTo;
+	this.aspectRatio = 1;
+	this.recalcAspectRatio();
 
-var WWOBJLoader2Stage = (function () {
+	this.scene = null;
+	this.cameraDefaults = {
+		posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+		posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+		near: 0.1,
+		far: 10000,
+		fov: 45
+	};
+	this.camera = null;
+	this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-	function WWOBJLoader2Stage( elementToBindTo ) {
-		this.renderer = null;
-		this.canvas = elementToBindTo;
-		this.aspectRatio = 1;
-		this.recalcAspectRatio();
+	this.controls = null;
+	this.cube = null;
 
-		this.scene = null;
-		this.cameraDefaults = {
-			posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
-			posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-			near: 0.1,
-			far: 10000,
-			fov: 45
-		};
-		this.camera = null;
-		this.cameraTarget = this.cameraDefaults.posCameraTarget;
+	this.objs2Load = [];
+	this.allAssets = [];
+	this.processing = false;
 
-		this.controls = null;
-		this.cube = null;
+	// Check for the various File API support.
+	this.fileApiAvailable = true;
+	if ( window.File && window.FileReader && window.FileList && window.Blob ) {
 
-		this.objs2Load = [];
-		this.allAssets = [];
-		this.processing = false;
+		console.log( 'File API is supported! Enabling all features.' );
 
-		// Check for the various File API support.
-		this.fileApiAvailable = true;
-		if ( window.File && window.FileReader && window.FileList && window.Blob ) {
+	} else {
 
-			console.log( 'File API is supported! Enabling all features.' );
+		this.fileApiAvailable = false;
+		console.warn( 'File API is not supported! Disabling file loading.' );
 
-		} else {
-
-			this.fileApiAvailable = false;
-			console.warn( 'File API is not supported! Disabling file loading.' );
-
-		}
 	}
+};
 
-	WWOBJLoader2Stage.prototype.initGL = function () {
+WWOBJLoader2Stage.prototype = {
+
+	constructor: WWOBJLoader2Stage,
+
+	initGL: function () {
 		this.renderer = new THREE.WebGLRenderer( {
 			canvas: this.canvas,
 			antialias: true,
@@ -79,35 +79,35 @@ var WWOBJLoader2Stage = (function () {
 		this.cube = new THREE.Mesh( geometry, material );
 		this.cube.position.set( 0, 0, 0 );
 		this.scene.add( this.cube );
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.resizeDisplayGL = function () {
+	resizeDisplayGL: function () {
 		this.controls.handleResize();
 
 		this.recalcAspectRatio();
 		this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 		this.updateCamera();
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.recalcAspectRatio = function () {
+	recalcAspectRatio: function () {
 		this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.resetCamera = function () {
+	resetCamera: function () {
 		this.camera.position.copy( this.cameraDefaults.posCamera );
 		this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 		this.updateCamera();
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.updateCamera = function () {
+	updateCamera: function () {
 		this.camera.aspect = this.aspectRatio;
 		this.camera.lookAt( this.cameraTarget );
 		this.camera.updateProjectionMatrix();
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.render = function () {
+	render: function () {
 		if ( ! this.renderer.autoClear ) this.renderer.clear();
 		this.reloadAssets();
 
@@ -117,9 +117,9 @@ var WWOBJLoader2Stage = (function () {
 		this.cube.rotation.y += 0.05;
 
 		this.renderer.render( this.scene, this.camera );
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.initContent = function (  ) {
+	initContent: function (  ) {
 		this.assetsDef = {
 			objsMale: null,
 			objsFemale: null,
@@ -212,9 +212,9 @@ var WWOBJLoader2Stage = (function () {
 		prepData.useIndices = true;
 		prepData.useAsync = true;
 		this.assetsDef.objsZomaxSink = prepData;
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.clearAllAssests = function () {
+	clearAllAssests: function () {
 		var storedObject3d;
 		for ( var asset in this.allAssets ) {
 
@@ -243,7 +243,7 @@ var WWOBJLoader2Stage = (function () {
 				}
 				if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
 			};
-			if ( Validator.isValid( storedObject3d ) ) {
+			if ( THREE.LoaderSupport.Validator.isValid( storedObject3d ) ) {
 
 				if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
 				storedObject3d.traverse( remover );
@@ -252,10 +252,10 @@ var WWOBJLoader2Stage = (function () {
 			}
 		}
 		this.allAssets = [];
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.updateAssets = function ( prepData ) {
-		if ( Validator.isValid( prepData ) ) {
+	updateAssets: function ( prepData ) {
+		if ( THREE.LoaderSupport.Validator.isValid( prepData ) ) {
 
 			if ( ! this.allAssets.hasOwnProperty( prepData.modelName ) ) {
 
@@ -268,15 +268,15 @@ var WWOBJLoader2Stage = (function () {
 			}
 
 		}
-	};
+	},
 
-	WWOBJLoader2Stage.prototype._reportProgress = function( event ) {
-		var output = Validator.verifyInput( event.detail.text, '' );
+	_reportProgress: function( event ) {
+		var output = THREE.LoaderSupport.Validator.verifyInput( event.detail.text, '' );
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;
-	};
+	},
 
-	WWOBJLoader2Stage.prototype.reloadAssets = function () {
+	reloadAssets: function () {
 		if ( this.objs2Load.length === 0 || this.processing ) {
 
 			return;
@@ -290,11 +290,11 @@ var WWOBJLoader2Stage = (function () {
 		var prepData = this.objs2Load[ 0 ];
 		this.objs2Load.shift();
 		var streamMeshes = prepData.streamMeshesTo;
-		if ( Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
+		if ( THREE.LoaderSupport.Validator.isValid( streamMeshes ) ) this.scene.add( streamMeshes );
 
 		var scope = this;
 		var reloadAssetsProxy = function ( event ) {
-			if ( ! Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
+			if ( ! THREE.LoaderSupport.Validator.isValid( streamMeshes ) ) scope.scene.add( event.detail.loaderRootNode );
 			scope.processing = false;
 			scope.allAssets[ prepData.modelName ] = event.detail.loaderRootNode;
 			scope.reloadAssets();
@@ -324,7 +324,7 @@ var WWOBJLoader2Stage = (function () {
 			};
 
 			var doneUnzipping = function () {
-				zipTools.unpackAsString( Validator.isValid( resourceMtl ) ? resourceMtl.name : null, setMtlAsString );
+				zipTools.unpackAsString( THREE.LoaderSupport.Validator.isValid( resourceMtl ) ? resourceMtl.name : null, setMtlAsString );
 			};
 
 			var errorCase = function ( text ) {
@@ -339,9 +339,9 @@ var WWOBJLoader2Stage = (function () {
 			objLoader2.run( prepData );
 
 		}
-	};
+	},
 
-	WWOBJLoader2Stage.prototype._handleFileSelect = function ( event, pathTexture ) {
+	_handleFileSelect: function ( event, pathTexture ) {
 		var fileObj = null;
 		var fileMtl = null;
 		var files = event.target.files;
@@ -358,7 +358,7 @@ var WWOBJLoader2Stage = (function () {
 
 		}
 
-		if ( ! Validator.isValid( fileObj ) ) {
+		if ( ! THREE.LoaderSupport.Validator.isValid( fileObj ) ) {
 			alert( 'Unable to load OBJ file from given files.' );
 		}
 
@@ -406,27 +406,26 @@ var WWOBJLoader2Stage = (function () {
 		};
 		fileReader.readAsArrayBuffer( fileObj );
 
-	};
-
-	return WWOBJLoader2Stage;
-
-})();
-
-var ZipTools = (function () {
-
-	var Validator = THREE.LoaderSupport.Validator;
-
-	function ZipTools( path ) {
-		this.zip = new JSZip();
-
-		this.fileLoader = new THREE.FileLoader();
-		this.fileLoader.setPath( path );
-		this.fileLoader.setResponseType( 'arraybuffer' );
-
-		this.zipContent = null;
 	}
 
-	ZipTools.prototype.load = function ( filename, callbacks ) {
+};
+
+
+var ZipTools = function ( path ) {
+	this.zip = new JSZip();
+
+	this.fileLoader = new THREE.FileLoader();
+	this.fileLoader.setPath( path );
+	this.fileLoader.setResponseType( 'arraybuffer' );
+
+	this.zipContent = null;
+};
+
+ZipTools.prototype = {
+
+	constructor: ZipTools,
+
+	load: function ( filename, callbacks ) {
 		var scope = this;
 
 		var onSuccess = function ( zipDataFromFileLoader ) {
@@ -450,7 +449,7 @@ var ZipTools = (function () {
 
 				numericalValueRef = numericalValue;
 				output = 'Download of "' + filename + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-				if ( Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
+				if ( THREE.LoaderSupport.Validator.isValid( callbacks.progress ) ) callbacks.progress( { detail: { text: output } } );
 
 			}
 		};
@@ -463,9 +462,9 @@ var ZipTools = (function () {
 
 		console.log( 'Starting download: ' + filename );
 		this.fileLoader.load( filename, onSuccess, onProgress, onError );
-	};
+	},
 
-	ZipTools.prototype.unpackAsUint8Array = function ( filename, callback ) {
+	unpackAsUint8Array: function ( filename, callback ) {
 
 		if ( JSZip.support.uint8array ) {
 
@@ -486,10 +485,10 @@ var ZipTools = (function () {
 			} );
 
 		}
-	};
+	},
 
-	ZipTools.prototype.unpackAsString = function ( filename, callback ) {
-		if ( Validator.isValid( filename ) ) {
+	unpackAsString: function ( filename, callback ) {
+		if ( THREE.LoaderSupport.Validator.isValid( filename ) ) {
 
 			this.zipContent.file( filename ).async( 'string' )
 			.then( function ( dataAsString ) {
@@ -503,8 +502,6 @@ var ZipTools = (function () {
 			callback( null );
 
 		}
-	};
+	}
 
-	return ZipTools;
-
-})();
+};
