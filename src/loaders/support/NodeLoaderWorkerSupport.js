@@ -1,6 +1,3 @@
-//Work around webpack builds failing with NodeJS requires
-var _require = eval( 'require' );
-
 /**
  * This class provides the NodeJS implementation of the WorkerRunnerRefImpl
  * @class
@@ -14,10 +11,10 @@ THREE.LoaderSupport.NodeWorkerRunnerRefImpl = ( function(){
 		//Also, the message object can be passed directly to
 		//processMessage() as it isn't an `Event`, but a plain object
 		//with the data
-		this.getParentScope().onmessage = this.processMessage( this );
+		this.getParentScope().onmessage = this.processMessage.bind( this );
 	}
 	//Inherit from WorkerRunnerRefImpl
-	Object.setPrototypeOf( NodeWorkerRunnerRefImpl.prototype, THREE.LoaderSupport.WorkerRunnerRefImpl );
+	Object.setPrototypeOf( NodeWorkerRunnerRefImpl.prototype, THREE.LoaderSupport.WorkerRunnerRefImpl.prototype );
 
 	/**
 	 * @inheritdoc
@@ -27,6 +24,10 @@ THREE.LoaderSupport.NodeWorkerRunnerRefImpl = ( function(){
 	 * GlobalWorkerScope
 	 */
 	NodeWorkerRunnerRefImpl.prototype.getParentScope = function(){
+		//Work around webpack builds failing with NodeJS requires
+		//(placing it outside this function will fail because
+		//this class is passed to the worker as a string!)
+		var _require = eval( 'require' );
 		return _require( 'worker_threads' ).parentPort;
 	};
 
