@@ -23,7 +23,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
@@ -35,7 +34,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Initializes the MeshBuilder (currently only default material initialisation).
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 */
 	init: function () {
@@ -72,7 +70,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
@@ -98,7 +95,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} payload Raw Mesh or Material descriptions.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
@@ -118,7 +114,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
@@ -277,7 +272,6 @@ THREE.LoaderSupport.MeshBuilder.prototype = {
 
 	/**
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
-	 * @memberOf THREE.LoaderSupport.MeshBuilder
 	 *
 	 * @param {Object} materialPayload Material update instructions
 	 */

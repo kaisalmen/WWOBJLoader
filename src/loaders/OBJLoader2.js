@@ -20,7 +20,8 @@ THREE.OBJLoader2 = function ( manager ) {
 
 	this.modelName = '';
 	this.instanceNo = 0;
-	this.path = '';
+	this.path;
+	this.resourcePath;
 	this.useIndices = false;
 	this.disregardNormals = false;
 	this.materialPerSmoothingGroup = false;
@@ -67,6 +68,14 @@ THREE.OBJLoader2.prototype = {
 	 */
 	setPath: function ( path ) {
 		this.path = THREE.LoaderSupport.Validator.verifyInput( path, this.path );
+	},
+
+	/**
+	 * Allow to specify resourcePath for dependencies of specified resource.
+	 * @param {string} resourcePath
+	 */
+	setResourcePath: function ( resourcePath ) {
+		this.resourcePath = THREE.LoaderSupport.Validator.verifyInput( resourcePath, this.resourcePath );
 	},
 
 	/**
@@ -185,7 +194,7 @@ THREE.OBJLoader2.prototype = {
 	/**
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
 	 *
-	 * @param {string}  url A string containing the path/URL of the file to be loaded.
+	 * @param {string} url A string containing the path/URL of the file to be loaded.
 	 * @param {callback} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
 	 * @param {callback} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {callback} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
@@ -231,6 +240,8 @@ THREE.OBJLoader2.prototype = {
 
 			}
 		};
+		this.setPath( resource.path );
+		this.setResourcePath( resource.resourcePath );
 
 		// fast-fail
 		if ( ! THREE.LoaderSupport.Validator.isValid( resource.url ) || THREE.LoaderSupport.Validator.isValid( resource.content ) ) {
@@ -258,9 +269,9 @@ THREE.OBJLoader2.prototype = {
 
 
 			var fileLoader = new THREE.FileLoader( this.manager );
-			fileLoader.setPath( this.path );
+			fileLoader.setPath( this.path || this.resourcePath );
 			fileLoader.setResponseType( 'arraybuffer' );
-			fileLoader.load( resource.url, fileLoaderOnLoad, onProgress, onError );
+			fileLoader.load( resource.name, fileLoaderOnLoad, onProgress, onError );
 
 		}
 	},
@@ -517,7 +528,7 @@ THREE.OBJLoader2.prototype = {
 			var mtlLoader = new THREE.MTLLoader( this.manager );
 			crossOrigin = THREE.LoaderSupport.Validator.verifyInput( crossOrigin, 'anonymous' );
 			mtlLoader.setCrossOrigin( crossOrigin );
-			mtlLoader.setResourcePath( resource.path );
+			mtlLoader.setResourcePath( resource.resourcePath || resource.path );
 			if ( THREE.LoaderSupport.Validator.isValid( materialOptions ) ) mtlLoader.setMaterialOptions( materialOptions );
 
 			var parseTextWithMtlLoader = function ( content ) {
@@ -722,7 +733,6 @@ THREE.OBJLoader2.Parser.prototype = {
 
 	/**
 	 * Parse the provided arraybuffer
-	 * @memberOf Parser
 	 *
 	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
@@ -778,7 +788,6 @@ THREE.OBJLoader2.Parser.prototype = {
 
 	/**
 	 * Parse the provided text
-	 * @memberOf Parser
 	 *
 	 * @param {string} text OBJ data as string
 	 */
