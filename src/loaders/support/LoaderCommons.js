@@ -150,15 +150,13 @@ THREE.LoaderSupport.LoadedMeshUserOverride.prototype = {
 THREE.LoaderSupport.ResourceDescriptor = function ( url, extension ) {
 	var urlParts = url.split( '/' );
 
-	if ( urlParts.length < 2 ) {
+	this.path;
+	this.resourcePath;
+	this.name = url;
+	this.url = url;
+	if ( urlParts.length >= 2 ) {
 
-		this.path = null;
-		this.name = url;
-		this.url = url;
-
-	} else {
-
-		this.path = THREE.LoaderSupport.Validator.verifyInput( urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/', null );
+		this.path = THREE.LoaderSupport.Validator.verifyInput( urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/', this.path );
 		this.name = urlParts[ urlParts.length - 1 ];
 		this.url = url;
 
@@ -167,7 +165,7 @@ THREE.LoaderSupport.ResourceDescriptor = function ( url, extension ) {
 	this.extension = THREE.LoaderSupport.Validator.verifyInput( extension, 'default' );
 	this.extension = this.extension.trim();
 	this.content = null;
-}
+};
 
 THREE.LoaderSupport.ResourceDescriptor.prototype = {
 
@@ -180,6 +178,14 @@ THREE.LoaderSupport.ResourceDescriptor.prototype = {
 	 */
 	setContent: function ( content ) {
 		this.content = THREE.LoaderSupport.Validator.verifyInput( content, null );
+	},
+
+	/**
+	 * Allow to specify resourcePath for dependencies of specified resource.
+	 * @param {string} resourcePath
+	 */
+	setResourcePath: function ( resourcePath ) {
+		this.resourcePath = THREE.LoaderSupport.Validator.verifyInput( resourcePath, this.resourcePath );
 	}
 };
 

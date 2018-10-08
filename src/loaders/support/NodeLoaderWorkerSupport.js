@@ -43,8 +43,7 @@ THREE.LoaderSupport.WorkerSupport.NodeLoaderWorker.prototype.constructor = THREE
 
 /**
  * @inheritdoc
- * @memberOf NodeLoaderWorker
- */
+  */
 THREE.LoaderSupport.WorkerSupport.NodeLoaderWorker.checkSupport = function() {
 	try {
 		// Work around webpack builds failing with NodeJS requires
@@ -58,7 +57,6 @@ THREE.LoaderSupport.WorkerSupport.NodeLoaderWorker.checkSupport = function() {
 
 /**
  * @inheritdoc
- * @memberOf NodeLoaderWorker
  */
 THREE.LoaderSupport.WorkerSupport.NodeLoaderWorker.prototype.initWorker = function ( code, runnerImplName ) {
 	var supportError = this.checkSupport();
