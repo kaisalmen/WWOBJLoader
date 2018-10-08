@@ -309,7 +309,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			LoaderWorker.call( this );
 		}
 		//Inherit from LoaderWorker
-		Object.setPrototypeOf( NodeLoaderWorker.prototype, LoaderWorker );
+		Object.setPrototypeOf( NodeLoaderWorker.prototype, LoaderWorker.prototype );
 
 		/**
 		 * @inheritdoc
@@ -317,6 +317,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		 */
 		NodeLoaderWorker.checkSupport = function() {
 			try {
+				var _require = eval( 'require' ); //Work around webpack builds failing with NodeJS requires
 				_require.resolve( 'worker_threads' );
 			}
 			catch(e) {
@@ -337,6 +338,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 			}
 			this.runnerImplName = runnerImplName;
 
+			var _require = eval( 'require' ); //Work around webpack builds failing with NodeJS requires
 			var Worker = _require( 'worker_threads' ).Worker;
 			this.worker = new Worker( code, { eval: true } );
 
@@ -360,7 +362,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 		};
 
 		//Choose implementation of worker based on environment
-		this.loaderWorker = typeof "window" !== undefined ? new LoaderWorker() : new NodeLoaderWorker();
+		this.loaderWorker = typeof window !== "undefined" ? new LoaderWorker() : new NodeLoaderWorker();
 	}
 
 	/**
@@ -409,7 +411,7 @@ THREE.LoaderSupport.WorkerSupport = (function () {
 
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + runnerImpl.name + '" as Runner class for worker.' );
 
-		} else if ( typeof "window" !== undefined ) { //Browser implementation
+		} else if ( typeof window !== "undefined" ) { //Browser implementation
 
 			runnerImpl = THREE.LoaderSupport.WorkerRunnerRefImpl;
 			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using DEFAULT "THREE.LoaderSupport.WorkerRunnerRefImpl" as Runner class for worker.' );
