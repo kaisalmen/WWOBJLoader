@@ -1063,13 +1063,13 @@ THREE.OBJLoader2.Parser.prototype = {
 
 			var faceIndexVi = parseInt( faceIndexV );
 			var indexPointerV = 3 * ( faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3 );
+			var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 
 			var vertices = scope.rawMesh.subGroupInUse.vertices;
 			vertices.push( scope.vertices[ indexPointerV++ ] );
 			vertices.push( scope.vertices[ indexPointerV++ ] );
 			vertices.push( scope.vertices[ indexPointerV ] );
 
-			var indexPointerC = scope.colors.length > 0 ? indexPointerV + 1 : null;
 			if ( indexPointerC !== null ) {
 
 				var colors = scope.rawMesh.subGroupInUse.colors;
