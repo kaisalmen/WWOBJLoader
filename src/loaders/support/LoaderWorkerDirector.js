@@ -37,7 +37,7 @@ THREE.LoaderSupport.WorkerDirector = function ( classDef ) {
 }
 
 
-THREE.LoaderSupport.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION = '2.3.0-dev';
+THREE.LoaderSupport.WorkerDirector.LOADER_WORKER_DIRECTOR_VERSION = '2.3.0';
 THREE.LoaderSupport.WorkerDirector.MAX_WEB_WORKER = 16;
 THREE.LoaderSupport.WorkerDirector.MAX_QUEUE_SIZE = 2048;
 

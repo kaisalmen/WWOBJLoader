@@ -178,7 +178,7 @@ MeshSpray.Parser.prototype = {
 		var fixedOffsetY;
 		var fixedOffsetZ;
 		var s, t;
-		// complete triagle
+		// complete triangle
 		var sizeVaring = this.sizeFactor * Math.random();
 		// local coords offset
 		var localOffsetFactor = this.localOffsetFactor;

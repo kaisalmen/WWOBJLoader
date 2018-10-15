@@ -1,7 +1,9 @@
 # Changelog
 
-## 2.5.0-dev
-- Pull Request #46: Add nodejs support by @Cobertos
+## 2.5.0
+- Issue #47: Fixed incorrect vertex color pointerC initialization (omitting first set of values)
+- Pull Request #46: It is now possible to run `THREE.OBJLoader2` in nodejs 10.5.0+. Thanks to @Cobertos
+- Replaced Singletons with pure function/prototype definitions (backport from dev (V3.0.0)). Reason: Counter issues with worker code Blob generation from minified code base (e.g when using webpack)
 - three.js issue 12942: Align `setPath` and `setResourcePath` meaning and handling
 
 ## 2.4.2
