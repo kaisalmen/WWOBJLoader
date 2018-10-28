@@ -20,7 +20,7 @@
 			<div id="feedback"></div>
 		</div>
 
-		<script src="../../node_modules/three/examples/js/Detector.js"></script>
+		<script src="../../node_modules/three/examples/js/WebGL.js"></script>
 		<script src="../../node_modules/three/build/three.js"></script>
 		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
 		<script src="../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
@@ -28,7 +28,7 @@
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
 		<script src="../../src/loaders/MeshTransfer.js"></script>
-		<script src="../../src/loaders/OBJLoader2.js"></script>
+		<script src="../../src/loaders/WLOBJLoader2.js"></script>
 		<script>
 
 			'use strict';
@@ -91,7 +91,7 @@
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					var scope = this;
-					var objLoader2 = new THREE.OBJLoader2();
+					var objLoader2 = new THREE.WLOBJLoader2();
 
 					var callbackOnLoad = function ( object3d ) {
 						scope.scene.add( object3d );

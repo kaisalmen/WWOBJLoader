@@ -1,23 +1,23 @@
 {
   "name": "wwobjloader2",
-  "version": "3.0.0-dev",
+  "version": "3.0.0-beta",
   "versions": {
-    "obj_loader2": "3.0.0-dev",
-    "worker_loader": "1.0.0-dev",
-    "worker_support": "3.0.0-dev",
-    "worker_loader_director": "3.0.0-dev",
-    "mesh_receiver": "2.0.0-dev",
-    "mesh_transmitter": "1.0.0-dev"
+    "obj_loader2": "3.0.0-beta",
+    "worker_loader": "1.0.0-beta",
+    "worker_support": "3.0.0-beta",
+    "worker_loader_director": "3.0.0-beta",
+    "mesh_receiver": "2.0.0-beta",
+    "mesh_transmitter": "1.0.0-beta"
   },
   "previous_versions": {
-    "obj_loader2": "2.4.1",
+    "obj_loader2": "2.5.0",
     "worker_loader": "n.a.",
-    "worker_support": "2.2.1",
-    "worker_loader_director": "2.2.0",
-    "mesh_builder": "1.2.1"
+    "worker_support": "2.3.0",
+    "worker_loader_director": "2.3.0",
+    "mesh_builder": "1.3.0"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
-  "main": "build/OBJLoader2.js",
+  "main": "build/WLOBJLoader2.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
@@ -79,7 +79,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.96.0"
+    "three": "^0.97.0"
   },
   "devDependencies": {
     "del": "^3.0.0",

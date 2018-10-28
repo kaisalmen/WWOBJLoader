@@ -1,7 +1,7 @@
-if ( ! THREE.OBJLoader2 ) { THREE.OBJLoader2 = {} }
+if ( ! THREE.WLOBJLoader2 ) { THREE.WLOBJLoader2 = {} }
 if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTransfer.MeshTransmitter || ! THREE.MeshTransfer.Validator ) {
 
-	console.error( '"THREE.MeshTransfer" is not available, but "THREE.OBJLoader2" requires it. Please include "MeshTransfer.js" in your HTML.' );
+	console.error( '"THREE.MeshTransfer" is not available, but "THREE.WLOBJLoader2" requires it. Please include "MeshTransfer.js" in your HTML.' );
 
 }
 
@@ -12,8 +12,8 @@ if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTr
  *
  * @param {THREE.DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link THREE.DefaultLoadingManager}
  */
-THREE.OBJLoader2 = function ( manager ) {
-	console.info( 'Using THREE.OBJLoader2 version: ' + THREE.OBJLoader2.OBJLOADER2_VERSION );
+THREE.WLOBJLoader2 = function ( manager ) {
+	console.info( 'Using THREE.WLOBJLoader2 version: ' + THREE.WLOBJLoader2.OBJLOADER2_VERSION );
 
 	this.manager = THREE.MeshTransfer.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.logging = {
@@ -37,14 +37,14 @@ THREE.OBJLoader2 = function ( manager ) {
 	};
 };
 
-THREE.OBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
-THREE.OBJLoader2.prototype.constructor = THREE.OBJLoader2;
-THREE.OBJLoader2.OBJLOADER2_VERSION = '3.0.0-dev';
+THREE.WLOBJLoader2.prototype = Object.create( THREE.WLOBJLoader2.prototype );
+THREE.WLOBJLoader2.prototype.constructor = THREE.WLOBJLoader2;
+THREE.WLOBJLoader2.OBJLOADER2_VERSION = '3.0.0-beta';
 
 
-THREE.OBJLoader2.prototype = {
+THREE.WLOBJLoader2.prototype = {
 
-	constructor: THREE.OBJLoader2,
+	constructor: THREE.WLOBJLoader2,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -319,7 +319,7 @@ THREE.OBJLoader2.prototype = {
 			this.dataReceiver.setBaseObject3d( this.baseObject3d );
 			this.dataReceiver.createDefaultMaterials();
 
-			var parser = new THREE.OBJLoader2.Parser();
+			var parser = new THREE.WLOBJLoader2.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
 			parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 			parser.setUseOAsMesh( this.useOAsMesh );
@@ -370,7 +370,7 @@ THREE.OBJLoader2.prototype = {
 	 * Utility method for parsing mtl text with MTLLoader
 	 */
 	_parseMtl: function ( content, parserConfiguration ) {
-		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
+		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.WLOBJLoader2" requires it for loading MTL files.' );
 		if ( ! THREE.MeshTransfer.Validator.isValid( content ) || ! ( typeof( content ) === 'string' || content instanceof String ) ) console.error( 'Provided content is not a String.' );
 
 		var mtlParseResult = {
@@ -382,7 +382,7 @@ THREE.OBJLoader2.prototype = {
 			var mtlLoader = new THREE.MTLLoader( this.manager );
 			var crossOrigin = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.crossOrigin, 'anonymous' );
 			mtlLoader.setCrossOrigin( crossOrigin );
-			if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration.texturePath ) ) mtlLoader.setPath( parserConfiguration.texturePath );
+			if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration.texturePath ) ) mtlLoader.setResourcePath( parserConfiguration.texturePath );
 			if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration.materialOptions ) ) mtlLoader.setMaterialOptions( parserConfiguration.materialOptions );
 
 			var contentAsText = content;
@@ -429,14 +429,14 @@ THREE.OBJLoader2.prototype = {
 	buildWorkerCode: function ( codeSerializer ) {
 		var workerCode = '';
 		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by THREE.OBJLoader2.buildWorkerCode.\n';
+		workerCode += '  * This code was constructed by THREE.WLOBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
-		workerCode += 'THREE = { OBJLoader2: {} };\n\n';
-		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
+		workerCode += 'THREE = { WLOBJLoader2: {} };\n\n';
+		workerCode += codeSerializer.serializeClass( 'THREE.WLOBJLoader2.Parser', THREE.WLOBJLoader2.Parser );
 
 		return {
 			code: workerCode,
-			parserName: 'THREE.OBJLoader2.Parser',
+			parserName: 'THREE.WLOBJLoader2.Parser',
 			provideThree: false
 		}
 	}
@@ -446,7 +446,7 @@ THREE.OBJLoader2.prototype = {
  * Parse OBJ data either from ArrayBuffer or string
  * @class
  */
-THREE.OBJLoader2.Parser = function() {
+THREE.WLOBJLoader2.Parser = function() {
 	this.callbackProgress = null;
 	this.callbackDataReceiver = null;
 	this.contentRef = null;
@@ -503,9 +503,9 @@ THREE.OBJLoader2.Parser = function() {
 	};
 };
 
-THREE.OBJLoader2.Parser.prototype = {
+THREE.WLOBJLoader2.Parser.prototype = {
 
-	constructor: THREE.OBJLoader2.Parser,
+	constructor: THREE.WLOBJLoader2.Parser,
 
 	resetRawMesh: function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
@@ -582,7 +582,6 @@ THREE.OBJLoader2.Parser.prototype = {
 
 	/**
 	 * Parse the provided arraybuffer
-	 * @memberOf Parser
 	 *
 	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
@@ -638,7 +637,6 @@ THREE.OBJLoader2.Parser.prototype = {
 
 	/**
 	 * Parse the provided text
-	 * @memberOf Parser
 	 *
 	 * @param {string} text OBJ data as string
 	 */

@@ -16,7 +16,7 @@ THREE.WorkerLoader = function ( manager ) {
 	this.manager = THREE.MeshTransfer.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
 };
-THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-dev';
+THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-beta';
 
 
 THREE.WorkerLoader.prototype = {
@@ -1095,7 +1095,7 @@ THREE.WorkerLoader.WorkerSupport = function () {
 
 	this._reset();
 };
-THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-dev';
+THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-beta';
 
 THREE.WorkerLoader.WorkerSupport.prototype = {
 

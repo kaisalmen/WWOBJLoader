@@ -307,7 +307,7 @@ WWParallels.prototype = {
 				enforceSync: enforceSync === true
 			};
 			var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( baseConfig )
-				.setLoaderConfig( THREE.OBJLoader2, { modelName: modelPrepData.modelName } )
+				.setLoaderConfig( THREE.WLOBJLoader2, { modelName: modelPrepData.modelName } )
 				.setExtension( 'obj' )
 				.setResourceDescriptors( modelPrepData.resourceDescriptors )
 				.setCallbacksApp( callbackOnReport )

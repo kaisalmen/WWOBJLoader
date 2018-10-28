@@ -61,7 +61,7 @@ var OBJLoader2Example = (function () {
 
 
 		var scope = this;
-		var objLoader2 = new THREE.OBJLoader2();
+		var objLoader2 = new THREE.WLOBJLoader2();
 		var callbackOnLoad = function ( object3d ) {
 			scope.scene.add( object3d );
 			console.log( 'Loading complete: ' + modelName );

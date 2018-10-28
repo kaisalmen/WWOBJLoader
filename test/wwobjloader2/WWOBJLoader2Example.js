@@ -75,7 +75,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'female02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader2 = new THREE.OBJLoader2();
+		var objLoader2 = new THREE.WLOBJLoader2();
 		objLoader2.setModelName( modelName );
 
 		var scope = this;
@@ -123,7 +123,7 @@ var WWOBJLoader2Example = (function () {
 		var filename = 'resource/obj/female02/female02_vertex_colors.obj';
 		fileLoader.load( filename,
 			function ( content ) {
-				var objLoader = new THREE.OBJLoader2();
+				var objLoader = new THREE.WLOBJLoader2();
 				objLoader.setModelName( modelName );
 
 				var workerLoader = new THREE.WorkerLoader();
@@ -141,7 +141,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'male02';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader2 = new THREE.OBJLoader2();
+		var objLoader2 = new THREE.WLOBJLoader2();
 		objLoader2.setModelName( modelName );
 		objLoader2.setUseIndices( true );
 
@@ -167,7 +167,7 @@ var WWOBJLoader2Example = (function () {
 		var modelName = 'WaltHead';
 		this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-		var objLoader2 = new THREE.OBJLoader2();
+		var objLoader2 = new THREE.WLOBJLoader2();
 		objLoader2.setModelName( modelName );
 
 		var local = new THREE.Object3D();
@@ -216,7 +216,7 @@ var WWOBJLoader2Example = (function () {
 				instanceNo: 42,
 				baseObject3d: local
 			} )
-			.setLoaderConfig( THREE.OBJLoader2 )
+			.setLoaderConfig( THREE.WLOBJLoader2 )
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad )
 			.setCallbacksApp( callbackOnProgress );
@@ -243,7 +243,7 @@ var WWOBJLoader2Example = (function () {
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				terminateWorkerOnLoad: false
 			} )
-			.setLoaderConfig( THREE.OBJLoader2 )
+			.setLoaderConfig( THREE.WLOBJLoader2 )
 			.addResourceDescriptor( rd )
 			.setCallbacksPipeline( callbackOnLoad );
 		new THREE.WorkerLoader()

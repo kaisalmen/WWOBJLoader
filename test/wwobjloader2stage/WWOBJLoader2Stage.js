@@ -151,7 +151,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdMtl )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsMale = loadingTaskConfig;
@@ -171,7 +171,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdMtl )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsFemale = loadingTaskConfig;
@@ -187,7 +187,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsCerberus = loadingTaskConfig;
 
@@ -206,7 +206,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdMtl )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsWaltHead = loadingTaskConfig;
@@ -223,7 +223,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsViveController = loadingTaskConfig;
 
@@ -244,7 +244,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdZip )
 			.addResourceDescriptor( rdMtl )
 			.addResourceDescriptor( rdObj );
@@ -264,7 +264,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdZip )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsZomaxOven = loadingTaskConfig;
@@ -281,7 +281,7 @@ var WWOBJLoader2Stage = (function () {
 				instanceNo: 0,
 				baseObject3d: pivot
 			} )
-			.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+			.setLoaderConfig( THREE.WLOBJLoader2, { useIndices: true } )
 			.addResourceDescriptor( rdZip )
 			.addResourceDescriptor( rdObj );
 		this.assetsDef.objsZomaxSink = loadingTaskConfig;
@@ -508,7 +508,7 @@ var WWOBJLoader2Stage = (function () {
 				resourceMTL.setContent( fileDataMtl.target.result );
 				prepData.addResource( resourceMTL );
 
-				var objLoader = new THREE.OBJLoader2();
+				var objLoader = new THREE.WLOBJLoader2();
 				objLoader.run( prepData );
 			};
 			fileReader.readAsText( fileMtl );
