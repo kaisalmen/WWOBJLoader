@@ -44,7 +44,7 @@ THREE.MeshTransfer.MeshReceiver = function() {
 	};
 	this.materials = [];
 };
-THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-beta';
+THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-preview';
 
 
 THREE.MeshTransfer.MeshReceiver.prototype = {
@@ -470,7 +470,7 @@ THREE.MeshTransfer.MeshTransmitter = function () {
 	this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
 };
 
-THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-beta';
+THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-preview';
 
 
 THREE.MeshTransfer.MeshTransmitter.prototype = {

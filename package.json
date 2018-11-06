@@ -1,13 +1,13 @@
 {
   "name": "wwobjloader2",
-  "version": "3.0.0-beta",
+  "version": "3.0.0-preview",
   "versions": {
-    "obj_loader2": "3.0.0-beta",
-    "worker_loader": "1.0.0-beta",
-    "worker_support": "3.0.0-beta",
-    "worker_loader_director": "3.0.0-beta",
-    "mesh_receiver": "2.0.0-beta",
-    "mesh_transmitter": "1.0.0-beta"
+    "obj_loader2": "3.0.0-preview",
+    "worker_loader": "1.0.0-preview",
+    "worker_support": "3.0.0-preview",
+    "worker_loader_director": "3.0.0-preview",
+    "mesh_receiver": "2.0.0-preview",
+    "mesh_transmitter": "1.0.0-preview"
   },
   "previous_versions": {
     "obj_loader2": "2.5.0",
@@ -79,7 +79,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.97.0"
+    "three": "^0.98.0"
   },
   "devDependencies": {
     "del": "^3.0.0",

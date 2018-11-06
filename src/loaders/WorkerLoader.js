@@ -16,7 +16,7 @@ THREE.WorkerLoader = function ( manager ) {
 	this.manager = THREE.MeshTransfer.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
 	this.loadingTask = new THREE.WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
 };
-THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-beta';
+THREE.WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-preview';
 
 
 THREE.WorkerLoader.prototype = {
@@ -359,8 +359,6 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );
 
 		}
-
-
 		this.dataReceiver = new THREE.MeshTransfer.MeshReceiver();
 		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
 
@@ -937,7 +935,8 @@ THREE.WorkerLoader.ResourceDescriptor = function ( resourceType, name, input ) {
 	this.content;
 	this.url = null;
 	this.filename = null;
-	this.path = '';
+	this.path;
+	this.resourcePath;
 	this.extension = null;
 	this.async = {
 		load: false,
@@ -1035,7 +1034,7 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 
 	setParserConfiguration: function ( parserConfiguration ) {
 		THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( this.parserConfiguration, parserConfiguration, true );
-		if ( this.parserConfiguration.name === undefined || this.parserConfiguration.name === null ) this.parserConfiguration.name = this.name;
+		this.parserConfiguration.filename = THREE.MeshTransfer.Validator.verifyInput( this.parserConfiguration.filename, this.filename );
 		return this;
 	},
 
@@ -1070,10 +1069,11 @@ THREE.WorkerLoader.ResourceDescriptor.prototype = {
 		copy.url = this.url;
 		copy.filename = this.filename;
 		copy.path = this.path;
+		copy.resourcePath = this.resourcePath;
 		copy.extension = this.extension;
 		copy.async.load = this.async.load;
 		copy.async.parse = this.async.parse;
-		copy.parserConfiguration.payloadType = this.parserConfiguration.payloadType;
+		THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype.applyProperties( copy.parserConfiguration, this.parserConfiguration, true );
 		this.result = null;
 		return copy;
 	}
@@ -1095,7 +1095,7 @@ THREE.WorkerLoader.WorkerSupport = function () {
 
 	this._reset();
 };
-THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-beta';
+THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
 
 THREE.WorkerLoader.WorkerSupport.prototype = {
 

@@ -138,7 +138,7 @@ var WWOBJLoader2Stage = (function () {
 		var parserConfigMtl = {
 			payloadType: 'text',
 			haveMtl: true,
-			texturePath: '../../resource/obj/male02/',
+			resourcePath: '../../resource/obj/male02/',
 			materialOptions: {}
 		};
 		var rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'male02.mtl', '../../resource/obj/male02/male02.mtl' )
@@ -161,7 +161,7 @@ var WWOBJLoader2Stage = (function () {
 		pivot.position.set( 200, 0, -75 );
 		this.scene.add( pivot );
 
-		parserConfigMtl.texturePath = '../../resource/obj/female02/';
+		parserConfigMtl.resourcePath = '../../resource/obj/female02/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' )
 			.setParserConfiguration( parserConfigMtl )
 			.configureAsync( false, false );
@@ -196,7 +196,7 @@ var WWOBJLoader2Stage = (function () {
 		pivot.position.set( 0, 0, 75 );
 		this.scene.add( pivot );
 
-		parserConfigMtl.texturePath = '../../resource/obj/walt/';
+		parserConfigMtl.resourcePath = '../../resource/obj/walt/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.mtl', '../../resource/obj/walt/WaltHead.mtl' )
 			.setParserConfiguration( parserConfigMtl )
 			.configureAsync( false, false );
@@ -233,7 +233,7 @@ var WWOBJLoader2Stage = (function () {
 		this.scene.add( pivot );
 
 		var rdZip = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.zip', '../../resource/obj/PTV1/PTV1.zip' );
-		parserConfigMtl.texturePath = '../../resource/PTV1/walt/';
+		parserConfigMtl.resourcePath = '../../resource/PTV1/walt/';
 		rdMtl = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'PTV1.mtl' )
 			.setParserConfiguration( parserConfigMtl )
 			.configureAsync( false, false );

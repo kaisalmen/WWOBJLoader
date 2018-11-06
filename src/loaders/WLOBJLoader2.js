@@ -23,7 +23,8 @@ THREE.WLOBJLoader2 = function ( manager ) {
 
 	this.modelName = '';
 	this.instanceNo = 0;
-	this.path = '';
+	this.path;
+	this.resourcePath;
 	this.useIndices = false;
 	this.disregardNormals = false;
 	this.materialPerSmoothingGroup = false;
@@ -39,7 +40,7 @@ THREE.WLOBJLoader2 = function ( manager ) {
 
 THREE.WLOBJLoader2.prototype = Object.create( THREE.WLOBJLoader2.prototype );
 THREE.WLOBJLoader2.prototype.constructor = THREE.WLOBJLoader2;
-THREE.WLOBJLoader2.OBJLOADER2_VERSION = '3.0.0-beta';
+THREE.WLOBJLoader2.OBJLOADER2_VERSION = '3.0.0-preview';
 
 
 THREE.WLOBJLoader2.prototype = {
@@ -77,6 +78,15 @@ THREE.WLOBJLoader2.prototype = {
 	setPath: function ( path ) {
 		this.path = THREE.MeshTransfer.Validator.verifyInput( path, this.path );
 		return this;
+	},
+
+
+	/**
+	 * Allow to specify resourcePath for dependencies of specified resource.
+	 * @param {string} resourcePath
+	 */
+	setResourcePath: function ( resourcePath ) {
+		this.resourcePath = THREE.MeshTransfer.Validator.verifyInput( resourcePath, this.resourcePath );
 	},
 
 	/**
@@ -183,15 +193,22 @@ THREE.WLOBJLoader2.prototype = {
 			}
 		};
 		if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.onParseProgress ) ) this.callbacks.onParseProgress( event );
-		if ( this.logging.enabled && this.logging.debug ) console.debug( content );
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.log( content );
+
+		}
 	},
 
 	_onError: function ( event ) {
-		var output = 'Error occurred while downloading!';
-
+		var output = '';
 		if ( event.currentTarget && event.currentTarget.statusText !== null ) {
 
-			output += '\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
+			output = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
+
+		} else if ( typeof( event ) === 'string' || event instanceof String ) {
+
+			output = event;
 
 		}
 		var scope = this;
@@ -211,20 +228,38 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {function} [onMeshAlter] Called after worker successfully delivered a single mesh
 	 * * @param {Object} parserConfiguration Provide additional instructions for MTL parsing:
-	 * 	- {String} path Relative path for texture loading
-	 *  - {String} [name] Name given to identify the mtl file
+	 * 	- {String} resourcePath Relative path for texture loading
+	 *  - {String} [mtlName] Name given to identify the mtl file
 	 *  - {string} [crossOrigin] CORS value
 	 *  - {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
 	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter, parserConfiguration ) {
+		if ( ! THREE.MeshTransfer.Validator.isValid( onError ) ) {
 
-		if ( ! THREE.MeshTransfer.Validator.isValid( onError ) ) onError = this._onError;
+			var scope = this;
+			onError = function ( event ) {
+				scope._onError( event );
+			};
+
+		}
 		if ( ! THREE.MeshTransfer.Validator.isValid( url ) ) onError( 'An invalid url was provided. Unable to continue!' );
+
+		if ( ! THREE.MeshTransfer.Validator.isValid( parserConfiguration ) ) {
+
+			parserConfiguration = {};
+
+		}
 
 		// find out if we have obj or mtl extension
 		var urlParts = url.split( '/' );
 		var filename = url;
-		if ( urlParts.length > 2 ) filename = urlParts[ urlParts.length - 1 ];
+		if ( urlParts.length > 2 ) {
+
+			filename = urlParts.pop();
+			parserConfiguration.path = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.path, urlParts.join( '/' ) + '/' );
+
+		}
+		parserConfiguration.payloadType = 'arraybuffer';
 
 		var filenameParts = filename.split( '.' );
 		var extension = null;
@@ -232,6 +267,21 @@ THREE.WLOBJLoader2.prototype = {
 
 		// unable to continue
 		if ( extension === null ) onError( 'File with no extension was supplied. Unable to continue!' );
+		extension = extension.toLowerCase();
+		if ( extension !== 'obj' && extension !== 'mtl' ) {
+
+			onError( 'Provided extension "' + extension + '" is not supported by "WLOBJLoader2".' );
+
+		} else if ( extension === 'mtl' ) {
+
+			parserConfiguration.payloadType = 'text';
+
+		}
+		this.setPath( parserConfiguration.path  );
+		this.setResourcePath( parserConfiguration.resourcePath );
+
+		// set default values bound to load
+		parserConfiguration.filename = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.filename, filename );
 
 		var scope = this;
 		if ( ! THREE.MeshTransfer.Validator.isValid( onFileLoadProgress ) ) {
@@ -252,39 +302,14 @@ THREE.WLOBJLoader2.prototype = {
 		}
 		this._setCallbacks( null, onMeshAlter, null );
 
-		var haveObj = extension.toLowerCase() === 'obj';
-		if ( ! haveObj && ( extension.toLowerCase() !== 'mtl' ) ) {
-
-			onError( 'Provided extension "' + extension + '" is not supported by "OBJLoader".' );
-
-		}
-
 		var fileLoaderOnLoad = function ( content ) {
-			if ( ! THREE.MeshTransfer.Validator.isValid( parserConfiguration ) && ! haveObj ) {
-
-				var texturePath = '';
-				if ( urlParts.length > 2 ) {
-
-					var urlPartsPath = urlParts.slice( 0, urlParts.length - 1).join( '/' ) + '/';
-					if ( urlPartsPath !== undefined && urlPartsPath !== null ) texturePath = urlPartsPath;
-
-				}
-				parserConfiguration = {
-					haveMtl: true,
-					filename: filename,
-					texturePath: texturePath,
-					crossOrigin: null,
-					materialOptions: {}
-				};
-
-			}
 			onLoad( scope.parse( content, parserConfiguration ) );
 		};
 
 		var fileLoader = new THREE.FileLoader( this.manager );
-		fileLoader.setPath( this.path );
-		fileLoader.setResponseType( haveObj ? 'arraybuffer' : 'text' );
-		fileLoader.load( url, fileLoaderOnLoad, onFileLoadProgress, onError );
+		fileLoader.setPath( this.path || this.resourcePath );
+		fileLoader.setResponseType( parserConfiguration.payloadType );
+		fileLoader.load( filename, fileLoaderOnLoad, onFileLoadProgress, onError );
 	},
 
 	/**
@@ -292,8 +317,8 @@ THREE.WLOBJLoader2.prototype = {
 	 *
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 * @param {Object} parserConfiguration Provide additional instructions for MTL parsing:
-	 * 	- {String} path Relative path for texture loading
-	 *  - {String} [name] Name given to identify the mtl file
+	 * 	- {String} resourcePath Relative path for texture loading
+	 *  - {String} [filename] Name given to identify the mtl file
 	 *  - {string} [crossOrigin] CORS value
 	 *  - {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
@@ -306,12 +331,21 @@ THREE.WLOBJLoader2.prototype = {
 
 		}
 
-		var parseResult;
-		if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration ) && parserConfiguration.haveMtl ) {
+		if ( ! THREE.MeshTransfer.Validator.isValid( parserConfiguration ) ) {
 
-			if ( this.logging.enabled ) console.time( 'OBJLoader parse MTL: ' + parserConfiguration.name );
+			parserConfiguration = {};
+
+		}
+		parserConfiguration.filename = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.filename, 'NoFileNameAvailable' );
+		parserConfiguration.crossOrigin = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.crossOrigin, 'anonymous' );
+		parserConfiguration.materialOptions = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.materialOptions, {} );
+
+		var parseResult;
+		if ( parserConfiguration.payloadType === 'text' ) {
+
+			if ( this.logging.enabled ) console.time( 'OBJLoader parse MTL: ' + parserConfiguration.filename );
 			parseResult = this._parseMtl( content, parserConfiguration );
-			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse MTL: ' + parserConfiguration.name );
+			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse MTL: ' + parserConfiguration.filename );
 
 		} else {
 
@@ -348,7 +382,7 @@ THREE.WLOBJLoader2.prototype = {
 				if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
 				parser.parse( content );
 
-			} else if ( typeof(content) === 'string' || content instanceof String ) {
+			} else if ( typeof( content ) === 'string' || content instanceof String ) {
 
 				if ( this.logging.enabled ) console.info( 'Parsing text...' );
 				parser.parseText( content );
@@ -371,32 +405,27 @@ THREE.WLOBJLoader2.prototype = {
 	 */
 	_parseMtl: function ( content, parserConfiguration ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.WLOBJLoader2" requires it for loading MTL files.' );
-		if ( ! THREE.MeshTransfer.Validator.isValid( content ) || ! ( typeof( content ) === 'string' || content instanceof String ) ) console.error( 'Provided content is not a String.' );
+		if ( ! THREE.MeshTransfer.Validator.isValid( content ) && typeof( content ) !== 'string' && ! ( content instanceof String ) && ! ( content instanceof ArrayBuffer ) ) {
 
+			console.error( 'Unable to parse mtl file: \"' + parserConfiguration.filename + '\". Provided content is neither a String nor an ArrayBuffer.' );
+
+		}
 		var mtlParseResult = {
 			materials: [],
 			materialCreator: null
 		};
-		if ( THREE.MeshTransfer.Validator.isValid( content ) && THREE.MeshTransfer.Validator.isValid( parserConfiguration ) ) {
+		if ( THREE.MeshTransfer.Validator.isValid( content ) ) {
 
 			var mtlLoader = new THREE.MTLLoader( this.manager );
-			var crossOrigin = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.crossOrigin, 'anonymous' );
-			mtlLoader.setCrossOrigin( crossOrigin );
-			if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration.texturePath ) ) mtlLoader.setResourcePath( parserConfiguration.texturePath );
-			if ( THREE.MeshTransfer.Validator.isValid( parserConfiguration.materialOptions ) ) mtlLoader.setMaterialOptions( parserConfiguration.materialOptions );
+			mtlLoader.setCrossOrigin( parserConfiguration.crossOrigin );
+			mtlLoader.setResourcePath( parserConfiguration.path || parserConfiguration.resourcePath );
+			mtlLoader.setMaterialOptions( parserConfiguration.materialOptions );
 
 			var contentAsText = content;
-			if ( typeof( content ) !== 'string' && ! ( content instanceof String ) ) {
+			if ( content instanceof ArrayBuffer && ( content.length > 0 || content.byteLength > 0 ) ) {
 
-				if ( content.length > 0 || content.byteLength > 0 ) {
-
-					contentAsText = THREE.LoaderUtils.decodeText( content );
-
-				} else {
-
-					var errorMessage = 'Unable to parse mtl as it it seems to be neither a String, an Array or an ArrayBuffer!';
-					if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
-				}
+				parserConfiguration.payloadType === 'arraybuffer';
+				contentAsText = THREE.LoaderUtils.decodeText( content );
 
 			}
 			mtlParseResult.materialCreator = mtlLoader.parse( contentAsText );

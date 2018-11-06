@@ -99,7 +99,7 @@
 					};
 
 					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Zaghetto.pcd', '../../resource/pcd/binary/Zaghetto.pcd' );
-					var parserConfiguration = {	url: rd.url };
+					var parserConfiguration = {	resourcePath: rd.path };
 					rd.setParserConfiguration( parserConfiguration );
 					rd.configureAsync( false, true );
 

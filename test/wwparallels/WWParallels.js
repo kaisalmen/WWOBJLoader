@@ -216,7 +216,7 @@ WWParallels.prototype = {
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
-			texturePath: '../../resource/obj/male02/',
+			resourcePath: '../../resource/obj/male02/',
 			materialOptions: {}
 		};
 		var callbackOnProcessResult = function ( resourceDescriptor ) {
@@ -238,7 +238,7 @@ WWParallels.prototype = {
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
-			texturePath: '../../resource/obj/female02/',
+			resourcePath: '../../resource/obj/female02/',
 			materialOptions: {}
 		};
 		rdMtl.setParserConfiguration( parserConfigurationMtl );
@@ -272,7 +272,7 @@ WWParallels.prototype = {
 		var parserConfigurationMtl = {
 			payloadType: 'text',
 			haveMtl: true,
-			texturePath: '../../resource/obj/walt/',
+			resourcePath: '../../resource/obj/walt/',
 			materialOptions: {}
 		};
 		rdMtl.setParserConfiguration( parserConfigurationMtl );

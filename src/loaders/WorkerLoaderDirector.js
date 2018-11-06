@@ -32,7 +32,7 @@ THREE.WorkerLoader.Director = function () {
 	this.objectsCompleted = 0;
 };
 
-THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '3.0.0-beta';
+THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '3.0.0-preview';
 THREE.WorkerLoader.Director.MAX_WEB_WORKER = 16;
 THREE.WorkerLoader.Director.MAX_QUEUE_SIZE = 2048;
 

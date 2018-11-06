@@ -6,7 +6,7 @@ THREE.WLDRACOLoader = function ( manager ) {
 	THREE.DRACOLoader.call( this, manager );
 	this.builderPath = '../';
 	this.callbackDataReceiver = null;
-	this.url = 'js/libs/draco/';
+	this.resourcePath = 'js/libs/draco/';
 };
 
 THREE.WLDRACOLoader.prototype = Object.create( THREE.DRACOLoader.prototype );
@@ -20,12 +20,12 @@ THREE.WLDRACOLoader.prototype.setCallbackDataReceiver = function ( callbackDataR
 	this.callbackDataReceiver = callbackDataReceiver;
 };
 
-THREE.WLDRACOLoader.prototype.setUrl = function ( url ) {
-	this.url = url;
+THREE.WLDRACOLoader.prototype.setResourcePath = function ( resourcePath ) {
+	this.resourcePath = resourcePath;
 };
 
 THREE.WLDRACOLoader.prototype.parse = function ( arrayBuffer, options ) {
-	THREE.DRACOLoader.setDecoderPath( this.url );
+	THREE.DRACOLoader.setDecoderPath( this.resourcePath );
 	THREE.DRACOLoader.setDecoderConfig( { type: 'js' } );
 
 	var scope = this;
@@ -127,7 +127,8 @@ THREE.WLDRACOLoader.prototype.buildWorkerCode = function ( codeSerializer, scope
 		code: getDecoderModule.toString()
 	};
 	var workerCode = codeSerializer.serializeClass( 'THREE.DRACOLoader', THREE.DRACOLoader, 'THREE.DRACOLoader', null, null, null, overrideFunctions );
-	workerCode += codeSerializer.serializeClass( 'THREE.WLDRACOLoader', THREE.WLDRACOLoader, 'THREE.WLDRACOLoader', 'THREE.DRACOLoader', null, [ 'setBasePath', 'setUrl', 'setCallbackDataReceiver', 'parse' ] );
+	workerCode += codeSerializer.serializeClass( 'THREE.WLDRACOLoader', THREE.WLDRACOLoader, 'THREE.WLDRACOLoader', 'THREE.DRACOLoader', null,
+		[ 'setBuilderPath', 'setResourcePath', 'setCallbackDataReceiver', 'parse' ] );
 	return {
 		code: workerCode,
 		parserName: 'THREE.WLDRACOLoader',
@@ -207,7 +208,7 @@ THREE.WWDRACOLoader.prototype = {
 
 		}
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'DracoLoaderArrayBuffer', rawBuffer );
-		var parserConfiguration = {	url: this.dracoLibsPath };
+		var parserConfiguration = {	resourcePath: this.dracoLibsPath };
 		rd.setParserConfiguration( parserConfiguration );
 		rd.setDataOption( 'attributeUniqueIdMap', attributeUniqueIdMap );
 		rd.setDataOption( 'attributeTypeMap', attributeTypeMap );
