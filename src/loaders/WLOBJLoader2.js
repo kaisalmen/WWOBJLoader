@@ -105,7 +105,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
 	 */
 	setMaterials: function ( materialsOrmaterialCreator ) {
-		var materials = [];
+		var materials = {};
 		if ( materialsOrmaterialCreator instanceof THREE.MTLLoader.MaterialCreator ) {
 
 			materials = this._handleMtlMaterials( materialsOrmaterialCreator );

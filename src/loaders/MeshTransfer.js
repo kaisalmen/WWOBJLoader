@@ -42,7 +42,7 @@ THREE.MeshTransfer.MeshReceiver = function() {
 		onMeshAlter: null,
 		onLoadMaterials: null
 	};
-	this.materials = [];
+	this.materials = {};
 };
 THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-preview';
 
