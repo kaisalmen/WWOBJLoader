@@ -98,7 +98,7 @@
 					};
 
 					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco', window.location.href ).href;
-//					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'bunny.drc', '../../resource/draco/bunny.drc' );
+					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'bunny.drc', '../../resource/draco/bunny.drc' );
 					var rdCaesar = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'caesar.drc', '../../resource/draco/caesar.drc' );
 					var rdHannibal2 = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'hannibal2.drc', '../../resource/draco/hannibal2.drc' );
 					var parserConfiguration = { resourcePath: dracoLibsPath };
@@ -111,7 +111,7 @@
 						.setLoaderConfig( THREE.WLDRACOLoader, {
 							builderPath: '../../'
 						} )
-						.addResourceDescriptor( rdCaesar )
+						.addResourceDescriptor( rd )
 						.setCallbacksPipeline( callbackOnLoad );
 					new THREE.WorkerLoader()
 						.executeLoadingTaskConfig( loadingTaskConfig );

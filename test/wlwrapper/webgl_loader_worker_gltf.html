@@ -30,7 +30,6 @@
 		<script src="../../src/loaders/MeshTransfer.js"></script>
 		<script src="../../src/loaders/WorkerLoader.js"></script>
 		<script src="../../src/loaders/wrapper/WLDRACOLoader.js"></script>
-		<script src="../../src/loaders/wrapper/WLGLTFLoader.js"></script>
 
 		<script>
 
@@ -95,35 +94,17 @@
 					local.scale.set( 1.0, 1.0, 1.0 );
 					this.scene.add( local );
 
-					var scope = this;
-					var callbackOnLoad = function ( object3d ) {
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + object3d.name } } );
+					var callbackOnLoad = function ( gltfData ) {
+						local.add( gltfData.scene );
 					};
 
-					var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Monster.gltf', '../../resource/gltf/Monster/glTF-Draco/Monster.gltf' );
-					rd.configureAsync( false, false );
-					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco/gltf', window.location.href ).href;
-
-					var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-						baseObject3d: local
-					} )
-						.setLoaderConfig( THREE.WLGLTFLoader, {
-							dracoBuilderPath: '../../',
-							dracoLibsPath: dracoLibsPath,
-							path: '../../resource/gltf/Monster/glTF-Draco/'
-						} )
-						.addResourceDescriptor( rd )
-						.setCallbacksPipeline( callbackOnLoad );
-					new THREE.WorkerLoader()
-						.executeLoadingTaskConfig( loadingTaskConfig );
-/*
 					var gltfLoader = new THREE.GLTFLoader();
-					gltfLoader.setPath( '../../resource/gltf/Monster/glTF-Draco/' );
+
+					gltfLoader.setDRACOLoader( new THREE.WLDRACOLoader() );
+					var dracoLibsPath = new URL( '../../node_modules/three/examples/js/libs/draco/gltf/', window.location.href ).href;
 					THREE.DRACOLoader.setDecoderPath( dracoLibsPath );
 
-					gltfLoader.setDRACOLoader( new THREE.DRACOLoader() );
-					gltfLoader.load( rd.url );
-*/
+					gltfLoader.load( '../../resource/gltf/Monster/glTF-Draco/Monster.gltf', callbackOnLoad );
 				},
 
 				_reportProgress: function( event ) {
