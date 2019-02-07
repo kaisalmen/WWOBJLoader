@@ -1,5 +1,5 @@
 if ( ! THREE.WLOBJLoader2 ) { THREE.WLOBJLoader2 = {} }
-if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTransfer.MeshTransmitter || ! THREE.MeshTransfer.Validator ) {
+if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTransfer.Validator ) {
 
 	console.error( '"THREE.MeshTransfer" is not available, but "THREE.WLOBJLoader2" requires it. Please include "MeshTransfer.js" in your HTML.' );
 

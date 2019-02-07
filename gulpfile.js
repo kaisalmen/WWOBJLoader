@@ -8,9 +8,9 @@ var rename = require( 'gulp-rename' );
 var concat = require( 'gulp-concat' );
 var uglify = require( 'gulp-uglify' );
 var header = require( 'gulp-header' );
-var replace = require( 'gulp-replace-task' );
+var replace = require( 'gulp-replace' );
 var remoteSrc = require( 'gulp-remote-src' );
-var gutil = require( 'gulp-util' );
+var log = require( 'fancy-log' );
 var decompress = require('gulp-decompress');
 
 var jsdoc = require( 'gulp-jsdoc3' );
@@ -33,83 +33,65 @@ function buildHeader() {
 		"\n\n'use strict';\n\n";
 };
 
-gulp.task( 'clean-build', function () {
-	return del.sync( DIR.BUILD );
+gulp.task( 'clean-build', function ( done ) {
+	return del( DIR.BUILD );
 });
 
-gulp.task( 'set-versions', function () {
+gulp.task( 'set-versions', function ( done ) {
 	gulp.src(
 		[ 'src/loaders/WLOBJLoader2.js' ]
 	)
-	.pipe( replace( {
-		patterns: [	{
-				match: /THREE\.WLOBJLoader2\.OBJLOADER2_VERSION\s*=.*/g,
-				replacement: "THREE.WLOBJLoader2.OBJLOADER2_VERSION = '"+ packageContent.versions.obj_loader2 + "';"
-			} ]
-	} ) )
+	.pipe( replace( /THREE\.WLOBJLoader2\.OBJLOADER2_VERSION\s*=.*/g,
+		"THREE.WLOBJLoader2.OBJLOADER2_VERSION = '"+ packageContent.versions.obj_loader2 + "';" ) )
 	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
 		[ 'src/loaders/MeshTransfer.js' ]
 	)
-	.pipe( replace( {
-		patterns: [ {
-				match: /THREE\.MeshTransfer\.MeshReceiver\.MESH_RECEIVER_VERSION\s*=.*/g,
-				replacement: "THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '"+ packageContent.versions.mesh_receiver + "';"
-			},
-			{
-				match: /THREE\.MeshTransfer\.MeshTransmitter\.MESH_TRANSMITTER_VERSION\s*=.*/g,
-				replacement: "THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '"+ packageContent.versions.mesh_transmitter + "';"
-			} ]
-	} ) )
+	.pipe( replace( /THREE\.MeshTransfer\.MeshReceiver\.MESH_RECEIVER_VERSION\s*=.*/g,
+		"THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '"+ packageContent.versions.mesh_receiver + "';" ) )
+	.pipe( replace( /THREE\.MeshTransfer\.MeshTransmitter\.MESH_TRANSMITTER_VERSION\s*=.*/g,
+		"THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '"+ packageContent.versions.mesh_transmitter + "';" ) )
 	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
 		[ 'src/loaders/WorkerLoader.js' ]
 	)
-	.pipe( replace( {
-		patterns: [ {
-				match: /THREE\.WorkerLoader\.WORKER_LOADER_VERSION\s*=.*/g,
-				replacement: "THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.worker_loader + "';"
-			},
-			{
-				match: /THREE\.WorkerLoader\.WorkerSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
-				replacement: "THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.worker_support + "';"
-			} ]
-	} ) )
+	.pipe( replace( /THREE\.WorkerLoader\.WORKER_LOADER_VERSION\s*=.*/g,
+		"THREE.WorkerLoader.WORKER_LOADER_VERSION = '" + packageContent.versions.worker_loader + "';" ) )
+	.pipe( replace( /THREE\.WorkerLoader\.WorkerSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
+		"THREE.WorkerLoader.WorkerSupport.WORKER_SUPPORT_VERSION = '" + packageContent.versions.worker_support + "';" ) )
 	.pipe( gulp.dest( "src/loaders" ) );
 
 	gulp.src(
 		[ 'src/loaders/WorkerLoaderDirector.js' ]
 	)
-	.pipe( replace( {
-		patterns: [	{
-			match: /THREE\.WorkerLoader\.Director\.WORKER_LOADER_DIRECTOR_VERSION\s*=.*/g,
-			replacement: "THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.worker_loader_director + "';"
-		} ]
-	} ) )
+	.pipe( replace( /THREE\.WorkerLoader\.Director\.WORKER_LOADER_DIRECTOR_VERSION\s*=.*/g,
+		"THREE.WorkerLoader.Director.WORKER_LOADER_DIRECTOR_VERSION = '"+ packageContent.versions.worker_loader_director + "';" ) )
 	.pipe( gulp.dest( "src/loaders" ) );
+	done();
 } );
 
 
-gulp.task( 'bundle-loader-support', [ 'bundle-worker-loader' ], function() {
+gulp.task( 'bundle-objloader2', function ( done ) {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
-			'src/loaders/MeshTransfer.js'
+			'src/loaders/WLOBJLoader2.js'
 		]
 	)
-	.pipe( concat( 'MeshTransfer.js' ) )
+	.pipe( concat( 'WLOBJLoader2.js' ) )
 	.pipe( header( builtHeader ) )
 	.pipe( gulp.dest( DIR.BUILD ) )
 
 	.pipe( uglify( { mangle: { toplevel: true } } ) )
-	.pipe( rename( { basename: 'MeshTransfer.min' } ) )
+	.pipe( rename( { basename: 'WLOBJLoader2.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
+	done();
 } );
 
 
-gulp.task( 'bundle-worker-loader', [ 'bundle-objloader2' ], function() {
+gulp.task( 'bundle-worker-loader', gulp.series( 'bundle-objloader2', function( done ) {
 	var builtHeader = buildHeader();
 	gulp.src(
 		[
@@ -124,27 +106,29 @@ gulp.task( 'bundle-worker-loader', [ 'bundle-objloader2' ], function() {
 	.pipe( uglify( { mangle: { toplevel: true } } ) )
 	.pipe( rename( { basename: 'WorkerLoader.min' } ) )
 	.pipe( gulp.dest( DIR.BUILD ) );
-} );
+	done();
+} ) );
 
 
-gulp.task( 'bundle-objloader2', function () {
+gulp.task( 'bundle-loader-support', gulp.series( 'bundle-worker-loader', function( done ) {
 	var builtHeader = buildHeader();
 	gulp.src(
-			[
-				'src/loaders/WLOBJLoader2.js'
-			]
-		)
-		.pipe( concat( 'WLOBJLoader2.js' ) )
-		.pipe( header( builtHeader ) )
-		.pipe( gulp.dest( DIR.BUILD ) )
+		[
+			'src/loaders/MeshTransfer.js'
+		]
+	)
+	.pipe( concat( 'MeshTransfer.js' ) )
+	.pipe( header( builtHeader ) )
+	.pipe( gulp.dest( DIR.BUILD ) )
 
-		.pipe( uglify( { mangle: { toplevel: true } } ) )
-		.pipe( rename( { basename: 'WLOBJLoader2.min' } ) )
-		.pipe( gulp.dest( DIR.BUILD ) );
-} );
+	.pipe( uglify( { mangle: { toplevel: true } } ) )
+	.pipe( rename( { basename: 'MeshTransfer.min' } ) )
+	.pipe( gulp.dest( DIR.BUILD ) );
+	done();
+} ) );
 
 
-gulp.task( 'create-docs', function ( cb ) {
+gulp.task( 'create-docs', function ( done, cb ) {
 	del.sync( DIR.DOCS + 'fonts' );
 	del.sync( DIR.DOCS + 'img' );
 	del.sync( DIR.DOCS + 'scripts' );
@@ -167,7 +151,8 @@ gulp.task( 'create-docs', function ( cb ) {
 
 	gulp.src( [ 'CHANGELOG.md' ] )
 		.pipe( gulp.dest( DIR.DOCS ) );
-});
+	done();
+} );
 
 
 var exampleDef = {
@@ -196,14 +181,15 @@ var exampleDef = {
 	}
 };
 
-gulp.task( 'prepare-examples', function () {
+gulp.task( 'prepare-examples', function ( done ) {
 	exampleDef.css.common = fs.readFileSync( 'test/common/common.css', 'utf8' );
 	exampleDef.js.ext_tabs = "\t\t";
 	exampleDef.dir.dest = DIR.EXAMPLES;
+	done();
 });
 
 
-gulp.task( 'clean-examples', function () {
+gulp.task( 'clean-examples', function ( done ) {
 	del.sync( DIR.TEST + 'objloader2/' + 'main.html' );
 	del.sync( DIR.TEST + 'objloader2/' + 'main.min.html' );
 	del.sync( DIR.TEST + 'objloader2/' + 'webgl_loader*.html' );
@@ -219,10 +205,11 @@ gulp.task( 'clean-examples', function () {
 	del.sync( DIR.TEST + 'meshspray/' + 'main.html' );
 	del.sync( DIR.TEST + 'meshspray/' + 'main.min.html' );
 	del.sync( DIR.TEST + 'meshspray/' + 'webgl_loader*.html' );
+	done();
 });
 
 
-gulp.task( 'create-obj2-examples', function () {
+gulp.task( 'create-obj2-examples', function ( done ) {
 	exampleDef.css.style_all = exampleDef.css.common;
 	exampleDef.css.style_tabs = "\t\t\t";
 	exampleDef.css.link_all = "";
@@ -235,7 +222,7 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/objloader2/template/main.three.html';
 	exampleDef.dir.dest = 'test/objloader2';
-	exampleDef.file.out = 'webgl_loader_obj2';
+	exampleDef.file.out = 'webgl_loader_worker_obj2';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -266,10 +253,12 @@ gulp.task( 'create-obj2-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"./OBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
+
+	done();
 });
 
 
-gulp.task( 'create-wwobj2-examples', function () {
+gulp.task( 'create-wwobj2-examples', function ( done ) {
 	exampleDef.css.style_all = exampleDef.css.common;
 	exampleDef.css.style_tabs = "\t\t\t";
 	exampleDef.css.link_all = "";
@@ -283,7 +272,7 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2/template/main.three.html';
 	exampleDef.dir.dest = 'test/wwobjloader2';
-	exampleDef.file.out = 'webgl_loader_obj2_options';
+	exampleDef.file.out = 'webgl_loader_worker_obj2_options';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -317,10 +306,12 @@ gulp.task( 'create-wwobj2-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Example.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
+
+	done();
 });
 
 
-gulp.task( 'create-wwobj2_parallels-examples', function () {
+gulp.task( 'create-wwobj2_parallels-examples', function ( done ) {
 	exampleDef.css.main = fs.readFileSync( 'test/wwparallels/main.css', 'utf8' );
 	exampleDef.css.style_all = exampleDef.css.common + "\n" + exampleDef.css.main;
 	exampleDef.css.style_tabs = "\t\t\t";
@@ -335,7 +326,7 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwparallels/template/main.three.html';
 	exampleDef.dir.dest = 'test/wwparallels';
-	exampleDef.file.out = 'webgl_loader_obj2_run_director';
+	exampleDef.file.out = 'webgl_loader_worker_multi_director';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -370,10 +361,12 @@ gulp.task( 'create-wwobj2_parallels-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"./WWParallels.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
+
+	done();
 });
 
 
-gulp.task( 'create-wwobj2_stage-examples', function () {
+gulp.task( 'create-wwobj2_stage-examples', function ( done ) {
 	exampleDef.css.style_all = exampleDef.css.common;
 	exampleDef.css.style_tabs = "\t\t\t";
 	exampleDef.css.link_all = "";
@@ -387,7 +380,7 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/wwobjloader2stage/template/main.three.html';
 	exampleDef.dir.dest = 'test/wwobjloader2stage';
-	exampleDef.file.out = 'webgl_loader_obj2_ww_stage';
+	exampleDef.file.out = 'webgl_worker_loader_obj2_ww_stage';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -421,10 +414,12 @@ gulp.task( 'create-wwobj2_stage-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"./WWOBJLoader2Stage.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
+
+	done();
 });
 
 
-gulp.task( 'create-meshspray-examples', function () {
+gulp.task( 'create-meshspray-examples', function ( done ) {
 	exampleDef.css.main = "";
 	exampleDef.css.style_all = exampleDef.css.common;
 	exampleDef.css.style_tabs = "\t\t\t";
@@ -438,7 +433,7 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.js.inline_tabs = "\t\t\t";
 	exampleDef.file.src = 'test/meshspray/template/main.three.html';
 	exampleDef.dir.dest = 'test/meshspray';
-	exampleDef.file.out = 'webgl_loader_obj2_meshspray';
+	exampleDef.file.out = 'webgl_loader_worker_meshspray';
 	buildExample();
 
 	exampleDef.css.style_all = "";
@@ -470,6 +465,8 @@ gulp.task( 'create-meshspray-examples', function () {
 	exampleDef.js.ext_code += "<script src=\"./MeshSpray.js\"\>\</script\>";
 	exampleDef.file.out = 'main.src';
 	buildExample();
+
+	done();
 });
 
 
@@ -537,56 +534,39 @@ function buildExample() {
 	}
 
 	gulp.src( [ exampleDef.file.src ] )
-		.pipe( replace( {
-			patterns: [
-				{
-					match: /\/\*STUB_JS_THREE\*\//g,
-					replacement: js_ext_three
-				},
-				{
-					match: /\/\*STUB_JS_EXT\*\//g,
-					replacement: js_ext_code
-				},
-				{
-					match: /\/\*STUB_JS_INLINE\*\//g,
-					replacement: js_inline_code
-				},
-				{
-					match: /\/\*STUB_CSS_LINK\*\//g,
-					replacement: css_link_all
-				},
-				{
-					match: /\/\*STUB_CSS_EMBED\*\//g,
-					replacement: css_style_all
-				}
-			]
-		} ) )
+		.pipe( replace( /\/\*STUB_JS_THREE\*\//g, js_ext_three ) )
+		.pipe( replace( /\/\*STUB_JS_EXT\*\//g, js_ext_code ) )
+		.pipe( replace( /\/\*STUB_JS_INLINE\*\//g, js_inline_code ) )
+		.pipe( replace( /\/\*STUB_CSS_LINK\*\//g, css_link_all ) )
+		.pipe( replace( /\/\*STUB_CSS_EMBED\*\//g, css_style_all ) )
 		.pipe( rename( { basename: exampleDef.file.out } ) )
 		.pipe( gulp.dest( exampleDef.dir.dest ) );
 };
 
-gulp.task( 'dl-female02', function() {
-	gutil.log( 'Downloading female02:' );
+gulp.task( 'dl-female02', function( done ) {
+	log( 'Downloading female02:' );
 	return remoteSrc(
 		[ 'female02.obj', 'female02.mtl', 'female02_vertex_colors.obj', '01_-_Default1noCulling.JPG', '02_-_Default1noCulling.JPG', '03_-_Default1noCulling.JPG' ],
 		{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/female02/'
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/female02/'
 		}
 	).pipe( gulp.dest( './resource/obj/female02/' ) );
+	done();
 });
 
-gulp.task( 'dl-male02', [ 'dl-female02' ], function() {
-	gutil.log( 'Downloading male02:' );
+gulp.task( 'dl-male02', gulp.series( 'dl-female02', function( done ) {
+	log( 'Downloading male02:' );
 	return remoteSrc(
 		[ 'male02.obj', 'male02.mtl', '01_-_Default1noCulling.JPG', 'male-02-1noCulling.JPG', 'orig_02_-_Defaul1noCulling.JPG' ],
 		{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/male02/'
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/male02/'
 		}
 	).pipe( gulp.dest( './resource/obj/male02/' ) );
-});
+	done();
+} ) );
 
-gulp.task( 'dl-cerberus', [ 'dl-male02' ], function() {
-	gutil.log( 'Downloading cerberus:' );
+gulp.task( 'dl-cerberus', gulp.series( 'dl-male02', function( done ) {
+	log( 'Downloading cerberus:' );
 	return remoteSrc(
 		[ 'Cerberus.obj' ],
 		{
@@ -594,10 +574,11 @@ gulp.task( 'dl-cerberus', [ 'dl-male02' ], function() {
 		}
 	)
 	.pipe( gulp.dest( './resource/obj/cerberus/' ) );
-});
+	done();
+} ) );
 
-gulp.task( 'dl-vive-controller', [ 'dl-cerberus' ], function() {
-	gutil.log( 'Downloading vive-controller:' );
+gulp.task( 'dl-vive-controller', gulp.series( 'dl-cerberus', function( done ) {
+	log( 'Downloading vive-controller:' );
 	return remoteSrc(
 		[ 'vr_controller_vive_1_5.obj' ],
 		{
@@ -605,21 +586,23 @@ gulp.task( 'dl-vive-controller', [ 'dl-cerberus' ], function() {
 		}
 	)
 	.pipe( gulp.dest( './resource/obj/vive-controller/' ) );
-});
+	done();
+} ) );
 
-gulp.task( 'dl-walt', [ 'dl-vive-controller' ], function() {
-	gutil.log( 'Downloading walt:' );
+gulp.task( 'dl-walt', gulp.series( 'dl-vive-controller', function( done ) {
+	log( 'Downloading walt:' );
 	return remoteSrc(
 		[ 'WaltHead.obj', 'WaltHead.mtl' ],
 		{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/obj/walt/'
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/walt/'
 		}
 	)
 	.pipe( gulp.dest( './resource/obj/walt/' ) );
-});
+	done();
+} ) );
 
-gulp.task( 'dl-ptv1', [ 'dl-walt' ], function() {
-	gutil.log( 'Downloading model PTV1:' );
+gulp.task( 'dl-ptv1', gulp.series( 'dl-walt', function( done ) {
+	log( 'Downloading model PTV1:' );
 	return remoteSrc(
 		[ 'PTV1.zip' ],
 		{
@@ -628,10 +611,14 @@ gulp.task( 'dl-ptv1', [ 'dl-walt' ], function() {
 	)
 	.pipe( decompress() )
 	.pipe( gulp.dest( './resource/obj/PTV1/' ) );
-});
+	done();
+} ) );
 
-gulp.task( 'dl-sink', [ 'dl-ptv1' ], function() {
-	gutil.log( 'Downloading model Sink from Zomax (Cornelius Dämmrich):' );
+gulp.task( 'dl-sink', gulp.series( 'dl-ptv1', function( done ) {
+	log( 'Downloading models from Zomax currently not possible' );
+	done();
+/*
+	log( 'Downloading model Sink from Zomax (Cornelius Dämmrich):' );
 	return remoteSrc(
 		[ 'zomax-net_haze-sink-scene.zip' ],
 		{
@@ -640,10 +627,14 @@ gulp.task( 'dl-sink', [ 'dl-ptv1' ], function() {
 	)
 	.pipe( decompress() )
 	.pipe( gulp.dest( './resource/obj/zomax/' ) );
-});
+*/
+} ) );
 
-gulp.task( 'dl-oven', [ 'dl-sink' ], function() {
-	gutil.log( 'Downloading model Oven from Zomax (Cornelius Dämmrich):' );
+gulp.task( 'dl-oven', gulp.series( 'dl-sink', function( done ) {
+	log( 'Downloading models from Zomax currently not possible' );
+	done();
+/*
+	log( 'Downloading model Oven from Zomax (Cornelius Dämmrich):' );
 	return remoteSrc(
 		[ 'zomax-net_haze-oven-scene.zip' ],
 		{
@@ -652,37 +643,38 @@ gulp.task( 'dl-oven', [ 'dl-sink' ], function() {
 	)
 	.pipe( decompress() )
 	.pipe( gulp.dest( './resource/obj/zomax/' ) );
-});
+*/
+} ) );
 
 
 gulp.task(
 	'build-examples',
-	[
+	gulp.series(
 		'prepare-examples',
 		'create-obj2-examples',
 		'create-wwobj2-examples',
 		'create-wwobj2_stage-examples',
 		'create-wwobj2_parallels-examples',
 		'create-meshspray-examples'
-	]
+	)
 );
 
 
 gulp.task(
 	'get-resources',
-	[
+	gulp.series(
 		'dl-oven'
-	]
+	)
 );
 
 
 gulp.task(
 	'default',
-	[
+	gulp.series(
 		'clean-build',
 		'set-versions',
 		'bundle-loader-support',
 		'create-docs',
 		'build-examples'
-	]
+	)
 );
