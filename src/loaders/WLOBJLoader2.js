@@ -1,10 +1,4 @@
 if ( ! THREE.WLOBJLoader2 ) { THREE.WLOBJLoader2 = {} }
-if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTransfer.Validator ) {
-
-	console.error( '"THREE.MeshTransfer" is not available, but "THREE.WLOBJLoader2" requires it. Please include "MeshTransfer.js" in your HTML.' );
-
-}
-
 
 /**
  * Use this class to load OBJ data from files or to parse OBJ data from an arraybuffer
@@ -15,7 +9,7 @@ if ( ! THREE.MeshTransfer || ! THREE.MeshTransfer.MeshReceiver || ! THREE.MeshTr
 THREE.WLOBJLoader2 = function ( manager ) {
 	console.info( 'Using THREE.WLOBJLoader2 version: ' + THREE.WLOBJLoader2.OBJLOADER2_VERSION );
 
-	this.manager = THREE.MeshTransfer.Validator.verifyInput( manager, THREE.DefaultLoadingManager );
+	this.manager = ( manager && manager !== null ) ? manager : THREE.DefaultLoadingManager;
 	this.logging = {
 		enabled: true,
 		debug: false
@@ -31,7 +25,8 @@ THREE.WLOBJLoader2 = function ( manager ) {
 	this.useOAsMesh = false;
 	this.baseObject3d = new THREE.Group();
 
-	this.dataReceiver = new THREE.MeshTransfer.MeshReceiver();
+//	this.dataReceiver = new THREE.MeshTransfer.MeshReceiver();
+	this.materials = {};
 	this.callbacks = {
 		onParseProgress: null,
 		genericErrorHandler: null
@@ -41,6 +36,30 @@ THREE.WLOBJLoader2 = function ( manager ) {
 THREE.WLOBJLoader2.prototype = Object.create( THREE.WLOBJLoader2.prototype );
 THREE.WLOBJLoader2.prototype.constructor = THREE.WLOBJLoader2;
 THREE.WLOBJLoader2.OBJLOADER2_VERSION = '3.0.0-preview';
+
+THREE.WLOBJLoader2.Validator = {
+
+	/**
+	 * If given input is null or undefined, false is returned otherwise true.
+	 *
+	 * @param input Can be anything
+	 * @returns {boolean}
+	 */
+	isValid: function( input ) {
+		return ( input !== null && input !== undefined );
+	},
+
+	/**
+	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
+	 *
+	 * @param input Can be anything
+	 * @param defaultValue Can be anything
+	 * @returns {*}
+	 */
+	verifyInput: function( input, defaultValue ) {
+		return ( input === null || input === undefined ) ? defaultValue : input;
+	}
+};
 
 
 THREE.WLOBJLoader2.prototype = {
@@ -56,7 +75,7 @@ THREE.WLOBJLoader2.prototype = {
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
+//		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
 		return this;
 	},
 
@@ -66,7 +85,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {string} modelName
 	 */
 	setModelName: function ( modelName ) {
-		this.modelName = THREE.MeshTransfer.Validator.verifyInput( modelName, this.modelName );
+		this.modelName = THREE.WLOBJLoader2.Validator.verifyInput( modelName, this.modelName );
 		return this;
 	},
 
@@ -76,7 +95,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {string} path URL
 	 */
 	setPath: function ( path ) {
-		this.path = THREE.MeshTransfer.Validator.verifyInput( path, this.path );
+		this.path = THREE.WLOBJLoader2.Validator.verifyInput( path, this.path );
 		return this;
 	},
 
@@ -86,7 +105,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {string} resourcePath
 	 */
 	setResourcePath: function ( resourcePath ) {
-		this.resourcePath = THREE.MeshTransfer.Validator.verifyInput( resourcePath, this.resourcePath );
+		this.resourcePath = THREE.WLOBJLoader2.Validator.verifyInput( resourcePath, this.resourcePath );
 	},
 
 	/**
@@ -95,7 +114,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {THREE.Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
 	 */
 	setBaseObject3d: function ( baseObject3d ) {
-		this.baseObject3d = THREE.MeshTransfer.Validator.verifyInput( baseObject3d, this.baseObject3d );
+		this.baseObject3d = THREE.WLOBJLoader2.Validator.verifyInput( baseObject3d, this.baseObject3d );
 		return this;
 	},
 
@@ -115,7 +134,7 @@ THREE.WLOBJLoader2.prototype = {
 			materials = materialsOrmaterialCreator
 
 		}
-		this.dataReceiver.setMaterials( materials );
+//		this.dataReceiver.setMaterials( materials );
 		return this;
 	},
 
@@ -164,13 +183,13 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {Function} genericErrorHandler
 	 */
 	setGenericErrorHandler: function ( genericErrorHandler ) {
-		this.callbacks.genericErrorHandler = THREE.MeshTransfer.Validator.verifyInput( genericErrorHandler, null );
+		this.callbacks.genericErrorHandler = THREE.WLOBJLoader2.Validator.verifyInput( genericErrorHandler, null );
 	},
 
 
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
-		if ( THREE.MeshTransfer.Validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
-		this.dataReceiver._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
+		if ( THREE.WLOBJLoader2.Validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
+//		this.dataReceiver._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
 	},
 
 	/**
@@ -182,7 +201,7 @@ THREE.WLOBJLoader2.prototype = {
 	 * @param {number} numericalValue Numerical value describing the progress
 	 */
 	_onProgress: function ( type, text, numericalValue ) {
-		var content = THREE.MeshTransfer.Validator.isValid( text ) ? text : '';
+		var content = THREE.WLOBJLoader2.Validator.isValid( text ) ? text : '';
 		var event = {
 			detail: {
 				type: type,
@@ -192,7 +211,7 @@ THREE.WLOBJLoader2.prototype = {
 				numericalValue: numericalValue
 			}
 		};
-		if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.onParseProgress ) ) this.callbacks.onParseProgress( event );
+		if ( THREE.WLOBJLoader2.Validator.isValid( this.callbacks.onParseProgress ) ) this.callbacks.onParseProgress( event );
 		if ( this.logging.enabled && this.logging.debug ) {
 
 			console.log( content );
@@ -216,7 +235,7 @@ THREE.WLOBJLoader2.prototype = {
 			scope._onProgress( 'error', text, numericalValue );
 		};
 		onProgressScoped( output, - 1 );
-		if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( output );
+		if ( THREE.WLOBJLoader2.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( output );
 	},
 
 	/**
@@ -234,7 +253,7 @@ THREE.WLOBJLoader2.prototype = {
 	 *  - {Object} [materialOptions] Set material loading options for MTLLoader
 	 */
 	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter, parserConfiguration ) {
-		if ( ! THREE.MeshTransfer.Validator.isValid( onError ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( onError ) ) {
 
 			var scope = this;
 			onError = function ( event ) {
@@ -242,9 +261,9 @@ THREE.WLOBJLoader2.prototype = {
 			};
 
 		}
-		if ( ! THREE.MeshTransfer.Validator.isValid( url ) ) onError( 'An invalid url was provided. Unable to continue!' );
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( url ) ) onError( 'An invalid url was provided. Unable to continue!' );
 
-		if ( ! THREE.MeshTransfer.Validator.isValid( parserConfiguration ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( parserConfiguration ) ) {
 
 			parserConfiguration = {};
 
@@ -256,7 +275,7 @@ THREE.WLOBJLoader2.prototype = {
 		if ( urlParts.length > 2 ) {
 
 			filename = urlParts.pop();
-			parserConfiguration.path = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.path, urlParts.join( '/' ) + '/' );
+			parserConfiguration.path = THREE.WLOBJLoader2.Validator.verifyInput( parserConfiguration.path, urlParts.join( '/' ) + '/' );
 
 		}
 		parserConfiguration.payloadType = 'arraybuffer';
@@ -281,10 +300,10 @@ THREE.WLOBJLoader2.prototype = {
 		this.setResourcePath( parserConfiguration.resourcePath );
 
 		// set default values bound to load
-		parserConfiguration.filename = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.filename, filename );
+		parserConfiguration.filename = THREE.WLOBJLoader2.Validator.verifyInput( parserConfiguration.filename, filename );
 
 		var scope = this;
-		if ( ! THREE.MeshTransfer.Validator.isValid( onFileLoadProgress ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( onFileLoadProgress ) ) {
 			var numericalValueRef = 0;
 			var numericalValue = 0;
 			onFileLoadProgress = function ( event ) {
@@ -324,21 +343,21 @@ THREE.WLOBJLoader2.prototype = {
 	 */
 	parse: function ( content, parserConfiguration ) {
 		// fast-fail in case of illegal data
-		if ( ! THREE.MeshTransfer.Validator.isValid( content ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( content ) ) {
 
 			console.warn( 'Provided content is not a valid ArrayBuffer or String.' );
 			return this.baseObject3d;
 
 		}
 
-		if ( ! THREE.MeshTransfer.Validator.isValid( parserConfiguration ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( parserConfiguration ) ) {
 
 			parserConfiguration = {};
 
 		}
-		parserConfiguration.filename = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.filename, 'NoFileNameAvailable' );
-		parserConfiguration.crossOrigin = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.crossOrigin, 'anonymous' );
-		parserConfiguration.materialOptions = THREE.MeshTransfer.Validator.verifyInput( parserConfiguration.materialOptions, {} );
+		parserConfiguration.filename = THREE.WLOBJLoader2.Validator.verifyInput( parserConfiguration.filename, 'NoFileNameAvailable' );
+		parserConfiguration.crossOrigin = THREE.WLOBJLoader2.Validator.verifyInput( parserConfiguration.crossOrigin, 'anonymous' );
+		parserConfiguration.materialOptions = THREE.WLOBJLoader2.Validator.verifyInput( parserConfiguration.materialOptions, {} );
 
 		var parseResult;
 		if ( parserConfiguration.payloadType === 'text' ) {
@@ -350,8 +369,8 @@ THREE.WLOBJLoader2.prototype = {
 		} else {
 
 			if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
-			this.dataReceiver.setBaseObject3d( this.baseObject3d );
-			this.dataReceiver.createDefaultMaterials();
+//			this.dataReceiver.setBaseObject3d( this.baseObject3d );
+//			this.dataReceiver.createDefaultMaterials();
 
 			var parser = new THREE.WLOBJLoader2.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -360,15 +379,22 @@ THREE.WLOBJLoader2.prototype = {
 			parser.setUseIndices( this.useIndices );
 			parser.setDisregardNormals( this.disregardNormals );
 			// sync code works directly on the material references
-			parser.setMaterials( this.dataReceiver.getMaterials() );
+//			parser.setMaterials( this.dataReceiver.getMaterials() );
 
 			var scope = this;
 			var onMeshLoaded = function ( payload ) {
-				var meshes = scope.dataReceiver.processPayload( payload );
-				var mesh;
-				for ( var i in meshes ) {
-					mesh = meshes[ i ];
-					scope.baseObject3d.add( mesh );
+
+				if ( payload.cmd === 'data' && payload.type === 'mesh' ) {
+
+					var meshes = scope._buildMeshes( payload );
+					var mesh;
+					for ( var i in meshes ) {
+
+						mesh = meshes[ i ];
+						scope.baseObject3d.add( mesh );
+
+					}
+
 				}
 			};
 			parser.setCallbackDataReceiver( onMeshLoaded );
@@ -390,7 +416,7 @@ THREE.WLOBJLoader2.prototype = {
 			} else {
 
 				var errorMessage = 'Provided content was neither of type String nor Uint8Array! Aborting...';
-				if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
+				if ( THREE.WLOBJLoader2.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 
 			}
 			if ( this.logging.enabled ) console.timeEnd( 'OBJLoader parse: ' + this.modelName );
@@ -400,12 +426,167 @@ THREE.WLOBJLoader2.prototype = {
 		return parseResult;
 	},
 
+	_buildMeshes: function ( meshPayload ) {
+		var meshName = meshPayload.params.meshName;
+
+		var bufferGeometry = new THREE.BufferGeometry();
+		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
+		if ( meshPayload.buffers.indices !== null ) {
+
+			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ) );
+
+		}
+		var haveVertexColors = meshPayload.buffers.colors  !== null;
+		if ( haveVertexColors ) {
+
+			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
+
+		}
+		if ( meshPayload.buffers.normals !== null ) {
+
+			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.normals ), 3 ) );
+
+		} else {
+
+			bufferGeometry.computeVertexNormals();
+
+		}
+		if ( meshPayload.buffers.uvs  !== null ) {
+
+			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
+
+		}
+		if ( meshPayload.buffers.skinIndex !== null ) {
+
+			bufferGeometry.addAttribute( 'skinIndex', new THREE.BufferAttribute( new Uint16Array( meshPayload.buffers.skinIndex ), 4 ) );
+
+		}
+		if ( meshPayload.buffers.skinWeight !== null ) {
+
+			bufferGeometry.addAttribute( 'skinWeight', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.skinWeight ), 4 ) );
+
+		}
+
+		var material, materialName, key;
+		var materialNames = meshPayload.materials.materialNames;
+		var createMultiMaterial = meshPayload.materials.multiMaterial;
+		var multiMaterials = [];
+		for ( key in materialNames ) {
+
+			materialName = materialNames[ key ];
+			material = this.materials[ materialName ];
+			if ( createMultiMaterial ) multiMaterials.push( material );
+
+		}
+		if ( createMultiMaterial ) {
+
+			material = multiMaterials;
+			var materialGroups = meshPayload.materials.materialGroups;
+			var materialGroup;
+			for ( key in materialGroups ) {
+
+				materialGroup = materialGroups[ key ];
+				bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+
+			}
+
+		}
+
+		var meshes = [];
+		var mesh;
+		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
+		var callbackOnMeshAlterResult;
+		var useOrgMesh = true;
+		var geometryType = meshPayload.geometryType === null ? 0 : meshPayload.geometryType;
+/*
+		if ( callbackOnMeshAlter ) {
+
+			callbackOnMeshAlterResult = callbackOnMeshAlter(
+				{
+					detail: {
+						meshName: meshName,
+						bufferGeometry: bufferGeometry,
+						material: material,
+						geometryType: geometryType
+					}
+				}
+			);
+		}
+*/
+		material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		if ( callbackOnMeshAlterResult ) {
+
+			if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
+
+				useOrgMesh = false;
+
+			} else if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
+
+				for ( var i in callbackOnMeshAlterResult.meshes ) {
+
+					meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
+
+				}
+				useOrgMesh = false;
+
+			}
+
+		}
+		if ( useOrgMesh ) {
+
+			if ( meshPayload.computeBoundingSphere ) bufferGeometry.computeBoundingSphere();
+			if ( geometryType === 0 ) {
+
+				mesh = new THREE.Mesh( bufferGeometry, material );
+
+			} else if ( geometryType === 1 ) {
+
+				mesh = new THREE.LineSegments( bufferGeometry, material );
+
+			} else {
+
+				mesh = new THREE.Points( bufferGeometry, material );
+
+			}
+			mesh.name = meshName;
+			meshes.push( mesh );
+
+		}
+
+		var progressMessage = meshPayload.params.meshName;
+		if ( meshes.length > 0 ) {
+
+			var meshNames = [];
+			for ( var i in meshes ) {
+
+				mesh = meshes[ i ];
+				meshNames[ i ] = mesh.name;
+
+			}
+			progressMessage += ': Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+
+		} else {
+
+			progressMessage += ': Not adding mesh: ' + meshName;
+			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
+
+		}
+		var callbackOnParseProgress = this.callbacks.onParseProgress;
+		if ( callbackOnParseProgress ) {
+
+			callbackOnParseProgress( 'progress', progressMessage, meshPayload.progress.numericalValue );
+
+		}
+		return meshes;
+	},
+
 	/**
 	 * Utility method for parsing mtl text with MTLLoader
 	 */
 	_parseMtl: function ( content, parserConfiguration ) {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.WLOBJLoader2" requires it for loading MTL files.' );
-		if ( ! THREE.MeshTransfer.Validator.isValid( content ) && typeof( content ) !== 'string' && ! ( content instanceof String ) && ! ( content instanceof ArrayBuffer ) ) {
+		if ( ! THREE.WLOBJLoader2.Validator.isValid( content ) && typeof( content ) !== 'string' && ! ( content instanceof String ) && ! ( content instanceof ArrayBuffer ) ) {
 
 			console.error( 'Unable to parse mtl file: \"' + parserConfiguration.filename + '\". Provided content is neither a String nor an ArrayBuffer.' );
 
@@ -414,7 +595,7 @@ THREE.WLOBJLoader2.prototype = {
 			materials: [],
 			materialCreator: null
 		};
-		if ( THREE.MeshTransfer.Validator.isValid( content ) ) {
+		if ( THREE.WLOBJLoader2.Validator.isValid( content ) ) {
 
 			var mtlLoader = new THREE.MTLLoader( this.manager );
 			mtlLoader.setCrossOrigin( parserConfiguration.crossOrigin );
@@ -429,11 +610,11 @@ THREE.WLOBJLoader2.prototype = {
 
 			}
 			mtlParseResult.materialCreator = mtlLoader.parse( contentAsText );
-			if ( THREE.MeshTransfer.Validator.isValid( mtlParseResult.materialCreator ) ) {
+			if ( THREE.WLOBJLoader2.Validator.isValid( mtlParseResult.materialCreator ) ) {
 
 				mtlParseResult.materialCreator.preload();
 				this.setMaterials( mtlParseResult.materialCreator );
-				mtlParseResult.materials = this.dataReceiver.getMaterials();
+//				mtlParseResult.materials = this.dataReceiver.getMaterials();
 
 			}
 
@@ -589,7 +770,7 @@ THREE.WLOBJLoader2.Parser.prototype = {
 		if ( this.callbackDataReceiver === undefined || this.callbackDataReceiver === null ) {
 
 			var errorMessage = 'Unable to run as no callback for building meshes is set.';
-			if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
+			if ( THREE.WLOBJLoader2.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 
 		}
 		this.pushSmoothingGroup( 1 );
@@ -1080,7 +1261,7 @@ THREE.WLOBJLoader2.Parser.prototype = {
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
 				var errorMessage = 'Vertex Colors were detected, but vertex count and color count do not match!';
-				if ( THREE.MeshTransfer.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
+				if ( THREE.WLOBJLoader2.Validator.isValid( this.callbacks.genericErrorHandler ) ) this.callbacks.genericErrorHandler( errorMessage );
 
 			}
 			if ( this.logging.enabled && this.logging.debug ) console.debug( this.createRawMeshReport( this.inputObjectCount ) );
