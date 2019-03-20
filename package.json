@@ -82,7 +82,7 @@
     "three": "^0.102.1"
   },
   "devDependencies": {
-    "del": "^3.0.0",
+    "del": "^4.0.0",
     "gulp": "^4.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-decompress": "^2.0.2",
