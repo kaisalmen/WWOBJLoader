@@ -1127,7 +1127,7 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 			started: false,
 			queuedMessage: null,
 			callbacks: {
-				dataReceiver: null,
+				onAssetAvailable: null,
 				onLoad: null,
 				terminate: scopeTerminate
 			}
@@ -1195,17 +1195,17 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 	/**
 	 * Update all callbacks.
 	 *
-	 * @param {Function} dataReceiver The function for processing the data, e.g. {@link THREE.MeshTransfer.MeshReceiver}.
+	 * @param {Function} onAssetAvailable The function for processing the data, e.g. {@link THREE.MeshTransfer.MeshReceiver}.
 	 * @param {Function} [onLoad] The function that is called when parsing is complete.
 	 */
-	updateCallbacks: function ( dataReceiver, onLoad ) {
-		this.worker.callbacks.dataReceiver = THREE.MeshTransfer.Validator.verifyInput( dataReceiver, this.worker.callbacks.dataReceiver );
+	updateCallbacks: function ( onAssetAvailable, onLoad ) {
+		this.worker.callbacks.onAssetAvailable = THREE.MeshTransfer.Validator.verifyInput( onAssetAvailable, this.worker.callbacks.onAssetAvailable );
 		this.worker.callbacks.onLoad = THREE.MeshTransfer.Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
 		this._verifyCallbacks();
 	},
 
 	_verifyCallbacks: function () {
-		if ( ! THREE.MeshTransfer.Validator.isValid( this.worker.callbacks.dataReceiver ) ) throw 'Unable to run as no "dataReceiver" callback is set.';
+		if ( ! THREE.MeshTransfer.Validator.isValid( this.worker.callbacks.onAssetAvailable ) ) throw 'Unable to run as no "onAssetAvailable" callback is set.';
 	},
 
 	/**
@@ -1329,19 +1329,19 @@ THREE.WorkerLoader.WorkerSupport.prototype = {
 		var payload = event.data;
 		switch ( payload.cmd ) {
 			case 'data':
-				this.worker.callbacks.dataReceiver( payload );
+				this.worker.callbacks.onAssetAvailable( payload );
 				break;
 
 			case 'confirm':
 				if ( payload.type === 'initWorkerDone' ) {
 
 					this.worker.queuedMessage = null;
-					this.worker.callbacks.dataReceiver( payload );
+					this.worker.callbacks.onAssetAvailable( payload );
 
 				} else if ( payload.type === 'fileLoaded' ) {
 
 					this.worker.queuedMessage = null;
-					this.worker.callbacks.dataReceiver( null, payload.params.index );
+					this.worker.callbacks.onAssetAvailable( null, payload.params.index );
 				}
 				break;
 
@@ -1754,10 +1754,10 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 		} else if ( payload.cmd === 'parse' ) {
 
 			var callbacks = {
-				callbackDataReceiver: function ( payload ) {
+				callbackOnAssetAvailable: function ( payload ) {
 					self.postMessage( payload );
 				},
-				callbackProgress: function ( text ) {
+				callbackOnProgress: function ( text ) {
 					if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 				}
 			};
@@ -1792,7 +1792,7 @@ THREE.WorkerLoader.WorkerSupport._WorkerRunnerRefImpl.prototype = {
 				var meshTransmitter = new THREE.MeshTransfer.MeshTransmitter();
 
 				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
-				meshTransmitter.setCallbackDataReceiver( callbacks.callbackDataReceiver );
+				meshTransmitter.setCallbackDataReceiver( callbacks.callbackOnAssetAvailable );
 				meshTransmitter.walkMesh( object3d );
 
 			} else {

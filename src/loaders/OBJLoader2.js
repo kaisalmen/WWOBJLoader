@@ -395,7 +395,8 @@ THREE.OBJLoader2.prototype = {
 			var onProgressScoped = function ( text, numericalValue ) {
 				scope._onProgress( 'progressParse', text, numericalValue );
 			};
-			parser.setParserCallbacks( onProgressScoped, onMeshLoaded );
+			parser.setCallbackOnProgress( onProgressScoped );
+			parser.setCallbackOnAssetAvailable( onMeshLoaded );
 
 			if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
@@ -656,9 +657,9 @@ THREE.OBJLoader2.prototype = {
  */
 THREE.OBJLoader2.Parser = function() {
 	this.callbacks = {
-		onProgress: undefined,
-		onAssetAvailable: undefined,
-		onError: undefined
+		onProgress: null,
+		onAssetAvailable: null,
+		onError: null
 	};
 	this.contentRef = null;
 	this.legacyMode = false;
@@ -754,17 +755,24 @@ THREE.OBJLoader2.Parser.prototype = {
 		this.materials = materials;
 	},
 
-	setParserCallbacks: function ( onProgress, onAssetAvailable, onError ) {
-		if ( onProgress !== null && onProgress !== undefined ) {
 
-			this.callbacks.onProgress = onProgress;
-
-		}
+	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
 		if ( onAssetAvailable !== null && onAssetAvailable !== undefined ) {
 
 			this.callbacks.onAssetAvailable = onAssetAvailable;
 
 		}
+	},
+
+	setCallbackOnProgress: function ( onProgress ) {
+		if ( onProgress !== null && onProgress !== undefined ) {
+
+			this.callbacks.onProgress = onProgress;
+
+		}
+	},
+
+	setCallbackOnError: function ( onError ) {
 		if ( onError !== null && onError !== undefined ) {
 
 			this.callbacks.onError = onError;
@@ -778,9 +786,9 @@ THREE.OBJLoader2.Parser.prototype = {
 	},
 
 	configure: function () {
-		if ( this.callbacks.onAssetAvailable ) {
+		if ( this.callbacks.onAssetAvailable !== null ) {
 
-			if ( this.callbacks.onError ) {
+			if ( this.callbacks.onError !== null ) {
 
 				this.callbacks.onError( 'Unable to run as no callback for building meshes is set.' );
 
@@ -797,10 +805,16 @@ THREE.OBJLoader2.Parser.prototype = {
 				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 				+ '\n\tuseOAsMesh: ' + this.useOAsMesh
 				+ '\n\tuseIndices: ' + this.useIndices
-				+ '\n\tdisregardNormals: ' + this.disregardNormals
-				+ '\n\tcallbacks.onProgress: ' + ( this.callbacks.onProgress ) ? this.callbacks.onProgress.name : '';
-				+ '\n\tcallbacks.onAssetAvailable: ' + ( this.callbacks.onAssetAvailable ) ? this.callbacks.onAssetAvailable.name : '';
-				+ '\n\tcallbacks.onError: ' + ( this.callbacks.onError ) ? this.callbacks.onError.name : '';
+				+ '\n\tdisregardNormals: ' + this.disregardNormals;
+				if ( this.callbacks.onProgress !== null ) {
+					printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
+				}
+				if ( this.callbacks.onAssetAvailable !== null ) {
+					printedConfig += '\n\tcallbacks.onAssetAvailable: ' + this.callbacks.onAssetAvailable.name;
+				}
+				if ( this.callbacks.onError !== null ) {
+					printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
+				}
 			console.info( printedConfig );
 
 		}
@@ -1276,7 +1290,7 @@ THREE.OBJLoader2.Parser.prototype = {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
-				if ( this.callbacks.onError ) {
+				if ( this.callbacks.onError !== null ) {
 
 					this.callbacks.onError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
 
@@ -1288,7 +1302,11 @@ THREE.OBJLoader2.Parser.prototype = {
 
 			this.buildMesh( result );
 			var progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
-			this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
+			if ( this.callbacks.onProgress !== null ) {
+
+				this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
+
+			}
 			this.resetRawMesh();
 
 		}
