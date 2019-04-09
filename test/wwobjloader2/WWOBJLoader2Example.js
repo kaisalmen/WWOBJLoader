@@ -80,8 +80,6 @@ var WWOBJLoader2Example = (function () {
 
 		var scope = this;
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader2.setMaterials( mtlParseResult.materials );
-
 			var fileLoader = new THREE.FileLoader();
 			fileLoader.setPath( '../../' );
 			fileLoader.setResponseType( 'arraybuffer' );
@@ -157,7 +155,6 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader2.setMaterials( mtlParseResult.materials );
 			objLoader2.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 		};
 		objLoader2.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
@@ -183,8 +180,6 @@ var WWOBJLoader2Example = (function () {
 		};
 
 		var onLoadMtl = function ( mtlParseResult ) {
-			objLoader2.setMaterials( mtlParseResult.materials );
-
 			var workerLoader = new THREE.WorkerLoader()
 				.setLoader( objLoader2 );
 			workerLoader.getLoadingTask()

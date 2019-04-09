@@ -70,7 +70,6 @@ var OBJLoader2Example = (function () {
 
 		var onLoadMtl = function ( mtlParseResult ) {
 			objLoader2.setModelName( modelName );
-			objLoader2.setMaterials( mtlParseResult.materials );
 			objLoader2.setLogging( true, true );
 			objLoader2.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
 		};

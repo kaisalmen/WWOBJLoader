@@ -25,12 +25,13 @@ THREE.OBJLoader2 = function ( manager ) {
 	this.useOAsMesh = false;
 	this.baseObject3d = new THREE.Group();
 
-//	this.dataReceiver = new THREE.MeshTransfer.MeshReceiver();
-	this.materials = {};
 	this.callbacks = {
 		onParseProgress: undefined,
 		genericErrorHandler: undefined
 	};
+
+	this.materials = {};
+	this._createDefaultMaterials();
 };
 
 THREE.OBJLoader2.prototype = Object.create( THREE.OBJLoader2.prototype );
@@ -42,6 +43,29 @@ THREE.OBJLoader2.prototype = {
 
 	constructor: THREE.OBJLoader2,
 
+	_createDefaultMaterials: function () {
+		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultMaterial.name = 'defaultMaterial';
+
+		var defaultVertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
+		defaultVertexColorMaterial.vertexColors = THREE.VertexColors;
+
+		var defaultLineMaterial = new THREE.LineBasicMaterial();
+		defaultLineMaterial.name = 'defaultLineMaterial';
+
+		var defaultPointMaterial = new THREE.PointsMaterial( { size: 0.1 } );
+		defaultPointMaterial.name = 'defaultPointMaterial';
+
+		var defaultMaterials = {};
+		defaultMaterials[ defaultMaterial.name ] = defaultMaterial;
+		defaultMaterials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
+		defaultMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
+		defaultMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
+
+		this.addMaterials( defaultMaterials );
+	},
+
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
 	 *
@@ -51,7 +75,6 @@ THREE.OBJLoader2.prototype = {
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-//		this.dataReceiver.setLogging( this.logging.enabled, this.logging.debug );
 		return this;
 	},
 
@@ -97,21 +120,33 @@ THREE.OBJLoader2.prototype = {
 	/**
 	 * Set materials loaded by MTLLoader or any other supplier of an Array of {@link THREE.Material}.
 	 *
-	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 * @param Object with named {@link THREE.Material} or instance of {@link THREE.MTLLoader.MaterialCreator}
 	 */
-	setMaterials: function ( materialsOrmaterialCreator ) {
-		var materials = {};
-		if ( materialsOrmaterialCreator instanceof THREE.MTLLoader.MaterialCreator ) {
+	addMaterials: function ( materialsOrmaterialCreator ) {
+		var newMaterials = {};
+		if ( materialsOrmaterialCreator !== undefined && materialsOrmaterialCreator !== null ) {
 
-			materials = this._handleMtlMaterials( materialsOrmaterialCreator );
+			if ( materialsOrmaterialCreator instanceof THREE.MTLLoader.MaterialCreator ) {
 
-		} else if ( Array.isArray( materialsOrmaterialCreator ) ) {
+				newMaterials = this._handleMtlMaterials( materialsOrmaterialCreator );
 
-			materials = materialsOrmaterialCreator
+			} else {
 
+				newMaterials = materialsOrmaterialCreator;
+
+			}
+			if ( Object.keys( newMaterials ).length > 0 ) {
+
+				for ( var newMaterialName in newMaterials ) {
+
+					this.materials[ newMaterialName ] = newMaterials[ newMaterialName ];
+					if ( this.logging.enabled ) console.info( 'Material with name "' + newMaterialName + '" was added.' );
+
+				}
+
+			}
 		}
-//		this.dataReceiver.setMaterials( materials );
-		return this;
+		return newMaterials;
 	},
 
 	/**
@@ -173,7 +208,6 @@ THREE.OBJLoader2.prototype = {
 			this.callbacks.onParseProgress = onParseProgress;
 
 		}
-//		this.dataReceiver._setCallbacks( onParseProgress, onMeshAlter, onLoadMaterials );
 	},
 
 	/**
@@ -364,8 +398,6 @@ THREE.OBJLoader2.prototype = {
 		} else {
 
 			if ( this.logging.enabled ) console.time( 'OBJLoader parse: ' + this.modelName );
-//			this.dataReceiver.setBaseObject3d( this.baseObject3d );
-//			this.dataReceiver.createDefaultMaterials();
 
 			var parser = new THREE.OBJLoader2.Parser();
 			parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -374,7 +406,7 @@ THREE.OBJLoader2.prototype = {
 			parser.setUseIndices( this.useIndices );
 			parser.setDisregardNormals( this.disregardNormals );
 			// sync code works directly on the material references
-//			parser.setMaterials( this.dataReceiver.getMaterials() );
+			parser.setMaterials( this.materials );
 
 			var scope = this;
 			var onMeshLoaded = function ( payload ) {
@@ -497,7 +529,7 @@ THREE.OBJLoader2.prototype = {
 		var callbackOnMeshAlterResult;
 		var useOrgMesh = true;
 		var geometryType = meshPayload.geometryType === null ? 0 : meshPayload.geometryType;
-/*
+
 		if ( callbackOnMeshAlter ) {
 
 			callbackOnMeshAlterResult = callbackOnMeshAlter(
@@ -511,8 +543,7 @@ THREE.OBJLoader2.prototype = {
 				}
 			);
 		}
-*/
-		material = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+
 		if ( callbackOnMeshAlterResult ) {
 
 			if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
@@ -612,8 +643,7 @@ THREE.OBJLoader2.prototype = {
 			if ( mtlParseResult.materialCreator !== null && mtlParseResult.materialCreator !== undefined ) {
 
 				mtlParseResult.materialCreator.preload();
-				this.setMaterials( mtlParseResult.materialCreator );
-//				mtlParseResult.materials = this.dataReceiver.getMaterials();
+				mtlParseResult.materials = this.addMaterials( mtlParseResult.materialCreator );
 
 			}
 
@@ -754,7 +784,6 @@ THREE.OBJLoader2.Parser.prototype = {
 	setMaterials: function ( materials ) {
 		this.materials = materials;
 	},
-
 
 	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
 		if ( onAssetAvailable !== null && onAssetAvailable !== undefined ) {

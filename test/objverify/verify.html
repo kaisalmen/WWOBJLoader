@@ -101,14 +101,12 @@
 
 					var onLoadMtl = function ( materials ) {
 						var objLoader = new THREE.OBJLoader();
-						objLoader.setMaterials( materials.materialCreator );
 						objLoader.load( './verify.obj', function ( object ) {
 							object.position.y = -100;
 							scope.scene.add( object );
 						} );
 
 						objLoader2.setModelName( modelName );
-						objLoader2.setMaterials( materials );
 						objLoader2.setLogging( true, false );
 						objLoader2.setUseOAsMesh( true );
 						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null );
