@@ -1,0 +1,170 @@
+/**
+ * @author Kai Salmen / www.kaisalmen.de
+ */
+
+/**
+ * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
+ * @constructor
+ */
+THREE.WorkerSupport.WorkerRunner = function () {
+	this.resourceDescriptors = [];
+	this.logging = {
+		enabled: false,
+		debug: false
+	};
+
+	var scope = this;
+	var scopedRunner = function( event ) {
+		scope.processMessage( event.data );
+	};
+	self.addEventListener( 'message', scopedRunner, false );
+};
+
+THREE.WorkerSupport.WorkerRunner.prototype = {
+
+	constructor: THREE.WorkerSupport.WorkerRunner,
+
+	/**
+	 * Applies values from parameter object via set functions or via direct assignment.
+	 *
+	 * @param {Object} parser The parser instance
+	 * @param {Object} params The parameter object
+	 */
+	applyProperties: function ( parser, params, forceCreation ) {
+		// fast-fail
+		if ( parser === undefined || parser === null || params === undefined || params === null ) return;
+
+		var property, funcName, values;
+		for ( property in params ) {
+			funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
+			values = params[ property ];
+
+			if ( typeof parser[ funcName ] === 'function' ) {
+
+				parser[ funcName ]( values );
+
+			} else if ( parser.hasOwnProperty( property ) || forceCreation ) {
+
+				parser[ property ] = values;
+
+			}
+		}
+	},
+
+	/**
+	 * Configures the Parser implementation according the supplied configuration object.
+	 *
+	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 */
+	processMessage: function ( payload ) {
+		var scope = this;
+		if ( payload.cmd === 'initWorker' ) {
+
+			this.logging.enabled = payload.logging.enabled === true;
+			this.logging.debug = payload.logging.debug === true;
+			if ( payload.data.resourceDescriptors !== null && this.resourceDescriptors.length === 0 ) {
+
+				for ( var name in payload.data.resourceDescriptors ) this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
+
+			}
+			self.postMessage( {
+				cmd: 'confirm',
+				type: 'initWorkerDone',
+				msg: 'Worker init has been successfully performed.'
+			} );
+
+		} else if ( payload.cmd === 'loadFile' ) {
+			console.warn( '\"loadFile\" inside worker is currently disabled.');
+/*
+			var resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
+			var fileLoadingExecutor = new THREE.WorkerLoader.FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
+
+			var callbackProgress = function ( text ) {
+				if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+			};
+			var callbackError = function ( message ) {
+				console.error( message );
+			};
+			fileLoadingExecutor
+			.setPath( payload.params.path )
+			.setCallbacks( callbackProgress, callbackError );
+
+			var confirmFileLoaded = function ( content, completedIndex ) {
+				if ( content !== undefined && content !== null) {
+
+					scope.resourceDescriptors[ completedIndex ].content = content;
+
+				}
+				self.postMessage( {
+					cmd: 'confirm',
+					type: 'fileLoaded',
+					params: {
+						index: completedIndex
+					}
+				} );
+			};
+			fileLoadingExecutor.loadFile( resourceDescriptorCurrent, payload.params.index, confirmFileLoaded );
+*/
+		} else if ( payload.cmd === 'parse' ) {
+
+			var callbacks = {
+				callbackOnAssetAvailable: function ( payload ) {
+					self.postMessage( payload );
+				},
+				callbackOnProgress: function ( text ) {
+					if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+				}
+			};
+
+			// Parser is expected to be named as such
+			var parser = new THREE.WorkerSupport.Parser();
+			if ( typeof parser[ 'setLogging' ] === 'function' ) {
+
+				parser.setLogging( this.logging.enabled, this.logging.debug );
+
+			}
+			this.applyProperties( parser, payload.params );
+			this.applyProperties( parser, payload.materials );
+			this.applyProperties( parser, callbacks );
+
+			var arraybuffer;
+			if ( payload.params.index !== undefined && payload.params.index !== null) {
+
+				arraybuffer = this.resourceDescriptors[ payload.params.index ].content;
+
+			} else {
+
+				arraybuffer = payload.data.input;
+
+			}
+
+			var parseFunctionName = 'parse';
+			if ( typeof parser.getParseFunctionName === 'function' ) parseFunctionName = parser.getParseFunctionName();
+			if ( payload.usesMeshDisassembler ) {
+
+				var object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
+				var meshTransmitter = new THREE.MeshTransfer.MeshTransmitter();
+
+				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
+				meshTransmitter.setCallbackDataReceiver( callbacks.callbackOnAssetAvailable );
+				meshTransmitter.walkMesh( object3d );
+
+			} else {
+
+				parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
+
+			}
+			if ( this.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
+
+			self.postMessage( {
+				cmd: 'completeOverall',
+				msg: 'WorkerRunner completed run.'
+			} );
+
+		} else {
+
+			console.error( 'WorkerRunner: Received unknown command: ' + payload.cmd );
+
+		}
+	}
+};

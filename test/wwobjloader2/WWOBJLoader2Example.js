@@ -252,8 +252,10 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype._reportProgress = function( event ) {
 		var output = '';
-		if ( THREE.MeshTransfer.Validator.isValid( event.detail ) && THREE.MeshTransfer.Validator.isValid( event.detail.text ) ) {
+		if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === ! undefined ) {
+
 			output = event.detail.text;
+
 		}
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;

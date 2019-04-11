@@ -62,6 +62,7 @@ var OBJLoader2Example = (function () {
 
 		var scope = this;
 		var objLoader2 = new THREE.OBJLoader2();
+		objLoader2.printVersion();
 		var callbackOnLoad = function ( object3d ) {
 			scope.scene.add( object3d );
 			console.log( 'Loading complete: ' + modelName );
@@ -77,7 +78,12 @@ var OBJLoader2Example = (function () {
 	};
 
 	OBJLoader2Example.prototype._reportProgress = function( event ) {
-		var output = THREE.MeshTransfer.Validator.verifyInput( event.detail.text, '' );
+		var output = '';
+		if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === ! undefined ) {
+
+			output = event.detail.text;
+
+		}
 		console.log( 'Progress: ' + output );
 		document.getElementById( 'feedback' ).innerHTML = output;
 	};
