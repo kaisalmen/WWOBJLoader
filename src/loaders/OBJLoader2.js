@@ -676,14 +676,9 @@ THREE.OBJLoader2.prototype = {
 		workerCode += 'if ( ! THREE.OBJLoader2 ) { THREE.OBJLoader2 = {} };\n\n';
 //		workerCode += codeSerializer.serializeClass( 'THREE.OBJLoader2.Parser', THREE.OBJLoader2.Parser );
 
-		return {
-			code: workerCode,
-			parserName: 'THREE.OBJLoader2.Parser',
-			libs: {
-				locations: [ 'src/loaders/worker/OBJLoader2Parser.js' ],
-				path: '../../'
-			},
-			provideThree: false
-		}
+		var codeBuilderInstructions = new THREE.WorkerSupport.CodeBuilderIntructions( 'THREE.OBJLoader2.Parser', false );
+		codeBuilderInstructions.addCodeFragment( workerCode );
+		codeBuilderInstructions.addLibrary( 'src/loaders/worker/OBJLoader2Parser.js', '../../' );
+		return codeBuilderInstructions;
 	}
 };
