@@ -375,10 +375,10 @@ THREE.OBJLoader2.prototype = {
 	 */
 	parse: function ( content, parserConfiguration ) {
 		// fast-fail in case of illegal data
+		var parseResult = this.baseObject3d;
 		if ( content === null || content === undefined ) {
 
-			console.warn( 'Provided content is not a valid ArrayBuffer or String.' );
-			return this.baseObject3d;
+			throw 'Provided content is not a valid ArrayBuffer or String. Unable to continue parsing';
 
 		}
 		if ( parserConfiguration === null || parserConfiguration === undefined ) {
@@ -390,7 +390,6 @@ THREE.OBJLoader2.prototype = {
 		parserConfiguration.crossOrigin  = ( parserConfiguration.crossOrigin === null || parserConfiguration.crossOrigin === undefined ) ? 'anonymous' : parserConfiguration.crossOrigin;
 		parserConfiguration.materialOptions  = ( parserConfiguration.materialOptions === null || parserConfiguration.materialOptions === undefined ) ? {} : parserConfiguration.materialOptions;
 
-		var parseResult;
 		if ( parserConfiguration.payloadType === 'text' ) {
 
 			if ( this.logging.enabled ) console.time( 'OBJLoader parse MTL: ' + parserConfiguration.filename );

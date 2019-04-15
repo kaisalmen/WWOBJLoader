@@ -442,15 +442,24 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 			this.setBuildWorkerCodeFunction( loadingTaskConfig.loader.buildWorkerCode );
 
 		}
-		if ( ! THREE.MeshTransfer.Validator.isValid( this.loader.ref ) ) this._throwError( 'Unable to continue. You have not specified a loader!' );
+		if ( ! THREE.MeshTransfer.Validator.isValid( this.loader.ref ) ) {
 
-		if ( typeof this.loader.buildWorkerCode !== 'function' && typeof this.loader.ref.buildWorkerCode === 'function' ) {
-
-			this.loader.buildWorkerCode = this.loader.ref.buildWorkerCode;
+			this._throwError( 'Unable to continue. You have not specified a loader!' );
 
 		}
-		if ( typeof this.loader.buildWorkerCode !== 'function' ) console.warn( 'No buildWorkerCode function is available for: ' + this.loader.ref.modelName );
+		if ( typeof this.loader.buildWorkerCode !== 'function' ) {
 
+			if ( typeof this.loader.ref.buildWorkerCode === 'function' ) {
+
+				this.loader.buildWorkerCode = this.loader.ref.buildWorkerCode;
+
+			} else {
+
+				console.info( 'No buildWorkerCode function is available for: ' + this.loader.ref.modelName + 'Processing is limited to main.' );
+
+			}
+
+		}
 		THREE.WorkerSupport.WorkerRunner.prototype.applyProperties( this, ownConfig );
 		if ( loadingTaskConfig !== null ) {
 
@@ -467,20 +476,14 @@ THREE.WorkerLoader.LoadingTask.prototype = {
 				loadingTaskConfig.callbacks.pipeline.onCompleteParsing
 			);
 		}
+		// this will ensure that any base configuration on LoadingTask and Loader are aligned
+		THREE.WorkerSupport.WorkerRunner.prototype.applyProperties( this.loader.ref, ownConfig );
+		THREE.WorkerSupport.WorkerRunner.prototype.applyProperties( this.loader.ref, this.loader.config );
+		if ( typeof this.loader.ref.setGenericErrorHandler === 'function' ) {
 
-		if ( ! THREE.MeshTransfer.Validator.isValid( this.loader.ref ) ) {
-
-			if ( this.logging.enabled ) console.warn( "Provided loader is not valid" );
-
-		} else {
-
-			// this will ensure that any base configuration on LoadingTask and Loader are aligned
-			THREE.WorkerSupport.WorkerRunner.prototype.applyProperties( this.loader.ref, ownConfig );
-			THREE.WorkerSupport.WorkerRunner.prototype.applyProperties( this.loader.ref, this.loader.config );
-			if ( typeof this.loader.ref.setGenericErrorHandler === 'function' ) this.loader.ref.setGenericErrorHandler( this.callbacks.app.onReportError );
+			this.loader.ref.setGenericErrorHandler( this.callbacks.app.onReportError );
 
 		}
-
 		return this;
 	},
 

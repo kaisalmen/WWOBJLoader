@@ -345,7 +345,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 
 			} else {
 
-				console.warn( 'Requested material "' + materialNameOrg + '" is not available!' );
+				console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
 
 			}
 		}

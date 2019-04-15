@@ -726,7 +726,7 @@ THREE.OBJLoader2.Parser.prototype = {
 
 				var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				materialOrg = this.materials[ defaultMaterialName ];
-				if ( this.logging.enabled ) console.warn( 'object_group "' + meshOutputGroup.objectName + '_' +
+				if ( this.logging.enabled ) console.info( 'object_group "' + meshOutputGroup.objectName + '_' +
 					meshOutputGroup.groupName + '" was defined with unresolvable material "' +
 					materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
 				materialNameOrg = defaultMaterialName;
