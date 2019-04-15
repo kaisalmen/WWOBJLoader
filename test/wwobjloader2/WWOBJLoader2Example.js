@@ -175,7 +175,7 @@ var WWOBJLoader2Example = (function () {
 		this.pivot.add( local );
 
 		var scope = this;
-		var callbackOnLoad = function ( event ) {
+		var onReport = function ( event ) {
 			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
 		};
 
@@ -185,7 +185,7 @@ var WWOBJLoader2Example = (function () {
 			workerLoader.getLoadingTask()
 				.setTerminateWorkerOnLoad( false )
 				.setBaseObject3d( local );
-			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
+			workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', null, null, onReport );
 
 		};
 		objLoader2.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
@@ -193,28 +193,30 @@ var WWOBJLoader2Example = (function () {
 
 	WWOBJLoader2Example.prototype.useRunSync = function () {
 		var local = new THREE.Object3D();
+		local.name = 'Pivot_Cerberus';
 		local.position.set( 0, 0, 100 );
-		local.scale.set( 50.0, 50.0, 50.0 );
+		var scale = 50;
+		local.scale.set( scale, scale, scale );
 		this.pivot.add( local );
 
 		var scope = this;
-		var callbackOnLoad = function ( event ) {
-			scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-		};
-		var callbackOnProgress = function ( event ) {
+		var onProgress = function ( event ) {
 			scope._reportProgress( event );
+		};
+		var onCompleteParsing = function ( event ) {
+			onProgress( { detail: { text: 'Parsing complete: ' + event.detail.modelName } } );
 		};
 
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
-		rd.configureAsync( true, true );
+		rd.configureAsync( true, false );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
 				instanceNo: 42,
 				baseObject3d: local
 			} )
 			.setLoaderConfig( THREE.OBJLoader2 )
 			.addResourceDescriptor( rd )
-			.setCallbacksPipeline( callbackOnLoad )
-			.setCallbacksApp( callbackOnProgress );
+			.setCallbacksPipeline( null, null, onCompleteParsing )
+			.setCallbacksApp( onProgress );
 		new THREE.WorkerLoader()
 			.executeLoadingTaskConfig( loadingTaskConfig );
 	};
@@ -226,7 +228,7 @@ var WWOBJLoader2Example = (function () {
 		this.pivot.add( local );
 
 		var scope = this;
-		var callbackOnLoad = function ( event ) {
+		var onComplete = function ( event ) {
 			var mesh = event.detail.result;
 			var scale = 200.0;
 			mesh.scale.set( scale, scale, scale );
@@ -240,7 +242,7 @@ var WWOBJLoader2Example = (function () {
 			} )
 			.setLoaderConfig( THREE.OBJLoader2 )
 			.addResourceDescriptor( rd )
-			.setCallbacksPipeline( callbackOnLoad );
+			.setCallbacksPipeline( onComplete );
 		new THREE.WorkerLoader()
 			.getLoadingTask()
 			.execute( loadingTaskConfig );

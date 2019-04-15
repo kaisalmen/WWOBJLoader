@@ -87,7 +87,7 @@ THREE.WorkerLoader.prototype = {
 	 */
 	loadAsync: function ( url, onLoad, onMesh, onReport, onReportError ) {
 		this.loadingTask.addResourceDescriptor( new THREE.WorkerLoader.ResourceDescriptor( 'URL', 'url_loadAsync', url ) )
-			.updateCallbacksPipeline( null, null, onLoad )
+			.updateCallbacksPipeline( onLoad, null, null )
 			.updateCallbacksParsing( onMesh, null )
 			.updateCallbacksApp( onReport, onReportError )
 			.execute();
