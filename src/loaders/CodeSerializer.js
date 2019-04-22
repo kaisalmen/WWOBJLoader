@@ -1,7 +1,10 @@
 /**
  * @author Kai Salmen / www.kaisalmen.de
  */
-THREE.CodeSerializer = {
+export { CodeSerializer }
+
+
+const CodeSerializer = {
 
 	/**
 	 *

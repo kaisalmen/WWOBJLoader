@@ -2,11 +2,16 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+import { MeshTransmitter } from "../MeshTransfer.js"
+
+export { WorkerRunner }
+
+
 /**
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
  * @constructor
  */
-THREE.WorkerSupport.WorkerRunner = function () {
+const WorkerRunner = function () {
 	this.resourceDescriptors = [];
 	this.logging = {
 		enabled: false,
@@ -20,9 +25,9 @@ THREE.WorkerSupport.WorkerRunner = function () {
 	self.addEventListener( 'message', scopedRunner, false );
 };
 
-THREE.WorkerSupport.WorkerRunner.prototype = {
+WorkerRunner.prototype = {
 
-	constructor: THREE.WorkerSupport.WorkerRunner,
+	constructor: WorkerRunner,
 
 	/**
 	 * Applies values from parameter object via set functions or via direct assignment.
@@ -117,7 +122,7 @@ THREE.WorkerSupport.WorkerRunner.prototype = {
 			};
 
 			// Parser is expected to be named as such
-			var parser = new THREE.WorkerSupport.Parser();
+			var parser = new Parser();
 			if ( typeof parser[ 'setLogging' ] === 'function' ) {
 
 				parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -143,7 +148,7 @@ THREE.WorkerSupport.WorkerRunner.prototype = {
 			if ( payload.usesMeshDisassembler ) {
 
 				var object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
-				var meshTransmitter = new THREE.MeshTransfer.MeshTransmitter();
+				var meshTransmitter = new MeshTransmitter();
 
 				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
 				meshTransmitter.setCallbackDataReceiver( callbacks.callbackOnAssetAvailable );

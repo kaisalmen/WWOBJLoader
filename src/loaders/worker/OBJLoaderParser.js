@@ -2,11 +2,15 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+export {
+	Parser
+};
+
 /**
  * Parse OBJ data either from ArrayBuffer or string
  * @class
  */
-THREE.OBJLoader2.Parser = function() {
+const Parser = function() {
 	this.callbacks = {
 		onProgress: null,
 		onAssetAvailable: null,
@@ -66,9 +70,9 @@ THREE.OBJLoader2.Parser = function() {
 	};
 };
 
-THREE.OBJLoader2.Parser.prototype = {
+Parser.prototype = {
 
-	constructor: THREE.OBJLoader2.Parser,
+	constructor: Parser,
 
 	resetRawMesh: function () {
 		// faces are stored according combined index of group, material and smoothingGroup (0 or not)
@@ -726,10 +730,14 @@ THREE.OBJLoader2.Parser.prototype = {
 
 				var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				materialOrg = this.materials[ defaultMaterialName ];
-				if ( this.logging.enabled ) console.info( 'object_group "' + meshOutputGroup.objectName + '_' +
-					meshOutputGroup.groupName + '" was defined with unresolvable material "' +
-					materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
-				materialNameOrg = defaultMaterialName;
+				if ( this.logging.enabled ) {
+
+					console.info( 'object_group "' + meshOutputGroup.objectName + '_' +
+						meshOutputGroup.groupName + '" was defined with unresolvable material "' +
+						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
+
+				}
+				materialName = defaultMaterialName;
 
 				// if names are identical then there is no need for later manipulation
 				if ( materialNameOrg === materialName ) {

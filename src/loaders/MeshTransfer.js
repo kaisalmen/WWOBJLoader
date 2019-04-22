@@ -1,8 +1,30 @@
+/**
+ * @author Kai Salmen / www.kaisalmen.de
+ */
 
-if ( THREE.MeshTransfer === undefined ) { THREE.MeshTransfer = {} }
+import {
+	BufferAttribute,
+	BufferGeometry,
+	LineBasicMaterial,
+	LineSegments,
+	Material,
+	MaterialLoader,
+	Mesh,
+	MeshStandardMaterial,
+	Points,
+	PointsMaterial,
+	VertexColors
+} from "../../node_modules/three/build/three.module.js";
+
+export {
+	MeshReceiver,
+	MeshTransmitter,
+	LoadedMeshUserOverride,
+	Validator
+}
 
 
-THREE.MeshTransfer.Validator = {
+const Validator = {
 
 	/**
 	 * If given input is null or undefined, false is returned otherwise true.
@@ -27,10 +49,8 @@ THREE.MeshTransfer.Validator = {
 };
 
 
-THREE.MeshTransfer.MeshReceiver = function() {
-	console.info( 'Using THREE.MeshTransfer.MeshReceiver version: ' + THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION );
-
-	this.validator = THREE.MeshTransfer.Validator;
+const MeshReceiver = function() {
+	console.info( 'Using MeshReceiver version: ' + MeshReceiver.MESH_RECEIVER_VERSION );
 
 	this.logging = {
 		enabled: true,
@@ -44,12 +64,12 @@ THREE.MeshTransfer.MeshReceiver = function() {
 	};
 	this.materials = {};
 };
-THREE.MeshTransfer.MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-preview';
+MeshReceiver.MESH_RECEIVER_VERSION = '2.0.0-preview';
 
 
-THREE.MeshTransfer.MeshReceiver.prototype = {
+MeshReceiver.prototype = {
 
-	constructor: THREE.MeshTransfer.MeshReceiver,
+	constructor: MeshReceiver,
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -71,17 +91,17 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 	},
 
 	createDefaultMaterials: function () {
-		var defaultMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		var defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
-		var defaultVertexColorMaterial = new THREE.MeshStandardMaterial( { color: 0xDCF1FF } );
+		var defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
-		defaultVertexColorMaterial.vertexColors = THREE.VertexColors;
+		defaultVertexColorMaterial.vertexColors = VertexColors;
 
-		var defaultLineMaterial = new THREE.LineBasicMaterial();
+		var defaultLineMaterial = new LineBasicMaterial();
 		defaultLineMaterial.name = 'defaultLineMaterial';
 
-		var defaultPointMaterial = new THREE.PointsMaterial( { size: 0.1 } );
+		var defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
 		defaultPointMaterial.name = 'defaultPointMaterial';
 
 		var runtimeMaterials = {};
@@ -104,9 +124,9 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 	},
 
 	/**
-	 * Set materials loaded by any supplier of an Array of {@link THREE.Material}.
+	 * Set materials loaded by any supplier of an Array of {@link Material}.
 	 *
-	 * @param {THREE.Material[]} materials Array of {@link THREE.Material}
+	 * @param {Material[]} materials Array of {@link Material}
 	 */
 	setMaterials: function ( materials ) {
 		var payload = {
@@ -115,23 +135,23 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 			materials: {
 				materialCloneInstructions: null,
 				serializedMaterials: null,
-				runtimeMaterials: this.validator.isValid( this.callbacks.onLoadMaterials ) ? this.callbacks.onLoadMaterials( materials ) : materials
+				runtimeMaterials: Validator.isValid( this.callbacks.onLoadMaterials ) ? this.callbacks.onLoadMaterials( materials ) : materials
 			}
 		};
 		this.updateMaterials( payload );
 	},
 
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
-		if ( this.validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
-		if ( this.validator.isValid( onMeshAlter ) ) this.callbacks.onMeshAlter = onMeshAlter;
-		if ( this.validator.isValid( onLoadMaterials ) ) this.callbacks.onLoadMaterials = onLoadMaterials;
+		if ( Validator.isValid( onParseProgress ) ) this.callbacks.onParseProgress = onParseProgress;
+		if ( Validator.isValid( onMeshAlter ) ) this.callbacks.onMeshAlter = onMeshAlter;
+		if ( Validator.isValid( onLoadMaterials ) ) this.callbacks.onLoadMaterials = onLoadMaterials;
 	},
 
 	/**
 	 * Delegates processing of the payload (mesh building or material update) to the corresponding functions (BW-compatibility).
 	 *
 	 * @param {Object} payload Raw Mesh or Material descriptions.
-	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh} or null in case of material update
+	 * @returns {Mesh[]} mesh Array of {@link Mesh} or null in case of material update
 	 */
 	processPayload: function ( payload ) {
 		if ( payload.type === 'mesh' ) {
@@ -150,46 +170,46 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
 	 *
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
-	 * @returns {THREE.Mesh[]} mesh Array of {@link THREE.Mesh}
+	 * @returns {Mesh[]} mesh Array of {@link Mesh}
 	 */
 	buildMeshes: function ( meshPayload ) {
 		var meshName = meshPayload.params.meshName;
 
-		var bufferGeometry = new THREE.BufferGeometry();
-		bufferGeometry.addAttribute( 'position', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
-		if ( this.validator.isValid( meshPayload.buffers.indices ) ) {
+		var bufferGeometry = new BufferGeometry();
+		bufferGeometry.addAttribute( 'position', new BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
+		if ( Validator.isValid( meshPayload.buffers.indices ) ) {
 
-			bufferGeometry.setIndex( new THREE.BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ) );
+			bufferGeometry.setIndex( new BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ) );
 
 		}
-		var haveVertexColors = this.validator.isValid( meshPayload.buffers.colors );
+		var haveVertexColors = Validator.isValid( meshPayload.buffers.colors );
 		if ( haveVertexColors ) {
 
-			bufferGeometry.addAttribute( 'color', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
+			bufferGeometry.addAttribute( 'color', new BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
 
 		}
-		if ( this.validator.isValid( meshPayload.buffers.normals ) ) {
+		if ( Validator.isValid( meshPayload.buffers.normals ) ) {
 
-			bufferGeometry.addAttribute( 'normal', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.normals ), 3 ) );
+			bufferGeometry.addAttribute( 'normal', new BufferAttribute( new Float32Array( meshPayload.buffers.normals ), 3 ) );
 
 		} else {
 
 			bufferGeometry.computeVertexNormals();
 
 		}
-		if ( this.validator.isValid( meshPayload.buffers.uvs ) ) {
+		if ( Validator.isValid( meshPayload.buffers.uvs ) ) {
 
-			bufferGeometry.addAttribute( 'uv', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
-
-		}
-		if ( this.validator.isValid( meshPayload.buffers.skinIndex ) ) {
-
-			bufferGeometry.addAttribute( 'skinIndex', new THREE.BufferAttribute( new Uint16Array( meshPayload.buffers.skinIndex ), 4 ) );
+			bufferGeometry.addAttribute( 'uv', new BufferAttribute( new Float32Array( meshPayload.buffers.uvs ), 2 ) );
 
 		}
-		if ( this.validator.isValid( meshPayload.buffers.skinWeight ) ) {
+		if ( Validator.isValid( meshPayload.buffers.skinIndex ) ) {
 
-			bufferGeometry.addAttribute( 'skinWeight', new THREE.BufferAttribute( new Float32Array( meshPayload.buffers.skinWeight ), 4 ) );
+			bufferGeometry.addAttribute( 'skinIndex', new BufferAttribute( new Uint16Array( meshPayload.buffers.skinIndex ), 4 ) );
+
+		}
+		if ( Validator.isValid( meshPayload.buffers.skinWeight ) ) {
+
+			bufferGeometry.addAttribute( 'skinWeight', new BufferAttribute( new Float32Array( meshPayload.buffers.skinWeight ), 4 ) );
 
 		}
 
@@ -223,8 +243,8 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
 		var callbackOnMeshAlterResult;
 		var useOrgMesh = true;
-		var geometryType = this.validator.verifyInput( meshPayload.geometryType, 0 );
-		if ( this.validator.isValid( callbackOnMeshAlter ) ) {
+		var geometryType = Validator.verifyInput( meshPayload.geometryType, 0 );
+		if ( Validator.isValid( callbackOnMeshAlter ) ) {
 
 			callbackOnMeshAlterResult = callbackOnMeshAlter(
 				{
@@ -236,7 +256,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 					}
 				}
 			);
-			if ( this.validator.isValid( callbackOnMeshAlterResult ) ) {
+			if ( Validator.isValid( callbackOnMeshAlterResult ) ) {
 
 				if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
 
@@ -261,15 +281,15 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 			if ( meshPayload.computeBoundingSphere ) bufferGeometry.computeBoundingSphere();
 			if ( geometryType === 0 ) {
 
-				mesh = new THREE.Mesh( bufferGeometry, material );
+				mesh = new Mesh( bufferGeometry, material );
 
 			} else if ( geometryType === 1 ) {
 
-				mesh = new THREE.LineSegments( bufferGeometry, material );
+				mesh = new LineSegments( bufferGeometry, material );
 
 			} else {
 
-				mesh = new THREE.Points( bufferGeometry, material );
+				mesh = new Points( bufferGeometry, material );
 
 			}
 			mesh.name = meshName;
@@ -278,7 +298,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 		}
 
 		var progressMessage = meshPayload.params.meshName;
-		if ( this.validator.isValid( meshes ) && meshes.length > 0 ) {
+		if ( Validator.isValid( meshes ) && meshes.length > 0 ) {
 
 			var meshNames = [];
 			for ( var i in meshes ) {
@@ -297,7 +317,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 
 		}
 		var callbackOnParseProgress = this.callbacks.onParseProgress;
-		if ( this.validator.isValid( callbackOnParseProgress ) ) {
+		if ( Validator.isValid( callbackOnParseProgress ) ) {
 
 			callbackOnParseProgress( 'progress', progressMessage, meshPayload.progress.numericalValue );
 
@@ -324,10 +344,10 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 	updateMaterials: function ( materialPayload ) {
 		var material, materialName;
 		var materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
-		if ( this.validator.isValid( materialCloneInstructions ) ) {
+		if ( Validator.isValid( materialCloneInstructions ) ) {
 
 			var materialNameOrg = materialCloneInstructions.materialNameOrg;
-			if ( this.validator.isValid( materialNameOrg ) ) {
+			if ( Validator.isValid( materialNameOrg ) ) {
 
 				var materialOrg = this.materials[ materialNameOrg ];
 				material = materialOrg.clone();
@@ -351,14 +371,14 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 		}
 
 		var materials = materialPayload.materials.serializedMaterials;
-		if ( this.validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 
-			var loader = new THREE.MaterialLoader();
+			var loader = new MaterialLoader();
 			var materialJson;
 			for ( materialName in materials ) {
 
 				materialJson = materials[ materialName ];
-				if ( this.validator.isValid( materialJson ) ) {
+				if ( Validator.isValid( materialJson ) ) {
 
 					material = loader.parse( materialJson );
 					if ( this.logging.enabled ) console.info( 'De-serialized material with name "' + materialName + '" will be added.' );
@@ -370,7 +390,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 		}
 
 		materials = materialPayload.materials.runtimeMaterials;
-		if ( this.validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
+		if ( Validator.isValid( materials ) && Object.keys( materials ).length > 0 ) {
 
 			for ( materialName in materials ) {
 
@@ -403,7 +423,7 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
 	/**
 	 * Returns the mapping object of material name and corresponding material.
 	 *
-	 * @returns {Object} Map of {@link THREE.Material}
+	 * @returns {Object} Map of {@link Material}
 	 */
 	getMaterials: function () {
 		return this.materials;
@@ -419,21 +439,21 @@ THREE.MeshTransfer.MeshReceiver.prototype = {
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
-THREE.MeshTransfer.LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+const LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
 	this.disregardMesh = disregardMesh === true;
 	this.alteredMesh = alteredMesh === true;
 	this.meshes = [];
 };
 
 
-THREE.MeshTransfer.LoadedMeshUserOverride.prototype = {
+LoadedMeshUserOverride.prototype = {
 
-	constructor: THREE.MeshTransfer.LoadedMeshUserOverride,
+	constructor: LoadedMeshUserOverride,
 
 	/**
 	 * Add a mesh created within callback.
 	 *
-	 * @param {THREE.Mesh} mesh
+	 * @param {Mesh} mesh
 	 */
 	addMesh: function ( mesh ) {
 		this.meshes.push( mesh );
@@ -464,18 +484,18 @@ THREE.MeshTransfer.LoadedMeshUserOverride.prototype = {
  *
  * @constructor
  */
-THREE.MeshTransfer.MeshTransmitter = function () {
+const MeshTransmitter = function () {
 	this.callbackDataReceiver = null;
 	this.defaultGeometryType = 2;
 	this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
 };
 
-THREE.MeshTransfer.MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-preview';
+MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-preview';
 
 
-THREE.MeshTransfer.MeshTransmitter.prototype = {
+MeshTransmitter.prototype = {
 
-	constructor: THREE.MeshTransfer.MeshTransmitter,
+	constructor: MeshTransmitter,
 
 	setCallbackDataReceiver: function ( callbackDataReceiver ) {
 		this.callbackDataReceiver = callbackDataReceiver;
@@ -490,7 +510,7 @@ THREE.MeshTransfer.MeshTransmitter.prototype = {
 		var _walk_ = function ( object3d ) {
 			console.info( 'Walking: ' + object3d.name );
 
-			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof THREE.BufferGeometry ) {
+			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
 
 				scope.handleBufferGeometry( object3d[ 'geometry' ], object3d.name );
 

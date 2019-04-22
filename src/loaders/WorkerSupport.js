@@ -1,14 +1,20 @@
 /**
  * @author Kai Salmen / www.kaisalmen.de
  */
-//if ( ! THREE.WorkerLoader ) { THREE.WorkerLoader = {} }
+
+import { FileLoader } from "../../node_modules/three/build/three.module.js";
+import { CodeSerializer } from "./CodeSerializer.js"
+import { WorkerRunner } from "./worker/WorkerRunner.js"
+
+export { WorkerSupport }
+
 
 /**
  * This class provides means to transform existing parser code into a web worker. It defines a simple communication protocol
  * which allows to configure the worker and receive raw mesh data during execution.
  * @class
  */
-THREE.WorkerSupport = function () {
+const WorkerSupport = function () {
 	// check worker support first
 	if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 	if ( window.Blob === undefined ) throw "This browser does not support Blob!";
@@ -16,14 +22,14 @@ THREE.WorkerSupport = function () {
 
 	this._reset();
 };
-THREE.WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
+WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
 
-THREE.WorkerSupport.prototype = {
+WorkerSupport.prototype = {
 
-	constructor: THREE.WorkerSupport,
+	constructor: WorkerSupport,
 
 	printVersion: function() {
-		console.info( 'Using THREE.WorkerSupport version: ' + THREE.WorkerSupport.WORKER_SUPPORT_VERSION );
+		console.info( 'Using WorkerSupport version: ' + WorkerSupport.WORKER_SUPPORT_VERSION );
 	},
 
 	_reset: function () {
@@ -41,8 +47,8 @@ THREE.WorkerSupport.prototype = {
 			logging: true,
 			workerRunner: {
 				haveUserImpl: false,
-				name: 'THREE.WorkerSupport.WorkerRunner',
-				impl: THREE.WorkerSupport.WorkerRunner,
+				name: 'WorkerRunner',
+				impl: WorkerRunner,
 				parserName: null,
 				usesMeshDisassembler: null,
 				defaultGeometryType: null
@@ -89,8 +95,8 @@ THREE.WorkerSupport.prototype = {
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.worker.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
-		if ( this.worker.terminateWorkerOnLoad && THREE.MeshTransfer.Validator.isValid( this.worker.native ) &&
-			! THREE.MeshTransfer.Validator.isValid( this.worker.queuedMessage ) && this.worker.started ) {
+		if ( this.worker.terminateWorkerOnLoad && Validator.isValid( this.worker.native ) &&
+			! Validator.isValid( this.worker.queuedMessage ) && this.worker.started ) {
 
 			if ( this.logging.enabled ) console.info( 'Worker is terminated immediately as it is not running!' );
 			this._terminate();
@@ -106,7 +112,7 @@ THREE.WorkerSupport.prototype = {
 	 * @param {string} userRunnerImplName The name of the object
 	 */
 	setUserRunnerImpl: function ( userRunnerImpl, userRunnerImplName ) {
-		if ( THREE.MeshTransfer.Validator.isValid( userRunnerImpl ) && THREE.MeshTransfer.Validator.isValid( userRunnerImplName ) ) {
+		if ( Validator.isValid( userRunnerImpl ) && Validator.isValid( userRunnerImplName ) ) {
 
 			this.worker.workerRunner.haveUserImpl = true;
 			this.worker.workerRunner.impl = userRunnerImpl;
@@ -120,17 +126,17 @@ THREE.WorkerSupport.prototype = {
 	/**
 	 * Update all callbacks.
 	 *
-	 * @param {Function} onAssetAvailable The function for processing the data, e.g. {@link THREE.MeshTransfer.MeshReceiver}.
+	 * @param {Function} onAssetAvailable The function for processing the data, e.g. {@link MeshReceiver}.
 	 * @param {Function} [onLoad] The function that is called when parsing is complete.
 	 */
 	updateCallbacks: function ( onAssetAvailable, onLoad ) {
-		this.worker.callbacks.onAssetAvailable = THREE.MeshTransfer.Validator.verifyInput( onAssetAvailable, this.worker.callbacks.onAssetAvailable );
-		this.worker.callbacks.onLoad = THREE.MeshTransfer.Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
+		this.worker.callbacks.onAssetAvailable = Validator.verifyInput( onAssetAvailable, this.worker.callbacks.onAssetAvailable );
+		this.worker.callbacks.onLoad = Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
 		this._verifyCallbacks();
 	},
 
 	_verifyCallbacks: function () {
-		if ( ! THREE.MeshTransfer.Validator.isValid( this.worker.callbacks.onAssetAvailable ) ) throw 'Unable to run as no "onAssetAvailable" callback is set.';
+		if ( ! Validator.isValid( this.worker.callbacks.onAssetAvailable ) ) throw 'Unable to run as no "onAssetAvailable" callback is set.';
 	},
 
 	/**
@@ -139,7 +145,7 @@ THREE.WorkerSupport.prototype = {
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
 	validate: function ( loaderRef, buildWorkerCode, containFileLoadingCode ) {
-		if ( THREE.MeshTransfer.Validator.isValid( this.worker.native ) ) return;
+		if ( Validator.isValid( this.worker.native ) ) return;
 		if ( this.logging.enabled ) {
 
 			console.info( 'WorkerSupport: Building worker code...' );
@@ -150,15 +156,15 @@ THREE.WorkerSupport.prototype = {
 		var codeBuilderInstructions;
 		if ( buildWorkerCode === undefined || buildWorkerCode === null ) {
 
-			codeBuilderInstructions = new THREE.WorkerSupport.CodeBuilderIntructions( 'Parser', false );
+			codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
 
 		} else {
 
-			codeBuilderInstructions = buildWorkerCode( THREE.CodeSerializer, loaderRef );
+			codeBuilderInstructions = buildWorkerCode( CodeSerializer, loaderRef );
 
 		}
 
-		var codeParserRef = 'if ( ! THREE.WorkerSupport ) { THREE.WorkerSupport = {} };\n\nTHREE.WorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
+		var codeParserRef = 'if ( ! WorkerSupport ) { WorkerSupport = {} };\n\nWorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
 		codeBuilderInstructions.addCodeFragment( codeParserRef );
 		codeBuilderInstructions.addLibrary( 'src/loaders/worker/WorkerRunner.js', '../../' );
 		codeBuilderInstructions.addCodeFragment( 'new ' + this.worker.workerRunner.name + '();\n\n' );
@@ -166,8 +172,7 @@ THREE.WorkerSupport.prototype = {
 		if ( codeBuilderInstructions.containsMeshDisassembler === true || codeBuilderInstructions.usesMeshDisassembler === true ) {
 
 			console.warn( 'Feature \"containsMeshDisassembler\" is currently not available!' );
-//			extraCode += 'THREE.MeshTransfer = {};\n\n';
-//			extraCode += THREE.CodeSerializer.serializeClass( 'THREE.MeshTransfer.MeshTransmitter', THREE.MeshTransfer.MeshTransmitter );
+//			extraCode += CodeSerializer.serializeClass( 'MeshTransmitter', MeshTransmitter );
 
 		}
 		if ( containFileLoadingCode ) {
@@ -177,17 +182,17 @@ THREE.WorkerSupport.prototype = {
 			if ( ! codeBuilderInstructions.providesThree ) {
 /*
 				userWorkerCode += 'var loading = {};\n\n';
-				userWorkerCode += THREE.CodeSerializer.serializeObject( 'THREE.Cache', THREE.Cache );
-				userWorkerCode += THREE.DefaultLoadingManager.constructor.toString();
+				userWorkerCode += CodeSerializer.serializeObject( 'Cache', Cache );
+				userWorkerCode += DefaultLoadingManager.constructor.toString();
 				userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
-				userWorkerCode += 'var Cache = THREE.Cache;\n\n';
-				userWorkerCode += THREE.CodeSerializer.serializeClass( 'THREE.FileLoader', THREE.FileLoader, 'FileLoader' );
+				userWorkerCode += 'var Cache = Cache;\n\n';
+				userWorkerCode += CodeSerializer.serializeClass( 'FileLoader', FileLoader, 'FileLoader' );
 */
 			}
-//			userWorkerCode += THREE.CodeSerializer.serializeClass( 'THREE.WorkerLoader.ResourceDescriptor', THREE.WorkerLoader.ResourceDescriptor );
-//			userWorkerCode += THREE.CodeSerializer.serializeClass( 'THREE.WorkerLoader.FileLoadingExecutor', THREE.WorkerLoader.FileLoadingExecutor );
+//			userWorkerCode += CodeSerializer.serializeClass( 'WorkerLoader.ResourceDescriptor', WorkerLoader.ResourceDescriptor );
+//			userWorkerCode += CodeSerializer.serializeClass( 'WorkerLoader.FileLoadingExecutor', WorkerLoader.FileLoadingExecutor );
 		}
-//		userWorkerCode += THREE.CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
+//		userWorkerCode += CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 
 		var scope = this;
 		var scopedReceiveWorkerMessage = function ( event ) {
@@ -228,7 +233,7 @@ THREE.WorkerSupport.prototype = {
 
 				} else {
 
-					var fileLoader = new THREE.FileLoader();
+					var fileLoader = new FileLoader();
 					fileLoader.setPath( codeInstruction.resourcePath );
 					fileLoader.setResponseType( 'text' );
 					fileLoader.load( codeInstruction.libraryPath, processNewCode );
@@ -266,7 +271,7 @@ THREE.WorkerSupport.prototype = {
 			case 'completeOverall':
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				if ( THREE.MeshTransfer.Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
+				if ( Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
 
 				if ( this.worker.terminateWorkerOnLoad ) {
 
@@ -280,7 +285,7 @@ THREE.WorkerSupport.prototype = {
 				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Reported error: ' + payload.msg );
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				if ( THREE.MeshTransfer.Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
+				if ( Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
 
 				if ( this.worker.terminateWorkerOnLoad ) {
 
@@ -343,7 +348,7 @@ THREE.WorkerSupport.prototype = {
 	_verifyWorkerIsAvailable: function ( payload, transferables ) {
 		this._verifyCallbacks();
 		var ready = true;
-		if ( THREE.MeshTransfer.Validator.isValid( this.worker.queuedMessage ) ) {
+		if ( Validator.isValid( this.worker.queuedMessage ) ) {
 
 			console.warn( 'Already processing message. Rejecting new run instruction' );
 			ready = false;
@@ -361,7 +366,7 @@ THREE.WorkerSupport.prototype = {
 	},
 
 	_postMessage: function () {
-		if ( THREE.MeshTransfer.Validator.isValid( this.worker.queuedMessage ) && THREE.MeshTransfer.Validator.isValid( this.worker.native ) ) {
+		if ( Validator.isValid( this.worker.queuedMessage ) && Validator.isValid( this.worker.native ) ) {
 
 			if ( this.worker.queuedMessage.payload.data.input instanceof ArrayBuffer ) {
 
@@ -394,36 +399,5 @@ THREE.WorkerSupport.prototype = {
 	_terminate: function () {
 		this.worker.native.terminate();
 		this._reset();
-	}
-};
-
-THREE.WorkerSupport.CodeBuilderIntructions = function ( parserName, providesThree ) {
-	this.parserName = parserName;
-	this.providesThree = providesThree === true;
-	this.codeInstructions = [];
-	this.defaultGeometryType = 0;
-	this.containsMeshDisassembler = false;
-	this.usesMeshDisassembler = false;
-};
-
-THREE.WorkerSupport.CodeBuilderIntructions.prototype = {
-
-	addCodeFragment: function( codeFragment ) {
-		this.codeInstructions.push( {
-			type: 'serializedCode',
-			code: codeFragment
-		} );
-	},
-
-	addLibrary: function( libraryPath, resourcePath ) {
-		this.codeInstructions.push( {
-			type: 'lib',
-			libraryPath: libraryPath,
-			resourcePath: resourcePath
-		} );
-	},
-
-	getCodeInstructions: function() {
-		return this.codeInstructions;
 	}
 };

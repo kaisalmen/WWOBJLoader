@@ -41,10 +41,7 @@
     "docs/CHANGELOG.md",
     "src",
     "test/common",
-    "test/objloader2/main.html",
-    "test/objloader2/main.min.html",
     "test/objloader2/main.src.html",
-    "test/objloader2/OBJLoader2Example.js",
     "test/wwobjloader2/main.html",
     "test/wwobjloader2/main.min.html",
     "test/wwobjloader2/main.src.html",
@@ -82,7 +79,7 @@
     "three": "^0.103.0"
   },
   "devDependencies": {
-    "del": "^4.0.0",
+    "del": "^4.1.0",
     "gulp": "^4.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-decompress": "^2.0.2",
