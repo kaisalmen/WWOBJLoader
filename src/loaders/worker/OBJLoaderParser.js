@@ -152,9 +152,9 @@ Parser.prototype = {
 		this.pushSmoothingGroup( 1 );
 		if ( this.logging.enabled ) {
 
-			var matKeys = Object.keys( this.materials );
-			var matNames = (matKeys.length > 0) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
-			var printedConfig = 'OBJLoader.Parser configuration:'
+			let matKeys = Object.keys( this.materials );
+			let matNames = (matKeys.length > 0) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join( '\n\t\t- ' ) : '\n\tmaterialNames: None';
+			let printedConfig = 'OBJLoader.Parser configuration:'
 				+ matNames
 				+ '\n\tmaterialPerSmoothingGroup: ' + this.materialPerSmoothingGroup
 				+ '\n\tuseOAsMesh: ' + this.useOAsMesh
@@ -183,13 +183,13 @@ Parser.prototype = {
 		if ( this.logging.enabled ) console.time( 'OBJLoader.Parser.parse' );
 		this.configure();
 
-		var arrayBufferView = new Uint8Array( arrayBuffer );
+		let arrayBufferView = new Uint8Array( arrayBuffer );
 		this.contentRef = arrayBufferView;
-		var length = arrayBufferView.byteLength;
+		let length = arrayBufferView.byteLength;
 		this.globalCounts.totalBytes = length;
-		var buffer = new Array( 128 );
+		let buffer = new Array( 128 );
 
-		for ( var code, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i ++ ) {
+		for ( let code, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i ++ ) {
 
 			code = arrayBufferView[ i ];
 			switch ( code ) {
@@ -239,11 +239,11 @@ Parser.prototype = {
 		this.configure();
 		this.legacyMode = true;
 		this.contentRef = text;
-		var length = text.length;
+		let length = text.length;
 		this.globalCounts.totalBytes = length;
-		var buffer = new Array( 128 );
+		let buffer = new Array( 128 );
 
-		for ( var char, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i ++ ) {
+		for ( let char, word = '', bufferPointer = 0, slashesCount = 0, i = 0; i < length; i ++ ) {
 
 			char = text[ i ];
 			switch ( char ) {
@@ -282,11 +282,11 @@ Parser.prototype = {
 	processLine: function ( buffer, bufferPointer, slashesCount ) {
 		if ( bufferPointer < 1 ) return;
 
-		var reconstructString = function ( content, legacyMode, start, stop ) {
-			var line = '';
+		let reconstructString = function ( content, legacyMode, start, stop ) {
+			let line = '';
 			if ( stop > start ) {
 
-				var i;
+				let i;
 				if ( legacyMode ) {
 
 					for ( i = start; i < stop; i ++ ) line += content[ i ];
@@ -303,7 +303,7 @@ Parser.prototype = {
 			return line;
 		};
 
-		var bufferLength, length, i, lineDesignation;
+		let bufferLength, length, i, lineDesignation;
 		lineDesignation = buffer [ 0 ];
 		switch ( lineDesignation ) {
 			case 'v':
@@ -421,7 +421,7 @@ Parser.prototype = {
 				break;
 
 			case 'usemtl':
-				var mtlName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
+				let mtlName = reconstructString( this.contentRef, this.legacyMode, this.globalCounts.lineByte + 7, this.globalCounts.currentByte );
 				if ( mtlName !== '' && this.rawMesh.activeMtlName !== mtlName ) {
 
 					this.rawMesh.activeMtlName = mtlName;
@@ -437,12 +437,12 @@ Parser.prototype = {
 	},
 
 	pushSmoothingGroup: function ( smoothingGroup ) {
-		var smoothingGroupInt = parseInt( smoothingGroup );
+		let smoothingGroupInt = parseInt( smoothingGroup );
 		if ( isNaN( smoothingGroupInt ) ) {
 			smoothingGroupInt = smoothingGroup === "off" ? 0 : 1;
 		}
 
-		var smoothCheck = this.rawMesh.smoothingGroup.normalized;
+		let smoothCheck = this.rawMesh.smoothingGroup.normalized;
 		this.rawMesh.smoothingGroup.normalized = this.rawMesh.smoothingGroup.splitMaterials ? smoothingGroupInt : (smoothingGroupInt === 0) ? 0 : 1;
 		this.rawMesh.smoothingGroup.real = smoothingGroupInt;
 
@@ -475,7 +475,7 @@ Parser.prototype = {
 	},
 
 	checkSubGroup: function () {
-		var index = this.rawMesh.activeMtlName + '|' + this.rawMesh.smoothingGroup.normalized;
+		let index = this.rawMesh.activeMtlName + '|' + this.rawMesh.smoothingGroup.normalized;
 		this.rawMesh.subGroupInUse = this.rawMesh.subGroups[ index ];
 
 		if ( this.rawMesh.subGroupInUse === undefined || this.rawMesh.subGroupInUse === null ) {
@@ -500,22 +500,22 @@ Parser.prototype = {
 	},
 
 	buildFace: function ( faceIndexV, faceIndexU, faceIndexN ) {
-		var subGroupInUse = this.rawMesh.subGroupInUse;
-		var scope = this;
-		var updateSubGroupInUse = function () {
+		let subGroupInUse = this.rawMesh.subGroupInUse;
+		let scope = this;
+		let updateSubGroupInUse = function () {
 
-			var faceIndexVi = parseInt( faceIndexV );
-			var indexPointerV = 3 * (faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3);
-			var indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
+			let faceIndexVi = parseInt( faceIndexV );
+			let indexPointerV = 3 * (faceIndexVi > 0 ? faceIndexVi - 1 : faceIndexVi + scope.vertices.length / 3);
+			let indexPointerC = scope.colors.length > 0 ? indexPointerV : null;
 
-			var vertices = subGroupInUse.vertices;
+			let vertices = subGroupInUse.vertices;
 			vertices.push( scope.vertices[ indexPointerV ++ ] );
 			vertices.push( scope.vertices[ indexPointerV ++ ] );
 			vertices.push( scope.vertices[ indexPointerV ] );
 
 			if ( indexPointerC !== null ) {
 
-				var colors = subGroupInUse.colors;
+				let colors = subGroupInUse.colors;
 				colors.push( scope.colors[ indexPointerC ++ ] );
 				colors.push( scope.colors[ indexPointerC ++ ] );
 				colors.push( scope.colors[ indexPointerC ] );
@@ -523,18 +523,18 @@ Parser.prototype = {
 			}
 			if ( faceIndexU ) {
 
-				var faceIndexUi = parseInt( faceIndexU );
-				var indexPointerU = 2 * (faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.uvs.length / 2);
-				var uvs = subGroupInUse.uvs;
+				let faceIndexUi = parseInt( faceIndexU );
+				let indexPointerU = 2 * (faceIndexUi > 0 ? faceIndexUi - 1 : faceIndexUi + scope.uvs.length / 2);
+				let uvs = subGroupInUse.uvs;
 				uvs.push( scope.uvs[ indexPointerU ++ ] );
 				uvs.push( scope.uvs[ indexPointerU ] );
 
 			}
 			if ( faceIndexN && ! scope.disregardNormals ) {
 
-				var faceIndexNi = parseInt( faceIndexN );
-				var indexPointerN = 3 * (faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.normals.length / 3);
-				var normals = subGroupInUse.normals;
+				let faceIndexNi = parseInt( faceIndexN );
+				let indexPointerN = 3 * (faceIndexNi > 0 ? faceIndexNi - 1 : faceIndexNi + scope.normals.length / 3);
+				let normals = subGroupInUse.normals;
 				normals.push( scope.normals[ indexPointerN ++ ] );
 				normals.push( scope.normals[ indexPointerN ++ ] );
 				normals.push( scope.normals[ indexPointerN ] );
@@ -545,8 +545,8 @@ Parser.prototype = {
 		if ( this.useIndices ) {
 
 			if ( this.disregardNormals ) faceIndexN = undefined;
-			var mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
-			var indicesPointer = subGroupInUse.indexMappings[ mappingName ];
+			let mappingName = faceIndexV + ( faceIndexU ? '_' + faceIndexU : '_n' ) + ( faceIndexN ? '_' + faceIndexN : '_n' );
+			let indicesPointer = subGroupInUse.indexMappings[ mappingName ];
 			if ( indicesPointer === undefined || indicesPointer === null ) {
 
 				indicesPointer = this.rawMesh.subGroupInUse.vertices.length / 3;
@@ -586,16 +586,16 @@ Parser.prototype = {
 	 * Clear any empty subGroup and calculate absolute vertex, normal and uv counts
 	 */
 	finalizeRawMesh: function () {
-		var meshOutputGroupTemp = [];
-		var meshOutputGroup;
-		var absoluteVertexCount = 0;
-		var absoluteIndexMappingsCount = 0;
-		var absoluteIndexCount = 0;
-		var absoluteColorCount = 0;
-		var absoluteNormalCount = 0;
-		var absoluteUvCount = 0;
-		var indices;
-		for ( var name in this.rawMesh.subGroups ) {
+		let meshOutputGroupTemp = [];
+		let meshOutputGroup;
+		let absoluteVertexCount = 0;
+		let absoluteIndexMappingsCount = 0;
+		let absoluteIndexCount = 0;
+		let absoluteColorCount = 0;
+		let absoluteNormalCount = 0;
+		let absoluteUvCount = 0;
+		let indices;
+		for ( let name in this.rawMesh.subGroups ) {
 
 			meshOutputGroup = this.rawMesh.subGroups[ name ];
 			if ( meshOutputGroup.vertices.length > 0 ) {
@@ -603,7 +603,11 @@ Parser.prototype = {
 				indices = meshOutputGroup.indices;
 				if ( indices.length > 0 && absoluteIndexMappingsCount > 0 ) {
 
-					for ( var i in indices ) indices[ i ] = indices[ i ] + absoluteIndexMappingsCount;
+					for ( let i in indices ) {
+
+						indices[ i ] = indices[ i ] + absoluteIndexMappingsCount;
+
+					}
 
 				}
 				meshOutputGroupTemp.push( meshOutputGroup );
@@ -618,7 +622,7 @@ Parser.prototype = {
 		}
 
 		// do not continue if no result
-		var result = null;
+		let result = null;
 		if ( meshOutputGroupTemp.length > 0 ) {
 
 			result = {
@@ -638,8 +642,8 @@ Parser.prototype = {
 	},
 
 	processCompletedMesh: function () {
-		var result = this.finalizeRawMesh();
-		var haveMesh = result !== null;
+		let result = this.finalizeRawMesh();
+		let haveMesh = result !== null;
 		if ( haveMesh ) {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
@@ -655,7 +659,7 @@ Parser.prototype = {
 			this.inputObjectCount ++;
 
 			this.buildMesh( result );
-			var progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
+			let progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
 			if ( this.callbacks.onProgress !== null ) {
 
 				this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
@@ -674,39 +678,39 @@ Parser.prototype = {
 	 * @param result
 	 */
 	buildMesh: function ( result ) {
-		var meshOutputGroups = result.subGroups;
+		let meshOutputGroups = result.subGroups;
 
-		var vertexFA = new Float32Array( result.absoluteVertexCount );
+		let vertexFA = new Float32Array( result.absoluteVertexCount );
 		this.globalCounts.vertices += result.absoluteVertexCount / 3;
 		this.globalCounts.faces += result.faceCount;
 		this.globalCounts.doubleIndicesCount += result.doubleIndicesCount;
-		var indexUA = (result.absoluteIndexCount > 0) ? new Uint32Array( result.absoluteIndexCount ) : null;
-		var colorFA = (result.absoluteColorCount > 0) ? new Float32Array( result.absoluteColorCount ) : null;
-		var normalFA = (result.absoluteNormalCount > 0) ? new Float32Array( result.absoluteNormalCount ) : null;
-		var uvFA = (result.absoluteUvCount > 0) ? new Float32Array( result.absoluteUvCount ) : null;
-		var haveVertexColors = colorFA !== null;
+		let indexUA = (result.absoluteIndexCount > 0) ? new Uint32Array( result.absoluteIndexCount ) : null;
+		let colorFA = (result.absoluteColorCount > 0) ? new Float32Array( result.absoluteColorCount ) : null;
+		let normalFA = (result.absoluteNormalCount > 0) ? new Float32Array( result.absoluteNormalCount ) : null;
+		let uvFA = (result.absoluteUvCount > 0) ? new Float32Array( result.absoluteUvCount ) : null;
+		let haveVertexColors = colorFA !== null;
 
-		var meshOutputGroup;
-		var materialNames = [];
+		let meshOutputGroup;
+		let materialNames = [];
 
-		var createMultiMaterial = (meshOutputGroups.length > 1);
-		var materialIndex = 0;
-		var materialIndexMapping = [];
-		var selectedMaterialIndex;
-		var materialGroup;
-		var materialGroups = [];
+		let createMultiMaterial = (meshOutputGroups.length > 1);
+		let materialIndex = 0;
+		let materialIndexMapping = [];
+		let selectedMaterialIndex;
+		let materialGroup;
+		let materialGroups = [];
 
-		var vertexFAOffset = 0;
-		var indexUAOffset = 0;
-		var colorFAOffset = 0;
-		var normalFAOffset = 0;
-		var uvFAOffset = 0;
-		var materialGroupOffset = 0;
-		var materialGroupLength = 0;
+		let vertexFAOffset = 0;
+		let indexUAOffset = 0;
+		let colorFAOffset = 0;
+		let normalFAOffset = 0;
+		let uvFAOffset = 0;
+		let materialGroupOffset = 0;
+		let materialGroupLength = 0;
 
-		var materialOrg, material, materialName, materialNameOrg;
+		let materialOrg, material, materialName, materialNameOrg;
 		// only one specific face type
-		for ( var oodIndex in meshOutputGroups ) {
+		for ( let oodIndex in meshOutputGroups ) {
 
 			if ( ! meshOutputGroups.hasOwnProperty( oodIndex ) ) continue;
 			meshOutputGroup = meshOutputGroups[ oodIndex ];
@@ -728,7 +732,7 @@ Parser.prototype = {
 			// both original and derived names do not lead to an existing material => need to use a default material
 			if ( ( materialOrg === undefined || materialOrg === null ) && ( material === undefined || material === null ) ) {
 
-				var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
+				let defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				materialOrg = this.materials[ defaultMaterialName ];
 				if ( this.logging.enabled ) {
 
@@ -750,7 +754,7 @@ Parser.prototype = {
 			}
 			if ( material === undefined || material === null ) {
 
-				var materialCloneInstructions = {
+				let materialCloneInstructions = {
 					materialNameOrg: materialNameOrg,
 					materialName: materialName,
 					materialProperties: {
@@ -758,7 +762,7 @@ Parser.prototype = {
 						flatShading: meshOutputGroup.smoothingGroup === 0
 					}
 				};
-				var payload = {
+				let payload = {
 					cmd: 'data',
 					type: 'material',
 					materials: {
@@ -768,7 +772,7 @@ Parser.prototype = {
 				this.callbacks.onAssetAvailable( payload );
 
 				// only set materials if they don't exist, yet
-				var matCheck = this.materials[ materialName ];
+				let matCheck = this.materials[ materialName ];
 				if ( matCheck === undefined || matCheck === null ) {
 
 					this.materials[ materialName ] = materialCloneInstructions;
@@ -836,8 +840,8 @@ Parser.prototype = {
 
 			if ( this.logging.enabled && this.logging.debug ) {
 
-				var materialIndexLine = ( selectedMaterialIndex === undefined || selectedMaterialIndex === null ) ? '' : '\n\t\tmaterialIndex: ' + selectedMaterialIndex;
-				var createdReport = '\tOutput Object no.: ' + this.outputObjectCount +
+				let materialIndexLine = ( selectedMaterialIndex === undefined || selectedMaterialIndex === null ) ? '' : '\n\t\tmaterialIndex: ' + selectedMaterialIndex;
+				let createdReport = '\tOutput Object no.: ' + this.outputObjectCount +
 					'\n\t\tgroupName: ' + meshOutputGroup.groupName +
 					'\n\t\tIndex: ' + meshOutputGroup.index +
 					'\n\t\tfaceType: ' + this.rawMesh.faceType +
@@ -893,7 +897,7 @@ Parser.prototype = {
 		if ( this.logging.enabled ) console.info( 'Global output object count: ' + this.outputObjectCount );
 		if ( this.processCompletedMesh() && this.logging.enabled ) {
 
-			var parserFinalReport = 'Overall counts: ' +
+			let parserFinalReport = 'Overall counts: ' +
 				'\n\tVertices: ' + this.globalCounts.vertices +
 				'\n\tFaces: ' + this.globalCounts.faces +
 				'\n\tMultiple definitions: ' + this.globalCounts.doubleIndicesCount;

@@ -70,20 +70,20 @@ OBJLoader2.prototype = {
 	},
 
 	_createDefaultMaterials: function () {
-		var defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
+		let defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
 
-		var defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
+		let defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
 		defaultVertexColorMaterial.vertexColors = VertexColors;
 
-		var defaultLineMaterial = new LineBasicMaterial();
+		let defaultLineMaterial = new LineBasicMaterial();
 		defaultLineMaterial.name = 'defaultLineMaterial';
 
-		var defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
+		let defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
 		defaultPointMaterial.name = 'defaultPointMaterial';
 
-		var defaultMaterials = {};
+		let defaultMaterials = {};
 		defaultMaterials[ defaultMaterial.name ] = defaultMaterial;
 		defaultMaterials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
 		defaultMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
@@ -250,8 +250,8 @@ OBJLoader2.prototype = {
 	 * @param {number} numericalValue Numerical value describing the progress
 	 */
 	_onProgress: function ( type, text, numericalValue ) {
-		var content = ( text === null || text === undefined ) ? '': text;
-		var event = {
+		let content = ( text === null || text === undefined ) ? '': text;
+		let event = {
 			detail: {
 				type: type,
 				modelName: this.modelName,
@@ -273,7 +273,7 @@ OBJLoader2.prototype = {
 	},
 
 	_onError: function ( event ) {
-		var output = '';
+		let output = '';
 		if ( event.currentTarget && event.currentTarget.statusText !== null ) {
 
 			output = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
@@ -283,8 +283,8 @@ OBJLoader2.prototype = {
 			output = event;
 
 		}
-		var scope = this;
-		var onProgressScoped = function ( text, numericalValue ) {
+		let scope = this;
+		let onProgressScoped = function ( text, numericalValue ) {
 			scope._onProgress( 'error', text, numericalValue );
 		};
 		onProgressScoped( output, - 1 );
@@ -305,7 +305,7 @@ OBJLoader2.prototype = {
 	 * @param {function} [onMeshAlter] Called after worker successfully delivered a single mesh
 	 */
 	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter, parserConfiguration ) {
-		var scope = this;
+		let scope = this;
 		if ( onError === null || onError === undefined ) {
 
 			onError = function ( event ) {
@@ -318,27 +318,20 @@ OBJLoader2.prototype = {
 			onError( 'An invalid url was provided. Unable to continue!' );
 
 		}
-//		var urlParts = url.split( '/' );
-//		var filename = ( urlParts.length > 2 ) ? urlParts.pop() : url;
-
 		let urlFull = new URL( url, window.location.href ).href;
 		let filename = urlFull;
 		let urlParts = urlFull.split( '/' );
-		let localPath;
 		if ( urlParts.length > 2 ) {
 
 			filename = urlParts[ urlParts.length - 1 ];
 			let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
-			if ( urlPartsPath !== undefined && urlPartsPath !== null ) localPath = urlPartsPath;
+			if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 		}
-
-
-//		var localPath = urlParts.join( '/' ) + '/';
 		if ( onFileLoadProgress === null || onFileLoadProgress === undefined ) {
 
-			var numericalValueRef = 0;
-			var numericalValue = 0;
+			let numericalValueRef = 0;
+			let numericalValue = 0;
 			onFileLoadProgress = function ( event ) {
 				if ( ! event.lengthComputable ) return;
 
@@ -346,7 +339,7 @@ OBJLoader2.prototype = {
 				if ( numericalValue > numericalValueRef ) {
 
 					numericalValueRef = numericalValue;
-					var output = 'Download of "' + url + '": ' + (numericalValue * 100).toFixed( 2 ) + '%';
+					let output = 'Download of "' + url + '": ' + (numericalValue * 100).toFixed( 2 ) + '%';
 					scope._onProgress( 'progressLoad', output, numericalValue );
 
 				}
@@ -354,11 +347,11 @@ OBJLoader2.prototype = {
 
 		}
 		this._setCallbacks( null, onMeshAlter, null );
-		var fileLoaderOnLoad = function ( content ) {
+		let fileLoaderOnLoad = function ( content ) {
 			onLoad( scope.parse( content ) );
 		};
-		var fileLoader = new FileLoader( this.manager );
-		fileLoader.setPath( this.path || this.resourcePath || localPath );
+		let fileLoader = new FileLoader( this.manager );
+		fileLoader.setPath( this.path || this.resourcePath );
 		fileLoader.setResponseType( 'arraybuffer' );
 		fileLoader.load( filename, fileLoaderOnLoad, onFileLoadProgress, onError );
 	},
@@ -380,7 +373,7 @@ OBJLoader2.prototype = {
 			console.time( 'OBJLoader parse: ' + this.modelName );
 
 		}
-		var parser = new Parser();
+		let parser = new Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseOAsMesh( this.useOAsMesh );
@@ -389,14 +382,14 @@ OBJLoader2.prototype = {
 		// sync code works directly on the material references
 		parser.setMaterials( this.materials );
 
-		var scope = this;
-		var onMeshLoaded = function ( payload ) {
+		let scope = this;
+		let onMeshLoaded = function ( payload ) {
 
 			if ( payload.cmd === 'data' && payload.type === 'mesh' ) {
 
-				var meshes = scope._buildMeshes( payload );
-				var mesh;
-				for ( var i in meshes ) {
+				let meshes = scope._buildMeshes( payload );
+				let mesh;
+				for ( let i in meshes ) {
 
 					mesh = meshes[ i ];
 					scope.baseObject3d.add( mesh );
@@ -405,7 +398,7 @@ OBJLoader2.prototype = {
 
 			}
 		};
-		var onProgressScoped = function ( text, numericalValue ) {
+		let onProgressScoped = function ( text, numericalValue ) {
 			scope._onProgress( 'progressParse', text, numericalValue );
 		};
 		parser.setCallbackOnProgress( onProgressScoped );
@@ -422,7 +415,7 @@ OBJLoader2.prototype = {
 
 		} else {
 
-			var errorMessage = 'Provided content was neither of type String nor Uint8Array! Aborting...';
+			let errorMessage = 'Provided content was neither of type String nor Uint8Array! Aborting...';
 			if ( this.callbacks.genericErrorHandler ) {
 
 				this.callbacks.genericErrorHandler( errorMessage );
@@ -439,16 +432,16 @@ OBJLoader2.prototype = {
 	},
 
 	_buildMeshes: function ( meshPayload ) {
-		var meshName = meshPayload.params.meshName;
+		let meshName = meshPayload.params.meshName;
 
-		var bufferGeometry = new BufferGeometry();
+		let bufferGeometry = new BufferGeometry();
 		bufferGeometry.addAttribute( 'position', new BufferAttribute( new Float32Array( meshPayload.buffers.vertices ), 3 ) );
 		if ( meshPayload.buffers.indices !== null ) {
 
 			bufferGeometry.setIndex( new BufferAttribute( new Uint32Array( meshPayload.buffers.indices ), 1 ) );
 
 		}
-		var haveVertexColors = meshPayload.buffers.colors  !== null;
+		let haveVertexColors = meshPayload.buffers.colors  !== null;
 		if ( haveVertexColors ) {
 
 			bufferGeometry.addAttribute( 'color', new BufferAttribute( new Float32Array( meshPayload.buffers.colors ), 3 ) );
@@ -479,10 +472,10 @@ OBJLoader2.prototype = {
 
 		}
 
-		var material, materialName, key;
-		var materialNames = meshPayload.materials.materialNames;
-		var createMultiMaterial = meshPayload.materials.multiMaterial;
-		var multiMaterials = [];
+		let material, materialName, key;
+		let materialNames = meshPayload.materials.materialNames;
+		let createMultiMaterial = meshPayload.materials.multiMaterial;
+		let multiMaterials = [];
 		for ( key in materialNames ) {
 
 			materialName = materialNames[ key ];
@@ -493,8 +486,8 @@ OBJLoader2.prototype = {
 		if ( createMultiMaterial ) {
 
 			material = multiMaterials;
-			var materialGroups = meshPayload.materials.materialGroups;
-			var materialGroup;
+			let materialGroups = meshPayload.materials.materialGroups;
+			let materialGroup;
 			for ( key in materialGroups ) {
 
 				materialGroup = materialGroups[ key ];
@@ -504,12 +497,12 @@ OBJLoader2.prototype = {
 
 		}
 
-		var meshes = [];
-		var mesh;
-		var callbackOnMeshAlter = this.callbacks.onMeshAlter;
-		var callbackOnMeshAlterResult;
-		var useOrgMesh = true;
-		var geometryType = meshPayload.geometryType === null ? 0 : meshPayload.geometryType;
+		let meshes = [];
+		let mesh;
+		let callbackOnMeshAlter = this.callbacks.onMeshAlter;
+		let callbackOnMeshAlterResult;
+		let useOrgMesh = true;
+		let geometryType = meshPayload.geometryType === null ? 0 : meshPayload.geometryType;
 
 		if ( callbackOnMeshAlter ) {
 
@@ -533,7 +526,7 @@ OBJLoader2.prototype = {
 
 			} else if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
 
-				for ( var i in callbackOnMeshAlterResult.meshes ) {
+				for ( let i in callbackOnMeshAlterResult.meshes ) {
 
 					meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
 
@@ -564,11 +557,11 @@ OBJLoader2.prototype = {
 
 		}
 
-		var progressMessage = meshPayload.params.meshName;
+		let progressMessage = meshPayload.params.meshName;
 		if ( meshes.length > 0 ) {
 
-			var meshNames = [];
-			for ( var i in meshes ) {
+			let meshNames = [];
+			for ( let i in meshes ) {
 
 				mesh = meshes[ i ];
 				meshNames[ i ] = mesh.name;
@@ -583,7 +576,7 @@ OBJLoader2.prototype = {
 			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100).toFixed( 2 ) + '%)';
 
 		}
-		var callbackOnParseProgress = this.callbacks.onParseProgress;
+		let callbackOnParseProgress = this.callbacks.onParseProgress;
 		if ( callbackOnParseProgress ) {
 
 			callbackOnParseProgress( 'progress', progressMessage, meshPayload.progress.numericalValue );
@@ -593,14 +586,14 @@ OBJLoader2.prototype = {
 	},
 
 	buildWorkerCode: function ( codeSerializer ) {
-		var workerCode = '';
+		let workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
 		workerCode += 'OBJLoader2 = {};\n\n';
 //		workerCode += codeSerializer.serializeClass( 'Parser', Parser );
 
-		var codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
+		let codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
 		codeBuilderInstructions.addCodeFragment( workerCode );
 		codeBuilderInstructions.addLibrary( 'src/loaders/worker/OBJLoader2Parser.js', '../../' );
 		return codeBuilderInstructions;
