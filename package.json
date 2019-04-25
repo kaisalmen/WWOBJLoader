@@ -41,10 +41,7 @@
     "docs/CHANGELOG.md",
     "src",
     "test/common",
-    "test/objloader2/main.html",
-    "test/objloader2/main.min.html",
     "test/objloader2/main.src.html",
-    "test/objloader2/OBJLoader2Example.js",
     "test/wwobjloader2/main.html",
     "test/wwobjloader2/main.min.html",
     "test/wwobjloader2/main.src.html",
@@ -79,11 +76,11 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.103.0"
+    "three": "^0.104.0"
   },
   "devDependencies": {
-    "del": "^4.0.0",
-    "gulp": "^4.0.0",
+    "del": "^4.1.0",
+    "gulp": "^4.0.1",
     "gulp-concat": "^2.6.1",
     "gulp-decompress": "^2.0.2",
     "gulp-header": "^2.0.7",

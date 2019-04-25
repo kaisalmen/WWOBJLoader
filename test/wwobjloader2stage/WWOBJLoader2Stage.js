@@ -405,7 +405,6 @@ var WWOBJLoader2Stage = (function () {
 			var wsResourceArray = [];
 			var setObjAsArrayBuffer = function ( data ) {
 				resourceObj.setBuffer( data );
-				resourceObj.resourceType = 'Buffer';
 				wsResourceArray.push( resourceObj );
 
 				scope._reportProgress( { detail: { text: '' } } );
