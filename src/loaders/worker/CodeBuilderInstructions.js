@@ -16,6 +16,8 @@ const CodeBuilderInstructions = function ( parserName, providesThree ) {
 
 CodeBuilderInstructions.prototype = {
 
+	constructor: CodeBuilderInstructions,
+
 	addCodeFragment: function( codeFragment ) {
 		this.codeInstructions.push( {
 			type: 'serializedCode',

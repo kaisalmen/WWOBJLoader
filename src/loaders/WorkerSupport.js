@@ -3,7 +3,7 @@
  */
 
 import { FileLoader } from "../../node_modules/three/build/three.module.js";
-import { CodeSerializer } from "./CodeSerializer.js"
+import { CodeSerializer } from "./util/CodeSerializer.js"
 import { WorkerRunner } from "./worker/WorkerRunner.js"
 
 export { WorkerSupport }

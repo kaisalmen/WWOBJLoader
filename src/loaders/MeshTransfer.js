@@ -16,37 +16,13 @@ import {
 	VertexColors
 } from "../../node_modules/three/build/three.module.js";
 
+import { Validator } from "./util/Validator.js";
+
 export {
 	MeshReceiver,
 	MeshTransmitter,
-	LoadedMeshUserOverride,
-	Validator
+	LoadedMeshUserOverride
 }
-
-
-const Validator = {
-
-	/**
-	 * If given input is null or undefined, false is returned otherwise true.
-	 *
-	 * @param input Can be anything
-	 * @returns {boolean}
-	 */
-	isValid: function( input ) {
-		return ( input !== null && input !== undefined );
-	},
-
-	/**
-	 * If given input is null or undefined, the defaultValue is returned otherwise the given input.
-	 *
-	 * @param input Can be anything
-	 * @param defaultValue Can be anything
-	 * @returns {*}
-	 */
-	verifyInput: function( input, defaultValue ) {
-		return ( input === null || input === undefined ) ? defaultValue : input;
-	}
-};
 
 
 const MeshReceiver = function() {

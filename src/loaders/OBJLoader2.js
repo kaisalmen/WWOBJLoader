@@ -19,12 +19,10 @@ import {
 	Points
 } from "../../node_modules/three/build/three.module.js";
 
-import { Parser } from "./worker/OBJLoaderParser.js";
+import { Parser } from "./parser/OBJLoader2Parser.js";
 import { CodeBuilderInstructions } from "./worker/CodeBuilderInstructions.js";
 
-export {
-	OBJLoader2,
-};
+export { OBJLoader2 };
 
 
 /**
@@ -58,7 +56,7 @@ const OBJLoader2 = function ( manager ) {
 	this.materials = {};
 	this._createDefaultMaterials();
 };
-OBJLoader2.OBJLOADER2_VERSION = '3.0.0-preview';
+OBJLoader2.OBJLOADER2_VERSION = '3.0.0-beta';
 
 
 OBJLoader2.prototype = {

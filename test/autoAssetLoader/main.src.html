@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - OBJLoader2 basic usage</title>
+		<title>three.js webgl - AutoAssetLoader example</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
@@ -16,7 +16,7 @@
 
 		</div>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 direct loader test
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - AutoAssetLoader example
 			<div id="feedback"></div>
 		</div>
 
@@ -37,12 +37,17 @@
 			} from "../../node_modules/three/build/three.module.js";
 
 			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
-
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
+			import { MtlObjBridge } from "../../src/loaders/parser/MtlObjBridge.js";
+			import {
+				AutoAssetLoader,
+				AssetTask,
+				ResourceDescriptor
+			} from "../../src/loaders/AutoAssetLoader.js";
 
 
-			const OBJLoader2Example = function ( elementToBindTo ) {
+			const AutoAssetLoaderExample = function ( elementToBindTo ) {
 				this.renderer = null;
 				this.canvas = elementToBindTo;
 				this.aspectRatio = 1;
@@ -62,9 +67,9 @@
 				this.controls = null;
 			};
 
-			OBJLoader2Example.prototype = {
+			AutoAssetLoaderExample.prototype = {
 
-				constructor: OBJLoader2Example,
+				constructor: AutoAssetLoaderExample,
 
 				initGL: function () {
 					this.renderer = new WebGLRenderer( {
@@ -96,38 +101,31 @@
 				},
 
 				initContent: function () {
-					let modelName = 'female02';
-					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
+					let autoAssetLoader = new AutoAssetLoader();
 
-
-					let scope = this;
-					let objLoader2 = new OBJLoader2();
-					objLoader2.printVersion();
-					let callbackOnLoad = function ( object3d ) {
-						scope.scene.add( object3d );
-						console.log( 'Loading complete: ' + modelName );
-						scope._reportProgress( { detail: { text: '' } } );
+					let assetTask0 = new AssetTask( 'task0' );
+					let rdMtl = new ResourceDescriptor( 'URL', 'union.mtl', '../../resource/obj/14032/union.mtl' );
+					assetTask0.setResourceDescriptor( rdMtl );
+					let loaderConfigurationMtl = {
+						resourcePath: '../../resource/obj/14032/',
+						materialOptions: {}
 					};
+					assetTask0.setAssetHandlerRef( MTLLoader, loaderConfigurationMtl );
 
-					let onLoadMtl = function ( mtlParseResult ) {
-						objLoader2.setModelName( modelName );
-						objLoader2.setLogging( true, true );
-						objLoader2.addMaterialsFromMtlLoader( mtlParseResult );
-						objLoader2.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
-					};
-					let mtlLoader = new MTLLoader();
-					mtlLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
-				},
+					let assetTask1 = new AssetTask( 'task1' );
+					let mtlObjBridge = new MtlObjBridge();
+					assetTask1.setAssetHandler( mtlObjBridge );
 
-				_reportProgress: function ( event ) {
-					let output = '';
-					if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === !undefined ) {
+					let assetTask2 = new AssetTask( 'task2' );
+					let rdObj = new ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' );
+					assetTask2.setResourceDescriptor( rdObj );
+					assetTask2.setAssetHandlerRef( OBJLoader2 );
 
-						output = event.detail.text;
+					autoAssetLoader.addAssetTask( assetTask0 );
+					autoAssetLoader.addAssetTask( assetTask1 );
+					autoAssetLoader.addAssetTask( assetTask2 );
 
-					}
-					console.log( 'Progress: ' + output );
-					document.getElementById( 'feedback' ).innerHTML = output;
+					autoAssetLoader.init().loadAssets().processAssets();
 				},
 
 				resizeDisplayGL: function () {
@@ -163,7 +161,7 @@
 				}
 			};
 
-			let app = new OBJLoader2Example( document.getElementById( 'example' ) );
+			let app = new AutoAssetLoaderExample( document.getElementById( 'example' ) );
 
 			let resizeWindow = function () {
 				app.resizeDisplayGL();

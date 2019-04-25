@@ -4,7 +4,7 @@
 
 import { WorkerLoader } from "./WorkerLoader";
 import { WorkerSupport } from "./WorkerSupport";
-import { Validator } from "./MeshTransfer.js";
+import { Validator } from "./util/Validator.js";
 
 export {
 	Director,

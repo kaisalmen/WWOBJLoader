@@ -9,19 +9,15 @@ import {
 	Object3D
 } from "../../node_modules/three/build/three.module.js";
 
-import {
-	MeshReceiver,
-	Validator
-} from "./MeshTransfer.js";
-
-import { WorkerRunner } from "./worker/WorkerRunner";
+import { MeshReceiver } from "./MeshTransfer.js";
+import { Validator } from "./util/Validator.js";
+import { ObjectManipulator } from "./util/ObjectManipulator.js";
 
 export {
 	WorkerLoader,
 	LoadingTask,
 	FileLoadingExecutor,
-	LoadingTaskConfig,
-	ResourceDescriptor
+	LoadingTaskConfig
 }
 
 /**
@@ -481,7 +477,7 @@ LoadingTask.prototype = {
 			}
 
 		}
-		WorkerRunner.prototype.applyProperties( this, ownConfig );
+		ObjectManipulator.applyProperties( this, ownConfig );
 		if ( loadingTaskConfig !== null ) {
 
 			this.resetResourceDescriptors( loadingTaskConfig.resourceDescriptors );
@@ -498,8 +494,8 @@ LoadingTask.prototype = {
 			);
 		}
 		// this will ensure that any base configuration on LoadingTask and Loader are aligned
-		WorkerRunner.prototype.applyProperties( this.loader.ref, ownConfig );
-		WorkerRunner.prototype.applyProperties( this.loader.ref, this.loader.config );
+		ObjectManipulator.applyProperties( this.loader.ref, ownConfig );
+		ObjectManipulator.applyProperties( this.loader.ref, this.loader.config );
 		if ( typeof this.loader.ref.setGenericErrorHandler === 'function' ) {
 
 			this.loader.ref.setGenericErrorHandler( this.callbacks.app.onReportError );
@@ -619,7 +615,7 @@ LoadingTask.prototype = {
 
 			} else {
 
-				WorkerRunner.prototype.applyProperties( loadingTask.loader.ref, resourceDescriptorCurrent.parserConfiguration );
+				ObjectManipulator.applyProperties( loadingTask.loader.ref, resourceDescriptorCurrent.parserConfiguration );
 				if ( typeof loadingTask.loader.ref.getParseFunctionName === 'function' ) {
 
 					var parseFunctionName = loadingTask.loader.ref.getParseFunctionName();
@@ -944,164 +940,4 @@ LoadingTaskConfig.prototype = {
 		return this;
 	}
 };
-
-/**
- *
- * @param {String} resourceType
- * @param {String} name
- * @param {Object} [input]
- * @constructor
- */
-const ResourceDescriptor = function ( resourceType, name, input ) {
-	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
-	this.resourceType = resourceType;
-
-	this.content;
-	this.url = null;
-	this.filename = null;
-	this.path;
-	this.resourcePath;
-	this.extension = null;
-	this.async = {
-		load: false,
-		parse: true
-	};
-	this.parserConfiguration = {
-		payloadType: 'arraybuffer'
-	};
-	this.dataOptions = {};
-	this.transferables = [];
-	this.result = null;
-
-	this._init( input );
-};
-
-ResourceDescriptor.prototype = {
-
-	constructor: WorkerLoader.ResourceDescriptor,
-
-	_init: function ( input ) {
-		input = ( input !== undefined && input !== null ) ? input : null;
-
-		if ( this.resourceType === 'URL' ) {
-
-			this.url = ( input !== null ) ? input : this.name;
-			this.url = new URL( this.url, window.location.href ).href;
-			this.filename = this.url;
-			var urlParts = this.url.split( '/' );
-			if ( urlParts.length > 2 ) {
-
-				this.filename = urlParts[ urlParts.length - 1 ];
-				var urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
-				if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
-
-			}
-			var filenameParts = this.filename.split( '.' );
-			if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-			this.content = null;
-
-		} else if ( this.resourceType === 'Buffer' ) {
-
-			this.parserConfiguration.payloadType = 'arraybuffer';
-			this.setBuffer( input );
-
-		} else if ( this.resourceType === 'String' ) {
-
-			this.parserConfiguration.payloadType = 'text';
-			this.setString( input );
-
-		} else if ( this.resourceType === 'Metadata' ) {
-
-			this.content = 'no_content';
-
-		} else {
-
-			throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...';
-
-		}
-	},
-
-	setString: function ( input ) {
-		// fast-fail on unset input
-		if ( input === null ) return;
-		if ( ! ( typeof( input ) === 'string' || input instanceof String) ) this._throwError( 'Provided input is not of resourceType "String"! Aborting...' );
-		this.content = input;
-	},
-
-	setBuffer: function ( buffer ) {
-		// fast-fail on unset input
-		if ( buffer === null ) return;
-		if ( ! ( buffer instanceof ArrayBuffer ||
-			buffer instanceof Int8Array ||
-			buffer instanceof Uint8Array ||
-			buffer instanceof Uint8ClampedArray ||
-			buffer instanceof Int16Array ||
-			buffer instanceof Uint16Array ||
-			buffer instanceof Int32Array ||
-			buffer instanceof Uint32Array ||
-			buffer instanceof Float32Array ||
-			buffer instanceof Float64Array ) ) {
-
-			this._throwError( 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...' );
-
-		}
-		this.content = buffer;
-	},
-
-	configureAsync: function ( loadAsync, parseAsync ) {
-		this.async.parse = parseAsync === true;
-		// Loading in Worker is currently only allowed when async parse is performed!!!!
-		this.async.load = loadAsync === true && this.async.parse;
-
-		return this;
-	},
-
-	setParserConfiguration: function ( parserConfiguration ) {
-		WorkerRunner.prototype.applyProperties( this.parserConfiguration, parserConfiguration, true );
-		this.parserConfiguration.filename = Validator.verifyInput( this.parserConfiguration.filename, this.filename );
-		return this;
-	},
-
-	setDataOption: function ( name, object, transferables ) {
-		if ( ! Array.isArray( transferables ) ) transferables = [];
-		this.dataOptions[ name ] = {
-			name: name,
-			object: object
-		};
-		if ( transferables.length > 0 ) {
-
-			this.transferables = this.transferables.concat( transferables );
-
-		}
-	},
-
-	setParserResult: function ( result ) {
-		this.result = result;
-	},
-
-	setCallbackOnProcessResult: function ( callbackOnProcessResult ) {
-		this.callbackOnProcessResult = callbackOnProcessResult;
-		return this;
-	},
-
-	getCallbackOnProcessResult: function ( ) {
-		return this.callbackOnProcessResult;
-	},
-
-	createSendable: function () {
-		var copy = new WorkerLoader.ResourceDescriptor( this.resourceType, this.name );
-		copy.url = this.url;
-		copy.filename = this.filename;
-		copy.path = this.path;
-		copy.resourcePath = this.resourcePath;
-		copy.extension = this.extension;
-		copy.async.load = this.async.load;
-		copy.async.parse = this.async.parse;
-		WorkerRunner.prototype.applyProperties( copy.parserConfiguration, this.parserConfiguration, true );
-		this.result = null;
-		return copy;
-	}
-};
-
-
 

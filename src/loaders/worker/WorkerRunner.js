@@ -3,6 +3,7 @@
  */
 
 import { MeshTransmitter } from "../MeshTransfer.js"
+import { ObjectManipulator } from "./util/ObjectManipulator.js";
 
 export { WorkerRunner }
 
@@ -28,33 +29,6 @@ const WorkerRunner = function () {
 WorkerRunner.prototype = {
 
 	constructor: WorkerRunner,
-
-	/**
-	 * Applies values from parameter object via set functions or via direct assignment.
-	 *
-	 * @param {Object} parser The parser instance
-	 * @param {Object} params The parameter object
-	 */
-	applyProperties: function ( parser, params, forceCreation ) {
-		// fast-fail
-		if ( parser === undefined || parser === null || params === undefined || params === null ) return;
-
-		var property, funcName, values;
-		for ( property in params ) {
-			funcName = 'set' + property.substring( 0, 1 ).toLocaleUpperCase() + property.substring( 1 );
-			values = params[ property ];
-
-			if ( typeof parser[ funcName ] === 'function' ) {
-
-				parser[ funcName ]( values );
-
-			} else if ( parser.hasOwnProperty( property ) || forceCreation ) {
-
-				parser[ property ] = values;
-
-			}
-		}
-	},
 
 	/**
 	 * Configures the Parser implementation according the supplied configuration object.
@@ -128,9 +102,9 @@ WorkerRunner.prototype = {
 				parser.setLogging( this.logging.enabled, this.logging.debug );
 
 			}
-			this.applyProperties( parser, payload.params );
-			this.applyProperties( parser, payload.materials );
-			this.applyProperties( parser, callbacks );
+			ObjectManipulator.applyProperties( parser, payload.params );
+			ObjectManipulator.applyProperties( parser, payload.materials );
+			ObjectManipulator.applyProperties( parser, callbacks );
 
 			var arraybuffer;
 			if ( payload.params.index !== undefined && payload.params.index !== null) {
