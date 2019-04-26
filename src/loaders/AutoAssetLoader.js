@@ -3,6 +3,7 @@
  */
 
 import { ObjectManipulator } from "./util/ObjectManipulator.js";
+import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
 export {
 	AutoAssetLoader,
@@ -49,7 +50,7 @@ AutoAssetLoader.prototype = {
 	 */
 	init: function () {
 		this.assetTasks.forEach( function ( value, key ) {
-			console.log( 'Initialising ' + key + '...' );
+			console.log( 'Initialising "' + key + '"...' );
 			value.init();
 		} );
 		return this;
@@ -60,17 +61,39 @@ AutoAssetLoader.prototype = {
 	 * @returns {AutoAssetLoader}
 	 */
 	loadAssets: function () {
-		return this;
-	},
+		async function loadResource( assetTask ) {
+			let response = await FileLoadingExecutor.loadFileAsync( {
+				resourceDescriptor: assetTask.getResourceDescriptor(),
+				instanceNo: 0,
+				description: 'loadAssets',
+				reportCallback: ( report => console.log( report ) )
+			} );
+			return response;
+		}
 
-	/**
-	 *
-	 * @returns {AutoAssetLoader}
-	 */
-	processAssets: function ( ) {
-		console.log( 'Waiting for completion of loading of all assets!');
+		async function loadResources( assetTasks ) {
+			let loadPromises = [ assetTasks.size ];
+			let counter = 0;
+			for ( let assetTask of assetTasks.values() ) {
+				loadPromises[ counter ] = await loadResource( assetTask );
+				counter++;
+			}
+
+			console.log( 'Waiting for completion of loading of all assets!');
+			return await Promise.all( loadPromises );
+		}
+
+		function processAssets( loadResults ) {
+			console.log( 'Result of loading: ' + loadResults.length );
+		}
+
+		loadResources( this.assetTasks )
+			.then( x => processAssets( x ) )
+			.catch( x => console.error( x ) );
+
 		return this;
 	}
+
 };
 
 
@@ -85,7 +108,8 @@ const AssetTask = function ( name ) {
 	this.assetHandler = {
 		ref: null,
 		instance: null,
-		config: {}
+		config: {},
+		processFunctionName: 'parse'
 	}
 };
 
@@ -99,6 +123,17 @@ AssetTask.prototype = {
 	 */
 	getName: function () {
 		return this.name;
+	},
+
+	/**
+	 * Change the name of the process function of the assetHandler instance. Default is "parse".
+	 *
+	 * @param {String} processFunctionName
+	 * @returns {AssetTask}
+	 */
+	setProcessFunctionName: function ( processFunctionName ) {
+		this.assetHandler.processFunctionName = processFunctionName;
+		return this;
 	},
 
 	/**
@@ -169,6 +204,7 @@ AssetTask.prototype = {
 	 * @returns {AssetTask}
 	 */
 	process: function ( previousResult ) {
+		this.assetHandler.instance[ this.processFunctionName ]( previousResult );
 		return this;
 	}
 
@@ -327,5 +363,3 @@ ResourceDescriptor.prototype = {
 		return copy;
 	}
 };
-
-

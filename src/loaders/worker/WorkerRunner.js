@@ -56,7 +56,7 @@ WorkerRunner.prototype = {
 			console.warn( '\"loadFile\" inside worker is currently disabled.');
 /*
 			var resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
-			var fileLoadingExecutor = new THREE.WorkerLoader.FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
+			var fileLoadingExecutor = new FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
 
 			var callbackProgress = function ( text ) {
 				if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );

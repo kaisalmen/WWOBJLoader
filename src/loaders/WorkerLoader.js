@@ -4,7 +4,6 @@
 
 import {
 	DefaultLoadingManager,
-	FileLoader,
 	Group,
 	Object3D
 } from "../../node_modules/three/build/three.module.js";
@@ -12,11 +11,11 @@ import {
 import { MeshReceiver } from "./MeshTransfer.js";
 import { Validator } from "./util/Validator.js";
 import { ObjectManipulator } from "./util/ObjectManipulator.js";
+import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
 export {
 	WorkerLoader,
 	LoadingTask,
-	FileLoadingExecutor,
 	LoadingTaskConfig
 }
 
@@ -507,7 +506,7 @@ LoadingTask.prototype = {
 	_executeLoadFiles: function () {
 		var loadingTask = this;
 
-		var fileLoadingExecutor = new WorkerLoader.FileLoadingExecutor( loadingTask.instanceNo, loadingTask.description );
+		var fileLoadingExecutor = new FileLoadingExecutor( loadingTask.instanceNo, loadingTask.description );
 		fileLoadingExecutor
 			.setCallbacks( loadingTask.callbacks.app.onReport, loadingTask._throwError );
 
@@ -723,90 +722,6 @@ LoadingTask.prototype = {
 			}
 
 		}
-	}
-};
-
-const FileLoadingExecutor = function ( instanceNo, description ) {
-	this.callbacks = {
-		report: null,
-		onError: null
-	};
-	this.instanceNo = instanceNo;
-	this.description = description;
-	this.path = '';
-};
-
-FileLoadingExecutor.prototype = {
-
-	constructor: FileLoadingExecutor,
-
-	setPath: function ( path ) {
-		this.path = Validator.verifyInput( path, this.path );
-		return this;
-	},
-
-	setCallbacks: function ( callbackAppReport, callbackOnError  ) {
-		this.callbacks.report = callbackAppReport;
-		this.callbacks.onError = callbackOnError;
-		return this;
-	},
-
-	setManager: function ( manager ) {
-		this.manager = Validator.verifyInput( manager, DefaultLoadingManager );
-		return this;
-	},
-
-	/**
-	 */
-	loadFile: function ( resourceDescriptorCurrent, index, onCompleteFileLoading ) {
-		var numericalValueRef = 0;
-		var numericalValue = 0;
-		var scope = this;
-		var scopedOnReportProgress = function ( event ) {
-			if ( ! event.lengthComputable ) return;
-
-			numericalValue = event.loaded / event.total;
-			if ( numericalValue > numericalValueRef ) {
-
-				numericalValueRef = numericalValue;
-				var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
-				var output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-				if ( Validator.isValid( scope.callbacks.report ) ) {
-
-					scope.callbacks.report( {
-						detail: {
-							type: 'progressLoad',
-							modelName: this.description,
-							text: output,
-							instanceNo: this.instanceNo,
-							numericalValue: numericalValue
-
-						}
-					} );
-
-				}
-			}
-		};
-
-		var scopedOnReportError = function ( event ) {
-			var url = ( resourceDescriptorCurrent === null ) ? '' : resourceDescriptorCurrent.url;
-			var errorMessage = 'Error occurred while downloading "' + url + '"';
-			scope.callbacks.onError( errorMessage, event );
-		};
-
-		var processResourcesProxy = function ( content ) {
-			if ( Validator.isValid( onCompleteFileLoading ) ) {
-
-				onCompleteFileLoading( content, index );
-
-			}
-		};
-
-		var fileLoader = new FileLoader( this.manager );
-		fileLoader.setResponseType( resourceDescriptorCurrent.parserConfiguration.payloadType );
-		fileLoader.setPath( this.path );
-		fileLoader.load( resourceDescriptorCurrent.url, processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
-
 	}
 };
 
