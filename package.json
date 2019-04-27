@@ -76,22 +76,22 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.97.0"
+    "three": "^0.104.0"
   },
   "devDependencies": {
-    "jszip": "^3.1.5",
-    "del": "^3.0.0",
+    "jszip": "^3.2.1",
+    "del": "^4.1.0",
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.5",
+    "gulp-header": "^2.0.7",
     "gulp-jsdoc3": "^2.0.0",
     "gulp-rename": "^1.4.0",
     "gulp-replace-task": "^0.11.0",
-    "gulp-uglify": "^3.0.1",
-    "gulp-remote-src": "^0.4.3",
+    "gulp-uglify": "^3.0.2",
+    "gulp-remote-src": "^0.4.4",
     "gulp-util": "^3.0.8",
     "gulp-decompress": "^2.0.2",
     "http-server": "^0.11.1",
-    "npm-run-all": "^4.1.3"
+    "npm-run-all": "^4.1.5"
   }
 }
