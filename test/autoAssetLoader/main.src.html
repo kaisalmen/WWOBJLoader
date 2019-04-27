@@ -102,22 +102,24 @@
 
 				initContent: function () {
 					let autoAssetLoader = new AutoAssetLoader();
+					autoAssetLoader.setBaseObject3d( this.scene );
 
 					let assetTask0 = new AssetTask( 'task0' );
-					let rdMtl = new ResourceDescriptor( 'URL', 'union.mtl', '../../resource/obj/14032/union.mtl' );
+					let rdMtl = new ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
 					assetTask0.setResourceDescriptor( rdMtl );
 					let loaderConfigurationMtl = {
-						resourcePath: '../../resource/obj/14032/',
+						resourcePath: '../../resource/obj/female02/',
 						materialOptions: {}
 					};
 					assetTask0.setAssetHandlerRef( MTLLoader, loaderConfigurationMtl );
 
 					let assetTask1 = new AssetTask( 'task1' );
+					assetTask1.setLinker( true );
 					let mtlObjBridge = new MtlObjBridge();
 					assetTask1.setAssetHandler( mtlObjBridge );
 
 					let assetTask2 = new AssetTask( 'task2' );
-					let rdObj = new ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' );
+					let rdObj = new ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' );
 					assetTask2.setResourceDescriptor( rdObj );
 					assetTask2.setAssetHandlerRef( OBJLoader2 );
 
@@ -125,7 +127,7 @@
 					autoAssetLoader.addAssetTask( assetTask1 );
 					autoAssetLoader.addAssetTask( assetTask2 );
 
-					autoAssetLoader.init().loadAssets();
+					autoAssetLoader.run();
 				},
 
 				resizeDisplayGL: function () {

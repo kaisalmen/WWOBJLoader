@@ -64,16 +64,17 @@ const FileLoadingExecutor = {
 
 		function scopedOnReportError( event ) {
 			let errorMessage = 'Error occurred while downloading "' + url + '"';
-			onCompleteFileLoading( { errorMessage, event } );
+			onCompleteFileLoading( { resourceDescriptor, errorMessage, event } );
 		}
 
 		function processResourcesProxy( content ) {
-			onCompleteFileLoading( null, content );
+			resourceDescriptor.setAssetHandlerResult( content );
+			onCompleteFileLoading( null, resourceDescriptor );
 		}
 
 		let fileLoader = new FileLoader();
 		fileLoader.setResponseType( payloadType );
-		fileLoader.load( url + 'asda', processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
+		fileLoader.load( url, processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
 
 	}
 };
