@@ -34,7 +34,7 @@ THREE.OBJLoader2 = function ( manager ) {
 	this.terminateWorkerOnLoad = true;
 };
 
-THREE.OBJLoader2.OBJLOADER2_VERSION = '2.5.0';
+THREE.OBJLoader2.OBJLOADER2_VERSION = '2.5.1';
 
 THREE.OBJLoader2.prototype = {
 
