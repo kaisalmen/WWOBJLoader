@@ -12,11 +12,11 @@ MtlObjBridge.prototype = {
 
 	constructor: MtlObjBridge,
 
-	parse: function( previousResult, nextAssetTask ) {
-		let assetHandler = nextAssetTask.assetHandler.instance;
+	link: function( assetTaskBefore, assetTaskAfter ) {
+		let assetHandler = assetTaskAfter.assetHandler.instance;
 		if ( typeof assetHandler.addMaterials === 'function' ) {
 
-			assetHandler.addMaterialsFromMtlLoader( previousResult );
+			assetHandler.addMaterialsFromMtlLoader( assetTaskBefore.getProcessResult() );
 
 		}
 	}

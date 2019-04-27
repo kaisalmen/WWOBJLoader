@@ -126,7 +126,7 @@ const AssetTask = function ( name ) {
 	this.relations = {
 		before: null,
 		after: null
-	}
+	};
 	this.linker = false;
 	this.processResult;
 };
@@ -183,10 +183,15 @@ AssetTask.prototype = {
 
 	setLinker: function ( linker ) {
 		this.linker = linker;
+		this.setProcessFunctionName( 'link' );
 	},
 
 	isLinker: function () {
 		return this.linker;
+	},
+
+	getProcessResult: function () {
+		return this.processResult;
 	},
 
 	/**
@@ -245,13 +250,13 @@ AssetTask.prototype = {
 	 *
 	 */
 	process: function () {
-		if ( ! this.linker ) {
+		if ( ! this.isLinker() ) {
 
 			this.processResult = this.assetHandler.instance[ this.assetHandler.processFunctionName ]( this.resourceDescriptor.content.result );
 
 		} else {
 
-			this.processResult = this.assetHandler.instance[ this.assetHandler.processFunctionName ]( this.relations.before.processResult, this.relations.after );
+			this.processResult = this.assetHandler.instance[ this.assetHandler.processFunctionName ]( this.relations.before, this.relations.after );
 
 		}
 	}
