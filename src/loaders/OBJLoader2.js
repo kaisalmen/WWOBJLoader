@@ -71,7 +71,7 @@ THREE.OBJLoader2.prototype = {
 	},
 
 	/**
-	 * Allow to specify resourcePath for dependencies of specified resource.
+	 * Allows to specify resourcePath for dependencies of specified resource.
 	 * @param {string} resourcePath
 	 */
 	setResourcePath: function ( resourcePath ) {
@@ -332,10 +332,9 @@ THREE.OBJLoader2.prototype = {
 	 */
 	parse: function ( content ) {
 		// fast-fail in case of illegal data
-		if ( ! THREE.LoaderSupport.Validator.isValid( content ) ) {
+		if ( content === null || content === undefined ) {
 
-			console.warn( 'Provided content is not a valid ArrayBuffer or String.' );
-			return this.loaderRootNode;
+			throw 'Provided content is not a valid ArrayBuffer or String. Unable to continue parsing';
 
 		}
 		if ( this.logging.enabled ) console.time( 'OBJLoader2 parse: ' + this.modelName );
@@ -407,10 +406,9 @@ THREE.OBJLoader2.prototype = {
 			if ( measureTime && scope.logging.enabled ) console.timeEnd( 'OBJLoader2 parseAsync: ' + scope.modelName );
 		};
 		// fast-fail in case of illegal data
-		if ( ! THREE.LoaderSupport.Validator.isValid( content ) ) {
+		if ( content === null || content === undefined ) {
 
-			console.warn( 'Provided content is not a valid ArrayBuffer.' );
-			scopedOnLoad()
+			throw 'Provided content is not a valid ArrayBuffer or String. Unable to continue parsing';
 
 		} else {
 
@@ -496,7 +494,7 @@ THREE.OBJLoader2.prototype = {
 		if ( THREE.MTLLoader === undefined ) console.error( '"THREE.MTLLoader" is not available. "THREE.OBJLoader2" requires it for loading MTL files.' );
 		if ( THREE.LoaderSupport.Validator.isValid( resource ) && this.logging.enabled ) console.time( 'Loading MTL: ' + resource.name );
 
-		var materials = [];
+		var materials = {};
 		var scope = this;
 		var processMaterials = function ( materialCreator ) {
 			var materialCreatorMaterials = [];
@@ -1280,9 +1278,13 @@ THREE.OBJLoader2.Parser.prototype = {
 
 				var defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				materialOrg = this.materials[ defaultMaterialName ];
-				if ( this.logging.enabled ) console.warn( 'object_group "' + meshOutputGroup.objectName + '_' +
-					meshOutputGroup.groupName + '" was defined with unresolvable material "' +
-					materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
+				if ( this.logging.enabled ) {
+
+					console.info( 'object_group "' + meshOutputGroup.objectName + '_' +
+						meshOutputGroup.groupName + '" was defined with unresolvable material "' +
+						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
+
+				}
 				materialNameOrg = defaultMaterialName;
 
 				// if names are identical then there is no need for later manipulation
