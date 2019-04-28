@@ -41,10 +41,10 @@
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
 			import { MtlObjBridge } from "../../src/loaders/parser/MtlObjBridge.js";
 			import {
-				AutoAssetLoader,
+				AssetPipelineLoader,
 				AssetTask,
 				ResourceDescriptor
-			} from "../../src/loaders/AutoAssetLoader.js";
+			} from "../../src/loaders/AssetPipelineLoader.js";
 
 
 			const AutoAssetLoaderExample = function ( elementToBindTo ) {
@@ -101,8 +101,8 @@
 				},
 
 				initContent: function () {
-					let autoAssetLoader = new AutoAssetLoader();
-					autoAssetLoader.setBaseObject3d( this.scene );
+					let assetPipelineLoader = new AssetPipelineLoader();
+					assetPipelineLoader.setBaseObject3d( this.scene );
 
 					let assetTask0 = new AssetTask( 'task0' );
 					let rdMtl = new ResourceDescriptor( 'URL', 'female02.mtl', '../../resource/obj/female02/female02.mtl' );
@@ -123,11 +123,11 @@
 					assetTask2.setResourceDescriptor( rdObj );
 					assetTask2.setAssetHandlerRef( OBJLoader2 );
 
-					autoAssetLoader.addAssetTask( assetTask0 );
-					autoAssetLoader.addAssetTask( assetTask1 );
-					autoAssetLoader.addAssetTask( assetTask2 );
+					assetPipelineLoader.addAssetTask( assetTask0 );
+					assetPipelineLoader.addAssetTask( assetTask1 );
+					assetPipelineLoader.addAssetTask( assetTask2 );
 
-					autoAssetLoader.run();
+					assetPipelineLoader.run();
 				},
 
 				resizeDisplayGL: function () {

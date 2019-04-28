@@ -68,7 +68,7 @@ const FileLoadingExecutor = {
 		}
 
 		function processResourcesProxy( content ) {
-			resourceDescriptor.setAssetHandlerResult( content );
+			resourceDescriptor.setAssetLoaderResult( content );
 			onCompleteFileLoading( null, resourceDescriptor );
 		}
 

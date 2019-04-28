@@ -6,7 +6,7 @@ import { ObjectManipulator } from "./util/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
 export {
-	AutoAssetLoader,
+	AssetPipelineLoader,
 	AssetTask,
 	ResourceDescriptor
 }
@@ -16,29 +16,29 @@ export {
  *
  * @constructor
  */
-const AutoAssetLoader = function () {
+const AssetPipelineLoader = function () {
 	this.assetTasks = new Map();
 	this.baseObject3d;
 };
-AutoAssetLoader.AUTO_ASSET_LOADER_VERSION = '1.0.0-alpha';
+AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
 
-AutoAssetLoader.prototype = {
+AssetPipelineLoader.prototype = {
 
-	constructor: AutoAssetLoader,
+	constructor: AssetPipelineLoader,
 
 	/**
 	 *
-	 * @returns {AutoAssetLoader}
+	 * @returns {AssetPipelineLoader}
 	 */
 	printVersion: function() {
-		console.info( 'Using AutoAssetLoader version: ' + Director.AUTO_ASSET_LOADER_VERSION );
+		console.info( 'Using AssetPipelineLoader version: ' + Director.ASSET_PIPELINE_LOADER_VERSION );
 		return this;
 	},
 
 	/**
 	 *
 	 * @param {AssetTask} assetTask
-	 * @returns {AutoAssetLoader}
+	 * @returns {AssetPipelineLoader}
 	 */
 	addAssetTask: function ( assetTask ) {
 		this.assetTasks.set( assetTask.getName(), assetTask );
@@ -51,7 +51,7 @@ AutoAssetLoader.prototype = {
 
 	/**
 	 *
-	 * @returns {AutoAssetLoader}
+	 * @returns {AssetPipelineLoader}
 	 */
 	run: function () {
 		this._initAssetTasks();
@@ -117,7 +117,7 @@ AutoAssetLoader.prototype = {
 const AssetTask = function ( name ) {
 	this.name = name;
 	this.resourceDescriptor;
-	this.assetHandler = {
+	this.assetLoader = {
 		ref: null,
 		instance: null,
 		config: {},
@@ -150,7 +150,7 @@ AssetTask.prototype = {
 	 * @returns {AssetTask}
 	 */
 	setProcessFunctionName: function ( processFunctionName ) {
-		this.assetHandler.processFunctionName = processFunctionName;
+		this.assetLoader.processFunctionName = processFunctionName;
 		return this;
 	},
 
@@ -201,9 +201,9 @@ AssetTask.prototype = {
 	 * @returns {AssetTask}
 	 */
 	setAssetHandlerRef: function ( assetHandlerRef, assetHandlerConfig ) {
-		this.assetHandler.ref = assetHandlerRef;
+		this.assetLoader.ref = assetHandlerRef;
 		if ( assetHandlerConfig !== undefined && assetHandlerConfig !== null ) {
-			this.assetHandler.config = assetHandlerConfig;
+			this.assetLoader.config = assetHandlerConfig;
 		}
 		return this;
 	},
@@ -211,7 +211,7 @@ AssetTask.prototype = {
 	setAssetHandler: function ( assetHandler ) {
 		if ( assetHandler ) {
 
-			this.assetHandler.instance = assetHandler;
+			this.assetLoader.instance = assetHandler;
 
 		}
 		return this;
@@ -222,16 +222,16 @@ AssetTask.prototype = {
 	 */
 	init: function () {
 		console.log( this.name + ': Performing init' );
-		if ( this.assetHandler.instance === null && this.assetHandler.ref !== null ) {
+		if ( this.assetLoader.instance === null && this.assetLoader.ref !== null ) {
 
-			this.assetHandler.instance = Object.create( this.assetHandler.ref.prototype );
-			this.assetHandler.ref.call( this.assetHandler.instance );
-			ObjectManipulator.applyProperties( this.assetHandler.instance, this.assetHandler.config );
+			this.assetLoader.instance = Object.create( this.assetLoader.ref.prototype );
+			this.assetLoader.ref.call( this.assetLoader.instance );
+			ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config );
 
 		}
-		if ( this.assetHandler.instance !== null && typeof this.assetHandler.instance.printVersion === 'function' ) {
+		if ( this.assetLoader.instance !== null && typeof this.assetLoader.instance.printVersion === 'function' ) {
 
-			this.assetHandler.instance.printVersion();
+			this.assetLoader.instance.printVersion();
 
 		}
 	},
@@ -252,11 +252,12 @@ AssetTask.prototype = {
 	process: function () {
 		if ( ! this.isLinker() ) {
 
-			this.processResult = this.assetHandler.instance[ this.assetHandler.processFunctionName ]( this.resourceDescriptor.content.result );
+			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( this.resourceDescriptor.content.result );
 
 		} else {
 
-			this.processResult = this.assetHandler.instance[ this.assetHandler.processFunctionName ]( this.relations.before, this.relations.after );
+			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ](
+				this.relations.before.processResult, this.relations.after.assetLoader.instance );
 
 		}
 	}
@@ -274,7 +275,8 @@ AssetTask.prototype = {
 const ResourceDescriptor = function ( resourceType, name, input ) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.content = {
-		data: null,
+		input: null,
+		inputDataOptions: null,
 		resourceType: resourceType,
 		payloadType: 'arraybuffer',
 		result: null
@@ -288,7 +290,6 @@ const ResourceDescriptor = function ( resourceType, name, input ) {
 		load: false,
 		parse: true
 	};
-	this.dataOptions = {};
 	this.transferables = [];
 
 	this._init( input );
@@ -316,7 +317,7 @@ ResourceDescriptor.prototype = {
 				}
 				let filenameParts = this.filename.split( '.' );
 				if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-				this.content.data = null;
+				this.content.input = null;
 				break;
 
 			case 'Buffer':
@@ -328,7 +329,7 @@ ResourceDescriptor.prototype = {
 				break;
 
 			case 'Metadata':
-				this.content.data = 'no_content';
+				this.content.input = 'no_content';
 				break;
 
 			default:
@@ -344,7 +345,7 @@ ResourceDescriptor.prototype = {
 		if ( ! ( typeof( input ) === 'string' || input instanceof String) ) this._throwError( 'Provided input is not of resourceType "String"! Aborting...' );
 		this.content.resourceType = 'String';
 		this.content.payloadType = 'string';
-		this.content.data = input;
+		this.content.input = input;
 	},
 
 	setBuffer: function ( buffer ) {
@@ -366,7 +367,7 @@ ResourceDescriptor.prototype = {
 		}
 		this.content.resourceType = 'Buffer';
 		this.content.payloadType = 'arraybuffer';
-		this.content.data = buffer;
+		this.content.input = buffer;
 	},
 
 	configureAsync: function ( loadAsync, parseAsync ) {
@@ -377,9 +378,9 @@ ResourceDescriptor.prototype = {
 		return this;
 	},
 
-	setDataOption: function ( name, object, transferables ) {
+	setInputDataOption: function ( name, object, transferables ) {
 		if ( ! Array.isArray( transferables ) ) transferables = [];
-		this.dataOptions[ name ] = {
+		this.content.inputDataOptions[ name ] = {
 			name: name,
 			object: object
 		};
@@ -390,7 +391,7 @@ ResourceDescriptor.prototype = {
 		}
 	},
 
-	setAssetHandlerResult: function ( result ) {
+	setAssetLoaderResult: function ( result ) {
 		this.content.result = result;
 	},
 

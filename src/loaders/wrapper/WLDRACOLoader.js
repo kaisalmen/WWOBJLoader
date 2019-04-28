@@ -210,8 +210,8 @@ THREE.WWDRACOLoader.prototype = {
 		var rd = new THREE.WorkerLoader.ResourceDescriptor( 'Buffer', 'DracoLoaderArrayBuffer', rawBuffer );
 		var parserConfiguration = {	resourcePath: this.dracoLibsPath };
 		rd.setParserConfiguration( parserConfiguration );
-		rd.setDataOption( 'attributeUniqueIdMap', attributeUniqueIdMap );
-		rd.setDataOption( 'attributeTypeMap', attributeTypeMap );
+		rd.setInputDataOption( 'attributeUniqueIdMap', attributeUniqueIdMap );
+		rd.setInputDataOption( 'attributeTypeMap', attributeTypeMap );
 		var loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig();
 		loadingTaskConfig
 			.setLoaderConfig( THREE.WLDRACOLoader, {

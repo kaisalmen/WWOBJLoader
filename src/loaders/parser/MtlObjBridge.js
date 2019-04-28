@@ -2,6 +2,8 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+import { MTLLoader } from "../../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
+
 export { MtlObjBridge }
 
 
@@ -12,12 +14,32 @@ MtlObjBridge.prototype = {
 
 	constructor: MtlObjBridge,
 
-	link: function( assetTaskBefore, assetTaskAfter ) {
-		let assetHandler = assetTaskAfter.assetHandler.instance;
-		if ( typeof assetHandler.addMaterials === 'function' ) {
+	/**
+	 *
+	 * @param processResult
+	 * @param assetLoader
+	 */
+	link: function( processResult, assetLoader ) {
+		if ( typeof assetLoader.addMaterials === 'function' ) {
 
-			assetHandler.addMaterialsFromMtlLoader( assetTaskBefore.getProcessResult() );
+			assetLoader.addMaterials( this.addMaterialsFromMtlLoader( processResult ) );
 
 		}
-	}
+	},
+
+	/**
+	 * Returns the array instance of {@link MTLLoader.MaterialCreator}.
+	 *
+	 * @param Instance of {@link MTLLoader.MaterialCreator}
+	 */
+	addMaterialsFromMtlLoader: function ( materialCreator ) {
+		let newMaterials = {};
+		if ( materialCreator instanceof MTLLoader.MaterialCreator ) {
+
+			materialCreator.preload();
+			newMaterials = materialCreator.materials;
+
+		}
+		return newMaterials;
+	},
 };

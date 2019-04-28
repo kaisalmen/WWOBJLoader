@@ -142,22 +142,6 @@ OBJLoader2.prototype = {
 	},
 
 	/**
-	 * Set materials loaded by MTLLoader as instance of {@link MTLLoader.MaterialCreator}.
-	 *
-	 * @param Instance of {@link MTLLoader.MaterialCreator}
-	 */
-	addMaterialsFromMtlLoader: function ( materialCreator ) {
-		let newMaterials = {};
-		if ( materialCreator !== undefined && materialCreator !== null ) {
-
-			materialCreator.preload();
-			newMaterials = this.addMaterials( materialCreator.materials );
-
-		}
-		return newMaterials;
-	},
-
-	/**
 	 * Add materials as associated array.
 	 *
 	 * @param materials Object with named {@link Material}
