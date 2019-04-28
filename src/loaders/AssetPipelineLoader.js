@@ -2,6 +2,10 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+import {
+	Object3D
+} from "../../node_modules/three/build/three.module.js";
+
 import { ObjectManipulator } from "./util/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
@@ -16,9 +20,10 @@ export {
  *
  * @constructor
  */
-const AssetPipelineLoader = function () {
+const AssetPipelineLoader = function ( name ) {
 	this.assetTasks = new Map();
 	this.baseObject3d;
+	this.name = name;
 };
 AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
 
@@ -45,8 +50,14 @@ AssetPipelineLoader.prototype = {
 		return this;
 	},
 
+	/**
+	 *
+	 * @param {Object3D} baseObject3d
+	 * @returns {AssetPipelineLoader}
+	 */
 	setBaseObject3d: function ( baseObject3d ) {
 		this.baseObject3d = baseObject3d;
+		return this;
 	},
 
 	/**

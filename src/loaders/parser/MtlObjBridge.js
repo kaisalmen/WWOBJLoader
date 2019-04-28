@@ -7,12 +7,7 @@ import { MTLLoader } from "../../../node_modules/three/examples/jsm/loaders/MTLL
 export { MtlObjBridge }
 
 
-const MtlObjBridge = function () {
-};
-
-MtlObjBridge.prototype = {
-
-	constructor: MtlObjBridge,
+const MtlObjBridge = {
 
 	/**
 	 *
@@ -41,5 +36,5 @@ MtlObjBridge.prototype = {
 
 		}
 		return newMaterials;
-	},
+	}
 };

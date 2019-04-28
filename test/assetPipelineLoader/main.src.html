@@ -101,7 +101,7 @@
 				},
 
 				initContent: function () {
-					let assetPipelineLoader = new AssetPipelineLoader();
+					let assetPipelineLoader = new AssetPipelineLoader( 'testAssetPipelineLoader' );
 					assetPipelineLoader.setBaseObject3d( this.scene );
 
 					let assetTask0 = new AssetTask( 'task0' );
@@ -115,8 +115,7 @@
 
 					let assetTask1 = new AssetTask( 'task1' );
 					assetTask1.setLinker( true );
-					let mtlObjBridge = new MtlObjBridge();
-					assetTask1.setAssetHandler( mtlObjBridge );
+					assetTask1.setAssetHandler( MtlObjBridge );
 
 					let assetTask2 = new AssetTask( 'task2' );
 					let rdObj = new ResourceDescriptor( 'URL', 'female02.obj', '../../resource/obj/female02/female02.obj' );
