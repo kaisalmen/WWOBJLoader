@@ -40,6 +40,7 @@
 
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
+			import { MtlObjBridge } from "../../src/loaders/parser/MtlObjBridge.js";
 
 
 			const OBJLoader2Example = function ( elementToBindTo ) {
@@ -112,7 +113,7 @@
 					let onLoadMtl = function ( mtlParseResult ) {
 						objLoader2.setModelName( modelName );
 						objLoader2.setLogging( true, true );
-						objLoader2.addMaterialsFromMtlLoader( mtlParseResult );
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
 						objLoader2.load( '../../resource/obj/female02/female02.obj', callbackOnLoad, null, null, null );
 					};
 					let mtlLoader = new MTLLoader();

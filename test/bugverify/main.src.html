@@ -214,8 +214,7 @@
 
 			let assetTask14Mtl = new AssetTask( 'task14Mtl' );
 			assetTask14Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.mtl', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl' ) );
-			let mtlConfig14 = { resourcePath: '../../resource/obj/14/' };
-			assetTask14Mtl.setAssetHandlerRef( MTLLoader, mtlConfig14 );
+			assetTask14Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/14/' } );
 
 			let assetTask14MtlObjLink = new AssetTask( 'task14MtlObjLink' );
 			assetTask14MtlObjLink.setLinker( true );
@@ -240,21 +239,20 @@
 			app.scene.add( pivot14032 );
 			assetPipelineLoader14032.setBaseObject3d( pivot14032 );
 
-			let assetTask14032Mtl = new AssetTask( 'task14Mtl' );
+			let assetTask14032Mtl = new AssetTask( 'task14032Mtl' );
 			assetTask14032Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.mtl', '../../resource/obj/14032/union.mtl' ) );
-			let mtlConfig14032 = { resourcePath: '../../resource/obj/14032/' };
-			assetTask14032Mtl.setAssetHandlerRef( MTLLoader, mtlConfig14032 );
+			assetTask14032Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/14032/' } );
 
-			let assetTask14032MtlObjLink = new AssetTask( 'task14032MtlObjLink' );
+			let assetTask14032MtlObjLink = new AssetTask( 'task14MtlObjLink' );
 			assetTask14032MtlObjLink.setLinker( true );
 			assetTask14032MtlObjLink.setAssetHandler( MtlObjBridge );
 
-			let assetTask14032Obj = new AssetTask( 'task14Obj' );
+			let assetTask14032Obj = new AssetTask( 'task14032Obj' );
 			assetTask14032Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' ) );
 			assetTask14032Obj.setAssetHandlerRef( OBJLoader2 );
 
-//			assetPipelineLoader14032.addAssetTask( assetTask14032Mtl );
-//			assetPipelineLoader14032.addAssetTask( assetTask14032MtlObjLink );
+			assetPipelineLoader14032.addAssetTask( assetTask14032Mtl );
+			assetPipelineLoader14032.addAssetTask( assetTask14032MtlObjLink );
 			assetPipelineLoader14032.addAssetTask( assetTask14032Obj );
 
 			assetPipelineLoader14032.run();
