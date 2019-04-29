@@ -12,7 +12,10 @@ import {
 
 import { MaterialHandler } from "./MaterialHandler.js";
 
-export { MeshReceiver };
+export {
+	MeshReceiver,
+	LoadedMeshUserOverride
+};
 
 
 /**
@@ -164,6 +167,7 @@ MeshReceiver.prototype = {
 			);
 		}
 
+		// here LoadedMeshUserOverride is required to be provided by the callback used to alter the results
 		if ( callbackOnMeshAlterResult ) {
 
 			if ( callbackOnMeshAlterResult.isDisregardMesh() ) {
@@ -232,4 +236,51 @@ MeshReceiver.prototype = {
 		return meshes;
 	}
 
+};
+
+/**
+ * Object to return by callback onMeshAlter. Used to disregard a certain mesh or to return one to many meshes.
+ * @class
+ *
+ * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
+ * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
+ */
+const LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
+	this.disregardMesh = disregardMesh === true;
+	this.alteredMesh = alteredMesh === true;
+	this.meshes = [];
+};
+
+
+LoadedMeshUserOverride.prototype = {
+
+	constructor: LoadedMeshUserOverride,
+
+	/**
+	 * Add a mesh created within callback.
+	 *
+	 * @param {Mesh} mesh
+	 */
+	addMesh: function ( mesh ) {
+		this.meshes.push( mesh );
+		this.alteredMesh = true;
+	},
+
+	/**
+	 * Answers if mesh shall be disregarded completely.
+	 *
+	 * @returns {boolean}
+	 */
+	isDisregardMesh: function () {
+		return this.disregardMesh;
+	},
+
+	/**
+	 * Answers if new mesh(es) were created.
+	 *
+	 * @returns {boolean}
+	 */
+	providesAlteredMeshes: function () {
+		return this.alteredMesh;
+	}
 };

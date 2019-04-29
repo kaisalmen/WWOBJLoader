@@ -70,40 +70,7 @@ MaterialHandler.prototype = {
 		runtimeMaterials[ defaultLineMaterial.name ] = defaultLineMaterial;
 		runtimeMaterials[ defaultPointMaterial.name ] = defaultPointMaterial;
 
-		this.updateMaterials(
-			{
-				cmd: 'data',
-				type: 'material',
-				materials: {
-					materialCloneInstructions: null,
-					serializedMaterials: null,
-					runtimeMaterials: runtimeMaterials
-				}
-			}
-		);
-	},
-
-	/**
-	 * Set materials loaded by any supplier of an Array of {@link Material}.
-	 *
-	 * @param materials Object with named {@link Material}
-	 */
-	addMaterials: function ( materials ) {
-		let payload = {
-			cmd: 'data',
-			type: 'material',
-			materials: {
-				materialCloneInstructions: null,
-				serializedMaterials: null,
-				runtimeMaterials: materials
-			}
-		};
-		if ( this.callbacks.onLoadMaterials !== undefined && this.callbacks.onLoadMaterials !== null ) {
-
-			this.callbacks.onLoadMaterials( materials );
-
-		}
-		this.updateMaterials( payload );
+		this.addMaterials( runtimeMaterials );
 	},
 
 	/**
@@ -112,7 +79,7 @@ MaterialHandler.prototype = {
 	 * @param {Object} materialPayload Material update instructions
 	 * @returns {Object} Map of {@link Material}
 	 */
-	updateMaterials: function ( materialPayload ) {
+	addPayloadMaterials: function ( materialPayload ) {
 		let material, materialName;
 		let materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
 		let newMaterials = {};
@@ -165,9 +132,27 @@ MaterialHandler.prototype = {
 
 		}
 		materials = materialPayload.materials.runtimeMaterials;
+		newMaterials = this.addMaterials( materials, newMaterials );
+
+		return newMaterials;
+	},
+
+	/**
+	 * Set materials loaded by any supplier of an Array of {@link Material}.
+	 *
+	 * @param materials Object with named {@link Material}
+	 * @param newMaterials [Object] with named {@link Material}
+	 */
+	addMaterials: function ( materials, newMaterials ) {
+		if ( newMaterials === undefined || newMaterials === null ) {
+
+			newMaterials = {};
+
+		}
 		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) {
 
-			for ( materialName in materials ) {
+			let material;
+			for ( let materialName in materials ) {
 
 				material = materials[ materialName ];
 				this.materials[ materialName ] = material;
@@ -177,7 +162,6 @@ MaterialHandler.prototype = {
 			}
 
 		}
-
 		return newMaterials;
 	},
 

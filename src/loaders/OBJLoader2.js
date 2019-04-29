@@ -12,8 +12,8 @@ import {
 } from "../../node_modules/three/build/three.module.js";
 
 import { Parser } from "./parser/OBJLoader2Parser.js";
-import { MeshReceiver } from "./util/MeshReceiver.js";
-import { MaterialHandler } from "./util/MaterialHandler.js";
+import { MeshReceiver } from "./shared/MeshReceiver.js";
+import { MaterialHandler } from "./shared/MaterialHandler.js";
 import { CodeBuilderInstructions } from "./worker/CodeBuilderInstructions.js";
 
 export { OBJLoader2 };
@@ -341,7 +341,7 @@ OBJLoader2.prototype = {
 
 			} else if ( payload.type === 'material' ) {
 
-				let newMaterials = scope.materialHandler.updateMaterials( payload );
+				let newMaterials = scope.materialHandler.addPayloadMaterials( payload );
 
 			}
 		};

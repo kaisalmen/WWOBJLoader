@@ -3,63 +3,12 @@
  */
 
 import {
-	BufferGeometry,
-	Mesh,
-} from "../../node_modules/three/build/three.module.js";
+	BufferGeometry
+} from "three";
 
 export {
-	MeshTransmitter,
-	LoadedMeshUserOverride
+	MeshTransmitter
 }
-
-
-/**
- * Object to return by callback onMeshAlter. Used to disregard a certain mesh or to return one to many meshes.
- * @class
- *
- * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
- * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
- */
-const LoadedMeshUserOverride = function( disregardMesh, alteredMesh ) {
-	this.disregardMesh = disregardMesh === true;
-	this.alteredMesh = alteredMesh === true;
-	this.meshes = [];
-};
-
-
-LoadedMeshUserOverride.prototype = {
-
-	constructor: LoadedMeshUserOverride,
-
-	/**
-	 * Add a mesh created within callback.
-	 *
-	 * @param {Mesh} mesh
-	 */
-	addMesh: function ( mesh ) {
-		this.meshes.push( mesh );
-		this.alteredMesh = true;
-	},
-
-	/**
-	 * Answers if mesh shall be disregarded completely.
-	 *
-	 * @returns {boolean}
-	 */
-	isDisregardMesh: function () {
-		return this.disregardMesh;
-	},
-
-	/**
-	 * Answers if new mesh(es) were created.
-	 *
-	 * @returns {boolean}
-	 */
-	providesAlteredMeshes: function () {
-		return this.alteredMesh;
-	}
-};
-
 
 /**
  *
@@ -70,7 +19,6 @@ const MeshTransmitter = function () {
 	this.defaultGeometryType = 2;
 	this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
 };
-
 MeshTransmitter.MESH_TRANSMITTER_VERSION = '1.0.0-preview';
 
 
