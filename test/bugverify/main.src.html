@@ -39,8 +39,8 @@
 
 			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
-			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
 			import { MtlObjBridge } from "../../src/loaders/parser/MtlObjBridge.js";
+			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
 			import {
 				AssetPipelineLoader,
 				AssetTask,
@@ -65,9 +65,6 @@
 				this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 				this.controls = null;
-
-				this.loadingTaskConfigs = [];
-				this.processing = false;
 			};
 
 			OBJLoader2BugVerify.prototype = {
@@ -102,45 +99,7 @@
 					let helper = new GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 					this.scene.add( helper );
 				},
-/*
-				updateAssets: function ( loadInstructions ) {
-					this.loadingTaskConfigs.push( loadInstructions );
-				},
 
-				loadAssets: function () {
-					if ( this.loadingTaskConfigs.length === 0 || this.processing ) {
-
-						return;
-
-					} else {
-
-						this.processing = true;
-
-					}
-					let loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
-					this.loadingTaskConfigs.shift();
-
-					let scope = this;
-					let loadAssetsProxy = function ( object3d ) {
-						if ( ! Validator.isValid( loadingTaskConfig.config.baseObject3d ) ) {
-							scope.scene.add( object3d );
-						}
-						scope.processing = false;
-						scope.loadAssets();
-						scope._reportProgress( { detail: { text: '' } } );
-					};
-					this._reportProgress( { detail: { text: '' } } );
-
-					console.log( '\n\nloadAssets: Processing next resourceDescriptors' );
-
-					loadingTaskConfig.setCallbacksPipeline( loadAssetsProxy )
-						.setCallbacksApp( this._reportProgress );
-					new WorkerLoader()
-						.getLoadingTask()
-						.setEnforceSync( true )
-						.execute( loadingTaskConfig );
-				},
-*/
 				_reportProgress: function( event ) {
 					let output = '';
 					if ( Validator.isValid( event.detail ) && Validator.isValid( event.detail.text ) ) {
@@ -443,9 +402,6 @@
 			assetPipelineLoader27Wall2.addAssetTask( assetTask27Wall2Obj );
 
 			assetPipelineLoader27Wall2.run();
-
-
-			app.loadAssets();
 
 		</script>
 	</body>

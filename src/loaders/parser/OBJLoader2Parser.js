@@ -733,21 +733,13 @@ Parser.prototype = {
 			if ( ( materialOrg === undefined || materialOrg === null ) && ( material === undefined || material === null ) ) {
 
 				let defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
-				materialOrg = this.materials[ defaultMaterialName ];
+				materialName = defaultMaterialName;
+				material = this.materials[ materialName ];
 				if ( this.logging.enabled ) {
 
 					console.info( 'object_group "' + meshOutputGroup.objectName + '_' +
 						meshOutputGroup.groupName + '" was defined with unresolvable material "' +
-						materialNameOrg + '"! Assigning "' + defaultMaterialName + '".' );
-
-				}
-				materialName = defaultMaterialName;
-
-				// if names are identical then there is no need for later manipulation
-				if ( materialNameOrg === materialName ) {
-
-					material = materialOrg;
-					materialName = defaultMaterialName;
+						materialNameOrg + '"! Assigning "' + materialName + '".' );
 
 				}
 

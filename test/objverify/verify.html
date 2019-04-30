@@ -40,6 +40,7 @@
 			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
 
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
+			import { MtlObjBridge } from "../../src/loaders/parser/MtlObjBridge.js";
 			import { OBJLoader } from "../../node_modules/three/examples/jsm/loaders/OBJLoader.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
 
@@ -121,7 +122,7 @@
 							scope.scene.add( object );
 						} );
 
-						objLoader2.addMaterialsFromMtlLoader( mtlParseResult );
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
 						objLoader2.load( './verify.obj', callbackOnLoad, null, null, null );
 					};
 
