@@ -26,7 +26,7 @@ export { OBJLoader2 };
  * @param {DefaultLoadingManager} [manager] The loadingManager for the loader to use. Default is {@link DefaultLoadingManager}
  */
 const OBJLoader2 = function ( manager ) {
-	this.manager = ( manager && manager !== null ) ? manager : DefaultLoadingManager;
+	this.manager = ( manager !== undefined && manager !== null ) ? manager : DefaultLoadingManager;
 	this.logging = {
 		enabled: true,
 		debug: false
@@ -34,8 +34,8 @@ const OBJLoader2 = function ( manager ) {
 
 	this.modelName = '';
 	this.instanceNo = 0;
-	this.path;
-	this.resourcePath;
+	this.path = undefined;
+	this.resourcePath = undefined;
 	this.useIndices = false;
 	this.disregardNormals = false;
 	this.materialPerSmoothingGroup = false;
@@ -79,7 +79,7 @@ OBJLoader2.prototype = {
 	 * @param {string} modelName
 	 */
 	setModelName: function ( modelName ) {
-		this.modelName = ( modelName === null || modelName === undefined ) ? this.modelName : modelName;
+		this.modelName = modelName ? modelName : this.modelName;
 		return this;
 	},
 
@@ -89,7 +89,7 @@ OBJLoader2.prototype = {
 	 * @param {string} path URL
 	 */
 	setPath: function ( path ) {
-		this.path = ( path === null || path === undefined ) ? this.path : path;
+		this.path = path ? path : this.path;
 		return this;
 	},
 
@@ -99,7 +99,7 @@ OBJLoader2.prototype = {
 	 * @param {string} resourcePath
 	 */
 	setResourcePath: function ( resourcePath ) {
-		this.resourcePath = ( resourcePath === null || resourcePath === undefined ) ? this.resourcePath : resourcePath;
+		this.resourcePath = resourcePath ? resourcePath : this.resourcePath;
 	},
 
 	/**
@@ -108,7 +108,7 @@ OBJLoader2.prototype = {
 	 * @param {Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
 	 */
 	setBaseObject3d: function ( baseObject3d ) {
-		this.baseObject3d = ( baseObject3d === null || baseObject3d === undefined ) ? this.baseObject3d : baseObject3d;
+		this.baseObject3d = ( baseObject3d === undefined || baseObject3d === null ) ? this.baseObject3d : baseObject3d;
 		return this;
 	},
 
@@ -166,14 +166,22 @@ OBJLoader2.prototype = {
 	 * @param {Function} genericErrorHandler
 	 */
 	setGenericErrorHandler: function ( genericErrorHandler ) {
-		if ( genericErrorHandler !== null && genericErrorHandler !== undefined ) {
+		if ( genericErrorHandler !== undefined && genericErrorHandler !== null ) {
 
 			this.callbacks.genericErrorHandler = genericErrorHandler;
 
 		}
 	},
 
-
+	/**
+	 *
+	 * @private
+	 *
+	 * @param {Function} [onParseProgress]
+	 * @param {Function} [onMeshAlter]
+	 * @param {Function} [onLoadMaterials]
+	 * @private
+	 */
 	_setCallbacks: function ( onParseProgress, onMeshAlter, onLoadMaterials ) {
 		if ( onParseProgress !== undefined && onParseProgress !== null ) {
 
@@ -193,7 +201,7 @@ OBJLoader2.prototype = {
 	 * @param {number} numericalValue Numerical value describing the progress
 	 */
 	_onProgress: function ( type, text, numericalValue ) {
-		let content = ( text === null || text === undefined ) ? '': text;
+		let content = text ? text : '';
 		let event = {
 			detail: {
 				type: type,
@@ -215,6 +223,12 @@ OBJLoader2.prototype = {
 		}
 	},
 
+	/**
+	 * Announce error feedback which is given to the generic error handler to the registered callbacks.
+	 * @private
+	 *
+	 * @param {Object} event The event containing the error
+	 */
 	_onError: function ( event ) {
 		let output = '';
 		if ( event.currentTarget && event.currentTarget.statusText !== null ) {
@@ -247,7 +261,7 @@ OBJLoader2.prototype = {
 	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {function} [onMeshAlter] Called after worker successfully delivered a single mesh
 	 */
-	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter, parserConfiguration ) {
+	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 		let scope = this;
 		if ( onError === null || onError === undefined ) {
 
@@ -333,15 +347,13 @@ OBJLoader2.prototype = {
 			if ( payload.type === 'mesh' ) {
 
 				let meshes = scope.meshReceiver.buildMeshes( payload );
-				let mesh;
-				for ( let i in meshes ) {
-					mesh = meshes[ i ];
+				for ( let mesh of meshes ) {
 					scope.baseObject3d.add( mesh );
 				}
 
 			} else if ( payload.type === 'material' ) {
 
-				let newMaterials = scope.materialHandler.addPayloadMaterials( payload );
+				scope.materialHandler.addPayloadMaterials( payload );
 
 			}
 		};
@@ -378,13 +390,17 @@ OBJLoader2.prototype = {
 		return this.baseObject3d;
 	},
 
-	buildWorkerCode: function ( codeSerializer ) {
+	/**
+	 * This function is invoked by worker creation function.
+	 *
+	 * @returns {CodeBuilderInstructions}
+	 */
+	buildWorkerCode: function () {
 		let workerCode = '';
 		workerCode += '/**\n';
 		workerCode += '  * This code was constructed by OBJLoader2.buildWorkerCode.\n';
 		workerCode += '  */\n\n';
 		workerCode += 'OBJLoader2 = {};\n\n';
-//		workerCode += codeSerializer.serializeClass( 'Parser', Parser );
 
 		let codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
 		codeBuilderInstructions.addCodeFragment( workerCode );

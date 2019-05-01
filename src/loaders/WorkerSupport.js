@@ -38,8 +38,8 @@ WorkerSupport.prototype = {
 			debug: false
 		};
 
-		var scope = this;
-		var scopeTerminate = function (  ) {
+		let scope = this;
+		let scopeTerminate = function (  ) {
 			scope._terminate();
 		};
 		this.worker = {
@@ -153,7 +153,7 @@ WorkerSupport.prototype = {
 			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
 		}
-		var codeBuilderInstructions;
+		let codeBuilderInstructions;
 		if ( buildWorkerCode === undefined || buildWorkerCode === null ) {
 
 			codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
@@ -164,7 +164,7 @@ WorkerSupport.prototype = {
 
 		}
 
-		var codeParserRef = 'if ( ! WorkerSupport ) { WorkerSupport = {} };\n\nWorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
+		let codeParserRef = 'if ( ! WorkerSupport ) { WorkerSupport = {} };\n\nWorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
 		codeBuilderInstructions.addCodeFragment( codeParserRef );
 		codeBuilderInstructions.addLibrary( 'src/loaders/worker/WorkerRunner.js', '../../' );
 		codeBuilderInstructions.addCodeFragment( 'new ' + this.worker.workerRunner.name + '();\n\n' );
@@ -181,11 +181,11 @@ WorkerSupport.prototype = {
 
 			if ( ! codeBuilderInstructions.providesThree ) {
 /*
-				userWorkerCode += 'var loading = {};\n\n';
+				userWorkerCode += 'let loading = {};\n\n';
 				userWorkerCode += CodeSerializer.serializeObject( 'Cache', Cache );
 				userWorkerCode += DefaultLoadingManager.constructor.toString();
-				userWorkerCode += 'var DefaultLoadingManager = new LoadingManager();\n\n';
-				userWorkerCode += 'var Cache = Cache;\n\n';
+				userWorkerCode += 'let DefaultLoadingManager = new LoadingManager();\n\n';
+				userWorkerCode += 'let Cache = Cache;\n\n';
 				userWorkerCode += CodeSerializer.serializeClass( 'FileLoader', FileLoader, 'FileLoader' );
 */
 			}
@@ -194,22 +194,22 @@ WorkerSupport.prototype = {
 		}
 //		userWorkerCode += CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 
-		var scope = this;
-		var scopedReceiveWorkerMessage = function ( event ) {
+		let scope = this;
+		let scopedReceiveWorkerMessage = function ( event ) {
 			scope._receiveWorkerMessage( event );
 		};
 
-		var concatenateCode = '';
-		var processCodeInstructions = function ( codeInstructions ) {
+		let concatenateCode = '';
+		let processCodeInstructions = function ( codeInstructions ) {
 
-			var processNewCode = function ( contentAsString ) {
+			let processNewCode = function ( contentAsString ) {
 				concatenateCode += contentAsString;
 				processCodeInstructions( codeInstructions );
 			};
 
 			if ( codeInstructions.length === 0 ) {
 
-				var blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
+				let blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
 				scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
 				scope.worker.native.onmessage = scopedReceiveWorkerMessage;
 				scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler;
@@ -225,7 +225,7 @@ WorkerSupport.prototype = {
 
 			} else {
 
-				var codeInstruction = codeInstructions[ 0 ];
+				let codeInstruction = codeInstructions[ 0 ];
 				codeInstructions.shift();
 				if ( codeInstruction.type === 'serializedCode' ) {
 
@@ -233,7 +233,7 @@ WorkerSupport.prototype = {
 
 				} else {
 
-					var fileLoader = new FileLoader();
+					let fileLoader = new FileLoader();
 					fileLoader.setPath( codeInstruction.resourcePath );
 					fileLoader.setResponseType( 'text' );
 					fileLoader.load( codeInstruction.libraryPath, processNewCode );
@@ -249,7 +249,7 @@ WorkerSupport.prototype = {
 	 * Executed in worker scope
 	 */
 	_receiveWorkerMessage: function ( event ) {
-		var payload = event.data;
+		let payload = event.data;
 		switch ( payload.cmd ) {
 			case 'data':
 				this.worker.callbacks.onAssetAvailable( payload );
@@ -303,7 +303,7 @@ WorkerSupport.prototype = {
 	},
 
 	runAsyncInitWorker: function ( resourceDescriptors ) {
-		var payload = {
+		let payload = {
 			cmd: 'initWorker',
 			logging: {
 				enabled: this.logging.enabled,
@@ -347,7 +347,7 @@ WorkerSupport.prototype = {
 
 	_verifyWorkerIsAvailable: function ( payload, transferables ) {
 		this._verifyCallbacks();
-		var ready = true;
+		let ready = true;
 		if ( Validator.isValid( this.worker.queuedMessage ) ) {
 
 			console.warn( 'Already processing message. Rejecting new run instruction' );
@@ -370,7 +370,7 @@ WorkerSupport.prototype = {
 
 			if ( this.worker.queuedMessage.payload.data.input instanceof ArrayBuffer ) {
 
-				var transferables = [];
+				let transferables = [];
 				if ( this.worker.forceWorkerDataCopy ) {
 
 					transferables.push( this.worker.queuedMessage.payload.data.input.slice( 0 ) );
