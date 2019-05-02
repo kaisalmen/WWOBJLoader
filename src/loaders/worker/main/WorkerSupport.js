@@ -2,9 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { FileLoader } from "../../node_modules/three/build/three.module.js";
-import { CodeSerializer } from "./util/CodeSerializer.js"
-import { WorkerRunner } from "./worker/WorkerRunner.js"
+import { FileLoader } from "three";
+import { CodeSerializer } from "./CodeSerializer.js"
+import { WorkerRunner } from "../independent/WorkerRunner.js"
 
 export { WorkerSupport }
 

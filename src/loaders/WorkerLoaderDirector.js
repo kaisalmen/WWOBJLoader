@@ -3,7 +3,7 @@
  */
 
 import { WorkerLoader } from "./WorkerLoader";
-import { WorkerSupport } from "./WorkerSupport";
+import { WorkerSupport } from "./worker/main/WorkerSupport";
 import { Validator } from "./util/Validator.js";
 
 export {

@@ -3,14 +3,13 @@
  */
 
 import {
-	DefaultLoadingManager,
 	Group,
 	Object3D
 } from "../../node_modules/three/build/three.module.js";
 
 import { MeshReceiver } from "./MeshTransfer.js";
 import { Validator } from "./util/Validator.js";
-import { ObjectManipulator } from "./util/ObjectManipulator.js";
+import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
 export {
@@ -21,11 +20,9 @@ export {
 
 /**
  *
- * @param {DefaultLoadingManager} [manager]
  * @constructor
  */
-const WorkerLoader = function ( manager ) {
-	this.manager = Validator.verifyInput( manager, DefaultLoadingManager );
+const WorkerLoader = function () {
 	this.loadingTask = new WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
 };
 WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-preview';

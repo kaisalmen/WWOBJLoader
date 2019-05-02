@@ -603,7 +603,7 @@ Parser.prototype = {
 				indices = meshOutputGroup.indices;
 				if ( indices.length > 0 && absoluteIndexMappingsCount > 0 ) {
 
-					for ( let i in indices ) {
+					for ( let i = 0; i < indices.length; i++ ) {
 
 						indices[ i ] = indices[ i ] + absoluteIndexMappingsCount;
 
@@ -732,8 +732,7 @@ Parser.prototype = {
 			// both original and derived names do not lead to an existing material => need to use a default material
 			if ( ( materialOrg === undefined || materialOrg === null ) && ( material === undefined || material === null ) ) {
 
-				let defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
-				materialName = defaultMaterialName;
+				materialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 				material = this.materials[ materialName ];
 				if ( this.logging.enabled ) {
 

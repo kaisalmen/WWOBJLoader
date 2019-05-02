@@ -2,8 +2,8 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { MeshTransmitter } from "../MeshTransfer.js"
-import { ObjectManipulator } from "./util/ObjectManipulator.js";
+import { MeshTransmitter } from "../../util/MeshTransmitter.js"
+import { ObjectManipulator } from "./ObjectManipulator.js";
 
 export { WorkerRunner }
 

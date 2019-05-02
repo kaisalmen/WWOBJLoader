@@ -98,7 +98,11 @@ MaterialHandler.prototype = {
 				let materialProperties = materialCloneInstructions.materialProperties;
 				for ( let key in materialProperties ) {
 
-					if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) material[ key ] = materialProperties[ key ];
+					if ( material.hasOwnProperty( key ) && materialProperties.hasOwnProperty( key ) ) {
+
+						material[ key ] = materialProperties[ key ];
+
+					}
 
 				}
 				this.materials[ materialName ] = material;

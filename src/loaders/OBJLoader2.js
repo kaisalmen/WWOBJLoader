@@ -11,10 +11,9 @@ import {
 	Object3D
 } from "../../node_modules/three/build/three.module.js";
 
-import { Parser } from "./parser/OBJLoader2Parser.js";
+import { Parser } from "./worker/independent/OBJLoader2Parser.js";
 import { MeshReceiver } from "./shared/MeshReceiver.js";
 import { MaterialHandler } from "./shared/MaterialHandler.js";
-import { CodeBuilderInstructions } from "./worker/CodeBuilderInstructions.js";
 
 export { OBJLoader2 };
 
@@ -201,13 +200,13 @@ OBJLoader2.prototype = {
 	 * @param {number} numericalValue Numerical value describing the progress
 	 */
 	_onProgress: function ( type, text, numericalValue ) {
-		let content = text ? text : '';
+		let message = text ? text : '';
 		let event = {
 			detail: {
 				type: type,
 				modelName: this.modelName,
 				instanceNo: this.instanceNo,
-				text: content,
+				text: message,
 				numericalValue: numericalValue
 			}
 		};
@@ -218,7 +217,7 @@ OBJLoader2.prototype = {
 		}
 		if ( this.logging.enabled && this.logging.debug ) {
 
-			console.log( content );
+			console.log( message );
 
 		}
 	},
@@ -227,29 +226,20 @@ OBJLoader2.prototype = {
 	 * Announce error feedback which is given to the generic error handler to the registered callbacks.
 	 * @private
 	 *
-	 * @param {Object} event The event containing the error
+	 * @param {String} message The event containing the error
 	 */
-	_onError: function ( event ) {
-		let output = '';
-		if ( event.currentTarget && event.currentTarget.statusText !== null ) {
-
-			output = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
-
-		} else if ( typeof( event ) === 'string' || event instanceof String ) {
-
-			output = event;
-
-		}
-		let scope = this;
-		let onProgressScoped = function ( text, numericalValue ) {
-			scope._onProgress( 'error', text, numericalValue );
-		};
-		onProgressScoped( output, - 1 );
+	_onError: function ( message ) {
 		if ( this.callbacks.genericErrorHandler ) {
 
-			this.callbacks.genericErrorHandler( output );
+			this.callbacks.genericErrorHandler( message );
 
 		}
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.log( message );
+
+		}
+
 	},
 
 	/**
@@ -266,7 +256,15 @@ OBJLoader2.prototype = {
 		if ( onError === null || onError === undefined ) {
 
 			onError = function ( event ) {
-				scope._onError( event );
+
+				let errorMessage = event;
+				if ( event.currentTarget && event.currentTarget.statusText !== null ) {
+
+					 errorMessage = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
+
+				}
+				scope._onError( errorMessage );
+
 			};
 
 		}
@@ -360,8 +358,12 @@ OBJLoader2.prototype = {
 		let onProgressScoped = function ( text, numericalValue ) {
 			scope._onProgress( 'progressParse', text, numericalValue );
 		};
-		parser.setCallbackOnProgress( onProgressScoped );
+		let onErrorScoped = function ( message ) {
+			scope._onError( message );
+		};
 		parser.setCallbackOnAssetAvailable( onMeshLoaded );
+		parser.setCallbackOnProgress( onProgressScoped );
+		parser.setCallbackOnError( onErrorScoped );
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
 
 			if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
@@ -374,12 +376,7 @@ OBJLoader2.prototype = {
 
 		} else {
 
-			let errorMessage = 'Provided content was neither of type String nor Uint8Array! Aborting...';
-			if ( this.callbacks.genericErrorHandler ) {
-
-				this.callbacks.genericErrorHandler( errorMessage );
-
-			}
+			scope._onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
 
 		}
 		if ( this.logging.enabled ) {
@@ -388,23 +385,5 @@ OBJLoader2.prototype = {
 
 		}
 		return this.baseObject3d;
-	},
-
-	/**
-	 * This function is invoked by worker creation function.
-	 *
-	 * @returns {CodeBuilderInstructions}
-	 */
-	buildWorkerCode: function () {
-		let workerCode = '';
-		workerCode += '/**\n';
-		workerCode += '  * This code was constructed by OBJLoader2.buildWorkerCode.\n';
-		workerCode += '  */\n\n';
-		workerCode += 'OBJLoader2 = {};\n\n';
-
-		let codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
-		codeBuilderInstructions.addCodeFragment( workerCode );
-		codeBuilderInstructions.addLibrary( 'src/loaders/worker/OBJLoader2Parser.js', '../../' );
-		return codeBuilderInstructions;
 	}
 };
