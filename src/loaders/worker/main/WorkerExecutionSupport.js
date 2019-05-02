@@ -6,7 +6,7 @@ import { FileLoader } from "three";
 import { CodeSerializer } from "./CodeSerializer.js"
 import { WorkerRunner } from "../independent/WorkerRunner.js"
 
-export { WorkerSupport }
+export { WorkerExecutionSupport }
 
 
 /**
@@ -14,7 +14,7 @@ export { WorkerSupport }
  * which allows to configure the worker and receive raw mesh data during execution.
  * @class
  */
-const WorkerSupport = function () {
+const WorkerExecutionSupport = function () {
 	// check worker support first
 	if ( window.Worker === undefined ) throw "This browser does not support web workers!";
 	if ( window.Blob === undefined ) throw "This browser does not support Blob!";
@@ -22,14 +22,14 @@ const WorkerSupport = function () {
 
 	this._reset();
 };
-WorkerSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
+WorkerExecutionSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
 
-WorkerSupport.prototype = {
+WorkerExecutionSupport.prototype = {
 
-	constructor: WorkerSupport,
+	constructor: WorkerExecutionSupport,
 
 	printVersion: function() {
-		console.info( 'Using WorkerSupport version: ' + WorkerSupport.WORKER_SUPPORT_VERSION );
+		console.info( 'Using WorkerSupport version: ' + WorkerExecutionSupport.WORKER_SUPPORT_VERSION );
 	},
 
 	_reset: function () {

@@ -80,7 +80,7 @@ WorkerLoader.prototype = {
 	 * Configure the existing {@link WorkerLoader.LoadingTask} with the supplied parameters.
 	 *
 	 * @param {WorkerLoader.LoadingTaskConfig} loadingTaskConfig
-	 * @param {WorkerSupport} [workerSupport]
+	 * @param {WorkerExecutionSupport} [workerSupport]
 	 * @returns {WorkerLoader}
 	 */
 	executeLoadingTaskConfig: function ( loadingTaskConfig, workerSupport ) {
@@ -344,7 +344,7 @@ LoadingTask.prototype = {
 
 	/**
 	 * @param {WorkerLoader.LoadingTaskConfig} [loadingTaskConfig]
-	 * @param {WorkerSupport} [workerSupport]
+	 * @param {WorkerExecutionSupport} [workerSupport]
 	 *
 	 * @returns {WorkerLoader.LoadingTask}
 	 */
@@ -360,13 +360,13 @@ LoadingTask.prototype = {
 
 	_initExecute: function ( callbackLoadFiles, loadingTaskConfig, workerSupport ) {
 		this._applyConfig( loadingTaskConfig );
-		if ( Validator.isValid( workerSupport ) && workerSupport instanceof WorkerSupport ) {
+		if ( Validator.isValid( workerSupport ) && workerSupport instanceof WorkerExecutionSupport ) {
 
 			this.workerSupport = workerSupport;
 
 		} else {
 
-			this.workerSupport = new WorkerSupport();
+			this.workerSupport = new WorkerExecutionSupport();
 			this.workerSupport.setLogging( this.logging.enabled, this.logging.debug );
 			this.workerSupport.setTerminateWorkerOnLoad( this.terminateWorkerOnLoad );
 			this.workerSupport.setForceWorkerDataCopy( this.forceWorkerDataCopy );

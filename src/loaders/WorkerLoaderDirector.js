@@ -3,7 +3,7 @@
  */
 
 import { WorkerLoader } from "./WorkerLoader";
-import { WorkerSupport } from "./worker/main/WorkerSupport";
+import { WorkerExecutionSupport } from "./worker/main/WorkerSupport";
 import { Validator } from "./util/Validator.js";
 
 export {
@@ -288,7 +288,7 @@ Pool.prototype = {
 			supportDesc = this.workerLoaders[ instanceNo ];
 			if ( ! Validator.isValid( supportDesc ) ) {
 
-				workerSupport = new WorkerSupport()
+				workerSupport = new WorkerExecutionSupport()
 					.setForceWorkerDataCopy( this.directorRef.forceWorkerDataCopy )
 					.setTerminateWorkerOnLoad( false );
 				var supportDesc = {
