@@ -4,7 +4,6 @@
  * @class
  */
 THREE.LoaderSupport.WorkerSupport = function () {
-	console.info( 'Using THREE.LoaderSupport.WorkerSupport version: ' + THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION );
 	this.logging = {
 		enabled: true,
 		debug: false
@@ -15,6 +14,8 @@ THREE.LoaderSupport.WorkerSupport = function () {
 };
 
 THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION = '2.3.0';
+console.info( 'Using THREE.LoaderSupport.WorkerSupport version: ' + THREE.LoaderSupport.WorkerSupport.WORKER_SUPPORT_VERSION );
+
 
 THREE.LoaderSupport.WorkerSupport.prototype = {
 
@@ -574,10 +575,10 @@ THREE.LoaderSupport.WorkerRunnerRefImpl.prototype = {
 
 			var self = this.getParentScope();
 			var callbacks = {
-				callbackMeshBuilder: function ( payload ) {
+				callbackOnAssetAvailable: function ( payload ) {
 					self.postMessage( payload );
 				},
-				callbackProgress: function ( text ) {
+				callbackOnProgress: function ( text ) {
 					if ( payload.logging.enabled && payload.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 				}
 			};
@@ -593,7 +594,7 @@ THREE.LoaderSupport.WorkerRunnerRefImpl.prototype = {
 
 			if ( payload.logging.enabled ) console.log( 'WorkerRunner: Run complete!' );
 
-			callbacks.callbackMeshBuilder( {
+			callbacks.callbackOnAssetAvailable( {
 				cmd: 'complete',
 				msg: 'WorkerRunner completed run.'
 			} );

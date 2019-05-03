@@ -4,7 +4,6 @@
  * @class
  */
 THREE.LoaderSupport.MeshBuilder = function() {
-	console.info( 'Using THREE.LoaderSupport.MeshBuilder version: ' + THREE.LoaderSupport.MeshBuilder.LOADER_MESH_BUILDER_VERSION );
 	this.validator = THREE.LoaderSupport.Validator;
 
 	this.logging = {
@@ -16,6 +15,8 @@ THREE.LoaderSupport.MeshBuilder = function() {
 	this.materials = {};
 };
 THREE.LoaderSupport.MeshBuilder.LOADER_MESH_BUILDER_VERSION = '1.3.1';
+console.info( 'Using THREE.LoaderSupport.MeshBuilder version: ' + THREE.LoaderSupport.MeshBuilder.LOADER_MESH_BUILDER_VERSION );
+
 
 THREE.LoaderSupport.MeshBuilder.prototype = {
 
