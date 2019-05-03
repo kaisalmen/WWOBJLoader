@@ -12,11 +12,6 @@ import {
 
 import { MaterialHandler } from "./MaterialHandler.js";
 
-export {
-	MeshReceiver,
-	LoadedMeshUserOverride
-};
-
 
 /**
  *
@@ -283,4 +278,9 @@ LoadedMeshUserOverride.prototype = {
 	providesAlteredMeshes: function () {
 		return this.alteredMesh;
 	}
+};
+
+export {
+	MeshReceiver,
+	LoadedMeshUserOverride
 };

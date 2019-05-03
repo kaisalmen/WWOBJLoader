@@ -2,14 +2,10 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { WorkerLoader } from "./WorkerLoader";
-import { WorkerExecutionSupport } from "./worker/main/WorkerSupport";
+import { WorkerLoader } from "./WorkerLoader.js";
+import { WorkerExecutionSupport } from "./worker/main/WorkerExecutionSupport.js";
 import { Validator } from "./util/Validator.js";
 
-export {
-	Director,
-	Pool
-}
 
 /**
  * Orchestrate loading of multiple OBJ files/data from an instruction queue with a configurable amount of workers (1-16).
@@ -46,15 +42,12 @@ const Director = function () {
 Director.WORKER_LOADER_DIRECTOR_VERSION = '3.0.0-preview';
 Director.MAX_WEB_WORKER = 16;
 Director.MAX_QUEUE_SIZE = 2048;
+console.info( 'Using Director version: ' + Director.WORKER_LOADER_DIRECTOR_VERSION );
 
 
 Director.prototype = {
 
 	constructor: Director,
-
-	printVersion: function() {
-		console.info( 'Using Director version: ' + Director.WORKER_LOADER_DIRECTOR_VERSION );
-	},
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -445,3 +438,8 @@ Pool.prototype = {
 		}
 	}
 };
+
+export {
+	Director,
+	Pool
+}

@@ -1,7 +1,6 @@
 /**
  * @author Kai Salmen / www.kaisalmen.de
  */
-export { CodeSerializer }
 
 
 const CodeSerializer = {
@@ -175,3 +174,5 @@ const CodeSerializer = {
 		return objectString;
 	},
 };
+
+export { CodeSerializer }

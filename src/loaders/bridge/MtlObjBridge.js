@@ -4,8 +4,6 @@
 
 import { MTLLoader } from "../../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 
-export { MtlObjBridge }
-
 
 const MtlObjBridge = {
 
@@ -38,3 +36,5 @@ const MtlObjBridge = {
 		return newMaterials;
 	}
 };
+
+export { MtlObjBridge }

@@ -9,12 +9,6 @@ import {
 import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
-export {
-	AssetPipelineLoader,
-	AssetTask,
-	ResourceDescriptor
-}
-
 
 /**
  *
@@ -26,19 +20,11 @@ const AssetPipelineLoader = function ( name ) {
 	this.name = name;
 };
 AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
+console.info( 'Using AssetPipelineLoader version: ' + AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION );
 
 AssetPipelineLoader.prototype = {
 
 	constructor: AssetPipelineLoader,
-
-	/**
-	 *
-	 * @returns {AssetPipelineLoader}
-	 */
-	printVersion: function() {
-		console.info( 'Using AssetPipelineLoader version: ' + Director.ASSET_PIPELINE_LOADER_VERSION );
-		return this;
-	},
 
 	/**
 	 *
@@ -240,11 +226,6 @@ AssetTask.prototype = {
 			ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config );
 
 		}
-		if ( this.assetLoader.instance !== null && typeof this.assetLoader.instance.printVersion === 'function' ) {
-
-			this.assetLoader.instance.printVersion();
-
-		}
 	},
 
 	loadResource: async function () {
@@ -428,3 +409,9 @@ ResourceDescriptor.prototype = {
 		return copy;
 	}
 };
+
+export {
+	AssetPipelineLoader,
+	AssetTask,
+	ResourceDescriptor
+}

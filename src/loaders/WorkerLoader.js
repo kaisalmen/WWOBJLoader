@@ -12,11 +12,6 @@ import { Validator } from "./util/Validator.js";
 import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 
-export {
-	WorkerLoader,
-	LoadingTask,
-	LoadingTaskConfig
-}
 
 /**
  *
@@ -26,15 +21,12 @@ const WorkerLoader = function () {
 	this.loadingTask = new WorkerLoader.LoadingTask( 'WorkerLoader_LoadingTask' );
 };
 WorkerLoader.WORKER_LOADER_VERSION = '1.0.0-preview';
+console.info( 'Using WorkerLoader version: ' + WorkerLoader.WORKER_LOADER_VERSION );
 
 
 WorkerLoader.prototype = {
 
 	constructor: WorkerLoader,
-
-	printVersion: function() {
-		console.info( 'Using WorkerLoader version: ' + WorkerLoader.WORKER_LOADER_VERSION );
-	},
 
 	/**
 	 *
@@ -853,3 +845,8 @@ LoadingTaskConfig.prototype = {
 	}
 };
 
+export {
+	WorkerLoader,
+	LoadingTask,
+	LoadingTaskConfig
+}

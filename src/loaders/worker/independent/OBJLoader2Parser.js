@@ -2,10 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-export {
-	Parser
-};
-
 /**
  * Parse OBJ data either from ArrayBuffer or string
  * @class
@@ -107,7 +103,15 @@ Parser.prototype = {
 	},
 
 	setMaterials: function ( materials ) {
-		this.materials = materials;
+		if ( materials === undefined || materials === null ) return;
+
+		for ( let materialName in materials ) {
+			if ( materials.hasOwnProperty( materialName ) ) {
+
+				this.materials[ materialName ] = materials[ materialName ];
+
+			}
+		}
 	},
 
 	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
@@ -140,12 +144,16 @@ Parser.prototype = {
 	},
 
 	configure: function () {
-		if ( this.callbacks.onAssetAvailable !== null ) {
+		if ( this.callbacks.onAssetAvailable === null ) {
 
+			let errorMessage = 'Unable to run as no callback for building meshes is set.';
 			if ( this.callbacks.onError !== null ) {
 
-				this.callbacks.onError( 'Unable to run as no callback for building meshes is set.' );
+				this.callbacks.onError( errorMessage );
 
+			} else {
+
+				throw errorMessage;
 			}
 
 		}
@@ -662,7 +670,8 @@ Parser.prototype = {
 			let progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
 			if ( this.callbacks.onProgress !== null ) {
 
-				this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
+				this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '' +
+					'] Total progress: ' + (progressBytesPercent * 100).toFixed( 2 ) + '%', progressBytesPercent );
 
 			}
 			this.resetRawMesh();
@@ -897,3 +906,5 @@ Parser.prototype = {
 		}
 	}
 };
+
+export { Parser };

@@ -5,8 +5,6 @@
 import { MeshTransmitter } from "../../util/MeshTransmitter.js"
 import { ObjectManipulator } from "./ObjectManipulator.js";
 
-export { WorkerRunner }
-
 
 /**
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
@@ -147,3 +145,5 @@ WorkerRunner.prototype = {
 		}
 	}
 };
+
+export { WorkerRunner }

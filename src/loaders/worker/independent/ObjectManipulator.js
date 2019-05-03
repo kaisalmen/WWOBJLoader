@@ -2,10 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-export {
-	ObjectManipulator
-}
-
 
 const ObjectManipulator = {
 
@@ -36,3 +32,5 @@ const ObjectManipulator = {
 		}
 	}
 };
+
+export { ObjectManipulator }

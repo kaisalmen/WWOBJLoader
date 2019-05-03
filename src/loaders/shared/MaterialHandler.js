@@ -4,14 +4,11 @@
 
 import {
 	LineBasicMaterial,
-	Material,
 	MaterialLoader,
 	MeshStandardMaterial,
 	PointsMaterial,
 	VertexColors
 } from "../../../node_modules/three/build/three.module.js";
-
-export { MaterialHandler }
 
 
 const MaterialHandler = function () {
@@ -205,3 +202,5 @@ MaterialHandler.prototype = {
 	}
 
 };
+
+export { MaterialHandler }

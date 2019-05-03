@@ -4,11 +4,8 @@
 
 import {
 	BufferGeometry
-} from "three";
+} from "../../../node_modules/three/build/three.module.js";
 
-export {
-	MeshTransmitter
-}
 
 /**
  *
@@ -126,3 +123,5 @@ MeshTransmitter.prototype = {
 		);
 	}
 };
+
+export { MeshTransmitter }

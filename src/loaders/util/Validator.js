@@ -2,10 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-export {
-	Validator
-}
-
 
 const Validator = {
 
@@ -30,3 +26,5 @@ const Validator = {
 		return ( input === null || input === undefined ) ? defaultValue : input;
 	}
 };
+
+export { Validator }

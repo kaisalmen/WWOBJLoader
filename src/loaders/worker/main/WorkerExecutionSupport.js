@@ -2,11 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { FileLoader } from "three";
+import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
 import { CodeSerializer } from "./CodeSerializer.js"
 import { WorkerRunner } from "../independent/WorkerRunner.js"
-
-export { WorkerExecutionSupport }
 
 
 /**
@@ -23,14 +21,12 @@ const WorkerExecutionSupport = function () {
 	this._reset();
 };
 WorkerExecutionSupport.WORKER_SUPPORT_VERSION = '3.0.0-preview';
+console.info( 'Using WorkerSupport version: ' + WorkerExecutionSupport.WORKER_SUPPORT_VERSION );
+
 
 WorkerExecutionSupport.prototype = {
 
 	constructor: WorkerExecutionSupport,
-
-	printVersion: function() {
-		console.info( 'Using WorkerSupport version: ' + WorkerExecutionSupport.WORKER_SUPPORT_VERSION );
-	},
 
 	_reset: function () {
 		this.logging = {
@@ -401,3 +397,5 @@ WorkerExecutionSupport.prototype = {
 		this._reset();
 	}
 };
+
+export { WorkerExecutionSupport }

@@ -6,9 +6,6 @@ import {
 	FileLoader
 } from "../../../node_modules/three/build/three.module.js";
 
-export {
-	FileLoadingExecutor
-}
 
 const FileLoadingExecutor = {
 
@@ -78,3 +75,5 @@ const FileLoadingExecutor = {
 
 	}
 };
+
+export { FileLoadingExecutor }

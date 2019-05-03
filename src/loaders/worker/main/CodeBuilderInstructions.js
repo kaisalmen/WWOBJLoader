@@ -2,8 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-export { CodeBuilderInstructions }
-
 
 const CodeBuilderInstructions = function ( parserName, providesThree ) {
 	this.parserName = parserName;
@@ -37,3 +35,5 @@ CodeBuilderInstructions.prototype = {
 		return this.codeInstructions;
 	}
 };
+
+export { CodeBuilderInstructions }
