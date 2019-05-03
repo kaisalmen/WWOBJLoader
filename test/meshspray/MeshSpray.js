@@ -148,8 +148,9 @@ MeshSpray.Parser = function () {
 	this.debug = false;
 	this.dimension = 200;
 	this.quantity = 1;
-	this.callbackMeshBuilder = null;
-	this.callbackProgress = null;
+	this.callbacks = {
+		onAssetAvailable: null
+	};
 	this.serializedMaterials = null;
 	this.logging = {
 		enabled: true,
@@ -160,6 +161,14 @@ MeshSpray.Parser = function () {
 MeshSpray.Parser.prototype = {
 
 	constructor: MeshSpray.Parser,
+
+	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
+		if ( onAssetAvailable !== null && onAssetAvailable !== undefined ) {
+
+			this.callbacks.onAssetAvailable = onAssetAvailable;
+
+		}
+	},
 
 	setLogging: function ( enabled, debug ) {
 		this.logging.enabled = enabled === true;
@@ -252,10 +261,10 @@ MeshSpray.Parser.prototype = {
 				serializedMaterials: newSerializedMaterials
 			}
 		};
-		this.callbackMeshBuilder( payload );
+		this.callbacks.onAssetAvailable( payload );
 
 		this.globalObjectCount++;
-		this.callbackMeshBuilder(
+		this.callbacks.onAssetAvailable(
 			{
 				cmd: 'meshData',
 				progress: {
