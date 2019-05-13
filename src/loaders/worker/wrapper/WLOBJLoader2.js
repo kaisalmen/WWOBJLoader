@@ -1,9 +1,8 @@
-import { CodeBuilderInstructions } from "../main/CodeBuilderInstructions";
 /**
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { CodeBuilderInstructions } from "./worker/main/CodeBuilderInstructions.js";
+import { CodeBuilderInstructions } from "../main/CodeBuilderInstructions.js";
 
 export { };
 
@@ -41,7 +40,9 @@ WLOBJLoader2.prototype = {
 
 		let codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
 		codeBuilderInstructions.addCodeFragment( workerCode );
-		codeBuilderInstructions.addLibrary( 'src/loaders/worker/OBJLoader2Parser.js', this.resourcePath );
+		codeBuilderInstructions.addLibrary( 'src/loaders/worker/independent/OBJLoader2Parser.js', this.resourcePath );
 		return codeBuilderInstructions;
 	}
 };
+
+export { WLOBJLoader2 }

@@ -7,7 +7,7 @@ import {
 	Object3D
 } from "../../node_modules/three/build/three.module.js";
 
-import { MeshReceiver } from "./MeshTransfer.js";
+import { MeshReceiver } from "./shared/MeshReceiver.js";
 import { Validator } from "./util/Validator.js";
 import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";

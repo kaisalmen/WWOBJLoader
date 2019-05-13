@@ -5,6 +5,8 @@
 import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
 import { CodeSerializer } from "./CodeSerializer.js"
 import { WorkerRunner } from "../independent/WorkerRunner.js"
+import { CodeBuilderInstructions } from "../main/CodeBuilderInstructions.js"
+import { Validator } from  "../../util/Validator.js"
 
 
 /**
@@ -140,7 +142,7 @@ WorkerExecutionSupport.prototype = {
 	 *
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
-	validate: function ( loaderRef, buildWorkerCode, containFileLoadingCode ) {
+	validate: function ( buildWorkerCode, containFileLoadingCode ) {
 		if ( Validator.isValid( this.worker.native ) ) return;
 		if ( this.logging.enabled ) {
 
@@ -156,13 +158,13 @@ WorkerExecutionSupport.prototype = {
 
 		} else {
 
-			codeBuilderInstructions = buildWorkerCode( CodeSerializer, loaderRef );
+			codeBuilderInstructions = buildWorkerCode( CodeSerializer );
 
 		}
 
 		let codeParserRef = 'if ( ! WorkerSupport ) { WorkerSupport = {} };\n\nWorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
 		codeBuilderInstructions.addCodeFragment( codeParserRef );
-		codeBuilderInstructions.addLibrary( 'src/loaders/worker/WorkerRunner.js', '../../' );
+		codeBuilderInstructions.addLibrary( 'src/loaders/worker/independent/WorkerRunner.js', '../../' );
 		codeBuilderInstructions.addCodeFragment( 'new ' + this.worker.workerRunner.name + '();\n\n' );
 
 		if ( codeBuilderInstructions.containsMeshDisassembler === true || codeBuilderInstructions.usesMeshDisassembler === true ) {

@@ -328,22 +328,8 @@ OBJLoader2.prototype = {
 		parser.setMaterials( this.materialHandler.getMaterials() );
 
 		let scope = this;
-		let onMeshLoaded = function ( payload ) {
-
-			if ( payload.cmd !== 'data' ) return;
-
-			if ( payload.type === 'mesh' ) {
-
-				let meshes = scope.meshReceiver.buildMeshes( payload );
-				for ( let mesh of meshes ) {
-					scope.baseObject3d.add( mesh );
-				}
-
-			} else if ( payload.type === 'material' ) {
-
-				scope.materialHandler.addPayloadMaterials( payload );
-
-			}
+		let scopedOnAssetAvailable = function ( payload ) {
+			scope._onAssetAvailable( payload );
 		};
 		let onProgressScoped = function ( text, numericalValue ) {
 			scope._onProgress( 'progressParse', text, numericalValue );
@@ -351,7 +337,7 @@ OBJLoader2.prototype = {
 		let onErrorScoped = function ( message ) {
 			scope._onError( message );
 		};
-		parser.setCallbackOnAssetAvailable( onMeshLoaded );
+		parser.setCallbackOnAssetAvailable( scopedOnAssetAvailable );
 		parser.setCallbackOnProgress( onProgressScoped );
 		parser.setCallbackOnError( onErrorScoped );
 		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
@@ -375,6 +361,24 @@ OBJLoader2.prototype = {
 
 		}
 		return this.baseObject3d;
+	},
+
+	_onAssetAvailable: function ( payload ) {
+
+		if ( payload.cmd !== 'data' ) return;
+
+		if ( payload.type === 'mesh' ) {
+
+			let meshes = scope.meshReceiver.buildMeshes( payload );
+			for ( let mesh of meshes ) {
+				scope.baseObject3d.add( mesh );
+			}
+
+		} else if ( payload.type === 'material' ) {
+
+			scope.materialHandler.addPayloadMaterials( payload );
+
+		}
 	}
 };
 
