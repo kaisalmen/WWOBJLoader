@@ -415,7 +415,6 @@ LoadingTask.prototype = {
 
 			this.workerSupport.validate( this.loader.ref, this.loader.buildWorkerCode, provideRds );
 			this.workerSupport.updateCallbacks( callbackLoadFiles );
-			this.workerSupport.runAsyncInitWorker( rdForWorkerInit );
 
 		} else {
 

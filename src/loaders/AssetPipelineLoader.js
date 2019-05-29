@@ -2,10 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import {
-	Object3D
-} from "../../node_modules/three/build/three.module.js";
-
 import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
 import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
 

@@ -137,12 +137,29 @@ WorkerExecutionSupport.prototype = {
 		if ( ! Validator.isValid( this.worker.callbacks.onAssetAvailable ) ) throw 'Unable to run as no "onAssetAvailable" callback is set.';
 	},
 
+
+	buildJsm: function ( workerFile, defaultGeometryType, usesMeshDisassembler ) {
+		let scope = this;
+		let scopedReceiveWorkerMessage = function ( event ) {
+			scope._receiveWorkerMessage( event );
+		};
+
+		this.worker.native = new Worker( workerFile, { type: "module" } );
+		this.worker.native.onmessage = scopedReceiveWorkerMessage;
+		this.worker.workerRunner.usesMeshDisassembler = usesMeshDisassembler;
+		scope.worker.workerRunner.defaultGeometryType = 0;
+		if ( defaultGeometryType !== undefined && defaultGeometryType !== null ) {
+
+			scope.worker.workerRunner.defaultGeometryType = defaultGeometryType;
+		}
+	},
+
 	/**
 	 * Validate the status of worker code and the derived worker and specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
 	 *
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
-	validate: function ( buildWorkerCode, containFileLoadingCode ) {
+	build: function ( buildWorkerCode, containFileLoadingCode ) {
 		if ( Validator.isValid( this.worker.native ) ) return;
 		if ( this.logging.enabled ) {
 
@@ -217,8 +234,7 @@ WorkerExecutionSupport.prototype = {
 					scope.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
 				}
 
-				// process stored queuedMessage
-				scope._postMessage();
+				log.error("WorkerExecutionSupport.build: Needs to be transformed to async await!");
 				if ( scope.logging.enabled ) console.timeEnd( 'buildWebWorkerCode' );
 
 			} else {
@@ -249,21 +265,8 @@ WorkerExecutionSupport.prototype = {
 	_receiveWorkerMessage: function ( event ) {
 		let payload = event.data;
 		switch ( payload.cmd ) {
-			case 'data':
+			case 'assetAvailable':
 				this.worker.callbacks.onAssetAvailable( payload );
-				break;
-
-			case 'confirm':
-				if ( payload.type === 'initWorkerDone' ) {
-
-					this.worker.queuedMessage = null;
-					this.worker.callbacks.onAssetAvailable( payload );
-
-				} else if ( payload.type === 'fileLoaded' ) {
-
-					this.worker.queuedMessage = null;
-					this.worker.callbacks.onAssetAvailable( null, payload.params.index );
-				}
 				break;
 
 			case 'completeOverall':
@@ -298,22 +301,6 @@ WorkerExecutionSupport.prototype = {
 				break;
 
 		}
-	},
-
-	runAsyncInitWorker: function ( resourceDescriptors ) {
-		let payload = {
-			cmd: 'initWorker',
-			logging: {
-				enabled: this.logging.enabled,
-				debug: this.logging.debug
-			},
-			data: {
-				resourceDescriptors: resourceDescriptors
-			}
-		};
-		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
-
-		this._postMessage();
 	},
 
 	/**

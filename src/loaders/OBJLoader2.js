@@ -8,7 +8,7 @@ import {
 	Group
 } from "../../node_modules/three/build/three.module.js";
 
-import { Parser } from "./worker/independent/OBJLoader2Parser.js";
+import { OBJLoader2Parser } from "./worker/independent/OBJLoader2Parser.js";
 import { MeshReceiver } from "./shared/MeshReceiver.js";
 import { MaterialHandler } from "./shared/MaterialHandler.js";
 
@@ -318,7 +318,7 @@ OBJLoader2.prototype = {
 			console.time( 'OBJLoader parse: ' + this.modelName );
 
 		}
-		let parser = new Parser();
+		let parser = new OBJLoader2Parser();
 		parser.setLogging( this.logging.enabled, this.logging.debug );
 		parser.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup );
 		parser.setUseOAsMesh( this.useOAsMesh );
@@ -365,18 +365,18 @@ OBJLoader2.prototype = {
 
 	_onAssetAvailable: function ( payload ) {
 
-		if ( payload.cmd !== 'data' ) return;
+		if ( payload.cmd !== 'assetAvailable' ) return;
 
 		if ( payload.type === 'mesh' ) {
 
-			let meshes = scope.meshReceiver.buildMeshes( payload );
+			let meshes = this.meshReceiver.buildMeshes( payload );
 			for ( let mesh of meshes ) {
-				scope.baseObject3d.add( mesh );
+				this.baseObject3d.add( mesh );
 			}
 
 		} else if ( payload.type === 'material' ) {
 
-			scope.materialHandler.addPayloadMaterials( payload );
+			this.materialHandler.addPayloadMaterials( payload );
 
 		}
 	}

@@ -48,7 +48,6 @@
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
-			import { WLOBJLoader2 } from "../../src/loaders/worker/wrapper/WLOBJLoader2.js";
 			import {
 				WorkerLoader,
 				LoadingTaskConfig
@@ -156,16 +155,6 @@
 					let modelName = 'female02_vertex' ;
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					let callbackOnLoad = function ( event ) {
-						let local = new Object3D();
-						local.name = 'Pivot_female02_vertex';
-						local.position.set( -75, 0, 0 );
-						scope.pivot.add( local );
-						local.add( event.detail.result );
-
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-					};
-
 					let scope = this;
 
 					let resourceDescriptor = new ResourceDescriptor( 'URL', 'female02_vertex_colors.obj', '../../resource/obj/female02/female02_vertex_colors.obj' );
@@ -175,21 +164,28 @@
 					fileLoader.load( resourceDescriptor.url,
 						function ( content ) {
 
-						resourceDescriptor.setBuffer( content );
+							resourceDescriptor.setBuffer( content );
 
 							let objLoader = new OBJLoader2();
 							objLoader.setModelName( modelName );
-							let wlOBJLoader2 = new WLOBJLoader2();
 
 							let workerExecutionSupport = new WorkerExecutionSupport();
 							workerExecutionSupport.setTerminateWorkerOnLoad( true );
 
-							let scopedbuildWorkerCode = function () {
-								return wlOBJLoader2.buildWorkerCode();
+							workerExecutionSupport.buildJsm( '../../src/loaders/worker/dependent/OBJLoader2Worker.js' );
+							let scopedOnAssetAvailable = function ( payload ) {
+								objLoader._onAssetAvailable( payload );
 							};
-							workerExecutionSupport.validate( scopedbuildWorkerCode );
-							workerExecutionSupport.updateCallbacks( objLoader._onAssetAvailable, callbackOnLoad );
-							workerExecutionSupport.runAsyncInitWorker();
+							let callbackOnLoad = function ( message ) {
+								let local = new Object3D();
+								local.name = 'Pivot_female02_vertex';
+								local.position.set( -75, 0, 0 );
+								scope.pivot.add( local );
+								local.add( objLoader.baseObject3d );
+
+								scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+							};
+							workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, callbackOnLoad );
 							workerExecutionSupport.runAsyncParse(
 								{
 									params: null,

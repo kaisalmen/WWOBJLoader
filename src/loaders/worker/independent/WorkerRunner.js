@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { MeshTransmitter } from "../../util/MeshTransmitter.js"
+//import { MeshTransmitter } from "../../util/MeshTransmitter.js";
 import { ObjectManipulator } from "./ObjectManipulator.js";
 
 
@@ -10,15 +10,16 @@ import { ObjectManipulator } from "./ObjectManipulator.js";
  * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
  * @constructor
  */
-const WorkerRunner = function () {
+const WorkerRunner = function ( parser ) {
 	this.resourceDescriptors = [];
 	this.logging = {
 		enabled: false,
 		debug: false
 	};
+	this.parser = parser;
 
-	var scope = this;
-	var scopedRunner = function( event ) {
+	let scope = this;
+	let scopedRunner = function( event ) {
 		scope.processMessage( event.data );
 	};
 	self.addEventListener( 'message', scopedRunner, false );
@@ -34,39 +35,39 @@ WorkerRunner.prototype = {
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
 	processMessage: function ( payload ) {
-		var scope = this;
-		if ( payload.cmd === 'initWorker' ) {
+		let scope = this;
 
+		if ( payload.logging ) {
 			this.logging.enabled = payload.logging.enabled === true;
 			this.logging.debug = payload.logging.debug === true;
-			if ( payload.data.resourceDescriptors !== null && this.resourceDescriptors.length === 0 ) {
+		}
+		if ( payload.data.resourceDescriptors && this.resourceDescriptors.length === 0 ) {
 
-				for ( var name in payload.data.resourceDescriptors ) this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
+			for ( let name in payload.data.resourceDescriptors ) {
+
+				this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
 
 			}
-			self.postMessage( {
-				cmd: 'confirm',
-				type: 'initWorkerDone',
-				msg: 'Worker init has been successfully performed.'
-			} );
 
-		} else if ( payload.cmd === 'loadFile' ) {
+		}
+
+		if ( payload.cmd === 'loadFile' ) {
 			console.warn( '\"loadFile\" inside worker is currently disabled.');
 /*
-			var resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
-			var fileLoadingExecutor = new FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
+			let resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
+			let fileLoadingExecutor = new FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
 
-			var callbackProgress = function ( text ) {
+			let callbackProgress = function ( text ) {
 				if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 			};
-			var callbackError = function ( message ) {
+			let callbackError = function ( message ) {
 				console.error( message );
 			};
 			fileLoadingExecutor
 			.setPath( payload.params.path )
 			.setCallbacks( callbackProgress, callbackError );
 
-			var confirmFileLoaded = function ( content, completedIndex ) {
+			let confirmFileLoaded = function ( content, completedIndex ) {
 				if ( content !== undefined && content !== null) {
 
 					scope.resourceDescriptors[ completedIndex ].content = content;
@@ -84,7 +85,7 @@ WorkerRunner.prototype = {
 */
 		} else if ( payload.cmd === 'parse' ) {
 
-			var callbacks = {
+			let callbacks = {
 				callbackOnAssetAvailable: function ( payload ) {
 					self.postMessage( payload );
 				},
@@ -94,7 +95,8 @@ WorkerRunner.prototype = {
 			};
 
 			// Parser is expected to be named as such
-			var parser = new Parser();
+//			let parser = new Parser();
+			let parser = this.parser;
 			if ( typeof parser[ 'setLogging' ] === 'function' ) {
 
 				parser.setLogging( this.logging.enabled, this.logging.debug );
@@ -104,8 +106,8 @@ WorkerRunner.prototype = {
 			ObjectManipulator.applyProperties( parser, payload.materials );
 			ObjectManipulator.applyProperties( parser, callbacks );
 
-			var arraybuffer;
-			if ( payload.params.index !== undefined && payload.params.index !== null) {
+			let arraybuffer;
+			if ( payload.params && payload.params.index !== undefined && payload.params.index !== null) {
 
 				arraybuffer = this.resourceDescriptors[ payload.params.index ].content;
 
@@ -115,17 +117,17 @@ WorkerRunner.prototype = {
 
 			}
 
-			var parseFunctionName = 'parse';
+			let parseFunctionName = 'parse';
 			if ( typeof parser.getParseFunctionName === 'function' ) parseFunctionName = parser.getParseFunctionName();
 			if ( payload.usesMeshDisassembler ) {
-
-				var object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
-				var meshTransmitter = new MeshTransmitter();
+/*
+				let object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
+				let meshTransmitter = new MeshTransmitter();
 
 				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
 				meshTransmitter.setCallbackDataReceiver( callbacks.callbackOnAssetAvailable );
 				meshTransmitter.walkMesh( object3d );
-
+*/
 			} else {
 
 				parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
