@@ -5,12 +5,12 @@
 import {
 	Group,
 	Object3D
-} from "../../node_modules/three/build/three.module.js";
+} from "three";
 
-import { MeshReceiver } from "./shared/MeshReceiver.js";
-import { Validator } from "./util/Validator.js";
-import { ObjectManipulator } from "./worker/independent/ObjectManipulator.js";
-import { FileLoadingExecutor } from "./util/FileLoadingExecutor.js";
+import { MeshReceiver } from "../shared/MeshReceiver.js";
+import { Validator } from "./Validator.js";
+import { ObjectManipulator } from "../worker/independent/ObjectManipulator.js";
+import { FileLoadingExecutor } from "../util/FileLoadingExecutor.js";
 
 
 /**

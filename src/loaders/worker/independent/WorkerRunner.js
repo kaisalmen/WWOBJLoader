@@ -2,7 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-//import { MeshTransmitter } from "../../util/MeshTransmitter.js";
 import { ObjectManipulator } from "./ObjectManipulator.js";
 
 
@@ -51,39 +50,7 @@ WorkerRunner.prototype = {
 
 		}
 
-		if ( payload.cmd === 'loadFile' ) {
-			console.warn( '\"loadFile\" inside worker is currently disabled.');
-/*
-			let resourceDescriptorCurrent = this.resourceDescriptors[ payload.params.index ];
-			let fileLoadingExecutor = new FileLoadingExecutor( payload.params.instanceNo, payload.params.description );
-
-			let callbackProgress = function ( text ) {
-				if ( scope.logging.enabled && scope.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
-			};
-			let callbackError = function ( message ) {
-				console.error( message );
-			};
-			fileLoadingExecutor
-			.setPath( payload.params.path )
-			.setCallbacks( callbackProgress, callbackError );
-
-			let confirmFileLoaded = function ( content, completedIndex ) {
-				if ( content !== undefined && content !== null) {
-
-					scope.resourceDescriptors[ completedIndex ].content = content;
-
-				}
-				self.postMessage( {
-					cmd: 'confirm',
-					type: 'fileLoaded',
-					params: {
-						index: completedIndex
-					}
-				} );
-			};
-			fileLoadingExecutor.loadFile( resourceDescriptorCurrent, payload.params.index, confirmFileLoaded );
-*/
-		} else if ( payload.cmd === 'parse' ) {
+		if ( payload.cmd === 'parse' ) {
 
 			let callbacks = {
 				callbackOnAssetAvailable: function ( payload ) {
@@ -94,8 +61,6 @@ WorkerRunner.prototype = {
 				}
 			};
 
-			// Parser is expected to be named as such
-//			let parser = new Parser();
 			let parser = this.parser;
 			if ( typeof parser[ 'setLogging' ] === 'function' ) {
 
@@ -120,14 +85,9 @@ WorkerRunner.prototype = {
 			let parseFunctionName = 'parse';
 			if ( typeof parser.getParseFunctionName === 'function' ) parseFunctionName = parser.getParseFunctionName();
 			if ( payload.usesMeshDisassembler ) {
-/*
-				let object3d = parser[ parseFunctionName ] ( arraybuffer, payload.data.options );
-				let meshTransmitter = new MeshTransmitter();
 
-				meshTransmitter.setDefaultGeometryType( payload.defaultGeometryType );
-				meshTransmitter.setCallbackDataReceiver( callbacks.callbackOnAssetAvailable );
-				meshTransmitter.walkMesh( object3d );
-*/
+				// TODO: Allow to plug and use generic MeshDisassembler
+
 			} else {
 
 				parser[ parseFunctionName ] ( arraybuffer, payload.data.options );

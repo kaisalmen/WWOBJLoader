@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - Worker Execution Testbed</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+	</head>
+
+	<body>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+		<div id="dat">
+
+		</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Worker Execution Support Testbed
+			<div id="feedback"></div>
+		</div>
+
+		<script src="../../node_modules/three/examples/js/WebGL.js"></script>
+		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+		<script type="module">
+
+			'use strict';
+
+			import {
+				AmbientLight,
+				DirectionalLight,
+				GridHelper,
+				PerspectiveCamera,
+				Scene,
+				Vector3,
+				WebGLRenderer,
+				FileLoader
+			} from "../../node_modules/three/build/three.module.js";
+
+			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
+			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
+			import { WorkerExecutionSupport } from "../../src/loaders/worker/main/WorkerExecutionSupport.js";
+			import { ResourceDescriptor } from "../../src/loaders/AssetPipelineLoader.js";
+			import { CodeSerializer } from "../../src/loaders/worker/main/CodeSerializer.js";
+			import { CodeBuilderInstructions } from "../../src/loaders/worker/main/CodeBuilderInstructions.js";
+			import { OBJLoader2Parser } from "../../src/loaders/worker/independent/OBJLoader2Parser.js";
+			import { WorkerRunner } from "../../src/loaders/worker/independent/WorkerRunner.js";
+			import { ObjectManipulator } from "../../src/loaders/worker/independent/ObjectManipulator.js";
+
+			const WorkerModuleSupportExample = function ( elementToBindTo ) {
+				this.renderer = null;
+				this.canvas = elementToBindTo;
+				this.aspectRatio = 1;
+				this.recalcAspectRatio();
+
+				this.scene = null;
+				this.cameraDefaults = {
+					posCamera: new Vector3( 0.0, 175.0, 500.0 ),
+					posCameraTarget: new Vector3( 0, 0, 0 ),
+					near: 0.1,
+					far: 10000,
+					fov: 45
+				};
+				this.camera = null;
+				this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+				this.controls = null;
+
+				this.useJsm = false;
+			};
+
+			WorkerModuleSupportExample.prototype = {
+
+				constructor: WorkerModuleSupportExample,
+
+				initGL: function () {
+					this.renderer = new WebGLRenderer( {
+						canvas: this.canvas,
+						antialias: true,
+						autoClear: true
+					} );
+					this.renderer.setClearColor( 0x050505 );
+
+					this.scene = new Scene();
+
+					this.camera = new PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.resetCamera();
+					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
+
+					let ambientLight = new AmbientLight( 0x404040 );
+					let directionalLight1 = new DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new DirectionalLight( 0xC0C090 );
+
+					directionalLight1.position.set( -100, -50, 100 );
+					directionalLight2.position.set( 100, 50, -100 );
+
+					this.scene.add( directionalLight1 );
+					this.scene.add( directionalLight2 );
+					this.scene.add( ambientLight );
+
+					let helper = new GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					this.scene.add( helper );
+				},
+
+				initContent: function () {
+					let modelName = 'female02_vertex' ;
+					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
+
+					let scope = this;
+
+					let resourceDescriptor = new ResourceDescriptor( 'URL', 'female02_vertex_colors.obj', '../../resource/obj/female02/female02_vertex_colors.obj' );
+
+					let fileLoader = new FileLoader();
+					fileLoader.setResponseType( 'arraybuffer' );
+					fileLoader.load( resourceDescriptor.url,
+						function ( content ) {
+
+							resourceDescriptor.setBuffer( content );
+
+							let objLoader = new OBJLoader2();
+							objLoader.setModelName( modelName );
+
+							let workerExecutionSupport = new WorkerExecutionSupport();
+							workerExecutionSupport.setTerminateWorkerOnLoad( true );
+
+							if ( this.useJsm ) {
+								workerExecutionSupport.buildJsm( '../../src/loaders/worker/dependent/OBJLoader2Worker.js' );
+							}
+							else {
+								let codeOBJLoader2Parser = CodeSerializer.serializeClass( 'OBJLoader2Parser', OBJLoader2Parser );
+								let codeObjectManipulator = CodeSerializer.serializeObject( 'ObjectManipulator', ObjectManipulator );
+								let codeWorkerRunner = CodeSerializer.serializeClass( 'WorkerRunner', WorkerRunner );
+
+								let codeBuilderInstructions = new CodeBuilderInstructions();
+								codeBuilderInstructions.addCodeFragment( codeOBJLoader2Parser );
+								codeBuilderInstructions.addCodeFragment( codeObjectManipulator );
+								codeBuilderInstructions.addCodeFragment( codeWorkerRunner );
+
+								codeBuilderInstructions.addLibraryImport( '../../node_modules/three/build/three.js' );
+								codeBuilderInstructions.addStartCode( 'new WorkerRunner( new OBJLoader2Parser() );' );
+
+								workerExecutionSupport.buildStandard( codeBuilderInstructions );
+							}
+
+							let scopedOnAssetAvailable = function ( payload ) {
+								objLoader._onAssetAvailable( payload );
+							};
+							let callbackOnLoad = function ( message ) {
+								scope.scene.add(  objLoader.baseObject3d  );
+								scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+							};
+							workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, callbackOnLoad );
+							workerExecutionSupport.runAsyncParse(
+								{
+									params: null,
+									materials: null,
+									data: {
+										input: resourceDescriptor.content.input,
+										options: resourceDescriptor.content.inputDataOptions
+									}
+								},
+								resourceDescriptor.transferables );
+
+							scope._reportProgress( { detail: { text: 'File loading complete: ' + resourceDescriptor.filename } } );
+						}
+					);
+				},
+
+				finalize: function () {
+					this._reportProgress( { detail: { text: '' } } );
+				},
+
+				_reportProgress: function ( event ) {
+					let output = '';
+					if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === !undefined ) {
+
+						output = event.detail.text;
+
+					}
+					console.log( 'Progress: ' + output );
+					document.getElementById( 'feedback' ).innerHTML = output;
+				},
+
+				resizeDisplayGL: function () {
+					this.controls.handleResize();
+
+					this.recalcAspectRatio();
+					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+					this.updateCamera();
+				},
+
+				recalcAspectRatio: function () {
+					this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+				},
+
+				resetCamera: function () {
+					this.camera.position.copy( this.cameraDefaults.posCamera );
+					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+					this.updateCamera();
+				},
+
+				updateCamera: function () {
+					this.camera.aspect = this.aspectRatio;
+					this.camera.lookAt( this.cameraTarget );
+					this.camera.updateProjectionMatrix();
+				},
+
+				render: function () {
+					if ( !this.renderer.autoClear ) this.renderer.clear();
+					this.controls.update();
+					this.renderer.render( this.scene, this.camera );
+				}
+			};
+
+			let app = new WorkerModuleSupportExample( document.getElementById( 'example' ) );
+
+			let resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			let render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+			app.initContent();
+
+			render();
+
+		</script>
+	</body>
+</html>

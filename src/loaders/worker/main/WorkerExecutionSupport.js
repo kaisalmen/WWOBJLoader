@@ -2,12 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
-import { CodeSerializer } from "./CodeSerializer.js"
 import { WorkerRunner } from "../independent/WorkerRunner.js"
-import { CodeBuilderInstructions } from "../main/CodeBuilderInstructions.js"
-import { Validator } from  "../../util/Validator.js"
-
 
 /**
  * This class provides means to transform existing parser code into a web worker. It defines a simple communication protocol
@@ -93,10 +88,14 @@ WorkerExecutionSupport.prototype = {
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.worker.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
-		if ( this.worker.terminateWorkerOnLoad && Validator.isValid( this.worker.native ) &&
-			! Validator.isValid( this.worker.queuedMessage ) && this.worker.started ) {
+		if ( this.worker.terminateWorkerOnLoad && this.worker.native !== null &&
+				this.worker.queuedMessage === null && this.worker.started ) {
 
-			if ( this.logging.enabled ) console.info( 'Worker is terminated immediately as it is not running!' );
+			if ( this.logging.enabled ) {
+
+				console.info( 'Worker is terminated immediately as it is not running!' );
+
+			}
 			this._terminate();
 
 		}
@@ -110,7 +109,7 @@ WorkerExecutionSupport.prototype = {
 	 * @param {string} userRunnerImplName The name of the object
 	 */
 	setUserRunnerImpl: function ( userRunnerImpl, userRunnerImplName ) {
-		if ( Validator.isValid( userRunnerImpl ) && Validator.isValid( userRunnerImplName ) ) {
+		if ( userRunnerImpl !== undefined && userRunnerImpl !== null && userRunnerImplName ) {
 
 			this.worker.workerRunner.haveUserImpl = true;
 			this.worker.workerRunner.impl = userRunnerImpl;
@@ -128,17 +127,28 @@ WorkerExecutionSupport.prototype = {
 	 * @param {Function} [onLoad] The function that is called when parsing is complete.
 	 */
 	updateCallbacks: function ( onAssetAvailable, onLoad ) {
-		this.worker.callbacks.onAssetAvailable = Validator.verifyInput( onAssetAvailable, this.worker.callbacks.onAssetAvailable );
-		this.worker.callbacks.onLoad = Validator.verifyInput( onLoad, this.worker.callbacks.onLoad );
+		if ( onAssetAvailable !== undefined && onAssetAvailable !== null ) {
+
+			this.worker.callbacks.onAssetAvailable = onAssetAvailable;
+
+		}
+		if ( onLoad !== undefined && onLoad !== null ) {
+
+			this.worker.callbacks.onLoad = onLoad;
+
+		}
 		this._verifyCallbacks();
 	},
 
 	_verifyCallbacks: function () {
-		if ( ! Validator.isValid( this.worker.callbacks.onAssetAvailable ) ) throw 'Unable to run as no "onAssetAvailable" callback is set.';
+		if ( this.worker.callbacks.onAssetAvailable === undefined || this.worker.callbacks.onAssetAvailable === null ) {
+
+			throw 'Unable to run as no "onAssetAvailable" callback is set.';
+
+		}
 	},
 
-
-	buildJsm: function ( workerFile, defaultGeometryType, usesMeshDisassembler ) {
+	buildJsm: function ( workerFile, defaultGeometryType ) {
 		let scope = this;
 		let scopedReceiveWorkerMessage = function ( event ) {
 			scope._receiveWorkerMessage( event );
@@ -146,12 +156,13 @@ WorkerExecutionSupport.prototype = {
 
 		this.worker.native = new Worker( workerFile, { type: "module" } );
 		this.worker.native.onmessage = scopedReceiveWorkerMessage;
-		this.worker.workerRunner.usesMeshDisassembler = usesMeshDisassembler;
+		this.worker.workerRunner.usesMeshDisassembler = false;
 		scope.worker.workerRunner.defaultGeometryType = 0;
 		if ( defaultGeometryType !== undefined && defaultGeometryType !== null ) {
 
 			scope.worker.workerRunner.defaultGeometryType = defaultGeometryType;
 		}
+
 	},
 
 	/**
@@ -159,55 +170,18 @@ WorkerExecutionSupport.prototype = {
 	 *
 	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
-	build: function ( buildWorkerCode, containFileLoadingCode ) {
-		if ( Validator.isValid( this.worker.native ) ) return;
+	buildStandard: function ( codeBuilderInstructions ) {
+		if ( this.worker.native !== null ) return;
 		if ( this.logging.enabled ) {
 
 			console.info( 'WorkerSupport: Building worker code...' );
 			console.time( 'buildWebWorkerCode' );
-			if ( ! this.worker.workerRunner.haveUserImpl ) console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
+			if ( ! this.worker.workerRunner.haveUserImpl ) {
 
-		}
-		let codeBuilderInstructions;
-		if ( buildWorkerCode === undefined || buildWorkerCode === null ) {
+				console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
 
-			codeBuilderInstructions = new CodeBuilderInstructions( 'Parser', false );
-
-		} else {
-
-			codeBuilderInstructions = buildWorkerCode( CodeSerializer );
-
-		}
-
-		let codeParserRef = 'if ( ! WorkerSupport ) { WorkerSupport = {} };\n\nWorkerSupport.Parser = ' + codeBuilderInstructions.parserName + ';\n\n'
-		codeBuilderInstructions.addCodeFragment( codeParserRef );
-		codeBuilderInstructions.addLibrary( 'src/loaders/worker/independent/WorkerRunner.js', '../../' );
-		codeBuilderInstructions.addCodeFragment( 'new ' + this.worker.workerRunner.name + '();\n\n' );
-
-		if ( codeBuilderInstructions.containsMeshDisassembler === true || codeBuilderInstructions.usesMeshDisassembler === true ) {
-
-			console.warn( 'Feature \"containsMeshDisassembler\" is currently not available!' );
-//			extraCode += CodeSerializer.serializeClass( 'MeshTransmitter', MeshTransmitter );
-
-		}
-		if ( containFileLoadingCode ) {
-
-			console.warn( 'Feature \"containFileLoadingCode\" is currently not available!' );
-
-			if ( ! codeBuilderInstructions.providesThree ) {
-/*
-				userWorkerCode += 'let loading = {};\n\n';
-				userWorkerCode += CodeSerializer.serializeObject( 'Cache', Cache );
-				userWorkerCode += DefaultLoadingManager.constructor.toString();
-				userWorkerCode += 'let DefaultLoadingManager = new LoadingManager();\n\n';
-				userWorkerCode += 'let Cache = Cache;\n\n';
-				userWorkerCode += CodeSerializer.serializeClass( 'FileLoader', FileLoader, 'FileLoader' );
-*/
 			}
-//			userWorkerCode += CodeSerializer.serializeClass( 'WorkerLoader.ResourceDescriptor', WorkerLoader.ResourceDescriptor );
-//			userWorkerCode += CodeSerializer.serializeClass( 'WorkerLoader.FileLoadingExecutor', WorkerLoader.FileLoadingExecutor );
 		}
-//		userWorkerCode += CodeSerializer.serializeClass( this.worker.workerRunner.name, this.worker.workerRunner.impl );
 
 		let scope = this;
 		let scopedReceiveWorkerMessage = function ( event ) {
@@ -215,48 +189,30 @@ WorkerExecutionSupport.prototype = {
 		};
 
 		let concatenateCode = '';
-		let processCodeInstructions = function ( codeInstructions ) {
+		codeBuilderInstructions.getImportStatements().forEach( function ( element ) {
+			concatenateCode += element + '\n';
+		} );
+		concatenateCode += '\n';
+		codeBuilderInstructions.getCodeFragments().forEach( function ( element ) {
+			concatenateCode += element+ '\n';
+		} );
+		concatenateCode += '\n';
+		concatenateCode += codeBuilderInstructions.getStartCode();
 
-			let processNewCode = function ( contentAsString ) {
-				concatenateCode += contentAsString;
-				processCodeInstructions( codeInstructions );
-			};
+		let blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
+		scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
+		scope.worker.native.onmessage = scopedReceiveWorkerMessage;
+		this.worker.workerRunner.usesMeshDisassembler = false;
+		scope.worker.workerRunner.defaultGeometryType = 0;
+		if ( codeBuilderInstructions.defaultGeometryType !== undefined && codeBuilderInstructions.defaultGeometryType !== null ) {
 
-			if ( codeInstructions.length === 0 ) {
+			scope.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
+		}
+		if ( scope.logging.enabled ) {
 
-				let blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
-				scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
-				scope.worker.native.onmessage = scopedReceiveWorkerMessage;
-				scope.worker.workerRunner.usesMeshDisassembler = codeBuilderInstructions.usesMeshDisassembler;
-				scope.worker.workerRunner.defaultGeometryType = 0;
-				if ( codeBuilderInstructions.defaultGeometryType !== undefined && codeBuilderInstructions.defaultGeometryType !== null ) {
+			console.timeEnd( 'buildWebWorkerCode' );
 
-					scope.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
-				}
-
-				log.error("WorkerExecutionSupport.build: Needs to be transformed to async await!");
-				if ( scope.logging.enabled ) console.timeEnd( 'buildWebWorkerCode' );
-
-			} else {
-
-				let codeInstruction = codeInstructions[ 0 ];
-				codeInstructions.shift();
-				if ( codeInstruction.type === 'serializedCode' ) {
-
-					processNewCode( codeInstruction.code );
-
-				} else {
-
-					let fileLoader = new FileLoader();
-					fileLoader.setPath( codeInstruction.resourcePath );
-					fileLoader.setResponseType( 'text' );
-					fileLoader.load( codeInstruction.libraryPath, processNewCode );
-
-				}
-
-			}
-		};
-		processCodeInstructions( codeBuilderInstructions.getCodeInstructions() );
+		}
 	},
 
 	/**
@@ -272,8 +228,11 @@ WorkerExecutionSupport.prototype = {
 			case 'completeOverall':
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				if ( Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
+				if ( this.worker.callbacks.onLoad !== null ) {
 
+					this.worker.callbacks.onLoad( payload.msg );
+
+				}
 				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run is complete. Terminating application on request!' );
@@ -286,8 +245,11 @@ WorkerExecutionSupport.prototype = {
 				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Reported error: ' + payload.msg );
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
-				if ( Validator.isValid( this.worker.callbacks.onLoad ) ) this.worker.callbacks.onLoad( payload.msg );
+				if ( this.worker.callbacks.onLoad !== null ) {
 
+					this.worker.callbacks.onLoad( payload.msg );
+
+				}
 				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run reported error. Terminating application on request!' );
@@ -301,19 +263,6 @@ WorkerExecutionSupport.prototype = {
 				break;
 
 		}
-	},
-
-	/**
-	 * Runs the file loading in worker with the provided configuration.
-	 *
-	 * @param {Object} payload configuration required for loading files.
-	 */
-	runAsyncLoad: function ( payload ) {
-		payload.cmd = 'loadFile';
-		payload.data = {};
-		if ( ! this._verifyWorkerIsAvailable( payload ) ) return;
-
-		this._postMessage();
 	},
 
 	/**
@@ -333,7 +282,7 @@ WorkerExecutionSupport.prototype = {
 	_verifyWorkerIsAvailable: function ( payload, transferables ) {
 		this._verifyCallbacks();
 		let ready = true;
-		if ( Validator.isValid( this.worker.queuedMessage ) ) {
+		if ( this.worker.queuedMessage !== null ) {
 
 			console.warn( 'Already processing message. Rejecting new run instruction' );
 			ready = false;
@@ -351,7 +300,7 @@ WorkerExecutionSupport.prototype = {
 	},
 
 	_postMessage: function () {
-		if ( Validator.isValid( this.worker.queuedMessage ) && Validator.isValid( this.worker.native ) ) {
+		if ( this.worker.queuedMessage !== null && this.worker.native !== null ) {
 
 			if ( this.worker.queuedMessage.payload.data.input instanceof ArrayBuffer ) {
 

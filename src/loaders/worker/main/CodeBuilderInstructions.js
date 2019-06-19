@@ -3,37 +3,43 @@
  */
 
 
-const CodeBuilderInstructions = function ( parserName, providesThree ) {
-	this.parserName = parserName;
-	this.providesThree = providesThree === true;
-	this.codeInstructions = [];
+const CodeBuilderInstructions = function () {
+	this.startCode = '';
+	this.codeFragments = [];
+	this.importStatements = [];
 	this.defaultGeometryType = 0;
-	this.containsMeshDisassembler = false;
-	this.usesMeshDisassembler = false;
 };
 
 CodeBuilderInstructions.prototype = {
 
 	constructor: CodeBuilderInstructions,
 
-	addCodeFragment: function( codeFragment ) {
-		this.codeInstructions.push( {
-			type: 'serializedCode',
-			code: codeFragment
-		} );
+	addStartCode: function ( startCode ) {
+		this.startCode = startCode;
 	},
 
-	addLibrary: function( libraryPath, resourcePath ) {
-		this.codeInstructions.push( {
-			type: 'lib',
-			libraryPath: libraryPath,
-			resourcePath: resourcePath
-		} );
+	addCodeFragment: function ( code ) {
+		this.codeFragments.push( code );
 	},
 
-	getCodeInstructions: function() {
-		return this.codeInstructions;
+	addLibraryImport: function ( libraryPath ) {
+		let libraryUrl = new URL( libraryPath, window.location.href ).href;
+		let code = 'importScripts( "' + libraryUrl + '" );';
+		this.importStatements.push(	code );
+	},
+
+	getImportStatements: function () {
+		return this.importStatements;
+	},
+
+	getCodeFragments: function () {
+		return this.codeFragments;
+	},
+
+	getStartCode: function () {
+		return this.startCode;
 	}
+
 };
 
 export { CodeBuilderInstructions }

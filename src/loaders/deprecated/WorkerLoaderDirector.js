@@ -3,8 +3,8 @@
  */
 
 import { WorkerLoader } from "./WorkerLoader.js";
-import { WorkerExecutionSupport } from "./worker/main/WorkerExecutionSupport.js";
-import { Validator } from "./util/Validator.js";
+import { WorkerExecutionSupport } from "../worker/main/WorkerExecutionSupport.js";
+import { Validator } from "./Validator.js";
 
 
 /**
