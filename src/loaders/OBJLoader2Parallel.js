@@ -10,11 +10,9 @@ import {
 import { CodeSerializer } from "./worker/main/CodeSerializer.js";
 import { OBJLoader2 } from "./OBJLoader2.js";
 
-// Imports related to wrapper and to worker
-import { ObjectManipulator } from "./utils/ObjectManipulator.js";
-
-// Imports only related to worker
+// Imports only related to worker (when standard workers (modules aren't supported) are used)
 import { OBJLoader2Parser } from "./worker/parallel/OBJLoader2Parser.js";
+import { ObjectManipulator } from "./utils/ObjectManipulator.js";
 import { WorkerRunner } from "./worker/parallel/WorkerRunner.js";
 
 /**

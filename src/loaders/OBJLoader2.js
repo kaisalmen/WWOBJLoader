@@ -382,7 +382,4 @@ OBJLoader2.prototype = {
 	}
 };
 
-export {
-	OBJLoader2,
-	OBJLoader2Parser
-};
+export { OBJLoader2 };
