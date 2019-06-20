@@ -49,7 +49,7 @@ OBJLoader2WorkerWrapper.prototype = {
 		workerExecutionSupport.setTerminateWorkerOnLoad( true );
 
 		if ( useJsm ) {
-			workerExecutionSupport.buildJsm( '../../src/loaders/worker/dependent/OBJLoader2Worker.js' );
+			workerExecutionSupport.buildJsm( '../../src/loaders/worker/parallel/jsm/OBJLoader2Worker.js' );
 		}
 		else {
 			let codeOBJLoader2Parser = CodeSerializer.serializeClass( 'OBJLoader2Parser', OBJLoader2Parser );

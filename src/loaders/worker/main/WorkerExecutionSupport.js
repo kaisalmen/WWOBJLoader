@@ -152,7 +152,8 @@ WorkerExecutionSupport.prototype = {
 			scope._receiveWorkerMessage( event );
 		};
 
-		this.worker.native = new Worker( workerFile, { type: "module" } );
+		let workerFileUrl = new URL( workerFile, window.location.href ).href;
+		this.worker.native = new Worker( workerFileUrl, { type: "module" } );
 		this.worker.native.onmessage = scopedReceiveWorkerMessage;
 		this.worker.workerRunner.usesMeshDisassembler = false;
 		scope.worker.workerRunner.defaultGeometryType = 0;
