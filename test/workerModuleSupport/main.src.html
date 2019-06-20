@@ -38,8 +38,7 @@
 			} from "../../node_modules/three/build/three.module.js";
 
 			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
-    		import { ResourceDescriptor } from "../../src/loaders/utils/ResourceDescriptor.js";
-			import { OBJLoader2WorkerWrapper } from "../../src/loaders/wrapper/OBJLoader2WorkerWrapper.js";
+			import { OBJLoader2Parallel } from "../../src/loaders/OBJLoader2Parallel.js";
 
 			const WorkerModuleSupportExample = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -59,8 +58,6 @@
 				this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 				this.controls = null;
-
-				this.useJsm = false;
 			};
 
 			WorkerModuleSupportExample.prototype = {
@@ -102,21 +99,24 @@
 
 					let scope = this;
 
-					let resourceDescriptor = new ResourceDescriptor( 'URL', 'female02_vertex_colors.obj', '../../resource/obj/female02/female02_vertex_colors.obj' );
+					let objLoader2Parallel = new OBJLoader2Parallel();
+					objLoader2Parallel.setModelName( modelName )
+						.setUseJsmWorker( false );
 
-					let wrapper = new OBJLoader2WorkerWrapper( {
-						modelName: modelName
-					}, this.scene );
-					wrapper.setCallbackReportProgress( scope._reportProgress );
-
+					let filename = '../../resource/obj/female02/female02_vertex_colors.obj';
 					let fileLoader = new FileLoader();
 					fileLoader.setResponseType( 'arraybuffer' );
-					fileLoader.load( resourceDescriptor.url,
+					fileLoader.load( new URL( filename, window.location.href ).href,
 						function ( content ) {
 
-							scope._reportProgress( { detail: { text: 'File loading complete: ' + resourceDescriptor.filename } } );
-							resourceDescriptor.setBuffer( content );
-							wrapper.runAsyncParse( resourceDescriptor, false );
+							scope._reportProgress( { detail: { text: 'File loading complete: ' + filename } } );
+
+							let callbackOnLoad = function ( message ) {
+								scope.scene.add( objLoader2Parallel.baseObject3d  );
+								scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+							};
+
+							objLoader2Parallel.parseParallel( content, callbackOnLoad );
 
 						}
 					);

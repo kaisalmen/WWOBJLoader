@@ -2,6 +2,58 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+const CodeBuilderInstructions = function () {
+	this.startCode = '';
+	this.codeFragments = [];
+	this.importStatements = [];
+	this.jsmWorkerFile;
+	this.jsmWorker = false;
+	this.defaultGeometryType = 0;
+};
+
+CodeBuilderInstructions.prototype = {
+
+	constructor: CodeBuilderInstructions,
+
+	setJsmWorkerFile: function ( jsmWorkerFile ) {
+		this.jsmWorkerFile = jsmWorkerFile;
+	},
+
+	setJsmWorker: function ( jsmWorker ) {
+		this.jsmWorker = jsmWorker;
+	},
+
+	isJsmWorker: function () {
+		return this.jsmWorker;
+	},
+
+	addStartCode: function ( startCode ) {
+		this.startCode = startCode;
+	},
+
+	addCodeFragment: function ( code ) {
+		this.codeFragments.push( code );
+	},
+
+	addLibraryImport: function ( libraryPath ) {
+		let libraryUrl = new URL( libraryPath, window.location.href ).href;
+		let code = 'importScripts( "' + libraryUrl + '" );';
+		this.importStatements.push(	code );
+	},
+
+	getImportStatements: function () {
+		return this.importStatements;
+	},
+
+	getCodeFragments: function () {
+		return this.codeFragments;
+	},
+
+	getStartCode: function () {
+		return this.startCode;
+	}
+
+};
 /**
  * This class provides means to transform existing parser code into a web worker. It defines a simple communication protocol
  * which allows to configure the worker and receive raw mesh data during execution.
@@ -35,6 +87,7 @@ WorkerExecutionSupport.prototype = {
 		};
 		this.worker = {
 			native: null,
+			jsmWorker: false,
 			logging: true,
 			workerRunner: {
 				haveUserImpl: false,
@@ -86,7 +139,7 @@ WorkerExecutionSupport.prototype = {
 	 */
 	setTerminateWorkerOnLoad: function ( terminateWorkerOnLoad ) {
 		this.worker.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
-		if ( this.worker.terminateWorkerOnLoad && this.worker.native !== null &&
+		if ( this.worker.terminateWorkerOnLoad && this.isWorkerLoaded( this.worker.jsmWorker ) &&
 				this.worker.queuedMessage === null && this.worker.started ) {
 
 			if ( this.logging.enabled ) {
@@ -146,46 +199,23 @@ WorkerExecutionSupport.prototype = {
 		}
 	},
 
-	buildJsm: function ( workerFile, defaultGeometryType ) {
-		let scope = this;
-		let scopedReceiveWorkerMessage = function ( event ) {
-			scope._receiveWorkerMessage( event );
-		};
+	buildWorkerJsm: function ( codeBuilderInstructions ) {
+		this._buildWorkerCheckPreconditions( true, 'buildWorkerJsm' );
 
-		let workerFileUrl = new URL( workerFile, window.location.href ).href;
-		this.worker.native = new Worker( workerFileUrl, { type: "module" } );
-		this.worker.native.onmessage = scopedReceiveWorkerMessage;
-		this.worker.workerRunner.usesMeshDisassembler = false;
-		scope.worker.workerRunner.defaultGeometryType = 0;
-		if ( defaultGeometryType !== undefined && defaultGeometryType !== null ) {
+		let workerFileUrl = new URL( codeBuilderInstructions.jsmWorkerFile, window.location.href ).href;
+		let worker = new Worker( workerFileUrl, { type: "module" } );
+		codeBuilderInstructions.setJsmWorker( true );
 
-			scope.worker.workerRunner.defaultGeometryType = defaultGeometryType;
-		}
-
+		this._configureWorkerCommunication( worker, codeBuilderInstructions, 'buildWorkerJsm' );
 	},
 
 	/**
 	 * Validate the status of worker code and the derived worker and specify functions that should be build when new raw mesh data becomes available and when the parser is finished.
 	 *
-	 * @param {Function} buildWorkerCode The function that is invoked to create the worker code of the parser.
+	 * @param {CodeBuilderIns} buildWorkerCode The function that is invoked to create the worker code of the parser.
 	 */
-	buildStandard: function ( codeBuilderInstructions ) {
-		if ( this.worker.native !== null ) return;
-		if ( this.logging.enabled ) {
-
-			console.info( 'WorkerSupport: Building worker code...' );
-			console.time( 'buildWebWorkerCode' );
-			if ( ! this.worker.workerRunner.haveUserImpl ) {
-
-				console.info( 'WorkerSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
-
-			}
-		}
-
-		let scope = this;
-		let scopedReceiveWorkerMessage = function ( event ) {
-			scope._receiveWorkerMessage( event );
-		};
+	buildWorkerStandard: function ( codeBuilderInstructions ) {
+		this._buildWorkerCheckPreconditions( false,'buildWorkerStandard' );
 
 		let concatenateCode = '';
 		codeBuilderInstructions.getImportStatements().forEach( function ( element ) {
@@ -199,19 +229,53 @@ WorkerExecutionSupport.prototype = {
 		concatenateCode += codeBuilderInstructions.getStartCode();
 
 		let blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
-		scope.worker.native = new Worker( window.URL.createObjectURL( blob ) );
-		scope.worker.native.onmessage = scopedReceiveWorkerMessage;
+		let worker = new Worker( window.URL.createObjectURL( blob ) );
+		codeBuilderInstructions.setJsmWorker( false );
+
+		this._configureWorkerCommunication( worker, codeBuilderInstructions, 'buildWorkerStandard' );
+	},
+
+	_buildWorkerCheckPreconditions: function ( requireJsmWorker, timeLabel ) {
+		if ( this.isWorkerLoaded( requireJsmWorker ) ) return;
+
+		if ( this.logging.enabled ) {
+
+			console.info( 'WorkerExecutionSupport: Building ' + ( requireJsmWorker ? 'jsm' : 'standard' ) + ' worker code...' );
+			console.time( timeLabel );
+			if ( ! this.worker.workerRunner.haveUserImpl ) {
+
+				console.info( 'WorkerExecutionSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
+
+			}
+		}
+	},
+
+	_configureWorkerCommunication: function ( worker, codeBuilderInstructions, timeLabel ) {
+		this.worker.native = worker;
+		this.worker.jsmWorker = codeBuilderInstructions.isJsmWorker();
+
+		let scope = this;
+		let scopedReceiveWorkerMessage = function ( event ) {
+			scope._receiveWorkerMessage( event );
+		};
+		this.worker.native.onmessage = scopedReceiveWorkerMessage;
 		this.worker.workerRunner.usesMeshDisassembler = false;
-		scope.worker.workerRunner.defaultGeometryType = 0;
+		this.worker.workerRunner.defaultGeometryType = 0;
 		if ( codeBuilderInstructions.defaultGeometryType !== undefined && codeBuilderInstructions.defaultGeometryType !== null ) {
 
-			scope.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
+			this.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
 		}
-		if ( scope.logging.enabled ) {
 
-			console.timeEnd( 'buildWebWorkerCode' );
+		if ( this.logging.enabled ) {
+
+			console.timeEnd( timeLabel );
 
 		}
+	},
+
+	isWorkerLoaded: function ( requireJsmWorker ) {
+		return this.worker.native !== null &&
+			( ( requireJsmWorker && this.worker.jsmWorker ) || ( ! requireJsmWorker && ! this.worker.jsmWorker ) );
 	},
 
 	/**
@@ -290,7 +354,7 @@ WorkerExecutionSupport.prototype = {
 
 			this.worker.queuedMessage = {
 				payload: payload,
-				transferables: transferables
+				transferables: ( transferables === undefined || transferables === null ) ? [] : transferables
 			};
 			this.worker.started = true;
 
@@ -299,7 +363,7 @@ WorkerExecutionSupport.prototype = {
 	},
 
 	_postMessage: function () {
-		if ( this.worker.queuedMessage !== null && this.worker.native !== null ) {
+		if ( this.worker.queuedMessage !== null && this.isWorkerLoaded( this.worker.jsmWorker ) ) {
 
 			if ( this.worker.queuedMessage.payload.data.input instanceof ArrayBuffer ) {
 
@@ -335,4 +399,7 @@ WorkerExecutionSupport.prototype = {
 	}
 };
 
-export { WorkerExecutionSupport }
+export {
+	CodeBuilderInstructions,
+	WorkerExecutionSupport
+}
