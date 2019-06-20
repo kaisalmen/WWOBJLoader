@@ -121,7 +121,7 @@
 
 				_reportProgress: function ( event ) {
 					let output = '';
-					if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === !undefined ) {
+					if ( event.detail !== null && event.detail !== undefined && event.detail.text ) {
 
 						output = event.detail.text;
 

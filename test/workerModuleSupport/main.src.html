@@ -38,14 +38,8 @@
 			} from "../../node_modules/three/build/three.module.js";
 
 			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
-			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
-			import { WorkerExecutionSupport } from "../../src/loaders/worker/main/WorkerExecutionSupport.js";
-			import { ResourceDescriptor } from "../../src/loaders/AssetPipelineLoader.js";
-			import { CodeSerializer } from "../../src/loaders/worker/main/CodeSerializer.js";
-			import { CodeBuilderInstructions } from "../../src/loaders/worker/main/CodeBuilderInstructions.js";
-			import { OBJLoader2Parser } from "../../src/loaders/worker/independent/OBJLoader2Parser.js";
-			import { WorkerRunner } from "../../src/loaders/worker/independent/WorkerRunner.js";
-			import { ObjectManipulator } from "../../src/loaders/worker/independent/ObjectManipulator.js";
+    		import { ResourceDescriptor } from "../../src/loaders/utils/ResourceDescriptor.js";
+			import { OBJLoader2WorkerWrapper } from "../../src/loaders/wrapper/OBJLoader2WorkerWrapper.js";
 
 			const WorkerModuleSupportExample = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -110,58 +104,20 @@
 
 					let resourceDescriptor = new ResourceDescriptor( 'URL', 'female02_vertex_colors.obj', '../../resource/obj/female02/female02_vertex_colors.obj' );
 
+					let wrapper = new OBJLoader2WorkerWrapper( {
+						modelName: modelName
+					}, this.scene );
+					wrapper.setCallbackReportProgress( scope._reportProgress );
+
 					let fileLoader = new FileLoader();
 					fileLoader.setResponseType( 'arraybuffer' );
 					fileLoader.load( resourceDescriptor.url,
 						function ( content ) {
 
-							resourceDescriptor.setBuffer( content );
-
-							let objLoader = new OBJLoader2();
-							objLoader.setModelName( modelName );
-
-							let workerExecutionSupport = new WorkerExecutionSupport();
-							workerExecutionSupport.setTerminateWorkerOnLoad( true );
-
-							if ( this.useJsm ) {
-								workerExecutionSupport.buildJsm( '../../src/loaders/worker/dependent/OBJLoader2Worker.js' );
-							}
-							else {
-								let codeOBJLoader2Parser = CodeSerializer.serializeClass( 'OBJLoader2Parser', OBJLoader2Parser );
-								let codeObjectManipulator = CodeSerializer.serializeObject( 'ObjectManipulator', ObjectManipulator );
-								let codeWorkerRunner = CodeSerializer.serializeClass( 'WorkerRunner', WorkerRunner );
-
-								let codeBuilderInstructions = new CodeBuilderInstructions();
-								codeBuilderInstructions.addCodeFragment( codeOBJLoader2Parser );
-								codeBuilderInstructions.addCodeFragment( codeObjectManipulator );
-								codeBuilderInstructions.addCodeFragment( codeWorkerRunner );
-
-								codeBuilderInstructions.addLibraryImport( '../../node_modules/three/build/three.js' );
-								codeBuilderInstructions.addStartCode( 'new WorkerRunner( new OBJLoader2Parser() );' );
-
-								workerExecutionSupport.buildStandard( codeBuilderInstructions );
-							}
-
-							let scopedOnAssetAvailable = function ( payload ) {
-								objLoader._onAssetAvailable( payload );
-							};
-							let callbackOnLoad = function ( message ) {
-								scope.scene.add(  objLoader.baseObject3d  );
-								scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
-							};
-							workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, callbackOnLoad );
-							workerExecutionSupport.runAsyncParse(
-								{
-									params: null,
-									materials: null,
-									data: {
-										input: resourceDescriptor.content.input,
-										options: resourceDescriptor.content.inputDataOptions
-									}
-								},
-								resourceDescriptor.transferables );
-
 							scope._reportProgress( { detail: { text: 'File loading complete: ' + resourceDescriptor.filename } } );
+							resourceDescriptor.setBuffer( content );
+							wrapper.runAsyncParse( resourceDescriptor, false );
+
 						}
 					);
 				},
@@ -172,7 +128,7 @@
 
 				_reportProgress: function ( event ) {
 					let output = '';
-					if ( event.detail !== null && event.detail !== undefined && event.detail.text !== null && event.detail.text === !undefined ) {
+					if ( event.detail !== null && event.detail !== undefined && event.detail.text ) {
 
 						output = event.detail.text;
 

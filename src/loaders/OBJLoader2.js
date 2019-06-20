@@ -8,7 +8,7 @@ import {
 	Group
 } from "../../node_modules/three/build/three.module.js";
 
-import { OBJLoader2Parser } from "./worker/independent/OBJLoader2Parser.js";
+import { OBJLoader2Parser } from "./worker/parallel/OBJLoader2Parser.js";
 import { MeshReceiver } from "./shared/MeshReceiver.js";
 import { MaterialHandler } from "./shared/MaterialHandler.js";
 
@@ -382,4 +382,7 @@ OBJLoader2.prototype = {
 	}
 };
 
-export { OBJLoader2 };
+export {
+	OBJLoader2,
+	OBJLoader2Parser
+};

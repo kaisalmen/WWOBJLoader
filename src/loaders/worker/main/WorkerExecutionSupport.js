@@ -2,8 +2,6 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { WorkerRunner } from "../independent/WorkerRunner.js"
-
 /**
  * This class provides means to transform existing parser code into a web worker. It defines a simple communication protocol
  * which allows to configure the worker and receive raw mesh data during execution.
@@ -41,7 +39,7 @@ WorkerExecutionSupport.prototype = {
 			workerRunner: {
 				haveUserImpl: false,
 				name: 'WorkerRunner',
-				impl: WorkerRunner,
+				impl: null,
 				parserName: null,
 				usesMeshDisassembler: null,
 				defaultGeometryType: null

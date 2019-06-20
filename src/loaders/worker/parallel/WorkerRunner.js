@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { ObjectManipulator } from "./ObjectManipulator.js";
+import { ObjectManipulator } from "../../utils/ObjectManipulator.js";
 
 
 /**

@@ -9,8 +9,8 @@ import {
 
 import { MeshReceiver } from "../shared/MeshReceiver.js";
 import { Validator } from "./Validator.js";
-import { ObjectManipulator } from "../worker/independent/ObjectManipulator.js";
-import { FileLoadingExecutor } from "../util/FileLoadingExecutor.js";
+import { ObjectManipulator } from "../utils/ObjectManipulator.js";
+import { FileLoadingExecutor } from "../utils/FileLoadingExecutor.js";
 
 
 /**
