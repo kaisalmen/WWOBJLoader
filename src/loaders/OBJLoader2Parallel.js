@@ -44,14 +44,15 @@ OBJLoader2Parallel.prototype._configure = function () {
 	if ( this.workerExecutionSupport.isWorkerLoaded( this.useJsmWorker ) ) return;
 
 	let codeBuilderInstructions = new CodeBuilderInstructions();
-	codeBuilderInstructions.setJsmWorkerFile( '../../src/loaders/worker/parallel/jsm/OBJLoader2Worker.js' );
 
+	let jsmSuccess = false;
 	if ( this.useJsmWorker ) {
 
-		this.workerExecutionSupport.buildWorkerJsm( codeBuilderInstructions );
-
+		codeBuilderInstructions.setJsmWorkerFile( '../../src/loaders/worker/parallel/jsm/OBJLoader2Worker.js' );
+		jsmSuccess = this.workerExecutionSupport.buildWorkerJsm( codeBuilderInstructions );
 	}
-	else {
+
+	if ( ! jsmSuccess ) {
 
 		let codeOBJLoader2Parser = CodeSerializer.serializeClass( 'OBJLoader2Parser', OBJLoader2Parser );
 		let codeObjectManipulator = CodeSerializer.serializeObject( 'ObjectManipulator', ObjectManipulator );

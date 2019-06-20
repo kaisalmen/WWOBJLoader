@@ -200,13 +200,29 @@ WorkerExecutionSupport.prototype = {
 	},
 
 	buildWorkerJsm: function ( codeBuilderInstructions ) {
+		let jsmSuccess = true;
 		this._buildWorkerCheckPreconditions( true, 'buildWorkerJsm' );
 
 		let workerFileUrl = new URL( codeBuilderInstructions.jsmWorkerFile, window.location.href ).href;
-		let worker = new Worker( workerFileUrl, { type: "module" } );
-		codeBuilderInstructions.setJsmWorker( true );
+		try {
 
-		this._configureWorkerCommunication( worker, codeBuilderInstructions, 'buildWorkerJsm' );
+			let worker = new Worker( workerFileUrl, { type: "module" } );
+			codeBuilderInstructions.setJsmWorker( true );
+
+			this._configureWorkerCommunication( worker, codeBuilderInstructions, 'buildWorkerJsm' );
+
+		}
+		catch ( e ) {
+
+			jsmSuccess = false;
+			if ( e instanceof TypeError || e instanceof  SyntaxError ) {
+
+				console.error( "Modules are not supported in workers." );
+
+			}
+		}
+
+		return jsmSuccess;
 	},
 
 	/**
