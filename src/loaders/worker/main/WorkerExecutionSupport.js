@@ -90,12 +90,9 @@ WorkerExecutionSupport.prototype = {
 			jsmWorker: false,
 			logging: true,
 			workerRunner: {
-				haveUserImpl: false,
 				name: 'WorkerRunner',
-				impl: null,
-				parserName: null,
-				usesMeshDisassembler: null,
-				defaultGeometryType: null
+				usesMeshDisassembler: false,
+				defaultGeometryType: 0
 			},
 			terminateWorkerOnLoad: false,
 			forceWorkerDataCopy: false,
@@ -148,24 +145,6 @@ WorkerExecutionSupport.prototype = {
 
 			}
 			this._terminate();
-
-		}
-		return this;
-	},
-
-	/**
-	 * Set a user-defined runner embedding the worker code and  handling communication and execution with main.
-	 *
-	 * @param {object} userRunnerImpl The object reference
-	 * @param {string} userRunnerImplName The name of the object
-	 */
-	setUserRunnerImpl: function ( userRunnerImpl, userRunnerImplName ) {
-		if ( userRunnerImpl !== undefined && userRunnerImpl !== null && userRunnerImplName ) {
-
-			this.worker.workerRunner.haveUserImpl = true;
-			this.worker.workerRunner.impl = userRunnerImpl;
-			this.worker.workerRunner.name = userRunnerImplName;
-			if ( this.logging.enabled ) console.info( 'WorkerSupport: Using "' + userRunnerImplName + '" as Runner class for worker.' );
 
 		}
 		return this;
@@ -258,11 +237,7 @@ WorkerExecutionSupport.prototype = {
 
 			console.info( 'WorkerExecutionSupport: Building ' + ( requireJsmWorker ? 'jsm' : 'standard' ) + ' worker code...' );
 			console.time( timeLabel );
-			if ( ! this.worker.workerRunner.haveUserImpl ) {
 
-				console.info( 'WorkerExecutionSupport: Using DEFAULT "' + this.worker.workerRunner.name + '" as Runner class for worker.' );
-
-			}
 		}
 	},
 
@@ -275,8 +250,6 @@ WorkerExecutionSupport.prototype = {
 			scope._receiveWorkerMessage( event );
 		};
 		this.worker.native.onmessage = scopedReceiveWorkerMessage;
-		this.worker.workerRunner.usesMeshDisassembler = false;
-		this.worker.workerRunner.defaultGeometryType = 0;
 		if ( codeBuilderInstructions.defaultGeometryType !== undefined && codeBuilderInstructions.defaultGeometryType !== null ) {
 
 			this.worker.workerRunner.defaultGeometryType = codeBuilderInstructions.defaultGeometryType;
@@ -299,6 +272,8 @@ WorkerExecutionSupport.prototype = {
 	 */
 	_receiveWorkerMessage: function ( event ) {
 		let payload = event.data;
+		let workerRunnerName = this.worker.workerRunner.name;
+
 		switch ( payload.cmd ) {
 			case 'assetAvailable':
 				this.worker.callbacks.onAssetAvailable( payload );
@@ -314,14 +289,14 @@ WorkerExecutionSupport.prototype = {
 				}
 				if ( this.worker.terminateWorkerOnLoad ) {
 
-					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run is complete. Terminating application on request!' );
+					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + workerRunnerName + ']: Run is complete. Terminating application on request!' );
 					this.worker.callbacks.terminate();
 
 				}
 				break;
 
 			case 'error':
-				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Reported error: ' + payload.msg );
+				console.error( 'WorkerSupport [' + workerRunnerName + ']: Reported error: ' + payload.msg );
 				this.worker.queuedMessage = null;
 				this.worker.started = false;
 				if ( this.worker.callbacks.onLoad !== null ) {
@@ -331,14 +306,14 @@ WorkerExecutionSupport.prototype = {
 				}
 				if ( this.worker.terminateWorkerOnLoad ) {
 
-					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Run reported error. Terminating application on request!' );
+					if ( this.worker.logging.enabled ) console.info( 'WorkerSupport [' + workerRunnerName + ']: Run reported error. Terminating application on request!' );
 					this.worker.callbacks.terminate();
 
 				}
 				break;
 
 			default:
-				console.error( 'WorkerSupport [' + this.worker.workerRunner.name + ']: Received unknown command: ' + payload.cmd );
+				console.error( 'WorkerSupport [' + workerRunnerName + ']: Received unknown command: ' + payload.cmd );
 				break;
 
 		}
@@ -349,7 +324,7 @@ WorkerExecutionSupport.prototype = {
 	 *
 	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 */
-	runAsyncParse: function( payload, transferables ) {
+	executeParallel: function( payload, transferables ) {
 		payload.cmd = 'parse';
 		payload.usesMeshDisassembler = this.worker.workerRunner.usesMeshDisassembler;
 		payload.defaultGeometryType = this.worker.workerRunner.defaultGeometryType;

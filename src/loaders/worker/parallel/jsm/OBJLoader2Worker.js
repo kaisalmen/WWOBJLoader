@@ -3,6 +3,9 @@
  */
 
 import { OBJLoader2Parser } from "../OBJLoader2Parser.js";
-import { WorkerRunner } from "../WorkerRunner.js";
+import {
+	WorkerRunner,
+	DefaultWorkerPayloadHandler
+} from "../WorkerRunner.js";
 
-new WorkerRunner( new OBJLoader2Parser() );
+new WorkerRunner( new DefaultWorkerPayloadHandler( new OBJLoader2Parser() ) );

@@ -13,7 +13,10 @@ import { OBJLoader2 } from "./OBJLoader2.js";
 // Imports only related to worker (when standard workers (modules aren't supported) are used)
 import { OBJLoader2Parser } from "./worker/parallel/OBJLoader2Parser.js";
 import { ObjectManipulator } from "./utils/ObjectManipulator.js";
-import { WorkerRunner } from "./worker/parallel/WorkerRunner.js";
+import {
+	WorkerRunner,
+	DefaultWorkerPayloadHandler
+} from "./worker/parallel/WorkerRunner.js";
 
 /**
  *
@@ -28,14 +31,13 @@ const OBJLoader2Parallel = function ( manager ) {
 	this.callbackOnLoad = null;
 	this.executeParallel = true;
 	this.workerExecutionSupport = new WorkerExecutionSupport();
-	this.workerExecutionSupport.setTerminateWorkerOnLoad( true );
 };
 
 OBJLoader2Parallel.prototype = Object.create( OBJLoader2.prototype );
 OBJLoader2Parallel.prototype.constructor = OBJLoader2Parallel;
 
 OBJLoader2Parallel.prototype.setUseJsmWorker = function ( useJsmWorker ) {
-	this.useJsmWorker = useJsmWorker;
+	this.useJsmWorker = useJsmWorker === true;
 	return this;
 };
 
@@ -57,6 +59,10 @@ OBJLoader2Parallel.prototype.setExecuteParallel = function ( executeParallel ) {
 };
 
 OBJLoader2Parallel.prototype._configure = function () {
+	if ( this.callbackOnLoad === null ) {
+		"No callbackOnLoad was provided! Aborting!"
+	}
+
 	// check if worker is already available and if so, then fast-fail
 	if ( this.workerExecutionSupport.isWorkerLoaded( this.useJsmWorker ) ) return;
 
@@ -73,18 +79,26 @@ OBJLoader2Parallel.prototype._configure = function () {
 
 		let codeOBJLoader2Parser = CodeSerializer.serializeClass( 'OBJLoader2Parser', OBJLoader2Parser );
 		let codeObjectManipulator = CodeSerializer.serializeObject( 'ObjectManipulator', ObjectManipulator );
+		let codeParserPayloadHandler = CodeSerializer.serializeClass( 'DefaultWorkerPayloadHandler', DefaultWorkerPayloadHandler );
 		let codeWorkerRunner = CodeSerializer.serializeClass( 'WorkerRunner', WorkerRunner );
 
 		codeBuilderInstructions.addCodeFragment( codeOBJLoader2Parser );
 		codeBuilderInstructions.addCodeFragment( codeObjectManipulator );
+		codeBuilderInstructions.addCodeFragment( codeParserPayloadHandler );
 		codeBuilderInstructions.addCodeFragment( codeWorkerRunner );
 
 //		codeBuilderInstructions.addLibraryImport( '../../node_modules/three/build/three.js' );
-		codeBuilderInstructions.addStartCode( 'new WorkerRunner( new OBJLoader2Parser() );' );
+		codeBuilderInstructions.addStartCode( 'new WorkerRunner( new DefaultWorkerPayloadHandler( new OBJLoader2Parser() ) );' );
 
 		this.workerExecutionSupport.buildWorkerStandard( codeBuilderInstructions );
 
 	}
+	let scope = this;
+	let scopedOnAssetAvailable = function ( payload ) {
+		scope._onAssetAvailable( payload );
+	};
+
+	this.workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, this.callbackOnLoad );
 };
 
 /**
@@ -104,49 +118,34 @@ OBJLoader2Parallel.prototype.load = function( content, onLoad, onFileLoadProgres
 OBJLoader2Parallel.prototype.parse = function( content ) {
 	if ( this.executeParallel ) {
 
-		this.parseParallel( content, this.callbackOnLoad );
+		this._configure();
+
+		this.workerExecutionSupport.executeParallel(
+			{
+				params: {
+					modelName: this.modelName,
+					instanceNo: this.instanceNo,
+					useIndices: this.useIndices,
+					disregardNormals: this.disregardNormals,
+					materialPerSmoothingGroup: this.materialPerSmoothingGroup,
+					useOAsMesh: this.useOAsMesh,
+				},
+				materials: this.materialHandler.getMaterialsJSON(),
+				data: {
+					input: content,
+					options: null
+				},
+				logging: {
+					enabled: this.logging.enabled,
+					debug: this.logging.debug
+				}
+			} );
 
 	} else {
 
 		this.callbackOnLoad( OBJLoader2.prototype.parse.call( this, content ) );
 
 	}
-};
-
-/**
- * @param {ArrayBuffer} content
- * @param {function} callbackOnLoad
- */
-OBJLoader2Parallel.prototype.parseParallel = function( content, callbackOnLoad ) {
-	this._configure();
-
-	let scope = this;
-	let scopedOnAssetAvailable = function ( payload ) {
-		scope._onAssetAvailable( payload );
-	};
-
-	this.workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, callbackOnLoad );
-
-	this.workerExecutionSupport.runAsyncParse(
-		{
-			params: {
-				modelName: this.modelName,
-				instanceNo: this.instanceNo,
-				useIndices: this.useIndices,
-				disregardNormals: this.disregardNormals,
-				materialPerSmoothingGroup: this.materialPerSmoothingGroup,
-				useOAsMesh: this.useOAsMesh,
-			},
-			materials: this.materialHandler.getMaterialsJSON(),
-			data: {
-				input: content,
-				options: null
-			},
-			logging: {
-				enabled: this.logging.enabled,
-				debug: this.logging.debug
-			}
-		} );
 };
 
 export { OBJLoader2Parallel }

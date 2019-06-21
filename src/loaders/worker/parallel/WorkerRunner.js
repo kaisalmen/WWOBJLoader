@@ -4,54 +4,26 @@
 
 import { ObjectManipulator } from "../../utils/ObjectManipulator.js";
 
-
-/**
- * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
- * @constructor
- */
-const WorkerRunner = function ( parser ) {
-	this.resourceDescriptors = [];
+const DefaultWorkerPayloadHandler = function ( parser ) {
+	this.parser = parser;
 	this.logging = {
 		enabled: false,
 		debug: false
 	};
-	this.parser = parser;
-
-	let scope = this;
-	let scopedRunner = function( event ) {
-		scope.processMessage( event.data );
-	};
-	self.addEventListener( 'message', scopedRunner, false );
 };
 
-WorkerRunner.prototype = {
+DefaultWorkerPayloadHandler.prototype = {
 
-	constructor: WorkerRunner,
+	constructor: DefaultWorkerPayloadHandler,
 
-	/**
-	 * Configures the Parser implementation according the supplied configuration object.
-	 *
-	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
-	 */
-	processMessage: function ( payload ) {
-		let scope = this;
-
+	handlePayload: function ( payload ) {
 		if ( payload.logging ) {
 			this.logging.enabled = payload.logging.enabled === true;
 			this.logging.debug = payload.logging.debug === true;
 		}
-		if ( payload.data.resourceDescriptors && this.resourceDescriptors.length === 0 ) {
-
-			for ( let name in payload.data.resourceDescriptors ) {
-
-				this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
-
-			}
-
-		}
-
 		if ( payload.cmd === 'parse' ) {
 
+			let scope = this;
 			let callbacks = {
 				callbackOnAssetAvailable: function ( payload ) {
 					self.postMessage( payload );
@@ -105,7 +77,52 @@ WorkerRunner.prototype = {
 			console.error( 'WorkerRunner: Received unknown command: ' + payload.cmd );
 
 		}
+
 	}
 };
 
-export { WorkerRunner }
+
+/**
+ * Default implementation of the WorkerRunner responsible for creation and configuration of the parser within the worker.
+ * @constructor
+ */
+const WorkerRunner = function ( payloadHandler ) {
+	this.resourceDescriptors = [];
+	this.payloadHandler = payloadHandler;
+
+	let scope = this;
+	let scopedRunner = function( event ) {
+		scope.processMessage( event.data );
+	};
+	self.addEventListener( 'message', scopedRunner, false );
+};
+
+WorkerRunner.prototype = {
+
+	constructor: WorkerRunner,
+
+	/**
+	 * Configures the Parser implementation according the supplied configuration object.
+	 *
+	 * @param {Object} payload Raw mesh description (buffers, params, materials) used to build one to many meshes.
+	 */
+	processMessage: function ( payload ) {
+		if ( payload.data.resourceDescriptors && this.resourceDescriptors.length === 0 ) {
+
+			for ( let name in payload.data.resourceDescriptors ) {
+
+				this.resourceDescriptors.push( payload.data.resourceDescriptors[ name ] );
+
+			}
+
+		}
+
+		this.payloadHandler.handlePayload( payload );
+	}
+
+};
+
+export {
+	WorkerRunner,
+	DefaultWorkerPayloadHandler
+}
