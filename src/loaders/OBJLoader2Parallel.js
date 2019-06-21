@@ -25,6 +25,8 @@ const OBJLoader2Parallel = function ( manager ) {
 	OBJLoader2.call( this, manager );
 	this.useJsmWorker = false;
 
+	this.callbackOnLoad = null;
+	this.executeParallel = true;
 	this.workerExecutionSupport = new WorkerExecutionSupport();
 	this.workerExecutionSupport.setTerminateWorkerOnLoad( true );
 };
@@ -34,6 +36,23 @@ OBJLoader2Parallel.prototype.constructor = OBJLoader2Parallel;
 
 OBJLoader2Parallel.prototype.setUseJsmWorker = function ( useJsmWorker ) {
 	this.useJsmWorker = useJsmWorker;
+	return this;
+};
+
+OBJLoader2Parallel.prototype.setCallbackOnLoad = function ( callbackOnLoad ) {
+	if ( callbackOnLoad !== undefined && callbackOnLoad !== null ) {
+		this.callbackOnLoad = callbackOnLoad;
+	}
+	else {
+
+		throw "No callbackOnLoad was provided! Aborting!"
+
+	}
+	return this;
+};
+
+OBJLoader2Parallel.prototype.setExecuteParallel = function ( executeParallel ) {
+	this.executeParallel = executeParallel === true;
 	return this;
 };
 
@@ -64,6 +83,32 @@ OBJLoader2Parallel.prototype._configure = function () {
 		codeBuilderInstructions.addStartCode( 'new WorkerRunner( new OBJLoader2Parser() );' );
 
 		this.workerExecutionSupport.buildWorkerStandard( codeBuilderInstructions );
+
+	}
+};
+
+/**
+ * Load is intercepted from OBJLoader2.
+ * @inheritDoc
+ */
+OBJLoader2Parallel.prototype.load = function( content, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
+	this.setCallbackOnLoad( onLoad );
+
+	OBJLoader2.prototype.load.call( this, content, function () {}, onFileLoadProgress, onError, onMeshAlter );
+
+};
+
+/**
+ * @inheritDoc
+ */
+OBJLoader2Parallel.prototype.parse = function( content ) {
+	if ( this.executeParallel ) {
+
+		this.parseParallel( content, this.callbackOnLoad );
+
+	} else {
+
+		this.callbackOnLoad( OBJLoader2.prototype.parse.call( this, content ) );
 
 	}
 };
