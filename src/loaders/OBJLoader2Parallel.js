@@ -58,6 +58,10 @@ OBJLoader2Parallel.prototype.setExecuteParallel = function ( executeParallel ) {
 	return this;
 };
 
+OBJLoader2Parallel.prototype.getWorkerExecutionSupport = function () {
+	return this.workerExecutionSupport;
+};
+
 OBJLoader2Parallel.prototype._configure = function () {
 	if ( this.callbackOnLoad === null ) {
 		"No callbackOnLoad was provided! Aborting!"

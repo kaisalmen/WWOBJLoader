@@ -20,7 +20,6 @@
 			<div id="feedback"></div>
 		</div>
 
-		<script src="../../node_modules/three/examples/js/WebGL.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script type="module">
 
@@ -38,6 +37,7 @@
 				Object3D,
 				MeshNormalMaterial,
 				Mesh,
+				VertexNormalsHelper,
 				FileLoader,
 				DoubleSide,
 				FrontSide
@@ -48,12 +48,8 @@
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
-			import {
-				WorkerLoader,
-				LoadingTaskConfig
-			} from "../../src/loaders/deprecated/WorkerLoader.js";
-			import { WorkerExecutionSupport } from "../../src/loaders/worker/main/WorkerExecutionSupport.js";
-			import { ResourceDescriptor } from "../../src/loaders/AssetPipelineLoader.js";
+			import { OBJLoader2Parallel } from "../../src/loaders/OBJLoader2Parallel.js";
+			import { LoadedMeshUserOverride } from "../../src/loaders/shared/MeshReceiver.js";
 
 			const WWOBJLoader2Example = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -124,94 +120,65 @@
 					this.scene.add( this.pivot );
 				},
 
-				useParseSync: function () {
+				useParseMain: function () {
 					let modelName = 'female02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					let objLoader2 = new OBJLoader2();
-					objLoader2.setModelName( modelName );
+					let objLoader2 = new OBJLoader2()
+						.setModelName( modelName );
 
 					let scope = this;
-					let onLoadMtl = function ( mtlParseResult ) {
+					function onLoadMtl ( mtlParseResult ) {
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
+
 						let fileLoader = new FileLoader();
 						fileLoader.setPath( '../../' );
 						fileLoader.setResponseType( 'arraybuffer' );
 						fileLoader.load( 'resource/obj/female02/female02.obj',
-								function ( content ) {
-									let local = new Object3D();
-									local.name = 'Pivot_female02';
-									local.position.set( 75, 0, 0 );
-									scope.pivot.add( local );
-									local.add( objLoader2.parse( content ) );
+							function ( content ) {
+								let local = new Object3D();
+								local.name = 'Pivot_female02';
+								local.position.set( 75, 0, 0 );
+								scope.pivot.add( local );
+								local.add( objLoader2.parse( content ) );
 
-									scope._reportProgress( { detail: { text: 'Loading complete: ' + modelName } } );
-								}
+								scope._reportProgress( { detail: { text: 'Loading complete: ' + modelName } } );
+							}
 						);
-					};
-					objLoader2.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
+					}
+
+					let mtlLoader = new MTLLoader();
+					mtlLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
 				},
 
-				useParseAsync: function () {
+				useParseParallel: function () {
 					let modelName = 'female02_vertex' ;
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					let scope = this;
 
-					let resourceDescriptor = new ResourceDescriptor( 'URL', 'female02_vertex_colors.obj', '../../resource/obj/female02/female02_vertex_colors.obj' );
+					let objLoader2Parallel = new OBJLoader2Parallel();
+					objLoader2Parallel.setModelName( modelName );
 
-					let fileLoader = new FileLoader();
-					fileLoader.setResponseType( 'arraybuffer' );
-					fileLoader.load( resourceDescriptor.url,
-						function ( content ) {
+					function callbackOnLoad ( message ) {
+						scope.scene.add( objLoader2Parallel.baseObject3d  );
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					}
 
-							resourceDescriptor.setBuffer( content );
-
-							let objLoader = new OBJLoader2();
-							objLoader.setModelName( modelName );
-
-							let workerExecutionSupport = new WorkerExecutionSupport();
-							workerExecutionSupport.setTerminateWorkerOnLoad( true );
-
-							workerExecutionSupport.buildJsm( '../../src/loaders/worker/dependent/OBJLoader2Worker.js' );
-							let scopedOnAssetAvailable = function ( payload ) {
-								objLoader._onAssetAvailable( payload );
-							};
-							let callbackOnLoad = function ( message ) {
-								let local = new Object3D();
-								local.name = 'Pivot_female02_vertex';
-								local.position.set( -75, 0, 0 );
-								scope.pivot.add( local );
-								local.add( objLoader.baseObject3d );
-
-								scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
-							};
-							workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, callbackOnLoad );
-							workerExecutionSupport.runAsyncParse(
-								{
-									params: null,
-									materials: null,
-									data: {
-										input: resourceDescriptor.content.input,
-										options: resourceDescriptor.content.inputDataOptions
-									}
-								},
-								resourceDescriptor.transferables );
-
-							scope._reportProgress( { detail: { text: 'File loading complete: ' + resourceDescriptor.filename } } );
-						}
-					);
+					let filename = '../../resource/obj/female02/female02_vertex_colors.obj';
+					objLoader2Parallel.load( filename, callbackOnLoad );
 				},
 
-				useLoadSync: function () {
+				useLoadMain: function () {
 					let modelName = 'male02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					let objLoader2 = new OBJLoader2();
-					objLoader2.setModelName( modelName );
-					objLoader2.setUseIndices( true );
+					let objLoader2 = new OBJLoader2()
+						.setModelName( modelName )
+						.setUseIndices( true );
 
 					let scope = this;
-					let callbackOnLoad = function ( object3d ) {
+					function callbackOnLoad ( object3d ) {
 						let local = new Object3D();
 						local.name = 'Pivot_male02';
 						local.position.set( 0, 0, -75 );
@@ -219,20 +186,20 @@
 						local.add( object3d );
 
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + objLoader2.modelName } } );
-					};
+					}
 
-					let onLoadMtl = function ( mtlParseResult ) {
+					function onLoadMtl ( mtlParseResult ) {
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
 						objLoader2.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
-					};
-					objLoader2.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
+					}
+
+					let mtlLoader = new MTLLoader();
+					mtlLoader.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
 				},
 
-				useLoadAsync: function () {
+				useLoadParallel: function () {
 					let modelName = 'WaltHead';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
-
-					let objLoader2 = new OBJLoader2();
-					objLoader2.setModelName( modelName );
 
 					let local = new Object3D();
 					local.name = 'Pivot_WaltHead';
@@ -241,24 +208,24 @@
 					local.scale.set( scale, scale, scale );
 					this.pivot.add( local );
 
+					let objLoader2Parallel = new OBJLoader2Parallel()
+						.setModelName( modelName )
+					    .setBaseObject3d( local );
+
 					let scope = this;
-					let onReport = function ( event ) {
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-					};
+					function callbackOnLoad ( message ) {
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					}
+					function onLoadMtl ( mtlParseResult ) {
+						objLoader2Parallel.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
+						objLoader2Parallel.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
+					}
 
-					let onLoadMtl = function ( mtlParseResult ) {
-						let workerLoader = new WorkerLoader()
-						.setLoader( objLoader2 );
-						workerLoader.getLoadingTask()
-						.setTerminateWorkerOnLoad( false )
-						.setBaseObject3d( local );
-						workerLoader.loadAsync( '../../resource/obj/walt/WaltHead.obj', null, null, onReport );
-
-					};
-					objLoader2.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
+					let mtlLoader = new MTLLoader();
+					mtlLoader.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
 				},
 
-				useRunSync: function () {
+				useLoadMainFallback: function () {
 					let local = new Object3D();
 					local.name = 'Pivot_Cerberus';
 					local.position.set( 0, 0, 100 );
@@ -266,53 +233,55 @@
 					local.scale.set( scale, scale, scale );
 					this.pivot.add( local );
 
-					let scope = this;
-					let onProgress = function ( event ) {
-						scope._reportProgress( event );
-					};
-					let onCompleteParsing = function ( event ) {
-						onProgress( { detail: { text: 'Parsing complete: ' + event.detail.modelName } } );
-					};
+					let objLoader2Parallel = new OBJLoader2Parallel()
+						.setModelName( local.name )
+						.setExecuteParallel( false );
 
-					let rd = new ResourceDescriptor( 'URL', 'Cerberus.obj', '../../resource/obj/cerberus/Cerberus.obj' );
-					rd.configureAsync( true, false );
-					let loadingTaskConfig = new LoadingTaskConfig( {
-						instanceNo: 42,
-						baseObject3d: local
-					} )
-					.setLoaderConfig( OBJLoader2 )
-					.addResourceDescriptor( rd )
-					.setCallbacksPipeline( null, null, onCompleteParsing )
-					.setCallbacksApp( onProgress );
-					new WorkerLoader()
-					.executeLoadingTaskConfig( loadingTaskConfig );
+					let scope = this;
+					function callbackOnLoad ( object3d ) {
+						local.add( object3d );
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + local.name } } );
+					}
+
+					objLoader2Parallel.load( '../../resource/obj/cerberus/Cerberus.obj', callbackOnLoad );
 				},
 
-				useRunAsyncMeshAlter: function () {
+				useLoadParallelMeshAlter: function () {
 					let local = new Object3D();
 					local.position.set( 125, 50, 0 );
 					local.name = 'Pivot_vive-controller';
 					this.pivot.add( local );
 
-					let scope = this;
-					let onComplete = function ( event ) {
-						let mesh = event.detail.result;
+					let objLoader2Parallel = new OBJLoader2Parallel()
+						.setModelName( local.name )
+						.setBaseObject3d( local );
+
+					// Configure WorkerExecutionSupport to disregard worker after execution
+					objLoader2Parallel.getWorkerExecutionSupport().setTerminateWorkerOnLoad( true );
+
+					function callbackMeshAlter ( event ) {
+						let override = new LoadedMeshUserOverride( false, true );
+
+						let mesh = new Mesh( event.detail.bufferGeometry, event.detail.material );
 						let scale = 200.0;
 						mesh.scale.set( scale, scale, scale );
-						local.add( mesh );
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + event.detail.modelName } } );
-					};
+						mesh.name = event.detail.meshName;
+						let helper = new VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+						helper.name = 'VertexNormalsHelper';
 
-					let rd = new ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj' );
-					let loadingTaskConfig = new LoadingTaskConfig( {
-						terminateWorkerOnLoad: false
-					} )
-					.setLoaderConfig( OBJLoader2 )
-					.addResourceDescriptor( rd )
-					.setCallbacksPipeline( onComplete );
-					new WorkerLoader()
-					.getLoadingTask()
-					.execute( loadingTaskConfig );
+						override.addMesh( mesh );
+						override.addMesh( helper );
+
+						return override;
+					}
+					objLoader2Parallel._setCallbacks( null, callbackMeshAlter );
+
+					let scope = this;
+					function callbackOnLoad ( message ) {
+						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					}
+
+					objLoader2Parallel.load( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', callbackOnLoad );
 				},
 
 				finalize: function () {
@@ -376,9 +345,9 @@
 						material.flatShading = scope.flatShading;
 						material.needsUpdate = true;
 					};
-					let scopeTraverse = function ( object3d ) {
+					function scopeTraverse ( object3d ) {
 						scope.traverseScene( object3d );
-					};
+					}
 					scope.pivot.traverse( scopeTraverse );
 				},
 
@@ -387,13 +356,13 @@
 					scope.doubleSide = ! scope.doubleSide;
 					console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
 
-					scope.traversalFunction  = function ( material ) {
+					scope.traversalFunction = function ( material ) {
 						material.side = scope.doubleSide ? DoubleSide : FrontSide;
 					};
 
-					let scopeTraverse = function ( object3d ) {
+					function scopeTraverse ( object3d ) {
 						scope.traverseScene( object3d );
-					};
+					}
 					scope.pivot.traverse( scopeTraverse );
 				},
 
@@ -446,14 +415,14 @@
 
 
 			// init three.js example application
-			let resizeWindow = function () {
+			function resizeWindow () {
 				app.resizeDisplayGL();
-			};
+			}
 
-			let render = function () {
+			function render () {
 				requestAnimationFrame( render );
 				app.render();
-			};
+			}
 			window.addEventListener( 'resize', resizeWindow, false );
 
 			console.log( 'Starting initialisation phase...' );
@@ -463,24 +432,23 @@
 			// kick render loop
 			render();
 
-			// Load a file with OBJLoader.parse synchronously
-//			app.useParseSync();
+			// Load a file with OBJLoader2.parse on main
+			app.useParseMain();
 
-			// Load a file with OBJLoader.parseAsync asynchronously using a worker
-			app.useParseAsync();
-/*
-			// Load a file with OBJLoader.load synchronously
-			app.useLoadSync();
+			// Load a file with OBJLoader2Parallel.parse in parallel in worker
+			app.useParseParallel();
 
-			// Load a file with OBJLoader.load asynchronously
-			app.useLoadAsync();
+			// Load a file with OBJLoader.load on main
+			app.useLoadMain();
 
-			// Load a file with OBJLoader.run synchronously
-			app.useRunSync();
+			// Load a file with OBJLoader2Parallel.load in parallel in worker
+			app.useLoadParallel();
 
-			// Load a file with OBJLoader.run asynchronously and add normals during onMeshAlter
-			app.useRunAsyncMeshAlter();
-*/
+			// Load a file with OBJLoader2Parallel.load on main with fallback to OBJLoader2.parse
+			app.useLoadMainFallback();
+
+			// Load a file with OBJLoader2Parallel.load in parallel in worker and add normals during onMeshAlter
+			app.useLoadParallelMeshAlter();
 			app.finalize();
 
 		</script>
