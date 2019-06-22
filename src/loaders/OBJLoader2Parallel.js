@@ -7,7 +7,7 @@ import {
 	CodeBuilderInstructions,
 	WorkerExecutionSupport
 } from "./worker/main/WorkerExecutionSupport.js";
-import { CodeSerializer } from "./worker/main/CodeSerializer.js";
+import { CodeSerializer } from "./utils/CodeSerializer.js";
 import { OBJLoader2 } from "./OBJLoader2.js";
 
 // Imports only related to worker (when standard workers (modules aren't supported) are used)

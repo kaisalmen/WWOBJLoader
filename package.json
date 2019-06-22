@@ -67,8 +67,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "http": "http-server -p 8085",
-    "http-three": "http-server ../three.js -p 8081"
+    "http": "http-server -p 8085"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",

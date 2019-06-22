@@ -12,9 +12,9 @@ const CodeSerializer = {
 	 * @returns {string}
 	 */
 	serializeObject: function ( fullName, object ) {
-		var objectString = fullName + ' = {\n\n';
-		var part;
-		for ( var name in object ) {
+		let objectString = fullName + ' = {\n\n';
+		let part;
+		for ( let name in object ) {
 
 			part = object[ name ];
 			if ( typeof( part ) === 'string' || part instanceof String ) {
@@ -53,17 +53,17 @@ const CodeSerializer = {
 	 * @returns {string}
 	 */
 	serializeClass: function ( fullName, object, constructorName, basePrototypeName, ignoreFunctions, includeFunctions, overrideFunctions ) {
-		var valueString, objectPart, constructorString, i, funcOverride;
-		var prototypeFunctions = [];
-		var objectProperties = [];
-		var objectFunctions = [];
-		var isExtended = ( basePrototypeName !== null && basePrototypeName !== undefined );
+		let valueString, objectPart, constructorString, i, funcOverride;
+		let prototypeFunctions = [];
+		let objectProperties = [];
+		let objectFunctions = [];
+		let isExtended = ( basePrototypeName !== null && basePrototypeName !== undefined );
 
 		if ( ! Array.isArray( ignoreFunctions ) ) ignoreFunctions = [];
 		if ( ! Array.isArray( includeFunctions ) ) includeFunctions = null;
 		if ( ! Array.isArray( overrideFunctions ) ) overrideFunctions = [];
 
-		for ( var name in object.prototype ) {
+		for ( let name in object.prototype ) {
 
 			objectPart = object.prototype[ name ];
 			valueString = objectPart.toString();
@@ -95,7 +95,7 @@ const CodeSerializer = {
 			}
 
 		}
-		for ( var name in object ) {
+		for ( let name in object ) {
 
 			objectPart = object[ name ];
 
@@ -143,7 +143,7 @@ const CodeSerializer = {
 			constructorString = fullName + ' = ' + object.prototype.constructor.toString().replace( constructorName, '' );
 
 		}
-		var objectString = constructorString + '\n\n';
+		let objectString = constructorString + '\n\n';
 		if ( isExtended ) {
 
 			objectString += fullName + '.prototype = Object.create( ' + basePrototypeName + '.prototype );\n';
