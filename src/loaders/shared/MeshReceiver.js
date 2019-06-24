@@ -10,8 +10,6 @@ import {
 	Points
 } from "../../../node_modules/three/build/three.module.js";
 
-import { MaterialHandler } from "./MaterialHandler.js";
-
 
 /**
  *
