@@ -33,9 +33,12 @@ const OBJLoader2Parallel = function ( manager ) {
 	this.executeParallel = true;
 	this.workerExecutionSupport = new WorkerExecutionSupport();
 };
-
 OBJLoader2Parallel.prototype = Object.create( OBJLoader2.prototype );
 OBJLoader2Parallel.prototype.constructor = OBJLoader2Parallel;
+
+OBJLoader2.OBJLOADER2_PARALLEL_VERSION = '3.0.0-beta2';
+console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2.OBJLOADER2_PARALLEL_VERSION );
+
 
 OBJLoader2Parallel.prototype.setPreferJsmWorker = function ( preferJsmWorker ) {
 	this.preferJsmWorker = preferJsmWorker === true;
