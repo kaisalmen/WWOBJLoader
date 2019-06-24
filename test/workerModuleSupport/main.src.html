@@ -98,7 +98,7 @@
 
 					let objLoader2Parallel = new OBJLoader2Parallel();
 					objLoader2Parallel.setModelName( modelName )
-						.setUseJsmWorker( false )
+						.setPreferJsmWorker( true )
 						.setExecuteParallel( true );
 
 					let callbackOnLoad = function ( message ) {
