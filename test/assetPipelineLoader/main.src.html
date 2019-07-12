@@ -40,10 +40,11 @@
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
 			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
+			import { ResourceDescriptor } from "../../src/loaders/utils/ResourceDescriptor.js";
 			import {
 				AssetPipelineLoader,
-				AssetTask,
-				ResourceDescriptor
+				AssetPipeline,
+				AssetTask
 			} from "../../src/loaders/AssetPipelineLoader.js";
 
 
@@ -122,11 +123,12 @@
 					assetTask2.setResourceDescriptor( rdObj );
 					assetTask2.setAssetHandlerRef( OBJLoader2 );
 
-					assetPipelineLoader.addAssetTask( assetTask0 );
-					assetPipelineLoader.addAssetTask( assetTask1 );
-					assetPipelineLoader.addAssetTask( assetTask2 );
+					let assetPipeline = new AssetPipeline();
+					assetPipeline.addAssetTask( assetTask0 );
+					assetPipeline.addAssetTask( assetTask1 );
+					assetPipeline.addAssetTask( assetTask2 );
 
-					assetPipelineLoader.run();
+					assetPipelineLoader.run( assetPipeline );
 				},
 
 				resizeDisplayGL: function () {
