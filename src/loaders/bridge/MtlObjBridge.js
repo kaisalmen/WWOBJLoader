@@ -1,5 +1,6 @@
 /**
- * @author Kai Salmen / www.kaisalmen.de
+ * @author Kai Salmen / https://kaisalmen.de
+ * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
 import { MTLLoader } from "../../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
@@ -12,12 +13,14 @@ const MtlObjBridge = {
 	 * @param processResult
 	 * @param assetLoader
 	 */
-	link: function( processResult, assetLoader ) {
+	link: function ( processResult, assetLoader ) {
+
 		if ( typeof assetLoader.addMaterials === 'function' ) {
 
 			assetLoader.addMaterials( this.addMaterialsFromMtlLoader( processResult ) );
 
 		}
+
 	},
 
 	/**
@@ -26,6 +29,7 @@ const MtlObjBridge = {
 	 * @param Instance of {@link MTLLoader.MaterialCreator}
 	 */
 	addMaterialsFromMtlLoader: function ( materialCreator ) {
+
 		let newMaterials = {};
 		if ( materialCreator instanceof MTLLoader.MaterialCreator ) {
 
@@ -34,7 +38,8 @@ const MtlObjBridge = {
 
 		}
 		return newMaterials;
+
 	}
 };
 
-export { MtlObjBridge }
+export { MtlObjBridge };
