@@ -8,10 +8,11 @@
  */
 const OBJLoader2Parser = function () {
 
+	let scope = this;
 	this.callbacks = {
-		onProgress: null,
-		onAssetAvailable: null,
-		onError: null
+		onProgress: function ( type, text, numericalValue ) { scope._onProgress( type, text, numericalValue ) },
+		onAssetAvailable: function ( payload ) { scope._onAssetAvailable( payload ) },
+		onError: function ( errorMessage ) { scope._onError( errorMessage ) }
 	};
 	this.contentRef = null;
 	this.legacyMode = false;
@@ -90,31 +91,59 @@ OBJLoader2Parser.prototype = {
 
 	},
 
+	/**
+	 * Tells whether a material shall be created per smoothing group.
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false
+	 * @return {OBJLoader2Parser}
+	 */
 	setMaterialPerSmoothingGroup: function ( materialPerSmoothingGroup ) {
 
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup;
+		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
+		return this;
 
 	},
 
+	/**
+	 * Usually 'o' is meta-information and does not result in creation of new meshes, but mesh creation on occurrence of "o" can be enforced.
+	 *
+	 * @param {boolean} useOAsMesh=false
+	 * @return {OBJLoader2Parser}
+	 */
 	setUseOAsMesh: function ( useOAsMesh ) {
 
-		this.useOAsMesh = useOAsMesh;
+		this.useOAsMesh = useOAsMesh === true;
+		return this;
 
 	},
 
+	/**
+	 * Instructs loaders to create indexed {@link BufferGeometry}.
+	 *
+	 * @param {boolean} useIndices=false
+	 * @return {OBJLoader2Parser}
+	 */
 	setUseIndices: function ( useIndices ) {
 
-		this.useIndices = useIndices;
+		this.useIndices = useIndices === true;
+		return this;
 
 	},
 
+	/**
+	 * Tells whether normals should be completely disregarded and regenerated.
+	 *
+	 * @param {boolean} disregardNormals=false
+	 * @return {OBJLoader2Parser}
+	 */
 	setDisregardNormals: function ( disregardNormals ) {
 
-		this.disregardNormals = disregardNormals;
+		this.disregardNormals = disregardNormals === true;
+		return this;
 
 	},
 
-	setMaterials: function ( materials ) {
+	_setMaterials: function ( materials ) {
 
 		if ( materials === undefined || materials === null ) return;
 
@@ -140,6 +169,11 @@ OBJLoader2Parser.prototype = {
 
 	},
 
+	/**
+	 *
+	 * @param {Function} onProgress
+	 * @return {OBJLoader2Parser}
+	 */
 	setCallbackOnProgress: function ( onProgress ) {
 
 		if ( onProgress !== null && onProgress !== undefined ) {
@@ -147,9 +181,16 @@ OBJLoader2Parser.prototype = {
 			this.callbacks.onProgress = onProgress;
 
 		}
+		return this;
 
 	},
 
+	/**
+	 * Register an generic error handler that is called if available instead of throwing an exception.
+	 *
+	 * @param {Function} onError
+	 * @return {OBJLoader2Parser}
+	 */
 	setCallbackOnError: function ( onError ) {
 
 		if ( onError !== null && onError !== undefined ) {
@@ -157,13 +198,86 @@ OBJLoader2Parser.prototype = {
 			this.callbacks.onError = onError;
 
 		}
+		return this;
 
 	},
 
+	/**
+	 * Announce feedback which is give to the registered callbacks.
+	 * @private
+	 *
+	 * @param {string} type The type of event
+	 * @param {string} text Textual description of the event
+	 * @param {number} numericalValue Numerical value describing the progress
+	 */
+	_onProgress: function ( type, text, numericalValue ) {
+
+		let message = text ? text : '';
+		let event = {
+			detail: {
+				type: type,
+				modelName: this.modelName,
+				instanceNo: this.instanceNo,
+				text: message,
+				numericalValue: numericalValue
+			}
+		};
+/*
+		if ( this.callbacks.onProgress ) {
+
+			this.callbacks.onProgress( event );
+
+		}
+*/
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.log( message );
+
+		}
+
+	},
+
+	/**
+	 * Announce error feedback which is given to the generic error handler to the registered callbacks.
+	 * @private
+	 *
+	 * @param {String} errorMessage The event containing the error
+	 */
+	_onError: function ( errorMessage ) {
+/*
+		if ( this.callbacks.onError ) {
+
+			this.callbacks.onError( errorMessage );
+
+		}
+*/
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.log( errorMessage );
+
+		}
+
+	},
+
+	_onAssetAvailable: function ( payload ) {
+
+		console.log( "OBJLoader2Parser does not provide callback onAssetAvailable");
+
+	},
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 *
+	 * @return {OBJLoader2Parser}
+	 */
 	setLogging: function ( enabled, debug ) {
 
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
+		return this;
 
 	},
 
@@ -220,9 +334,9 @@ OBJLoader2Parser.prototype = {
 	 *
 	 * @param {Uint8Array} arrayBuffer OBJ data as Uint8Array
 	 */
-	parse: function ( arrayBuffer ) {
+	execute: function ( arrayBuffer ) {
 
-		if ( this.logging.enabled ) console.time( 'OBJLoader.Parser.parse' );
+		if ( this.logging.enabled ) console.time( 'OBJLoader2Parser.parse' );
 		this.configure();
 
 		let arrayBufferView = new Uint8Array( arrayBuffer );
@@ -271,7 +385,7 @@ OBJLoader2Parser.prototype = {
 
 		}
 		this.finalizeParsing();
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader.Parser.parse' );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2Parser.parse' );
 
 	},
 
@@ -280,9 +394,9 @@ OBJLoader2Parser.prototype = {
 	 *
 	 * @param {string} text OBJ data as string
 	 */
-	parseText: function ( text ) {
+	executeLegacy: function ( text ) {
 
-		if ( this.logging.enabled ) console.time( 'OBJLoader.Parser.parseText' );
+		if ( this.logging.enabled ) console.time( 'OBJLoader2Parser.parseText' );
 		this.configure();
 		this.legacyMode = true;
 		this.contentRef = text;
@@ -326,7 +440,7 @@ OBJLoader2Parser.prototype = {
 
 		}
 		this.finalizeParsing();
-		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader.Parser.parseText' );
+		if ( this.logging.enabled ) console.timeEnd( 'OBJLoader2Parser.parseText' );
 
 	},
 
@@ -737,12 +851,8 @@ OBJLoader2Parser.prototype = {
 
 			this.buildMesh( result );
 			let progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
-			if ( this.callbacks.onProgress !== null ) {
-
-				this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '' +
+			this._onProgress( 'progressParse', 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '' +
 					'] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%', progressBytesPercent );
-
-			}
 			this.resetRawMesh();
 
 		}
