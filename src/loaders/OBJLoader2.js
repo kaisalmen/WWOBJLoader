@@ -137,7 +137,14 @@ OBJLoader2.prototype.setCallbackOnLoadMaterials = function ( onLoadMaterials ) {
 OBJLoader2.prototype.load = function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
 	let scope = this;
-	if ( onError === null || onError === undefined ) {
+	if ( onLoad === null || onLoad === undefined || ! ( onLoad instanceof Function ) ) {
+
+		let errorMessage = 'onLoad is not a function! Aborting...';
+		scope.callbacks.onError( errorMessage );
+		throw errorMessage
+
+	}
+	if ( onError === null || onError === undefined || ! ( onError instanceof Function ) ) {
 
 		onError = function ( event ) {
 
@@ -147,7 +154,7 @@ OBJLoader2.prototype.load = function ( url, onLoad, onFileLoadProgress, onError,
 				 errorMessage = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
 
 			}
-			scope._onError( errorMessage );
+			scope.callbacks.onError( errorMessage );
 
 		};
 
@@ -167,7 +174,7 @@ OBJLoader2.prototype.load = function ( url, onLoad, onFileLoadProgress, onError,
 		if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 	}
-	if ( onFileLoadProgress === null || onFileLoadProgress === undefined ) {
+	if ( onFileLoadProgress === null || onFileLoadProgress === undefined || ! ( onFileLoadProgress instanceof Function ) ) {
 
 		let numericalValueRef = 0;
 		let numericalValue = 0;
@@ -180,7 +187,7 @@ OBJLoader2.prototype.load = function ( url, onLoad, onFileLoadProgress, onError,
 
 				numericalValueRef = numericalValue;
 				let output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-				scope._onProgress( 'progressLoad', output, numericalValue );
+				scope.callbacks.onProgress( 'progressLoad', output, numericalValue );
 
 			}
 
@@ -235,7 +242,7 @@ OBJLoader2.prototype.parse = function ( content ) {
 
 	} else {
 
-		this._onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
+		this.callbacks.onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
 
 	}
 	if ( this.logging.enabled ) {

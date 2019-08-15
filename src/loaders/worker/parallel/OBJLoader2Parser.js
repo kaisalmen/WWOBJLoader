@@ -10,9 +10,15 @@ const OBJLoader2Parser = function () {
 
 	let scope = this;
 	this.callbacks = {
-		onProgress: function ( type, text, numericalValue ) { scope._onProgress( type, text, numericalValue ) },
-		onAssetAvailable: function ( payload ) { scope._onAssetAvailable( payload ) },
-		onError: function ( errorMessage ) { scope._onError( errorMessage ) }
+		onProgress: function ( type, text, numericalValue ) {
+			scope._onProgress( type, text, numericalValue )
+		},
+		onAssetAvailable: function ( payload ) {
+			scope._onAssetAvailable( payload )
+		},
+		onError: function ( errorMessage ) {
+			scope._onError( errorMessage )
+		}
 	};
 	this.contentRef = null;
 	this.legacyMode = false;
@@ -161,7 +167,7 @@ OBJLoader2Parser.prototype = {
 
 	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
 
-		if ( onAssetAvailable !== null && onAssetAvailable !== undefined ) {
+		if ( onAssetAvailable !== null && onAssetAvailable !== undefined && onAssetAvailable instanceof Function ) {
 
 			this.callbacks.onAssetAvailable = onAssetAvailable;
 
@@ -176,7 +182,7 @@ OBJLoader2Parser.prototype = {
 	 */
 	setCallbackOnProgress: function ( onProgress ) {
 
-		if ( onProgress !== null && onProgress !== undefined ) {
+		if ( onProgress !== null && onProgress !== undefined && onProgress instanceof Function ) {
 
 			this.callbacks.onProgress = onProgress;
 
@@ -193,7 +199,7 @@ OBJLoader2Parser.prototype = {
 	 */
 	setCallbackOnError: function ( onError ) {
 
-		if ( onError !== null && onError !== undefined ) {
+		if ( onError !== null && onError !== undefined && onError instanceof Function ) {
 
 			this.callbacks.onError = onError;
 
@@ -222,13 +228,7 @@ OBJLoader2Parser.prototype = {
 				numericalValue: numericalValue
 			}
 		};
-/*
-		if ( this.callbacks.onProgress ) {
 
-			this.callbacks.onProgress( event );
-
-		}
-*/
 		if ( this.logging.enabled && this.logging.debug ) {
 
 			console.log( message );
@@ -244,16 +244,10 @@ OBJLoader2Parser.prototype = {
 	 * @param {String} errorMessage The event containing the error
 	 */
 	_onError: function ( errorMessage ) {
-/*
-		if ( this.callbacks.onError ) {
 
-			this.callbacks.onError( errorMessage );
-
-		}
-*/
 		if ( this.logging.enabled && this.logging.debug ) {
 
-			console.log( errorMessage );
+			console.error( errorMessage );
 
 		}
 
@@ -261,7 +255,9 @@ OBJLoader2Parser.prototype = {
 
 	_onAssetAvailable: function ( payload ) {
 
-		console.log( "OBJLoader2Parser does not provide callback onAssetAvailable");
+		let errorMessage = 'OBJLoader2Parser does not provide implementation for onAssetAvailable. Aborting...';
+		this.callbacks.onError( errorMessage );
+		throw errorMessage;
 
 	},
 
@@ -283,20 +279,6 @@ OBJLoader2Parser.prototype = {
 
 	configure: function () {
 
-		if ( this.callbacks.onAssetAvailable === null ) {
-
-			let errorMessage = 'Unable to run as no callback for building meshes is set.';
-			if ( this.callbacks.onError !== null ) {
-
-				this.callbacks.onError( errorMessage );
-
-			} else {
-
-				throw errorMessage;
-
-			}
-
-		}
 		this.pushSmoothingGroup( 1 );
 		if ( this.logging.enabled ) {
 
@@ -308,21 +290,9 @@ OBJLoader2Parser.prototype = {
 				+ '\n\tuseOAsMesh: ' + this.useOAsMesh
 				+ '\n\tuseIndices: ' + this.useIndices
 				+ '\n\tdisregardNormals: ' + this.disregardNormals;
-			if ( this.callbacks.onProgress !== null ) {
-
-				printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
-
-			}
-			if ( this.callbacks.onAssetAvailable !== null ) {
-
-				printedConfig += '\n\tcallbacks.onAssetAvailable: ' + this.callbacks.onAssetAvailable.name;
-
-			}
-			if ( this.callbacks.onError !== null ) {
-
-				printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
-
-			}
+			printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
+			printedConfig += '\n\tcallbacks.onAssetAvailable: ' + this.callbacks.onAssetAvailable.name;
+			printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
 			console.info( printedConfig );
 
 		}
@@ -839,11 +809,7 @@ OBJLoader2Parser.prototype = {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
-				if ( this.callbacks.onError !== null ) {
-
-					this.callbacks.onError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
-
-				}
+				this.callbacks.onError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
 
 			}
 			if ( this.logging.enabled && this.logging.debug ) console.debug( this.createRawMeshReport( this.inputObjectCount ) );
