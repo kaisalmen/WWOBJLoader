@@ -20,7 +20,6 @@
 			<div id="feedback"></div>
 		</div>
 
-		<script src="../../node_modules/three/examples/js/WebGL.js"></script>
 		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script type="module">
 
@@ -41,11 +40,13 @@
 			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
 			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
+			import { ResourceDescriptor } from "../../src/loaders/utils/ResourceDescriptor.js";
 			import {
 				AssetPipelineLoader,
-				AssetTask,
-				ResourceDescriptor
+				AssetPipeline,
+				AssetTask
 			} from "../../src/loaders/AssetPipelineLoader.js";
+
 
 			const OBJLoader2BugVerify = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -183,11 +184,12 @@
 			assetTask14Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' ) );
 			assetTask14Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader14.addAssetTask( assetTask14Mtl );
-			assetPipelineLoader14.addAssetTask( assetTask14MtlObjLink );
-			assetPipelineLoader14.addAssetTask( assetTask14Obj );
+			let assetPipeline14 = new AssetPipeline();
+			assetPipeline14.addAssetTask( assetTask14Mtl );
+			assetPipeline14.addAssetTask( assetTask14MtlObjLink );
+			assetPipeline14.addAssetTask( assetTask14Obj );
 
-			assetPipelineLoader14.run();
+			assetPipelineLoader14.run( assetPipeline14 );
 
 
 			// issue: 14032
@@ -210,11 +212,12 @@
 			assetTask14032Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' ) );
 			assetTask14032Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader14032.addAssetTask( assetTask14032Mtl );
-			assetPipelineLoader14032.addAssetTask( assetTask14032MtlObjLink );
-			assetPipelineLoader14032.addAssetTask( assetTask14032Obj );
+			let assetPipeline14032 = new AssetPipeline();
+			assetPipeline14032.addAssetTask( assetTask14032Mtl );
+			assetPipeline14032.addAssetTask( assetTask14032MtlObjLink );
+			assetPipeline14032.addAssetTask( assetTask14032Obj );
 
-			assetPipelineLoader14032.run();
+			assetPipelineLoader14032.run( assetPipeline14032 );
 
 
 			// issue: 21
@@ -237,11 +240,12 @@
 			assetTask21Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue21.obj', '../../resource/obj/21/Table_Photo_Frame_03.obj' ) );
 			assetTask21Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader21.addAssetTask( assetTask21Mtl );
-			assetPipelineLoader21.addAssetTask( assetTask21MtlObjLink );
-			assetPipelineLoader21.addAssetTask( assetTask21Obj );
+			let assetPipeline21 = new AssetPipeline();
+			assetPipeline21.addAssetTask( assetTask21Mtl );
+			assetPipeline21.addAssetTask( assetTask21MtlObjLink );
+			assetPipeline21.addAssetTask( assetTask21Obj );
 
-			assetPipelineLoader21.run();
+			assetPipelineLoader21.run( assetPipeline21 );
 
 
 			// issue: 12120
@@ -264,11 +268,12 @@
 			assetTask12120Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12120.obj', '../../resource/obj/12120/zjej_abm_f01_out_T005.obj' ) );
 			assetTask12120Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader12120.addAssetTask( assetTask12120Mtl );
-			assetPipelineLoader12120.addAssetTask( assetTask12120MtlObjLink );
-			assetPipelineLoader12120.addAssetTask( assetTask12120Obj );
+			let assetPipeline12120 = new AssetPipeline();
+			assetPipeline12120.addAssetTask( assetTask12120Mtl );
+			assetPipeline12120.addAssetTask( assetTask12120MtlObjLink );
+			assetPipeline12120.addAssetTask( assetTask12120Obj );
 
-			assetPipelineLoader12120.run();
+			assetPipelineLoader12120.run( assetPipeline12120 );
 
 
 			// issue: 12324
@@ -290,11 +295,12 @@
 			assetTask12324Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12324.obj', '../../resource/obj/12324/rampanueva.obj' ) );
 			assetTask12324Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader12324.addAssetTask( assetTask12324Mtl );
-			assetPipelineLoader12324.addAssetTask( assetTask12324MtlObjLink );
-			assetPipelineLoader12324.addAssetTask( assetTask12324Obj );
+			let assetPipeline12324 = new AssetPipeline();
+			assetPipeline12324.addAssetTask( assetTask12324Mtl );
+			assetPipeline12324.addAssetTask( assetTask12324MtlObjLink );
+			assetPipeline12324.addAssetTask( assetTask12324Obj );
 
-			assetPipelineLoader12324.run();
+			assetPipelineLoader12324.run( assetPipeline12324 );
 
 
 
@@ -318,11 +324,12 @@
 			assetTask11811AObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811a.obj', '../../resource/obj/11811/3dbpo10518T.obj' ) );
 			assetTask11811AObj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader11811A.addAssetTask( assetTask11811AMtl );
-			assetPipelineLoader11811A.addAssetTask( assetTask11811AMtlObjLink );
-			assetPipelineLoader11811A.addAssetTask( assetTask11811AObj );
+			let assetPipeline11811A = new AssetPipeline();
+			assetPipeline11811A.addAssetTask( assetTask11811AMtl );
+			assetPipeline11811A.addAssetTask( assetTask11811AMtlObjLink );
+			assetPipeline11811A.addAssetTask( assetTask11811AObj );
 
-			assetPipelineLoader11811A.run();
+			assetPipelineLoader11811A.run( assetPipeline11811A );
 
 
 			// issue: 11811B
@@ -345,11 +352,12 @@
 			assetTask11811BObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811b.obj', '../../resource/obj/11811/3dbts103601T.obj' ) );
 			assetTask11811BObj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader11811B.addAssetTask( assetTask11811BMtl );
-			assetPipelineLoader11811B.addAssetTask( assetTask11811BMtlObjLink );
-			assetPipelineLoader11811B.addAssetTask( assetTask11811BObj );
+			let assetPipeline11811B = new AssetPipeline();
+			assetPipeline11811B.addAssetTask( assetTask11811BMtl );
+			assetPipeline11811B.addAssetTask( assetTask11811BMtlObjLink );
+			assetPipeline11811B.addAssetTask( assetTask11811BObj );
 
-			assetPipelineLoader11811B.run();
+			assetPipelineLoader11811B.run( assetPipeline11811B );
 
 			// Issue: 27 door
 			let assetPipelineLoader27Door = new AssetPipelineLoader( 'Issue27Door' );
@@ -371,11 +379,12 @@
 			assetTask27DoorObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27door.obj', '../../resource/obj/27/door.obj' ) );
 			assetTask27DoorObj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader27Door.addAssetTask( assetTask27DoorMtl );
-			assetPipelineLoader27Door.addAssetTask( assetTask27DoorMtlObjLink );
-			assetPipelineLoader27Door.addAssetTask( assetTask27DoorObj );
+			let assetPipeline27Door = new AssetPipeline();
+			assetPipeline27Door.addAssetTask( assetTask27DoorMtl );
+			assetPipeline27Door.addAssetTask( assetTask27DoorMtlObjLink );
+			assetPipeline27Door.addAssetTask( assetTask27DoorObj );
 
-			assetPipelineLoader27Door.run();
+			assetPipelineLoader27Door.run( assetPipeline27Door );
 
 			// Issue: 27 wall2
 			let assetPipelineLoader27Wall2 = new AssetPipelineLoader( 'Issue27Wall2' );
@@ -397,11 +406,12 @@
 			assetTask27Wall2Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27wall2.obj', '../../resource/obj/27/wall2.obj' ) );
 			assetTask27Wall2Obj.setAssetHandlerRef( OBJLoader2 );
 
-			assetPipelineLoader27Wall2.addAssetTask( assetTask27Wall2Mtl );
-			assetPipelineLoader27Wall2.addAssetTask( assetTask27Wall2MtlObjLink );
-			assetPipelineLoader27Wall2.addAssetTask( assetTask27Wall2Obj );
+			let assetPipeline27Wall2 = new AssetPipeline();
+			assetPipeline27Wall2.addAssetTask( assetTask27Wall2Mtl );
+			assetPipeline27Wall2.addAssetTask( assetTask27Wall2MtlObjLink );
+			assetPipeline27Wall2.addAssetTask( assetTask27Wall2Obj );
 
-			assetPipelineLoader27Wall2.run();
+			assetPipelineLoader27Wall2.run( assetPipeline27Wall2 );
 
 		</script>
 	</body>

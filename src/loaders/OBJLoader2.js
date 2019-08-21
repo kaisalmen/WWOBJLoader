@@ -107,21 +107,28 @@ OBJLoader2.prototype.addMaterials = function ( materials ) {
 };
 
 /**
+ * Register a function that is called once a single mesh is available and it could be altered by the supplied function.
  *
  * @param {Function} [onMeshAlter]
+ * @return {OBJLoader2}
  */
 OBJLoader2.prototype.setCallbackOnMeshAlter = function ( onMeshAlter ) {
 
 	this.meshReceiver._setCallbacks( this.callbacks.onProgress, onMeshAlter );
+	return this;
 
 };
 
 /**
+ * Register a function that is called once all materials have been loaded and they could be altered by the supplied function.
+ *
  * @param {Function} [onLoadMaterials]
+ * @return {OBJLoader2}
  */
 OBJLoader2.prototype.setCallbackOnLoadMaterials = function ( onLoadMaterials ) {
 
 	this.materialHandler._setCallbacks( onLoadMaterials );
+	return this;
 
 };
 
