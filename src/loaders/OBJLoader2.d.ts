@@ -4,7 +4,7 @@ import {
   Object3D
 } from '../../node_modules/three/src/Three';
 
-import { OBJLoader2Parser } from './worker/parallel/OBJLoader2Parser.js';
+import { OBJLoader2Parser } from './worker/parallel/OBJLoader2Parser';
 import { MaterialHandler } from './shared/MaterialHandler';
 import { MeshReceiver} from './shared/MeshReceiver';
 

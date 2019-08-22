@@ -1,7 +1,7 @@
 import {
   LoadingManager
 } from '../../node_modules/three/src/Three';
-import { OBJLoader2 } from './OBJLoader2.js';
+import { OBJLoader2 } from './OBJLoader2';
 
 import { WorkerExecutionSupport} from './worker/main/WorkerExecutionSupport';
 
