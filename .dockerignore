@@ -1,0 +1,8 @@
+# Exclude everything not needed for build
+archive
+build
+docs
+node_modules
+resource
+src
+test

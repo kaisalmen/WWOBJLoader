@@ -1,11 +1,16 @@
-version: '3.3'
+version: '3.7'
 
 services:
-  obj2nginx:
-    image: nginx
+  objloader2dev:
+    image: objloader2dev
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
     ports:
       - 8085:80
     volumes:
-      - .:/usr/share/nginx/html:ro
-      - ./resource/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    container_name: obj2nginx
+      - ./src:/project/src:ro
+      - ./resource:/project/resource:ro
+      - ./test:/project/test:ro
+    command: ["nginx", "-g", "daemon off;"]
+    container_name: objloader2dev
