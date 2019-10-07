@@ -4,7 +4,7 @@ services:
   objloader2dev:
     image: objloader2dev
     build:
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       context: .
     ports:
       - 8085:80
