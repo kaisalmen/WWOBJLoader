@@ -3,7 +3,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+import { MTLLoader } from "../../../../jsm/loaders/MTLLoader.js";
 
 
 const MtlObjBridge = {
@@ -17,7 +17,7 @@ const MtlObjBridge = {
 
 		if ( typeof assetLoader.addMaterials === 'function' ) {
 
-			assetLoader.addMaterials( this.addMaterialsFromMtlLoader( processResult ) );
+			assetLoader.addMaterials( this.addMaterialsFromMtlLoader( processResult ), true );
 
 		}
 

@@ -4,6 +4,9 @@
 /build
 /node_modules
 
+/examples/jsm/controls/*
+/examples/jsm/libs/*
+/examples/jsm/loaders/MTLLoader.*
 /examples/models/draco
 /examples/models/gltf
 /examples/models/obj/1*
@@ -41,6 +44,5 @@
 /docs/img
 /docs/scripts
 /docs/*
-/examples/jsm/controls/TrackballControls.js
-/examples/jsm/libs/dat.gui.module.js
-/examples/jsm/loaders/MTLLoader.js
+
+/src

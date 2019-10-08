@@ -4,45 +4,25 @@
 		<title>three.js webgl - OBJLoader2 usage options</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-		<link href="../test/common/Common.css" type="text/css" rel="stylesheet"/>
+		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 
 	<body>
-		<div id="glFullscreen">
-			<canvas id="example"></canvas>
-		</div>
-		<div id="dat">
-
+	<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="dat" style="user-select: none;	position: absolute;	left: 0; top: 0; z-Index: 200;">
 		</div>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 usage options
-			<div id="feedback"></div>
+			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
-		<script src="../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script type="module">
 
 			'use strict';
 
-			import {
-				AmbientLight,
-				DirectionalLight,
-				GridHelper,
-				PerspectiveCamera,
-				Scene,
-				Vector3,
-				BoxBufferGeometry,
-				WebGLRenderer,
-				Object3D,
-				MeshNormalMaterial,
-				Mesh,
-				VertexNormalsHelper,
-				FileLoader,
-				DoubleSide,
-				FrontSide
-			} from "../build/three.module.js";
+			import * as THREE from '../build/three.module.js';
 			import { GUI } from './jsm/libs/dat.gui.module.js';
+
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 
 			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
@@ -59,8 +39,8 @@
 
 				this.scene = null;
 				this.cameraDefaults = {
-					posCamera: new Vector3( 0.0, 175.0, 500.0 ),
-					posCameraTarget: new Vector3( 0, 0, 0 ),
+					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
 					near: 0.1,
 					far: 10000,
 					fov: 45
@@ -82,22 +62,22 @@
 				constructor: WWOBJLoader2Example,
 
 				initGL: function () {
-					this.renderer = new WebGLRenderer( {
+					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
 						antialias: true,
 						autoClear: true
 					} );
 					this.renderer.setClearColor( 0x050505 );
 
-					this.scene = new Scene();
+					this.scene = new THREE.Scene();
 
-					this.camera = new PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 					this.resetCamera();
 					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
 
-					let ambientLight = new AmbientLight( 0x404040 );
-					let directionalLight1 = new DirectionalLight( 0xC0C090 );
-					let directionalLight2 = new DirectionalLight( 0xC0C090 );
+					let ambientLight = new THREE.AmbientLight( 0x404040 );
+					let directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
 					directionalLight1.position.set( -100, -50, 100 );
 					directionalLight2.position.set( 100, 50, -100 );
@@ -106,16 +86,16 @@
 					this.scene.add( directionalLight2 );
 					this.scene.add( ambientLight );
 
-					let helper = new GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					let helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 					this.scene.add( helper );
 
-					let geometry = new BoxBufferGeometry( 10, 10, 10 );
-					let material = new MeshNormalMaterial();
-					this.cube = new Mesh( geometry, material );
+					let geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
+					let material = new THREE.MeshNormalMaterial();
+					this.cube = new THREE.Mesh( geometry, material );
 					this.cube.position.set( 0, 0, 0 );
 					this.scene.add( this.cube );
 
-					this.pivot = new Object3D();
+					this.pivot = new THREE.Object3D();
 					this.pivot.name = 'Pivot';
 					this.scene.add( this.pivot );
 				},
@@ -129,26 +109,26 @@
 
 					let scope = this;
 					function onLoadMtl ( mtlParseResult ) {
-						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 
-						let fileLoader = new FileLoader();
-						fileLoader.setPath( '../../' );
+						let fileLoader = new THREE.FileLoader();
+						fileLoader.setPath( '' );
 						fileLoader.setResponseType( 'arraybuffer' );
-						fileLoader.load( 'resource/obj/female02/female02.obj',
-							function ( content ) {
-								let local = new Object3D();
+						fileLoader.load( 'models/obj/female02/female02.obj',
+							function ( content, message ) {
+								let local = new THREE.Object3D();
 								local.name = 'Pivot_female02';
 								local.position.set( 75, 0, 0 );
 								scope.pivot.add( local );
 								local.add( objLoader2.parse( content ) );
 
-								scope._reportProgress( { detail: { text: 'Loading complete: ' + modelName } } );
+								scope._reportProgress( { detail: { text: 'Loading of ' + modelName + 'completed: ' + message } } );
 							}
 						);
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( './models/obj/female02/female02.mtl', onLoadMtl );
+					mtlLoader.load( 'models/obj/female02/female02.mtl', onLoadMtl );
 				},
 
 				useParseParallel: function () {
@@ -156,17 +136,28 @@
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					let scope = this;
-
-					let objLoader2Parallel = new OBJLoader2Parallel();
-					objLoader2Parallel.setModelName( modelName );
-
-					function callbackOnLoad ( message ) {
-						scope.scene.add( objLoader2Parallel.baseObject3d  );
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					function callbackOnLoad( object3d, message ) {
+						scope.scene.add( object3d );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + 'completed: ' + message } } );
 					}
 
-					let filename = './models/obj/female02/female02_vertex_colors.obj';
-					objLoader2Parallel.load( filename, callbackOnLoad );
+					let materials = {
+						tester: new THREE.MeshStandardMaterial()
+					};
+
+					let objLoader2Parallel = new OBJLoader2Parallel()
+						.setModelName( modelName )
+						.setCallbackOnLoad( callbackOnLoad )
+						.addMaterials( materials, true );
+
+					let fileLoader = new THREE.FileLoader();
+					fileLoader.setPath( '' );
+					fileLoader.setResponseType( 'arraybuffer' );
+					fileLoader.load( 'models/obj/female02/female02_vertex_colors.obj',
+						function ( content ) {
+							objLoader2Parallel.parse( content );
+						}
+					);
 				},
 
 				useLoadMain: function () {
@@ -174,34 +165,34 @@
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					let objLoader2 = new OBJLoader2()
-						.setModelName( modelName )
-						.setUseIndices( true );
+					.setModelName( modelName )
+					.setUseIndices( true );
 
 					let scope = this;
-					function callbackOnLoad ( object3d ) {
-						let local = new Object3D();
+					function callbackOnLoad ( object3d, message ) {
+						let local = new THREE.Object3D();
 						local.name = 'Pivot_male02';
 						local.position.set( 0, 0, -75 );
 						scope.pivot.add( local );
 						local.add( object3d );
 
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + objLoader2.modelName } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + 'completed: ' + message } } );
 					}
 
 					function onLoadMtl ( mtlParseResult ) {
-						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
-						objLoader2.load( './models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
+						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
+						objLoader2.load( 'models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( './models/obj/male02/male02.mtl', onLoadMtl );
+					mtlLoader.load( 'models/obj/male02/male02.mtl', onLoadMtl );
 				},
 
 				useLoadParallel: function () {
 					let modelName = 'WaltHead';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					let local = new Object3D();
+					let local = new THREE.Object3D();
 					local.name = 'Pivot_WaltHead';
 					local.position.set( -125, 50, 0 );
 					let scale = 0.5;
@@ -209,24 +200,24 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
-						.setModelName( modelName )
-					    .setBaseObject3d( local );
+						.setModelName( modelName );
 
 					let scope = this;
-					function callbackOnLoad ( message ) {
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					function callbackOnLoad ( object3d, message ) {
+						local.add( object3d );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + 'completed: ' + message } } );
 					}
 					function onLoadMtl ( mtlParseResult ) {
-						objLoader2Parallel.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
-						objLoader2Parallel.load( './models/obj/walt/WaltHead.obj', callbackOnLoad );
+						objLoader2Parallel.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
+						objLoader2Parallel.load( 'models/obj/walt/WaltHead.obj', callbackOnLoad );
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( './models/obj/walt/WaltHead.mtl', onLoadMtl );
+					mtlLoader.load( 'models/obj/walt/WaltHead.mtl', onLoadMtl );
 				},
 
 				useLoadMainFallback: function () {
-					let local = new Object3D();
+					let local = new THREE.Object3D();
 					local.name = 'Pivot_Cerberus';
 					local.position.set( 0, 0, 100 );
 					let scale = 50;
@@ -238,16 +229,16 @@
 						.setExecuteParallel( false );
 
 					let scope = this;
-					function callbackOnLoad ( object3d ) {
+					function callbackOnLoad ( object3d, message ) {
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + local.name } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + 'completed: ' + message } } );
 					}
 
-					objLoader2Parallel.load( './models/obj/cerberus/Cerberus.obj', callbackOnLoad );
+					objLoader2Parallel.load( 'models/obj/cerberus/Cerberus.obj', callbackOnLoad );
 				},
 
 				useLoadParallelMeshAlter: function () {
-					let local = new Object3D();
+					let local = new THREE.Object3D();
 					local.position.set( 125, 50, 0 );
 					local.name = 'Pivot_vive-controller';
 					this.pivot.add( local );
@@ -262,11 +253,11 @@
 					function callbackMeshAlter ( event ) {
 						let override = new LoadedMeshUserOverride( false, true );
 
-						let mesh = new Mesh( event.detail.bufferGeometry, event.detail.material );
+						let mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
 						let scale = 200.0;
 						mesh.scale.set( scale, scale, scale );
 						mesh.name = event.detail.meshName;
-						let helper = new VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
+						let helper = new THREE.VertexNormalsHelper( mesh, 2, 0x00ff00, 1 );
 						helper.name = 'VertexNormalsHelper';
 
 						override.addMesh( mesh );
@@ -277,11 +268,11 @@
 					objLoader2Parallel.setCallbackOnMeshAlter( callbackMeshAlter );
 
 					let scope = this;
-					function callbackOnLoad ( message ) {
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					function callbackOnLoad ( object3d, message ) {
+						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + 'completed: ' + message } } );
 					}
 
-					objLoader2Parallel.load( './models/obj/vive-controller/vr_controller_vive_1_5.obj', callbackOnLoad );
+					objLoader2Parallel.load( 'models/obj/vive-controller/vr_controller_vive_1_5.obj', callbackOnLoad );
 				},
 
 				finalize: function () {
@@ -354,10 +345,10 @@
 				alterDouble: function () {
 					let scope = this;
 					scope.doubleSide = ! scope.doubleSide;
-					console.log( scope.doubleSide ? 'Enabling DoubleSide materials' : 'Enabling FrontSide materials');
+					console.log( scope.doubleSide ? 'Enabling THREE.DoubleSide materials' : 'Enabling THREE.FrontSide materials');
 
 					scope.traversalFunction = function ( material ) {
-						material.side = scope.doubleSide ? DoubleSide : FrontSide;
+						material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
 					};
 
 					function scopeTraverse ( object3d ) {

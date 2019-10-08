@@ -4,38 +4,24 @@
 		<title>three.js webgl - AutoAssetLoader example</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-
-		<link href="../test/common/Common.css" type="text/css" rel="stylesheet"/>
+		<link type="text/css" rel="stylesheet" href="main.css">
 	</head>
 
 	<body>
-		<div id="glFullscreen">
-			<canvas id="example"></canvas>
-		</div>
-		<div id="dat">
-
-		</div>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
 		<div id="info">
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - AutoAssetLoader example
-			<div id="feedback"></div>
+			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
 		<script type="module">
 
 			'use strict';
 
-			import {
-				AmbientLight,
-				DirectionalLight,
-				GridHelper,
-				PerspectiveCamera,
-				Scene,
-				Vector3,
-				WebGLRenderer
-			} from "../build/three.module.js";
-
+			import * as THREE from '../build/three.module.js';
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
+
 			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
 			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
 			import { ResourceDescriptor } from "./jsm/loaders/obj2/utils/ResourceDescriptor.js";
@@ -50,12 +36,11 @@
 				this.renderer = null;
 				this.canvas = elementToBindTo;
 				this.aspectRatio = 1;
-				this.recalcAspectRatio();
 
 				this.scene = null;
 				this.cameraDefaults = {
-					posCamera: new Vector3( 0.0, 175.0, 500.0 ),
-					posCameraTarget: new Vector3( 0, 0, 0 ),
+					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
 					near: 0.1,
 					far: 10000,
 					fov: 45
@@ -71,22 +56,23 @@
 				constructor: AutoAssetLoaderExample,
 
 				initGL: function () {
-					this.renderer = new WebGLRenderer( {
+					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
 						antialias: true,
 						autoClear: true
 					} );
 					this.renderer.setClearColor( 0x050505 );
 
-					this.scene = new Scene();
+					this.scene = new THREE.Scene();
 
-					this.camera = new PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.recalcAspectRatio();
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 					this.resetCamera();
 					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
 
-					let ambientLight = new AmbientLight( 0x404040 );
-					let directionalLight1 = new DirectionalLight( 0xC0C090 );
-					let directionalLight2 = new DirectionalLight( 0xC0C090 );
+					let ambientLight = new THREE.AmbientLight( 0x404040 );
+					let directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
 
 					directionalLight1.position.set( - 100, - 50, 100 );
 					directionalLight2.position.set( 100, 50, - 100 );
@@ -95,7 +81,7 @@
 					this.scene.add( directionalLight2 );
 					this.scene.add( ambientLight );
 
-					let helper = new GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					let helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 					this.scene.add( helper );
 				},
 

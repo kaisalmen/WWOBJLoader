@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
       context: .
     ports:
-      - 8086:80
+      - 8085:80
     volumes:
       - ./build/:/project/build/:rw
       - ./examples/:/project/examples/:rw

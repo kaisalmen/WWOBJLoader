@@ -5,7 +5,7 @@
 
 import {
 	FileLoader
-} from "three";
+} from "../../../../../build/three.module.js";
 
 
 const FileLoadingExecutor = {
