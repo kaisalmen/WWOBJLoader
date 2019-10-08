@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+		<link href="../test/common/Common.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
@@ -20,7 +20,7 @@
 			<div id="feedback"></div>
 		</div>
 
-		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+		<script src="../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script type="module">
 
 			'use strict';
@@ -41,15 +41,15 @@
 				FileLoader,
 				DoubleSide,
 				FrontSide
-			} from "../../node_modules/three/build/three.module.js";
+			} from "../build/three.module.js";
+			import { GUI } from './jsm/libs/dat.gui.module.js';
+			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 
-			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
-
-			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
-			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
-			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
-			import { OBJLoader2Parallel } from "../../src/loaders/OBJLoader2Parallel.js";
-			import { LoadedMeshUserOverride } from "../../src/loaders/shared/MeshReceiver.js";
+			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
+			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
+			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
+			import { OBJLoader2Parallel } from "./jsm/loaders/OBJLoader2Parallel.js";
+			import { LoadedMeshUserOverride } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 
 			const WWOBJLoader2Example = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -148,7 +148,7 @@
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( '../../resource/obj/female02/female02.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/female02/female02.mtl', onLoadMtl );
 				},
 
 				useParseParallel: function () {
@@ -165,7 +165,7 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
 					}
 
-					let filename = '../../resource/obj/female02/female02_vertex_colors.obj';
+					let filename = './models/obj/female02/female02_vertex_colors.obj';
 					objLoader2Parallel.load( filename, callbackOnLoad );
 				},
 
@@ -190,11 +190,11 @@
 
 					function onLoadMtl ( mtlParseResult ) {
 						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
-						objLoader2.load( '../../resource/obj/male02/male02.obj', callbackOnLoad, null, null, null );
+						objLoader2.load( './models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( '../../resource/obj/male02/male02.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/male02/male02.mtl', onLoadMtl );
 				},
 
 				useLoadParallel: function () {
@@ -218,11 +218,11 @@
 					}
 					function onLoadMtl ( mtlParseResult ) {
 						objLoader2Parallel.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ) );
-						objLoader2Parallel.load( '../../resource/obj/walt/WaltHead.obj', callbackOnLoad );
+						objLoader2Parallel.load( './models/obj/walt/WaltHead.obj', callbackOnLoad );
 					}
 
 					let mtlLoader = new MTLLoader();
-					mtlLoader.load( '../../resource/obj/walt/WaltHead.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/walt/WaltHead.mtl', onLoadMtl );
 				},
 
 				useLoadMainFallback: function () {
@@ -243,7 +243,7 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + local.name } } );
 					}
 
-					objLoader2Parallel.load( '../../resource/obj/cerberus/Cerberus.obj', callbackOnLoad );
+					objLoader2Parallel.load( './models/obj/cerberus/Cerberus.obj', callbackOnLoad );
 				},
 
 				useLoadParallelMeshAlter: function () {
@@ -281,7 +281,7 @@
 						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
 					}
 
-					objLoader2Parallel.load( '../../resource/obj/vive-controller/vr_controller_vive_1_5.obj', callbackOnLoad );
+					objLoader2Parallel.load( './models/obj/vive-controller/vr_controller_vive_1_5.obj', callbackOnLoad );
 				},
 
 				finalize: function () {
@@ -393,7 +393,7 @@
 			};
 
 			let menuDiv = document.getElementById( 'dat' );
-			let gui = new dat.GUI( {
+			let gui = new GUI( {
 				autoPlace: false,
 				width: 320
 			} );

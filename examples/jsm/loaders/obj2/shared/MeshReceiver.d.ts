@@ -1,6 +1,6 @@
 import {
   Mesh
-} from '../../../node_modules/three/src/Three';
+} from 'three';
 
 import { MaterialHandler } from './MaterialHandler'
 

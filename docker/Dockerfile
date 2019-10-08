@@ -8,9 +8,9 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 
 RUN mkdir -p /project/docker
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY package.json /project/package.json
-COPY docker/createDevEnv.sh /project/docker/createDevEnv.sh
-
 RUN cd project && npm install
-RUN bash project/docker/createDevEnv.sh
+
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/createDevEnv.sh /project/docker/createDevEnv.sh
+COPY docker/runDevEnv.sh /project/docker/runDevEnv.sh

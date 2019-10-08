@@ -3,7 +3,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { MTLLoader } from "../../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 
 
 const MtlObjBridge = {

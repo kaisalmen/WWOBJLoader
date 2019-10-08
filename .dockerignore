@@ -2,7 +2,6 @@
 archive
 build
 docs
+examples
 node_modules
-resource
-src
 test

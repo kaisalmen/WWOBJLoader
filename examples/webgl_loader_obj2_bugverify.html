@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
-		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+		<link href="../test/common/Common.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
@@ -20,7 +20,6 @@
 			<div id="feedback"></div>
 		</div>
 
-		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 		<script type="module">
 
 			'use strict';
@@ -34,18 +33,18 @@
 				Vector3,
 				Object3D,
 				WebGLRenderer
-			} from "../../node_modules/three/build/three.module.js";
+			} from "../build/three.module.js";
 
-			import { TrackballControls } from "../../node_modules/three/examples/jsm/controls/TrackballControls.js";
-			import { MTLLoader } from "../../node_modules/three/examples/jsm/loaders/MTLLoader.js";
-			import { MtlObjBridge } from "../../src/loaders/bridge/MtlObjBridge.js";
-			import { OBJLoader2 } from "../../src/loaders/OBJLoader2.js";
-			import { ResourceDescriptor } from "../../src/loaders/utils/ResourceDescriptor.js";
+			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
+			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
+			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
+			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
+			import { ResourceDescriptor } from "./jsm/loaders/obj2/utils/ResourceDescriptor.js";
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from "../../src/loaders/AssetPipelineLoader.js";
+			} from "./jsm/loaders/AssetPipelineLoader.js";
 
 
 			const OBJLoader2BugVerify = function ( elementToBindTo ) {
@@ -173,15 +172,15 @@
 			assetPipelineLoader14.setBaseObject3d( pivot14 );
 
 			let assetTask14Mtl = new AssetTask( 'task14Mtl' );
-			assetTask14Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.mtl', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl' ) );
-			assetTask14Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/14/' } );
+			assetTask14Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.mtl', './models/obj/14/bbd3874250e2414aaa6a4c84c8a21656.mtl' ) );
+			assetTask14Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/14/' } );
 
 			let assetTask14MtlObjLink = new AssetTask( 'task14MtlObjLink' );
 			assetTask14MtlObjLink.setLinker( true );
 			assetTask14MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask14Obj = new AssetTask( 'task14Obj' );
-			assetTask14Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.obj', '../../resource/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' ) );
+			assetTask14Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue14.obj', './models/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' ) );
 			assetTask14Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline14 = new AssetPipeline();
@@ -201,15 +200,15 @@
 			assetPipelineLoader14032.setBaseObject3d( pivot14032 );
 
 			let assetTask14032Mtl = new AssetTask( 'task14032Mtl' );
-			assetTask14032Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.mtl', '../../resource/obj/14032/union.mtl' ) );
-			assetTask14032Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/14032/' } );
+			assetTask14032Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.mtl', './models/obj/14032/union.mtl' ) );
+			assetTask14032Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/14032/' } );
 
 			let assetTask14032MtlObjLink = new AssetTask( 'task14MtlObjLink' );
 			assetTask14032MtlObjLink.setLinker( true );
 			assetTask14032MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask14032Obj = new AssetTask( 'task14032Obj' );
-			assetTask14032Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.obj', '../../resource/obj/14032/union.obj' ) );
+			assetTask14032Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'union.obj', './models/obj/14032/union.obj' ) );
 			assetTask14032Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline14032 = new AssetPipeline();
@@ -229,15 +228,15 @@
 			assetPipelineLoader21.setBaseObject3d( pivot21 );
 
 			let assetTask21Mtl = new AssetTask( 'task21Mtl' );
-			assetTask21Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue21.mtl', '../../resource/obj/21/Table_Photo_Frame_03.mtl' ) );
-			assetTask21Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/21/' } );
+			assetTask21Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue21.mtl', './models/obj/21/Table_Photo_Frame_03.mtl' ) );
+			assetTask21Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/21/' } );
 
 			let assetTask21MtlObjLink = new AssetTask( 'task21MtlObjLink' );
 			assetTask21MtlObjLink.setLinker( true );
 			assetTask21MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask21Obj = new AssetTask( 'task21Obj' );
-			assetTask21Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue21.obj', '../../resource/obj/21/Table_Photo_Frame_03.obj' ) );
+			assetTask21Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue21.obj', './models/obj/21/Table_Photo_Frame_03.obj' ) );
 			assetTask21Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline21 = new AssetPipeline();
@@ -257,15 +256,15 @@
 			assetPipelineLoader12120.setBaseObject3d( pivot12120 );
 
 			let assetTask12120Mtl = new AssetTask( 'task12120Mtl' );
-			assetTask12120Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12120.mtl', '../../resource/obj/12120/zjej_abm_f01_out_T005.mtl' ) );
-			assetTask12120Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/12120/' } );
+			assetTask12120Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12120.mtl', './models/obj/12120/zjej_abm_f01_out_T005.mtl' ) );
+			assetTask12120Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/12120/' } );
 
 			let assetTask12120MtlObjLink = new AssetTask( 'task12120MtlObjLink' );
 			assetTask12120MtlObjLink.setLinker( true );
 			assetTask12120MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask12120Obj = new AssetTask( 'task12121Obj' );
-			assetTask12120Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12120.obj', '../../resource/obj/12120/zjej_abm_f01_out_T005.obj' ) );
+			assetTask12120Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12120.obj', './models/obj/12120/zjej_abm_f01_out_T005.obj' ) );
 			assetTask12120Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline12120 = new AssetPipeline();
@@ -284,15 +283,15 @@
 			assetPipelineLoader12324.setBaseObject3d( pivot12324 );
 
 			let assetTask12324Mtl = new AssetTask( 'task12324Mtl' );
-			assetTask12324Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12324.mtl', '../../resource/obj/12324/rampanueva.mtl' ) );
-			assetTask12324Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/12324/' } );
+			assetTask12324Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12324.mtl', './models/obj/12324/rampanueva.mtl' ) );
+			assetTask12324Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/12324/' } );
 
 			let assetTask12324MtlObjLink = new AssetTask( 'task12324MtlObjLink' );
 			assetTask12324MtlObjLink.setLinker( true );
 			assetTask12324MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask12324Obj = new AssetTask( 'task12324Obj' );
-			assetTask12324Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12324.obj', '../../resource/obj/12324/rampanueva.obj' ) );
+			assetTask12324Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue12324.obj', './models/obj/12324/rampanueva.obj' ) );
 			assetTask12324Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline12324 = new AssetPipeline();
@@ -313,15 +312,15 @@
 			assetPipelineLoader11811A.setBaseObject3d( pivot11811A );
 
 			let assetTask11811AMtl = new AssetTask( 'task11811AMtl' );
-			assetTask11811AMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811a.mtl', '../../resource/obj/11811/3dbpo10518T.mtl' ) );
-			assetTask11811AMtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/11811/' } );
+			assetTask11811AMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811a.mtl', './models/obj/11811/3dbpo10518T.mtl' ) );
+			assetTask11811AMtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/11811/' } );
 
 			let assetTask11811AMtlObjLink = new AssetTask( 'task11811AMtlObjLink' );
 			assetTask11811AMtlObjLink.setLinker( true );
 			assetTask11811AMtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask11811AObj = new AssetTask( 'task11811AObj' );
-			assetTask11811AObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811a.obj', '../../resource/obj/11811/3dbpo10518T.obj' ) );
+			assetTask11811AObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811a.obj', './models/obj/11811/3dbpo10518T.obj' ) );
 			assetTask11811AObj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline11811A = new AssetPipeline();
@@ -341,15 +340,15 @@
 			assetPipelineLoader11811B.setBaseObject3d( pivot11811B );
 
 			let assetTask11811BMtl = new AssetTask( 'task11811BMtl' );
-			assetTask11811BMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811b.mtl', '../../resource/obj/11811/3dbts103601T.mtl' ) );
-			assetTask11811BMtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/11811/' } );
+			assetTask11811BMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811b.mtl', './models/obj/11811/3dbts103601T.mtl' ) );
+			assetTask11811BMtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/11811/' } );
 
 			let assetTask11811BMtlObjLink = new AssetTask( 'task11811BMtlObjLink' );
 			assetTask11811BMtlObjLink.setLinker( true );
 			assetTask11811BMtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask11811BObj = new AssetTask( 'task11811BObj' );
-			assetTask11811BObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811b.obj', '../../resource/obj/11811/3dbts103601T.obj' ) );
+			assetTask11811BObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue11811b.obj', './models/obj/11811/3dbts103601T.obj' ) );
 			assetTask11811BObj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline11811B = new AssetPipeline();
@@ -368,15 +367,15 @@
 			assetPipelineLoader27Door.setBaseObject3d( pivot27Door );
 
 			let assetTask27DoorMtl = new AssetTask( 'task27DoorMtl' );
-			assetTask27DoorMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27door.mtl', '../../resource/obj/27/door.mtl' ) );
-			assetTask27DoorMtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/27/' } );
+			assetTask27DoorMtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27door.mtl', './models/obj/27/door.mtl' ) );
+			assetTask27DoorMtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/27/' } );
 
 			let assetTask27DoorMtlObjLink = new AssetTask( 'task27DoorMtlObjLink' );
 			assetTask27DoorMtlObjLink.setLinker( true );
 			assetTask27DoorMtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask27DoorObj = new AssetTask( 'task27DoorObj' );
-			assetTask27DoorObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27door.obj', '../../resource/obj/27/door.obj' ) );
+			assetTask27DoorObj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27door.obj', './models/obj/27/door.obj' ) );
 			assetTask27DoorObj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline27Door = new AssetPipeline();
@@ -395,15 +394,15 @@
 			assetPipelineLoader27Wall2.setBaseObject3d( pivot27Wall2 );
 
 			let assetTask27Wall2Mtl = new AssetTask( 'task27Wall2Mtl' );
-			assetTask27Wall2Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27wall2.mtl', '../../resource/obj/27/wall2.mtl' ) );
-			assetTask27Wall2Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: '../../resource/obj/27/' } );
+			assetTask27Wall2Mtl.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27wall2.mtl', './models/obj/27/wall2.mtl' ) );
+			assetTask27Wall2Mtl.setAssetHandlerRef( MTLLoader, { resourcePath: './models/obj/27/' } );
 
 			let assetTask27Wall2MtlObjLink = new AssetTask( 'task27Wall2MtlObjLink' );
 			assetTask27Wall2MtlObjLink.setLinker( true );
 			assetTask27Wall2MtlObjLink.setAssetHandler( MtlObjBridge );
 
 			let assetTask27Wall2Obj = new AssetTask( 'task27Wall2Obj' );
-			assetTask27Wall2Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27wall2.obj', '../../resource/obj/27/wall2.obj' ) );
+			assetTask27Wall2Obj.setResourceDescriptor( new ResourceDescriptor( 'URL', 'Issue27wall2.obj', './models/obj/27/wall2.obj' ) );
 			assetTask27Wall2Obj.setAssetHandlerRef( OBJLoader2 );
 
 			let assetPipeline27Wall2 = new AssetPipeline();

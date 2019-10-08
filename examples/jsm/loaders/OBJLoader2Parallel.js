@@ -7,17 +7,17 @@
 import {
 	CodeBuilderInstructions,
 	WorkerExecutionSupport
-} from "./worker/main/WorkerExecutionSupport.js";
-import { CodeSerializer } from "./utils/CodeSerializer.js";
+} from "./obj2/worker/main/WorkerExecutionSupport.js";
+import { CodeSerializer } from "./obj2/utils/CodeSerializer.js";
 import { OBJLoader2 } from "./OBJLoader2.js";
 
 // Imports only related to worker (when standard workers (modules aren't supported) are used)
-import { OBJLoader2Parser } from "./worker/parallel/OBJLoader2Parser.js";
-import { ObjectManipulator } from "./utils/ObjectManipulator.js";
+import { OBJLoader2Parser } from "./obj2/worker/parallel/OBJLoader2Parser.js";
+import { ObjectManipulator } from "./obj2/utils/ObjectManipulator.js";
 import {
 	WorkerRunner,
 	DefaultWorkerPayloadHandler
-} from "./worker/parallel/WorkerRunner.js";
+} from "./obj2/worker/parallel/WorkerRunner.js";
 
 /**
  * Extends {OBJLoader2} with the capability to run the parser {OBJLoader2Parser} in web worker

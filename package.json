@@ -1,20 +1,13 @@
 {
   "name": "wwobjloader2",
-  "version": "3.0.0-preview",
+  "version": "3.1.1-dev",
   "versions": {
-    "obj_loader2": "3.0.0-preview",
-    "worker_loader": "1.0.0-preview",
-    "worker_support": "3.0.0-preview",
-    "worker_loader_director": "3.0.0-preview",
-    "mesh_receiver": "2.0.0-preview",
-    "mesh_transmitter": "1.0.0-preview"
+    "obj_loader2": "3.1.1-dev",
+    "worker_support": "3.1.1-dev"
   },
   "previous_versions": {
-    "obj_loader2": "2.5.0",
-    "worker_loader": "n.a.",
-    "worker_support": "2.3.0",
-    "worker_loader_director": "2.3.0",
-    "mesh_builder": "1.3.0"
+    "obj_loader2": "2.5.1",
+    "worker_support": "2.3.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WLOBJLoader2.js",
@@ -39,23 +32,12 @@
     "docs/styles",
     "docs/*.html",
     "docs/CHANGELOG.md",
-    "src",
+    "examples/webgl_loader_assetpipeline.html",
+    "examples/webgl_loader_obj2.html",
+    "examples/webgl_loader_obj2_bugverify.html",
+    "examples/webgl_loader_obj2_options.html",
+    "examples/webgl_loader_obj2_workermodulesupport.html",
     "test/common",
-    "test/objloader2/main.src.html",
-    "test/wwobjloader2/main.src.html",
-    "test/wwobjloader2stage/main.html",
-    "test/wwobjloader2stage/main.min.html",
-    "test/wwobjloader2stage/main.src.html",
-    "test/wwobjloader2stage/WWOBJLoader2Stage.js",
-    "test/wwparallels/main.html",
-    "test/wwparallels/main.min.html",
-    "test/wwparallels/main.src.html",
-    "test/wwparallels/main.css",
-    "test/wwparallels/WWParallels.js",
-    "test/meshspray/main.html",
-    "test/meshspray/main.min.html",
-    "test/meshspray/main.src.html",
-    "test/meshspray/MeshSpray.js",
     "test/objverify/gulpfile.js",
     "test/objverify/verify.html",
     "test/objverify/verify.mtl",
@@ -66,28 +48,25 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "http": "http-server -p 8085"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.107.0"
+    "three": "^0.109.0"
   },
   "devDependencies": {
-    "del": "^5.0.0",
+    "del": "^5.1.0",
     "fancy-log": "^1.3.3",
     "gulp": "^4.0.2",
     "gulp-concat": "^2.6.1",
-    "gulp-decompress": "^2.0.2",
+    "gulp-decompress": "^3.0.0",
     "gulp-header": "^2.0.9",
     "gulp-jsdoc3": "^2.0.0",
     "gulp-remote-src": "^0.4.4",
     "gulp-rename": "^1.4.0",
     "gulp-replace": "^1.0.0",
     "gulp-uglify": "^3.0.2",
-    "http-server": "^0.11.1",
-    "jszip": "^3.2.2",
-    "npm-run-all": "^4.1.5"
+    "jszip": "^3.2.2"
   }
 }

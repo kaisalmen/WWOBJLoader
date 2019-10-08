@@ -5,7 +5,7 @@
 
 import {
 	BufferGeometry
-} from "../../../node_modules/three/build/three.module.js";
+} from "three";
 
 
 /**

@@ -1,9 +1,9 @@
 import {
   LoadingManager
-} from '../../node_modules/three/src/Three';
+} from 'three';
 import { OBJLoader2 } from './OBJLoader2';
 
-import { WorkerExecutionSupport} from './worker/main/WorkerExecutionSupport';
+import { WorkerExecutionSupport} from './obj2/worker/main/WorkerExecutionSupport';
 
 export class OBJLoader2Parallel extends OBJLoader2 {
   constructor(manager?: LoadingManager);

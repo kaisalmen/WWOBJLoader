@@ -1,6 +1,6 @@
 import {
   Material
-} from '../../../node_modules/three/src/Three';
+} from 'three';
 
 export class MaterialHandler {
   constructor();

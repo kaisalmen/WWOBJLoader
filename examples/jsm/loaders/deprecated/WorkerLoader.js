@@ -7,10 +7,10 @@ import {
 	Object3D
 } from "three";
 
-import { MeshReceiver } from "../shared/MeshReceiver.js";
+import { MeshReceiver } from "../obj2/shared/MeshReceiver.js";
 import { Validator } from "./Validator.js";
-import { ObjectManipulator } from "../utils/ObjectManipulator.js";
-import { FileLoadingExecutor } from "../utils/FileLoadingExecutor.js";
+import { ObjectManipulator } from "../obj2/utils/ObjectManipulator.js";
+import { FileLoadingExecutor } from "../obj2/utils/FileLoadingExecutor.js";
 
 
 /**

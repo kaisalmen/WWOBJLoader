@@ -3,7 +3,7 @@
  */
 
 import { WorkerLoader } from "./WorkerLoader.js";
-import { WorkerExecutionSupport } from "../worker/main/WorkerExecutionSupport.js";
+import { WorkerExecutionSupport } from "../obj2/worker/main/WorkerExecutionSupport.js";
 import { Validator } from "./Validator.js";
 
 

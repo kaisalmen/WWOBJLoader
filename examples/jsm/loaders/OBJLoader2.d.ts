@@ -2,11 +2,11 @@ import {
   LoadingManager,
   Group,
   Object3D
-} from '../../node_modules/three/src/Three';
+} from 'three';
 
-import { OBJLoader2Parser } from './worker/parallel/OBJLoader2Parser';
-import { MaterialHandler } from './shared/MaterialHandler';
-import { MeshReceiver} from './shared/MeshReceiver';
+import { OBJLoader2Parser } from './obj2/worker/parallel/OBJLoader2Parser';
+import { MaterialHandler } from './obj2/shared/MaterialHandler';
+import { MeshReceiver} from './obj2/shared/MeshReceiver';
 
 export class OBJLoader2 extends OBJLoader2Parser {
   constructor(manager?: LoadingManager);

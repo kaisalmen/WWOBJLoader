@@ -4,21 +4,21 @@
 /build
 /node_modules
 
-/resource/draco
-/resource/gltf
-/resource/obj/1*
-/resource/obj/2*
-/resource/obj/capsule
-/resource/obj/cerberus
-/resource/obj/datamogensen
-/resource/obj/emmy3d
-/resource/obj/PTV1
-/resource/obj/rolleiflex
-/resource/obj/totoro
-/resource/obj/vive-controller
-/resource/obj/walt
-/resource/obj/zomax
-/resource/pcd
+/examples/models/draco
+/examples/models/gltf
+/examples/models/obj/1*
+/examples/models/obj/2*
+/examples/models/obj/capsule
+/examples/models/obj/cerberus
+/examples/models/obj/datamogensen
+/examples/models/obj/emmy3d
+/examples/models/obj/PTV1
+/examples/models/obj/rolleiflex
+/examples/models/obj/totoro
+/examples/models/obj/vive-controller
+/examples/models/obj/walt
+/examples/models/obj/zomax
+/examples/models/pcd
 
 /test/meshspray/main.html
 /test/meshspray/main.min.html
@@ -41,3 +41,6 @@
 /docs/img
 /docs/scripts
 /docs/*
+/examples/jsm/controls/TrackballControls.js
+/examples/jsm/libs/dat.gui.module.js
+/examples/jsm/loaders/MTLLoader.js

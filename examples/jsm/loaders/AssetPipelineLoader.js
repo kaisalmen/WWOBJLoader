@@ -2,9 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { ResourceDescriptor } from "./utils/ResourceDescriptor.js";
-import { FileLoadingExecutor } from "./utils/FileLoadingExecutor.js";
-import { ObjectManipulator } from "./utils/ObjectManipulator.js";
+import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
+import { FileLoadingExecutor } from "./obj2/utils/FileLoadingExecutor.js";
+import { ObjectManipulator } from "./obj2/utils/ObjectManipulator.js";
 
 
 /**
