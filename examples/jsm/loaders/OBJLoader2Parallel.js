@@ -189,8 +189,8 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 						disregardNormals: this.parser.disregardNormals,
 						materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
 						useOAsMesh: this.parser.useOAsMesh,
+						materials: this.materialHandler.getMaterialsJSON()
 					},
-					materials: this.materialHandler.getMaterialsJSON(),
 					data: {
 						input: content,
 						options: null
