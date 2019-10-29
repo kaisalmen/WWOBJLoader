@@ -4,7 +4,7 @@
 
 import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
 import { FileLoadingExecutor } from "./obj2/utils/FileLoadingExecutor.js";
-import { ObjectManipulator } from "./obj2/utils/ObjectManipulator.js";
+import { ObjectManipulator } from "./obj2/worker/parallel/WorkerRunner.js";
 
 
 /**
@@ -292,7 +292,7 @@ AssetTask.prototype = {
 
 			this.assetLoader.instance = Object.create( this.assetLoader.ref.prototype );
 			this.assetLoader.ref.call( this.assetLoader.instance );
-			ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config );
+			ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config, false );
 
 		}
 
