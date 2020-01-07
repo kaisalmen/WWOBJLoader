@@ -53,7 +53,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.109.0"
+    "three": "^0.112.1"
   },
   "devDependencies": {
     "del": "^5.1.0",
@@ -64,7 +64,7 @@
     "gulp-header": "^2.0.9",
     "gulp-jsdoc3": "^2.0.0",
     "gulp-remote-src": "^0.4.4",
-    "gulp-rename": "^1.4.0",
+    "gulp-rename": "^2.0.0",
     "gulp-replace": "^1.0.0",
     "gulp-uglify": "^3.0.2",
     "jszip": "^3.2.2"
