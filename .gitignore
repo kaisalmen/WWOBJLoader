@@ -7,6 +7,7 @@
 /examples/jsm/controls/*
 /examples/jsm/libs/*
 /examples/jsm/loaders/MTLLoader.*
+/examples/jsm/loaders/deprecated/*
 /examples/models/draco
 /examples/models/gltf
 /examples/models/obj/1*
