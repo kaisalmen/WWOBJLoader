@@ -4,7 +4,7 @@ newmtl red
 	Ks 0.000000 0.000000 0.000000
 	illum 2
 	Ns 0.000000
-	map_Kd ../../resource/obj/female02/02_-_Default1noCulling.JPG
+	map_Kd ../female02/02_-_Default1noCulling.JPG
 
 newmtl blue
 	Ka 0.000000 0.000000 1.000000

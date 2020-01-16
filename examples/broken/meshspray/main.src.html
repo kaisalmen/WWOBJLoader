@@ -4,8 +4,8 @@
 		<title>three.js webgl - Mesh Spray</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-/*STUB_CSS_EMBED*/
-/*STUB_CSS_LINK*/
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
 	</head>
 
 	<body>
@@ -20,14 +20,17 @@
 		<div id="feedback"></div>
 	</div>
 
-		<script src="../../node_modules/three/examples/js/WebGL.js"></script>
-/*STUB_JS_THREE*/
-		<script src="../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
-		<script src="../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+		<script src="../../../node_modules/three/examples/js/WebGL.js"></script>
+		<script src="../../../node_modules/three/build/three.js"></script>
+		<script src="../../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
 
-/*STUB_JS_EXT*/
+		<script src="../../src/loaders/MeshTransfer.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoader.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoaderDirector.js"></script>
+		<script src="MeshSpray.js"></script>
 		<script>
-/*STUB_JS_INLINE*/
+
 			var app = new MeshSprayApp( document.getElementById( 'example' ) );
 
 			// init three.js example application
