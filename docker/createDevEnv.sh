@@ -22,3 +22,4 @@ cp -f ${DIR_BASE}/node_modules/three/examples/jsm/controls/TrackballControls.js 
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.js ${DIR_BASE}/examples/jsm/loaders/MTLLoader.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/MTLLoader.d.ts
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/libs/dat.gui.module.js ${DIR_BASE}/examples/jsm/libs/dat.gui.module.js
+cp -f ${DIR_BASE}/node_modules/three/examples/jsm/libs/gunzip.module.min.js ${DIR_BASE}/examples/jsm/libs/gunzip.module.min.js

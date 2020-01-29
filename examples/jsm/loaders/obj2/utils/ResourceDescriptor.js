@@ -5,19 +5,16 @@
 
 /**
  *
- * @param {String} resourceType
  * @param {String} name
- * @param {Object} [input]
  * @constructor
  */
-const ResourceDescriptor = function ( resourceType, name, input ) {
+const ResourceDescriptor = function ( name) {
 	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
 	this.content = {
-		input: null,
-		inputDataOptions: null,
-		resourceType: resourceType,
-		payloadType: 'arraybuffer',
-		result: null
+		data: null,
+		dataOptions: null,
+		needStringOutput: false,
+		compressed: false
 	};
 	this.url = null;
 	this.filename = null;
@@ -29,64 +26,91 @@ const ResourceDescriptor = function ( resourceType, name, input ) {
 		parse: true
 	};
 	this.transferables = [];
-
-	this._init( input );
 };
 
 ResourceDescriptor.prototype = {
 
 	constructor: ResourceDescriptor,
 
-	_init: function ( input ) {
-		input = ( input !== undefined && input !== null ) ? input : null;
+	/**
+	 *
+	 * @param url
+	 * @return {ResourceDescriptor}
+	 */
+	setUrl: function ( url ) {
 
-		switch ( this.content.resourceType ) {
-			case 'URL':
-				this.url = ( input !== null ) ? input : this.name;
-				this.url = new URL( this.url, window.location.href ).href;
-				this.filename = this.url;
-				let urlParts = this.url.split( '/' );
-				if ( urlParts.length > 2 ) {
+		this.url = ( url === undefined || url === null ) ? this.name : url;
+		this.url = new URL( this.url, window.location.href ).href;
+		this.filename = this.url;
+		let urlParts = this.url.split( '/' );
+		if ( urlParts.length > 2 ) {
 
-					this.filename = urlParts[ urlParts.length - 1 ];
-					let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
-					if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
-
-				}
-				let filenameParts = this.filename.split( '.' );
-				if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-				this.content.input = null;
-				break;
-
-			case 'Buffer':
-				this.setBuffer( input );
-				break;
-
-			case 'String':
-				this.setString( input );
-				break;
-
-			case 'Metadata':
-				this.content.input = 'no_content';
-				break;
-
-			default:
-				throw 'An unsupported resourceType "' + this.resourceType + '" was provided! Aborting...';
-				break;
+			this.filename = urlParts[ urlParts.length - 1 ];
+			let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
+			if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
 
 		}
+		let filenameParts = this.filename.split( '.' );
+		if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
+		return this;
+
 	},
 
-	setString: function ( input ) {
-		// fast-fail on unset input
-		if ( input === null ) return;
-		if ( ! ( typeof( input ) === 'string' || input instanceof String) ) this._throwError( 'Provided input is not of resourceType "String"! Aborting...' );
-		this.content.resourceType = 'String';
-		this.content.payloadType = 'string';
-		this.content.input = input;
+	/**
+	 *
+	 * @param needStringOutput
+ 	 * @return {ResourceDescriptor}
+	 */
+	setNeedStringOutput: function ( needStringOutput ) {
+
+		this.content.needStringOutput = needStringOutput;
+		return this;
+
 	},
 
+	/**
+	 *
+	 * @param {boolean} compressed
+	 * @return {ResourceDescriptor}
+	 */
+	setCompressed: function ( compressed ) {
+
+		this.content.compressed = compressed;
+		return this;
+
+	},
+
+	/**
+	 *
+	 * @return {boolean}
+	 */
+	isCompressed: function () {
+
+		return this.content.compressed;
+
+	},
+
+	/**
+	 *
+	 * @param loadAsync
+	 * @param parseAsync
+	 * @return {ResourceDescriptor}
+	 */
+	configureAsync: function ( loadAsync, parseAsync ) {
+
+		this.async.parse = parseAsync === true;
+		// Loading in Worker is currently only allowed when async parse is performed!!!!
+		this.async.load = loadAsync === true && this.async.parse;
+		return this;
+
+	},
+
+	/**
+	 *
+	 * @param buffer
+	 */
 	setBuffer: function ( buffer ) {
+
 		// fast-fail on unset input
 		if ( buffer === null ) return;
 		if ( ! ( buffer instanceof ArrayBuffer ||
@@ -103,22 +127,30 @@ ResourceDescriptor.prototype = {
 			this._throwError( 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...' );
 
 		}
-		this.content.resourceType = 'Buffer';
-		this.content.payloadType = 'arraybuffer';
-		this.content.input = buffer;
+
+		if ( this.content.needStringOutput ) {
+
+			this.content.data = new TextDecoder("utf-8" ).decode( buffer ) ;
+
+		}
+		else {
+
+			this.content.data = buffer;
+
+		}
+
 	},
 
-	configureAsync: function ( loadAsync, parseAsync ) {
-		this.async.parse = parseAsync === true;
-		// Loading in Worker is currently only allowed when async parse is performed!!!!
-		this.async.load = loadAsync === true && this.async.parse;
-
-		return this;
-	},
-
+	/**
+	 *
+	 * @param name
+	 * @param object
+	 * @param transferables
+	 */
 	setInputDataOption: function ( name, object, transferables ) {
+
 		if ( ! Array.isArray( transferables ) ) transferables = [];
-		this.content.inputDataOptions[ name ] = {
+		this.content.dataOptions[ name ] = {
 			name: name,
 			object: object
 		};
@@ -127,23 +159,33 @@ ResourceDescriptor.prototype = {
 			this.transferables = this.transferables.concat( transferables );
 
 		}
+
 	},
 
-	setAssetLoaderResult: function ( result ) {
-		this.content.result = result;
-	},
-
+	/**
+	 *
+	 * @param callbackOnProcessResult
+	 * @return {ResourceDescriptor}
+	 */
 	setCallbackOnProcessResult: function ( callbackOnProcessResult ) {
 		this.callbackOnProcessResult = callbackOnProcessResult;
 		return this;
 	},
 
+	/**
+	 *
+	 * @return {*}
+	 */
 	getCallbackOnProcessResult: function ( ) {
 		return this.callbackOnProcessResult;
 	},
 
+	/**
+	 *
+	 * @return {ResourceDescriptor}
+	 */
 	createSendable: function () {
-		let copy = new ResourceDescriptor( this.resourceType, this.name );
+		let copy = new ResourceDescriptor( this.name );
 		copy.url = this.url;
 		copy.filename = this.filename;
 		copy.path = this.path;
@@ -151,7 +193,7 @@ ResourceDescriptor.prototype = {
 		copy.extension = this.extension;
 		copy.async.load = this.async.load;
 		copy.async.parse = this.async.parse;
-		this.content.result = null;
+		this.content.data = null;
 		return copy;
 	}
 };

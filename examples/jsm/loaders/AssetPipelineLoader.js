@@ -13,8 +13,9 @@ import { ObjectManipulator } from "./obj2/worker/parallel/WorkerRunner.js";
  */
 const AssetPipelineLoader = function ( name ) {
 
-	this.baseObject3d;
+	this.baseObject3d = undefined;
 	this.name = name;
+	this.onComplete = null;
 
 };
 AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
@@ -36,6 +37,12 @@ AssetPipelineLoader.prototype = {
 
 	},
 
+	setOnComplete: function ( onComplete ) {
+
+		this.onComplete = onComplete;
+
+	},
+
 	/**
 	 *
 	 * @param {AssetPipeline} assetPipeline
@@ -43,11 +50,11 @@ AssetPipelineLoader.prototype = {
 	 */
 	run: function ( assetPipeline ) {
 
-		assetPipeline.initPipeline();
+		assetPipeline.initPipeline( this.name, this.onComplete );
 		assetPipeline.runPipeline( this.baseObject3d );
 		return this;
 
-	},
+	}
 
 };
 
@@ -57,6 +64,8 @@ AssetPipelineLoader.prototype = {
  */
 const AssetPipeline = function () {
 
+	this.name = null;
+	this.onComplete = null;
 	this.assetTasks = new Map();
 
 };
@@ -77,10 +86,14 @@ AssetPipeline.prototype = {
 
 	/**
 	 * Init all {@link AssetTask}
+	 *
+	 * @param {string} name Name of the pipeline
 	 * @return {AssetPipeline}
 	 */
-	initPipeline: function () {
+	initPipeline: function ( name, onComplete) {
 
+		this.name = name;
+		this.onComplete = onComplete;
 		let assetTaskBefore = null;
 		this.assetTasks.forEach( function ( assetTask, key ) {
 
@@ -107,9 +120,18 @@ AssetPipeline.prototype = {
 	 */
 	runPipeline: function ( baseObject3d ) {
 
+		let onComplete = x => console.log( "Done loading: " + x );
+		let scope = this;
+		if ( scope.onComplete !== undefined && scope.onComplete !== null ) {
+
+			onComplete = scope.onComplete;
+
+		}
 		loadResources( this.assetTasks )
 			.then( x => processAssets( x, this.assetTasks ) )
+			.then( x => onComplete( scope.name, "Completed Loading" ) )
 			.catch( x => console.error( x ) );
+
 
 		function processAssets( loadResults, assetTasks ) {
 
@@ -123,7 +145,7 @@ AssetPipeline.prototype = {
 			}
 			baseObject3d.add( assetTask.getProcessResult() );
 
-		};
+		}
 
 		async function loadResources( assetTasks ) {
 
@@ -142,10 +164,10 @@ AssetPipeline.prototype = {
 			console.log( 'Waiting for completion of loading of all assets!');
 			return await Promise.all( loadPromises );
 
-		};
+		}
 		return this;
 
-	},
+	}
 
 };
 
@@ -158,7 +180,7 @@ AssetPipeline.prototype = {
 const AssetTask = function ( name ) {
 
 	this.name = name;
-	this.resourceDescriptor;
+	this.resourceDescriptor = undefined;
 	this.assetLoader = {
 		ref: null,
 		instance: null,
@@ -170,7 +192,8 @@ const AssetTask = function ( name ) {
 		after: null
 	};
 	this.linker = false;
-	this.processResult;
+	this.processResult = undefined;
+	this.objectManipulator = new ObjectManipulator();
 
 };
 
@@ -292,7 +315,7 @@ AssetTask.prototype = {
 
 			this.assetLoader.instance = Object.create( this.assetLoader.ref.prototype );
 			this.assetLoader.ref.call( this.assetLoader.instance );
-			ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config, false );
+			this.objectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config, false );
 
 		}
 
@@ -306,6 +329,7 @@ AssetTask.prototype = {
 			description: 'loadAssets',
 			reportCallback: ( report => console.log( report.detail.text ) )
 		} );
+		this.resourceDescriptor = response;
 		return response;
 
 	},
@@ -317,7 +341,7 @@ AssetTask.prototype = {
 
 		if ( ! this.isLinker() ) {
 
-			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( this.resourceDescriptor.content.result );
+			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( this.resourceDescriptor.content.data );
 
 		} else {
 

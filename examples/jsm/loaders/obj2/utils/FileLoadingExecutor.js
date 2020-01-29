@@ -6,6 +6,7 @@
 import {
 	FileLoader
 } from "../../../../../build/three.module.js";
+import { Zlib } from "../../../libs/gunzip.module.min.js";
 
 
 const FileLoadingExecutor = {
@@ -29,10 +30,8 @@ const FileLoadingExecutor = {
 		let numericalValue = 0;
 		let resourceDescriptor = params.resourceDescriptor;
 		let url = '';
-		let payloadType = 'arraybuffer';
 		if ( resourceDescriptor !== undefined && resourceDescriptor !== null ) {
 			url = resourceDescriptor.url;
-			payloadType = resourceDescriptor.payloadType;
 		}
 
 		function scopedOnReportProgress( event ) {
@@ -66,12 +65,21 @@ const FileLoadingExecutor = {
 		}
 
 		function processResourcesProxy( content ) {
-			resourceDescriptor.setAssetLoaderResult( content );
+
+			let uint8array = content;
+			if ( resourceDescriptor.isCompressed() ) {
+
+				let inflate = new Zlib.Gunzip( new Uint8Array( content ) ); // eslint-disable-line no-undef
+				uint8array = inflate.decompress();
+
+			}
+			resourceDescriptor.setBuffer( uint8array );
 			onCompleteFileLoading( null, resourceDescriptor );
+
 		}
 
 		let fileLoader = new FileLoader();
-		fileLoader.setResponseType( payloadType );
+		fileLoader.setResponseType( 'arraybuffer' );
 		fileLoader.load( url, processResourcesProxy, scopedOnReportProgress, scopedOnReportError );
 
 	}

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - OBJLoader2 Stage</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			#dat {
+				user-select: none;
+				position: absolute;
+				left: 0;
+				top: 0;
+				z-Index: 200;
+			}
+			#fileUploadInput {
+				display: none;
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="dat">
+
+		</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 Stage
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+		<input id="fileUploadInput" type="file" name="files[]" multiple accept=".obj,.mtl" />
+		<script type="module">
+
+			'use strict';
+
+			import * as THREE from '../build/three.module.js';
+			import { GUI } from './jsm/libs/dat.gui.module.js';
+
+			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
+			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
+
+			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
+			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
+			import { ResourceDescriptor } from "./jsm/loaders/obj2/utils/ResourceDescriptor.js";
+			import {
+				AssetPipelineLoader,
+				AssetPipeline,
+				AssetTask
+			} from "./jsm/loaders/AssetPipelineLoader.js";
+
+			const WWOBJLoader2Stage = function ( elementToBindTo ) {
+				this.renderer = null;
+				this.canvas = elementToBindTo;
+				this.aspectRatio = 1;
+				this.recalcAspectRatio();
+
+				this.scene = null;
+				this.cameraDefaults = {
+					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+					near: 0.1,
+					far: 10000,
+					fov: 45
+				};
+				this.camera = null;
+				this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+				this.controls = null;
+				this.cube = null;
+
+				this.loadingTaskConfigs = [];
+				this.allAssets = [];
+				this.processing = false;
+
+				// Check for the various File API support.
+				this.fileApiAvailable = true;
+				if ( window.File && window.FileReader && window.FileList && window.Blob ) {
+
+					console.log( 'File API is supported! Enabling all features.' );
+
+				} else {
+
+					this.fileApiAvailable = false;
+					console.warn( 'File API is not supported! Disabling file loading.' );
+
+				}
+			};
+
+			WWOBJLoader2Stage.prototype = {
+
+				constructor: WWOBJLoader2Stage,
+
+				initGL: function () {
+					this.renderer = new THREE.WebGLRenderer( {
+						canvas: this.canvas,
+						antialias: true,
+						autoClear: true
+					} );
+					this.renderer.setClearColor( 0x0F0F0F );
+
+					this.scene = new THREE.Scene();
+
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.resetCamera();
+					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
+
+					let ambientLight = new THREE.AmbientLight( 0x404040 );
+					let directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+					directionalLight1.position.set( -100, -50, 100 );
+					directionalLight2.position.set( 100, 50, -100 );
+
+					this.scene.add( directionalLight1 );
+					this.scene.add( directionalLight2 );
+					this.scene.add( ambientLight );
+
+					let helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					this.scene.add( helper );
+
+					let geometry = new THREE.BoxGeometry( 10, 10, 10 );
+					let material = new THREE.MeshNormalMaterial();
+					this.cube = new THREE.Mesh( geometry, material );
+					this.cube.position.set( 0, 0, 0 );
+					this.scene.add( this.cube );
+				},
+
+				resizeDisplayGL: function () {
+					this.controls.handleResize();
+
+					this.recalcAspectRatio();
+					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+					this.updateCamera();
+				},
+
+				recalcAspectRatio: function () {
+					this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+				},
+
+				resetCamera: function () {
+					this.camera.position.copy( this.cameraDefaults.posCamera );
+					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+					this.updateCamera();
+				},
+
+				updateCamera: function () {
+					this.camera.aspect = this.aspectRatio;
+					this.camera.lookAt( this.cameraTarget );
+					this.camera.updateProjectionMatrix();
+				},
+
+				render: function () {
+					if ( ! this.renderer.autoClear ) this.renderer.clear();
+					this.reloadAssets();
+
+					this.controls.update();
+
+					this.cube.rotation.x += 0.05;
+					this.cube.rotation.y += 0.05;
+
+					this.renderer.render( this.scene, this.camera );
+				},
+
+				initContent: function (  ) {
+					this.assetsDef = {
+						objsMale: null,
+						objsFemale: null,
+						objsCerberus: null,
+						objsWaltHead: null,
+						objsViveController: null,
+						objsPtv1: null,
+						objsZomaxOven: null,
+						objsZomaxSink: null
+					};
+					this.assetsDef.objsFemaleMale = [];
+
+
+					let assetTaskMale02Mtl = new AssetTask( 'taskMale02mtl' );
+					let resMale02 = new ResourceDescriptor( 'male02.mtl' ).setUrl( 'models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
+					assetTaskMale02Mtl.setResourceDescriptor( resMale02 );
+
+					assetTaskMale02Mtl.setAssetHandlerRef( MTLLoader, {
+						resourcePath: 'models/obj/male02/',
+						materialOptions: {}
+					} );
+
+					let assetTaskMale02MtlObjLink = new AssetTask( 'taskMale02MtlObjLink' );
+					assetTaskMale02MtlObjLink.setLinker( true );
+					assetTaskMale02MtlObjLink.setAssetHandler( MtlObjBridge );
+
+					let assetTaskMale02Obj = new AssetTask( 'taskMale02Obj' );
+					assetTaskMale02Obj.setResourceDescriptor( new ResourceDescriptor( 'male02.obj' ).setUrl( 'models/obj/male02/male02.obj' ) );
+					assetTaskMale02Obj.setAssetHandlerRef( OBJLoader2 );
+
+					let assetPipelineMale02 = new AssetPipeline();
+					assetPipelineMale02.addAssetTask( assetTaskMale02Mtl );
+					assetPipelineMale02.addAssetTask( assetTaskMale02MtlObjLink );
+					assetPipelineMale02.addAssetTask( assetTaskMale02Obj );
+
+					let aplMale02 = new AssetPipelineLoader( 'Issue14' );
+					let pivot = new THREE.Object3D();
+					pivot.position.set( -200, 0, -175 );
+					this.scene.add( pivot );
+					aplMale02.setBaseObject3d( pivot );
+					aplMale02.run( assetPipelineMale02 );
+//					this.assetsDef.objsMale = assetPipelineMale02;
+
+
+					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1mtl' );
+					let resPTV1Mtl = new ResourceDescriptor( 'PTV1.mtl' )
+						.setUrl( 'models/obj/PTV1/PTV1.mtl.gz' )
+						.setNeedStringOutput( true )
+						.setCompressed( true );
+					assetTaskPTV1Mtl.setResourceDescriptor( resPTV1Mtl );
+					assetTaskPTV1Mtl.setAssetHandlerRef( MTLLoader, {
+						resourcePath: 'models/obj/PTV1/',
+						materialOptions: {}
+					} );
+
+					let assetTaskPTV1MtlObjLink = new AssetTask( 'taskPTV1MtlObjLink' );
+					assetTaskPTV1MtlObjLink.setLinker( true );
+					assetTaskPTV1MtlObjLink.setAssetHandler( MtlObjBridge );
+
+					let assetTaskPTV1Obj = new AssetTask( 'taskPTV1Obj' );
+					let resPTV1Obj = new ResourceDescriptor( 'PTV1.obj' )
+						.setUrl( 'models/obj/PTV1/PTV1.obj.gz' )
+						.setCompressed( true );
+					assetTaskPTV1Obj.setResourceDescriptor( resPTV1Obj );
+					assetTaskPTV1Obj.setAssetHandlerRef( OBJLoader2 );
+
+					let assetPipelinePTV1 = new AssetPipeline();
+					assetPipelinePTV1.addAssetTask( assetTaskPTV1Mtl );
+					assetPipelinePTV1.addAssetTask( assetTaskPTV1MtlObjLink );
+					assetPipelinePTV1.addAssetTask( assetTaskPTV1Obj );
+
+					let aplPTV1 = new AssetPipelineLoader( 'PTV1' );
+					pivot = new THREE.Object3D();
+					pivot.position.set( -250, 0, -200 );
+					this.scene.add( pivot );
+					aplPTV1.setBaseObject3d( pivot );
+					aplPTV1.run( assetPipelinePTV1 );
+//					this.assetsDef.objsPtv1 = assetPipelinePTV1;
+
+/*
+					pivot = new THREE.Object3D();
+					pivot.position.set( 200, 0, -75 );
+					this.scene.add( pivot );
+
+					parserConfigMtl.resourcePath = 'models/obj/female02/';
+					rdMtl = new ResourceDescriptor( 'URL', 'female02.mtl', 'models/obj/female02/female02.mtl' )
+						.setParserConfiguration( parserConfigMtl )
+						.configureAsync( false, false );
+					rdObj = new ResourceDescriptor( 'URL', 'female02.obj', 'models/obj/female02/female02.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'female02',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdMtl )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsFemale = loadingTaskConfig;
+
+
+					pivot = new THREE.Object3D();
+					pivot.position.set( 0, -100, 0 );
+					pivot.scale.set( 50.0, 50.0, 50.0 );
+					this.scene.add( pivot );
+					rdObj = new ResourceDescriptor( 'URL', 'Cerberus.obj', 'models/obj/cerberus/Cerberus.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'Cerberus',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsCerberus = loadingTaskConfig;
+
+
+					pivot = new THREE.Object3D();
+					pivot.position.set( 0, 0, 75 );
+					this.scene.add( pivot );
+
+					parserConfigMtl.resourcePath = 'models/obj/walt/';
+					rdMtl = new ResourceDescriptor( 'URL', 'Cerberus.mtl', 'models/obj/walt/WaltHead.mtl' )
+						.setParserConfiguration( parserConfigMtl )
+						.configureAsync( false, false );
+					rdObj = new ResourceDescriptor( 'URL', 'Cerberus.obj', 'models/obj/walt/WaltHead.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'WaltHead',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdMtl )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsWaltHead = loadingTaskConfig;
+
+
+					pivot = new THREE.Object3D();
+					pivot.position.set( 0, 0, 200 );
+					pivot.scale.set( 400.0, 400.0, 400.0 );
+					this.scene.add( pivot );
+
+					rdObj = new ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', 'models/obj/vive-controller/vr_controller_vive_1_5.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'vr_controller_vive_1_5',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsViveController = loadingTaskConfig;
+
+
+					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+					pivot = new THREE.Object3D();
+					pivot.position.set( -200, 0, 50 );
+					this.scene.add( pivot );
+
+					rdZip = new ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.zip', 'models/obj/zomax/zomax-net_haze-oven-scene.zip' );
+					rdObj = new ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'oven',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdZip )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsZomaxOven = loadingTaskConfig;
+
+
+					pivot = new THREE.Object3D();
+					pivot.position.set( -200, 0, 200 );
+					this.scene.add( pivot );
+
+					rdZip = new ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.zip', 'models/obj/zomax/zomax-net_haze-sink-scene.zip' );
+					rdObj = new ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.obj' );
+					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
+							name: 'sink',
+							instanceNo: 0,
+							baseObject3d: pivot
+						} )
+						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
+						.addResourceDescriptor( rdZip )
+						.addResourceDescriptor( rdObj );
+					this.assetsDef.objsZomaxSink = loadingTaskConfig;
+ */
+				},
+
+				clearAllAssests: function () {
+					let storedObject3d;
+					for ( let asset in this.allAssets ) {
+
+						storedObject3d = this.allAssets[ asset ];
+						let scope = this;
+						let remover = function ( object3d ) {
+
+							if ( storedObject3d === object3d ) return;
+
+							console.log( 'Removing ' + object3d.name );
+							scope.scene.remove( object3d );
+
+							if ( object3d.hasOwnProperty( 'geometry' ) ) object3d.geometry.dispose();
+							if ( object3d.hasOwnProperty( 'material' ) ) {
+
+								let mat = object3d.material;
+								if ( mat.hasOwnProperty( 'materials' ) ) {
+
+									let materials = mat.materials;
+									for ( let name in materials ) {
+
+										if ( materials.hasOwnProperty( name ) ) materials[ name ].dispose();
+
+									}
+								}
+							}
+							if ( object3d.hasOwnProperty( 'texture' ) )	object3d.texture.dispose();
+						};
+						if ( storedObject3d !== undefined && storedObject3d !== null ) {
+
+							if ( this.pivot !== storedObject3d ) scope.scene.remove( storedObject3d );
+							storedObject3d.traverse( remover );
+							storedObject3d = null;
+
+						}
+					}
+					this.allAssets = [];
+				},
+
+				updateAssets: function ( prepData ) {
+					if ( prepData !== undefined && prepData !== null ) {
+
+						if ( ! this.allAssets.hasOwnProperty( prepData.name ) ) {
+
+							this.loadingTaskConfigs.push( prepData );
+
+						} else {
+
+							this._reportProgress( { detail: { text: 'Will not reload: ' + prepData.name } } );
+
+						}
+
+					}
+				},
+
+				_reportProgress: function( event ) {
+					let output = ( event.detail.text !== undefined && event.detail.text !== null ) ? event.detail.text : '';
+					console.log( 'Progress: ' + output );
+					document.getElementById( 'feedback' ).innerHTML = output;
+				},
+
+				reloadAssets: function () {
+					if ( this.loadingTaskConfigs.length === 0 || this.processing ) {
+
+						return;
+
+					} else {
+
+						this.processing = true;
+
+					}
+
+					let loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
+					this.loadingTaskConfigs.shift();
+
+					let scope = this;
+					let loadAssetsProxy = function ( pipelineName, result ) {
+						scope.processing = false;
+						scope.allAssets[ pipelineName ] = result;
+						scope.reloadAssets();
+						scope._reportProgress( { detail: { text: '' } } );
+					};
+					this._reportProgress( { detail: { text: '' } } );
+
+					loadingTaskConfig.setOnComplete( loadAssetsProxy );
+
+					let findFile = function ( expectedExtension ) {
+						let resourceFound = null;
+						for ( let i = 0, resourceSearch; i < loadingTaskConfig.resourceDescriptors.length; i++ ) {
+
+							resourceSearch = loadingTaskConfig.resourceDescriptors[ i ];
+							if ( resourceSearch.extension === expectedExtension ) {
+
+								resourceFound = resourceSearch;
+								break;
+
+							}
+
+						}
+						return resourceFound;
+					};
+
+				},
+
+				_handleFileSelect: function ( event, pathTexture ) {
+					let fileObj = null;
+					let fileMtl = null;
+					let files = event.target.files;
+
+					for ( let i = 0, file; file = files[ i ]; i++ ) {
+
+						if ( file.name.indexOf( '\.obj' ) > 0 && fileObj === null ) {
+							fileObj = file;
+						}
+
+						if ( file.name.indexOf( '\.mtl' ) > 0 && fileMtl === null ) {
+							fileMtl = file;
+						}
+
+					}
+
+					if ( fileObj === undefined | fileObj === null ) {
+						alert( 'Unable to load OBJ file from given files.' );
+					}
+
+					let scope = this;
+					let callbackOnLoad = function ( event ) {
+						scope.scene.add( event.detail.baseObject3d );
+						console.log( 'Loading complete: ' + event.detail.modelName );
+						scope._reportProgress( { detail: { text: '' } } );
+					};
+
+					let fileReader = new FileReader();
+					fileReader.onload = function( fileDataObj ) {
+
+						let uint8Array = new Uint8Array( fileDataObj.target.result );
+
+						let prepData = new THREE.MeshTransfer.PrepData( 'userObj' );
+						let resourceOBJ = new THREE.MeshTransfer.ResourceDescriptor( pathTexture + '/' + fileObj.name, 'OBJ' );
+						let userPivot = new THREE.Object3D();
+						userPivot.position.set(
+							-100 + 200 * Math.random(),
+							-100 + 200 * Math.random(),
+							-100 + 200 * Math.random()
+						);
+						prepData.streamMeshesTo = userPivot;
+						scope.scene.add( userPivot );
+						scope.allAssets[ prepData.modelName ] = userPivot;
+
+						resourceOBJ.setContent( uint8Array );
+						prepData.addResource( resourceOBJ );
+						prepData.useAsync = true;
+						let callbacks = prepData.getCallbacks();
+						callbacks.setCallbackOnProgress( scope._reportProgress );
+						callbacks.setCallbackOnLoad( callbackOnLoad );
+
+						fileReader.onload = function( fileDataMtl ) {
+
+							let resourceMTL = new THREE.MeshTransfer.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
+							resourceMTL.setContent( fileDataMtl.target.result );
+							prepData.addResource( resourceMTL );
+
+							let objLoader = new THREE.OBJLoader2();
+							objLoader.run( prepData );
+						};
+						fileReader.readAsText( fileMtl );
+					};
+					fileReader.readAsArrayBuffer( fileObj );
+
+				},
+			};
+
+			let app = new WWOBJLoader2Stage( document.getElementById( 'example' ) );
+
+			// Init dat.gui and controls
+			let elemFileInput = document.getElementById( 'fileUploadInput' );
+			let menuDiv = document.getElementById( 'dat' );
+			let gui = new GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+			menuDiv.appendChild( gui.domElement );
+
+			let folderOptions = gui.addFolder( 'WWOBJLoader2Stage Options' );
+			let handleMale, handleFemale, handleWalt, handleCerberus, handleViveController, handlePTV1, handleSink, handleOven;
+			let wwOBJLoader2StageControl = {
+				pathTexture: 'models/obj/female02/',
+				blockEvent: function ( event ) {
+					event.stopPropagation();
+				},
+				enableElement: function ( elementHandle ) {
+					elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
+					elementHandle.domElement.parentElement.style.opacity = 1.0;
+				},
+				disableElement: function ( elementHandle ) {
+					elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'none';
+					elementHandle.domElement.parentElement.style.opacity = 0.5;
+				},
+				loadMale: function() {
+					app.updateAssets( app.assetsDef.objsMale );
+					this.disableElement( handleMale );
+				},
+				loadFemale: function() {
+					app.updateAssets( app.assetsDef.objsFemale );
+					this.disableElement( handleFemale );
+				},
+				loadWaltHead: function() {
+					app.updateAssets( app.assetsDef.objsWaltHead );
+					this.disableElement( handleWalt );
+				},
+				loadCerberus: function() {
+					app.updateAssets( app.assetsDef.objsCerberus );
+					this.disableElement( handleCerberus );
+				},
+				loadViveController: function () {
+					app.updateAssets( app.assetsDef.objsViveController );
+					this.disableElement( handleViveController );
+				},
+				loadPTV1: function () {
+					app.updateAssets( app.assetsDef.objsPtv1 );
+					this.disableElement( handlePTV1 );
+				},
+				loadOven: function () {
+					app.updateAssets( app.assetsDef.objsZomaxOven);
+					this.disableElement( handleOven );
+				},
+				loadSink: function () {
+					app.updateAssets( app.assetsDef.objsZomaxSink );
+					this.disableElement( handleSink );
+				},
+				loadUserFiles: function () {
+					elemFileInput.click();
+				},
+				clearAllAssests: function () {
+					app.clearAllAssests();
+					app.initContent();
+					this.enableElement( handleMale );
+					this.enableElement( handleFemale );
+					this.enableElement( handleWalt );
+					this.enableElement( handleCerberus );
+					this.enableElement( handleViveController );
+					this.enableElement( handlePTV1 );
+					this.enableElement( handleOven );
+					this.enableElement( handleSink );
+				}
+			};
+			handleMale = folderOptions.add( wwOBJLoader2StageControl, 'loadMale' ).name( 'Load Male' );
+			handleFemale = folderOptions.add( wwOBJLoader2StageControl, 'loadFemale' ).name( 'Load Female' );
+			handleWalt = folderOptions.add( wwOBJLoader2StageControl, 'loadWaltHead' ).name( 'Load Walt Head' );
+			handleCerberus = folderOptions.add( wwOBJLoader2StageControl, 'loadCerberus' ).name( 'Load Cerberus' );
+			handleViveController = folderOptions.add( wwOBJLoader2StageControl, 'loadViveController' ).name( 'Vive Controller' );
+			handlePTV1 = folderOptions.add( wwOBJLoader2StageControl, 'loadPTV1' ).name( 'PTV1 26MB->150MB' );
+			handleOven = folderOptions.add( wwOBJLoader2StageControl, 'loadOven' ).name( 'Oven 43MB->150MB' );
+			handleSink = folderOptions.add( wwOBJLoader2StageControl, 'loadSink' ).name( 'Sink 45MB->178MB' );
+			folderOptions.add( wwOBJLoader2StageControl, 'clearAllAssests' ).name( 'Clear Scene' );
+			folderOptions.open();
+
+			let folderUserFiles = gui.addFolder( 'User Files' );
+			if ( app.fileApiAvailable ) {
+
+				folderUserFiles.add( wwOBJLoader2StageControl, 'loadUserFiles' ).name( 'Load OBJ/MTL Files' );
+				let handleFileSelect = function ( event ) {
+					app._handleFileSelect( event, wwOBJLoader2StageControl.pathTexture );
+				};
+				elemFileInput.addEventListener( 'change' , handleFileSelect, false );
+
+				let controlPathTexture = folderUserFiles.add( wwOBJLoader2StageControl, 'pathTexture' ).name( 'Relative path to textures' );
+				controlPathTexture.onChange( function( value ) {
+					console.log( 'Setting pathTexture to: ' + value );
+					app.pathTexture = value + '/';
+				});
+
+			}
+
+
+			let resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			let render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+			app.initContent();
+
+			wwOBJLoader2StageControl.loadMale();
+			wwOBJLoader2StageControl.loadFemale();
+
+			render();
+
+		</script>
+	</body>
+</html>
+
