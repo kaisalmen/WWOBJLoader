@@ -4,10 +4,13 @@
 /build
 /node_modules
 
-/examples/jsm/controls/*
-/examples/jsm/libs/*
+/examples/jsm/controls/*.js
+/examples/jsm/controls/*.d.ts
+/examples/jsm/libs/*.js
+/examples/jsm/libs/*.d.ts
+/examples/jsm/helpers/*.js
+/examples/jsm/helpers/*.d.ts
 /examples/jsm/loaders/MTLLoader.*
-/examples/jsm/loaders/deprecated/*
 /examples/models/draco
 /examples/models/gltf
 /examples/models/obj/1*

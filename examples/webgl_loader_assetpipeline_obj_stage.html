@@ -170,7 +170,7 @@
 						objsFemale: null,
 						objsCerberus: null,
 						objsWaltHead: null,
-						objsViveController: null,
+						objsNinja: null,
 						objsPtv1: null,
 						objsZomaxOven: null,
 						objsZomaxSink: null
@@ -192,7 +192,8 @@
 					assetTaskMale02MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskMale02Obj = new AssetTask( 'taskMale02Obj' );
-					assetTaskMale02Obj.setResourceDescriptor( new ResourceDescriptor( 'male02.obj' ).setUrl( 'models/obj/male02/male02.obj' ) );
+					let resFemale02 =  new ResourceDescriptor( 'male02.obj' ).setUrl( 'models/obj/male02/male02.obj' )
+					assetTaskMale02Obj.setResourceDescriptor( resFemale02 );
 					assetTaskMale02Obj.setAssetHandlerRef( OBJLoader2 );
 
 					let assetPipelineMale02 = new AssetPipeline();
@@ -200,13 +201,47 @@
 					assetPipelineMale02.addAssetTask( assetTaskMale02MtlObjLink );
 					assetPipelineMale02.addAssetTask( assetTaskMale02Obj );
 
-					let aplMale02 = new AssetPipelineLoader( 'Issue14' );
+					let aplMale02 = new AssetPipelineLoader( 'APL_Male02' );
 					let pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, -175 );
 					this.scene.add( pivot );
 					aplMale02.setBaseObject3d( pivot );
 					aplMale02.run( assetPipelineMale02 );
 //					this.assetsDef.objsMale = assetPipelineMale02;
+
+
+					let assetTaskFemale02Mtl = new AssetTask( 'taskFemale021mtl' );
+					let resFemale02Mtl = new ResourceDescriptor( 'female02.mtl' )
+						.setUrl( 'models/obj/female02/female02.mtl' )
+						.setNeedStringOutput( true );
+					assetTaskFemale02Mtl.setResourceDescriptor( resFemale02Mtl );
+					assetTaskFemale02Mtl.setAssetHandlerRef( MTLLoader, {
+						resourcePath: 'models/obj/female02/',
+						materialOptions: {}
+					} );
+
+					let assetTaskFemale02MtlObjLink = new AssetTask( 'taskFemale02MtlObjLink' );
+					assetTaskFemale02MtlObjLink.setLinker( true );
+					assetTaskFemale02MtlObjLink.setAssetHandler( MtlObjBridge );
+
+					let assetTaskFemale02Obj = new AssetTask( 'taskFemale02Obj' );
+					let resFemale02Obj = new ResourceDescriptor( 'female02.obj' ).setUrl( 'models/obj/female02/female02.obj' );
+					assetTaskFemale02Obj.setResourceDescriptor( resFemale02Obj );
+					assetTaskFemale02Obj.setAssetHandlerRef( OBJLoader2 );
+
+
+					let assetPipelineFemale02 = new AssetPipeline();
+					assetPipelineFemale02.addAssetTask( assetTaskFemale02Mtl );
+					assetPipelineFemale02.addAssetTask( assetTaskFemale02MtlObjLink );
+					assetPipelineFemale02.addAssetTask( assetTaskFemale02Obj );
+
+					let aplFemale02 = new AssetPipelineLoader( 'APL_Female02' );
+					pivot = new THREE.Object3D();
+					pivot.position.set( 200, 0, -75 );
+					this.scene.add( pivot );
+					aplFemale02.setBaseObject3d( pivot );
+					aplFemale02.run( assetPipelineFemale02 );
+//					this.assetsDef.objsFemale = assetPipelineFemale02;
 
 
 					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1mtl' );
@@ -236,7 +271,7 @@
 					assetPipelinePTV1.addAssetTask( assetTaskPTV1MtlObjLink );
 					assetPipelinePTV1.addAssetTask( assetTaskPTV1Obj );
 
-					let aplPTV1 = new AssetPipelineLoader( 'PTV1' );
+					let aplPTV1 = new AssetPipelineLoader( 'APL_PTV1' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -250, 0, -200 );
 					this.scene.add( pivot );
@@ -244,113 +279,122 @@
 					aplPTV1.run( assetPipelinePTV1 );
 //					this.assetsDef.objsPtv1 = assetPipelinePTV1;
 
-/*
-					pivot = new THREE.Object3D();
-					pivot.position.set( 200, 0, -75 );
-					this.scene.add( pivot );
 
-					parserConfigMtl.resourcePath = 'models/obj/female02/';
-					rdMtl = new ResourceDescriptor( 'URL', 'female02.mtl', 'models/obj/female02/female02.mtl' )
-						.setParserConfiguration( parserConfigMtl )
-						.configureAsync( false, false );
-					rdObj = new ResourceDescriptor( 'URL', 'female02.obj', 'models/obj/female02/female02.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'female02',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdMtl )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsFemale = loadingTaskConfig;
+					let assetTaskCerberusObj = new AssetTask( 'taskCerberusObj' );
+					let resCerberusObj = new ResourceDescriptor( 'Cerberus.obj' ).setUrl( 'models/obj/cerberus/Cerberus.obj' );
+					assetTaskCerberusObj.setResourceDescriptor( resCerberusObj );
+					assetTaskCerberusObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineCerberus = new AssetPipeline();
+					assetPipelineCerberus.addAssetTask( assetTaskCerberusObj );
 
-
+					let aplCerberus = new AssetPipelineLoader( 'APL_Cerberus' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, -100, 0 );
 					pivot.scale.set( 50.0, 50.0, 50.0 );
 					this.scene.add( pivot );
-					rdObj = new ResourceDescriptor( 'URL', 'Cerberus.obj', 'models/obj/cerberus/Cerberus.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'Cerberus',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsCerberus = loadingTaskConfig;
+					aplCerberus.setBaseObject3d( pivot );
+					aplCerberus.run( assetPipelineCerberus );
+//					this.assetsDef.objsCerberus = assetPipelineCerberus;
 
 
+					let assetTaskWaltHeadMtl = new AssetTask( 'taskPTV1mtl' );
+					let resWaltHeadMtl = new ResourceDescriptor( 'WaltHead.mtl' )
+					.setUrl( 'models/obj/walt/WaltHead.mtl' )
+					.setNeedStringOutput( true );
+					assetTaskWaltHeadMtl.setResourceDescriptor( resWaltHeadMtl );
+					assetTaskWaltHeadMtl.setAssetHandlerRef( MTLLoader, {
+						resourcePath: 'models/obj/walt/',
+						materialOptions: {}
+					} );
+
+					let assetTaskWaltHeadMtlObjLink = new AssetTask( 'taskWaltHeadMtlObjLink' );
+					assetTaskWaltHeadMtlObjLink.setLinker( true );
+					assetTaskWaltHeadMtlObjLink.setAssetHandler( MtlObjBridge );
+
+					let assetTaskWaltHeadObj = new AssetTask( 'taskWaltHeadObj' );
+					let resWaltHeadObj = new ResourceDescriptor( 'WaltHead.obj' ).setUrl( 'models/obj/walt/WaltHead.obj' );
+					assetTaskWaltHeadObj.setResourceDescriptor( resWaltHeadObj );
+					assetTaskWaltHeadObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineWaltHead = new AssetPipeline();
+					assetPipelineWaltHead.addAssetTask( assetTaskWaltHeadObj );
+
+					let aplWaltHead = new AssetPipelineLoader( 'APL_WaltHead' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, 75 );
 					this.scene.add( pivot );
-
-					parserConfigMtl.resourcePath = 'models/obj/walt/';
-					rdMtl = new ResourceDescriptor( 'URL', 'Cerberus.mtl', 'models/obj/walt/WaltHead.mtl' )
-						.setParserConfiguration( parserConfigMtl )
-						.configureAsync( false, false );
-					rdObj = new ResourceDescriptor( 'URL', 'Cerberus.obj', 'models/obj/walt/WaltHead.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'WaltHead',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdMtl )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsWaltHead = loadingTaskConfig;
+					aplWaltHead.setBaseObject3d( pivot );
+					aplWaltHead.run( assetPipelineWaltHead );
+//					this.assetsDef.objsWaltHead = assetPipelineWaltHead;
 
 
+					let assetTaskNinjaObj = new AssetTask( 'taskNinjaObj' );
+					let resNinjaObj = new ResourceDescriptor( 'ninjaHead_Low.obj' ).setUrl( 'models/obj/ninja/ninjaHead_Low.obj' );
+					assetTaskNinjaObj.setResourceDescriptor( resNinjaObj );
+					assetTaskNinjaObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineNinja = new AssetPipeline();
+					assetPipelineNinja.addAssetTask( assetTaskNinjaObj );
+
+
+					let aplNinja = new AssetPipelineLoader( 'APL_Ninja' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, 200 );
-					pivot.scale.set( 400.0, 400.0, 400.0 );
 					this.scene.add( pivot );
-
-					rdObj = new ResourceDescriptor( 'URL', 'vr_controller_vive_1_5.obj', 'models/obj/vive-controller/vr_controller_vive_1_5.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'vr_controller_vive_1_5',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsViveController = loadingTaskConfig;
+					aplNinja.setBaseObject3d( pivot );
+					aplNinja.run( assetPipelineNinja );
+//					this.assetsDef.objsNinja = assetPipelineNinja;
 
 
 					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
 					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
+					let assetTaskOvenObj = new AssetTask( 'taskOvenObj' );
+					let resOvenObj = new ResourceDescriptor( 'zomax-net_haze-oven-scene.obj' )
+						.setUrl( 'models/obj/zomax/zomax-net_haze-oven-scene.obj.gz' )
+						.setCompressed( true );
+
+					assetTaskOvenObj.setResourceDescriptor( resOvenObj );
+					assetTaskOvenObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineOven = new AssetPipeline();
+					assetPipelineOven.addAssetTask( assetTaskOvenObj );
+
+
+					let aplOven = new AssetPipelineLoader( 'APL_Oven' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, 50 );
 					this.scene.add( pivot );
-
-					rdZip = new ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.zip', 'models/obj/zomax/zomax-net_haze-oven-scene.zip' );
-					rdObj = new ResourceDescriptor( 'URL', 'zomax-net_haze-oven-scene.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'oven',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdZip )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsZomaxOven = loadingTaskConfig;
+					aplOven.setBaseObject3d( pivot );
+					aplOven.run( assetPipelineOven );
+//					this.assetsDef.objsZomaxOven = assetPipelineOven;
 
 
+					let assetTaskSinkObj = new AssetTask( 'taskSinkObj' );
+					let resSinkObj = new ResourceDescriptor( 'zomax-net_haze-sink-scene.obj' )
+						.setUrl( 'models/obj/zomax/zomax-net_haze-sink-scene.obj.gz' )
+						.setCompressed( true );
+
+					assetTaskSinkObj.setResourceDescriptor( resSinkObj );
+					assetTaskSinkObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineSink = new AssetPipeline();
+					assetPipelineSink.addAssetTask( assetTaskSinkObj );
+
+
+					let aplSink = new AssetPipelineLoader( 'APL_Sink' );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, 200 );
 					this.scene.add( pivot );
+					aplSink.setBaseObject3d( pivot );
+					aplSink.run( assetPipelineSink );
+//					this.assetsDef.objsZomaxSink = assetPipelineSink;
 
-					rdZip = new ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.zip', 'models/obj/zomax/zomax-net_haze-sink-scene.zip' );
-					rdObj = new ResourceDescriptor( 'URL', 'zomax-net_haze-sink-scene.obj' );
-					loadingTaskConfig = new THREE.WorkerLoader.LoadingTaskConfig( {
-							name: 'sink',
-							instanceNo: 0,
-							baseObject3d: pivot
-						} )
-						.setLoaderConfig( THREE.OBJLoader2, { useIndices: true } )
-						.addResourceDescriptor( rdZip )
-						.addResourceDescriptor( rdObj );
-					this.assetsDef.objsZomaxSink = loadingTaskConfig;
- */
 				},
 
 				clearAllAssests: function () {
@@ -538,7 +582,7 @@
 			menuDiv.appendChild( gui.domElement );
 
 			let folderOptions = gui.addFolder( 'WWOBJLoader2Stage Options' );
-			let handleMale, handleFemale, handleWalt, handleCerberus, handleViveController, handlePTV1, handleSink, handleOven;
+			let handleMale, handleFemale, handleWalt, handleCerberus, handleNinja, handlePTV1, handleSink, handleOven;
 			let wwOBJLoader2StageControl = {
 				pathTexture: 'models/obj/female02/',
 				blockEvent: function ( event ) {
@@ -570,9 +614,9 @@
 					app.updateAssets( app.assetsDef.objsCerberus );
 					this.disableElement( handleCerberus );
 				},
-				loadViveController: function () {
-					app.updateAssets( app.assetsDef.objsViveController );
-					this.disableElement( handleViveController );
+				loadNinja: function () {
+					app.updateAssets( app.assetsDef.objsNinja );
+					this.disableElement( handleNinja );
 				},
 				loadPTV1: function () {
 					app.updateAssets( app.assetsDef.objsPtv1 );
@@ -596,7 +640,7 @@
 					this.enableElement( handleFemale );
 					this.enableElement( handleWalt );
 					this.enableElement( handleCerberus );
-					this.enableElement( handleViveController );
+					this.enableElement( handleNinja );
 					this.enableElement( handlePTV1 );
 					this.enableElement( handleOven );
 					this.enableElement( handleSink );
@@ -606,7 +650,7 @@
 			handleFemale = folderOptions.add( wwOBJLoader2StageControl, 'loadFemale' ).name( 'Load Female' );
 			handleWalt = folderOptions.add( wwOBJLoader2StageControl, 'loadWaltHead' ).name( 'Load Walt Head' );
 			handleCerberus = folderOptions.add( wwOBJLoader2StageControl, 'loadCerberus' ).name( 'Load Cerberus' );
-			handleViveController = folderOptions.add( wwOBJLoader2StageControl, 'loadViveController' ).name( 'Vive Controller' );
+			handleNinja = folderOptions.add( wwOBJLoader2StageControl, 'loadNinja' ).name( 'Ninja' );
 			handlePTV1 = folderOptions.add( wwOBJLoader2StageControl, 'loadPTV1' ).name( 'PTV1 26MB->150MB' );
 			handleOven = folderOptions.add( wwOBJLoader2StageControl, 'loadOven' ).name( 'Oven 43MB->150MB' );
 			handleSink = folderOptions.add( wwOBJLoader2StageControl, 'loadSink' ).name( 'Sink 45MB->178MB' );
