@@ -9,12 +9,15 @@ import { ObjectManipulator } from "./obj2/worker/parallel/WorkerRunner.js";
 
 /**
  *
+ * @param {String} name
+ * @param {AssetPipeline} assetPipeline
  * @constructor
  */
-const AssetPipelineLoader = function ( name ) {
+const AssetPipelineLoader = function ( name, assetPipeline ) {
 
-	this.baseObject3d = undefined;
 	this.name = name;
+	this.assetPipeline = assetPipeline;
+	this.baseObject3d = undefined;
 	this.onComplete = null;
 
 };
@@ -37,6 +40,10 @@ AssetPipelineLoader.prototype = {
 
 	},
 
+	/**
+	 *
+	 * @param {Function} onComplete
+	 */
 	setOnComplete: function ( onComplete ) {
 
 		this.onComplete = onComplete;
@@ -45,13 +52,12 @@ AssetPipelineLoader.prototype = {
 
 	/**
 	 *
-	 * @param {AssetPipeline} assetPipeline
 	 * @return {AssetPipelineLoader}
 	 */
-	run: function ( assetPipeline ) {
+	run: function () {
 
-		assetPipeline.initPipeline( this.name, this.onComplete );
-		assetPipeline.runPipeline( this.baseObject3d );
+		this.assetPipeline.initPipeline( this.name, this.onComplete );
+		this.assetPipeline.runPipeline( this.baseObject3d );
 		return this;
 
 	}

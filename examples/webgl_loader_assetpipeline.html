@@ -86,11 +86,10 @@
 				},
 
 				initContent: function () {
-					let assetPipelineLoader = new AssetPipelineLoader( 'testAssetPipelineLoader' );
-					assetPipelineLoader.setBaseObject3d( this.scene );
-
 					let assetTask0 = new AssetTask( 'task0' );
-					let rdMtl = new ResourceDescriptor( 'female02.mtl' ).setUrl( './models/obj/female02/female02.mtl' );
+					let rdMtl = new ResourceDescriptor( 'female02.mtl' )
+						.setUrl( './models/obj/female02/female02.mtl' )
+						.setNeedStringOutput( true );
 					assetTask0.setResourceDescriptor( rdMtl );
 					let loaderConfigurationMtl = {
 						resourcePath: './models/obj/female02/',
@@ -112,7 +111,9 @@
 					assetPipeline.addAssetTask( assetTask1 );
 					assetPipeline.addAssetTask( assetTask2 );
 
-					assetPipelineLoader.run( assetPipeline );
+					let assetPipelineLoader = new AssetPipelineLoader( 'testAssetPipelineLoader', assetPipeline );
+					assetPipelineLoader.setBaseObject3d( this.scene );
+					assetPipelineLoader.run();
 				},
 
 				resizeDisplayGL: function () {

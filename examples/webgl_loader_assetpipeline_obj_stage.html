@@ -69,7 +69,7 @@
 				this.controls = null;
 				this.cube = null;
 
-				this.loadingTaskConfigs = [];
+				this.pipelineLoaders = [];
 				this.allAssets = [];
 				this.processing = false;
 
@@ -178,7 +178,7 @@
 					this.assetsDef.objsFemaleMale = [];
 
 
-					let assetTaskMale02Mtl = new AssetTask( 'taskMale02mtl' );
+					let assetTaskMale02Mtl = new AssetTask( 'taskMale02Mtl' );
 					let resMale02 = new ResourceDescriptor( 'male02.mtl' ).setUrl( 'models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
 					assetTaskMale02Mtl.setResourceDescriptor( resMale02 );
 
@@ -201,16 +201,15 @@
 					assetPipelineMale02.addAssetTask( assetTaskMale02MtlObjLink );
 					assetPipelineMale02.addAssetTask( assetTaskMale02Obj );
 
-					let aplMale02 = new AssetPipelineLoader( 'APL_Male02' );
+					let aplMale02 = new AssetPipelineLoader( 'APL_Male02', assetPipelineMale02 );
 					let pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, -175 );
 					this.scene.add( pivot );
 					aplMale02.setBaseObject3d( pivot );
-					aplMale02.run( assetPipelineMale02 );
-//					this.assetsDef.objsMale = assetPipelineMale02;
+					this.assetsDef.objsMale = aplMale02;
 
 
-					let assetTaskFemale02Mtl = new AssetTask( 'taskFemale021mtl' );
+					let assetTaskFemale02Mtl = new AssetTask( 'taskFemale02Mtl' );
 					let resFemale02Mtl = new ResourceDescriptor( 'female02.mtl' )
 						.setUrl( 'models/obj/female02/female02.mtl' )
 						.setNeedStringOutput( true );
@@ -235,16 +234,15 @@
 					assetPipelineFemale02.addAssetTask( assetTaskFemale02MtlObjLink );
 					assetPipelineFemale02.addAssetTask( assetTaskFemale02Obj );
 
-					let aplFemale02 = new AssetPipelineLoader( 'APL_Female02' );
+					let aplFemale02 = new AssetPipelineLoader( 'APL_Female02', assetPipelineFemale02 );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 200, 0, -75 );
 					this.scene.add( pivot );
 					aplFemale02.setBaseObject3d( pivot );
-					aplFemale02.run( assetPipelineFemale02 );
-//					this.assetsDef.objsFemale = assetPipelineFemale02;
+					this.assetsDef.objsFemale = aplFemale02;
 
 
-					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1mtl' );
+					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1Mtl' );
 					let resPTV1Mtl = new ResourceDescriptor( 'PTV1.mtl' )
 						.setUrl( 'models/obj/PTV1/PTV1.mtl.gz' )
 						.setNeedStringOutput( true )
@@ -271,13 +269,12 @@
 					assetPipelinePTV1.addAssetTask( assetTaskPTV1MtlObjLink );
 					assetPipelinePTV1.addAssetTask( assetTaskPTV1Obj );
 
-					let aplPTV1 = new AssetPipelineLoader( 'APL_PTV1' );
+					let aplPTV1 = new AssetPipelineLoader( 'APL_PTV1', assetPipelinePTV1 );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -250, 0, -200 );
 					this.scene.add( pivot );
 					aplPTV1.setBaseObject3d( pivot );
-					aplPTV1.run( assetPipelinePTV1 );
-//					this.assetsDef.objsPtv1 = assetPipelinePTV1;
+					this.assetsDef.objsPtv1 = aplPTV1;
 
 
 					let assetTaskCerberusObj = new AssetTask( 'taskCerberusObj' );
@@ -289,17 +286,16 @@
 					let assetPipelineCerberus = new AssetPipeline();
 					assetPipelineCerberus.addAssetTask( assetTaskCerberusObj );
 
-					let aplCerberus = new AssetPipelineLoader( 'APL_Cerberus' );
+					let aplCerberus = new AssetPipelineLoader( 'APL_Cerberus', assetPipelineCerberus );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, -100, 0 );
 					pivot.scale.set( 50.0, 50.0, 50.0 );
 					this.scene.add( pivot );
 					aplCerberus.setBaseObject3d( pivot );
-					aplCerberus.run( assetPipelineCerberus );
-//					this.assetsDef.objsCerberus = assetPipelineCerberus;
+					this.assetsDef.objsCerberus = aplCerberus;
 
 
-					let assetTaskWaltHeadMtl = new AssetTask( 'taskPTV1mtl' );
+					let assetTaskWaltHeadMtl = new AssetTask( 'taskWaltHeadMtl' );
 					let resWaltHeadMtl = new ResourceDescriptor( 'WaltHead.mtl' )
 					.setUrl( 'models/obj/walt/WaltHead.mtl' )
 					.setNeedStringOutput( true );
@@ -320,15 +316,16 @@
 						useIndices: true
 					} );
 					let assetPipelineWaltHead = new AssetPipeline();
+					assetPipelineWaltHead.addAssetTask( assetTaskWaltHeadMtl );
+					assetPipelineWaltHead.addAssetTask( assetTaskWaltHeadMtlObjLink );
 					assetPipelineWaltHead.addAssetTask( assetTaskWaltHeadObj );
 
-					let aplWaltHead = new AssetPipelineLoader( 'APL_WaltHead' );
+					let aplWaltHead = new AssetPipelineLoader( 'APL_WaltHead', assetPipelineWaltHead );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, 75 );
 					this.scene.add( pivot );
 					aplWaltHead.setBaseObject3d( pivot );
-					aplWaltHead.run( assetPipelineWaltHead );
-//					this.assetsDef.objsWaltHead = assetPipelineWaltHead;
+					this.assetsDef.objsWaltHead = aplWaltHead;
 
 
 					let assetTaskNinjaObj = new AssetTask( 'taskNinjaObj' );
@@ -341,13 +338,12 @@
 					assetPipelineNinja.addAssetTask( assetTaskNinjaObj );
 
 
-					let aplNinja = new AssetPipelineLoader( 'APL_Ninja' );
+					let aplNinja = new AssetPipelineLoader( 'APL_Ninja', assetPipelineNinja );
 					pivot = new THREE.Object3D();
 					pivot.position.set( 0, 0, 200 );
 					this.scene.add( pivot );
 					aplNinja.setBaseObject3d( pivot );
-					aplNinja.run( assetPipelineNinja );
-//					this.assetsDef.objsNinja = assetPipelineNinja;
+					this.assetsDef.objsNinja = aplNinja;
 
 
 					// https://zomax.net/download/263/zomax-net_haze-sink-scene.zip
@@ -365,13 +361,12 @@
 					assetPipelineOven.addAssetTask( assetTaskOvenObj );
 
 
-					let aplOven = new AssetPipelineLoader( 'APL_Oven' );
+					let aplOven = new AssetPipelineLoader( 'APL_Oven', assetPipelineOven );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, 50 );
 					this.scene.add( pivot );
 					aplOven.setBaseObject3d( pivot );
-					aplOven.run( assetPipelineOven );
-//					this.assetsDef.objsZomaxOven = assetPipelineOven;
+					this.assetsDef.objsZomaxOven = aplOven;
 
 
 					let assetTaskSinkObj = new AssetTask( 'taskSinkObj' );
@@ -387,13 +382,12 @@
 					assetPipelineSink.addAssetTask( assetTaskSinkObj );
 
 
-					let aplSink = new AssetPipelineLoader( 'APL_Sink' );
+					let aplSink = new AssetPipelineLoader( 'APL_Sink', assetPipelineSink );
 					pivot = new THREE.Object3D();
 					pivot.position.set( -200, 0, 200 );
 					this.scene.add( pivot );
 					aplSink.setBaseObject3d( pivot );
-					aplSink.run( assetPipelineSink );
-//					this.assetsDef.objsZomaxSink = assetPipelineSink;
+					this.assetsDef.objsZomaxSink = aplSink;
 
 				},
 
@@ -442,7 +436,7 @@
 
 						if ( ! this.allAssets.hasOwnProperty( prepData.name ) ) {
 
-							this.loadingTaskConfigs.push( prepData );
+							this.pipelineLoaders.push( prepData );
 
 						} else {
 
@@ -460,7 +454,7 @@
 				},
 
 				reloadAssets: function () {
-					if ( this.loadingTaskConfigs.length === 0 || this.processing ) {
+					if ( this.pipelineLoaders.length === 0 || this.processing ) {
 
 						return;
 
@@ -470,8 +464,8 @@
 
 					}
 
-					let loadingTaskConfig = this.loadingTaskConfigs[ 0 ];
-					this.loadingTaskConfigs.shift();
+					let pipelineLoader = this.pipelineLoaders[ 0 ];
+					this.pipelineLoaders.shift();
 
 					let scope = this;
 					let loadAssetsProxy = function ( pipelineName, result ) {
@@ -482,24 +476,9 @@
 					};
 					this._reportProgress( { detail: { text: '' } } );
 
-					loadingTaskConfig.setOnComplete( loadAssetsProxy );
+					pipelineLoader.setOnComplete( loadAssetsProxy );
 
-					let findFile = function ( expectedExtension ) {
-						let resourceFound = null;
-						for ( let i = 0, resourceSearch; i < loadingTaskConfig.resourceDescriptors.length; i++ ) {
-
-							resourceSearch = loadingTaskConfig.resourceDescriptors[ i ];
-							if ( resourceSearch.extension === expectedExtension ) {
-
-								resourceFound = resourceSearch;
-								break;
-
-							}
-
-						}
-						return resourceFound;
-					};
-
+					pipelineLoader.run();
 				},
 
 				_handleFileSelect: function ( event, pathTexture ) {
@@ -523,49 +502,42 @@
 						alert( 'Unable to load OBJ file from given files.' );
 					}
 
-					let scope = this;
-					let callbackOnLoad = function ( event ) {
-						scope.scene.add( event.detail.baseObject3d );
-						console.log( 'Loading complete: ' + event.detail.modelName );
-						scope._reportProgress( { detail: { text: '' } } );
-					};
+					let assetTaskUserMtl = new AssetTask( 'taskUserMtl' );
+					let resUserMtl = new ResourceDescriptor( 'userMtl' )
+						.setUrl( pathTexture + '/' + fileMtl.name )
+						.setNeedStringOutput( true );
+					assetTaskUserMtl.setResourceDescriptor( resUserMtl );
+					assetTaskUserMtl.setAssetHandlerRef( MTLLoader, {
+						resourcePath: pathTexture,
+						materialOptions: {}
+					} );
 
-					let fileReader = new FileReader();
-					fileReader.onload = function( fileDataObj ) {
+					let assetTaskUserMtlObjLink = new AssetTask( 'taskUserMtlObjLink' );
+					assetTaskUserMtlObjLink.setLinker( true );
+					assetTaskUserMtlObjLink.setAssetHandler( MtlObjBridge );
 
-						let uint8Array = new Uint8Array( fileDataObj.target.result );
+					let assetTaskUserObj = new AssetTask( 'taskUserObj' );
+					let resUserObj = new ResourceDescriptor( 'userObj' ).setUrl( pathTexture + '/' + fileObj.name );
+					assetTaskUserObj.setResourceDescriptor( resUserObj );
+					assetTaskUserObj.setAssetHandlerRef( OBJLoader2, {
+						useIndices: true
+					} );
+					let assetPipelineUser = new AssetPipeline();
+					assetPipelineUser.addAssetTask( assetTaskUserMtl );
+					assetPipelineUser.addAssetTask( assetTaskUserMtlObjLink );
+					assetPipelineUser.addAssetTask( assetTaskUserObj );
 
-						let prepData = new THREE.MeshTransfer.PrepData( 'userObj' );
-						let resourceOBJ = new THREE.MeshTransfer.ResourceDescriptor( pathTexture + '/' + fileObj.name, 'OBJ' );
-						let userPivot = new THREE.Object3D();
-						userPivot.position.set(
+					let aplUser = new AssetPipelineLoader( 'APL_WaltHead', assetPipelineUser );
+					let userPivot = new THREE.Object3D();
+					userPivot.position.set(
 							-100 + 200 * Math.random(),
 							-100 + 200 * Math.random(),
 							-100 + 200 * Math.random()
-						);
-						prepData.streamMeshesTo = userPivot;
-						scope.scene.add( userPivot );
-						scope.allAssets[ prepData.modelName ] = userPivot;
+					);
+					this.scene.add( userPivot );
+					aplUser.setBaseObject3d( userPivot );
 
-						resourceOBJ.setContent( uint8Array );
-						prepData.addResource( resourceOBJ );
-						prepData.useAsync = true;
-						let callbacks = prepData.getCallbacks();
-						callbacks.setCallbackOnProgress( scope._reportProgress );
-						callbacks.setCallbackOnLoad( callbackOnLoad );
-
-						fileReader.onload = function( fileDataMtl ) {
-
-							let resourceMTL = new THREE.MeshTransfer.ResourceDescriptor( pathTexture + '/' + fileMtl.name, 'MTL' );
-							resourceMTL.setContent( fileDataMtl.target.result );
-							prepData.addResource( resourceMTL );
-
-							let objLoader = new THREE.OBJLoader2();
-							objLoader.run( prepData );
-						};
-						fileReader.readAsText( fileMtl );
-					};
-					fileReader.readAsArrayBuffer( fileObj );
+					aplUser.run();
 
 				},
 			};
