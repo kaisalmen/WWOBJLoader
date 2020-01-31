@@ -1,13 +1,15 @@
 {
   "name": "wwobjloader2",
-  "version": "3.1.1-dev",
+  "version": "3.1.2-dev",
   "versions": {
-    "obj_loader2": "3.1.1-dev",
-    "worker_support": "3.1.1-dev"
+    "obj_loader2": "3.1.2-dev",
+    "obj_loader2_parallel": "3.1.2-dev",
+    "worker_execution_support": "3.1.2-dev"
   },
   "previous_versions": {
-    "obj_loader2": "2.5.1",
-    "worker_support": "2.3.1"
+    "obj_loader2": "3.1.1",
+    "obj_loader2_parallel": "3.1.1",
+    "worker_execution_support": "3.1.1"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WLOBJLoader2.js",
@@ -26,13 +28,8 @@
     "README.md",
     "CHANGELOG.md",
     "build",
-    "docs/fonts",
-    "docs/img",
-    "docs/scripts",
-    "docs/styles",
-    "docs/*.html",
-    "docs/CHANGELOG.md",
     "examples/webgl_loader_assetpipeline.html",
+    "examples/webgl_loader_assetpipeline_obj_stage.html",
     "examples/webgl_loader_obj2.html",
     "examples/webgl_loader_obj2_bugverify.html",
     "examples/webgl_loader_obj2_options.html",
@@ -52,7 +49,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#readme",
   "dependencies": {
-    "three": "^0.112.1"
+    "three": "^0.113.2"
   },
   "devDependencies": {
     "del": "^5.1.0",
