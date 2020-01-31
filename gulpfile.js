@@ -16,13 +16,6 @@ var DIR = {
 	DOCS: 'docs/'
 };
 
-function buildHeader() {
-	return "/**\n" +
-		"  * @author Kai Salmen / https://kaisalmen.de\n" +
-		"  * Development repository: https://github.com/kaisalmen/WWOBJLoader\n" +
-		"  */" +
-		"\n\n'use strict';\n\n";
-};
 
 gulp.task( 'set-versions', function ( done ) {
 	gulp.src(
@@ -35,14 +28,14 @@ gulp.task( 'set-versions', function ( done ) {
 	gulp.src(
 		[ 'examples/jsm/loaders/OBJLoader2Parallel.js' ]
 	)
-	.pipe( replace( /OBJLoader2\.OBJLOADER2_PARALLEL_VERSION\s*=.*/g,
+	.pipe( replace( /OBJLoader2Parallel\.OBJLOADER2_PARALLEL_VERSION\s*=.*/g,
 		"OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '"+ packageContent.versions.obj_loader2_parallel + "';" ) )
 	.pipe( gulp.dest( "examples/jsm/loaders" ) );
 
 	gulp.src(
 		[ 'examples/jsm/loaders/obj2/worker/main/WorkerExecutionSupport.js']
 	)
-	.pipe( replace( /THREE\.WorkerLoader\.Director\.WORKER_LOADER_DIRECTOR_VERSION\s*=.*/g,
+	.pipe( replace( /WorkerExecutionSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
 		"WorkerExecutionSupport.WORKER_SUPPORT_VERSION = '"+ packageContent.versions.worker_execution_support + "';" ) )
 	.pipe( gulp.dest( "examples/jsm/loaders/obj2/worker/main" ) );
 	done();

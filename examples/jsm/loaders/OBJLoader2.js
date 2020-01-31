@@ -43,7 +43,7 @@ const OBJLoader2 = function ( manager ) {
 
 };
 
-OBJLoader2.OBJLOADER2_VERSION = '3.1.1';
+OBJLoader2.OBJLOADER2_VERSION = '3.1.2-dev';
 console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
 
 

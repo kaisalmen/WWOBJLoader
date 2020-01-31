@@ -1,15 +1,15 @@
 {
   "name": "wwobjloader2",
-  "version": "3.1.2-dev",
+  "version": "3.1.3-dev",
   "versions": {
     "obj_loader2": "3.1.2-dev",
-    "obj_loader2_parallel": "3.1.2-dev",
-    "worker_execution_support": "3.1.2-dev"
+    "obj_loader2_parallel": "3.1.3-dev",
+    "worker_execution_support": "3.1.1-dev"
   },
   "previous_versions": {
     "obj_loader2": "3.1.1",
-    "obj_loader2_parallel": "3.1.1",
-    "worker_execution_support": "3.1.1"
+    "obj_loader2_parallel": "3.1.2",
+    "worker_execution_support": "3.1.0"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WLOBJLoader2.js",
