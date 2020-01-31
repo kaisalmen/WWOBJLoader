@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - Web Worker Parallel Demo</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+		<link href="main.css" type="text/css" rel="stylesheet"/>
+	</head>
+
+	<body>
+		<div id="glFullscreen">
+			<canvas id="example"></canvas>
+		</div>
+		<div id="dat">
+
+		</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - Web Worker LoaderDirector Parallels Demo
+		</div>
+		<div id="feedback">
+		</div>
+
+		<script src="../../../node_modules/three/examples/js/WebGL.js"></script>
+		<script src="../../../node_modules/three/build/three.js"></script>
+		<script src="../../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../../node_modules/three/examples/js/loaders/MTLLoader.js"></script>
+		<script src="../../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+
+		<script src="../../src/loaders/MeshTransfer.js"></script>
+		<script src="../../jsm/loaders/OBJLoader2.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoader.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoaderDirector.js"></script>
+		<script src="WWParallels.js"></script>
+		<script>
+
+
+			var app = new WWParallels( document.getElementById( 'example' ) );
+
+			var wwParallelsControl = {
+				queueLength: 128,
+				workerCount: 4,
+				updateWorkerPoolSize: function () {
+					app.updateWorkerPoolSize( this.workerCount );
+				},
+				enforceSync: false,
+				run: function () {
+					app.enqueueAllAssests( this.queueLength, this.workerCount, this.enforceSync );
+				},
+				terminate: function () {
+					app.terminateManager();
+				},
+				clearAllAssests: function () {
+					app.terminateManagerAndClearScene();
+				}
+			};
+			var gui = new dat.GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+
+			var menuDiv = document.getElementById( 'dat' );
+			menuDiv.appendChild(gui.domElement);
+			var folderQueue = gui.addFolder( 'Web Worker Director Queue Control' );
+			folderQueue.add( wwParallelsControl, 'queueLength' ).min( 1 ).max( 1024 ).step( 1 );
+			folderQueue.add( wwParallelsControl, 'workerCount' ).min( 1 ).max( 16 ).step( 1 );
+			folderQueue.add( wwParallelsControl, 'updateWorkerPoolSize' ).name( 'Apply Worker Count' );
+			folderQueue.add( wwParallelsControl, 'enforceSync' );
+			folderQueue.add( wwParallelsControl, 'run' ).name( 'Run Queue' );
+			folderQueue.open();
+
+			var folderWWControl = gui.addFolder( 'Resource Management' );
+			folderWWControl.add( wwParallelsControl, 'terminate' ).name( 'Terminate WWManager' );
+			folderWWControl.add( wwParallelsControl, 'clearAllAssests' ).name( 'Clear Scene' );
+
+			var resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			var render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+
+			render();
+
+		</script>
+	</body>
+</html>

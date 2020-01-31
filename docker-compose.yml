@@ -9,8 +9,8 @@ services:
     ports:
       - 8085:80
     volumes:
-      - ./src:/project/src:ro
-      - ./resource:/project/resource:ro
-      - ./test:/project/test:ro
-    command: ["nginx", "-g", "daemon off;"]
+      - ./build/:/project/build/:rw
+      - ./examples/:/project/examples/:rw
+      - ./test:/project/test:rw
+    command: ["bash", "/project/docker/runDevEnv.sh"]
     container_name: objloader2dev

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - Mesh Spray</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link href="../common/Common.css" type="text/css" rel="stylesheet"/>
+	</head>
+
+	<body>
+	<div id="glFullscreen">
+		<canvas id="example"></canvas>
+	</div>
+	<div id="dat">
+
+	</div>
+	<div id="info">
+		<a href="http://threejs.org" target="_blank">three.js</a> - Mesh Spray
+		<div id="feedback"></div>
+	</div>
+
+		<script src="../../../node_modules/three/examples/js/WebGL.js"></script>
+		<script src="../../../node_modules/three/build/three.js"></script>
+		<script src="../../../node_modules/three/examples/js/controls/TrackballControls.js"></script>
+		<script src="../../../node_modules/three/examples/js/libs/dat.gui.min.js"></script>
+
+		<script src="../../src/loaders/MeshTransfer.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoader.js"></script>
+		<script src="../../examples/jsm/loaders/deprecated/WorkerLoaderDirector.js"></script>
+		<script src="MeshSpray.js"></script>
+		<script>
+
+			var app = new MeshSprayApp( document.getElementById( 'example' ) );
+
+			// init three.js example application
+			var resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			var render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+			app.initContent();
+
+			render();
+
+		</script>
+	</body>
+</html>
