@@ -70,8 +70,7 @@ gulp.task( 'create-docs', function ( done, cb ) {
 gulp.task( 'dl-female02', function( done ) {
 	log( 'Downloading female02:' );
 	return remoteSrc(
-		[ 'female02.obj', 'female02.mtl', 'female02_vertex_colors.obj', '01_-_Default1noCulling.JPG', '02_-_Default1noCulling.JPG', '03_-_Default1noCulling.JPG' ],
-		{
+		[ 'female02.obj', 'female02.mtl', 'female02_vertex_colors.obj', '01_-_Default1noCulling.JPG', '02_-_Default1noCulling.JPG', '03_-_Default1noCulling.JPG' ],	{
 			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/female02/'
 		}
 	).pipe( gulp.dest( './resource/obj/female02/' ) );
@@ -81,8 +80,7 @@ gulp.task( 'dl-female02', function( done ) {
 gulp.task( 'dl-male02', gulp.series( 'dl-female02', function( done ) {
 	log( 'Downloading male02:' );
 	return remoteSrc(
-		[ 'male02.obj', 'male02.mtl', '01_-_Default1noCulling.JPG', 'male-02-1noCulling.JPG', 'orig_02_-_Defaul1noCulling.JPG' ],
-		{
+		[ 'male02.obj', 'male02.mtl', '01_-_Default1noCulling.JPG', 'male-02-1noCulling.JPG', 'orig_02_-_Defaul1noCulling.JPG' ], {
 			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/male02/'
 		}
 	).pipe( gulp.dest( './resource/obj/male02/' ) );
@@ -92,8 +90,7 @@ gulp.task( 'dl-male02', gulp.series( 'dl-female02', function( done ) {
 gulp.task( 'dl-cerberus', gulp.series( 'dl-male02', function( done ) {
 	log( 'Downloading cerberus:' );
 	return remoteSrc(
-		[ 'Cerberus.obj' ],
-		{
+		[ 'Cerberus.obj' ],	{
 			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/cerberus/'
 		}
 	)
@@ -101,23 +98,21 @@ gulp.task( 'dl-cerberus', gulp.series( 'dl-male02', function( done ) {
 	done();
 } ) );
 
-gulp.task( 'dl-vive-controller', gulp.series( 'dl-cerberus', function( done ) {
-	log( 'Downloading vive-controller:' );
+gulp.task( 'dl-ninja', gulp.series( 'dl-cerberus', function( done ) {
+	log( 'Downloading ninja:' );
 	return remoteSrc(
-		[ 'vr_controller_vive_1_5.obj' ],
-		{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/vive-controller/'
+		[ 'ninjaHead_Low.obj' ], {
+			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/ninja/'
 		}
 	)
-	.pipe( gulp.dest( './resource/obj/vive-controller/' ) );
+	.pipe( gulp.dest( './resource/obj/ninja/' ) );
 	done();
 } ) );
 
-gulp.task( 'dl-walt', gulp.series( 'dl-vive-controller', function( done ) {
+gulp.task( 'dl-walt', gulp.series( 'dl-ninja', function( done ) {
 	log( 'Downloading walt:' );
 	return remoteSrc(
-		[ 'WaltHead.obj', 'WaltHead.mtl' ],
-		{
+		[ 'WaltHead.obj', 'WaltHead.mtl' ],	{
 			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/walt/'
 		}
 	)
@@ -128,8 +123,7 @@ gulp.task( 'dl-walt', gulp.series( 'dl-vive-controller', function( done ) {
 gulp.task( 'dl-ptv1', gulp.series( 'dl-walt', function( done ) {
 	log( 'Downloading model PTV1:' );
 	return remoteSrc(
-		[ 'PTV1.zip' ],
-		{
+		[ 'PTV1.zip' ],	{
 			base: 'https://kaisalmen.de/resource/obj/PTV1/'
 		}
 	)
@@ -139,35 +133,27 @@ gulp.task( 'dl-ptv1', gulp.series( 'dl-walt', function( done ) {
 } ) );
 
 gulp.task( 'dl-sink', gulp.series( 'dl-ptv1', function( done ) {
-	log( 'Downloading models from Zomax currently not possible' );
-	done();
-/*
-	log( 'Downloading model Sink from Zomax (Cornelius Dämmrich):' );
+	log( 'Downloading model Sink created by Cornelius Dämmrich (https://corneliusdammrich.com/):' );
 	return remoteSrc(
-		[ 'zomax-net_haze-sink-scene.zip' ],
-		{
-			base: 'https://zomax.net/download/263/'
+		[ 'zomax-net_haze-sink-scene.zip' ], {
+			base: 'https://kaisalmen.de/resource/obj/zomax/'
 		}
 	)
 	.pipe( decompress() )
-	.pipe( gulp.dest( './resource/obj/zomax/' ) );
-*/
+	.pipe( gulp.dest( './resource/obj/zomax/' ) )
+	.done();
 } ) );
 
 gulp.task( 'dl-oven', gulp.series( 'dl-sink', function( done ) {
-	log( 'Downloading models from Zomax currently not possible' );
-	done();
-/*
-	log( 'Downloading model Oven from Zomax (Cornelius Dämmrich):' );
+	log( 'Downloading model Oven created by Cornelius Dämmrich (https://corneliusdammrich.com/):' );
 	return remoteSrc(
-		[ 'zomax-net_haze-oven-scene.zip' ],
-		{
-			base: 'https://zomax.net/download/260/'
+		[ 'zomax-net_haze-oven-scene.zip' ], {
+			base: 'https://kaisalmen.de/resource/obj/zomax/'
 		}
 	)
 	.pipe( decompress() )
-	.pipe( gulp.dest( './resource/obj/zomax/' ) );
-*/
+	.pipe( gulp.dest( './resource/obj/zomax/' ) )
+	.done();
 } ) );
 
 
