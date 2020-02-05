@@ -8,6 +8,8 @@ OBJLoader2 is a new loader for the OBJ file format that is additionally executab
 
 Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
 
+# IMPORTANT: The info in this README is outdated and needs to be updated!!!!
+
 ## Repository structure / NPM content
 The directory structure is organized as follows:
 - **build**: Contains build libraries and documentation (NPM only)
