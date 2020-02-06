@@ -27,7 +27,6 @@ gulp.task( 'set-versions', function ( done ) {
 
 	gulp.src(
 		[ 'examples/jsm/loaders/OBJLoader2Parallel.js' ]
-			'src/loaders/support/NodeLoaderWorkerSupport.js',
 	)
 	.pipe( replace( /OBJLoader2Parallel\.OBJLOADER2_PARALLEL_VERSION\s*=.*/g,
 		"OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '"+ packageContent.versions.obj_loader2_parallel + "';" ) )
@@ -53,9 +52,8 @@ gulp.task( 'create-docs', function ( done, cb ) {
 	gulp.src(
 			[
 				'README.md',
-				'src/loaders/OBJLoader2.js',
-				'src/loaders/OBJLoader2Parallel.js'
-				'src/loaders/support/NodeLoaderWorkerSupport.js',
+				'examples/jsm/loaders/OBJLoader2.js',
+				'examples/jsm/loaders/OBJLoader2Parallel.js'
 			],
 			{
 				read: false

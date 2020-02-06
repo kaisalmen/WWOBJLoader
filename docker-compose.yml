@@ -11,5 +11,6 @@ services:
     volumes:
       - ./build/:/project/build/:rw
       - ./examples/:/project/examples/:rw
+      - ./src/:/project/src/:rw
     command: ["bash", "/project/docker/runDevEnv.sh"]
     container_name: objloader2dev

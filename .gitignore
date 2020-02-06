@@ -2,7 +2,7 @@
 
 /archive
 /build
-/node_modules
+/docs/
 
 /examples/jsm/controls/*.js
 /examples/jsm/controls/*.d.ts
@@ -27,4 +27,5 @@
 /examples/models/obj/zomax
 /examples/models/pcd
 
+/node_modules
 /src
