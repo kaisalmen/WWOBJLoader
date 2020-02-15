@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR_ME=$(realpath $(dirname ${0}))
-DIR_BASE=$(realpath ${DIR_ME}/..)
+DIR_BASE=$(realpath ${DIR_ME}/../..)
 
 # This is run inside the container
 if [[ ! -d ${DIR_BASE}/build ]]; then
@@ -19,3 +19,5 @@ cp -f ${DIR_BASE}/node_modules/three/examples/jsm/libs/dat.gui.module.js ${DIR_B
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/libs/gunzip.module.min.js ${DIR_BASE}/examples/jsm/libs/gunzip.module.min.js
 
 cp -fr ${DIR_BASE}/node_modules/three/src ${DIR_BASE}
+
+( cd ${DIR_BASE}/project && npm install )

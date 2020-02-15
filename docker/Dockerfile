@@ -1,16 +1,13 @@
 FROM ubuntu:18.04
 
-RUN apt update && apt upgrade -y \
-    && apt install -y curl
+RUN apt update && apt upgrade -y && apt install -y curl
 
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
-    && apt install -y nodejs nginx
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN apt install -y nodejs nginx
+RUN npm install gulp-cli -g \
+    && npm install gulp -D
 
-RUN mkdir -p /project/docker
-
-COPY package.json /project/package.json
-RUN cd project && npm install
+RUN apt autoremove \
+    && mkdir -p /project/node_modules && mkdir -p /project/examples
 
 COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/createDevEnv.sh /project/docker/createDevEnv.sh
-COPY docker/runDevEnv.sh /project/docker/runDevEnv.sh

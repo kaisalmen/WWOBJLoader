@@ -1,5 +1,44 @@
 # Changelog
 
+## 3.1.3-dev
+- Changed structure of the repository to mimic three.js layout
+- Fixes #18335 CodeSerializer works with uglified code
+- All multiple files loading examples now use `AssetPipelineLoader` prototype.
+
+## 3.1.2
+- three.js issue 17769:
+  - Move `ObjectManipulator` into `WorkerRunner` and export it from there
+  - Remove `OBJLoader2Parser` import from `WorkerRunner`. Remove unneeded functions from DefaultWorkerPayloadHandler and WorkerRunner and aligned typescript definitions
+  - The parser in DefaultWorkerPayloadHandler should not be limited to `OBJ2LoaderParser`. js and ts was not aligned here.
+
+## 3.1.1.
+- three.js issue 17615/17711: ObjLoader2Parser materials are not applied in worker 
+- Additionally, allow material override from `OBJLoader2#addMaterials` to `MaterialHandler#addMaterials`
+
+## 3.1.0
+- `OBJLoader2` is now based on `Loader` (three.js issue 17406)
+- Updated typescript definitions (fixed three.js issue 17364) Note: `OBJLoader2Parallel#parse` is implemented differently
+- Unified load and parse behaviour of `OBJLoader2` and `OBJLoader2Parallel`: Separate onParseComplete is gone. onLoad serves the same purpose in both sync an parallel use cases
+- Fix logging verbosity (MaterialHandler, etc)
+- Fixed three.js 15227 along
+
+## 3.0.0
+- Transformed the whole code base to jsm and added typescript definitions (in scope of complete three.js code base transformation).
+- Removed `LoaderWorkerDirector`. This is going to be replaced with more generic approach likely driven by three.js
+- `OBJLoader2` extends `OBJLoader2Parser`: Moved common functions (parser configuration and callback) to `OBJLoader2Parser`. Here aim was to remove redundant function definitions in both the independent parser code and in `OBJLoader2`.
+- `OBJLoader2Parser`: All private functions are now identified by "_". Provides functions and members for extensions.
+- `WorkerExecutionSupport` is able to create the worker code for `OBJLoader2Parallel` by concatenation of existing code pieces (memory or files) or loading a jsm file that contains all dependencies.
+- `MaterialHandler` and `MeshReceiver` have been extracted from OBJLoader2. The are re-usable `WorkerExecutionSupport` context.
+- All MTL handling code has been removed from OBJLoader2. New approach via bridge `MtlObjBridge`.
+- OBJLoader2 will not get any further dependencies. `WorkerExecutionSupport` will use OBJLoader2 and other loaders.
+- OBJ Verify has been updated to use modules for both `OBJLoader` and `OBJLoader2`.
+- Started `AssetPipelineLoader` prototyping
+
+## 2.5.1
+- three.js issue 15219: Materials are initialised as objects.
+- three.js issue 15468. `OBJLoader2`: Reduced log level from warn to info when defaultMaterial is used when material name was not resolvable.
+- three.js issue 16307: Backported onError function usage from OBJLoader2/Parser V3. Unified callback naming
+
 ## 2.5.0
 - Issue #47: Fixed incorrect vertex color pointerC initialization (omitting first set of values)
 - Pull Request #46: It is now possible to run `THREE.OBJLoader2` in nodejs 10.5.0+. Thanks to @Cobertos
