@@ -24,7 +24,8 @@ From the root of the repo just do:
 ```shell script
 docker-compose up -d --build
 ```
-It will init all files required (build directory and src to get all used three.js code working properly) and start an http server on port 8085.
+It will init all files required (build directory and src to get all used three.js code working properly) and start a [local http server on port 8085](http://localhost:8085).
+Nginx configuration is stored here: `docker/nginx.conf`. Adjust according your needs and rebuild the container.
 If you want to update the npm configuration, e.g. change `package.json` then do:
 ```shell script
 docker exec -it obj2dev bash -c "cd /project && npm install"
@@ -36,18 +37,18 @@ docker exec -it obj2dev bash -c "cd /project && gulp set-versions"
 
 If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
 After you have cloned this repository locally and have npm and gulp set-up, please run:<br>
-```bash
+```shell script
 npm install
 ```
 
 ## Build
-From the project's root run `gulp` to create The documentation in directory **build/docs** and the bundles in directory **build**:
- - **OBJLoader2[.min].js**: Contains all code required for the loader to work
- - **LoaderSupport[.min].js**: Consists of common support functions, worker control and worker director code
+
+### Docs
+From the project's root run `gulp` to create The documentation in directory **build/docs** and set the versions. No more bundling is performed.
  
 ### Models and resources
 Use gulp to download missing resources (OBJ, MTL files and textures):
-```bash
+```shell script
 gulp get-resources
 ```
 
@@ -78,23 +79,7 @@ gulp get-resources
 [OBJLoader2 basic usage](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
 [OBJLoader2 usage options](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
 [OBJLoader2 Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
-[LoaderDirector Mesh Spray](https://kaisalmen.de/wwobjloader2/meshspray/main.min.html)<br>
-[LoaderDirector Parallels Demo](https://kaisalmen.de/wwobjloader2/wwparallels/main.min.html)<br>
 
-## Http server for development
-If you have `docker` and `docker-compose` installed on your development platform, you are now able to launch `nginx` which is serving the complete content of this repository. Any changes to files are directly available in the HTTP server. This is solely meant for development.
-
-From the command-line, use the following command to launch the HTTP server:
-```bash
-docker-compose up -d
-```
-Content is available here: [http://localhost:8085](http://localhost:8085)<br>
-Nginx configuration is stored here: `resource/nginx/nginx.conf`. Adjust according your needs.
- 
-From the command-line, use the following to stop the HTTP server:
-```bash
-docker-compose down
-```
 
 Have fun!
 
