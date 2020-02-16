@@ -148,7 +148,8 @@
 
 
 			// issue: 14
-			let assetPipelineLoader14 = new AssetPipelineLoader( 'Issue14' );
+			let assetPipeline14 = new AssetPipeline();
+			let assetPipelineLoader14 = new AssetPipelineLoader( 'Issue14', assetPipeline14 );
 
 			let pivot14 = new THREE.Object3D();
 			pivot14.position.set( -400, 0, 0 );
@@ -168,16 +169,16 @@
 			assetTask14Obj.setResourceDescriptor( new ResourceDescriptor( 'Issue14.obj' ).setUrl( './models/obj/14/bbd3874250e2414aaa6a4c84c8a21656.obj' ) );
 			assetTask14Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline14 = new AssetPipeline();
 			assetPipeline14.addAssetTask( assetTask14Mtl );
 			assetPipeline14.addAssetTask( assetTask14MtlObjLink );
 			assetPipeline14.addAssetTask( assetTask14Obj );
 
-			assetPipelineLoader14.run( assetPipeline14 );
+			assetPipelineLoader14.run();
 
 
 			// issue: 14032
-			let assetPipelineLoader14032 = new AssetPipelineLoader( 'Issue14032' );
+			let assetPipeline14032 = new AssetPipeline();
+			let assetPipelineLoader14032 = new AssetPipelineLoader( 'Issue14032', assetPipeline14032 );
 
 			let pivot14032 = new THREE.Object3D();
 			pivot14032.position.set( -325, 50, 0 );
@@ -196,16 +197,16 @@
 			assetTask14032Obj.setResourceDescriptor( new ResourceDescriptor( 'union.obj' ).setUrl( './models/obj/14032/union.obj' ) );
 			assetTask14032Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline14032 = new AssetPipeline();
 			assetPipeline14032.addAssetTask( assetTask14032Mtl );
 			assetPipeline14032.addAssetTask( assetTask14032MtlObjLink );
 			assetPipeline14032.addAssetTask( assetTask14032Obj );
 
-			assetPipelineLoader14032.run( assetPipeline14032 );
+			assetPipelineLoader14032.run();
 
 
 			// issue: 21
-			let assetPipelineLoader21 = new AssetPipelineLoader( 'Issue21' );
+			let assetPipeline21 = new AssetPipeline();
+			let assetPipelineLoader21 = new AssetPipelineLoader( 'Issue21', assetPipeline21 );
 			let pivot21 = new THREE.Object3D();
 			pivot21.position.set( -225, 0, 0 );
 			pivot21.scale.set( 25.0, 25.0, 25.0 );
@@ -224,16 +225,16 @@
 			assetTask21Obj.setResourceDescriptor( new ResourceDescriptor( 'Issue21.obj' ).setUrl( './models/obj/21/Table_Photo_Frame_03.obj' ) );
 			assetTask21Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline21 = new AssetPipeline();
 			assetPipeline21.addAssetTask( assetTask21Mtl );
 			assetPipeline21.addAssetTask( assetTask21MtlObjLink );
 			assetPipeline21.addAssetTask( assetTask21Obj );
 
-			assetPipelineLoader21.run( assetPipeline21 );
+			assetPipelineLoader21.run();
 
 
 			// issue: 12120
-			let assetPipelineLoader12120 = new AssetPipelineLoader( 'Issue12120' );
+			let assetPipeline12120 = new AssetPipeline();
+			let assetPipelineLoader12120 = new AssetPipelineLoader( 'Issue12120', assetPipeline12120 );
 			let pivot12120 = new THREE.Object3D();
 			pivot12120.position.set( -325, 0, -100 );
 			pivot12120.scale.set( 0.01, 0.01, 0.01 );
@@ -252,16 +253,16 @@
 			assetTask12120Obj.setResourceDescriptor( new ResourceDescriptor( 'Issue12120.obj' ).setUrl( './models/obj/12120/zjej_abm_f01_out_T005.obj' ) );
 			assetTask12120Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline12120 = new AssetPipeline();
 			assetPipeline12120.addAssetTask( assetTask12120Mtl );
 			assetPipeline12120.addAssetTask( assetTask12120MtlObjLink );
 			assetPipeline12120.addAssetTask( assetTask12120Obj );
 
-			assetPipelineLoader12120.run( assetPipeline12120 );
+			assetPipelineLoader12120.run();
 
 
 			// issue: 12324
-			let assetPipelineLoader12324 = new AssetPipelineLoader( 'Issue12324' );
+			let assetPipeline12324 = new AssetPipeline();
+			let assetPipelineLoader12324 = new AssetPipelineLoader( 'Issue12324', assetPipeline12324 );
 			let pivot12324 = new THREE.Object3D();
 			pivot12324.position.set( -50, 0, 0 );
 			app.scene.add( pivot12324 );
@@ -279,17 +280,17 @@
 			assetTask12324Obj.setResourceDescriptor( new ResourceDescriptor( 'Issue12324.obj' ).setUrl( './models/obj/12324/rampanueva.obj' ) );
 			assetTask12324Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline12324 = new AssetPipeline();
 			assetPipeline12324.addAssetTask( assetTask12324Mtl );
 			assetPipeline12324.addAssetTask( assetTask12324MtlObjLink );
 			assetPipeline12324.addAssetTask( assetTask12324Obj );
 
-			assetPipelineLoader12324.run( assetPipeline12324 );
+			assetPipelineLoader12324.run();
 
 
 
 			// issue: 11811A
-			let assetPipelineLoader11811A = new AssetPipelineLoader( 'Issue11811A' );
+			let assetPipeline11811A = new AssetPipeline();
+			let assetPipelineLoader11811A = new AssetPipelineLoader( 'Issue11811A', assetPipeline11811A );
 			let pivot11811A = new THREE.Object3D();
 			pivot11811A.position.set( 50, 0, 0 );
 			pivot11811A.scale.set( 0.25, 0.25, 0.25 );
@@ -308,16 +309,16 @@
 			assetTask11811AObj.setResourceDescriptor( new ResourceDescriptor( 'Issue11811a.obj' ).setUrl( './models/obj/11811/3dbpo10518T.obj' ) );
 			assetTask11811AObj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline11811A = new AssetPipeline();
 			assetPipeline11811A.addAssetTask( assetTask11811AMtl );
 			assetPipeline11811A.addAssetTask( assetTask11811AMtlObjLink );
 			assetPipeline11811A.addAssetTask( assetTask11811AObj );
 
-			assetPipelineLoader11811A.run( assetPipeline11811A );
+			assetPipelineLoader11811A.run();
 
 
 			// issue: 11811B
-			let assetPipelineLoader11811B = new AssetPipelineLoader( 'Issue11811B' );
+			let assetPipeline11811B = new AssetPipeline();
+			let assetPipelineLoader11811B = new AssetPipelineLoader( 'Issue11811B', assetPipeline11811B );
 			let pivot11811B = new THREE.Object3D();
 			pivot11811B.position.set( 150, 0, 0 );
 			pivot11811B.scale.set( 0.25, 0.25, 0.25 );
@@ -336,15 +337,15 @@
 			assetTask11811BObj.setResourceDescriptor( new ResourceDescriptor( 'Issue11811b.obj' ).setUrl( './models/obj/11811/3dbts103601T.obj' ) );
 			assetTask11811BObj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline11811B = new AssetPipeline();
 			assetPipeline11811B.addAssetTask( assetTask11811BMtl );
 			assetPipeline11811B.addAssetTask( assetTask11811BMtlObjLink );
 			assetPipeline11811B.addAssetTask( assetTask11811BObj );
 
-			assetPipelineLoader11811B.run( assetPipeline11811B );
+			assetPipelineLoader11811B.run();
 
 			// Issue: 27 door
-			let assetPipelineLoader27Door = new AssetPipelineLoader( 'Issue27Door' );
+			let assetPipeline27Door = new AssetPipeline();
+			let assetPipelineLoader27Door = new AssetPipelineLoader( 'Issue27Door', assetPipeline27Door );
 			let pivot27Door = new THREE.Object3D();
 			pivot27Door.position.set( 250, 0, 0 );
 			pivot27Door.scale.set( 0.5, 0.5, 0.5 );
@@ -363,15 +364,15 @@
 			assetTask27DoorObj.setResourceDescriptor( new ResourceDescriptor( 'Issue27door.obj' ).setUrl( './models/obj/27/door.obj' ) );
 			assetTask27DoorObj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline27Door = new AssetPipeline();
 			assetPipeline27Door.addAssetTask( assetTask27DoorMtl );
 			assetPipeline27Door.addAssetTask( assetTask27DoorMtlObjLink );
 			assetPipeline27Door.addAssetTask( assetTask27DoorObj );
 
-			assetPipelineLoader27Door.run( assetPipeline27Door );
+			assetPipelineLoader27Door.run();
 
 			// Issue: 27 wall2
-			let assetPipelineLoader27Wall2 = new AssetPipelineLoader( 'Issue27Wall2' );
+			let assetPipeline27Wall2 = new AssetPipeline();
+			let assetPipelineLoader27Wall2 = new AssetPipelineLoader( 'Issue27Wall2', assetPipeline27Wall2 );
 			let pivot27Wall2 = new THREE.Object3D();
 			pivot27Wall2.position.set( 350, 0, 0 );
 			pivot27Wall2.scale.set( 0.5, 0.5, 0.5 );
@@ -390,12 +391,11 @@
 			assetTask27Wall2Obj.setResourceDescriptor( new ResourceDescriptor( 'Issue27wall2.obj' ).setUrl( './models/obj/27/wall2.obj' ) );
 			assetTask27Wall2Obj.setAssetHandlerRef( OBJLoader2 );
 
-			let assetPipeline27Wall2 = new AssetPipeline();
 			assetPipeline27Wall2.addAssetTask( assetTask27Wall2Mtl );
 			assetPipeline27Wall2.addAssetTask( assetTask27Wall2MtlObjLink );
 			assetPipeline27Wall2.addAssetTask( assetTask27Wall2Obj );
 
-			assetPipelineLoader27Wall2.run( assetPipeline27Wall2 );
+			assetPipelineLoader27Wall2.run();
 
 		</script>
 	</body>
