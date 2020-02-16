@@ -3,7 +3,7 @@
     "allowUnknownTags": true
   },
   "opts": {
-    "destination": "./docs"
+    "destination": "./build/docs"
   },
   "plugins": [
     "plugins/markdown"

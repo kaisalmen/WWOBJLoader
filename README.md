@@ -24,15 +24,18 @@ From the root of the repo just do:
 ```shell script
 docker-compose up -d --build
 ```
-It will start an http server on port 8085. If you want to update the npm configuration, e.g. change `package.json` then do:
+It will init all files required (build directory and src to get all used three.js code working properly) and start an http server on port 8085.
+If you want to update the npm configuration, e.g. change `package.json` then do:
 ```shell script
-docker exec -it objloader2dev bash -c "cd /project && npm install"
-docker exec -it objloader2dev bash -c "gulp -f /project/gulpfile.js"
+docker exec -it obj2dev bash -c "cd /project && npm install"
+```
+If you want to run something with gulp do for example:
+```shell script
+docker exec -it obj2dev bash -c "cd /project && gulp set-versions"
 ```
 
-Before you can start to play around some post-checkout initialization steps have to be performed.<br>
-**[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** must be installed on your local platform. They are required for retrieving dependencies and for building combined source bundles and the documentation.
-After you have cloned this repository locally, please run:<br>
+If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
+After you have cloned this repository locally and have npm and gulp set-up, please run:<br>
 ```bash
 npm install
 ```

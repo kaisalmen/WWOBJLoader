@@ -13,7 +13,7 @@ var config = require('./jsdoc.json');
 var packageContent = require('./package.json');
 
 var DIR = {
-	DOCS: 'docs/'
+	DOCS: 'build/docs/'
 };
 
 
@@ -49,19 +49,18 @@ gulp.task( 'create-docs', function ( done, cb ) {
 	del.sync( DIR.DOCS + 'styles' );
 	del.sync( DIR.DOCS + '*.html' );
 	del.sync( DIR.DOCS + '*.md' );
-	gulp.src(
-			[
-				'README.md',
-				'examples/jsm/loaders/OBJLoader2.js',
-				'examples/jsm/loaders/OBJLoader2Parallel.js'
-			],
-			{
-				read: false
-			}
+	gulp.src( [
+			'examples/jsm/loaders/OBJLoader2.js',
+			'examples/jsm/loaders/OBJLoader2Parallel.js'
+		],
+			{ read: false }
 		)
 		.pipe( jsdoc( config, cb ) );
 
-	gulp.src( [ 'CHANGELOG.md' ] )
+	gulp.src( [
+			'README.md',
+			'CHANGELOG.md'
+		] )
 		.pipe( gulp.dest( DIR.DOCS ) );
 	done();
 } );

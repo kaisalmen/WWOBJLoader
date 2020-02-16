@@ -1,22 +1,14 @@
 version: '3.7'
 
 services:
-  objloader2dev:
-    image: objloader2dev
+  obj2dev:
+    image: obj2dev
     build:
       dockerfile: docker/Dockerfile
       context: .
     ports:
       - 8085:80
     volumes:
-      - ./build/:/project/build/:rw
-      - ./examples/:/project/examples/:rw
-      - ./src/:/project/src/:rw
-      - ./gulpfile.js:/project/gulpfile.js:rw
-      - ./package.json:/project/package.json:rw
-      - ./package-lock.json:/project/package-lock.json:rw
-      - ./jsdoc.json:/project/jsdoc.json:rw
-      - ./CHANGELOG.md:/project/CHANGELOG.md:rw
-      - ./README.md:/project/README.md:rw
-    command: ["bash", "/project/examples/scripts/runDevEnv.sh"]
-    container_name: objloader2dev
+      - ./:/project/:rw
+    command: ["bash", "/project/docker/runDevEnv.sh"]
+    container_name: obj2dev
