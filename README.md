@@ -12,7 +12,7 @@ Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
 From now on I will no longer release `OBJLoader2` and `OBJLoader2Parallel` and sub-sequent features on npm. Extensions&Updates will be made available via three.js monthly release.
 
 
-## Repository structure / NPM content
+## Repository structure
 The directory structure now mimics the three.js directory structure to easy porting of changes:
 - **examples**: Contains Tests/HTML examples
 - **examples/jsm**: Contains the sources for the loaders
