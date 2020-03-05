@@ -15,7 +15,7 @@ import { CodeSerializer } from "./obj2/utils/CodeSerializer.js";
 import { OBJLoader2 } from "./OBJLoader2.js";
 
 // Imports only related to worker (when standard workers (modules aren't supported) are used)
-import { OBJLoader2Parser } from "./obj2/worker/parallel/OBJLoader2Parser.js";
+import { OBJLoader2Parser } from "./obj2/OBJLoader2Parser.js";
 import {
 	WorkerRunner,
 	DefaultWorkerPayloadHandler,
@@ -92,7 +92,7 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 		let codeBuilderInstructions = new CodeBuilderInstructions( true, true, this.preferJsmWorker );
 		if ( codeBuilderInstructions.isSupportsJsmWorker() ) {
 
-			codeBuilderInstructions.setJsmWorkerFile( '../examples/loaders/jsm/obj2/worker/parallel/jsm/OBJLoader2Worker.js' );
+			codeBuilderInstructions.setJsmWorkerFile( './jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js' );
 
 		}
 		if ( codeBuilderInstructions.isSupportsStandardWorker() ) {

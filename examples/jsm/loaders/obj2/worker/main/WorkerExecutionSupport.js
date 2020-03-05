@@ -387,6 +387,7 @@ WorkerExecutionSupport.prototype = {
 
 		};
 		this.worker.native.onmessage = scopedReceiveWorkerMessage;
+		this.worker.native.onerror = scopedReceiveWorkerMessage;
 		if ( defaultGeometryType !== undefined && defaultGeometryType !== null ) {
 
 			this.worker.workerRunner.defaultGeometryType = defaultGeometryType;
@@ -418,9 +419,15 @@ WorkerExecutionSupport.prototype = {
 	 */
 	_receiveWorkerMessage: function ( event ) {
 
+		// fast-fail in case of error
+		if ( event.type === "error" ) {
+
+			console.error( event );
+			return;
+
+		}
 		let payload = event.data;
 		let workerRunnerName = this.worker.workerRunner.name;
-
 		switch ( payload.cmd ) {
 
 			case 'assetAvailable':

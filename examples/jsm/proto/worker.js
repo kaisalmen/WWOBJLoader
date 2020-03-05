@@ -5,5 +5,5 @@
 import { sayHello } from './greet.js';
 
 addEventListener('message', e => {
-	postMessage(sayHello());
+	postMessage( sayHello() );
 });

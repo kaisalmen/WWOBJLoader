@@ -20,6 +20,9 @@
 				type: 'module'
 			} );
 
+			worker.onmessage = m => console.log( m );
+
+			worker.postMessage( "Trigger Worker" );
 		</script>
 	</body>
 </html>
