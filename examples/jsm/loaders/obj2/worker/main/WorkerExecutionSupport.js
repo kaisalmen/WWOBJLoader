@@ -19,7 +19,7 @@ const CodeBuilderInstructions = function ( supportsStandardWorker, supportsJsmWo
 	this.codeFragments = [];
 	this.importStatements = [];
 
-	this.jsmWorkerFile = null;
+	this.jsmWorkerUrl = null;
 	this.defaultGeometryType = 0;
 
 };
@@ -49,13 +49,13 @@ CodeBuilderInstructions.prototype = {
 	/**
 	 * Set the full path to the module that contains the worker code.
 	 *
-	 * @param {String} jsmWorkerFile
+	 * @param {String} jsmWorkerUrl
 	 */
-	setJsmWorkerFile: function ( jsmWorkerFile ) {
+	setJsmWorkerUrl: function ( jsmWorkerUrl ) {
 
-		if ( jsmWorkerFile !== undefined && jsmWorkerFile !== null ) {
+		if ( jsmWorkerUrl !== undefined && jsmWorkerUrl !== null ) {
 
-			this.jsmWorkerFile = jsmWorkerFile;
+			this.jsmWorkerUrl = jsmWorkerUrl;
 
 		}
 
@@ -289,10 +289,9 @@ WorkerExecutionSupport.prototype = {
 		let workerAvailable = this._buildWorkerCheckPreconditions( true, timeLabel );
 		if ( ! workerAvailable ) {
 
-			let workerFileUrl = new URL( codeBuilderInstructions.jsmWorkerFile, window.location.href ).href;
 			try {
 
-				let worker = new Worker( workerFileUrl, { type: "module" } );
+				let worker = new Worker( codeBuilderInstructions.jsmWorkerUrl.href, { type: "module" } );
 				this._configureWorkerCommunication( worker, true, codeBuilderInstructions.defaultGeometryType, timeLabel );
 
 			} catch ( e ) {

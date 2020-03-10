@@ -34,6 +34,7 @@ const OBJLoader2Parallel = function ( manager ) {
 
 	OBJLoader2.call( this, manager );
 	this.preferJsmWorker = false;
+	this.jsmWorkerUrl = null;
 
 	this.executeParallel = true;
 	this.workerExecutionSupport = new WorkerExecutionSupport();
@@ -42,7 +43,7 @@ const OBJLoader2Parallel = function ( manager ) {
 
 OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '3.1.3-dev';
 console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
-
+OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH = './jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js';
 
 OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototype ), {
 
@@ -64,11 +65,16 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	/**
 	 * Set whether jsm modules in workers should be used. This requires browser support which is currently only experimental.
 	 * @param preferJsmWorker True or False
+	 * @param jsmWorkerUrl Provide complete jsm worker URL otherwise relative path to this module may not be correct
 	 * @return {OBJLoader2Parallel}
 	 */
-	setPreferJsmWorker: function ( preferJsmWorker ) {
+	setJsmWorker: function ( preferJsmWorker, jsmWorkerUrl ) {
 
 		this.preferJsmWorker = preferJsmWorker === true;
+		if ( jsmWorkerUrl === undefined || jsmWorkerUrl === null ) {
+			throw "The url to the jsm worker is not valid. Aborting..."
+		}
+		this.jsmWorkerUrl = jsmWorkerUrl;
 		return this;
 
 	},
@@ -92,7 +98,7 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 		let codeBuilderInstructions = new CodeBuilderInstructions( true, true, this.preferJsmWorker );
 		if ( codeBuilderInstructions.isSupportsJsmWorker() ) {
 
-			codeBuilderInstructions.setJsmWorkerFile( './jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js' );
+			codeBuilderInstructions.setJsmWorkerUrl( this.jsmWorkerUrl );
 
 		}
 		if ( codeBuilderInstructions.isSupportsStandardWorker() ) {
