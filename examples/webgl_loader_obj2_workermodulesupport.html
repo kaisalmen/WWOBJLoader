@@ -14,7 +14,7 @@
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
-		<link rel="modulepreload" href="./jsm/loaders/obj2/worker/parallel/jsm/OBJLoader2Worker.js">
+		<link rel="modulepreload" href="jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js">
 
 		<script type="module">
 
@@ -86,7 +86,7 @@
 
 					let objLoader2Parallel = new OBJLoader2Parallel();
 					objLoader2Parallel.setModelName( modelName )
-							.setPreferJsmWorker( true )
+						.setJsmWorker( true, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setExecuteParallel( true );
 
 					let callbackOnLoad = function ( message ) {

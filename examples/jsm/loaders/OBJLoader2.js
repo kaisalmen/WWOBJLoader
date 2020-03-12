@@ -9,7 +9,7 @@ import {
 	Loader
 } from "../../../build/three.module.js";
 
-import { OBJLoader2Parser } from "./obj2/worker/parallel/OBJLoader2Parser.js";
+import { OBJLoader2Parser } from "./obj2/OBJLoader2Parser.js";
 import { MeshReceiver } from "./obj2/shared/MeshReceiver.js";
 import { MaterialHandler } from "./obj2/shared/MaterialHandler.js";
 
