@@ -52,7 +52,7 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	/**
 	 * Execution of parse in parallel via Worker is default, but normal {OBJLoader2} parsing can be enforced via false here.
 	 *
-	 * @param executeParallel True or False
+	 * @param {boolean} executeParallel True or False
 	 * @return {OBJLoader2Parallel}
 	 */
 	setExecuteParallel: function ( executeParallel ) {
@@ -64,8 +64,8 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 
 	/**
 	 * Set whether jsm modules in workers should be used. This requires browser support which is currently only experimental.
-	 * @param preferJsmWorker True or False
-	 * @param jsmWorkerUrl Provide complete jsm worker URL otherwise relative path to this module may not be correct
+	 * @param {boolean} preferJsmWorker True or False
+	 * @param {URL} jsmWorkerUrl Provide complete jsm worker URL otherwise relative path to this module may not be correct
 	 * @return {OBJLoader2Parallel}
 	 */
 	setJsmWorker: function ( preferJsmWorker, jsmWorkerUrl ) {
