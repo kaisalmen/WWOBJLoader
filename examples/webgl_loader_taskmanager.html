@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - TaskManager prototype</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - TaskManager prototype
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+
+		<script type="module">
+
+			'use strict';
+
+			import * as THREE from '../build/three.module.js';
+			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
+			import { TaskManager } from "./jsm/loaders/TaskManager.js";
+
+			const initFunction = function ( config ) {
+				console.log( "initFunction: " + config.param1 );
+			};
+
+			const execFunction = function ( config ) {
+				console.log( "execFunction: " + config.data );
+			};
+
+			const manageCom = function ( message ) {
+				let payload = message.data;
+				console.log( "manageComFunction: " + payload.cmd );
+				if ( payload.cmd === 'init' ) {
+
+					init( payload.config );
+
+				}
+				else if ( payload.cmd === 'execute' ) {
+
+					execute( payload.config );
+
+				}
+			};
+
+			class TaskManagerPrototypeExample {
+
+				constructor ( elementToBindTo ) {
+					this.renderer = null;
+					this.canvas = elementToBindTo;
+					this.aspectRatio = 1;
+
+					this.scene = null;
+					this.cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+						near: 0.1,
+						far: 10000,
+						fov: 45
+					};
+					this.camera = null;
+					this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
+					this.controls = null;
+
+					this.taskManager = new TaskManager( 4 );
+				}
+
+				initGL () {
+					this.renderer = new THREE.WebGLRenderer( {
+						canvas: this.canvas,
+						antialias: true,
+						autoClear: true
+					} );
+					this.renderer.setClearColor( 0x050505 );
+
+					this.scene = new THREE.Scene();
+
+					this.recalcAspectRatio();
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.resetCamera();
+					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
+
+					let ambientLight = new THREE.AmbientLight( 0x404040 );
+					let directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+					directionalLight1.position.set( - 100, - 50, 100 );
+					directionalLight2.position.set( 100, 50, - 100 );
+
+					this.scene.add( directionalLight1 );
+					this.scene.add( directionalLight2 );
+					this.scene.add( ambientLight );
+
+					let helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
+					this.scene.add( helper );
+				}
+
+				initContent () {
+					this.taskManager.registerType( "tmProto", initFunction, execFunction, manageCom );
+					this.taskManager.initType( "tmProto", { param1: 'param1value' } );
+					this.taskManager.addTask( "tmProto", 1, { data: 'dataValue' } )
+				}
+
+				resizeDisplayGL () {
+					this.controls.handleResize();
+
+					this.recalcAspectRatio();
+					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+					this.updateCamera();
+				}
+
+				recalcAspectRatio () {
+					this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+				}
+
+				resetCamera () {
+					this.camera.position.copy( this.cameraDefaults.posCamera );
+					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+					this.updateCamera();
+				}
+
+				updateCamera () {
+					this.camera.aspect = this.aspectRatio;
+					this.camera.lookAt( this.cameraTarget );
+					this.camera.updateProjectionMatrix();
+				}
+
+				render() {
+					if ( !this.renderer.autoClear ) this.renderer.clear();
+					this.controls.update();
+					this.renderer.render( this.scene, this.camera );
+				}
+			}
+
+			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
+
+			let resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			let render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+			app.initContent();
+
+			render();
+
+		</script>
+	</body>
+</html>
