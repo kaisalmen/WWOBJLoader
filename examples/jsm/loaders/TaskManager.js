@@ -26,7 +26,8 @@ class WorkerDefinition {
         this.worker = {
             maximumCount: maximumCount,
             code: [],
-            instances: new Map ()
+            instances: new Set (),
+            available: [],
         };
 
     }
@@ -77,21 +78,50 @@ class WorkerDefinition {
 
     createWorkers () {
 
+        let worker;
         for ( let i = 0; i < this.worker.maximumCount; i++ ) {
 
             if ( this.workerJsmUrl === null ) {
 
                 let workerBlob = new Blob( this.worker.code, { type: 'application/javascript' } );
-                this.worker.instances.set( i, new Worker( window.URL.createObjectURL( workerBlob ) ) );
+                worker = new Worker( window.URL.createObjectURL( workerBlob ) );
 
             }
             else {
 
-                this.worker.instances.set( i, new Worker( this.workerJsmUrl.href, { type: "module" } ) );
+                worker = new Worker( this.workerJsmUrl.href, { type: "module" } );
 
             }
+            worker.onmessage = ( event) => console.log( i + ": " + event);
+            worker.onerror = ( event) => console.log( i + ": " + event);
+            this.worker.instances.add( {
+                worker: worker,
+                id: i
+            } );
 
         }
+
+    }
+
+    initWorkers ( config, transferables ) {
+
+        let it = this.worker.instances.values();
+        for ( let workerObj; workerObj = it.next().value; ) {
+
+            workerObj.worker.postMessage( {
+                cmd: "init",
+                id: workerObj.id,
+                config: config
+            }, transferables );
+            this.worker.available.push( workerObj );
+
+        }
+
+    }
+
+    getAvailableTask () {
+
+        return this.worker.available.pop();
 
     }
 
@@ -170,10 +200,7 @@ class TaskManager {
 
         let workerDefinition = this.types.get( type );
         workerDefinition.createWorkers();
-        workerDefinition.worker.instances.get( 0 ).postMessage( {
-            cmd: "init",
-            config: config
-        }, transferables );
+        workerDefinition.initWorkers( config, transferables );
         return this;
 
     }
@@ -189,10 +216,21 @@ class TaskManager {
     addTask ( type, cost, config, transferables ) {
 
         let workerDefinition = this.types.get( type );
-        workerDefinition.worker.instances.get( 0 ).postMessage( {
-            cmd: "execute",
-            config: config
-        }, transferables );
+        let workerObj = workerDefinition.getAvailableTask();
+        if ( workerObj !== null ) {
+
+            workerObj.worker.postMessage( {
+                cmd: "execute",
+                id: workerObj.id,
+                config: config
+            }, transferables );
+
+        }
+        else {
+
+            console.log( "No Task available for execution" );
+
+        }
 
     }
 

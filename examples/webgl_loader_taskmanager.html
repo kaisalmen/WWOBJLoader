@@ -22,12 +22,26 @@
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 
-			const initFunction = function ( config ) {
-				console.log( "initFunction: " + config.param1 );
+			const initFunction = function ( id, config ) {
+
+				console.log( "initFunction [" + id + "]: " + config.param1 );
+				self.postMessage( {
+					cmd: "init",
+					result: "success",
+					id: id
+				} );
+
 			};
 
-			const execFunction = function ( config ) {
-				console.log( "execFunction: " + config.data );
+			const execFunction = function ( id, config ) {
+
+				console.log( "execFunction [" + id + "]: " + config.data );
+				self.postMessage( {
+					cmd: "exec",
+					result: "success",
+					id: id
+				} );
+
 			};
 
 			const manageCom = function ( message ) {
@@ -35,12 +49,12 @@
 				console.log( "manageComFunction: " + payload.cmd );
 				if ( payload.cmd === 'init' ) {
 
-					init( payload.config );
+					init( payload.id, payload.config );
 
 				}
 				else if ( payload.cmd === 'execute' ) {
 
-					execute( payload.config );
+					execute( payload.id, payload.config );
 
 				}
 			};
