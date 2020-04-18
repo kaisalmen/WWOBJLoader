@@ -24,10 +24,10 @@
 
 			const initFunction = function ( id, config ) {
 
-				console.log( "initFunction [" + id + "]: " + config.param1 );
+//				console.debug( "workerExec: initFunction [" + id + "]: " + config.param1 );
 				self.postMessage( {
 					cmd: "init",
-					result: "success",
+					result: "success: " + id,
 					id: id
 				} );
 
@@ -35,10 +35,12 @@
 
 			const execFunction = function ( id, config ) {
 
-				console.log( "execFunction [" + id + "]: " + config.data );
+//				console.debug( "workerExec: execFunction [" + id + "]: " + config.data );
+				let i = 0;
+				while ( i < 100000000 ) i++
 				self.postMessage( {
 					cmd: "exec",
-					result: "success",
+					result: "success: " + id,
 					id: id
 				} );
 
@@ -46,7 +48,7 @@
 
 			const manageCom = function ( message ) {
 				let payload = message.data;
-				console.log( "manageComFunction: " + payload.cmd );
+//				console.debug( "workerExec: manageComFunction: " + payload.cmd );
 				if ( payload.cmd === 'init' ) {
 
 					init( payload.id, payload.config );
@@ -79,7 +81,7 @@
 
 					this.controls = null;
 
-					this.taskManager = new TaskManager( 4 );
+					this.taskManager = new TaskManager( 8 );
 				}
 
 				initGL () {
@@ -112,10 +114,22 @@
 					this.scene.add( helper );
 				}
 
-				initContent () {
+				async initContent () {
 					this.taskManager.registerType( "tmProto", initFunction, execFunction, manageCom );
 					this.taskManager.initType( "tmProto", { param1: 'param1value' } );
-					this.taskManager.addTask( "tmProto", 1, { data: 'dataValue' } )
+
+					console.time( 'start' );
+					let last;
+					for ( let i = 0; i < 1000; i++ ) {
+
+						last = this.taskManager.addTask( "tmProto", 1, { data: 'dataValue' + i } )
+							.then( e => console.log( i + ": " + e ) ).catch( e => console.error( e ) );
+
+					}
+					await last;
+					console.timeEnd( 'start' );
+					alert( 'worker execution complete' );
+
 				}
 
 				resizeDisplayGL () {

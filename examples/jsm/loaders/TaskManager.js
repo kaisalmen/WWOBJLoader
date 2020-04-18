@@ -23,11 +23,12 @@ class WorkerDefinition {
             code: null
         };
         this.workerJsmUrl = null;
-        this.worker = {
+        this.workers = {
             maximumCount: maximumCount,
             code: [],
             instances: new Set (),
             available: [],
+            storedPromises: []
         };
 
     }
@@ -67,10 +68,10 @@ class WorkerDefinition {
                 this.comRouter.code = "const comRouter = " + this.comRouter.ref.toString() + ";\n\n";
 
             }
-            this.worker.code.push( this.init.code );
-            this.worker.code.push( this.execute.code );
-            this.worker.code.push( this.comRouter.code );
-            this.worker.code.push( "self.addEventListener( 'message', comRouter, false );" );
+            this.workers.code.push( this.init.code );
+            this.workers.code.push( this.execute.code );
+            this.workers.code.push( this.comRouter.code );
+            this.workers.code.push( "self.addEventListener( 'message', comRouter, false );" );
 
         }
 
@@ -79,11 +80,11 @@ class WorkerDefinition {
     createWorkers () {
 
         let worker;
-        for ( let i = 0; i < this.worker.maximumCount; i++ ) {
+        for ( let i = 0; i < this.workers.maximumCount; i++ ) {
 
             if ( this.workerJsmUrl === null ) {
 
-                let workerBlob = new Blob( this.worker.code, { type: 'application/javascript' } );
+                let workerBlob = new Blob( this.workers.code, { type: 'application/javascript' } );
                 worker = new Worker( window.URL.createObjectURL( workerBlob ) );
 
             }
@@ -92,9 +93,7 @@ class WorkerDefinition {
                 worker = new Worker( this.workerJsmUrl.href, { type: "module" } );
 
             }
-            worker.onmessage = ( event) => console.log( i + ": " + event);
-            worker.onerror = ( event) => console.log( i + ": " + event);
-            this.worker.instances.add( {
+            this.workers.instances.add( {
                 worker: worker,
                 id: i
             } );
@@ -105,7 +104,7 @@ class WorkerDefinition {
 
     initWorkers ( config, transferables ) {
 
-        let it = this.worker.instances.values();
+        let it = this.workers.instances.values();
         for ( let workerObj; workerObj = it.next().value; ) {
 
             workerObj.worker.postMessage( {
@@ -113,7 +112,7 @@ class WorkerDefinition {
                 id: workerObj.id,
                 config: config
             }, transferables );
-            this.worker.available.push( workerObj );
+            this.workers.available.push( workerObj );
 
         }
 
@@ -121,7 +120,18 @@ class WorkerDefinition {
 
     getAvailableTask () {
 
-        return this.worker.available.pop();
+        return this.workers.available.shift();
+
+    }
+
+    returnAvailableTask ( workerObj ) {
+
+        this.workers.available.push( workerObj );
+        let storedExec = this.workers.storedPromises.shift();
+        if ( storedExec ) {
+
+            storedExec.exec( this.getAvailableTask(), storedExec.resolve, storedExec.reject );
+        }
 
     }
 
@@ -213,24 +223,55 @@ class TaskManager {
      * @param {Transferable[]} [transferables]
      * @return {Promise}
      */
-    addTask ( type, cost, config, transferables ) {
+    async addTask ( type, cost, config, transferables ) {
 
         let workerDefinition = this.types.get( type );
         let workerObj = workerDefinition.getAvailableTask();
-        if ( workerObj !== null ) {
 
-            workerObj.worker.postMessage( {
-                cmd: "execute",
-                id: workerObj.id,
-                config: config
-            }, transferables );
+        return new Promise( ( resolveUser, rejectUser ) => {
 
-        }
-        else {
+            function executeWorker( workerObjExecute, resolveExecute, rejectExecute ) {
 
-            console.log( "No Task available for execution" );
+                let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
-        }
+                    workerObjExecute.worker.onmessage = resolveWorker;
+                    workerObjExecute.worker.onerror = rejectWorker;
+
+                    workerObjExecute.worker.postMessage( {
+                        cmd: "execute",
+                        id: workerObjExecute.id,
+                        config: config
+                    }, transferables );
+
+                } );
+                promiseWorker.then( ( e ) => {
+
+                    resolveExecute( e.data.result );
+                    workerDefinition.returnAvailableTask( workerObjExecute );
+
+                } ).catch( ( e ) => {
+
+                    rejectExecute( "Execution error: " + e );
+
+                } );
+
+            }
+
+            if ( workerObj ) {
+
+                executeWorker( workerObj, resolveUser, rejectUser );
+
+            }
+            else {
+
+                workerDefinition.workers.storedPromises.push( {
+                    exec: executeWorker,
+                    resolve: resolveUser,
+                    reject: rejectUser
+                } );
+
+            }
+        } )
 
     }
 
@@ -240,6 +281,7 @@ class TaskManager {
      */
     dispose () {
 
+        // TODO
         return this;
 
     }
