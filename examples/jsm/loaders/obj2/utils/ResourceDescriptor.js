@@ -164,24 +164,6 @@ ResourceDescriptor.prototype = {
 
 	/**
 	 *
-	 * @param callbackOnProcessResult
-	 * @return {ResourceDescriptor}
-	 */
-	setCallbackOnProcessResult: function ( callbackOnProcessResult ) {
-		this.callbackOnProcessResult = callbackOnProcessResult;
-		return this;
-	},
-
-	/**
-	 *
-	 * @return {*}
-	 */
-	getCallbackOnProcessResult: function ( ) {
-		return this.callbackOnProcessResult;
-	},
-
-	/**
-	 *
 	 * @return {ResourceDescriptor}
 	 */
 	createSendable: function () {

@@ -1,3 +1,6 @@
+import { FileLoadingExecutor } from "./obj2/utils/FileLoadingExecutor.js";
+import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
+
 /**
  * @author Don McCurdy / https://www.donmccurdy.com
  * @author Kai Salmen / https://kaisalmen.de
@@ -22,6 +25,7 @@ class WorkerDefinition {
             ref: null,
             code: null
         };
+        this.dependencies = new Set ();
         this.workerJsmUrl = null;
         this.workers = {
             maximumCount: maximumCount,
@@ -33,21 +37,27 @@ class WorkerDefinition {
 
     }
 
-    setInit ( initFunction ) {
+    setFunctions ( initFunction, executeFunction, comRouterFunction ) {
 
         this.init.ref = initFunction;
-
-    }
-
-    setExecute ( executeFunction ) {
-
         this.execute.ref = executeFunction;
+        this.comRouter.ref = comRouterFunction;
 
     }
 
-    setComRouterCode ( comRouterFunction ) {
+    /**
+     *
+     * @param {String[]} dependencies
+     * @return {*[]|*}
+     */
+    setDependencies ( dependencies ) {
 
-        this.comRouter.ref = comRouterFunction;
+        for ( let dependency of dependencies.entries() ) {
+
+            let url = dependency[ 1 ];
+            this.dependencies.add( new ResourceDescriptor( url ).setUrl( url ) );
+
+        }
 
     }
 
@@ -57,7 +67,25 @@ class WorkerDefinition {
 
     }
 
-    generateWorkerCode () {
+    async loadDependencies () {
+
+        let loadPromises = [];
+        for ( let dependency of this.dependencies.entries() ) {
+
+            loadPromises.push( await FileLoadingExecutor.loadFileAsync( {
+                resourceDescriptor: dependency[ 1 ],
+                instanceNo: 0,
+                description: 'loadAssets',
+                reportCallback: ( report => console.log( report.detail.text ) )
+            } ));
+
+        }
+        console.log( 'Waiting for completion of loading of all assets!');
+        return await Promise.all( loadPromises );
+
+    }
+
+    generateWorkerCode ( dependencies ) {
 
         if ( this.workerJsmUrl === null ) {
 
@@ -68,12 +96,20 @@ class WorkerDefinition {
                 this.comRouter.code = "const comRouter = " + this.comRouter.ref.toString() + ";\n\n";
 
             }
+
+            for ( let dependency of dependencies.entries() ) {
+
+                this.dependencies[ dependency[ 0 ] ] = dependency[ 1 ];
+                this.workers.code.push( dependency[ 1 ].content.data );
+
+            }
             this.workers.code.push( this.init.code );
             this.workers.code.push( this.execute.code );
             this.workers.code.push( this.comRouter.code );
             this.workers.code.push( "self.addEventListener( 'message', comRouter, false );" );
 
         }
+        return this;
 
     }
 
@@ -99,6 +135,7 @@ class WorkerDefinition {
             } );
 
         }
+        return this;
 
     }
 
@@ -163,18 +200,15 @@ class TaskManager {
      * @param {string} type
      * @param {function} initFunction
      * @param {function} executeFunction
-     * @param {function} [comRouterFunction]
+     * @param {function} comRouterFunction
+     * @param {String[]} [dependencies]
      * @return {TaskManager}
      */
-    registerType ( type, initFunction, executeFunction, comRouterFunction ) {
+    registerType ( type, initFunction, executeFunction, comRouterFunction, dependencies ) {
 
         let workerDefinition = new WorkerDefinition( this.maximumWorkerCount );
-        workerDefinition.setInit( initFunction );
-        workerDefinition.setExecute( executeFunction );
-        workerDefinition.setComRouterCode( comRouterFunction );
-
-        workerDefinition.generateWorkerCode();
-
+        workerDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
+        workerDefinition.setDependencies( dependencies );
         this.types.set( type, workerDefinition );
 
         return this;
@@ -191,9 +225,6 @@ class TaskManager {
 
         let workerDefinition = new WorkerDefinition( this.maximumWorkerCount );
         workerDefinition.setWorkerJsm( workerJsmUrl );
-
-        workerDefinition.generateWorkerCode();
-
         this.types.set( type, workerDefinition );
         return this;
 
@@ -209,8 +240,8 @@ class TaskManager {
     initType ( type, config, transferables ) {
 
         let workerDefinition = this.types.get( type );
-        workerDefinition.createWorkers();
-        workerDefinition.initWorkers( config, transferables );
+        workerDefinition.loadDependencies()
+            .then( deps => workerDefinition.generateWorkerCode( deps ).createWorkers().initWorkers( config, transferables ) );
         return this;
 
     }
