@@ -10,7 +10,10 @@
 /examples/jsm/libs/*.d.ts
 /examples/jsm/helpers/*.js
 /examples/jsm/helpers/*.d.ts
-/examples/jsm/loaders/MTLLoader.*
+/examples/jsm/loaders/MTLLoader.js
+/examples/jsm/loaders/MTLLoader.d.ts
+/examples/jsm/loaders/OBJLoader.js
+/examples/jsm/loaders/OBJLoader.d.ts
 /examples/models/draco
 /examples/models/gltf
 /examples/models/obj/1*
