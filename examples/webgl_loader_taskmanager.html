@@ -23,32 +23,42 @@
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 
 			const initFunction = function ( id, config ) {
+				self.storage = {
+					remember: "me",
+					position: null
+				};
 
-//				console.debug( "workerExec: initFunction [" + id + "]: " + config.param1 );
 				self.postMessage( {
 					cmd: "init",
 					result: "success: " + id,
-					id: id
+					id: id,
+
 				} );
 
 			};
 
 			const execFunction = function ( id, config ) {
 
-//				console.debug( "workerExec: execFunction [" + id + "]: " + config.data );
 				let i = 0;
 				while ( i < 100000000 ) i++
+				let sphere = new THREE.SphereBufferGeometry( 5, 32, 32 );
+				this.storage.position = sphere.getAttribute( 'position' );
+
+				console.log( self.storage.remember + ' execute worker: ' + id + ' buffer.length: ' + this.storage.position.array.length );
 				self.postMessage( {
 					cmd: "exec",
 					result: "success: " + id,
-					id: id
-				} );
+					id: id,
+					transferables: {
+						vertices: this.storage.position.array
+					}
+				},
+				[ this.storage.position.array.buffer ] );
 
 			};
 
 			const manageCom = function ( message ) {
 				let payload = message.data;
-//				console.debug( "workerExec: manageComFunction: " + payload.cmd );
 				if ( payload.cmd === 'init' ) {
 
 					init( payload.id, payload.config );
@@ -116,11 +126,11 @@
 
 				async initContent () {
 					this.taskManager.registerType( "tmProto", initFunction, execFunction, manageCom, [ "../build/three.js" ] );
-					this.taskManager.initType( "tmProto", { param1: 'param1value' } );
+					let available = await this.taskManager.initType( "tmProto", { param1: 'param1value' } );
 
 					console.time( 'start' );
 					let last;
-					for ( let i = 0; i < 1000; i++ ) {
+					for ( let i = 0; i < 100; i++ ) {
 
 						last = this.taskManager.addTask( "tmProto", 1, { data: 'dataValue' + i } )
 							.then( e => console.log( i + ": " + e ) ).catch( e => console.error( e ) );

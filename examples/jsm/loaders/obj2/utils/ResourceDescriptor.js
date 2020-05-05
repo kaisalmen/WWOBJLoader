@@ -21,10 +21,6 @@ const ResourceDescriptor = function ( name) {
 	this.path;
 	this.resourcePath;
 	this.extension = null;
-	this.async = {
-		load: false,
-		parse: true
-	};
 	this.transferables = [];
 };
 
@@ -92,21 +88,6 @@ ResourceDescriptor.prototype = {
 
 	/**
 	 *
-	 * @param loadAsync
-	 * @param parseAsync
-	 * @return {ResourceDescriptor}
-	 */
-	configureAsync: function ( loadAsync, parseAsync ) {
-
-		this.async.parse = parseAsync === true;
-		// Loading in Worker is currently only allowed when async parse is performed!!!!
-		this.async.load = loadAsync === true && this.async.parse;
-		return this;
-
-	},
-
-	/**
-	 *
 	 * @param buffer
 	 */
 	setBuffer: function ( buffer ) {
@@ -124,7 +105,7 @@ ResourceDescriptor.prototype = {
 			buffer instanceof Float32Array ||
 			buffer instanceof Float64Array ) ) {
 
-			this._throwError( 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...' );
+			throw( 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...' );
 
 		}
 
@@ -173,8 +154,6 @@ ResourceDescriptor.prototype = {
 		copy.path = this.path;
 		copy.resourcePath = this.resourcePath;
 		copy.extension = this.extension;
-		copy.async.load = this.async.load;
-		copy.async.parse = this.async.parse;
 		this.content.data = null;
 		return copy;
 	}

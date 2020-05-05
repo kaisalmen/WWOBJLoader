@@ -13,19 +13,21 @@ class WorkerDefinition {
      * @param {Number} maximumCount
      */
     constructor ( maximumCount ) {
-        this.init = {
-            ref: null,
-            code: null
+        this.functions = {
+            init: {
+                ref: null,
+                code: null
+            },
+            execute: {
+                ref: null,
+                code: null
+            },
+            comRouter: {
+                ref: null,
+                code: null
+            }
         };
-        this.execute = {
-            ref: null,
-            code: null
-        };
-        this.comRouter = {
-            ref: null,
-            code: null
-        };
-        this.dependencies = new Set ();
+        this.dependencyDescriptors = new Set ();
         this.workerJsmUrl = null;
         this.workers = {
             maximumCount: maximumCount,
@@ -39,25 +41,19 @@ class WorkerDefinition {
 
     setFunctions ( initFunction, executeFunction, comRouterFunction ) {
 
-        this.init.ref = initFunction;
-        this.execute.ref = executeFunction;
-        this.comRouter.ref = comRouterFunction;
+        this.functions.init.ref = initFunction;
+        this.functions.execute.ref = executeFunction;
+        this.functions.comRouter.ref = comRouterFunction;
 
     }
 
     /**
      *
-     * @param {String[]} dependencies
-     * @return {*[]|*}
+     * @param {String[]} dependencyUrls
      */
-    setDependencies ( dependencies ) {
+    setDependencyUrls ( dependencyUrls ) {
 
-        for ( let dependency of dependencies.entries() ) {
-
-            let url = dependency[ 1 ];
-            this.dependencies.add( new ResourceDescriptor( url ).setUrl( url ) );
-
-        }
+        dependencyUrls.forEach( url => this.dependencyDescriptors.add( new ResourceDescriptor( url ).setUrl( url ) ) )
 
     }
 
@@ -67,12 +63,18 @@ class WorkerDefinition {
 
     }
 
+    isWorkerJsm () {
+
+        return ( this.workerJsmUrl !== null );
+
+    }
+
     async loadDependencies () {
 
-        let loadPromises = [];
-        for ( let dependency of this.dependencies.entries() ) {
+        let dependencyDescriptors = [];
+        for ( let dependency of this.dependencyDescriptors.entries() ) {
 
-            loadPromises.push( await FileLoadingExecutor.loadFileAsync( {
+            dependencyDescriptors.push( await FileLoadingExecutor.loadFileAsync( {
                 resourceDescriptor: dependency[ 1 ],
                 instanceNo: 0,
                 description: 'loadAssets',
@@ -81,67 +83,65 @@ class WorkerDefinition {
 
         }
         console.log( 'Waiting for completion of loading of all assets!');
-        return await Promise.all( loadPromises );
+        return await Promise.all( dependencyDescriptors );
 
     }
 
-    generateWorkerCode ( dependencies ) {
+    async generateWorkerCode ( dependencyDescriptors ) {
 
-        if ( this.workerJsmUrl === null ) {
+        this.functions.init.code = 'const init = ' + this.functions.init.ref.toString() + ';\n\n';
+        this.functions.execute.code = 'const execute = ' + this.functions.execute.ref.toString() + ';\n\n';
+        if ( this.functions.comRouter.ref !== null ) {
 
-            this.init.code = "const init = " + this.init.ref.toString() + ";\n\n";
-            this.execute.code = "const execute = " + this.execute.ref.toString() + ";\n\n";
-            if ( this.comRouter.ref !== null ) {
-
-                this.comRouter.code = "const comRouter = " + this.comRouter.ref.toString() + ";\n\n";
-
-            }
-
-            for ( let dependency of dependencies.entries() ) {
-
-                this.dependencies[ dependency[ 0 ] ] = dependency[ 1 ];
-                this.workers.code.push( dependency[ 1 ].content.data );
-
-            }
-            this.workers.code.push( this.init.code );
-            this.workers.code.push( this.execute.code );
-            this.workers.code.push( this.comRouter.code );
-            this.workers.code.push( "self.addEventListener( 'message', comRouter, false );" );
+            this.functions.comRouter.code = "const comRouter = " + this.functions.comRouter.ref.toString() + ";\n\n";
 
         }
-        return this;
+
+        dependencyDescriptors.forEach( dependency => this.workers.code.push( dependency.content.data ) );
+
+        this.workers.code.push( this.functions.init.code );
+        this.workers.code.push( this.functions.execute.code );
+        this.workers.code.push( this.functions.comRouter.code );
+        this.workers.code.push( "self.addEventListener( 'message', comRouter, false );" );
+
+        return this.workers.code;
 
     }
 
-    createWorkers () {
+    async createWorkers ( code ) {
 
-        let worker;
-        for ( let i = 0; i < this.workers.maximumCount; i++ ) {
+        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
 
-            if ( this.workerJsmUrl === null ) {
-
-                let workerBlob = new Blob( this.workers.code, { type: 'application/javascript' } );
-                worker = new Worker( window.URL.createObjectURL( workerBlob ) );
-
-            }
-            else {
-
-                worker = new Worker( this.workerJsmUrl.href, { type: "module" } );
-
-            }
+            let workerBlob = new Blob( code, { type: 'application/javascript' } );
+            worker = new Worker( window.URL.createObjectURL( workerBlob ) );
             this.workers.instances.add( {
                 worker: worker,
                 id: i
             } );
 
         }
-        return this;
+        return this.workers.instances;
 
     }
 
-    initWorkers ( config, transferables ) {
+    async createWorkersJsm () {
 
-        let it = this.workers.instances.values();
+        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
+
+            worker = new Worker( this.workerJsmUrl.href, { type: "module" } );
+            this.workers.instances.add( {
+                worker: worker,
+                id: i
+            } );
+
+        }
+        return this.workers.instances;
+
+    }
+
+    async initWorkers ( instances, config, transferables ) {
+
+        let it = instances.values();
         for ( let workerObj; workerObj = it.next().value; ) {
 
             workerObj.worker.postMessage( {
@@ -152,6 +152,7 @@ class WorkerDefinition {
             this.workers.available.push( workerObj );
 
         }
+        return this.workers.available;
 
     }
 
@@ -201,16 +202,15 @@ class TaskManager {
      * @param {function} initFunction
      * @param {function} executeFunction
      * @param {function} comRouterFunction
-     * @param {String[]} [dependencies]
+     * @param {String[]} [dependencyUrls]
      * @return {TaskManager}
      */
-    registerType ( type, initFunction, executeFunction, comRouterFunction, dependencies ) {
+    registerType ( type, initFunction, executeFunction, comRouterFunction, dependencyUrls ) {
 
         let workerDefinition = new WorkerDefinition( this.maximumWorkerCount );
         workerDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
-        workerDefinition.setDependencies( dependencies );
+        workerDefinition.setDependencyUrls( dependencyUrls );
         this.types.set( type, workerDefinition );
-
         return this;
 
     }
@@ -235,15 +235,24 @@ class TaskManager {
      * @param {string} type
      * @param {object} config
      * @param {Transferable[]} [transferables]
-     * @return {TaskManager}
      */
-    initType ( type, config, transferables ) {
+    async initType ( type, config, transferables ) {
 
         let workerDefinition = this.types.get( type );
-        workerDefinition.loadDependencies()
-            .then( deps => workerDefinition.generateWorkerCode( deps ).createWorkers().initWorkers( config, transferables ) );
-        return this;
+        if ( workerDefinition.isWorkerJsm() ) {
 
+            return await workerDefinition.createWorkersJsm()
+                .then( instances => workerDefinition.initWorkers( instances, config, transferables ) );
+
+        }
+        else {
+
+            return await workerDefinition.loadDependencies()
+                .then( deps => workerDefinition.generateWorkerCode( deps ) )
+                .then( code => workerDefinition.createWorkers( code ) )
+                .then( instances => workerDefinition.initWorkers( instances, config, transferables ) );
+
+        }
     }
 
     /**
@@ -318,6 +327,5 @@ class TaskManager {
     }
 
 }
-
 
 export { TaskManager };
