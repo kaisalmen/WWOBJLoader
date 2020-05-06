@@ -173,6 +173,16 @@ class WorkerDefinition {
 
     }
 
+    dispose () {
+
+        let it = this.workers.instances.values();
+        for ( let workerObj; workerObj = it.next().value; ) {
+
+            workerObj.worker.terminate();
+
+        }
+    }
+
 }
 
 
@@ -286,7 +296,7 @@ class TaskManager {
                 } );
                 promiseWorker.then( ( e ) => {
 
-                    resolveExecute( e.data.result );
+                    resolveExecute( e.data );
                     workerDefinition.returnAvailableTask( workerObjExecute );
 
                 } ).catch( ( e ) => {
@@ -321,7 +331,11 @@ class TaskManager {
      */
     dispose () {
 
-        // TODO
+        for ( const [ key, workerDefinition ] of this.types.entries() ) {
+
+            workerDefinition.dispose();
+
+        }
         return this;
 
     }

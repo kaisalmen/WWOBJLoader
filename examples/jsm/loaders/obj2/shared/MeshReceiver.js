@@ -78,9 +78,7 @@ MeshReceiver.prototype = {
 	 */
 	buildMeshes: function ( meshPayload ) {
 
-		let meshName = meshPayload.params.meshName;
 		let buffers = meshPayload.buffers;
-
 		let bufferGeometry = new BufferGeometry();
 		if ( buffers.vertices !== undefined && buffers.vertices !== null ) {
 
@@ -122,28 +120,42 @@ MeshReceiver.prototype = {
 
 		}
 
-		let material, materialName, key;
-		let materialNames = meshPayload.materials.materialNames;
-		let createMultiMaterial = meshPayload.materials.multiMaterial;
-		let multiMaterials = [];
-		for ( key in materialNames ) {
+		let meshName = 'none';
+		if ( meshPayload.params.meshName ) meshName = meshPayload.params.meshName;
 
-			materialName = materialNames[ key ];
-			material = this.materialHandler.getMaterial( materialName );
-			if ( createMultiMaterial ) multiMaterials.push( material );
+		let material;
+		let multiMaterials = [];
+		let materialNames = []
+		let createMultiMaterial = false;
+		let materialGroups = [];
+		if ( meshPayload.materials ) {
+
+			if ( meshPayload.materials.materialNames ) materialNames = meshPayload.materials.materialNames;
+			if ( meshPayload.materials.multiMaterial ) createMultiMaterial = meshPayload.materials.multiMaterial;
+			if ( meshPayload.materials.materialGroups ) materialGroups = meshPayload.materials.materialGroups;
 
 		}
 		if ( createMultiMaterial ) {
 
-			material = multiMaterials;
-			let materialGroups = meshPayload.materials.materialGroups;
-			let materialGroup;
-			for ( key in materialGroups ) {
+			for ( let key in materialNames ) {
 
-				materialGroup = materialGroups[ key ];
+				let materialName = materialNames[ key ];
+				multiMaterials.push( this.materialHandler.getMaterial( materialName ) );
+
+			}
+			material = multiMaterials;
+			for ( let key in materialGroups ) {
+
+				let materialGroup = materialGroups[ key ];
 				bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
 
 			}
+
+		}
+		else {
+
+			let materialName = materialNames[ 0 ];
+			if ( materialName ) material = this.materialHandler.getMaterial( materialName );
 
 		}
 
@@ -151,7 +163,7 @@ MeshReceiver.prototype = {
 		let mesh;
 		let callbackOnMeshAlterResult;
 		let useOrgMesh = true;
-		let geometryType = meshPayload.geometryType === null ? 0 : meshPayload.geometryType;
+		let geometryType = meshPayload.geometryType ? meshPayload.geometryType : 0;
 
 		if ( this.callbacks.onMeshAlter ) {
 
@@ -208,7 +220,13 @@ MeshReceiver.prototype = {
 
 		}
 
-		let progressMessage = meshPayload.params.meshName;
+		let progressMessage = meshName;
+		let progressNumericalValue = 0;
+		if ( meshPayload.progress ) {
+
+			if ( meshPayload.progress.numericalValue ) progressNumericalValue = meshPayload.progress.numericalValue;
+
+		}
 		if ( meshes.length > 0 ) {
 
 			let meshNames = [];
@@ -219,20 +237,19 @@ MeshReceiver.prototype = {
 
 			}
 			progressMessage += ': Adding mesh(es) (' + meshNames.length + ': ' + meshNames + ') from input mesh: ' + meshName;
-			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
+			progressMessage += ' (' + ( progressNumericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		} else {
 
 			progressMessage += ': Not adding mesh: ' + meshName;
-			progressMessage += ' (' + ( meshPayload.progress.numericalValue * 100 ).toFixed( 2 ) + '%)';
+			progressMessage += ' (' + ( progressNumericalValue * 100 ).toFixed( 2 ) + '%)';
 
 		}
 		if ( this.callbacks.onProgress ) {
 
-			this.callbacks.onProgress( 'progress', progressMessage, meshPayload.progress.numericalValue );
+			this.callbacks.onProgress( 'progress', progressMessage, progressNumericalValue );
 
 		}
-
 		return meshes;
 
 	}

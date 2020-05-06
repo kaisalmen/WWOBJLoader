@@ -21,43 +21,66 @@
 			import * as THREE from '../build/three.module.js';
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
+			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
+			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
 
-			const initFunction = function ( id, config ) {
+			const workerInitFunction = function ( id, config ) {
 				self.storage = {
-					remember: "me",
-					position: null
+					whoami: id,
 				};
 
 				self.postMessage( {
 					cmd: "init",
-					result: "success: " + id,
-					id: id,
-
+					id: id
 				} );
 
 			};
 
-			const execFunction = function ( id, config ) {
+			const workerExecFunction = function ( id, config ) {
 
-				let i = 0;
-				while ( i < 100000000 ) i++
-				let sphere = new THREE.SphereBufferGeometry( 5, 32, 32 );
-				this.storage.position = sphere.getAttribute( 'position' );
+				let bufferGeometry = new THREE.SphereBufferGeometry( 35, 64, 64 );
 
-				console.log( self.storage.remember + ' execute worker: ' + id + ' buffer.length: ' + this.storage.position.array.length );
+				let vertexBA = bufferGeometry.getAttribute( 'position' ) ;
+				let indexBA = bufferGeometry.getIndex();
+				let colorBA = bufferGeometry.getAttribute( 'color' );
+				let normalBA = bufferGeometry.getAttribute( 'normal' );
+				let uvBA = bufferGeometry.getAttribute( 'uv' );
+
+				let vertexArray = vertexBA.array;
+				for ( let i = 0; i < vertexArray.length; i++ ) {
+
+					vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
+
+				}
+				let vertexFA = vertexArray;
+				let indexUA = ( indexBA !== null && indexBA !== undefined ) ? indexBA.array: null;
+				let colorFA = ( colorBA !== null && colorBA !== undefined ) ? colorBA.array: null;
+				let normalFA = ( normalBA !== null && normalBA !== undefined ) ? normalBA.array: null;
+				let uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
+
 				self.postMessage( {
-					cmd: "exec",
-					result: "success: " + id,
-					id: id,
-					transferables: {
-						vertices: this.storage.position.array
-					}
-				},
-				[ this.storage.position.array.buffer ] );
-
+						cmd: "exec",
+						id: id,
+						params: {
+							meshName: 'sphere' + config.count
+						},
+						buffers: {
+							vertices: vertexFA,
+							indices: indexUA,
+							colors: colorFA,
+							normals: normalFA,
+							uvs: uvFA,
+						}
+					},
+					[ vertexFA.buffer ],
+					indexUA !== null ?  [ indexUA.buffer ] : null,
+					colorFA !== null ? [ colorFA.buffer ] : null,
+					normalFA !== null ? [ normalFA.buffer ] : null,
+					uvFA !== null ? [ uvFA.buffer ] : null
+				);
 			};
 
-			const manageCom = function ( message ) {
+			const workerManageCom = function ( message ) {
 				let payload = message.data;
 				if ( payload.cmd === 'init' ) {
 
@@ -92,6 +115,7 @@
 					this.controls = null;
 
 					this.taskManager = new TaskManager( 8 );
+					this.meshReceiver = new MeshReceiver( new MaterialHandler() );
 				}
 
 				initGL () {
@@ -125,21 +149,63 @@
 				}
 
 				async initContent () {
-					this.taskManager.registerType( "tmProto", initFunction, execFunction, manageCom, [ "../build/three.js" ] );
+					this.taskManager.registerType( "tmProto", workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
 					let available = await this.taskManager.initType( "tmProto", { param1: 'param1value' } );
 
 					console.time( 'start' );
 					let last;
-					for ( let i = 0; i < 100; i++ ) {
+					for ( let i = 0; i < 25000; i++ ) {
 
-						last = this.taskManager.addTask( "tmProto", 1, { data: 'dataValue' + i } )
-							.then( e => console.log( i + ": " + e ) ).catch( e => console.error( e ) );
+						last = this.taskManager.addTask( "tmProto", 1, { count: i } )
+							.then( data => this.processMessage( data, i ) ).catch( e => console.error( e ) );
 
 					}
 					await last;
+					this.taskManager.dispose();
 					console.timeEnd( 'start' );
 					alert( 'worker execution complete' );
 
+				}
+
+				processMessage ( payload, count ) {
+					switch ( payload.cmd ) {
+						case 'init':
+							console.log( 'Init Completed: ' + payload.id );
+							break;
+
+						case 'exec':
+							let meshes = this.meshReceiver.buildMeshes( payload );
+
+							meshes.forEach( mesh => {
+								let x = Math.ceil( ( Math.random() - 0.5 ) * 750);
+								let y = Math.ceil( ( Math.random() - 0.5 ) * 750);
+								let z = Math.ceil( ( Math.random() - 0.5 ) * 750);
+								mesh.position.set( x, y, z );
+								mesh.material = new THREE.MeshNormalMaterial();
+								this.scene.add( mesh )
+							} );
+							break;
+
+						default:
+							console.error( payload.id + ': Received unknown command: ' + payload.cmd );
+							break;
+					}
+					let offset = count - 500;
+					if ( count % 100 === 0 && offset >= 0 ) {
+
+						let deleteRange = offset + 100;
+						console.log( 'Removing: ' + offset + ' to ' + deleteRange );
+						for ( let i = offset; i < deleteRange; i++ ) {
+
+							let toBeRemoved = this.scene.getObjectByName( 'sphere' + i );
+							toBeRemoved.geometry.dispose();
+							toBeRemoved.material.dispose();
+							this.scene.remove( toBeRemoved );
+
+
+						}
+
+					}
 				}
 
 				resizeDisplayGL () {
