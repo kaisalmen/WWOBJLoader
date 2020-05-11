@@ -78,6 +78,7 @@
 					normalFA !== null ? [ normalFA.buffer ] : null,
 					uvFA !== null ? [ uvFA.buffer ] : null
 				);
+
 			};
 
 			const workerManageCom = function ( message ) {
@@ -103,7 +104,7 @@
 
 					this.scene = null;
 					this.cameraDefaults = {
-						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCamera: new THREE.Vector3( 0.0, 500.0, 1500.0 ),
 						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
 						near: 0.1,
 						far: 10000,
@@ -116,6 +117,10 @@
 
 					this.taskManager = new TaskManager( 8 );
 					this.meshReceiver = new MeshReceiver( new MaterialHandler() );
+					this.meshCount = 0;
+					this.lastDeletedMesh = 0;
+					this.addOnRender = [];
+					this.addAndRemoveCount = 25;
 				}
 
 				initGL () {
@@ -153,17 +158,17 @@
 					let available = await this.taskManager.initType( "tmProto", { param1: 'param1value' } );
 
 					console.time( 'start' );
-					let last;
+					let executions = [];
 					for ( let i = 0; i < 25000; i++ ) {
 
-						last = this.taskManager.addTask( "tmProto", 1, { count: i } )
+						executions[ i ] = this.taskManager.addTask( "tmProto", 1, { count: i } )
 							.then( data => this.processMessage( data, i ) ).catch( e => console.error( e ) );
 
 					}
-					await last;
+					await Promise.all( executions );
+
 					this.taskManager.dispose();
 					console.timeEnd( 'start' );
-					alert( 'worker execution complete' );
 
 				}
 
@@ -174,38 +179,57 @@
 							break;
 
 						case 'exec':
-							let meshes = this.meshReceiver.buildMeshes( payload );
 
-							meshes.forEach( mesh => {
-								let x = Math.ceil( ( Math.random() - 0.5 ) * 750);
-								let y = Math.ceil( ( Math.random() - 0.5 ) * 750);
-								let z = Math.ceil( ( Math.random() - 0.5 ) * 750);
-								mesh.position.set( x, y, z );
-								mesh.material = new THREE.MeshNormalMaterial();
-								this.scene.add( mesh )
-							} );
+							let meshes = this.meshReceiver.buildMeshes( payload );
+							let mesh = meshes[ 0 ];
+							let x = Math.ceil( ( Math.random() - 0.5 ) * 750);
+							let y = Math.ceil( ( Math.random() - 0.5 ) * 750);
+							let z = Math.ceil( ( Math.random() - 0.5 ) * 750);
+							mesh.position.set( x, y, z );
+							mesh.material = new THREE.MeshNormalMaterial();
+							this.addOnRender.push( mesh );
 							break;
 
 						default:
 							console.error( payload.id + ': Received unknown command: ' + payload.cmd );
 							break;
 					}
-					let offset = count - 500;
-					if ( count % 100 === 0 && offset >= 0 ) {
+				}
 
-						let deleteRange = offset + 100;
-						console.log( 'Removing: ' + offset + ' to ' + deleteRange );
-						for ( let i = offset; i < deleteRange; i++ ) {
+				addMeshes() {
 
-							let toBeRemoved = this.scene.getObjectByName( 'sphere' + i );
-							toBeRemoved.geometry.dispose();
-							toBeRemoved.material.dispose();
-							this.scene.remove( toBeRemoved );
+					if ( this.addOnRender.length > 0 ) {
 
+						let length = Math.min( this.addOnRender.length, this.addAndRemoveCount );
+						for ( let i = 0; i < length; i ++ ) {
+
+							this.scene.add( this.addOnRender.shift() );
+							this.meshCount ++;
 
 						}
 
 					}
+
+				}
+
+				cleanMeshes() {
+
+					if ( this.meshCount > 500 && this.meshCount - this.lastDeletedMesh >= 500 ) {
+
+						let deleteRange = this.lastDeletedMesh + this.addAndRemoveCount;
+						console.log( 'Removing: ' + this.lastDeletedMesh + ' to ' + deleteRange );
+						for ( let toBeRemoved, i = this.lastDeletedMesh; i < deleteRange; i++ ) {
+
+							toBeRemoved = this.scene.getObjectByName( 'sphere' + i );
+							toBeRemoved.geometry.dispose();
+							toBeRemoved.material.dispose();
+							this.scene.remove( toBeRemoved );
+
+						}
+						this.lastDeletedMesh = deleteRange;
+
+					}
+
 				}
 
 				resizeDisplayGL () {
@@ -235,10 +259,15 @@
 				}
 
 				render() {
+					this.cleanMeshes();
+					this.addMeshes();
+
 					if ( !this.renderer.autoClear ) this.renderer.clear();
 					this.controls.update();
 					this.renderer.render( this.scene, this.camera );
+
 				}
+
 			}
 
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
