@@ -38,7 +38,7 @@
 
 			const workerExecFunction = function ( id, config ) {
 
-				let bufferGeometry = new THREE.SphereBufferGeometry( 30, 64, 64 );
+				let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 
 				let vertexBA = bufferGeometry.getAttribute( 'position' ) ;
 				let indexBA = bufferGeometry.getIndex();
@@ -62,7 +62,7 @@
 						cmd: "exec",
 						id: id,
 						params: {
-							meshName: 'sphere' + config.count
+							meshName: 'wwobj' + config.count
 						},
 						buffers: {
 							vertices: vertexFA,
@@ -129,7 +129,7 @@
 					this.loopCount = 1000;
 
 					// sphere positions
-					this.baseFactor = 500;
+					this.baseFactor = 750;
 					this.baseVectorX = new THREE.Vector3( 1, 0, 0 );
 					this.baseVectorY = new THREE.Vector3( 0, 1, 0 );
 					this.baseVectorZ = new THREE.Vector3( 0, 0, 1 );
@@ -167,18 +167,22 @@
 				}
 
 				async initContent () {
-					this.taskManager.registerType( "tmProto", workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
-					let available = await this.taskManager.initType( "tmProto", { param1: 'param1value' } );
+					this.taskManager.registerType( 'tmProtoExample', workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
+					this.taskManager.registerTypeJsm( "tmProtoExampleJsm", './jsm/taskmanager/tmJsmExample.js' );
+					let available = await this.taskManager.initType( 'tmProtoExample', { param1: 'param1value' } );
+					let availableJsm = await this.taskManager.initType( 'tmProtoExampleJsm', { param1: 'param1value' } );
 
 					console.time( 'start' );
 					let executions = [];
 
 					for ( let j = 0; j < this.loopCount; j++ ) {
 						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
-						for ( let localCount, i = 0; i < this.maxPerLoop; i ++ ) {
+						for ( let localCount, i = 0; i < this.maxPerLoop; i += 2 ) {
 
 							localCount = j * this.maxPerLoop + i;
-							executions.push( this.taskManager.addTask( "tmProto", 1, { count: localCount } ).then( data => this.processMessage( data, localCount ) ).catch( e => console.error( e ) ) );
+							executions.push( this.taskManager.addTask( 'tmProtoExample', 1, { count: localCount } ).then( data => this.processMessage( data, localCount ) ).catch( e => console.error( e ) ) );
+							localCount++;
+							executions.push( this.taskManager.addTask( 'tmProtoExampleJsm', 1, { count: localCount } ).then( data => this.processMessage( data, localCount ) ).catch( e => console.error( e ) ) );
 
 						}
 						await Promise.all( executions );
@@ -231,7 +235,7 @@
 						let deleteRange = this.lastDeletedMesh + this.removeCount;
 						for ( let toBeRemoved, i = this.lastDeletedMesh; i < deleteRange; i++ ) {
 
-							toBeRemoved = this.scene.getObjectByName( 'sphere' + i );
+							toBeRemoved = this.scene.getObjectByName( 'wwobj' + i );
 							if ( toBeRemoved ) {
 
 								toBeRemoved.geometry.dispose();

@@ -59,7 +59,7 @@ class WorkerDefinition {
 
     setWorkerJsm ( workerJsmUrl ) {
 
-        this.workerJsmUrl = workerJsmUrl;
+        this.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
 
     }
 
