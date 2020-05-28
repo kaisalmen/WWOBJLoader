@@ -115,7 +115,7 @@
 
 					this.controls = null;
 
-					this.taskManager = new TaskManager( 8 );
+					this.taskManager = new TaskManager();
 					this.meshReceiver = new MeshReceiver( new MaterialHandler() );
 
 					this.meshCount = 0;
@@ -167,8 +167,8 @@
 				}
 
 				async initContent () {
-					this.taskManager.registerType( 'tmProtoExample', workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
-					this.taskManager.registerTypeJsm( "tmProtoExampleJsm", './jsm/taskmanager/tmJsmExample.js' );
+					this.taskManager.registerType( 'tmProtoExample', 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
+					this.taskManager.registerTypeJsm( "tmProtoExampleJsm", 4, './jsm/taskmanager/tmJsmExample.js' );
 					let available = await this.taskManager.initType( 'tmProtoExample', { param1: 'param1value' } );
 					let availableJsm = await this.taskManager.initType( 'tmProtoExampleJsm', { param1: 'param1value' } );
 

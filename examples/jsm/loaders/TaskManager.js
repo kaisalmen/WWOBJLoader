@@ -188,10 +188,9 @@ class WorkerDefinition {
 
 class TaskManager {
 
-    constructor ( maximumWorkerCount ) {
+    constructor () {
 
         this.types = new Map();
-        this.maximumWorkerCount = maximumWorkerCount;
 
     }
 
@@ -209,15 +208,16 @@ class TaskManager {
     /**
      * Registers functionality for a new task type.
      * @param {string} type
+     * @param {number} maximumWorkerCount
      * @param {function} initFunction
      * @param {function} executeFunction
      * @param {function} comRouterFunction
      * @param {String[]} [dependencyUrls]
      * @return {TaskManager}
      */
-    registerType ( type, initFunction, executeFunction, comRouterFunction, dependencyUrls ) {
+    registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRouterFunction, dependencyUrls ) {
 
-        let workerDefinition = new WorkerDefinition( this.maximumWorkerCount );
+        let workerDefinition = new WorkerDefinition( maximumWorkerCount );
         workerDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
         workerDefinition.setDependencyUrls( dependencyUrls );
         this.types.set( type, workerDefinition );
@@ -228,12 +228,13 @@ class TaskManager {
     /**
      * Registers functionality for a new task type based on module file.
      * @param {string} type
-     * @param {URL} workerJsmUrl
+     * @param {number} maximumWorkerCount
+     * @param {string} workerJsmUrl
      * @return {TaskManager}
      */
-    registerTypeJsm ( type, workerJsmUrl ) {
+    registerTypeJsm ( type, maximumWorkerCount, workerJsmUrl ) {
 
-        let workerDefinition = new WorkerDefinition( this.maximumWorkerCount );
+        let workerDefinition = new WorkerDefinition( maximumWorkerCount );
         workerDefinition.setWorkerJsm( workerJsmUrl );
         this.types.set( type, workerDefinition );
         return this;
