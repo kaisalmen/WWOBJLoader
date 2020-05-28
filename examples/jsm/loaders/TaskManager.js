@@ -245,7 +245,7 @@ class TaskManager {
      * Provides initialization configuration and dependencies for all tasks of given type.
      * @param {string} type
      * @param {object} config
-     * @param {Transferable[]} [transferables]
+     * @param {Object} [transferables]
      */
     async initType ( type, config, transferables ) {
 

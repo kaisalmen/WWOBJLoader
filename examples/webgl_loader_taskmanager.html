@@ -23,6 +23,7 @@
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
+			import { MeshTransmitter } from "./jsm/loaders/obj2/utils/MeshTransmitter.js";
 
 			const workerInitFunction = function ( id, config ) {
 				self.storage = {
@@ -60,9 +61,9 @@
 
 				self.postMessage( {
 						cmd: "exec",
-						id: id,
+						meshName: 'tmProto' + config.count,
 						params: {
-							meshName: 'wwobj' + config.count
+							geometryType: 0
 						},
 						buffers: {
 							vertices: vertexFA,
@@ -70,6 +71,9 @@
 							colors: colorFA,
 							normals: normalFA,
 							uvs: uvFA,
+						},
+						materials: {
+							materialNames: [ 'meshNormalMaterial' ]
 						}
 					},
 					[ vertexFA.buffer ],
@@ -116,7 +120,12 @@
 					this.controls = null;
 
 					this.taskManager = new TaskManager();
-					this.meshReceiver = new MeshReceiver( new MaterialHandler() );
+					let materialHandler = new MaterialHandler();
+					materialHandler.createDefaultMaterials( true );
+					let meshNormalMaterial = new THREE.MeshNormalMaterial();
+					meshNormalMaterial.name = 'meshNormalMaterial';
+					materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
+					this.meshReceiver = new MeshReceiver( materialHandler );
 
 					this.meshCount = 0;
 					this.lastDeletedMesh = 0;
@@ -167,22 +176,34 @@
 				}
 
 				async initContent () {
+					var torus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
+					let meshTransmitter = new MeshTransmitter();
+					let torusPayload = meshTransmitter.handleBufferGeometry( torus );
+
 					this.taskManager.registerType( 'tmProtoExample', 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
 					this.taskManager.registerTypeJsm( "tmProtoExampleJsm", 4, './jsm/taskmanager/tmJsmExample.js' );
+					this.taskManager.registerTypeJsm( "tmProtoExampleJsmNoThree", 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
 					let available = await this.taskManager.initType( 'tmProtoExample', { param1: 'param1value' } );
 					let availableJsm = await this.taskManager.initType( 'tmProtoExampleJsm', { param1: 'param1value' } );
+					let availableJsmNoThree = await this.taskManager.initType( 'tmProtoExampleJsmNoThree', torusPayload.main, torusPayload.transferables );
 
 					console.time( 'start' );
 					let executions = [];
 
+					let globalCount = 0;
 					for ( let j = 0; j < this.loopCount; j++ ) {
 						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
-						for ( let localCount, i = 0; i < this.maxPerLoop; i += 2 ) {
 
-							localCount = j * this.maxPerLoop + i;
-							executions.push( this.taskManager.addTask( 'tmProtoExample', 1, { count: localCount } ).then( data => this.processMessage( data, localCount ) ).catch( e => console.error( e ) ) );
-							localCount++;
-							executions.push( this.taskManager.addTask( 'tmProtoExampleJsm', 1, { count: localCount } ).then( data => this.processMessage( data, localCount ) ).catch( e => console.error( e ) ) );
+						for ( let i = 0; i < this.maxPerLoop; i += 2 ) {
+
+							executions.push( this.taskManager.addTask( 'tmProtoExample', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
+							globalCount++;
+
+							executions.push( this.taskManager.addTask( 'tmProtoExampleJsm', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
+							globalCount++;
+
+//							executions.push( this.taskManager.addTask( 'tmProtoExampleJsmNoThree', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
+//							globalCount++;
 
 						}
 						await Promise.all( executions );
@@ -195,7 +216,7 @@
 
 				}
 
-				processMessage ( payload, count ) {
+				processMessage ( payload ) {
 					switch ( payload.cmd ) {
 						case 'init':
 							console.log( 'Init Completed: ' + payload.id );
@@ -203,7 +224,7 @@
 
 						case 'exec':
 							let meshes = this.meshReceiver.buildMeshes( payload );
-							this.addMesh( meshes[ 0 ] );
+							this.addMesh( meshes[ 0 ], payload.params );
 
 							this.cleanMeshes();
 							break;
@@ -214,15 +235,18 @@
 					}
 				}
 
-				addMesh( mesh ) {
+				addMesh( mesh, params ) {
 
 					let pos = new THREE.Vector3( this.baseFactor * Math.random(), this.baseFactor * Math.random(), this.baseFactor * Math.random() );
 					pos.applyAxisAngle( this.baseVectorX, 2 * Math.PI * Math.random() );
 					pos.applyAxisAngle( this.baseVectorY, 2 * Math.PI * Math.random() );
 					pos.applyAxisAngle( this.baseVectorZ, 2 * Math.PI * Math.random() );
+					if ( params.color !== undefined ) {
 
+						mesh.material.color = new THREE.Color( params.color.r, params.color.g, params.color.b );
+
+					}
 					mesh.position.set( pos.x, pos.y, pos.z );
-					mesh.material = new THREE.MeshNormalMaterial();
 					this.scene.add( mesh );
 					this.meshCount ++;
 
@@ -235,12 +259,17 @@
 						let deleteRange = this.lastDeletedMesh + this.removeCount;
 						for ( let toBeRemoved, i = this.lastDeletedMesh; i < deleteRange; i++ ) {
 
-							toBeRemoved = this.scene.getObjectByName( 'wwobj' + i );
+							toBeRemoved = this.scene.getObjectByName( 'tmProto' + i );
 							if ( toBeRemoved ) {
 
 								toBeRemoved.geometry.dispose();
 								toBeRemoved.material.dispose();
 								this.scene.remove( toBeRemoved );
+
+							}
+							else {
+
+								console.log( 'Unable to remove: tmProto' + i );
 
 							}
 

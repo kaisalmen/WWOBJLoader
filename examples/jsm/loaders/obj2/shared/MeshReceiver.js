@@ -121,7 +121,7 @@ MeshReceiver.prototype = {
 		}
 
 		let meshName = 'none';
-		if ( meshPayload.params.meshName ) meshName = meshPayload.params.meshName;
+		if ( meshPayload.meshName ) meshName = meshPayload.meshName;
 
 		let material;
 		let multiMaterials = [];
@@ -163,7 +163,7 @@ MeshReceiver.prototype = {
 		let mesh;
 		let callbackOnMeshAlterResult;
 		let useOrgMesh = true;
-		let geometryType = meshPayload.geometryType ? meshPayload.geometryType : 0;
+		let geometryType = meshPayload.params.geometryType ? meshPayload.params.geometryType : 0;
 
 		if ( this.callbacks.onMeshAlter ) {
 

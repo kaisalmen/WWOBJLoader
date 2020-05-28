@@ -13,24 +13,21 @@ class MeshTransmitter {
 	static MESH_TRANSMITTER_VERSION = '1.0.0-preview';
 
 	constructor() {
-
-		this.defaultGeometryType = 0;
-		this.defaultMaterials = [ 'defaultMaterial', 'defaultLineMaterial', 'defaultPointMaterial' ];
-
+		this.callbackDataReceiver = null;
 	}
 
-	setDefaultGeometryType ( defaultGeometryType ) {
-		this.defaultGeometryType = defaultGeometryType;
+	setCallbackDataReceiver( callbackDataReceiver ) {
+		this.callbackDataReceiver = callbackDataReceiver;
 	}
 
-	walkMesh ( rootNode ) {
+	walkMesh( rootNode ) {
 		let scope = this;
 		let _walk_ = function ( object3d ) {
 			console.info( 'Walking: ' + object3d.name );
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-
-				scope.handleBufferGeometry( object3d[ 'geometry' ], object3d.name );
+				let payload = scope.handleBufferGeometry( object3d[ 'geometry' ], object3d.name, ['TBD'], 0 );
+				scope.callbackDataReceiver( payload.main, payload.transferables );
 
 			}
 			if ( object3d.hasOwnProperty( 'material' ) ) {
@@ -61,33 +58,40 @@ class MeshTransmitter {
 
 	}
 
-	handleBufferGeometry ( bufferGeometry, id, meshName, handlerFunc ) {
-//			console.log ( bufferGeometry.attributes );
-		let vertexBA = bufferGeometry.getAttribute( 'position' ) ;
+	/**
+	 *
+	 * @param {BufferGeometry} bufferGeometry
+	 * @param {string} meshName
+	 * @param {string[]} materialNames
+	 * @param {number} geometryType
+	 */
+	handleBufferGeometry( bufferGeometry, meshName, materialNames, geometryType ) {
+		let vertexBA = bufferGeometry.getAttribute( 'position' );
 		let indexBA = bufferGeometry.getIndex();
 		let colorBA = bufferGeometry.getAttribute( 'color' );
 		let normalBA = bufferGeometry.getAttribute( 'normal' );
 		let uvBA = bufferGeometry.getAttribute( 'uv' );
 		let skinIndexBA = bufferGeometry.getAttribute( 'skinIndex' );
 		let skinWeightBA = bufferGeometry.getAttribute( 'skinWeight' );
-		let vertexFA = ( vertexBA !== null && vertexBA !== undefined ) ? vertexBA.array: null;
-		let indexUA = ( indexBA !== null && indexBA !== undefined ) ? indexBA.array: null;
-		let colorFA = ( colorBA !== null && colorBA !== undefined ) ? colorBA.array: null;
-		let normalFA = ( normalBA !== null && normalBA !== undefined ) ? normalBA.array: null;
-		let uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
-		let skinIndexFA = ( skinIndexBA !== null && skinIndexBA !== undefined ) ? skinIndexBA.array: null;
-		let skinWeightFA = ( skinWeightBA !== null && skinWeightBA !== undefined ) ? skinWeightBA.array: null;
+		let vertexFA = (vertexBA !== null && vertexBA !== undefined) ? vertexBA.array : null;
+		let indexUA = (indexBA !== null && indexBA !== undefined) ? indexBA.array : null;
+		let colorFA = (colorBA !== null && colorBA !== undefined) ? colorBA.array : null;
+		let normalFA = (normalBA !== null && normalBA !== undefined) ? normalBA.array : null;
+		let uvFA = (uvBA !== null && uvBA !== undefined) ? uvBA.array : null;
+		let skinIndexFA = (skinIndexBA !== null && skinIndexBA !== undefined) ? skinIndexBA.array : null;
+		let skinWeightFA = (skinWeightBA !== null && skinWeightBA !== undefined) ? skinWeightBA.array : null;
 
-		let materialNames = [ this.defaultMaterials[ this.defaultGeometryType ] ];
-		handlerFunc( {
+		return {
+			main: {
 				cmd: 'exec',
 				type: 'mesh',
-				id: id,
+				meshName: meshName,
 				progress: {
 					numericalValue: 0
 				},
 				params: {
-					meshName: meshName
+					// 0: mesh, 1: line, 2: point
+					geometryType: geometryType
 				},
 				materials: {
 					multiMaterial: false,
@@ -102,18 +106,18 @@ class MeshTransmitter {
 					uvs: uvFA,
 					skinIndex: skinIndexFA,
 					skinWeight: skinWeightFA
-				},
-				// 0: mesh, 1: line, 2: point
-				geometryType: this.defaultGeometryType
+				}
 			},
-			vertexFA !== null ?  [ vertexFA.buffer ] : null,
-			indexUA !== null ?  [ indexUA.buffer ] : null,
-			colorFA !== null ? [ colorFA.buffer ] : null,
-			normalFA !== null ? [ normalFA.buffer ] : null,
-			uvFA !== null ? [ uvFA.buffer ] : null,
-			skinIndexFA !== null ? [ skinIndexFA.buffer ] : null,
-			skinWeightFA !== null ? [ skinWeightFA.buffer ] : null
-		)
+			transferables: {
+				vertex: vertexFA !== null ? [vertexFA.buffer] : null,
+				index: indexUA !== null ? [indexUA.buffer] : null,
+				color: colorFA !== null ? [colorFA.buffer] : null,
+				normal: normalFA !== null ? [normalFA.buffer] : null,
+				uv: uvFA !== null ? [uvFA.buffer] : null,
+				skinIndex: skinIndexFA !== null ? [skinIndexFA.buffer] : null,
+				skinWeight: skinWeightFA !== null ? [skinWeightFA.buffer] : null
+			}
+		}
 	}
 }
 

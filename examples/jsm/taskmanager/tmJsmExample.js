@@ -35,7 +35,14 @@ function execute ( id, config ) {
 
 	}
 
-	meshTransmitter.handleBufferGeometry( bufferGeometry, id, 'wwobj' + config.count, self.postMessage );
+	let payload = meshTransmitter.handleBufferGeometry( bufferGeometry, 'tmProto' + config.count, [ 'defaultPointMaterial' ], 2 );
+//	let time = performance.now() + performance.timeOrigin;
+	payload.main.params.color = {
+		r: 0.2,
+		g: 0.25 + Math.random() * 0.5,
+		b: 0.2,
+	};
+	self.postMessage( payload.main, payload.transferables );
 
 }
 
