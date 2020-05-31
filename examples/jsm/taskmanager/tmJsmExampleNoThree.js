@@ -3,15 +3,15 @@
  */
 
 import {
-	MeshTransmitter
-} from "../loaders/obj2/utils/MeshTransmitter.js";
+	TransferableUtils
+} from "../loaders/obj2/utils/TransferableUtils.js";
 
-self.meshTransmitter = new MeshTransmitter();
-self.buffers = {};
+
+self.config = {};
 
 function init ( id, config ) {
-	self.buffers = config.buffers;
 
+	self.config = config;
 	self.postMessage( {
 		cmd: "init",
 		id: id
@@ -20,7 +20,26 @@ function init ( id, config ) {
 }
 
 function execute ( id, config ) {
-	console.log( self.buffers.vertices.length );
+
+	let payload = TransferableUtils.cloneMessageStructure( self.config );
+	let vertexArray = payload.main.buffers.vertices.buffer;
+	for ( let i = 0; i < vertexArray.length; i++ ) {
+
+		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
+
+	}
+	payload.main.meshName = 'tmProto' + config.count;
+	payload.main.params.geometryType = 1;
+	payload.main.materials.materialNames = [ 'defaultLineMaterial' ];
+	let randArray = new Uint8Array( 3 );
+	self.crypto.getRandomValues( randArray );
+	payload.main.params.color = {
+		r: randArray[ 0 ] / 255,
+		g: randArray[ 1 ] / 255,
+		b: randArray[ 2 ] / 255
+	};
+
+	self.postMessage( payload.main, payload.transferables );
 
 }
 

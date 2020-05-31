@@ -140,7 +140,7 @@ MeshReceiver.prototype = {
 			for ( let key in materialNames ) {
 
 				let materialName = materialNames[ key ];
-				multiMaterials.push( this.materialHandler.getMaterial( materialName ) );
+				multiMaterials.push( this.materialHandler.getMaterial( materialName ).clone() );
 
 			}
 			material = multiMaterials;
@@ -155,7 +155,7 @@ MeshReceiver.prototype = {
 		else {
 
 			let materialName = materialNames[ 0 ];
-			if ( materialName ) material = this.materialHandler.getMaterial( materialName );
+			if ( materialName ) material = this.materialHandler.getMaterial( materialName ).clone();
 
 		}
 

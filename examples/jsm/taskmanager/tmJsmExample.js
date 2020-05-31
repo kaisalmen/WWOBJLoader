@@ -6,10 +6,8 @@ import {
 	TorusKnotBufferGeometry
 } from "../../../build/three.module.js";
 import {
-	MeshTransmitter
-} from "../loaders/obj2/utils/MeshTransmitter.js";
-
-const meshTransmitter = new MeshTransmitter();
+	TransferableUtils
+} from "../loaders/obj2/utils/TransferableUtils.js";
 
 function init ( id, config ) {
 		self.storage = {
@@ -23,7 +21,7 @@ function init ( id, config ) {
 
 	}
 
-function execute ( id, config ) {
+async function execute ( id, config ) {
 
 	let bufferGeometry = new TorusKnotBufferGeometry( 20, 3, 100, 64 );
 
@@ -35,12 +33,14 @@ function execute ( id, config ) {
 
 	}
 
-	let payload = meshTransmitter.handleBufferGeometry( bufferGeometry, 'tmProto' + config.count, [ 'defaultPointMaterial' ], 2 );
-//	let time = performance.now() + performance.timeOrigin;
+	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, 'tmProto' + config.count, 2,[ 'defaultPointMaterial' ] );
+
+	let randArray = new Uint8Array( 3 );
+	self.crypto.getRandomValues( randArray );
 	payload.main.params.color = {
-		r: 0.2,
-		g: 0.25 + Math.random() * 0.5,
-		b: 0.2,
+		r: randArray[ 0 ] / 255,
+		g: randArray[ 1 ] / 255,
+		b: randArray[ 2 ] / 255
 	};
 	self.postMessage( payload.main, payload.transferables );
 

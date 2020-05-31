@@ -23,7 +23,7 @@
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
-			import { MeshTransmitter } from "./jsm/loaders/obj2/utils/MeshTransmitter.js";
+			import { TransferableUtils } from "./jsm/loaders/obj2/utils/TransferableUtils.js";
 
 			const workerInitFunction = function ( id, config ) {
 				self.storage = {
@@ -60,7 +60,8 @@
 				let uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
 
 				self.postMessage( {
-						cmd: "exec",
+						cmd: 'exec',
+						type: 'mesh',
 						meshName: 'tmProto' + config.count,
 						params: {
 							geometryType: 0
@@ -127,6 +128,8 @@
 					materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
+					this.taskNames = [ 'tmProtoExample', 'tmProtoExampleJsm', 'tmProtoExampleJsmNoThree' ];
+					this.executions = [];
 					this.meshCount = 0;
 					this.lastDeletedMesh = 0;
 					this.removeCount = 50;
@@ -176,43 +179,44 @@
 				}
 
 				async initContent () {
-					var torus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
-					let meshTransmitter = new MeshTransmitter();
-					let torusPayload = meshTransmitter.handleBufferGeometry( torus );
+					let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
+					let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
 
-					this.taskManager.registerType( 'tmProtoExample', 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
-					this.taskManager.registerTypeJsm( "tmProtoExampleJsm", 4, './jsm/taskmanager/tmJsmExample.js' );
-					this.taskManager.registerTypeJsm( "tmProtoExampleJsmNoThree", 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
-					let available = await this.taskManager.initType( 'tmProtoExample', { param1: 'param1value' } );
-					let availableJsm = await this.taskManager.initType( 'tmProtoExampleJsm', { param1: 'param1value' } );
-					let availableJsmNoThree = await this.taskManager.initType( 'tmProtoExampleJsmNoThree', torusPayload.main, torusPayload.transferables );
+					this.taskManager.registerType( this.taskNames[ 0 ], 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
+					this.taskManager.registerTypeJsm( this.taskNames[ 1 ], 4, './jsm/taskmanager/tmJsmExample.js' );
+					this.taskManager.registerTypeJsm( this.taskNames[ 2 ], 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
+					let available = await this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } );
+					let availableJsm = await this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } );
+					let availableJsmNoThree = await this.taskManager.initType( this.taskNames[ 2 ], torusPayload, torusPayload.transferables );
 
 					console.time( 'start' );
-					let executions = [];
 
 					let globalCount = 0;
+					let taskNameIndex = 0;
 					for ( let j = 0; j < this.loopCount; j++ ) {
 						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 
-						for ( let i = 0; i < this.maxPerLoop; i += 2 ) {
+						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
 
-							executions.push( this.taskManager.addTask( 'tmProtoExample', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
+							this._storeAddTaskPromise( taskNameIndex, globalCount );
 							globalCount++;
-
-							executions.push( this.taskManager.addTask( 'tmProtoExampleJsm', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
-							globalCount++;
-
-//							executions.push( this.taskManager.addTask( 'tmProtoExampleJsmNoThree', 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
-//							globalCount++;
+							taskNameIndex++;
+							if ( taskNameIndex === this.taskNames.length ) taskNameIndex = 0;
 
 						}
-						await Promise.all( executions );
-						executions = [];
+						await Promise.all( this.executions );
+						this.executions = [];
 						console.timeEnd( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 
 					}
 					this.taskManager.dispose();
 					console.timeEnd( 'start' );
+
+				}
+
+				_storeAddTaskPromise( taskNameIndex, globalCount  ) {
+
+					this.executions.push( this.taskManager.addTask( this.taskNames[ taskNameIndex ], 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
 
 				}
 
@@ -223,9 +227,19 @@
 							break;
 
 						case 'exec':
-							let meshes = this.meshReceiver.buildMeshes( payload );
-							this.addMesh( meshes[ 0 ], payload.params );
+							if ( payload.type === 'mesh' ) {
 
+								let meshes = this.meshReceiver.buildMeshes( payload );
+								this.addMesh( meshes[ 0 ], payload.params );
+
+							}
+							else {
+
+								let mesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 5, 32, 32 ) );
+								mesh.name = payload.meshName;
+								this.addMesh( mesh, {} )
+
+							}
 							this.cleanMeshes();
 							break;
 
