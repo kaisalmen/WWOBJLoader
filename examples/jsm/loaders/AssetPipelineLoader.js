@@ -3,7 +3,7 @@
  */
 
 import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
-import { FileLoadingExecutor } from "./obj2/utils/FileLoadingExecutor.js";
+import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
 import { ObjectManipulator } from "./obj2/worker/parallel/WorkerRunner.js";
 
 
@@ -329,14 +329,10 @@ AssetTask.prototype = {
 
 	loadResource: async function () {
 
-		let response = await FileLoadingExecutor.loadFileAsync( {
-			resourceDescriptor: this.getResourceDescriptor(),
-			instanceNo: 0,
-			description: 'loadAssets',
-			reportCallback: ( report => console.log( report.detail.text ) )
-		} );
-		this.resourceDescriptor = response;
-		return response;
+		let fileLoaderBufferAsync = new FileLoaderBufferAsync();
+		let buffer = await fileLoaderBufferAsync.loadFileAsync( this.getResourceDescriptor().getUrl(), ( report => console.log( report.detail.text ) ) );
+		this.resourceDescriptor.setBuffer( buffer );
+		return this.resourceDescriptor;
 
 	},
 
@@ -347,7 +343,8 @@ AssetTask.prototype = {
 
 		if ( ! this.isLinker() ) {
 
-			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( this.resourceDescriptor.content.data );
+			let data = this.resourceDescriptor.isNeedStringOutput() ? this.resourceDescriptor.getBufferAsString() : this.resourceDescriptor.getBuffer();
+			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( data );
 
 		} else {
 

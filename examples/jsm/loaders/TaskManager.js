@@ -1,14 +1,17 @@
-import { FileLoadingExecutor } from "./obj2/utils/FileLoadingExecutor.js";
-import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
-
 /**
  * @author Don McCurdy / https://www.donmccurdy.com
  * @author Kai Salmen / https://kaisalmen.de
  */
 
-class WorkerDefinition {
+import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
+
+/**
+ * Defines a worker type: functions, dependencies and runtime information once it was created.
+ */
+class WorkerTypeDefinition {
 
     /**
+     * Creates a new instance of {@link WorkerTypeDefinition}.
      *
      * @param {Number} maximumCount
      */
@@ -27,18 +30,30 @@ class WorkerDefinition {
                 code: null
             }
         };
-        this.dependencyDescriptors = new Set ();
+        /**
+         * @type {Set<URL>}
+         */
+        this.dependencyUrls = new Set();
+        /**
+         * @type {URL}
+         */
         this.workerJsmUrl = null;
         this.workers = {
             maximumCount: maximumCount,
             code: [],
-            instances: new Set (),
+            instances: new Set(),
             available: [],
             storedPromises: []
         };
 
     }
 
+    /**
+     *
+     * @param {function} initFunction
+     * @param {function} executeFunction
+     * @param {function} comRouterFunction
+     */
     setFunctions ( initFunction, executeFunction, comRouterFunction ) {
 
         this.functions.init.ref = initFunction;
@@ -48,46 +63,62 @@ class WorkerDefinition {
     }
 
     /**
+     * Set the url of all dependent libraries (non-jsm).
      *
      * @param {String[]} dependencyUrls
      */
     setDependencyUrls ( dependencyUrls ) {
 
-        dependencyUrls.forEach( url => this.dependencyDescriptors.add( new ResourceDescriptor( url ).setUrl( url ) ) )
+        dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
 
     }
 
+    /**
+     * Set the url of the jsm worker.
+     *
+     * @param {string} workerJsmUrl
+     */
     setWorkerJsm ( workerJsmUrl ) {
 
         this.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
 
     }
 
+    /**
+     * Is it a jsm worker?
+     * @return {boolean}
+     */
     isWorkerJsm () {
 
         return ( this.workerJsmUrl !== null );
 
     }
 
+    /**
+     * Loads all dependencies and stores each as {@link ArrayBuffer} into the array.
+     *
+     * @return {Promise<ArrayBuffer[]>}
+     */
     async loadDependencies () {
 
-        let dependencyDescriptors = [];
-        for ( let dependency of this.dependencyDescriptors.entries() ) {
+        let fileLoaderBufferAsync = new FileLoaderBufferAsync();
+        let buffers = [];
+        for ( let url of this.dependencyUrls.entries() ) {
 
-            dependencyDescriptors.push( await FileLoadingExecutor.loadFileAsync( {
-                resourceDescriptor: dependency[ 1 ],
-                instanceNo: 0,
-                description: 'loadAssets',
-                reportCallback: ( report => console.log( report.detail.text ) )
-            } ));
+            buffers.push( fileLoaderBufferAsync.loadFileAsync( url[ 1 ], ( report => console.log( report.detail.text ) ) ) );
 
         }
         console.log( 'Waiting for completion of loading of all assets!');
-        return await Promise.all( dependencyDescriptors );
+        return await Promise.all( buffers );
 
     }
 
-    async generateWorkerCode ( dependencyDescriptors ) {
+    /**
+     *
+     * @param {ArrayBuffer[]} buffers
+     * @return {Promise<String[]>}
+     */
+    async generateWorkerCode ( buffers ) {
 
         this.functions.init.code = 'const init = ' + this.functions.init.ref.toString() + ';\n\n';
         this.functions.execute.code = 'const execute = ' + this.functions.execute.ref.toString() + ';\n\n';
@@ -96,24 +127,29 @@ class WorkerDefinition {
             this.functions.comRouter.code = "const comRouter = " + this.functions.comRouter.ref.toString() + ";\n\n";
 
         }
-
-        dependencyDescriptors.forEach( dependency => this.workers.code.push( dependency.content.data ) );
+        buffers.forEach( buffer => this.workers.code.push( buffer ) );
 
         this.workers.code.push( this.functions.init.code );
         this.workers.code.push( this.functions.execute.code );
         this.workers.code.push( this.functions.comRouter.code );
-        this.workers.code.push( "self.addEventListener( 'message', comRouter, false );" );
+        this.workers.code.push( 'self.addEventListener( "message", comRouter, false );' );
 
         return this.workers.code;
 
     }
 
+    /**
+     *
+     * @param {string} code
+     * @return {Promise<Set<any>>}
+     */
     async createWorkers ( code ) {
 
         for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
 
             let workerBlob = new Blob( code, { type: 'application/javascript' } );
             worker = new Worker( window.URL.createObjectURL( workerBlob ) );
+            // TODO: why is this not a map with int index?
             this.workers.instances.add( {
                 worker: worker,
                 id: i
@@ -124,6 +160,10 @@ class WorkerDefinition {
 
     }
 
+    /**
+     *
+     * @return {Promise<Set<any>>}
+     */
     async createWorkersJsm () {
 
         for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
@@ -139,6 +179,13 @@ class WorkerDefinition {
 
     }
 
+    /**
+     *
+     * @param {object} instances
+     * @param {object} config
+     * @param {Transferable[]} transferables
+     * @return {Promise<[]>}
+     */
     async initWorkers ( instances, config, transferables ) {
 
         let it = instances.values();
@@ -156,12 +203,21 @@ class WorkerDefinition {
 
     }
 
+    /**
+     * Returns a Worker or none.
+     *
+     * @return {Worker|null}
+     */
     getAvailableTask () {
 
         return this.workers.available.shift();
 
     }
 
+    /**
+     *
+     * @param {object} workerObj
+     */
     returnAvailableTask ( workerObj ) {
 
         this.workers.available.push( workerObj );
@@ -173,6 +229,9 @@ class WorkerDefinition {
 
     }
 
+    /**
+     * Dispose all worker instances.
+     */
     dispose () {
 
         let it = this.workers.instances.values();
@@ -186,6 +245,9 @@ class WorkerDefinition {
 }
 
 
+/**
+ *
+ */
 class TaskManager {
 
     constructor () {
@@ -217,10 +279,10 @@ class TaskManager {
      */
     registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRouterFunction, dependencyUrls ) {
 
-        let workerDefinition = new WorkerDefinition( maximumWorkerCount );
-        workerDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
-        workerDefinition.setDependencyUrls( dependencyUrls );
-        this.types.set( type, workerDefinition );
+        let workerTypeDefinition = new WorkerTypeDefinition( maximumWorkerCount );
+        workerTypeDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
+        workerTypeDefinition.setDependencyUrls( dependencyUrls );
+        this.types.set( type, workerTypeDefinition );
         return this;
 
     }
@@ -234,9 +296,9 @@ class TaskManager {
      */
     registerTypeJsm ( type, maximumWorkerCount, workerJsmUrl ) {
 
-        let workerDefinition = new WorkerDefinition( maximumWorkerCount );
-        workerDefinition.setWorkerJsm( workerJsmUrl );
-        this.types.set( type, workerDefinition );
+        let workerTypeDefinition = new WorkerTypeDefinition( maximumWorkerCount );
+        workerTypeDefinition.setWorkerJsm( workerJsmUrl );
+        this.types.set( type, workerTypeDefinition );
         return this;
 
     }
@@ -245,23 +307,24 @@ class TaskManager {
      * Provides initialization configuration and dependencies for all tasks of given type.
      * @param {string} type
      * @param {object} config
-     * @param {Object} [transferables]
+     * @param {Transferable[]} [transferables]
      */
     async initType ( type, config, transferables ) {
 
-        let workerDefinition = this.types.get( type );
-        if ( workerDefinition.isWorkerJsm() ) {
+        let workerTypeDefinition = this.types.get( type );
+        if ( workerTypeDefinition.isWorkerJsm() ) {
 
-            return await workerDefinition.createWorkersJsm()
-                .then( instances => workerDefinition.initWorkers( instances, config, transferables ) );
+            return await workerTypeDefinition.createWorkersJsm()
+                .then( instances => workerTypeDefinition.initWorkers( instances, config, transferables ) );
 
         }
         else {
 
-            return await workerDefinition.loadDependencies()
-                .then( deps => workerDefinition.generateWorkerCode( deps ) )
-                .then( code => workerDefinition.createWorkers( code ) )
-                .then( instances => workerDefinition.initWorkers( instances, config, transferables ) );
+            return await workerTypeDefinition.loadDependencies()
+                .then( buffers => workerTypeDefinition.generateWorkerCode( buffers ) )
+                .then( code => workerTypeDefinition.createWorkers( code ) )
+                .then( instances => workerTypeDefinition.initWorkers( instances, config, transferables ) )
+                .catch( x => console.error( x ) );
 
         }
     }
@@ -276,8 +339,8 @@ class TaskManager {
      */
     async addTask ( type, cost, config, transferables ) {
 
-        let workerDefinition = this.types.get( type );
-        let workerObj = workerDefinition.getAvailableTask();
+        let workerTypeDefinition = this.types.get( type );
+        let workerObj = workerTypeDefinition.getAvailableTask();
 
         return new Promise( ( resolveUser, rejectUser ) => {
 
@@ -298,7 +361,7 @@ class TaskManager {
                 promiseWorker.then( ( e ) => {
 
                     resolveExecute( e.data );
-                    workerDefinition.returnAvailableTask( workerObjExecute );
+                    workerTypeDefinition.returnAvailableTask( workerObjExecute );
 
                 } ).catch( ( e ) => {
 
@@ -315,7 +378,7 @@ class TaskManager {
             }
             else {
 
-                workerDefinition.workers.storedPromises.push( {
+                workerTypeDefinition.workers.storedPromises.push( {
                     exec: executeWorker,
                     resolve: resolveUser,
                     reject: rejectUser
@@ -332,9 +395,9 @@ class TaskManager {
      */
     dispose () {
 
-        for ( const [ key, workerDefinition ] of this.types.entries() ) {
+        for ( let workerTypeDefinition of this.types.values() ) {
 
-            workerDefinition.dispose();
+            workerTypeDefinition.dispose();
 
         }
         return this;

@@ -87,9 +87,7 @@
 
 				initContent: function () {
 					let assetTask0 = new AssetTask( 'task0' );
-					let rdMtl = new ResourceDescriptor( 'female02.mtl' )
-						.setUrl( './models/obj/female02/female02.mtl' )
-						.setNeedStringOutput( true );
+					let rdMtl = new ResourceDescriptor( './models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
 					assetTask0.setResourceDescriptor( rdMtl );
 					let loaderConfigurationMtl = {
 						resourcePath: './models/obj/female02/',
@@ -102,7 +100,7 @@
 					assetTask1.setAssetHandler( MtlObjBridge );
 
 					let assetTask2 = new AssetTask( 'task2' );
-					let rdObj = new ResourceDescriptor( 'female02.obj' ).setUrl( './models/obj/female02/female02.obj' );
+					let rdObj = new ResourceDescriptor( './models/obj/female02/female02.obj' );
 					assetTask2.setResourceDescriptor( rdObj );
 					assetTask2.setAssetHandlerRef( OBJLoader2 );
 

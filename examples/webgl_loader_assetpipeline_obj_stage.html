@@ -179,7 +179,7 @@
 
 
 					let assetTaskMale02Mtl = new AssetTask( 'taskMale02Mtl' );
-					let resMale02 = new ResourceDescriptor( 'male02.mtl' ).setUrl( 'models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
+					let resMale02 = new ResourceDescriptor( 'models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
 					assetTaskMale02Mtl.setResourceDescriptor( resMale02 );
 
 					assetTaskMale02Mtl.setAssetHandlerRef( MTLLoader, {
@@ -192,7 +192,7 @@
 					assetTaskMale02MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskMale02Obj = new AssetTask( 'taskMale02Obj' );
-					let resFemale02 =  new ResourceDescriptor( 'male02.obj' ).setUrl( 'models/obj/male02/male02.obj' )
+					let resFemale02 =  new ResourceDescriptor( 'models/obj/male02/male02.obj' );
 					assetTaskMale02Obj.setResourceDescriptor( resFemale02 );
 					assetTaskMale02Obj.setAssetHandlerRef( OBJLoader2 );
 
@@ -210,9 +210,7 @@
 
 
 					let assetTaskFemale02Mtl = new AssetTask( 'taskFemale02Mtl' );
-					let resFemale02Mtl = new ResourceDescriptor( 'female02.mtl' )
-						.setUrl( 'models/obj/female02/female02.mtl' )
-						.setNeedStringOutput( true );
+					let resFemale02Mtl = new ResourceDescriptor( 'models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
 					assetTaskFemale02Mtl.setResourceDescriptor( resFemale02Mtl );
 					assetTaskFemale02Mtl.setAssetHandlerRef( MTLLoader, {
 						resourcePath: 'models/obj/female02/',
@@ -224,7 +222,7 @@
 					assetTaskFemale02MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskFemale02Obj = new AssetTask( 'taskFemale02Obj' );
-					let resFemale02Obj = new ResourceDescriptor( 'female02.obj' ).setUrl( 'models/obj/female02/female02.obj' );
+					let resFemale02Obj = new ResourceDescriptor( 'models/obj/female02/female02.obj' );
 					assetTaskFemale02Obj.setResourceDescriptor( resFemale02Obj );
 					assetTaskFemale02Obj.setAssetHandlerRef( OBJLoader2 );
 
@@ -243,8 +241,7 @@
 
 
 					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1Mtl' );
-					let resPTV1Mtl = new ResourceDescriptor( 'PTV1.mtl' )
-						.setUrl( 'models/obj/PTV1/PTV1.mtl.gz' )
+					let resPTV1Mtl = new ResourceDescriptor( 'models/obj/PTV1/PTV1.mtl.gz' )
 						.setNeedStringOutput( true )
 						.setCompressed( true );
 					assetTaskPTV1Mtl.setResourceDescriptor( resPTV1Mtl );
@@ -258,9 +255,7 @@
 					assetTaskPTV1MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskPTV1Obj = new AssetTask( 'taskPTV1Obj' );
-					let resPTV1Obj = new ResourceDescriptor( 'PTV1.obj' )
-						.setUrl( 'models/obj/PTV1/PTV1.obj.gz' )
-						.setCompressed( true );
+					let resPTV1Obj = new ResourceDescriptor( 'models/obj/PTV1/PTV1.obj.gz' ).setCompressed( true );
 					assetTaskPTV1Obj.setResourceDescriptor( resPTV1Obj );
 					assetTaskPTV1Obj.setAssetHandlerRef( OBJLoader2 );
 
@@ -278,7 +273,7 @@
 
 
 					let assetTaskCerberusObj = new AssetTask( 'taskCerberusObj' );
-					let resCerberusObj = new ResourceDescriptor( 'Cerberus.obj' ).setUrl( 'models/obj/cerberus/Cerberus.obj' );
+					let resCerberusObj = new ResourceDescriptor( 'models/obj/cerberus/Cerberus.obj' );
 					assetTaskCerberusObj.setResourceDescriptor( resCerberusObj );
 					assetTaskCerberusObj.setAssetHandlerRef( OBJLoader2, {
 						useIndices: true
@@ -296,9 +291,7 @@
 
 
 					let assetTaskWaltHeadMtl = new AssetTask( 'taskWaltHeadMtl' );
-					let resWaltHeadMtl = new ResourceDescriptor( 'WaltHead.mtl' )
-					.setUrl( 'models/obj/walt/WaltHead.mtl' )
-					.setNeedStringOutput( true );
+					let resWaltHeadMtl = new ResourceDescriptor( 'models/obj/walt/WaltHead.mtl' ).setNeedStringOutput( true );
 					assetTaskWaltHeadMtl.setResourceDescriptor( resWaltHeadMtl );
 					assetTaskWaltHeadMtl.setAssetHandlerRef( MTLLoader, {
 						resourcePath: 'models/obj/walt/',
@@ -310,7 +303,7 @@
 					assetTaskWaltHeadMtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskWaltHeadObj = new AssetTask( 'taskWaltHeadObj' );
-					let resWaltHeadObj = new ResourceDescriptor( 'WaltHead.obj' ).setUrl( 'models/obj/walt/WaltHead.obj' );
+					let resWaltHeadObj = new ResourceDescriptor( 'models/obj/walt/WaltHead.obj' );
 					assetTaskWaltHeadObj.setResourceDescriptor( resWaltHeadObj );
 					assetTaskWaltHeadObj.setAssetHandlerRef( OBJLoader2, {
 						useIndices: true
@@ -329,7 +322,7 @@
 
 
 					let assetTaskNinjaObj = new AssetTask( 'taskNinjaObj' );
-					let resNinjaObj = new ResourceDescriptor( 'ninjaHead_Low.obj' ).setUrl( 'models/obj/ninja/ninjaHead_Low.obj' );
+					let resNinjaObj = new ResourceDescriptor( 'models/obj/ninja/ninjaHead_Low.obj' );
 					assetTaskNinjaObj.setResourceDescriptor( resNinjaObj );
 					assetTaskNinjaObj.setAssetHandlerRef( OBJLoader2, {
 						useIndices: true
@@ -346,9 +339,7 @@
 					this.assetsDef.objsNinja = aplNinja;
 
 					let assetTaskOvenObj = new AssetTask( 'taskOvenObj' );
-					let resOvenObj = new ResourceDescriptor( 'zomax-net_haze-oven-scene.obj' )
-						.setUrl( 'models/obj/zomax/zomax-net_haze-oven-scene.obj.gz' )
-						.setCompressed( true );
+					let resOvenObj = new ResourceDescriptor( 'models/obj/zomax/zomax-net_haze-oven-scene.obj.gz' ).setCompressed( true );
 
 					assetTaskOvenObj.setResourceDescriptor( resOvenObj );
 					assetTaskOvenObj.setAssetHandlerRef( OBJLoader2, {
@@ -367,9 +358,7 @@
 
 
 					let assetTaskSinkObj = new AssetTask( 'taskSinkObj' );
-					let resSinkObj = new ResourceDescriptor( 'zomax-net_haze-sink-scene.obj' )
-						.setUrl( 'models/obj/zomax/zomax-net_haze-sink-scene.obj.gz' )
-						.setCompressed( true );
+					let resSinkObj = new ResourceDescriptor( 'models/obj/zomax/zomax-net_haze-sink-scene.obj.gz' ).setCompressed( true );
 
 					assetTaskSinkObj.setResourceDescriptor( resSinkObj );
 					assetTaskSinkObj.setAssetHandlerRef( OBJLoader2, {
@@ -500,9 +489,7 @@
 					}
 
 					let assetTaskUserMtl = new AssetTask( 'taskUserMtl' );
-					let resUserMtl = new ResourceDescriptor( 'userMtl' )
-						.setUrl( pathTexture + '/' + fileMtl.name )
-						.setNeedStringOutput( true );
+					let resUserMtl = new ResourceDescriptor( pathTexture + '/' + fileMtl.name ).setNeedStringOutput( true );
 					assetTaskUserMtl.setResourceDescriptor( resUserMtl );
 					assetTaskUserMtl.setAssetHandlerRef( MTLLoader, {
 						resourcePath: pathTexture,
@@ -514,7 +501,7 @@
 					assetTaskUserMtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskUserObj = new AssetTask( 'taskUserObj' );
-					let resUserObj = new ResourceDescriptor( 'userObj' ).setUrl( pathTexture + '/' + fileObj.name );
+					let resUserObj = new ResourceDescriptor( pathTexture + '/' + fileObj.name );
 					assetTaskUserObj.setResourceDescriptor( resUserObj );
 					assetTaskUserObj.setAssetHandlerRef( OBJLoader2, {
 						useIndices: true
@@ -592,7 +579,7 @@
 					this.disableElement( handlePTV1 );
 				},
 				loadOven: function () {
-					app.updateAssets( app.assetsDef.objsZomaxOven);
+					app.updateAssets( app.assetsDef.objsZomaxOven );
 					this.disableElement( handleOven );
 				},
 				loadSink: function () {

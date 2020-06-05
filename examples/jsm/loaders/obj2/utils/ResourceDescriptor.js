@@ -3,97 +3,135 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
+import { Zlib } from "../../../libs/gunzip.module.min.js";
+
 /**
- *
- * @param {String} name
- * @constructor
+ * Encapsulates a url and derived values (filename, extension and path and stores the {@link ArrayBufer}
+ * loaded from the resource described by the url.
  */
-const ResourceDescriptor = function ( name) {
-	this.name = ( name !== undefined && name !== null ) ? name : 'Unnamed_Resource';
-	this.content = {
-		data: null,
-		dataOptions: null,
-		needStringOutput: false,
-		compressed: false
-	};
-	this.url = null;
-	this.filename = null;
-	this.path;
-	this.resourcePath;
-	this.extension = null;
-	this.transferables = [];
-};
-
-ResourceDescriptor.prototype = {
-
-	constructor: ResourceDescriptor,
+class ResourceDescriptor {
 
 	/**
+	 * Creates a new instance of {@link ResourceDescriptor}.
 	 *
-	 * @param url
-	 * @return {ResourceDescriptor}
+	 * @param {string} url URL as text
 	 */
-	setUrl: function ( url ) {
+	constructor ( url ) {
 
-		this.url = ( url === undefined || url === null ) ? this.name : url;
-		this.url = new URL( this.url, window.location.href ).href;
-		this.filename = this.url;
-		let urlParts = this.url.split( '/' );
+		this.url = new URL( url, window.location.href );
+		this.path = './';
+		this.filename = url;
+		this.extension = null;
+
+		let urlParts = this.url.href.split( '/' );
 		if ( urlParts.length > 2 ) {
 
 			this.filename = urlParts[ urlParts.length - 1 ];
 			let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
-			if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
+			if ( urlPartsPath !== undefined ) this.path = urlPartsPath;
 
 		}
 		let filenameParts = this.filename.split( '.' );
 		if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
-		return this;
 
-	},
+		this.buffer = null;
+		this.needStringOutput = false;
+		this.compressed = false;
+
+	}
 
 	/**
+	 * Returns the URL.
+	 * @return {URL}
+	 */
+	getUrl() {
+
+		return this.url;
+
+	}
+
+	/**
+	 * Returns ths path from the base of the URL to the file
+	 * @return {string}
+	 */
+	getPath () {
+
+		return this.path;
+
+	}
+
+	/**
+	 * Returns the filename.
+	 * @return {string}
+	 */
+	getFilename () {
+
+		return this.filename;
+
+	}
+
+	/**
+	 * Returns the file extension if it was found
+	 * @return {null|string}
+	 */
+	getExtension () {
+
+		return this.extension;
+
+	}
+
+	/**
+	 * Allows to set if the buffer should be converted to string which is possible via {@link getBufferAsString}.
 	 *
-	 * @param needStringOutput
+	 * @param {boolean} needStringOutput
  	 * @return {ResourceDescriptor}
 	 */
-	setNeedStringOutput: function ( needStringOutput ) {
+	setNeedStringOutput ( needStringOutput ) {
 
-		this.content.needStringOutput = needStringOutput;
+		this.needStringOutput = needStringOutput;
 		return this;
 
-	},
+	}
+
+	/**
+	 * Tells if buffer should be returned as string.
+	 * @return {boolean}
+	 */
+	isNeedStringOutput () {
+
+		return this.needStringOutput;
+
+	}
 
 	/**
 	 *
 	 * @param {boolean} compressed
 	 * @return {ResourceDescriptor}
 	 */
-	setCompressed: function ( compressed ) {
+	setCompressed ( compressed ) {
 
-		this.content.compressed = compressed;
+		this.compressed = compressed;
 		return this;
 
-	},
+	}
 
 	/**
-	 *
+	 * Tells if the resource is compressed
 	 * @return {boolean}
 	 */
-	isCompressed: function () {
+	isCompressed () {
 
-		return this.content.compressed;
+		return this.compressed;
 
-	},
+	}
 
 	/**
-	 *
-	 * @param buffer
+	 * Set the buffer after loading. It will be decompressed if {@link isCompressed} is true.
+	 * @param {ArrayBuffer} buffer
+	 * @return {ResourceDescriptor}
 	 */
-	setBuffer: function ( buffer ) {
+	setBuffer ( buffer ) {
 
-		// fast-fail on unset input
-		if ( buffer === null ) return;
 		if ( ! ( buffer instanceof ArrayBuffer ||
 			buffer instanceof Int8Array ||
 			buffer instanceof Uint8Array ||
@@ -108,55 +146,43 @@ ResourceDescriptor.prototype = {
 			throw( 'Provided input is neither an "ArrayBuffer" nor a "TypedArray"! Aborting...' );
 
 		}
+		if ( this.isCompressed() ) {
 
-		if ( this.content.needStringOutput ) {
-
-			this.content.data = new TextDecoder("utf-8" ).decode( buffer ) ;
+			let inflate = new Zlib.Gunzip( new Uint8Array( buffer ) ); // eslint-disable-line no-undef
+			this.buffer = inflate.decompress();
 
 		}
 		else {
 
-			this.content.data = buffer;
+			this.buffer = buffer;
 
 		}
+		return this;
 
-	},
-
-	/**
-	 *
-	 * @param name
-	 * @param object
-	 * @param transferables
-	 */
-	setInputDataOption: function ( name, object, transferables ) {
-
-		if ( ! Array.isArray( transferables ) ) transferables = [];
-		this.content.dataOptions[ name ] = {
-			name: name,
-			object: object
-		};
-		if ( transferables.length > 0 ) {
-
-			this.transferables = this.transferables.concat( transferables );
-
-		}
-
-	},
-
-	/**
-	 *
-	 * @return {ResourceDescriptor}
-	 */
-	createSendable: function () {
-		let copy = new ResourceDescriptor( this.name );
-		copy.url = this.url;
-		copy.filename = this.filename;
-		copy.path = this.path;
-		copy.resourcePath = this.resourcePath;
-		copy.extension = this.extension;
-		this.content.data = null;
-		return copy;
 	}
-};
+
+	/**
+	 * Returns the buffer.
+	 *
+	 * @return {ArrayBuffer}
+	 */
+	getBuffer () {
+
+		return this.buffer;
+
+	}
+
+	/**
+	 * Returns the buffer as string by using {@link TextDecoder}.
+	 *
+	 * @return {string}
+	 */
+	getBufferAsString () {
+
+		return new TextDecoder("utf-8" ).decode( this.buffer ) ;
+
+	}
+
+}
 
 export { ResourceDescriptor }

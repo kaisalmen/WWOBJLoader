@@ -32,7 +32,6 @@ async function execute ( id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-
 	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, 'tmProto' + config.count, 2,[ 'defaultPointMaterial' ] );
 
 	let randArray = new Uint8Array( 3 );
@@ -42,7 +41,7 @@ async function execute ( id, config ) {
 		g: randArray[ 1 ] / 255,
 		b: randArray[ 2 ] / 255
 	};
-	self.postMessage( payload.main, payload.transferables );
+	payload.postMessage( self );
 
 }
 

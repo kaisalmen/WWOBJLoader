@@ -3,7 +3,7 @@
  */
 
 import {
-	TransferableUtils
+	MeshMessageStructure
 } from "../loaders/obj2/utils/TransferableUtils.js";
 
 
@@ -21,7 +21,7 @@ function init ( id, config ) {
 
 function execute ( id, config ) {
 
-	let payload = TransferableUtils.cloneMessageStructure( self.config );
+	let payload = MeshMessageStructure.cloneMessageStructure( self.config );
 	let vertexArray = payload.main.buffers.vertices.buffer;
 	for ( let i = 0; i < vertexArray.length; i++ ) {
 
@@ -38,8 +38,7 @@ function execute ( id, config ) {
 		g: randArray[ 1 ] / 255,
 		b: randArray[ 2 ] / 255
 	};
-
-	self.postMessage( payload.main, payload.transferables );
+	payload.postMessage( self );
 
 }
 
