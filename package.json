@@ -1,15 +1,10 @@
 {
   "name": "wwobjloader2",
-  "version": "3.1.3-dev",
+  "version": "3.2.1-dev",
   "versions": {
-    "obj_loader2": "3.1.2-dev",
-    "obj_loader2_parallel": "3.1.3-dev",
-    "worker_execution_support": "3.1.1-dev"
-  },
-  "previous_versions": {
-    "obj_loader2": "3.1.1",
-    "obj_loader2_parallel": "3.1.2",
-    "worker_execution_support": "3.1.0"
+    "obj_loader2": "3.2.1-dev",
+    "obj_loader2_parallel": "3.2.1-dev",
+    "worker_execution_support": "3.2.1-dev"
   },
   "description": "New OBJLoader utilizing web worker for three.js",
   "main": "build/WLOBJLoader2.js",
@@ -48,14 +43,14 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.116.1"
+    "three": "^0.117.1"
   },
   "devDependencies": {
     "del": "^5.1.0",
     "fancy-log": "^1.3.3",
     "gulp": "^4.0.2",
     "gulp-decompress": "^3.0.0",
-    "gulp-jsdoc3": "^2.0.0",
+    "gulp-jsdoc3": "^3.0.0",
     "gulp-remote-src": "^0.4.4",
     "gulp-replace": "^1.0.0"
   }

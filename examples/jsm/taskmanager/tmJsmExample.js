@@ -9,19 +9,19 @@ import {
 	TransferableUtils
 } from "../loaders/obj2/utils/TransferableUtils.js";
 
-function init ( id, config ) {
-		self.storage = {
+function init ( context, id, config ) {
+		context.storage = {
 			whoami: id,
 		};
 
-		self.postMessage( {
+		context.postMessage( {
 			cmd: "init",
 			id: id
 		} );
 
 	}
 
-async function execute ( id, config ) {
+async function execute ( context, id, config ) {
 
 	let bufferGeometry = new TorusKnotBufferGeometry( 20, 3, 100, 64 );
 
@@ -35,28 +35,28 @@ async function execute ( id, config ) {
 	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, 'tmProto' + config.count, 2,[ 'defaultPointMaterial' ] );
 
 	let randArray = new Uint8Array( 3 );
-	self.crypto.getRandomValues( randArray );
+	context.crypto.getRandomValues( randArray );
 	payload.main.params.color = {
 		r: randArray[ 0 ] / 255,
 		g: randArray[ 1 ] / 255,
 		b: randArray[ 2 ] / 255
 	};
-	payload.postMessage( self );
+	payload.postMessage( context );
 
 }
 
-function manageCom ( message ) {
+function comRouter ( message ) {
 	let payload = message.data;
 	if ( payload.cmd === 'init' ) {
 
-		init( payload.id, payload.config );
+		init( self, payload.id, payload.config );
 
 	}
 	else if ( payload.cmd === 'execute' ) {
 
-		execute( payload.id, payload.config );
+		execute( self, payload.id, payload.config );
 
 	}
 }
 
-self.addEventListener( 'message', manageCom, false );
+self.addEventListener( 'message', comRouter, false );

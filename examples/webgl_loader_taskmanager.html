@@ -25,41 +25,41 @@
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/loaders/obj2/utils/TransferableUtils.js";
 
-			const workerInitFunction = function ( id, config ) {
-				self.storage = {
+			const workerInitFunction = function ( context, id, config ) {
+				context.storage = {
 					whoami: id,
 				};
 
-				self.postMessage( {
+				context.postMessage( {
 					cmd: "init",
 					id: id
 				} );
 
 			};
 
-			const workerExecFunction = function ( id, config ) {
+			const workerExecFunction = function ( context, id, config ) {
 
 				let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 
-				let vertexBA = bufferGeometry.getAttribute( 'position' ) ;
+				let vertexBA = bufferGeometry.getAttribute( 'position' );
 				let indexBA = bufferGeometry.getIndex();
 				let colorBA = bufferGeometry.getAttribute( 'color' );
 				let normalBA = bufferGeometry.getAttribute( 'normal' );
 				let uvBA = bufferGeometry.getAttribute( 'uv' );
 
 				let vertexArray = vertexBA.array;
-				for ( let i = 0; i < vertexArray.length; i++ ) {
+				for ( let i = 0; i < vertexArray.length; i ++ ) {
 
 					vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
 
 				}
 				let vertexFA = vertexArray;
-				let indexUA = ( indexBA !== null && indexBA !== undefined ) ? indexBA.array: null;
-				let colorFA = ( colorBA !== null && colorBA !== undefined ) ? colorBA.array: null;
-				let normalFA = ( normalBA !== null && normalBA !== undefined ) ? normalBA.array: null;
-				let uvFA = ( uvBA !== null && uvBA !== undefined ) ? uvBA.array: null;
+				let indexUA = (indexBA !== null && indexBA !== undefined) ? indexBA.array : null;
+				let colorFA = (colorBA !== null && colorBA !== undefined) ? colorBA.array : null;
+				let normalFA = (normalBA !== null && normalBA !== undefined) ? normalBA.array : null;
+				let uvFA = (uvBA !== null && uvBA !== undefined) ? uvBA.array : null;
 
-				self.postMessage( {
+				context.postMessage( {
 						cmd: 'exec',
 						type: 'mesh',
 						meshName: 'tmProto' + config.count,
@@ -74,31 +74,30 @@
 							uvs: uvFA,
 						},
 						materials: {
-							materialNames: [ 'meshNormalMaterial' ]
+							materialNames: ['meshNormalMaterial']
 						}
 					},
-					[ vertexFA.buffer ],
-					indexUA !== null ?  [ indexUA.buffer ] : null,
-					colorFA !== null ? [ colorFA.buffer ] : null,
-					normalFA !== null ? [ normalFA.buffer ] : null,
-					uvFA !== null ? [ uvFA.buffer ] : null
+					[vertexFA.buffer],
+					indexUA !== null ? [indexUA.buffer] : null,
+					colorFA !== null ? [colorFA.buffer] : null,
+					normalFA !== null ? [normalFA.buffer] : null,
+					uvFA !== null ? [uvFA.buffer] : null
 				);
 
-			};
+			}
 
 			const workerManageCom = function ( message ) {
 				let payload = message.data;
 				if ( payload.cmd === 'init' ) {
 
-					init( payload.id, payload.config );
+					init( self, payload.id, payload.config );
+
+				} else if ( payload.cmd === 'execute' ) {
+
+					execute( self, payload.id, payload.config );
 
 				}
-				else if ( payload.cmd === 'execute' ) {
-
-					execute( payload.id, payload.config );
-
-				}
-			};
+			}
 
 			class TaskManagerPrototypeExample {
 
@@ -182,12 +181,13 @@
 					let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 					let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
 
+//					this.taskManager.registerType( this.taskNames[ 0 ], 0, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
 					this.taskManager.registerType( this.taskNames[ 0 ], 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
 					this.taskManager.registerTypeJsm( this.taskNames[ 1 ], 4, './jsm/taskmanager/tmJsmExample.js' );
 					this.taskManager.registerTypeJsm( this.taskNames[ 2 ], 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
-					let available = await this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } );
-					let availableJsm = await this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } );
-					let availableJsmNoThree = await this.taskManager.initType( this.taskNames[ 2 ], torusPayload, torusPayload.transferables );
+					let available = await this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } ).catch( e => console.error( e ) );
+					let availableJsm = await this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } ).catch( e => console.error( e ) );
+					let availableJsmNoThree = await this.taskManager.initType( this.taskNames[ 2 ], torusPayload, torusPayload.transferables ).catch( e => console.error( e ) );
 
 					console.time( 'start' );
 

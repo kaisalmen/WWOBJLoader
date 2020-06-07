@@ -7,21 +7,19 @@ import {
 } from "../loaders/obj2/utils/TransferableUtils.js";
 
 
-self.config = {};
+function init ( context, id, config ) {
 
-function init ( id, config ) {
-
-	self.config = config;
-	self.postMessage( {
+	context.config = config;
+	context.postMessage( {
 		cmd: "init",
 		id: id
 	} );
 
 }
 
-function execute ( id, config ) {
+function execute ( context, id, config ) {
 
-	let payload = MeshMessageStructure.cloneMessageStructure( self.config );
+	let payload = MeshMessageStructure.cloneMessageStructure( context.config );
 	let vertexArray = payload.main.buffers.vertices.buffer;
 	for ( let i = 0; i < vertexArray.length; i++ ) {
 
@@ -32,28 +30,28 @@ function execute ( id, config ) {
 	payload.main.params.geometryType = 1;
 	payload.main.materials.materialNames = [ 'defaultLineMaterial' ];
 	let randArray = new Uint8Array( 3 );
-	self.crypto.getRandomValues( randArray );
+	context.crypto.getRandomValues( randArray );
 	payload.main.params.color = {
 		r: randArray[ 0 ] / 255,
 		g: randArray[ 1 ] / 255,
 		b: randArray[ 2 ] / 255
 	};
-	payload.postMessage( self );
+	payload.postMessage( context );
 
 }
 
-function manageCom ( message ) {
+function comRouter ( message ) {
 	let payload = message.data;
 	if ( payload.cmd === 'init' ) {
 
-		init( payload.id, payload.config );
+		init( self, payload.id, payload.config );
 
 	}
 	else if ( payload.cmd === 'execute' ) {
 
-		execute( payload.id, payload.config );
+		execute( self, payload.id, payload.config );
 
 	}
 }
 
-self.addEventListener( 'message', manageCom, false );
+self.addEventListener( 'message', comRouter, false );

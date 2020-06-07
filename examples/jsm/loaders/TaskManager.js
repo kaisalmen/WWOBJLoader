@@ -6,246 +6,6 @@
 import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
 
 /**
- * Defines a worker type: functions, dependencies and runtime information once it was created.
- */
-class WorkerTypeDefinition {
-
-    /**
-     * Creates a new instance of {@link WorkerTypeDefinition}.
-     *
-     * @param {Number} maximumCount
-     */
-    constructor ( maximumCount ) {
-        this.functions = {
-            init: {
-                ref: null,
-                code: null
-            },
-            execute: {
-                ref: null,
-                code: null
-            },
-            comRouter: {
-                ref: null,
-                code: null
-            }
-        };
-        /**
-         * @type {Set<URL>}
-         */
-        this.dependencyUrls = new Set();
-        /**
-         * @type {URL}
-         */
-        this.workerJsmUrl = null;
-        this.workers = {
-            maximumCount: maximumCount,
-            code: [],
-            instances: new Set(),
-            available: [],
-            storedPromises: []
-        };
-
-    }
-
-    /**
-     *
-     * @param {function} initFunction
-     * @param {function} executeFunction
-     * @param {function} comRouterFunction
-     */
-    setFunctions ( initFunction, executeFunction, comRouterFunction ) {
-
-        this.functions.init.ref = initFunction;
-        this.functions.execute.ref = executeFunction;
-        this.functions.comRouter.ref = comRouterFunction;
-
-    }
-
-    /**
-     * Set the url of all dependent libraries (non-jsm).
-     *
-     * @param {String[]} dependencyUrls
-     */
-    setDependencyUrls ( dependencyUrls ) {
-
-        dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
-
-    }
-
-    /**
-     * Set the url of the jsm worker.
-     *
-     * @param {string} workerJsmUrl
-     */
-    setWorkerJsm ( workerJsmUrl ) {
-
-        this.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
-
-    }
-
-    /**
-     * Is it a jsm worker?
-     * @return {boolean}
-     */
-    isWorkerJsm () {
-
-        return ( this.workerJsmUrl !== null );
-
-    }
-
-    /**
-     * Loads all dependencies and stores each as {@link ArrayBuffer} into the array.
-     *
-     * @return {Promise<ArrayBuffer[]>}
-     */
-    async loadDependencies () {
-
-        let fileLoaderBufferAsync = new FileLoaderBufferAsync();
-        let buffers = [];
-        for ( let url of this.dependencyUrls.entries() ) {
-
-            buffers.push( fileLoaderBufferAsync.loadFileAsync( url[ 1 ], ( report => console.log( report.detail.text ) ) ) );
-
-        }
-        console.log( 'Waiting for completion of loading of all assets!');
-        return await Promise.all( buffers );
-
-    }
-
-    /**
-     *
-     * @param {ArrayBuffer[]} buffers
-     * @return {Promise<String[]>}
-     */
-    async generateWorkerCode ( buffers ) {
-
-        this.functions.init.code = 'const init = ' + this.functions.init.ref.toString() + ';\n\n';
-        this.functions.execute.code = 'const execute = ' + this.functions.execute.ref.toString() + ';\n\n';
-        if ( this.functions.comRouter.ref !== null ) {
-
-            this.functions.comRouter.code = "const comRouter = " + this.functions.comRouter.ref.toString() + ";\n\n";
-
-        }
-        buffers.forEach( buffer => this.workers.code.push( buffer ) );
-
-        this.workers.code.push( this.functions.init.code );
-        this.workers.code.push( this.functions.execute.code );
-        this.workers.code.push( this.functions.comRouter.code );
-        this.workers.code.push( 'self.addEventListener( "message", comRouter, false );' );
-
-        return this.workers.code;
-
-    }
-
-    /**
-     *
-     * @param {string} code
-     * @return {Promise<Set<any>>}
-     */
-    async createWorkers ( code ) {
-
-        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
-
-            let workerBlob = new Blob( code, { type: 'application/javascript' } );
-            worker = new Worker( window.URL.createObjectURL( workerBlob ) );
-            // TODO: why is this not a map with int index?
-            this.workers.instances.add( {
-                worker: worker,
-                id: i
-            } );
-
-        }
-        return this.workers.instances;
-
-    }
-
-    /**
-     *
-     * @return {Promise<Set<any>>}
-     */
-    async createWorkersJsm () {
-
-        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
-
-            worker = new Worker( this.workerJsmUrl.href, { type: "module" } );
-            this.workers.instances.add( {
-                worker: worker,
-                id: i
-            } );
-
-        }
-        return this.workers.instances;
-
-    }
-
-    /**
-     *
-     * @param {object} instances
-     * @param {object} config
-     * @param {Transferable[]} transferables
-     * @return {Promise<[]>}
-     */
-    async initWorkers ( instances, config, transferables ) {
-
-        let it = instances.values();
-        for ( let workerObj; workerObj = it.next().value; ) {
-
-            workerObj.worker.postMessage( {
-                cmd: "init",
-                id: workerObj.id,
-                config: config
-            }, transferables );
-            this.workers.available.push( workerObj );
-
-        }
-        return this.workers.available;
-
-    }
-
-    /**
-     * Returns a Worker or none.
-     *
-     * @return {Worker|null}
-     */
-    getAvailableTask () {
-
-        return this.workers.available.shift();
-
-    }
-
-    /**
-     *
-     * @param {object} workerObj
-     */
-    returnAvailableTask ( workerObj ) {
-
-        this.workers.available.push( workerObj );
-        let storedExec = this.workers.storedPromises.shift();
-        if ( storedExec ) {
-
-            storedExec.exec( this.getAvailableTask(), storedExec.resolve, storedExec.reject );
-        }
-
-    }
-
-    /**
-     * Dispose all worker instances.
-     */
-    dispose () {
-
-        let it = this.workers.instances.values();
-        for ( let workerObj; workerObj = it.next().value; ) {
-
-            workerObj.worker.terminate();
-
-        }
-    }
-
-}
-
-
-/**
  *
  */
 class TaskManager {
@@ -273,14 +33,14 @@ class TaskManager {
      * @param {number} maximumWorkerCount
      * @param {function} initFunction
      * @param {function} executeFunction
-     * @param {function} comRouterFunction
+     * @param {function} comRoutingFunction
      * @param {String[]} [dependencyUrls]
      * @return {TaskManager}
      */
-    registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRouterFunction, dependencyUrls ) {
+    registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRoutingFunction, dependencyUrls ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( maximumWorkerCount );
-        workerTypeDefinition.setFunctions( initFunction, executeFunction, comRouterFunction );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount );
+        workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
         workerTypeDefinition.setDependencyUrls( dependencyUrls );
         this.types.set( type, workerTypeDefinition );
         return this;
@@ -296,7 +56,7 @@ class TaskManager {
      */
     registerTypeJsm ( type, maximumWorkerCount, workerJsmUrl ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( maximumWorkerCount );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount );
         workerTypeDefinition.setWorkerJsm( workerJsmUrl );
         this.types.set( type, workerTypeDefinition );
         return this;
@@ -340,20 +100,27 @@ class TaskManager {
     async addTask ( type, cost, config, transferables ) {
 
         let workerTypeDefinition = this.types.get( type );
-        let workerObj = workerTypeDefinition.getAvailableTask();
+        let taskWorker = workerTypeDefinition.getAvailableTask();
 
         return new Promise( ( resolveUser, rejectUser ) => {
 
-            function executeWorker( workerObjExecute, resolveExecute, rejectExecute ) {
+            /**
+             * Function wrapping worker execution. It binds resolve and reject to onmessage and onerror.
+             *
+             * @param {TaskWorker} taskWorkerExecute
+             * @param {function} resolveExecute
+             * @param {function} rejectExecute
+             */
+            function executeWorker( taskWorkerExecute, resolveExecute, rejectExecute ) {
 
                 let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
-                    workerObjExecute.worker.onmessage = resolveWorker;
-                    workerObjExecute.worker.onerror = rejectWorker;
+                    taskWorkerExecute.onmessage = resolveWorker;
+                    taskWorkerExecute.onerror = rejectWorker;
 
-                    workerObjExecute.worker.postMessage( {
+                    taskWorkerExecute.postMessage( {
                         cmd: "execute",
-                        id: workerObjExecute.id,
+                        id: taskWorkerExecute.getId(),
                         config: config
                     }, transferables );
 
@@ -361,7 +128,7 @@ class TaskManager {
                 promiseWorker.then( ( e ) => {
 
                     resolveExecute( e.data );
-                    workerTypeDefinition.returnAvailableTask( workerObjExecute );
+                    workerTypeDefinition.returnAvailableTask( taskWorkerExecute );
 
                 } ).catch( ( e ) => {
 
@@ -371,13 +138,15 @@ class TaskManager {
 
             }
 
-            if ( workerObj ) {
+            if ( taskWorker ) {
 
-                executeWorker( workerObj, resolveUser, rejectUser );
+                executeWorker( taskWorker, resolveUser, rejectUser );
 
             }
             else {
 
+                // store promises that can not directly executed as the limit has been reached.
+                // storedPromises are checked when returnAvailableTask is called.
                 workerTypeDefinition.workers.storedPromises.push( {
                     exec: executeWorker,
                     resolve: resolveUser,
@@ -385,6 +154,7 @@ class TaskManager {
                 } );
 
             }
+
         } )
 
     }
@@ -405,5 +175,345 @@ class TaskManager {
     }
 
 }
+
+/**
+ * Defines a worker type: functions, dependencies and runtime information once it was created.
+ */
+class WorkerTypeDefinition {
+
+    /**
+     * Creates a new instance of {@link WorkerTypeDefinition}.
+     *
+     * @param {Number} maximumCount
+     */
+    constructor ( type, maximumCount ) {
+        this.type = type;
+        this.functions = {
+            init: {
+                ref: null,
+                code: null
+            },
+            execute: {
+                ref: null,
+                code: null
+            },
+            comRouting: {
+                ref: null,
+                code: null
+            }
+        };
+        /**
+         * @type {Set<URL>}
+         */
+        this.dependencyUrls = new Set();
+        /**
+         * @type {URL}
+         */
+        this.workerJsmUrl = null;
+        this.workers = {
+            maximumCount: maximumCount,
+            dependencies: [],
+            code: [],
+            instances: [],
+            available: [],
+            storedPromises: []
+        };
+
+    }
+
+    getType () {
+
+        return this.type;
+
+    }
+
+    /**
+     *
+     * @param {function} initFunction
+     * @param {function} executeFunction
+     * @param {function} comRoutingFunction
+     */
+    setFunctions ( initFunction, executeFunction, comRoutingFunction ) {
+
+        this.functions.init.ref = initFunction;
+        this.functions.execute.ref = executeFunction;
+        this.functions.comRouting.ref = comRoutingFunction;
+
+    }
+
+    /**
+     * Set the url of all dependent libraries (non-jsm).
+     *
+     * @param {String[]} dependencyUrls
+     */
+    setDependencyUrls ( dependencyUrls ) {
+
+        dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
+
+    }
+
+    /**
+     * Set the url of the jsm worker.
+     *
+     * @param {string} workerJsmUrl
+     */
+    setWorkerJsm ( workerJsmUrl ) {
+
+        this.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
+
+    }
+
+    /**
+     * Is it a jsm worker?
+     * @return {boolean}
+     */
+    isWorkerJsm () {
+
+        return ( this.workerJsmUrl !== null );
+
+    }
+
+    /**
+     * Loads all dependencies and stores each as {@link ArrayBuffer} into the array.
+     *
+     * @return {Promise<ArrayBuffer[]>}
+     */
+    async loadDependencies () {
+
+        let fileLoaderBufferAsync = new FileLoaderBufferAsync();
+        for ( let url of this.dependencyUrls.entries() ) {
+
+            let dep = await fileLoaderBufferAsync.loadFileAsync( url[ 1 ], ( report => console.log( report.detail.text ) ) )
+            this.workers.dependencies.push( dep );
+
+        }
+        console.log( 'Task: ' + this.getType() + ': Waiting for completion of loading of all dependencies.');
+        return await Promise.all( this.workers.dependencies );
+
+    }
+
+    /**
+     *
+     * @param {ArrayBuffer[]} dependencies
+     * @return {Promise<String[]>}
+     */
+    async generateWorkerCode ( dependencies ) {
+
+        this.functions.init.code = 'const init = ' + this.functions.init.ref.toString() + ';\n\n';
+        this.functions.execute.code = 'const execute = ' + this.functions.execute.ref.toString() + ';\n\n';
+        if ( this.functions.comRouting.ref !== null ) {
+
+            this.functions.comRouting.code = "const comRouting = " + this.functions.comRouting.ref.toString() + ";\n\n";
+
+        }
+        this.workers.code.push( this.functions.init.code );
+        this.workers.code.push( this.functions.execute.code );
+        this.workers.code.push( this.functions.comRouting.code );
+        this.workers.code.push( 'self.addEventListener( "message", comRouting, false );' );
+
+        return this.workers.code;
+
+    }
+
+    /**
+     *
+     * @param {string} code
+     * @return {Promise<TaskWorker[]>}
+     */
+    async createWorkers ( code ) {
+
+        let worker, workerBlob;
+        for ( let i = 0; i < this.workers.maximumCount; i++ ) {
+
+            workerBlob = new Blob( this.workers.dependencies.concat( this.workers.code ), { type: 'application/javascript' } );
+            worker = new TaskWorker( i, window.URL.createObjectURL( workerBlob ) );
+            this.workers.instances[ i ] = worker;
+
+        }
+        if ( this.workers.instances.length === 0) {
+
+            worker = new FakeWorker( 0, this.functions.init, this.functions.execute, this.functions.comRouting );
+            this.workers.instances[ 0 ] = worker;
+
+        }
+        return this.workers.instances;
+
+    }
+
+    /**
+     *
+     * @return {Promise<TaskWorker[]>}
+     */
+    async createWorkersJsm () {
+
+        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
+
+            worker = new TaskWorker( i, this.workerJsmUrl.href, { type: "module" } );
+            this.workers.instances[ i ] = worker;
+
+        }
+        return this.workers.instances;
+
+    }
+
+    /**
+     *
+     * @param {TaskWorker[]} instances
+     * @param {object} config
+     * @param {Transferable[]} transferables
+     * @return {Promise<TaskWorker[]>}
+     */
+    async initWorkers ( instances, config, transferables ) {
+
+        for ( let taskWorker of instances ) {
+
+            let promiseWorker = await new Promise( ( resolveWorker, rejectWorker ) => {
+
+                taskWorker.onmessage = resolveWorker;
+                taskWorker.onerror = rejectWorker;
+
+                taskWorker.postMessage( {
+                    cmd: "init",
+                    id: taskWorker.getId(),
+                    config: config
+                }, transferables );
+
+            } );
+            this.workers.available.push( taskWorker );
+
+        }
+        console.log( 'Task: ' + this.getType() + ': Waiting for completion of initialization of all workers.');
+        return await Promise.all( this.workers.available );
+
+    }
+
+    /**
+     * Returns the first {@link TaskWorker} from array of available workers.
+     *
+     * @return {TaskWorker|null}
+     */
+    getAvailableTask () {
+
+        return this.workers.available.shift();
+
+    }
+
+    /**
+     *
+     * @param {TaskWorker} taskWorker
+     */
+    returnAvailableTask ( taskWorker ) {
+
+        this.workers.available.push( taskWorker );
+        let storedExec = this.workers.storedPromises.shift();
+        if ( storedExec ) {
+
+            storedExec.exec( this.getAvailableTask(), storedExec.resolve, storedExec.reject );
+
+        }
+
+    }
+
+    /**
+     * Dispose all worker instances.
+     */
+    dispose () {
+
+        for ( let taskWorker of this.workers.instances ) {
+
+            taskWorker.terminate();
+
+        }
+
+    }
+
+}
+
+/**
+ *
+ */
+class TaskWorker extends Worker {
+
+    /**
+     *
+     * @param id
+     * @param aURL
+     * @param options
+     */
+    constructor( id, aURL, options ) {
+
+        super( aURL, options );
+        this.id = id;
+
+    }
+
+    /**
+     *
+     * @return {*}
+     */
+    getId() {
+
+        return this.id;
+
+    }
+
+}
+
+/**
+ *
+ */
+class FakeWorker extends TaskWorker {
+
+    /**
+     *
+     * @param id
+     * @param {object} init
+     * @param {object} execute
+     * @param {object} comRouting
+     */
+    constructor( id, init, execute, comRouting ) {
+
+        super( id, null )
+
+        this.functions = {
+            init: init,
+            execute: execute,
+            comRouting: comRouting
+        }
+
+    }
+
+    /**
+     *
+     * @param message
+     */
+    postMessage( message ) {
+
+        let scope = this;
+        let comRouting = function ( message ) {
+            const self = {
+                postMessage: function ( m ) {
+                    scope.onmessage( m )
+                },
+            }
+
+            let payload = message.data;
+            if ( payload.cmd === 'init' ) {
+
+                scope.functions.init.ref( self, payload.id, payload.config );
+
+            }
+            else if ( payload.cmd === 'execute' ) {
+
+                scope.functions.execute.ref( self, payload.id, payload.config );
+
+            }
+        };
+        comRouting( { data: message } )
+
+    }
+
+}
+
 
 export { TaskManager };

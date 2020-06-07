@@ -23,7 +23,7 @@ class FileLoaderBufferAsync extends FileLoader {
 	 *
 	 * @param {URL} url
 	 * @param {Function} [onProgress]
-	 * @return {Promise<unknown>}
+	 * @return {Promise<ArrayBuffer>}
 	 */
 	loadFileAsync ( url, onProgress ) {
 		let numericalValueRef = 0;
