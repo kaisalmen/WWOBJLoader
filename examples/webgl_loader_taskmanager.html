@@ -86,19 +86,6 @@
 
 			}
 
-			const workerManageCom = function ( message ) {
-				let payload = message.data;
-				if ( payload.cmd === 'init' ) {
-
-					init( self, payload.id, payload.config );
-
-				} else if ( payload.cmd === 'execute' ) {
-
-					execute( self, payload.id, payload.config );
-
-				}
-			}
-
 			class TaskManagerPrototypeExample {
 
 				constructor ( elementToBindTo ) {
@@ -127,7 +114,8 @@
 					materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
-					this.taskNames = [ 'tmProtoExample', 'tmProtoExampleJsm', 'tmProtoExampleJsmNoThree' ];
+					this.taskNames = [];
+					this.tasksToUse = [];
 					this.executions = [];
 					this.meshCount = 0;
 					this.lastDeletedMesh = 0;
@@ -177,37 +165,65 @@
 
 				}
 
-				async initContent () {
+				initContent () {
+
 					let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 					let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
 
-//					this.taskManager.registerType( this.taskNames[ 0 ], 0, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
-					this.taskManager.registerType( this.taskNames[ 0 ], 4, workerInitFunction, workerExecFunction, workerManageCom, [ "../build/three.js" ] );
-					this.taskManager.registerTypeJsm( this.taskNames[ 1 ], 4, './jsm/taskmanager/tmJsmExample.js' );
-					this.taskManager.registerTypeJsm( this.taskNames[ 2 ], 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
-					let available = await this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } ).catch( e => console.error( e ) );
-					let availableJsm = await this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } ).catch( e => console.error( e ) );
-					let availableJsmNoThree = await this.taskManager.initType( this.taskNames[ 2 ], torusPayload, torusPayload.transferables ).catch( e => console.error( e ) );
+					this.taskNames = [ 'tmProtoExample', 'tmProtoExampleMain', 'tmProtoExampleJsm', 'tmProtoExampleJsmNoThree' ];
+					this.tasksToUse = [ this.taskNames[ 0 ], this.taskNames[ 1 ], this.taskNames[ 2 ], this.taskNames[ 3 ] ];
+					let awaiting = [];
+
+					if ( this.tasksToUse.includes( this.taskNames[ 0 ] ) ) {
+
+						this.taskManager.registerType( this.taskNames[ 0 ], 4, workerInitFunction, workerExecFunction, null, ["../build/three.js"] );
+						awaiting.push( this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+
+					}
+					if ( this.tasksToUse.includes( this.taskNames[ 1 ] ) ) {
+
+						this.taskManager.registerType( this.taskNames[ 1 ], 0, workerInitFunction, workerExecFunction, null );
+						awaiting.push( this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+
+					}
+					if ( this.tasksToUse.includes( this.taskNames[ 2 ] ) ) {
+
+						this.taskManager.registerTypeJsm( this.taskNames[ 2 ], 4, './jsm/taskmanager/tmJsmExample.js' );
+						awaiting.push( this.taskManager.initType( this.taskNames[ 2 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+
+					}
+					if ( this.tasksToUse.includes( this.taskNames[ 3 ] ) ) {
+
+						this.taskManager.registerTypeJsm( this.taskNames[ 3 ], 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
+						awaiting.push( this.taskManager.initType( this.taskNames[ 3 ], torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
+
+					}
+					return Promise.all( awaiting );
+
+				}
+
+				async executeWorkers () {
 
 					console.time( 'start' );
-
 					let globalCount = 0;
-					let taskNameIndex = 0;
+					let taskToUseIndex = 0;
 					for ( let j = 0; j < this.loopCount; j++ ) {
 						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 
 						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
 
-							this._storeAddTaskPromise( taskNameIndex, globalCount );
+							this._storeAddTaskPromise( taskToUseIndex, globalCount );
 							globalCount++;
-							taskNameIndex++;
-							if ( taskNameIndex === this.taskNames.length ) taskNameIndex = 0;
+							taskToUseIndex++;
+							if ( taskToUseIndex === this.tasksToUse.length ) taskToUseIndex = 0;
 
 						}
-						await Promise.all( this.executions );
-						this.executions = [];
-						console.timeEnd( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
+						await Promise.all( this.executions ).then( x => {
 
+							this.executions = [];
+							console.timeEnd( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
+
+						} );
 					}
 					this.taskManager.dispose();
 					console.timeEnd( 'start' );
@@ -216,11 +232,11 @@
 
 				_storeAddTaskPromise( taskNameIndex, globalCount  ) {
 
-					this.executions.push( this.taskManager.addTask( this.taskNames[ taskNameIndex ], 1, { count: globalCount } ).then( data => this.processMessage( data ) ).catch( e => console.error( e ) ) );
+					this.executions.push( this.taskManager.addTask( this.tasksToUse[ taskNameIndex ], 1, { count: globalCount } ).then( data => this._processMessage( data ) ).catch( e => console.error( e ) ) );
 
 				}
 
-				processMessage ( payload ) {
+				_processMessage ( payload ) {
 					switch ( payload.cmd ) {
 						case 'init':
 							console.log( 'Init Completed: ' + payload.id );
@@ -230,17 +246,17 @@
 							if ( payload.type === 'mesh' ) {
 
 								let meshes = this.meshReceiver.buildMeshes( payload );
-								this.addMesh( meshes[ 0 ], payload.params );
+								this._addMesh( meshes[ 0 ], payload.params );
 
 							}
 							else {
 
 								let mesh = new THREE.Mesh( new THREE.SphereBufferGeometry( 5, 32, 32 ) );
 								mesh.name = payload.meshName;
-								this.addMesh( mesh, {} )
+								this._addMesh( mesh, {} )
 
 							}
-							this.cleanMeshes();
+							this._cleanMeshes();
 							break;
 
 						default:
@@ -249,7 +265,7 @@
 					}
 				}
 
-				addMesh( mesh, params ) {
+				_addMesh( mesh, params ) {
 
 					let pos = new THREE.Vector3( this.baseFactor * Math.random(), this.baseFactor * Math.random(), this.baseFactor * Math.random() );
 					pos.applyAxisAngle( this.baseVectorX, 2 * Math.PI * Math.random() );
@@ -266,7 +282,7 @@
 
 				}
 
-				cleanMeshes() {
+				_cleanMeshes() {
 
 					if ( this.meshCount > this.numberOfMeshesToKeep && this.meshCount - this.lastDeletedMesh >= this.numberOfMeshesToKeep ) {
 
@@ -324,7 +340,6 @@
 					if ( !this.renderer.autoClear ) this.renderer.clear();
 					this.controls.update();
 					this.renderer.render( this.scene, this.camera );
-
 				}
 
 			}
@@ -345,8 +360,10 @@
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-			app.initContent();
-
+			app.initContent().then( x => {
+				console.log( 'All tasks habe been initialized.' );
+				app.executeWorkers();
+			} );
 			render();
 
 		</script>

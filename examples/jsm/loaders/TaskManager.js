@@ -231,7 +231,7 @@ class WorkerTypeDefinition {
      *
      * @param {function} initFunction
      * @param {function} executeFunction
-     * @param {function} comRoutingFunction
+     * @param {function} [comRoutingFunction]
      */
     setFunctions ( initFunction, executeFunction, comRoutingFunction ) {
 
@@ -239,6 +239,25 @@ class WorkerTypeDefinition {
         this.functions.execute.ref = executeFunction;
         this.functions.comRouting.ref = comRoutingFunction;
 
+        if ( this.workers.maximumCount > 0 && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
+
+            let comRouting = function ( message, init, execute ) {
+
+                let payload = message.data;
+                if ( payload.cmd === 'init' ) {
+
+                    init( self, payload.id, payload.config );
+
+                } else if ( payload.cmd === 'execute' ) {
+
+                    execute( self, payload.id, payload.config );
+
+                }
+
+            }
+            this.functions.comRouting.ref = comRouting;
+
+        }
     }
 
     /**
@@ -248,7 +267,7 @@ class WorkerTypeDefinition {
      */
     setDependencyUrls ( dependencyUrls ) {
 
-        dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
+        if ( dependencyUrls ) dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
 
     }
 
@@ -309,7 +328,7 @@ class WorkerTypeDefinition {
         this.workers.code.push( this.functions.init.code );
         this.workers.code.push( this.functions.execute.code );
         this.workers.code.push( this.functions.comRouting.code );
-        this.workers.code.push( 'self.addEventListener( "message", comRouting, false );' );
+        this.workers.code.push( 'self.addEventListener( "message", message => comRouting( message, init, execute ), false );' );
 
         return this.workers.code;
 
@@ -332,7 +351,7 @@ class WorkerTypeDefinition {
         }
         if ( this.workers.instances.length === 0) {
 
-            worker = new FakeWorker( 0, this.functions.init, this.functions.execute, this.functions.comRouting );
+            worker = new FakeTaskWorker( 0, this.functions.init.ref, this.functions.execute.ref );
             this.workers.instances[ 0 ] = worker;
 
         }
@@ -367,7 +386,7 @@ class WorkerTypeDefinition {
 
         for ( let taskWorker of instances ) {
 
-            let promiseWorker = await new Promise( ( resolveWorker, rejectWorker ) => {
+            await new Promise( ( resolveWorker, rejectWorker ) => {
 
                 taskWorker.onmessage = resolveWorker;
                 taskWorker.onerror = rejectWorker;
@@ -462,23 +481,20 @@ class TaskWorker extends Worker {
 /**
  *
  */
-class FakeWorker extends TaskWorker {
+class FakeTaskWorker extends TaskWorker {
 
     /**
      *
      * @param id
-     * @param {object} init
-     * @param {object} execute
-     * @param {object} comRouting
+     * @param {function} initFunction
+     * @param {function} executeFunction
      */
-    constructor( id, init, execute, comRouting ) {
+    constructor( id, initFunction, executeFunction ) {
 
         super( id, null )
-
         this.functions = {
-            init: init,
-            execute: execute,
-            comRouting: comRouting
+            init: initFunction,
+            execute: executeFunction
         }
 
     }
@@ -491,21 +507,21 @@ class FakeWorker extends TaskWorker {
 
         let scope = this;
         let comRouting = function ( message ) {
-            const self = {
+            let self = {
                 postMessage: function ( m ) {
-                    scope.onmessage( m )
+                    scope.onmessage( { data: m } )
                 },
             }
 
             let payload = message.data;
             if ( payload.cmd === 'init' ) {
 
-                scope.functions.init.ref( self, payload.id, payload.config );
+                scope.functions.init( self, payload.id, payload.config );
 
             }
             else if ( payload.cmd === 'execute' ) {
 
-                scope.functions.execute.ref( self, payload.id, payload.config );
+                scope.functions.execute( self, payload.id, payload.config );
 
             }
         };

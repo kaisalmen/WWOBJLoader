@@ -5,6 +5,7 @@
 import {
 	MeshMessageStructure
 } from "../loaders/obj2/utils/TransferableUtils.js";
+import { comRouting } from "./tmDefaultComRouting.js";
 
 
 function init ( context, id, config ) {
@@ -40,18 +41,4 @@ function execute ( context, id, config ) {
 
 }
 
-function comRouter ( message ) {
-	let payload = message.data;
-	if ( payload.cmd === 'init' ) {
-
-		init( self, payload.id, payload.config );
-
-	}
-	else if ( payload.cmd === 'execute' ) {
-
-		execute( self, payload.id, payload.config );
-
-	}
-}
-
-self.addEventListener( 'message', comRouter, false );
+self.addEventListener( 'message', message => comRouting( message, init, execute ), false );
