@@ -5,6 +5,15 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			#dat {
+				user-select: none;
+				position: absolute;
+				left: 0;
+				top: 0;
+				z-Index: 200;
+			}
+		</style>
 	</head>
 
 	<body>
@@ -13,12 +22,15 @@
 			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - TaskManager prototype
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
+		<div id="dat" />
 
 		<script type="module">
 
 			'use strict';
 
 			import * as THREE from '../build/three.module.js';
+			import { GUI } from './jsm/libs/dat.gui.module.js';
+
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
@@ -114,7 +126,12 @@
 					materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
-					this.taskNames = [];
+					this.taskNames = new Map ();
+					this.taskNames.set( 'tmProtoExample', { use: true, quantity: 4 } );
+					this.taskNames.set( 'tmProtoExampleJsm', { use: true, quantity: 4 } );
+					this.taskNames.set( 'tmProtoExampleJsmNoThree', { use: true, quantity: 4 } );
+					this.taskNames.set( 'tmProtoExampleMain', { use: false, quantity: 0 } );
+
 					this.tasksToUse = [];
 					this.executions = [];
 					this.meshCount = 0;
@@ -126,6 +143,8 @@
 					this.maxPerLoop = 1000;
 					// number of Promises kept in one go
 					this.loopCount = 1000;
+
+					this.abort = false;
 
 					// sphere positions
 					this.baseFactor = 750;
@@ -167,35 +186,44 @@
 
 				initContent () {
 
-					let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
-					let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
-
-					this.taskNames = [ 'tmProtoExample', 'tmProtoExampleMain', 'tmProtoExampleJsm', 'tmProtoExampleJsmNoThree' ];
-					this.tasksToUse = [ this.taskNames[ 0 ], this.taskNames[ 1 ], this.taskNames[ 2 ], this.taskNames[ 3 ] ];
 					let awaiting = [];
+					this.tasksToUse = [];
+					let taskName = 'tmProtoExample';
+					let valueObj = this.taskNames.get( taskName );
+					if ( valueObj.use ) {
 
-					if ( this.tasksToUse.includes( this.taskNames[ 0 ] ) ) {
-
-						this.taskManager.registerType( this.taskNames[ 0 ], 4, workerInitFunction, workerExecFunction, null, ["../build/three.js"] );
-						awaiting.push( this.taskManager.initType( this.taskNames[ 0 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
-
-					}
-					if ( this.tasksToUse.includes( this.taskNames[ 1 ] ) ) {
-
-						this.taskManager.registerType( this.taskNames[ 1 ], 0, workerInitFunction, workerExecFunction, null );
-						awaiting.push( this.taskManager.initType( this.taskNames[ 1 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.tasksToUse.push( taskName );
+						this.taskManager.registerType( taskName, valueObj.quantity, workerInitFunction, workerExecFunction, null, ["../build/three.js"] );
+						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					if ( this.tasksToUse.includes( this.taskNames[ 2 ] ) ) {
+					taskName = 'tmProtoExampleJsm';
+					valueObj = this.taskNames.get( taskName );
+					if ( valueObj.use ) {
 
-						this.taskManager.registerTypeJsm( this.taskNames[ 2 ], 4, './jsm/taskmanager/tmJsmExample.js' );
-						awaiting.push( this.taskManager.initType( this.taskNames[ 2 ], { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.tasksToUse.push( taskName );
+						this.taskManager.registerTypeJsm( taskName, valueObj.quantity, './jsm/taskmanager/tmJsmExample.js' );
+						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					if ( this.tasksToUse.includes( this.taskNames[ 3 ] ) ) {
+					taskName = 'tmProtoExampleJsmNoThree';
+					valueObj = this.taskNames.get( taskName );
+					if ( valueObj.use ) {
 
-						this.taskManager.registerTypeJsm( this.taskNames[ 3 ], 4, './jsm/taskmanager/tmJsmExampleNoThree.js' );
-						awaiting.push( this.taskManager.initType( this.taskNames[ 3 ], torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
+						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
+						let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
+						this.tasksToUse.push( taskName );
+						this.taskManager.registerTypeJsm( taskName, valueObj.quantity, './jsm/taskmanager/tmJsmExampleNoThree.js' );
+						awaiting.push( this.taskManager.initType( taskName, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
+
+					}
+					taskName = 'tmProtoExampleMain';
+					valueObj = this.taskNames.get( taskName );
+					if ( valueObj.use ) {
+
+						this.tasksToUse.push( taskName );
+						this.taskManager.registerType( taskName, valueObj.quantity, workerInitFunction, workerExecFunction, null );
+						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
 					return Promise.all( awaiting );
@@ -204,10 +232,12 @@
 
 				async executeWorkers () {
 
+					if ( this.tasksToUse.length === 0 ) throw "No Tasks have been selected. Aborting..."
+
 					console.time( 'start' );
 					let globalCount = 0;
 					let taskToUseIndex = 0;
-					for ( let j = 0; j < this.loopCount; j++ ) {
+					for ( let j = 0; j < this.loopCount && !this.abort; j++ ) {
 						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 
 						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
@@ -232,7 +262,7 @@
 
 				_storeAddTaskPromise( taskNameIndex, globalCount  ) {
 
-					this.executions.push( this.taskManager.addTask( this.tasksToUse[ taskNameIndex ], 1, { count: globalCount } ).then( data => this._processMessage( data ) ).catch( e => console.error( e ) ) );
+					this.executions.push( this.taskManager.addTask( this.tasksToUse[ taskNameIndex ], { count: globalCount } ).then( data => this._processMessage( data ) ).catch( e => console.error( e ) ) );
 
 				}
 
@@ -346,6 +376,86 @@
 
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
 
+			let controls = [];
+			let controlStop;
+			let tmControls = {
+				tmProtoExampleName: app.taskNames.get( 'tmProtoExample' ).use,
+				tmProtoExampleQuantity: app.taskNames.get( 'tmProtoExample' ).quantity,
+				tmProtoExampleJsm: app.taskNames.get( 'tmProtoExampleJsm' ).use,
+				tmProtoExampleJsmQuantity: app.taskNames.get( 'tmProtoExampleJsm' ).quantity,
+				tmProtoExampleJsmNoThree: app.taskNames.get( 'tmProtoExampleJsmNoThree' ).use,
+				tmProtoExampleJsmNoThreeQuantity: app.taskNames.get( 'tmProtoExampleJsmNoThree' ).quantity,
+				tmProtoExampleMain: app.taskNames.get( 'tmProtoExampleMain' ).use,
+				blockEvent ( event ) {
+
+					event.stopPropagation();
+
+				},
+				disableElement ( elementHandle ) {
+
+					elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'none';
+					elementHandle.domElement.parentElement.style.opacity = 0.5;
+
+				},
+				executeLoading () {
+
+					for ( let control of controls ) this.disableElement( control );
+					app.initContent().then( x => {
+						console.log( 'All tasks have been initialized.' );
+						app.executeWorkers();
+					} );
+
+				},
+				stopExecution () {
+
+					app.abort = true;
+
+				}
+			};
+
+			let menuDiv = document.getElementById( 'dat' );
+			let gui = new GUI( {
+				autoPlace: false,
+				width: 320
+			} );
+			menuDiv.appendChild( gui.domElement );
+
+			let folderLegacy = gui.addFolder( 'Worker Legacy + three' );
+			let taskName0 = 'tmProtoExample';
+			controls[ 0 ] = folderLegacy.add( tmControls, taskName0 + 'Name' ).name( 'Use' );
+			controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
+			controls[ 1 ] = folderLegacy.add( tmControls, taskName0 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
+			controls[ 1 ].onChange( value => { app.taskNames.get( taskName0 ).quantity = value;	} );
+			folderLegacy.open();
+
+			let folderJsmThree = gui.addFolder( 'Worker Jsm + three' );
+			let taskName1 = 'tmProtoExampleJsm';
+			controls[ 2 ] = folderJsmThree.add( tmControls, taskName1 ).name( 'Use' );
+			controls[ 2 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
+			controls[ 3 ] = folderJsmThree.add( tmControls, taskName1 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
+			controls[ 3 ].onChange( value => { app.taskNames.get( taskName1 ).quantity = value;	} );
+			folderJsmThree.open();
+
+			let folderJsmNoThree = gui.addFolder( 'Worker Jsm solo' );
+			let taskName2 = 'tmProtoExampleJsmNoThree';
+			controls[ 4 ] = folderJsmNoThree.add( tmControls, taskName2 ).name( 'Use' );
+			controls[ 4 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
+			controls[ 5 ] = folderJsmNoThree.add( tmControls, taskName2 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
+			controls[ 5 ].onChange( value => { app.taskNames.get( taskName2 ).quantity = value;	} );
+			folderJsmNoThree.open();
+
+			let folderLegacyMain = gui.addFolder( 'Worker Legacy Main' );
+			let taskName3 = 'tmProtoExampleMain';
+			controls[ 6 ]  = folderLegacyMain.add( tmControls, taskName3 ).name( 'Use' );
+			controls[ 6 ].onChange( value => { app.taskNames.get( taskName3 ).use = value;} );
+			folderLegacyMain.open();
+
+			controls[ 7 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			controls[ 7 ].domElement.id = 'startButton';
+
+			controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
+
 			let resizeWindow = function () {
 				app.resizeDisplayGL();
 			};
@@ -360,10 +470,7 @@
 			console.log( 'Starting initialisation phase...' );
 			app.initGL();
 			app.resizeDisplayGL();
-			app.initContent().then( x => {
-				console.log( 'All tasks habe been initialized.' );
-				app.executeWorkers();
-			} );
+
 			render();
 
 		</script>

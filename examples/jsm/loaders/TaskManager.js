@@ -13,6 +13,20 @@ class TaskManager {
     constructor () {
 
         this.types = new Map();
+        this.verbose = false;
+
+    }
+
+    /**
+     * Set if logging should be verbose
+     *
+     * @param {boolean} verbose
+     * @return {TaskManager}
+     */
+    setVerbose ( verbose ) {
+
+        this.verbose = verbose;
+        return this;
 
     }
 
@@ -29,17 +43,17 @@ class TaskManager {
 
     /**
      * Registers functionality for a new task type.
-     * @param {string} type
-     * @param {number} maximumWorkerCount
-     * @param {function} initFunction
-     * @param {function} executeFunction
-     * @param {function} comRoutingFunction
+     * @param {string} type The name to be used for registration.
+     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     * @param {function} initFunction The function to be called when the worker is initialised
+     * @param {function} executeFunction The function to be called when the worker is executed
+     * @param {function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
      * @param {String[]} [dependencyUrls]
      * @return {TaskManager}
      */
     registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRoutingFunction, dependencyUrls ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount, this.verbose );
         workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
         workerTypeDefinition.setDependencyUrls( dependencyUrls );
         this.types.set( type, workerTypeDefinition );
@@ -49,14 +63,14 @@ class TaskManager {
 
     /**
      * Registers functionality for a new task type based on module file.
-     * @param {string} type
-     * @param {number} maximumWorkerCount
-     * @param {string} workerJsmUrl
+     * @param {string} type The name to be used for registration.
+     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     * @param {string} workerJsmUrl The URL to be used for the Worker. Module must provide logic to handle "init" and "execute" messages.
      * @return {TaskManager}
      */
     registerTypeJsm ( type, maximumWorkerCount, workerJsmUrl ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount, this.verbose );
         workerTypeDefinition.setWorkerJsm( workerJsmUrl );
         this.types.set( type, workerTypeDefinition );
         return this;
@@ -64,10 +78,10 @@ class TaskManager {
     }
 
     /**
-     * Provides initialization configuration and dependencies for all tasks of given type.
-     * @param {string} type
-     * @param {object} config
-     * @param {Transferable[]} [transferables]
+     * Provides initialization configuration and transferable objects.
+     * @param {string} type The name of the registered task type.
+     * @param {object} config Configuration properties as serializable string.
+     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
      */
     async initType ( type, config, transferables ) {
 
@@ -91,17 +105,15 @@ class TaskManager {
 
     /**
      * Queues a new task of the given type. Task will not execute until initialization completes.
-     * @param {string} type
-     * @param {number} cost
-     * @param {object} config
-     * @param {Transferable[]} [transferables]
+     * @param {string} type The name of the registered task type.
+     * @param {object} config Configuration properties as serializable string.
+     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
      * @return {Promise}
      */
-    async addTask ( type, cost, config, transferables ) {
+    async addTask ( type, config, transferables ) {
 
         let workerTypeDefinition = this.types.get( type );
         let taskWorker = workerTypeDefinition.getAvailableTask();
-
         return new Promise( ( resolveUser, rejectUser ) => {
 
             /**
@@ -184,10 +196,17 @@ class WorkerTypeDefinition {
     /**
      * Creates a new instance of {@link WorkerTypeDefinition}.
      *
-     * @param {Number} maximumCount
+     * @param {string} type The name of the registered task type.
+     * @param {Number} maximumCount Maximum worker count
+     * @param {boolean} [verbose] Set if logging should be verbose
      */
-    constructor ( type, maximumCount ) {
+    /**
+
+     */
+    constructor ( type, maximumCount, verbose ) {
         this.type = type;
+        this.maximumCount = maximumCount;
+        this.verbose = verbose === true;
         this.functions = {
             init: {
                 ref: null,
@@ -200,19 +219,19 @@ class WorkerTypeDefinition {
             comRouting: {
                 ref: null,
                 code: null
-            }
+            },
+            dependencies: {
+                urls: [],
+                code: []
+            },
+            /**
+             * @type {URL}
+             */
+            workerJsmUrl: null
         };
-        /**
-         * @type {Set<URL>}
-         */
-        this.dependencyUrls = new Set();
-        /**
-         * @type {URL}
-         */
-        this.workerJsmUrl = null;
+
+
         this.workers = {
-            maximumCount: maximumCount,
-            dependencies: [],
             code: [],
             instances: [],
             available: [],
@@ -228,10 +247,11 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Set the three functions. A default comRouting function is used if it is not passed here.
      *
-     * @param {function} initFunction
-     * @param {function} executeFunction
-     * @param {function} [comRoutingFunction]
+     * @param {function} initFunction The function to be called when the worker is initialised
+     * @param {function} executeFunction The function to be called when the worker is executed
+     * @param {function} [comRoutingFunction] The function that should handle communication, leave undefined for default behavior
      */
     setFunctions ( initFunction, executeFunction, comRoutingFunction ) {
 
@@ -239,7 +259,7 @@ class WorkerTypeDefinition {
         this.functions.execute.ref = executeFunction;
         this.functions.comRouting.ref = comRoutingFunction;
 
-        if ( this.workers.maximumCount > 0 && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
+        if ( this.maximumCount > 0 && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
 
             let comRouting = function ( message, init, execute ) {
 
@@ -261,53 +281,58 @@ class WorkerTypeDefinition {
     }
 
     /**
-     * Set the url of all dependent libraries (non-jsm).
+     * Set the url of all dependent libraries (only used in non-jsm case).
      *
-     * @param {String[]} dependencyUrls
+     * @param {String[]} dependencyUrls URLs of code init and execute functions rely on.
      */
     setDependencyUrls ( dependencyUrls ) {
 
-        if ( dependencyUrls ) dependencyUrls.forEach( url => { this.dependencyUrls.add( new URL( url, window.location.href ) ) } );
+        if ( dependencyUrls ) {
+
+            dependencyUrls.forEach( url => { this.functions.dependencies.urls.push( new URL( url, window.location.href ) ) } );
+
+        }
 
     }
 
     /**
      * Set the url of the jsm worker.
      *
-     * @param {string} workerJsmUrl
+     * @param {string} workerJsmUrl The URL is created from this string.
      */
     setWorkerJsm ( workerJsmUrl ) {
 
-        this.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
+        this.functions.workerJsmUrl = new URL( workerJsmUrl, window.location.href );
 
     }
 
     /**
      * Is it a jsm worker?
-     * @return {boolean}
+     *
+     * @return {boolean} True or false
      */
     isWorkerJsm () {
 
-        return ( this.workerJsmUrl !== null );
+        return ( this.functions.workerJsmUrl !== null );
 
     }
 
     /**
-     * Loads all dependencies and stores each as {@link ArrayBuffer} into the array.
+     * Loads all dependencies and stores each as {@link ArrayBuffer} into the array. Returns if all loading is completed.
      *
      * @return {Promise<ArrayBuffer[]>}
      */
     async loadDependencies () {
 
         let fileLoaderBufferAsync = new FileLoaderBufferAsync();
-        for ( let url of this.dependencyUrls.entries() ) {
+        for ( let url of this.functions.dependencies.urls ) {
 
-            let dep = await fileLoaderBufferAsync.loadFileAsync( url[ 1 ], ( report => console.log( report.detail.text ) ) )
-            this.workers.dependencies.push( dep );
+            let dep = await fileLoaderBufferAsync.loadFileAsync( url, report => { if ( this.verbose ) console.log( report.detail.text ); } )
+            this.functions.dependencies.code.push( dep );
 
         }
-        console.log( 'Task: ' + this.getType() + ': Waiting for completion of loading of all dependencies.');
-        return await Promise.all( this.workers.dependencies );
+        if ( this.verbose ) console.log( 'Task: ' + this.getType() + ': Waiting for completion of loading of all dependencies.');
+        return await Promise.all( this.functions.dependencies.code );
 
     }
 
@@ -342,9 +367,9 @@ class WorkerTypeDefinition {
     async createWorkers ( code ) {
 
         let worker, workerBlob;
-        for ( let i = 0; i < this.workers.maximumCount; i++ ) {
+        for ( let i = 0; i < this.maximumCount; i++ ) {
 
-            workerBlob = new Blob( this.workers.dependencies.concat( this.workers.code ), { type: 'application/javascript' } );
+            workerBlob = new Blob( this.functions.dependencies.code.concat( this.workers.code ), { type: 'application/javascript' } );
             worker = new TaskWorker( i, window.URL.createObjectURL( workerBlob ) );
             this.workers.instances[ i ] = worker;
 
@@ -365,9 +390,9 @@ class WorkerTypeDefinition {
      */
     async createWorkersJsm () {
 
-        for ( let worker, i = 0; i < this.workers.maximumCount; i++ ) {
+        for ( let worker, i = 0; i < this.maximumCount; i++ ) {
 
-            worker = new TaskWorker( i, this.workerJsmUrl.href, { type: "module" } );
+            worker = new TaskWorker( i, this.functions.workerJsmUrl.href, { type: "module" } );
             this.workers.instances[ i ] = worker;
 
         }
@@ -401,7 +426,7 @@ class WorkerTypeDefinition {
             this.workers.available.push( taskWorker );
 
         }
-        console.log( 'Task: ' + this.getType() + ': Waiting for completion of initialization of all workers.');
+        if ( this.verbose ) console.log( 'Task: ' + this.getType() + ': Waiting for completion of initialization of all workers.');
         return await Promise.all( this.workers.available );
 
     }
