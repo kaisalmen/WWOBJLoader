@@ -3,17 +3,27 @@
  * @author Kai Salmen / https://kaisalmen.de
  */
 
-import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
+import { FileLoader } from "../../../build/three.module.js";
 
 /**
  *
  */
 class TaskManager {
 
-    constructor () {
+    /**
+     *
+     * @param {number} [maximumWorkerCount] How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     */
+    constructor ( maximumWorkerCount ) {
 
         this.types = new Map();
         this.verbose = false;
+        this.maximumWorkerCount = 4
+        if ( maximumWorkerCount ) {
+
+            this.maximumWorkerCount = maximumWorkerCount;
+
+        }
 
     }
 
@@ -31,6 +41,18 @@ class TaskManager {
     }
 
     /**
+     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     * @return {TaskManager}
+     */
+    setMaximumWorkerCount ( maximumWorkerCount ) {
+
+        this.maximumWorkerCount = maximumWorkerCount;
+        return this;
+
+    }
+
+
+    /**
      * Returns true if support for the given task type is available.
      * @param {string} type The type as string
      * @return boolean
@@ -44,16 +66,16 @@ class TaskManager {
     /**
      * Registers functionality for a new task type.
      * @param {string} type The name to be used for registration.
-     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
      * @param {function} initFunction The function to be called when the worker is initialised
      * @param {function} executeFunction The function to be called when the worker is executed
      * @param {function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
+     * @param {boolean} fallback Set to true if execution should be performed in main
      * @param {String[]} [dependencyUrls]
      * @return {TaskManager}
      */
-    registerType ( type, maximumWorkerCount, initFunction, executeFunction, comRoutingFunction, dependencyUrls ) {
+    registerType ( type, initFunction, executeFunction, comRoutingFunction, fallback, dependencyUrls ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount, this.verbose );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, this.maximumWorkerCount, fallback, this.verbose );
         workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
         workerTypeDefinition.setDependencyUrls( dependencyUrls );
         this.types.set( type, workerTypeDefinition );
@@ -64,13 +86,12 @@ class TaskManager {
     /**
      * Registers functionality for a new task type based on module file.
      * @param {string} type The name to be used for registration.
-     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
      * @param {string} workerJsmUrl The URL to be used for the Worker. Module must provide logic to handle "init" and "execute" messages.
      * @return {TaskManager}
      */
-    registerTypeJsm ( type, maximumWorkerCount, workerJsmUrl ) {
+    registerTypeJsm ( type, workerJsmUrl ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( type, maximumWorkerCount, this.verbose );
+        let workerTypeDefinition = new WorkerTypeDefinition( type, this.maximumWorkerCount, false, this.verbose );
         workerTypeDefinition.setWorkerJsm( workerJsmUrl );
         this.types.set( type, workerTypeDefinition );
         return this;
@@ -198,14 +219,16 @@ class WorkerTypeDefinition {
      *
      * @param {string} type The name of the registered task type.
      * @param {Number} maximumCount Maximum worker count
+     * @param {boolean} fallback Set to true if execution should be performed in main
      * @param {boolean} [verbose] Set if logging should be verbose
      */
     /**
 
      */
-    constructor ( type, maximumCount, verbose ) {
+    constructor ( type, maximumCount, fallback, verbose ) {
         this.type = type;
         this.maximumCount = maximumCount;
+        this.fallback = fallback;
         this.verbose = verbose === true;
         this.functions = {
             init: {
@@ -259,7 +282,7 @@ class WorkerTypeDefinition {
         this.functions.execute.ref = executeFunction;
         this.functions.comRouting.ref = comRoutingFunction;
 
-        if ( this.maximumCount > 0 && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
+        if ( this.fallback && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
 
             let comRouting = function ( message, init, execute ) {
 
@@ -324,10 +347,11 @@ class WorkerTypeDefinition {
      */
     async loadDependencies () {
 
-        let fileLoaderBufferAsync = new FileLoaderBufferAsync();
+        let fileLoader = new FileLoader();
+        fileLoader.setResponseType( 'arraybuffer' );
         for ( let url of this.functions.dependencies.urls ) {
 
-            let dep = await fileLoaderBufferAsync.loadFileAsync( url, report => { if ( this.verbose ) console.log( report.detail.text ); } )
+            let dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report.detail.text ); } )
             this.functions.dependencies.code.push( dep );
 
         }
@@ -367,14 +391,18 @@ class WorkerTypeDefinition {
     async createWorkers ( code ) {
 
         let worker, workerBlob;
-        for ( let i = 0; i < this.maximumCount; i++ ) {
+        if ( !this.fallback ) {
 
-            workerBlob = new Blob( this.functions.dependencies.code.concat( this.workers.code ), { type: 'application/javascript' } );
-            worker = new TaskWorker( i, window.URL.createObjectURL( workerBlob ) );
-            this.workers.instances[ i ] = worker;
+            for ( let i = 0; i < this.maximumCount; i ++ ) {
+
+                workerBlob = new Blob( this.functions.dependencies.code.concat( this.workers.code ), { type: 'application/javascript' } );
+                worker = new TaskWorker( i, window.URL.createObjectURL( workerBlob ) );
+                this.workers.instances[ i ] = worker;
+
+            }
 
         }
-        if ( this.workers.instances.length === 0) {
+        else {
 
             worker = new FakeTaskWorker( 0, this.functions.init.ref, this.functions.execute.ref );
             this.workers.instances[ 0 ] = worker;

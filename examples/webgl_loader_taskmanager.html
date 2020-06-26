@@ -117,6 +117,7 @@
 					this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 					this.controls = null;
+					this.maximumWorkerCount = 4;
 
 					this.taskManager = new TaskManager();
 					let materialHandler = new MaterialHandler();
@@ -127,10 +128,10 @@
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
 					this.taskNames = new Map ();
-					this.taskNames.set( 'tmProtoExample', { use: true, quantity: 4 } );
-					this.taskNames.set( 'tmProtoExampleJsm', { use: true, quantity: 4 } );
-					this.taskNames.set( 'tmProtoExampleJsmNoThree', { use: true, quantity: 4 } );
-					this.taskNames.set( 'tmProtoExampleMain', { use: false, quantity: 0 } );
+					this.taskNames.set( 'tmProtoExample', { use: true, fallback: false } );
+					this.taskNames.set( 'tmProtoExampleJsm', { use: true, fallback: false } );
+					this.taskNames.set( 'tmProtoExampleJsmNoThree', { use: true, fallback: false} );
+					this.taskNames.set( 'tmProtoExampleMain', { use: false, fallback: true } );
 
 					this.tasksToUse = [];
 					this.executions = [];
@@ -193,7 +194,7 @@
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerType( taskName, valueObj.quantity, workerInitFunction, workerExecFunction, null, ["../build/three.js"] );
+						this.taskManager.registerType( taskName, workerInitFunction, workerExecFunction, null, false, ["../build/three.js"] );
 						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
@@ -202,7 +203,7 @@
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerTypeJsm( taskName, valueObj.quantity, './jsm/taskmanager/tmJsmExample.js' );
+						this.taskManager.registerTypeJsm( taskName, './jsm/taskmanager/tmJsmExample.js' );
 						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
@@ -213,7 +214,7 @@
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerTypeJsm( taskName, valueObj.quantity, './jsm/taskmanager/tmJsmExampleNoThree.js' );
+						this.taskManager.registerTypeJsm( taskName, './jsm/taskmanager/tmJsmExampleNoThree.js' );
 						awaiting.push( this.taskManager.initType( taskName, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
 
 					}
@@ -222,7 +223,7 @@
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerType( taskName, valueObj.quantity, workerInitFunction, workerExecFunction, null );
+						this.taskManager.registerType( taskName,  workerInitFunction, workerExecFunction, null, true );
 						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
@@ -380,12 +381,10 @@
 			let controlStop;
 			let tmControls = {
 				tmProtoExampleName: app.taskNames.get( 'tmProtoExample' ).use,
-				tmProtoExampleQuantity: app.taskNames.get( 'tmProtoExample' ).quantity,
 				tmProtoExampleJsm: app.taskNames.get( 'tmProtoExampleJsm' ).use,
-				tmProtoExampleJsmQuantity: app.taskNames.get( 'tmProtoExampleJsm' ).quantity,
 				tmProtoExampleJsmNoThree: app.taskNames.get( 'tmProtoExampleJsmNoThree' ).use,
-				tmProtoExampleJsmNoThreeQuantity: app.taskNames.get( 'tmProtoExampleJsmNoThree' ).quantity,
 				tmProtoExampleMain: app.taskNames.get( 'tmProtoExampleMain' ).use,
+				maximumWorkerCount: app.maximumWorkerCount,
 				blockEvent ( event ) {
 
 					event.stopPropagation();
@@ -421,38 +420,27 @@
 			} );
 			menuDiv.appendChild( gui.domElement );
 
-			let folderLegacy = gui.addFolder( 'Worker Legacy + three' );
 			let taskName0 = 'tmProtoExample';
-			controls[ 0 ] = folderLegacy.add( tmControls, taskName0 + 'Name' ).name( 'Use' );
+			controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
 			controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
-			controls[ 1 ] = folderLegacy.add( tmControls, taskName0 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
-			controls[ 1 ].onChange( value => { app.taskNames.get( taskName0 ).quantity = value;	} );
-			folderLegacy.open();
 
-			let folderJsmThree = gui.addFolder( 'Worker Jsm + three' );
 			let taskName1 = 'tmProtoExampleJsm';
-			controls[ 2 ] = folderJsmThree.add( tmControls, taskName1 ).name( 'Use' );
-			controls[ 2 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
-			controls[ 3 ] = folderJsmThree.add( tmControls, taskName1 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
-			controls[ 3 ].onChange( value => { app.taskNames.get( taskName1 ).quantity = value;	} );
-			folderJsmThree.open();
+			controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Jsm + three' );
+			controls[ 1 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
 
-			let folderJsmNoThree = gui.addFolder( 'Worker Jsm solo' );
 			let taskName2 = 'tmProtoExampleJsmNoThree';
-			controls[ 4 ] = folderJsmNoThree.add( tmControls, taskName2 ).name( 'Use' );
-			controls[ 4 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
-			controls[ 5 ] = folderJsmNoThree.add( tmControls, taskName2 + 'Quantity', 1, 16 ).step( 1 ).name( 'Quantity' );
-			controls[ 5 ].onChange( value => { app.taskNames.get( taskName2 ).quantity = value;	} );
-			folderJsmNoThree.open();
+			controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Jsm solo' );
+			controls[ 2 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
 
-			let folderLegacyMain = gui.addFolder( 'Worker Legacy Main' );
 			let taskName3 = 'tmProtoExampleMain';
-			controls[ 6 ]  = folderLegacyMain.add( tmControls, taskName3 ).name( 'Use' );
-			controls[ 6 ].onChange( value => { app.taskNames.get( taskName3 ).use = value;} );
-			folderLegacyMain.open();
+			controls[ 3 ]  = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
+			controls[ 3 ].onChange( value => { app.taskNames.get( taskName3 ).use = value;} );
 
-			controls[ 7 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
-			controls[ 7 ].domElement.id = 'startButton';
+			controls[ 4 ] = gui.add( tmControls, 'maximumWorkerCount', 1, 16 ).step( 1 ).name( 'Maximum worker count' );
+			controls[ 4 ].onChange( value => { app.taskManager.setMaximumWorkerCount( value ) } );
+
+			controls[ 5 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			controls[ 5 ].domElement.id = 'startButton';
 
 			controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
 
