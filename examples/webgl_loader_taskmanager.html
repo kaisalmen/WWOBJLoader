@@ -129,8 +129,8 @@
 
 					this.taskNames = new Map ();
 					this.taskNames.set( 'tmProtoExample', { use: true, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleJsm', { use: true, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleJsmNoThree', { use: true, fallback: false} );
+					this.taskNames.set( 'tmProtoExampleModule', { use: true, fallback: false } );
+					this.taskNames.set( 'tmProtoExampleModuleNoThree', { use: true, fallback: false} );
 					this.taskNames.set( 'tmProtoExampleMain', { use: false, fallback: true } );
 
 					this.tasksToUse = [];
@@ -140,10 +140,12 @@
 					this.removeCount = 50;
 					this.numberOfMeshesToKeep = 750;
 
+					this.overallExecutionCount = 1000000;
+
 					// overall executions: maxPerLoop * loopCount
 					this.maxPerLoop = 1000;
 					// number of Promises kept in one go
-					this.loopCount = 1000;
+					this.loopCount = this.overallExecutionCount / this.maxPerLoop;
 
 					this.abort = false;
 
@@ -194,28 +196,28 @@
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerType( taskName, workerInitFunction, workerExecFunction, null, false, ["../build/three.js"] );
-						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.taskManager.registerTaskType( taskName, workerInitFunction, workerExecFunction, null, false, ["../build/three.js"] );
+						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					taskName = 'tmProtoExampleJsm';
+					taskName = 'tmProtoExampleModule';
 					valueObj = this.taskNames.get( taskName );
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerTypeJsm( taskName, './jsm/taskmanager/tmJsmExample.js' );
-						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmModuleExample.js' );
+						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					taskName = 'tmProtoExampleJsmNoThree';
+					taskName = 'tmProtoExampleModuleNoThree';
 					valueObj = this.taskNames.get( taskName );
 					if ( valueObj.use ) {
 
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						let torusPayload = TransferableUtils.packageBufferGeometry( torus, 'torus', 0 );
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerTypeJsm( taskName, './jsm/taskmanager/tmJsmExampleNoThree.js' );
-						awaiting.push( this.taskManager.initType( taskName, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
+						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmModuleExampleNoThree.js' );
+						awaiting.push( this.taskManager.initTaskType( taskName, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
 
 					}
 					taskName = 'tmProtoExampleMain';
@@ -223,8 +225,8 @@
 					if ( valueObj.use ) {
 
 						this.tasksToUse.push( taskName );
-						this.taskManager.registerType( taskName,  workerInitFunction, workerExecFunction, null, true );
-						awaiting.push( this.taskManager.initType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.taskManager.registerTaskType( taskName, workerInitFunction, workerExecFunction, null, true );
+						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
 					return Promise.all( awaiting );
@@ -263,7 +265,7 @@
 
 				_storeAddTaskPromise( taskNameIndex, globalCount  ) {
 
-					this.executions.push( this.taskManager.addTask( this.tasksToUse[ taskNameIndex ], { count: globalCount } ).then( data => this._processMessage( data ) ).catch( e => console.error( e ) ) );
+					this.executions.push( this.taskManager.enqueueForExecution( this.tasksToUse[ taskNameIndex ], { count: globalCount } ).then( data => this._processMessage( data ) ).catch( e => console.error( e ) ) );
 
 				}
 
@@ -381,10 +383,12 @@
 			let controlStop;
 			let tmControls = {
 				tmProtoExampleName: app.taskNames.get( 'tmProtoExample' ).use,
-				tmProtoExampleJsm: app.taskNames.get( 'tmProtoExampleJsm' ).use,
-				tmProtoExampleJsmNoThree: app.taskNames.get( 'tmProtoExampleJsmNoThree' ).use,
+				tmProtoExampleModule: app.taskNames.get( 'tmProtoExampleModule' ).use,
+				tmProtoExampleModuleNoThree: app.taskNames.get( 'tmProtoExampleModuleNoThree' ).use,
 				tmProtoExampleMain: app.taskNames.get( 'tmProtoExampleMain' ).use,
 				maximumWorkerCount: app.maximumWorkerCount,
+				overallExecutionCount: app.overallExecutionCount,
+				maxPerLoop: app.maxPerLoop,
 				blockEvent ( event ) {
 
 					event.stopPropagation();
@@ -400,8 +404,9 @@
 				executeLoading () {
 
 					for ( let control of controls ) this.disableElement( control );
+					console.time( 'All tasks have been initialized' );
 					app.initContent().then( x => {
-						console.log( 'All tasks have been initialized.' );
+						console.timeEnd( 'All tasks have been initialized' );
 						app.executeWorkers();
 					} );
 
@@ -424,12 +429,12 @@
 			controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
 			controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
 
-			let taskName1 = 'tmProtoExampleJsm';
-			controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Jsm + three' );
+			let taskName1 = 'tmProtoExampleModule';
+			controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
 			controls[ 1 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
 
-			let taskName2 = 'tmProtoExampleJsmNoThree';
-			controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Jsm solo' );
+			let taskName2 = 'tmProtoExampleModuleNoThree';
+			controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
 			controls[ 2 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
 
 			let taskName3 = 'tmProtoExampleMain';
@@ -439,8 +444,14 @@
 			controls[ 4 ] = gui.add( tmControls, 'maximumWorkerCount', 1, 16 ).step( 1 ).name( 'Maximum worker count' );
 			controls[ 4 ].onChange( value => { app.taskManager.setMaximumWorkerCount( value ) } );
 
-			controls[ 5 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
-			controls[ 5 ].domElement.id = 'startButton';
+			controls[ 5 ] = gui.add( tmControls, 'overallExecutionCount', 0, 10000000 ).step( 1000 ).name( 'Overall Execution Count' );
+			controls[ 5 ].onChange( value => { app.overallExecutionCount = value } );
+
+			controls[ 6 ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Max Executions Peer loop' );
+			controls[ 6 ].onChange( value => { app.maxPerLoop = value } );
+
+			controls[ 7 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			controls[ 7 ].domElement.id = 'startButton';
 
 			controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
 

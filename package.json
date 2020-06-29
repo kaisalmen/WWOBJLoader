@@ -43,7 +43,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.117.1"
+    "three": "^0.118.3"
   },
   "devDependencies": {
     "del": "^5.1.0",
