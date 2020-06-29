@@ -130,81 +130,68 @@ class TaskManager {
      */
     async enqueueForExecution ( taskType, config, transferables ) {
 
-        let scope = this;
-        return new Promise( ( resolveUser, rejectUser ) => {
+        let localPromise = new Promise( ( resolveUser, rejectUser ) => {
 
-            /**
-             * Function wrapping worker execution. It binds resolve and reject to onmessage and onerror.
-             *
-             * @param {WorkerTypeDefinition} workerTypeDefinition
-             * @param {TaskWorker} taskWorker
-             * @param {function} resolveExecute
-             * @param {function} rejectExecute
-             */
-            function executeWorker( workerTypeDefinition, taskWorker, resolveExecute, rejectExecute ) {
-
-                let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
-
-                    taskWorker.onmessage = resolveWorker;
-                    taskWorker.onerror = rejectWorker;
-
-                    taskWorker.postMessage( {
-                        cmd: "execute",
-                        id: taskWorker.getId(),
-                        config: config
-                    }, transferables );
-
-                } );
-                promiseWorker.then( ( e ) => {
-
-                    workerTypeDefinition.returnAvailableTask( taskWorker );
-                    resolveExecute( e.data );
-                    scope._nextStoredPromise( workerTypeDefinition );
-
-                } ).catch( ( e ) => {
-
-                    rejectExecute( "Execution error: " + e );
-
-                } );
-
-            }
-
-            let workerTypeDefinition = scope.taskTypes.get( taskType );
-            let taskWorker = workerTypeDefinition.getAvailableTask();
-
-            if ( this.actualExecutionCount < this.maximumWorkerCount && taskWorker ) {
-
-                executeWorker( workerTypeDefinition, taskWorker, resolveUser, rejectUser );
-                this.actualExecutionCount++;
-
-            }
-            else {
-
-                // store promises that can not directly executed as the limit has been reached.
-                // storedPromises are checked when returnAvailableTask is called.
-                this.storedPromises.push( {
-                    executeWorker: executeWorker,
-                    resolve: resolveUser,
-                    reject: rejectUser
-                } );
-
-            }
+            this.storedPromises.push( {
+                taskType: taskType,
+                config: config,
+                transferables: transferables,
+                resolve: resolveUser,
+                reject: rejectUser
+            } );
 
         } )
 
+        this._verify();
+
+        return localPromise;
+
     }
 
-    _nextStoredPromise ( workerTypeDefinition ) {
+    _verify () {
 
-        this.actualExecutionCount--;
-        let storedExec = this.storedPromises.shift();
-        if ( storedExec ) {
+        if ( this.actualExecutionCount < this.maximumWorkerCount && this.storedPromises.length > 0 ) {
 
-            let taskWorker = workerTypeDefinition.getAvailableTask();
-            if ( taskWorker ) {
+            let storedExec = this.storedPromises.shift();
+            if ( storedExec ) {
 
-                this.actualExecutionCount ++;
-                storedExec.executeWorker( workerTypeDefinition, taskWorker, storedExec.resolve, storedExec.reject );
+                let workerTypeDefinition = this.taskTypes.get( storedExec.taskType );
+                let taskWorker = workerTypeDefinition.getAvailableTask();
+                if ( taskWorker ) {
+
+                    this.actualExecutionCount++;
+                    let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
+
+                        taskWorker.onmessage = resolveWorker;
+                        taskWorker.onerror = rejectWorker;
+
+                        taskWorker.postMessage( {
+                            cmd: "execute",
+                            id: taskWorker.getId(),
+                            config: storedExec.config
+                        }, storedExec.transferables );
+
+                    } );
+                    promiseWorker.then( ( e ) => {
+
+                        workerTypeDefinition.returnAvailableTask( taskWorker );
+                        storedExec.resolve( e.data );
+                        this.actualExecutionCount --;
+                        this._verify();
+
+                    } ).catch( ( e ) => {
+
+                        storedExec.reject( "Execution error: " + e );
+
+                    } );
+
+                }
+                else {
+
+                    // try later again
+                    this.storedPromises.push( storedExec );
+
+                }
 
             }
 
