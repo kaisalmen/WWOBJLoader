@@ -86,7 +86,7 @@
 							uvs: uvFA,
 						},
 						materials: {
-							materialNames: ['meshNormalMaterial']
+							materialNames: [ 'meshNormalMaterial' ]
 						}
 					},
 					[vertexFA.buffer],
@@ -120,6 +120,8 @@
 					this.maximumWorkerCount = 4;
 
 					this.taskManager = new TaskManager();
+					this.taskManager.setVerbose( true );
+
 					let materialHandler = new MaterialHandler();
 					materialHandler.createDefaultMaterials( true );
 					let meshNormalMaterial = new THREE.MeshNormalMaterial();
@@ -388,6 +390,7 @@
 				tmProtoExampleMain: app.taskNames.get( 'tmProtoExampleMain' ).use,
 				maximumWorkerCount: app.maximumWorkerCount,
 				overallExecutionCount: app.overallExecutionCount,
+				numberOfMeshesToKeep: app.numberOfMeshesToKeep,
 				maxPerLoop: app.maxPerLoop,
 				blockEvent ( event ) {
 
@@ -450,8 +453,11 @@
 			controls[ 6 ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Max Executions Peer loop' );
 			controls[ 6 ].onChange( value => { app.maxPerLoop = value } );
 
-			controls[ 7 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
-			controls[ 7 ].domElement.id = 'startButton';
+			controls[ 7 ] = gui.add( tmControls, 'numberOfMeshesToKeep', 100, 10000 ).step( 25 ).name( 'Keep N Meshes' );
+			controls[ 7 ].onChange( value => { app.numberOfMeshesToKeep = value } );
+
+			controls[ 8 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			controls[ 8 ].domElement.id = 'startButton';
 
 			controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
 

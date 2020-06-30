@@ -150,7 +150,7 @@ class TaskManager {
 
     _verify () {
 
-        if ( this.actualExecutionCount < this.maximumWorkerCount && this.storedPromises.length > 0 ) {
+        while ( this.actualExecutionCount < this.maximumWorkerCount && this.storedPromises.length > 0 ) {
 
             let storedExec = this.storedPromises.shift();
             if ( storedExec ) {
@@ -188,7 +188,7 @@ class TaskManager {
                 }
                 else {
 
-                    // try later again
+                    // try later again, add at the end for now
                     this.storedPromises.push( storedExec );
 
                 }
@@ -356,7 +356,7 @@ class WorkerTypeDefinition {
         fileLoader.setResponseType( 'arraybuffer' );
         for ( let url of this.functions.dependencies.urls ) {
 
-            let dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report.detail.text ); } )
+            let dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report ); } )
             this.functions.dependencies.code.push( dep );
 
         }
@@ -410,8 +410,12 @@ class WorkerTypeDefinition {
         }
         else {
 
-            worker = new FakeTaskWorker( 0, this.functions.init.ref, this.functions.execute.ref );
-            this.workers.instances[ 0 ] = worker;
+            for ( let i = 0; i < this.maximumCount; i ++ ) {
+
+                worker = new FakeTaskWorker( i, this.functions.init.ref, this.functions.execute.ref );
+                this.workers.instances[ i ] = worker;
+
+            }
 
         }
         return this.workers.instances;
@@ -436,7 +440,7 @@ class WorkerTypeDefinition {
 
     /**
      *
-     * @param {TaskWorker[]} instances
+     * @param {TaskWorker[]|FakeTaskWorker[]} instances
      * @param {object} config
      * @param {Transferable[]} transferables
      * @return {Promise<TaskWorker[]>}
@@ -466,9 +470,9 @@ class WorkerTypeDefinition {
     }
 
     /**
-     * Returns the first {@link TaskWorker} from array of available workers.
+     * Returns the first {@link TaskWorker} or {@link FakeTaskWorker} from array of available workers.
      *
-     * @return {TaskWorker|null}
+     * @return {TaskWorker|FakeTaskWorker|undefined}
      */
     getAvailableTask () {
 
@@ -478,7 +482,7 @@ class WorkerTypeDefinition {
 
     /**
      *
-     * @param {TaskWorker} taskWorker
+     * @param {TaskWorker|FakeTaskWorker} taskWorker
      */
     returnAvailableTask ( taskWorker ) {
 
@@ -534,7 +538,7 @@ class TaskWorker extends Worker {
 /**
  *
  */
-class FakeTaskWorker extends TaskWorker {
+class FakeTaskWorker {
 
     /**
      *
@@ -544,11 +548,21 @@ class FakeTaskWorker extends TaskWorker {
      */
     constructor( id, initFunction, executeFunction ) {
 
-        super( id, null )
+        this.id = id;
         this.functions = {
             init: initFunction,
             execute: executeFunction
         }
+
+    }
+
+    /**
+     *
+     * @return {*}
+     */
+    getId() {
+
+        return this.id;
 
     }
 
