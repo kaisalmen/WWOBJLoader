@@ -101,6 +101,7 @@
 			class TaskManagerPrototypeExample {
 
 				constructor ( elementToBindTo ) {
+
 					this.renderer = null;
 					this.canvas = elementToBindTo;
 					this.aspectRatio = 1;
@@ -115,9 +116,36 @@
 					};
 					this.camera = null;
 					this.cameraTarget = this.cameraDefaults.posCameraTarget;
-
 					this.controls = null;
-					this.maximumWorkerCount = 4;
+
+					this.taskManager = null;
+					this.meshReceiver = null;
+
+					this.taskNames = new Map ();
+					this.tasksToUse = [];
+					this.executions = [];
+					this.meshCount = 0;
+					this.lastDeletedMesh = 0;
+					this.removeCount = 50;
+					this.numberOfMeshesToKeep = 750;
+					this.overallExecutionCount = 1000000;
+
+					// overall executions: maxPerLoop * loopCount
+					this.maxPerLoop = 1000;
+					// number of Promises kept in one go
+					this.loopCount = this.overallExecutionCount / this.maxPerLoop;
+					this.abort = false;
+					this.reset = null;
+
+					// sphere positions
+					this.baseFactor = 750;
+					this.baseVectorX = new THREE.Vector3( 1, 0, 0 );
+					this.baseVectorY = new THREE.Vector3( 0, 1, 0 );
+					this.baseVectorZ = new THREE.Vector3( 0, 0, 1 );
+
+				}
+
+				resetAppContext () {
 
 					this.taskManager = new TaskManager();
 					this.taskManager.setVerbose( true );
@@ -129,7 +157,7 @@
 					materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
-					this.taskNames = new Map ();
+					this.taskNames.clear();
 					this.taskNames.set( 'tmProtoExample', { use: true, fallback: false } );
 					this.taskNames.set( 'tmProtoExampleModule', { use: true, fallback: false } );
 					this.taskNames.set( 'tmProtoExampleModuleNoThree', { use: true, fallback: false} );
@@ -137,6 +165,14 @@
 
 					this.tasksToUse = [];
 					this.executions = [];
+
+					if ( this.reset !== null ) {
+
+						this._deleteMeshRange( this.lastDeletedMesh, this.meshCount );
+						this.reset();
+						this.reset = null;
+
+					}
 					this.meshCount = 0;
 					this.lastDeletedMesh = 0;
 					this.removeCount = 50;
@@ -148,7 +184,6 @@
 					this.maxPerLoop = 1000;
 					// number of Promises kept in one go
 					this.loopCount = this.overallExecutionCount / this.maxPerLoop;
-
 					this.abort = false;
 
 					// sphere positions
@@ -231,7 +266,16 @@
 						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					return Promise.all( awaiting );
+					if ( awaiting.length > 0 ) {
+
+						return Promise.all( awaiting );
+
+					}
+					else {
+
+						return new Promise( ( resolve, reject ) => { reject ( 'No task type has been configured' ) } )
+
+					}
 
 				}
 
@@ -262,6 +306,12 @@
 					}
 					this.taskManager.dispose();
 					console.timeEnd( 'start' );
+
+					if ( this.reset ) {
+
+						this.resetAppContext();
+
+					}
 
 				}
 
@@ -322,24 +372,30 @@
 					if ( this.meshCount > this.numberOfMeshesToKeep && this.meshCount - this.lastDeletedMesh >= this.numberOfMeshesToKeep ) {
 
 						let deleteRange = this.lastDeletedMesh + this.removeCount;
-						for ( let toBeRemoved, i = this.lastDeletedMesh; i < deleteRange; i++ ) {
+						this._deleteMeshRange( this.lastDeletedMesh, deleteRange );
+						this.lastDeletedMesh = deleteRange;
 
-							toBeRemoved = this.scene.getObjectByName( 'tmProto' + i );
-							if ( toBeRemoved ) {
+					}
 
-								toBeRemoved.geometry.dispose();
-								toBeRemoved.material.dispose();
-								this.scene.remove( toBeRemoved );
+				}
 
-							}
-							else {
+				_deleteMeshRange ( firstMesh, lastMesh )  {
 
-								console.log( 'Unable to remove: tmProto' + i );
+					for ( let toBeRemoved, i = firstMesh; i < lastMesh; i++ ) {
 
-							}
+						toBeRemoved = this.scene.getObjectByName( 'tmProto' + i );
+						if ( toBeRemoved ) {
+
+							toBeRemoved.geometry.dispose();
+							toBeRemoved.material.dispose();
+							this.scene.remove( toBeRemoved );
 
 						}
-						this.lastDeletedMesh = deleteRange;
+						else {
+
+							console.log( 'Unable to remove: tmProto' + i );
+
+						}
 
 					}
 
@@ -380,18 +436,40 @@
 			}
 
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
+			app.resetAppContext();
 
-			let controls = [];
-			let controlStop;
 			let tmControls = {
-				tmProtoExampleName: app.taskNames.get( 'tmProtoExample' ).use,
-				tmProtoExampleModule: app.taskNames.get( 'tmProtoExampleModule' ).use,
-				tmProtoExampleModuleNoThree: app.taskNames.get( 'tmProtoExampleModuleNoThree' ).use,
-				tmProtoExampleMain: app.taskNames.get( 'tmProtoExampleMain' ).use,
-				maximumWorkerCount: app.maximumWorkerCount,
-				overallExecutionCount: app.overallExecutionCount,
-				numberOfMeshesToKeep: app.numberOfMeshesToKeep,
-				maxPerLoop: app.maxPerLoop,
+				controls: [],
+				controlStop: null,
+				controlReset: null,
+				started: false,
+				tmProtoExampleName: false,
+				tmProtoExampleModule: false,
+				tmProtoExampleModuleNoThree: false,
+				tmProtoExampleMain: false,
+				maxParallelExecutions: 0,
+				overallExecutionCount: 0,
+				numberOfMeshesToKeep: 0,
+				maxPerLoop: 0,
+				resetContent () {
+
+					this.tmProtoExampleName = app.taskNames.get( 'tmProtoExample' ).use;
+					this.tmProtoExampleModule = app.taskNames.get( 'tmProtoExampleModule' ).use;
+					this.tmProtoExampleModuleNoThree = app.taskNames.get( 'tmProtoExampleModuleNoThree' ).use;
+					this.tmProtoExampleMain = app.taskNames.get( 'tmProtoExampleMain' ).use;
+					this.maxParallelExecutions = app.taskManager.getMaxParallelExecutions();
+					this.overallExecutionCount = app.overallExecutionCount;
+					this.numberOfMeshesToKeep = app.numberOfMeshesToKeep;
+					this.maxPerLoop = app.maxPerLoop;
+					for ( let control of this.controls ) {
+
+						this.enableElement( control );
+						control.updateDisplay();
+
+					}
+					this.disableElement( this.controlStop );
+
+				},
 				blockEvent ( event ) {
 
 					event.stopPropagation();
@@ -404,19 +482,49 @@
 					elementHandle.domElement.parentElement.style.opacity = 0.5;
 
 				},
+				enableElement ( elementHandle ) {
+
+					elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
+					elementHandle.domElement.parentElement.style.opacity = 1.0;
+
+				},
 				executeLoading () {
 
-					for ( let control of controls ) this.disableElement( control );
+					this.started = true;
+					for ( let control of this.controls ) this.disableElement( control );
+					this.enableElement( this.controlStop );
 					console.time( 'All tasks have been initialized' );
 					app.initContent().then( x => {
 						console.timeEnd( 'All tasks have been initialized' );
 						app.executeWorkers();
-					} );
+					} ).catch( x => alert( x ) );
 
 				},
 				stopExecution () {
 
+					this.started = false;
 					app.abort = true;
+
+				},
+				resetExecution () {
+
+					let scope = this;
+					function scopeReset() {
+						scope.resetContent();
+					}
+					app.reset = scopeReset;
+					if ( this.started ) {
+
+						this.stopExecution();
+
+					}
+					else {
+
+						app.resetAppContext();
+						this.resetContent();
+
+					}
 
 				}
 			};
@@ -429,37 +537,40 @@
 			menuDiv.appendChild( gui.domElement );
 
 			let taskName0 = 'tmProtoExample';
-			controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
-			controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
+			tmControls.controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
+			tmControls.controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
 
 			let taskName1 = 'tmProtoExampleModule';
-			controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
-			controls[ 1 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
+			tmControls.controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
+			tmControls.controls[ 1 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
 
 			let taskName2 = 'tmProtoExampleModuleNoThree';
-			controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
-			controls[ 2 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
+			tmControls.controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
+			tmControls.controls[ 2 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
 
 			let taskName3 = 'tmProtoExampleMain';
-			controls[ 3 ]  = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
-			controls[ 3 ].onChange( value => { app.taskNames.get( taskName3 ).use = value;} );
+			tmControls.controls[ 3 ]  = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
+			tmControls.controls[ 3 ].onChange( value => { app.taskNames.get( taskName3 ).use = value;} );
 
-			controls[ 4 ] = gui.add( tmControls, 'maximumWorkerCount', 1, 16 ).step( 1 ).name( 'Maximum worker count' );
-			controls[ 4 ].onChange( value => { app.taskManager.setMaximumWorkerCount( value ) } );
+			tmControls.controls[ 4 ] = gui.add( tmControls, 'maxParallelExecutions', 1, 16 ).step( 1 ).name( 'Maximum Parallel Executions' );
+			tmControls.controls[ 4 ].onChange( value => { app.taskManager.setMaxParallelExecutions( value ) } );
 
-			controls[ 5 ] = gui.add( tmControls, 'overallExecutionCount', 0, 10000000 ).step( 1000 ).name( 'Overall Execution Count' );
-			controls[ 5 ].onChange( value => { app.overallExecutionCount = value } );
+			tmControls.controls[ 5 ] = gui.add( tmControls, 'overallExecutionCount', 0, 10000000 ).step( 1000 ).name( 'Overall Execution Count' );
+			tmControls.controls[ 5 ].onChange( value => { app.overallExecutionCount = value } );
 
-			controls[ 6 ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Max Executions Peer loop' );
-			controls[ 6 ].onChange( value => { app.maxPerLoop = value } );
+			tmControls.controls[ 6 ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Loop executions' );
+			tmControls.controls[ 6 ].onChange( value => { app.maxPerLoop = value } );
 
-			controls[ 7 ] = gui.add( tmControls, 'numberOfMeshesToKeep', 100, 10000 ).step( 25 ).name( 'Keep N Meshes' );
-			controls[ 7 ].onChange( value => { app.numberOfMeshesToKeep = value } );
+			tmControls.controls[ 7 ] = gui.add( tmControls, 'numberOfMeshesToKeep', 100, 10000 ).step( 25 ).name( 'Keep N Meshes' );
+			tmControls.controls[ 7 ].onChange( value => { app.numberOfMeshesToKeep = value } );
 
-			controls[ 8 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
-			controls[ 8 ].domElement.id = 'startButton';
+			tmControls.controls[ 8 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			tmControls.controls[ 8 ].domElement.id = 'startButton';
 
-			controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
+			tmControls.controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
+			tmControls.controlReset = gui.add( tmControls, 'resetExecution' ).name( 'Reset' );
+
+			tmControls.resetContent();
 
 			let resizeWindow = function () {
 				app.resizeDisplayGL();

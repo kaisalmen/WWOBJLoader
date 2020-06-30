@@ -6,19 +6,21 @@
 import { FileLoader } from "../../../build/three.module.js";
 
 /**
- *
+ * Register one to many tasks type to the TaskManager. Then init and enqueue a worker based execution by passing
+ * configuration and buffers. The TaskManager allows to execute a maximum number of executions in parallel.
  */
 class TaskManager {
 
     /**
+     * Creates a new TaskManager instance.
      *
-     * @param {number} [maximumWorkerCount] How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     * @param {number} [maxParallelExecutions] How many workers are allowed to be executed in parallel.
      */
-    constructor ( maximumWorkerCount ) {
+    constructor ( maxParallelExecutions ) {
 
         this.taskTypes = new Map();
         this.verbose = false;
-        this.maximumWorkerCount = maximumWorkerCount ? maximumWorkerCount : 4;
+        this.maxParallelExecutions = maxParallelExecutions ? maxParallelExecutions : 4;
         this.actualExecutionCount = 0;
         this.storedPromises = [];
 
@@ -38,19 +40,31 @@ class TaskManager {
     }
 
     /**
-     * @param {number} maximumWorkerCount How many workers are allows. Set 0 for execution on Main ({@link FakeTaskWorker})
+     * Set the maximum number of parallel executions.
+     *
+     * @param {number} maxParallelExecutions How many workers are allowed to be executed in parallel.
      * @return {TaskManager}
      */
-    setMaximumWorkerCount ( maximumWorkerCount ) {
+    setMaxParallelExecutions ( maxParallelExecutions ) {
 
-        this.maximumWorkerCount = maximumWorkerCount;
+        this.maxParallelExecutions = maxParallelExecutions;
         return this;
 
     }
 
+    /**
+     * Returns the maximum number of parallel executions.
+     * @return {number}
+     */
+    getMaxParallelExecutions () {
+
+        return this.maxParallelExecutions;
+
+    }
 
     /**
      * Returns true if support for the given task type is available.
+     *
      * @param {string} taskType The task type as string
      * @return boolean
      */
@@ -61,7 +75,8 @@ class TaskManager {
     }
 
     /**
-     * Registers functionality for a new task type.
+     * Registers functions and dependencies for a new task type.
+     *
      * @param {string} taskType The name to be used for registration.
      * @param {function} initFunction The function to be called when the worker is initialised
      * @param {function} executeFunction The function to be called when the worker is executed
@@ -72,7 +87,7 @@ class TaskManager {
      */
     registerTaskType ( taskType, initFunction, executeFunction, comRoutingFunction, fallback, dependencyUrls ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maximumWorkerCount, fallback, this.verbose );
+        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, fallback, this.verbose );
         workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
         workerTypeDefinition.setDependencyUrls( dependencyUrls );
         this.taskTypes.set( taskType, workerTypeDefinition );
@@ -82,13 +97,14 @@ class TaskManager {
 
     /**
      * Registers functionality for a new task type based on module file.
+     *
      * @param {string} taskType The name to be used for registration.
      * @param {string} workerModuleUrl The URL to be used for the Worker. Module must provide logic to handle "init" and "execute" messages.
      * @return {TaskManager}
      */
     registerTaskTypeModule ( taskType, workerModuleUrl ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maximumWorkerCount, false, this.verbose );
+        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, false, this.verbose );
         workerTypeDefinition.setWorkerModule( workerModuleUrl );
         this.taskTypes.set( taskType, workerTypeDefinition );
         return this;
@@ -97,6 +113,7 @@ class TaskManager {
 
     /**
      * Provides initialization configuration and transferable objects.
+     *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
      * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
@@ -123,6 +140,7 @@ class TaskManager {
 
     /**
      * Queues a new task of the given type. Task will not execute until initialization completes.
+     *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
      * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
@@ -142,23 +160,23 @@ class TaskManager {
 
         } )
 
-        this._verify();
+        this._kickExecutions();
 
         return localPromise;
 
     }
 
-    _verify () {
+    _kickExecutions () {
 
-        while ( this.actualExecutionCount < this.maximumWorkerCount && this.storedPromises.length > 0 ) {
+        while ( this.actualExecutionCount < this.maxParallelExecutions && this.storedPromises.length > 0 ) {
 
             let storedExec = this.storedPromises.shift();
             if ( storedExec ) {
 
                 let workerTypeDefinition = this.taskTypes.get( storedExec.taskType );
-                let taskWorker = workerTypeDefinition.getAvailableTask();
-                if ( taskWorker ) {
+                if ( workerTypeDefinition.hasTask() ) {
 
+                    let taskWorker = workerTypeDefinition.getAvailableTask();
                     this.actualExecutionCount++;
                     let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
@@ -177,7 +195,7 @@ class TaskManager {
                         workerTypeDefinition.returnAvailableTask( taskWorker );
                         storedExec.resolve( e.data );
                         this.actualExecutionCount --;
-                        this._verify();
+                        this._kickExecutions();
 
                     } ).catch( ( e ) => {
 
@@ -233,7 +251,6 @@ class WorkerTypeDefinition {
      */
     constructor ( taskType, maximumCount, fallback, verbose ) {
         this.taskType = taskType;
-        this.maximumCount = maximumCount;
         this.fallback = fallback;
         this.verbose = verbose === true;
         this.functions = {
@@ -262,7 +279,7 @@ class WorkerTypeDefinition {
 
         this.workers = {
             code: [],
-            instances: [],
+            instances: new Array ( maximumCount ),
             available: []
         };
 
@@ -400,7 +417,7 @@ class WorkerTypeDefinition {
 
             let workerBlob = new Blob( this.functions.dependencies.code.concat( this.workers.code ), { type: 'application/javascript' } );
             let objectURL = window.URL.createObjectURL( workerBlob );
-            for ( let i = 0; i < this.maximumCount; i ++ ) {
+            for ( let i = 0; i < this.workers.instances.length; i ++ ) {
 
                 worker = new TaskWorker( i, objectURL );
                 this.workers.instances[ i ] = worker;
@@ -410,9 +427,9 @@ class WorkerTypeDefinition {
         }
         else {
 
-            for ( let i = 0; i < this.maximumCount; i ++ ) {
+            for ( let i = 0; i < this.workers.instances.length; i ++ ) {
 
-                worker = new FakeTaskWorker( i, this.functions.init.ref, this.functions.execute.ref );
+                worker = new MockedTaskWorker( i, this.functions.init.ref, this.functions.execute.ref );
                 this.workers.instances[ i ] = worker;
 
             }
@@ -428,7 +445,7 @@ class WorkerTypeDefinition {
      */
     async createWorkerModules () {
 
-        for ( let worker, i = 0; i < this.maximumCount; i++ ) {
+        for ( let worker, i = 0; i < this.workers.instances.length; i++ ) {
 
             worker = new TaskWorker( i, this.functions.workerModuleUrl.href, { type: "module" } );
             this.workers.instances[ i ] = worker;
@@ -440,7 +457,7 @@ class WorkerTypeDefinition {
 
     /**
      *
-     * @param {TaskWorker[]|FakeTaskWorker[]} instances
+     * @param {TaskWorker[]|MockedTaskWorker[]} instances
      * @param {object} config
      * @param {Transferable[]} transferables
      * @return {Promise<TaskWorker[]>}
@@ -470,9 +487,9 @@ class WorkerTypeDefinition {
     }
 
     /**
-     * Returns the first {@link TaskWorker} or {@link FakeTaskWorker} from array of available workers.
+     * Returns the first {@link TaskWorker} or {@link MockedTaskWorker} from array of available workers.
      *
-     * @return {TaskWorker|FakeTaskWorker|undefined}
+     * @return {TaskWorker|MockedTaskWorker|undefined}
      */
     getAvailableTask () {
 
@@ -481,8 +498,19 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Returns if a task is available or not.
      *
-     * @param {TaskWorker|FakeTaskWorker} taskWorker
+     * @return {boolean}
+     */
+    hasTask () {
+
+        return this.workers.available.length > 0;
+
+    }
+
+    /**
+     *
+     * @param {TaskWorker|MockedTaskWorker} taskWorker
      */
     returnAvailableTask ( taskWorker ) {
 
@@ -506,15 +534,16 @@ class WorkerTypeDefinition {
 }
 
 /**
- *
+ * Extends the {@link Worker} with an id.
  */
 class TaskWorker extends Worker {
 
     /**
+     * Creates a new instance.
      *
-     * @param id
-     * @param aURL
-     * @param options
+     * @param {number} id Numerical id of the task.
+     * @param {string} aURL
+     * @param {object} [options]
      */
     constructor( id, aURL, options ) {
 
@@ -536,13 +565,15 @@ class TaskWorker extends Worker {
 }
 
 /**
- *
+ * This is a mock of a worker to be used on Main. It defines necessary functions, so it can be handled like
+ * a regular {@link TaskWorker}.
  */
-class FakeTaskWorker {
+class MockedTaskWorker {
 
     /**
+     * Creates a new instance.
      *
-     * @param id
+     * @param {number} id
      * @param {function} initFunction
      * @param {function} executeFunction
      */
@@ -567,7 +598,7 @@ class FakeTaskWorker {
     }
 
     /**
-     *
+     * Delegates the message to the registered functions
      * @param message
      */
     postMessage( message ) {
