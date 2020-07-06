@@ -18,6 +18,10 @@ class TaskManager {
      */
     constructor ( maxParallelExecutions ) {
 
+        /**
+         *
+         * @type {Map<string, WorkerTypeDefinition>}
+         */
         this.taskTypes = new Map();
         this.verbose = false;
         this.maxParallelExecutions = maxParallelExecutions ? maxParallelExecutions : 4;
@@ -241,13 +245,10 @@ class WorkerTypeDefinition {
     /**
      * Creates a new instance of {@link WorkerTypeDefinition}.
      *
-     * @param {string} type The name of the registered task type.
+     * @param {string} taskType The name of the registered task type.
      * @param {Number} maximumCount Maximum worker count
      * @param {boolean} fallback Set to true if execution should be performed in main
      * @param {boolean} [verbose] Set if logging should be verbose
-     */
-    /**
-
      */
     constructor ( taskType, maximumCount, fallback, verbose ) {
         this.taskType = taskType;
@@ -255,19 +256,27 @@ class WorkerTypeDefinition {
         this.verbose = verbose === true;
         this.functions = {
             init: {
+                /** @type {function} */
                 ref: null,
+                /** @type {string} */
                 code: null
             },
             execute: {
+                /** @type {function} */
                 ref: null,
+                /** @type {string} */
                 code: null
             },
             comRouting: {
+                /** @type {function} */
                 ref: null,
+                /** @type {string} */
                 code: null
             },
             dependencies: {
+                /** @type {URL[]} */
                 urls: [],
+                /** @type {string[]} */
                 code: []
             },
             /**
@@ -383,6 +392,7 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Uses the configured values for init, execute and comRouting and embeds it in necessary glue code.
      *
      * @param {ArrayBuffer[]} dependencies
      * @return {Promise<String[]>}
@@ -406,6 +416,7 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Creates workers based on the configured function and dependency strings.
      *
      * @param {string} code
      * @return {Promise<TaskWorker[]>}
@@ -440,6 +451,7 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Creates module workers.
      *
      * @return {Promise<TaskWorker[]>}
      */
@@ -456,6 +468,7 @@ class WorkerTypeDefinition {
     }
 
     /**
+     * Initialises all workers with common configuration data.
      *
      * @param {TaskWorker[]|MockedTaskWorker[]} instances
      * @param {object} config

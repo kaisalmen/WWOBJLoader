@@ -1,0 +1,14 @@
+{
+  "include": [
+    "examples/jsm/loaders/TaskManager.js",
+    "examples/jsm/loaders/obj2/utils/TransferableUtils.js",
+    "examples/jsm/loaders/obj2/utils/ResourceDescriptor.js"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "removeComments": true
+  }
+}
