@@ -1,5 +1,5 @@
 export class TransferableUtils {
-    static walkMesh(rootNode: any, callback: Function): void;
+    static walkMesh(rootNode: Object3D, callback: Function): void;
     static packageBufferGeometry(bufferGeometry: BufferGeometry, meshName: string, geometryType: number, materialNames?: string[]): MeshMessageStructure;
 }
 export class MeshMessageStructure {
@@ -18,28 +18,29 @@ export class MeshMessageStructure {
         };
         materials: {
             multiMaterial: boolean;
-            materialNames: any[];
-            materialGroups: any[];
+            materialNames: string[];
+            materialGroups: object[];
         };
         buffers: {
-            vertices: any;
-            indices: any;
-            colors: any;
-            normals: any;
-            uvs: any;
-            skinIndex: any;
-            skinWeight: any;
+            vertices: ArrayBuffer;
+            indices: ArrayBuffer;
+            colors: ArrayBuffer;
+            normals: ArrayBuffer;
+            uvs: ArrayBuffer;
+            skinIndex: ArrayBuffer;
+            skinWeight: ArrayBuffer;
         };
     };
     transferables: {
-        vertex: any;
-        index: any;
-        color: any;
-        normal: any;
-        uv: any;
-        skinIndex: any;
-        skinWeight: any;
+        vertex: ArrayBuffer[];
+        index: ArrayBuffer[];
+        color: ArrayBuffer[];
+        normal: ArrayBuffer[];
+        uv: ArrayBuffer[];
+        skinIndex: ArrayBuffer[];
+        skinWeight: ArrayBuffer[];
     };
     postMessage(postMessageImpl: object): void;
 }
+import { Object3D } from "../../../../../build/three.module.js";
 import { BufferGeometry } from "../../../../../build/three.module.js";

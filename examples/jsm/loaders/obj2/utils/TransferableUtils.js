@@ -4,7 +4,8 @@
  */
 
 import {
-	BufferGeometry
+	BufferGeometry,
+	Object3D
 } from "../../../../../build/three.module.js";
 
 /**
@@ -32,26 +33,42 @@ class MeshMessageStructure {
 			},
 			materials: {
 				multiMaterial: false,
+				/** @type {string[]} */
 				materialNames: [],
+				/** @type {object[]} */
 				materialGroups: []
 			},
 			buffers: {
+				/** @type {ArrayBuffer}	*/
 				vertices: null,
+				/** @type {ArrayBuffer}	*/
 				indices: null,
+				/** @type {ArrayBuffer}	*/
 				colors: null,
+				/** @type {ArrayBuffer}	*/
 				normals: null,
+				/** @type {ArrayBuffer}	*/
 				uvs: null,
+				/** @type {ArrayBuffer}	*/
 				skinIndex: null,
+				/** @type {ArrayBuffer}	*/
 				skinWeight: null
 			}
 		};
 		this.transferables = {
+			/** @type {ArrayBuffer[]} */
 			vertex: null,
+			/** @type {ArrayBuffer[]} */
 			index: null,
+			/** @type {ArrayBuffer[]} */
 			color: null,
+			/** @type {ArrayBuffer[]} */
 			normal: null,
+			/** @type {ArrayBuffer[]} */
 			uv: null,
+			/** @type {ArrayBuffer[]} */
 			skinIndex: null,
+			/** @type {ArrayBuffer[]} */
 			skinWeight: null
 		};
 
@@ -167,7 +184,7 @@ class TransferableUtils {
 	 * Walk a mesh and on ever geometry call the callback function.
 	 *
 	 * @param {Object3D} rootNode
-	 * @param {function} callback
+	 * @param {Function} callback
 	 */
 	static walkMesh( rootNode, callback ) {
 		let scope = this;

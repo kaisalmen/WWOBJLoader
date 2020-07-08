@@ -34,6 +34,7 @@ class ResourceDescriptor {
 		let filenameParts = this.filename.split( '.' );
 		if ( filenameParts.length > 1 ) this.extension = filenameParts[ filenameParts.length - 1 ];
 
+		/** @type {ArrayBuffer} */
 		this.buffer = null;
 		this.needStringOutput = false;
 		this.compressed = false;

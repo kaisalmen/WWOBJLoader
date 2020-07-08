@@ -4,7 +4,7 @@ export class TaskManager {
     verbose: boolean;
     maxParallelExecutions: number;
     actualExecutionCount: number;
-    storedPromises: any[];
+    storedExecutions: StoredExecution[];
     setVerbose(verbose: boolean): TaskManager;
     setMaxParallelExecutions(maxParallelExecutions: number): TaskManager;
     getMaxParallelExecutions(): number;
@@ -41,9 +41,9 @@ declare class WorkerTypeDefinition {
         workerModuleUrl: URL;
     };
     workers: {
-        code: any[];
-        instances: any[];
-        available: any[];
+        code: string[];
+        instances: TaskWorker[] | MockedTaskWorker[];
+        available: TaskWorker[] | MockedTaskWorker[];
     };
     getTaskType(): string;
     setFunctions(initFunction: Function, executeFunction: Function, comRoutingFunction?: Function): void;
@@ -60,10 +60,18 @@ declare class WorkerTypeDefinition {
     returnAvailableTask(taskWorker: TaskWorker | MockedTaskWorker): void;
     dispose(): void;
 }
+declare class StoredExecution {
+    constructor(taskType: string, config: object, resolve: Function, reject: Function, transferables?: Transferable[]);
+    taskType: string;
+    config: any;
+    resolve: Function;
+    reject: Function;
+    transferables: Transferable[];
+}
 declare class TaskWorker extends Worker {
     constructor(id: number, aURL: string, options?: object);
     id: number;
-    getId(): any;
+    getId(): number;
 }
 declare class MockedTaskWorker {
     constructor(id: number, initFunction: Function, executeFunction: Function);
@@ -72,7 +80,7 @@ declare class MockedTaskWorker {
         init: Function;
         execute: Function;
     };
-    getId(): any;
-    postMessage(message: any): void;
+    getId(): number;
+    postMessage(message: string, transfer?: Transferable[]): void;
 }
 export {};

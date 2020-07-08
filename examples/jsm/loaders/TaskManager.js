@@ -19,14 +19,16 @@ class TaskManager {
     constructor ( maxParallelExecutions ) {
 
         /**
-         *
          * @type {Map<string, WorkerTypeDefinition>}
          */
         this.taskTypes = new Map();
         this.verbose = false;
         this.maxParallelExecutions = maxParallelExecutions ? maxParallelExecutions : 4;
         this.actualExecutionCount = 0;
-        this.storedPromises = [];
+        /**
+         * @type {StoredExecution[]}
+         */
+        this.storedExecutions = [];
 
     }
 
@@ -154,30 +156,22 @@ class TaskManager {
 
         let localPromise = new Promise( ( resolveUser, rejectUser ) => {
 
-            this.storedPromises.push( {
-                taskType: taskType,
-                config: config,
-                transferables: transferables,
-                resolve: resolveUser,
-                reject: rejectUser
-            } );
+            this.storedExecutions.push( new StoredExecution( taskType, config, resolveUser, rejectUser, transferables ) );
 
-        } )
-
+        } );
         this._kickExecutions();
-
         return localPromise;
 
     }
 
     _kickExecutions () {
 
-        while ( this.actualExecutionCount < this.maxParallelExecutions && this.storedPromises.length > 0 ) {
+        while ( this.actualExecutionCount < this.maxParallelExecutions && this.storedExecutions.length > 0 ) {
 
-            let storedExec = this.storedPromises.shift();
-            if ( storedExec ) {
+            let storedExecution = this.storedExecutions.shift();
+            if ( storedExecution ) {
 
-                let workerTypeDefinition = this.taskTypes.get( storedExec.taskType );
+                let workerTypeDefinition = this.taskTypes.get( storedExecution.taskType );
                 if ( workerTypeDefinition.hasTask() ) {
 
                     let taskWorker = workerTypeDefinition.getAvailableTask();
@@ -190,20 +184,20 @@ class TaskManager {
                         taskWorker.postMessage( {
                             cmd: "execute",
                             id: taskWorker.getId(),
-                            config: storedExec.config
-                        }, storedExec.transferables );
+                            config: storedExecution.config
+                        }, storedExecution.transferables );
 
                     } );
                     promiseWorker.then( ( e ) => {
 
                         workerTypeDefinition.returnAvailableTask( taskWorker );
-                        storedExec.resolve( e.data );
+                        storedExecution.resolve( e.data );
                         this.actualExecutionCount --;
                         this._kickExecutions();
 
                     } ).catch( ( e ) => {
 
-                        storedExec.reject( "Execution error: " + e );
+                        storedExecution.reject( "Execution error: " + e );
 
                     } );
 
@@ -211,7 +205,7 @@ class TaskManager {
                 else {
 
                     // try later again, add at the end for now
-                    this.storedPromises.push( storedExec );
+                    this.storedExecutions.push( storedExecution );
 
                 }
 
@@ -287,8 +281,11 @@ class WorkerTypeDefinition {
 
 
         this.workers = {
+            /** @type {string[]} */
             code: [],
+            /** @type {TaskWorker[]|MockedTaskWorker[]} */
             instances: new Array ( maximumCount ),
+            /** @type {TaskWorker[]|MockedTaskWorker[]} */
             available: []
         };
 
@@ -547,6 +544,32 @@ class WorkerTypeDefinition {
 }
 
 /**
+ * Contains all things required for later executions of Worker.
+ */
+class StoredExecution {
+
+    /**
+     * Creates a new instance.
+     *
+     * @param {string} taskType
+     * @param {object} config
+     * @param {Function} resolve
+     * @param {Function} reject
+     * @param {Transferable[]} [transferables]
+     */
+    constructor( taskType, config, resolve, reject, transferables ) {
+
+        this.taskType = taskType;
+        this.config = config;
+        this.resolve = resolve;
+        this.reject = reject;
+        this.transferables = transferables;
+
+    }
+
+}
+
+/**
  * Extends the {@link Worker} with an id.
  */
 class TaskWorker extends Worker {
@@ -566,8 +589,8 @@ class TaskWorker extends Worker {
     }
 
     /**
-     *
-     * @return {*}
+     * Returns the id.
+     * @return {number}
      */
     getId() {
 
@@ -601,8 +624,8 @@ class MockedTaskWorker {
     }
 
     /**
-     *
-     * @return {*}
+     * Returns the id.
+     * @return {number}
      */
     getId() {
 
@@ -612,9 +635,10 @@ class MockedTaskWorker {
 
     /**
      * Delegates the message to the registered functions
-     * @param message
+     * @param {String} message
+     * @param {Transferable[]} [transfer]
      */
-    postMessage( message ) {
+    postMessage( message, transfer ) {
 
         let scope = this;
         let comRouting = function ( message ) {
@@ -639,6 +663,11 @@ class MockedTaskWorker {
         comRouting( { data: message } )
 
     }
+
+    /**
+     * Mocking termination
+     */
+    terminate () {}
 
 }
 

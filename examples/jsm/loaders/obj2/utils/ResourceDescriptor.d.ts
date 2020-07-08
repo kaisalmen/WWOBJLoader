@@ -4,7 +4,7 @@ export class ResourceDescriptor {
     path: string;
     filename: string;
     extension: string;
-    buffer: any;
+    buffer: ArrayBuffer;
     needStringOutput: boolean;
     compressed: boolean;
     getUrl(): URL;
