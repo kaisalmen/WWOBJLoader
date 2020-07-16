@@ -158,10 +158,11 @@
 					this.meshReceiver = new MeshReceiver( materialHandler );
 
 					this.taskNames.clear();
-					this.taskNames.set( 'tmProtoExample', { use: true, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleModule', { use: true, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleModuleNoThree', { use: true, fallback: false} );
+					this.taskNames.set( 'tmProtoExample', { use: false, fallback: false } );
+					this.taskNames.set( 'tmProtoExampleModule', { use: false, fallback: false } );
+					this.taskNames.set( 'tmProtoExampleModuleNoThree', { use: false, fallback: false} );
 					this.taskNames.set( 'tmProtoExampleMain', { use: false, fallback: true } );
+					this.taskNames.set( 'tmOBJLoader2', { use: true, fallback: false } );
 
 					this.tasksToUse = [];
 					this.executions = [];
@@ -266,6 +267,16 @@
 						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
+					taskName = 'tmOBJLoader2';
+					valueObj = this.taskNames.get( taskName );
+					if ( valueObj.use ) {
+
+						this.tasksToUse.push( taskName );
+						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmOBJLoader2.js' );
+						awaiting.push( this.taskManager.initTaskType( taskName, { file: '../../models/obj/female02/female02.obj' } ).catch( e => console.error( e ) ) );
+
+					}
+
 					if ( awaiting.length > 0 ) {
 
 						return Promise.all( awaiting );
@@ -328,6 +339,7 @@
 							break;
 
 						case 'exec':
+						case 'assetAvailable':
 							if ( payload.type === 'mesh' ) {
 
 								let meshes = this.meshReceiver.buildMeshes( payload );

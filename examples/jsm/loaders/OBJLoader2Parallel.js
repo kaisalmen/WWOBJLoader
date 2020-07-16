@@ -106,7 +106,8 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 			let objectManipulator = new ObjectManipulator();
 			let defaultWorkerPayloadHandler = new DefaultWorkerPayloadHandler( this.parser );
 			let workerRunner = new WorkerRunner( {} );
-			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( OBJLoader2Parser, this.parser ) );
+
+			codeBuilderInstructions.addCodeFragment( 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n' );
 			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( ObjectManipulator, objectManipulator ) );
 			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( DefaultWorkerPayloadHandler, defaultWorkerPayloadHandler ) );
 			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( WorkerRunner, workerRunner ) );

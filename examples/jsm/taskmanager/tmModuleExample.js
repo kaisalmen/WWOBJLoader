@@ -12,16 +12,16 @@ import { comRouting } from "./tmDefaultComRouting.js";
 
 
 function init ( context, id, config ) {
-		context.storage = {
-			whoami: id,
-		};
+	context.storage = {
+		whoami: id,
+	};
 
-		context.postMessage( {
-			cmd: "init",
-			id: id
-		} );
+	context.postMessage( {
+		cmd: "init",
+		id: id
+	} );
 
-	}
+}
 
 function execute ( context, id, config ) {
 
