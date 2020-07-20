@@ -149,14 +149,15 @@ class TaskManager {
      *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
+     * @param {Function} assetAvailableFunction Invoke this function if an asset become intermediately available
      * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
      * @return {Promise}
      */
-    async enqueueForExecution ( taskType, config, transferables ) {
+    async enqueueForExecution ( taskType, config, assetAvailableFunction, transferables ) {
 
         let localPromise = new Promise( ( resolveUser, rejectUser ) => {
 
-            this.storedExecutions.push( new StoredExecution( taskType, config, resolveUser, rejectUser, transferables ) );
+            this.storedExecutions.push( new StoredExecution( taskType, config, assetAvailableFunction, resolveUser, rejectUser, transferables ) );
 
         } );
         this._kickExecutions();
@@ -178,12 +179,30 @@ class TaskManager {
                     this.actualExecutionCount++;
                     let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
-                        taskWorker.onmessage = resolveWorker;
+                        taskWorker.onmessage = function ( e ) {
+
+                            // allow intermediate asset provision before flagging execComplete
+                            if ( e.data.cmd === 'assetAvailable' ) {
+
+                                if ( storedExecution.assetAvailableFunction instanceof Function ) {
+
+                                    storedExecution.assetAvailableFunction( e.data );
+
+                                }
+
+                            }
+                            else {
+
+                                resolveWorker( e );
+
+                            }
+
+                        };
                         taskWorker.onerror = rejectWorker;
 
                         taskWorker.postMessage( {
                             cmd: "execute",
-                            id: taskWorker.getId(),
+                            workerId: taskWorker.getId(),
                             config: storedExecution.config
                         }, storedExecution.transferables );
 
@@ -483,7 +502,7 @@ class WorkerTypeDefinition {
 
                 taskWorker.postMessage( {
                     cmd: "init",
-                    id: taskWorker.getId(),
+                    workerId: taskWorker.getId(),
                     config: config
                 }, transferables );
 
@@ -553,14 +572,16 @@ class StoredExecution {
      *
      * @param {string} taskType
      * @param {object} config
+     * @param {Function} assetAvailableFunction
      * @param {Function} resolve
      * @param {Function} reject
      * @param {Transferable[]} [transferables]
      */
-    constructor( taskType, config, resolve, reject, transferables ) {
+    constructor( taskType, config, assetAvailableFunction, resolve, reject, transferables ) {
 
         this.taskType = taskType;
         this.config = config;
+        this.assetAvailableFunction = assetAvailableFunction;
         this.resolve = resolve;
         this.reject = reject;
         this.transferables = transferables;

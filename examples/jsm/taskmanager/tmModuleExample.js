@@ -34,7 +34,7 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, 'tmProto' + config.count, 2,[ 'defaultPointMaterial' ] );
+	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 'tmProto' + config.id, 2,[ 'defaultPointMaterial' ] );
 
 	let randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );

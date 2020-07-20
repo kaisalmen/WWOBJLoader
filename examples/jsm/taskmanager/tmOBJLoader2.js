@@ -14,7 +14,7 @@ const loadFile = async function ( file ) {
 
 	let fileLoader = new FileLoader();
 	fileLoader.setResponseType( 'arraybuffer' );
-	return await fileLoader.loadAsync( file, report => console.log( report ) )
+	return await fileLoader.loadAsync( file )
 
 }
 
@@ -42,7 +42,11 @@ function execute ( context, id, config ) {
 	objParser.setCallbackOnAssetAvailable( m => { self.postMessage( m ); } );
 	objParser.setCallbackOnProgress( text => { console.debug( 'WorkerRunner: progress: ' + text ) } );
 	loadFile( file )
-		.then( ab => objParser.execute( ab ) )
+		.then( ab => {
+			objParser.objectId = config.id;
+			objParser.execute( ab )
+
+		} )
 		.catch( e => console.error( e ) );
 
 }

@@ -6,12 +6,12 @@ function comRouting ( message, init, execute ) {
 	let payload = message.data;
 	if ( payload.cmd === 'init' ) {
 
-		init( self, payload.id, payload.config );
+		init( self, payload.workerId, payload.config );
 
 	}
 	else if ( payload.cmd === 'execute' ) {
 
-		execute( self, payload.id, payload.config );
+		execute( self, payload.workerId, payload.config );
 
 	}
 }

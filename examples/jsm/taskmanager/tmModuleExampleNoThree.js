@@ -27,7 +27,8 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	payload.main.meshName = 'tmProto' + config.count;
+	payload.main.meshName = 'tmProto' + config.id;
+	payload.main.id = config.id;
 	payload.main.params.geometryType = 1;
 	payload.main.materials.materialNames = [ 'defaultLineMaterial' ];
 	let randArray = new Uint8Array( 3 );

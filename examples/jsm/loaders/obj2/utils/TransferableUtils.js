@@ -17,12 +17,14 @@ class MeshMessageStructure {
 	 * Creates a new {@link MeshMessageStructure}.
 	 *
 	 * @param {string} cmd
+	 * @param {string} id
 	 * @param {string} meshName
 	 */
-	constructor( cmd, meshName ) {
+	constructor( cmd, id, meshName ) {
 		this.main = {
 			cmd: cmd,
 			type: 'mesh',
+			id: id,
 			meshName: meshName,
 			progress: {
 				numericalValue: 0
@@ -192,7 +194,7 @@ class TransferableUtils {
 			console.info( 'Walking: ' + object3d.name );
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], object3d.name, 0,['TBD'] );
+				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], rootNode, object3d.name, 0,['TBD'] );
 				callback( payload.main, payload.transferables );
 
 			}
@@ -229,12 +231,13 @@ class TransferableUtils {
 	 * Package {@link BufferGeometry} into {@link MeshMessageStructure}
 	 *
 	 * @param {BufferGeometry} bufferGeometry
+	 * @param {string} id
 	 * @param {string} meshName
 	 * @param {number} geometryType
 	 * @param {string[]} [materialNames]
 	 * @return {MeshMessageStructure}
 	 */
-	static packageBufferGeometry( bufferGeometry, meshName, geometryType, materialNames ) {
+	static packageBufferGeometry( bufferGeometry, id, meshName, geometryType, materialNames ) {
 		let vertexBA = bufferGeometry.getAttribute( 'position' );
 		let indexBA = bufferGeometry.getIndex();
 		let colorBA = bufferGeometry.getAttribute( 'color' );
@@ -251,7 +254,7 @@ class TransferableUtils {
 		let skinWeightFA = (skinWeightBA !== null && skinWeightBA !== undefined) ? skinWeightBA.array : null;
 
 
-		let payload = new MeshMessageStructure( 'exec', meshName );
+		let payload = new MeshMessageStructure( 'execComplete', id, meshName );
 		payload.main.params.geometryType = geometryType;
 		payload.main.materials.materialNames = materialNames;
 		if ( vertexFA !== null ) {

@@ -74,6 +74,7 @@ const OBJLoader2Parser = function () {
 	this.colors = [];
 	this.normals = [];
 	this.uvs = [];
+	this.objectId = 0;
 
 	this.rawMesh = {
 		objectName: '',
@@ -842,6 +843,11 @@ const OBJLoader2Parser = function () {
 			this._resetRawMesh();
 
 		}
+		this.callbacks.onAssetAvailable(
+			{
+				cmd: 'execComplete',
+				type: 'void'
+			} );
 
 		return haveMesh;
 
@@ -1043,6 +1049,7 @@ const OBJLoader2Parser = function () {
 			{
 				cmd: 'assetAvailable',
 				type: 'mesh',
+				id: this.objectId,
 				meshName: result.name,
 				progress: {
 					numericalValue: this.globalCounts.currentByte / this.globalCounts.totalBytes
