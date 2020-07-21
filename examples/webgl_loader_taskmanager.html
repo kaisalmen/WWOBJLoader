@@ -36,68 +36,7 @@
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/loaders/obj2/utils/TransferableUtils.js";
-
-			const workerInitFunction = function ( context, id, config ) {
-				context.storage = {
-					whoami: config.id,
-				};
-
-				context.postMessage( {
-					cmd: "init",
-					id: id
-				} );
-
-			};
-
-			const workerExecFunction = function ( context, id, config ) {
-
-				let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
-
-				let vertexBA = bufferGeometry.getAttribute( 'position' );
-				let indexBA = bufferGeometry.getIndex();
-				let colorBA = bufferGeometry.getAttribute( 'color' );
-				let normalBA = bufferGeometry.getAttribute( 'normal' );
-				let uvBA = bufferGeometry.getAttribute( 'uv' );
-
-				let vertexArray = vertexBA.array;
-				for ( let i = 0; i < vertexArray.length; i ++ ) {
-
-					vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
-
-				}
-				let vertexFA = vertexArray;
-				let indexUA = (indexBA !== null && indexBA !== undefined) ? indexBA.array : null;
-				let colorFA = (colorBA !== null && colorBA !== undefined) ? colorBA.array : null;
-				let normalFA = (normalBA !== null && normalBA !== undefined) ? normalBA.array : null;
-				let uvFA = (uvBA !== null && uvBA !== undefined) ? uvBA.array : null;
-
-				context.postMessage( {
-						cmd: 'execComplete',
-						type: 'mesh',
-						meshName: 'tmProto' + config.id,
-						id: config.id,
-						params: {
-							geometryType: 0
-						},
-						buffers: {
-							vertices: vertexFA,
-							indices: indexUA,
-							colors: colorFA,
-							normals: normalFA,
-							uvs: uvFA,
-						},
-						materials: {
-							materialNames: [ 'meshNormalMaterial' ]
-						}
-					},
-					[vertexFA.buffer],
-					indexUA !== null ? [indexUA.buffer] : null,
-					colorFA !== null ? [colorFA.buffer] : null,
-					normalFA !== null ? [normalFA.buffer] : null,
-					uvFA !== null ? [uvFA.buffer] : null
-				);
-
-			}
+			import { FileLoader } from "../src/loaders/FileLoader.js";
 
 			class TaskManagerPrototypeExample {
 
@@ -122,7 +61,7 @@
 					this.materialHandler = null;
 					this.meshReceiver = null;
 
-					this.taskNames = new Map ();
+					this.taskDescriptions = new Map ();
 					this.tasksToUse = [];
 					this.executions = [];
 					this.objectsUsed = new Map();
@@ -147,7 +86,7 @@
 				}
 
 				resetAppContext () {
-					this.taskManager = new TaskManager( 1 );
+					this.taskManager = new TaskManager();
 					this.taskManager.setVerbose( true );
 
 					this.materialHandler = new MaterialHandler();
@@ -157,12 +96,40 @@
 					this.materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 					this.meshReceiver = new MeshReceiver( this.materialHandler );
 
-					this.taskNames.clear();
-					this.taskNames.set( 'tmProtoExample', { use: false, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleModule', { use: false, fallback: false } );
-					this.taskNames.set( 'tmProtoExampleModuleNoThree', { use: false, fallback: false} );
-					this.taskNames.set( 'tmProtoExampleMain', { use: false, fallback: true } );
-					this.taskNames.set( 'tmOBJLoader2', { use: true, fallback: false } );
+					this.taskDescriptions.clear();
+					this.taskDescriptions.set( 'tmProtoExample', {
+						name: 'tmProtoExample',
+						use: true,
+						fallback: false,
+						funcInit: WorkerFunctions.workerLegacyInit,
+						funcExec: WorkerFunctions.workerLegacyExec
+					} );
+					this.taskDescriptions.set( 'tmProtoExampleModule', {
+						name: 'tmProtoExampleModule',
+						use: true,
+						fallback: false,
+						module: './jsm/taskmanager/tmModuleExample.js'
+					} );
+					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
+						name: 'tmProtoExampleModuleNoThree',
+						use: true,
+						fallback: false,
+						module: './jsm/taskmanager/tmModuleExampleNoThree.js'
+					} );
+					this.taskDescriptions.set( 'tmProtoExampleMain', {
+						name: 'tmProtoExampleMain',
+						use: false,
+						fallback: true,
+						funcInit: WorkerFunctions.workerLegacyInit,
+						funcExec: WorkerFunctions.workerLegacyExec
+					} );
+					this.taskDescriptions.set( 'tmOBJLoader2', {
+						name: 'tmOBJLoader2',
+						use: true,
+						fallback: false,
+						module: './jsm/taskmanager/tmOBJLoader2.js',
+						filename: './models/obj/female02/female02.obj'
+					} );
 
 					this.tasksToUse = [];
 					this.executions = [];
@@ -225,57 +192,57 @@
 					this.scene.add( helper );
 				}
 
-				initContent () {
+				async initContent () {
 					let awaiting = [];
 					this.tasksToUse = [];
-					let taskName = 'tmProtoExample';
-					let valueObj = this.taskNames.get( taskName );
-					if ( valueObj.use ) {
+					let taskDescr = this.taskDescriptions.get( 'tmProtoExample' );
+					if ( taskDescr.use ) {
 
-						this.tasksToUse.push( taskName );
-						this.taskManager.registerTaskType( taskName, workerInitFunction, workerExecFunction, null, false, ["../build/three.js"] );
-						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
-
-					}
-					taskName = 'tmProtoExampleModule';
-					valueObj = this.taskNames.get( taskName );
-					if ( valueObj.use ) {
-
-						this.tasksToUse.push( taskName );
-						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmModuleExample.js' );
-						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+						this.tasksToUse.push( taskDescr );
+						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, ["../build/three.js"] );
+						awaiting.push( this.taskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					taskName = 'tmProtoExampleModuleNoThree';
-					valueObj = this.taskNames.get( taskName );
-					if ( valueObj.use ) {
+					taskDescr = this.taskDescriptions.get( 'tmProtoExampleModule' );
+					if ( taskDescr.use ) {
+
+						this.tasksToUse.push( taskDescr );
+						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
+						awaiting.push( this.taskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
+
+					}
+					taskDescr = this.taskDescriptions.get( 'tmProtoExampleModuleNoThree' );
+					if ( taskDescr.use ) {
 
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						let torusPayload = TransferableUtils.packageBufferGeometry( torus, '0', 'torus', 0 );
-						this.tasksToUse.push( taskName );
-						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmModuleExampleNoThree.js' );
-						awaiting.push( this.taskManager.initTaskType( taskName, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
+						this.tasksToUse.push( taskDescr );
+						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
+//						let transferablesArray = TransferableUtils.transferablesToArray( torusPayload.transferables );
+						awaiting.push( this.taskManager.initTaskType( taskDescr.name, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
 
 					}
-					taskName = 'tmProtoExampleMain';
-					valueObj = this.taskNames.get( taskName );
-					if ( valueObj.use ) {
+					taskDescr = this.taskDescriptions.get( 'tmProtoExampleMain' );
+					if ( taskDescr.use ) {
 
-						this.tasksToUse.push( taskName );
-						this.taskManager.registerTaskType( taskName, workerInitFunction, workerExecFunction, null, true );
-						awaiting.push( this.taskManager.initTaskType( taskName, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
-
-					}
-					taskName = 'tmOBJLoader2';
-					valueObj = this.taskNames.get( taskName );
-					if ( valueObj.use ) {
-
-						this.tasksToUse.push( taskName );
-						this.taskManager.registerTaskTypeModule( taskName, './jsm/taskmanager/tmOBJLoader2.js' );
-						awaiting.push( this.taskManager.initTaskType( taskName, { file: '../../models/obj/female02/female02.obj' } ).catch( e => console.error( e ) ) );
+						this.tasksToUse.push( taskDescr );
+						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, true );
+						awaiting.push( this.taskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
+					taskDescr = this.taskDescriptions.get( 'tmOBJLoader2' );
+					if ( taskDescr.use ) {
 
+						this.tasksToUse.push( taskDescr );
+						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
+						await this.loadFile( taskDescr.filename )
+							.then( buffer => {
+								let config = { buffer: buffer }
+								let transferables = { buffer: buffer };
+								awaiting.push( this.taskManager.initTaskType( taskDescr.name, config, transferables ).catch( e => console.error( e ) ) );
+							} );
+
+					}
 					if ( awaiting.length > 0 ) {
 
 						return Promise.all( awaiting );
@@ -286,6 +253,14 @@
 						return new Promise( ( resolve, reject ) => { reject ( 'No task type has been configured' ) } )
 
 					}
+				}
+
+				async loadFile ( file ) {
+
+					let fileLoader = new FileLoader();
+					fileLoader.setResponseType( 'arraybuffer' );
+					return fileLoader.loadAsync( file )
+
 				}
 
 				async executeWorkers () {
@@ -326,7 +301,8 @@
 
 				_storeAddTaskPromise( taskNameIndex, globalCount ) {
 
-					let promise = this.taskManager.enqueueForExecution( this.tasksToUse[ taskNameIndex ], { id: globalCount },
+					let taskDescr = this.tasksToUse[ taskNameIndex ];
+					let promise = this.taskManager.enqueueForExecution( taskDescr.name, { id: globalCount },
 							data => this._processMessage( data ) )
 						.then( data => this._processMessage( data ) )
 						.catch( e => console.error( e ) )
@@ -413,8 +389,9 @@
 				_deleteMeshRange( deleteRange )  {
 
 					let toBeRemoved;
+					let deleteCount = 0;
 					let i = 0;
-					while ( i < deleteRange && i < this.meshesAdded.length ) {
+					while ( deleteCount < deleteRange && i < this.meshesAdded.length ) {
 
 						let meshName = this.meshesAdded[ i ];
 						toBeRemoved = this.scene.getObjectByName( meshName );
@@ -428,14 +405,15 @@
 							}
 							this.scene.remove( toBeRemoved );
 							this.meshesAdded.splice( i, 1 );
+							deleteCount++;
 
 						}
 						else {
 
+							i++;
 							console.log( 'Unable to remove: ' + meshName );
 
 						}
-						i++;
 
 					}
 
@@ -475,6 +453,71 @@
 
 			}
 
+			const WorkerFunctions = {
+
+				workerLegacyInit: function ( context, id, config ) {
+					context.storage = {
+						whoami: config.id,
+					};
+
+					context.postMessage( {
+						cmd: "init",
+						id: id
+					} );
+
+				},
+
+				workerLegacyExec: function ( context, id, config ) {
+
+					let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
+
+					let vertexBA = bufferGeometry.getAttribute( 'position' );
+					let indexBA = bufferGeometry.getIndex();
+					let colorBA = bufferGeometry.getAttribute( 'color' );
+					let normalBA = bufferGeometry.getAttribute( 'normal' );
+					let uvBA = bufferGeometry.getAttribute( 'uv' );
+
+					let vertexArray = vertexBA.array;
+					for ( let i = 0; i < vertexArray.length; i ++ ) {
+
+						vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
+
+					}
+					let vertexFA = vertexArray;
+					let indexUA = (indexBA !== null && indexBA !== undefined) ? indexBA.array : null;
+					let colorFA = (colorBA !== null && colorBA !== undefined) ? colorBA.array : null;
+					let normalFA = (normalBA !== null && normalBA !== undefined) ? normalBA.array : null;
+					let uvFA = (uvBA !== null && uvBA !== undefined) ? uvBA.array : null;
+
+					context.postMessage( {
+								cmd: 'execComplete',
+								type: 'mesh',
+								meshName: 'tmProto' + config.id,
+								id: config.id,
+								params: {
+									geometryType: 0
+								},
+								buffers: {
+									vertices: vertexFA,
+									indices: indexUA,
+									colors: colorFA,
+									normals: normalFA,
+									uvs: uvFA,
+								},
+								materials: {
+									materialNames: ['meshNormalMaterial']
+								}
+							},
+							[vertexFA.buffer],
+							indexUA !== null ? [indexUA.buffer] : null,
+							colorFA !== null ? [colorFA.buffer] : null,
+							normalFA !== null ? [normalFA.buffer] : null,
+							uvFA !== null ? [uvFA.buffer] : null
+					);
+
+				}
+			}
+
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
 			app.resetAppContext();
 
@@ -494,11 +537,11 @@
 				maxPerLoop: 0,
 				resetContent () {
 
-					this.tmProtoExampleName = app.taskNames.get( 'tmProtoExample' ).use;
-					this.tmProtoExampleModule = app.taskNames.get( 'tmProtoExampleModule' ).use;
-					this.tmProtoExampleModuleNoThree = app.taskNames.get( 'tmProtoExampleModuleNoThree' ).use;
-					this.tmProtoExampleMain = app.taskNames.get( 'tmProtoExampleMain' ).use;
-					this.tmOBJLoader2 = app.taskNames.get( 'tmOBJLoader2' ).use;
+					this.tmProtoExampleName = app.taskDescriptions.get( 'tmProtoExample' ).use;
+					this.tmProtoExampleModule = app.taskDescriptions.get( 'tmProtoExampleModule' ).use;
+					this.tmProtoExampleModuleNoThree = app.taskDescriptions.get( 'tmProtoExampleModuleNoThree' ).use;
+					this.tmProtoExampleMain = app.taskDescriptions.get( 'tmProtoExampleMain' ).use;
+					this.tmOBJLoader2 = app.taskDescriptions.get( 'tmOBJLoader2' ).use;
 					this.maxParallelExecutions = app.taskManager.getMaxParallelExecutions();
 					this.overallExecutionCount = app.overallExecutionCount;
 					this.numberOfMeshesToKeep = app.numberOfMeshesToKeep;
@@ -580,23 +623,23 @@
 
 			let taskName0 = 'tmProtoExample';
 			tmControls.controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
-			tmControls.controls[ 0 ].onChange( value => { app.taskNames.get( taskName0 ).use = value; } );
+			tmControls.controls[ 0 ].onChange( value => { app.taskDescriptions.get( taskName0 ).use = value; } );
 
 			let taskName1 = 'tmProtoExampleModule';
 			tmControls.controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
-			tmControls.controls[ 1 ].onChange( value => { app.taskNames.get( taskName1 ).use = value; } );
+			tmControls.controls[ 1 ].onChange( value => { app.taskDescriptions.get( taskName1 ).use = value; } );
 
 			let taskName2 = 'tmProtoExampleModuleNoThree';
 			tmControls.controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
-			tmControls.controls[ 2 ].onChange( value => { app.taskNames.get( taskName2 ).use = value; } );
+			tmControls.controls[ 2 ].onChange( value => { app.taskDescriptions.get( taskName2 ).use = value; } );
 
 			let taskName3 = 'tmProtoExampleMain';
 			tmControls.controls[ 3 ] = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
-			tmControls.controls[ 3 ].onChange( value => { app.taskNames.get( taskName3 ).use = value; } );
+			tmControls.controls[ 3 ].onChange( value => { app.taskDescriptions.get( taskName3 ).use = value; } );
 
 			let taskName4 = 'tmOBJLoader2';
 			tmControls.controls[ 4 ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2' );
-			tmControls.controls[ 4 ].onChange( value => { app.taskNames.get( taskName4 ).use = value; } );
+			tmControls.controls[ 4 ].onChange( value => { app.taskDescriptions.get( taskName4 ).use = value; } );
 
 			tmControls.controls[ 5 ] = gui.add( tmControls, 'maxParallelExecutions', 1, 16 ).step( 1 ).name( 'Maximum Parallel Executions' );
 			tmControls.controls[ 5 ].onChange( value => { app.taskManager.setMaxParallelExecutions( value ) } );

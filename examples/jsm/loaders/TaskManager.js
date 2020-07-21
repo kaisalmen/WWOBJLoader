@@ -122,7 +122,7 @@ class TaskManager {
      *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
-     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
+     * @param {Object} [transferables] Any optional {@link ArrayBuffer} encapsulated in object..
      */
     async initTaskType ( taskType, config, transferables ) {
 
@@ -150,7 +150,7 @@ class TaskManager {
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
      * @param {Function} assetAvailableFunction Invoke this function if an asset become intermediately available
-     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer}.
+     * @param {Object} [transferables] Any optional {@link ArrayBuffer} encapsulated in object.
      * @return {Promise}
      */
     async enqueueForExecution ( taskType, config, assetAvailableFunction, transferables ) {
@@ -488,7 +488,7 @@ class WorkerTypeDefinition {
      *
      * @param {TaskWorker[]|MockedTaskWorker[]} instances
      * @param {object} config
-     * @param {Transferable[]} transferables
+     * @param {Object} transferables
      * @return {Promise<TaskWorker[]>}
      */
     async initWorkers ( instances, config, transferables ) {
@@ -500,11 +500,20 @@ class WorkerTypeDefinition {
                 taskWorker.onmessage = resolveWorker;
                 taskWorker.onerror = rejectWorker;
 
+                // ensure all transferables are copies to all workers on int!
+                let transferablesToWorker;
+                if ( transferables ) {
+                    transferablesToWorker = {};
+                    for ( let [ key, transferable ] of Object.entries( transferables ) ) {
+                        transferablesToWorker[ key ] = transferable !== null ? transferable.slice( 0 ) : null;
+                    }
+                }
+
                 taskWorker.postMessage( {
                     cmd: "init",
                     workerId: taskWorker.getId(),
                     config: config
-                }, transferables );
+                }, transferablesToWorker );
 
             } );
             this.workers.available.push( taskWorker );
