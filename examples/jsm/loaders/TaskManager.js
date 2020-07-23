@@ -88,14 +88,14 @@ class TaskManager {
      * @param {function} executeFunction The function to be called when the worker is executed
      * @param {function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
      * @param {boolean} fallback Set to true if execution should be performed in main
-     * @param {String[]} [dependencyUrls]
+     * @param {Object[]} [dependencyDescriptions]
      * @return {TaskManager}
      */
-    registerTaskType ( taskType, initFunction, executeFunction, comRoutingFunction, fallback, dependencyUrls ) {
+    registerTaskType ( taskType, initFunction, executeFunction, comRoutingFunction, fallback, dependencyDescriptions ) {
 
         let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, fallback, this.verbose );
         workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
-        workerTypeDefinition.setDependencyUrls( dependencyUrls );
+        workerTypeDefinition.setDependencyDescriptions( dependencyDescriptions );
         this.taskTypes.set( taskType, workerTypeDefinition );
         return this;
 
@@ -287,8 +287,8 @@ class WorkerTypeDefinition {
                 code: null
             },
             dependencies: {
-                /** @type {URL[]} */
-                urls: [],
+                /** @type {Object[]} */
+                descriptions: [],
                 /** @type {string[]} */
                 code: []
             },
@@ -353,13 +353,13 @@ class WorkerTypeDefinition {
     /**
      * Set the url of all dependent libraries (only used in non-module case).
      *
-     * @param {String[]} dependencyUrls URLs of code init and execute functions rely on.
+     * @param {Object[]} dependencyDescriptions URLs of code init and execute functions rely on.
      */
-    setDependencyUrls ( dependencyUrls ) {
+    setDependencyDescriptions ( dependencyDescriptions ) {
 
-        if ( dependencyUrls ) {
+        if ( dependencyDescriptions ) {
 
-            dependencyUrls.forEach( url => { this.functions.dependencies.urls.push( new URL( url, window.location.href ) ) } );
+            dependencyDescriptions.forEach( description => { this.functions.dependencies.descriptions.push( description ) } );
 
         }
 
@@ -396,9 +396,20 @@ class WorkerTypeDefinition {
 
         let fileLoader = new FileLoader();
         fileLoader.setResponseType( 'arraybuffer' );
-        for ( let url of this.functions.dependencies.urls ) {
+        for ( let description of this.functions.dependencies.descriptions ) {
 
-            let dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report ); } )
+            let dep;
+            if ( description.url ) {
+
+                let url = new URL( description.url, window.location.href );
+                dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report ); } )
+
+            }
+            if ( description.code ) {
+
+                dep = description.code;
+
+            }
             this.functions.dependencies.code.push( dep );
 
         }

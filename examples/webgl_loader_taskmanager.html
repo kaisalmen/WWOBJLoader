@@ -34,6 +34,7 @@
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { TaskManager } from "./jsm/loaders/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
+			import { OBJLoader2Parser } from "./jsm/loaders/obj2/OBJLoader2Parser.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/loaders/obj2/utils/TransferableUtils.js";
 			import { FileLoader } from "../src/loaders/FileLoader.js";
@@ -130,6 +131,14 @@
 						module: './jsm/taskmanager/tmOBJLoader2.js',
 						filename: './models/obj/female02/female02.obj'
 					} );
+					this.taskDescriptions.set( 'tmOBJLoader2Legacy', {
+						name: 'tmOBJLoader2Legacy',
+						use: true,
+						fallback: false,
+						funcInit: WorkerFunctions.workerObj2LegacyInit,
+						funcExec: WorkerFunctions.workerObj2LegacyExec,
+						filename: './models/obj/male02/male02.obj'
+					} );
 
 					this.tasksToUse = [];
 					this.executions = [];
@@ -199,7 +208,7 @@
 					if ( taskDescr.use ) {
 
 						this.tasksToUse.push( taskDescr );
-						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, ["../build/three.js"] );
+						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, [ { url: "../build/three.js" } ] );
 						awaiting.push( this.taskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
@@ -218,7 +227,6 @@
 						let torusPayload = TransferableUtils.packageBufferGeometry( torus, '0', 'torus', 0 );
 						this.tasksToUse.push( taskDescr );
 						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
-//						let transferablesArray = TransferableUtils.transferablesToArray( torusPayload.transferables );
 						awaiting.push( this.taskManager.initTaskType( taskDescr.name, torusPayload, torusPayload.transferables ).catch( e => console.error( e ) ) );
 
 					}
@@ -235,6 +243,20 @@
 
 						this.tasksToUse.push( taskDescr );
 						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
+						await this.loadFile( taskDescr.filename )
+							.then( buffer => {
+								let config = { buffer: buffer }
+								let transferables = { buffer: buffer };
+								awaiting.push( this.taskManager.initTaskType( taskDescr.name, config, transferables ).catch( e => console.error( e ) ) );
+							} );
+
+					}
+					taskDescr = this.taskDescriptions.get( 'tmOBJLoader2Legacy' );
+					if ( taskDescr.use ) {
+
+						this.tasksToUse.push( taskDescr );
+						let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
+						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, [ { code: obj2ParserDep } ]  );
 						await this.loadFile( taskDescr.filename )
 							.then( buffer => {
 								let config = { buffer: buffer }
@@ -515,6 +537,26 @@
 							uvFA !== null ? [uvFA.buffer] : null
 					);
 
+				},
+
+				workerObj2LegacyInit: function ( context, id, config ) {
+
+					self.objParser = new OBJLoader2Parser();
+					self.buffer = config.buffer;
+					context.postMessage( {
+						cmd: "init",
+						id: id
+					} );
+
+				},
+
+				workerObj2LegacyExec: function ( context, id, config ) {
+
+					self.objParser.setCallbackOnAssetAvailable( m => { self.postMessage( m ); } );
+					self.objParser.setCallbackOnProgress( text => { console.debug( 'WorkerRunner: progress: ' + text ) } );
+					self.objParser.objectId = config.id;
+					self.objParser.execute( self.buffer );
+
 				}
 			}
 
@@ -531,6 +573,7 @@
 				tmProtoExampleModuleNoThree: false,
 				tmProtoExampleMain: false,
 				tmOBJLoader2: false,
+				tmOBJLoader2Legacy: false,
 				maxParallelExecutions: 0,
 				overallExecutionCount: 0,
 				numberOfMeshesToKeep: 0,
@@ -542,6 +585,7 @@
 					this.tmProtoExampleModuleNoThree = app.taskDescriptions.get( 'tmProtoExampleModuleNoThree' ).use;
 					this.tmProtoExampleMain = app.taskDescriptions.get( 'tmProtoExampleMain' ).use;
 					this.tmOBJLoader2 = app.taskDescriptions.get( 'tmOBJLoader2' ).use;
+					this.tmOBJLoader2Legacy = app.taskDescriptions.get( 'tmOBJLoader2Legacy' ).use;
 					this.maxParallelExecutions = app.taskManager.getMaxParallelExecutions();
 					this.overallExecutionCount = app.overallExecutionCount;
 					this.numberOfMeshesToKeep = app.numberOfMeshesToKeep;
@@ -622,39 +666,54 @@
 			menuDiv.appendChild( gui.domElement );
 
 			let taskName0 = 'tmProtoExample';
-			tmControls.controls[ 0 ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
-			tmControls.controls[ 0 ].onChange( value => { app.taskDescriptions.get( taskName0 ).use = value; } );
+			let index = 0;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName0 ).use = value; } );
 
 			let taskName1 = 'tmProtoExampleModule';
-			tmControls.controls[ 1 ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
-			tmControls.controls[ 1 ].onChange( value => { app.taskDescriptions.get( taskName1 ).use = value; } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName1 ).name( 'Worker Module + three' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName1 ).use = value; } );
 
 			let taskName2 = 'tmProtoExampleModuleNoThree';
-			tmControls.controls[ 2 ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
-			tmControls.controls[ 2 ].onChange( value => { app.taskDescriptions.get( taskName2 ).use = value; } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName2 ).name( 'Worker Module solo' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName2 ).use = value; } );
 
 			let taskName3 = 'tmProtoExampleMain';
-			tmControls.controls[ 3 ] = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
-			tmControls.controls[ 3 ].onChange( value => { app.taskDescriptions.get( taskName3 ).use = value; } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName3 ).use = value; } );
 
 			let taskName4 = 'tmOBJLoader2';
-			tmControls.controls[ 4 ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2' );
-			tmControls.controls[ 4 ].onChange( value => { app.taskDescriptions.get( taskName4 ).use = value; } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2 Module' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName4 ).use = value; } );
 
-			tmControls.controls[ 5 ] = gui.add( tmControls, 'maxParallelExecutions', 1, 16 ).step( 1 ).name( 'Maximum Parallel Executions' );
-			tmControls.controls[ 5 ].onChange( value => { app.taskManager.setMaxParallelExecutions( value ) } );
+			let taskName5 = 'tmOBJLoader2Legacy';
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, taskName5 ).name( 'OBJLoader2 Legacy' );
+			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName5 ).use = value; } );
 
-			tmControls.controls[ 6 ] = gui.add( tmControls, 'overallExecutionCount', 0, 10000000 ).step( 1000 ).name( 'Overall Execution Count' );
-			tmControls.controls[ 6 ].onChange( value => { app.overallExecutionCount = value } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, 'maxParallelExecutions', 1, 16 ).step( 1 ).name( 'Maximum Parallel Executions' );
+			tmControls.controls[ index ].onChange( value => { app.taskManager.setMaxParallelExecutions( value ) } );
 
-			tmControls.controls[ 7 ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Loop executions' );
-			tmControls.controls[ 7 ].onChange( value => { app.maxPerLoop = value } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, 'overallExecutionCount', 0, 10000000 ).step( 1000 ).name( 'Overall Execution Count' );
+			tmControls.controls[ index ].onChange( value => { app.overallExecutionCount = value } );
 
-			tmControls.controls[ 8 ] = gui.add( tmControls, 'numberOfMeshesToKeep', 100, 10000 ).step( 25 ).name( 'Keep N Meshes' );
-			tmControls.controls[ 8 ].onChange( value => { app.numberOfMeshesToKeep = value } );
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, 'maxPerLoop', 0, 10000 ).step( 100 ).name( 'Loop executions' );
+			tmControls.controls[ index ].onChange( value => { app.maxPerLoop = value } );
 
-			tmControls.controls[ 9 ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
-			tmControls.controls[ 9 ].domElement.id = 'startButton';
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, 'numberOfMeshesToKeep', 100, 10000 ).step( 25 ).name( 'Keep N Meshes' );
+			tmControls.controls[ index ].onChange( value => { app.numberOfMeshesToKeep = value } );
+
+			index++;
+			tmControls.controls[ index ] = gui.add( tmControls, 'executeLoading' ).name( 'Engage' );
+			tmControls.controls[ index ].domElement.id = 'startButton';
 
 			tmControls.controlStop = gui.add( tmControls, 'stopExecution' ).name( 'Stop' );
 			tmControls.controlReset = gui.add( tmControls, 'resetExecution' ).name( 'Reset' );

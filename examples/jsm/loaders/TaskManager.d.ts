@@ -9,7 +9,7 @@ export class TaskManager {
     setMaxParallelExecutions(maxParallelExecutions: number): TaskManager;
     getMaxParallelExecutions(): number;
     supportsTaskType(taskType: string): boolean;
-    registerTaskType(taskType: string, initFunction: Function, executeFunction: Function, comRoutingFunction: Function, fallback: boolean, dependencyUrls?: string[]): TaskManager;
+    registerTaskType(taskType: string, initFunction: Function, executeFunction: Function, comRoutingFunction: Function, fallback: boolean, dependencyDescriptions?: any[]): TaskManager;
     registerTaskTypeModule(taskType: string, workerModuleUrl: string): TaskManager;
     initTaskType(taskType: string, config: object, transferables?: any): Promise<void | TaskWorker[]>;
     enqueueForExecution(taskType: string, config: object, assetAvailableFunction: Function, transferables?: any): Promise<any>;
@@ -35,7 +35,7 @@ declare class WorkerTypeDefinition {
             code: string;
         };
         dependencies: {
-            urls: URL[];
+            descriptions: any[];
             code: string[];
         };
         workerModuleUrl: URL;
@@ -47,7 +47,7 @@ declare class WorkerTypeDefinition {
     };
     getTaskType(): string;
     setFunctions(initFunction: Function, executeFunction: Function, comRoutingFunction?: Function): void;
-    setDependencyUrls(dependencyUrls: string[]): void;
+    setDependencyDescriptions(dependencyDescriptions: any[]): void;
     setWorkerModule(workerModuleUrl: string): void;
     isWorkerModule(): boolean;
     loadDependencies(): Promise<ArrayBuffer[]>;
