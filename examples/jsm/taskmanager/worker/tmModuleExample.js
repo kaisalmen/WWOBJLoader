@@ -2,13 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import {
-	TorusKnotBufferGeometry
-} from "../../../build/three.module.js";
-import {
-	TransferableUtils
-} from "../loaders/obj2/utils/TransferableUtils.js";
-import { comRouting } from "./tmDefaultComRouting.js";
+import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
+import { TransferableUtils } from "../utils/TransferableUtils.js";
+import { TaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
 
 
 function init ( context, id, config ) {
@@ -47,4 +43,4 @@ function execute ( context, id, config ) {
 
 }
 
-self.addEventListener( 'message', message => comRouting( message, init, execute ), false );
+self.addEventListener( 'message', message => TaskManagerDefaultRouting.comRouting( self, message, null, init, execute ), false );

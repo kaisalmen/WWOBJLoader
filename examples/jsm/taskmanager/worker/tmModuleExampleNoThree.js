@@ -2,10 +2,8 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import {
-	MeshMessageStructure
-} from "../loaders/obj2/utils/TransferableUtils.js";
-import { comRouting } from "./tmDefaultComRouting.js";
+import { MeshMessageStructure } from "../utils/TransferableUtils.js";
+import { TaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
 
 
 function init ( context, id, config ) {
@@ -42,4 +40,4 @@ function execute ( context, id, config ) {
 
 }
 
-self.addEventListener( 'message', message => comRouting( message, init, execute ), false );
+self.addEventListener( 'message', message => TaskManagerDefaultRouting.comRouting( self, message, null, init, execute ), false );

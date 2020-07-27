@@ -32,12 +32,13 @@
 			import { GUI } from './jsm/libs/dat.gui.module.js';
 
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
-			import { TaskManager } from "./jsm/loaders/TaskManager.js";
+			import { TaskManager } from "./jsm/taskmanager/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 			import { OBJLoader2Parser } from "./jsm/loaders/obj2/OBJLoader2Parser.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
-			import { TransferableUtils } from "./jsm/loaders/obj2/utils/TransferableUtils.js";
+			import { TransferableUtils } from "./jsm/taskmanager/utils/TransferableUtils.js";
 			import { FileLoader } from "../src/loaders/FileLoader.js";
+			import { OBJ2LoaderWorker } from "./jsm/taskmanager/worker/tmOBJLoader2.js";
 
 			class TaskManagerPrototypeExample {
 
@@ -100,22 +101,22 @@
 					this.taskDescriptions.clear();
 					this.taskDescriptions.set( 'tmProtoExample', {
 						name: 'tmProtoExample',
-						use: true,
+						use: false,
 						fallback: false,
 						funcInit: WorkerFunctions.workerLegacyInit,
 						funcExec: WorkerFunctions.workerLegacyExec
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
 						name: 'tmProtoExampleModule',
-						use: true,
+						use: false,
 						fallback: false,
-						module: './jsm/taskmanager/tmModuleExample.js'
+						module: './jsm/taskmanager/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
-						use: true,
+						use: false,
 						fallback: false,
-						module: './jsm/taskmanager/tmModuleExampleNoThree.js'
+						module: './jsm/taskmanager/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',
@@ -128,15 +129,15 @@
 						name: 'tmOBJLoader2',
 						use: true,
 						fallback: false,
-						module: './jsm/taskmanager/tmOBJLoader2.js',
+						module: './jsm/taskmanager/worker/tmOBJLoader2.js',
 						filename: './models/obj/female02/female02.obj'
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Legacy', {
 						name: 'tmOBJLoader2Legacy',
 						use: true,
 						fallback: false,
-						funcInit: WorkerFunctions.workerObj2LegacyInit,
-						funcExec: WorkerFunctions.workerObj2LegacyExec,
+						funcInit: OBJ2LoaderWorker.init,
+						funcExec: OBJ2LoaderWorker.execute,
 						filename: './models/obj/male02/male02.obj'
 					} );
 
@@ -537,27 +538,8 @@
 							uvFA !== null ? [uvFA.buffer] : null
 					);
 
-				},
-
-				workerObj2LegacyInit: function ( context, id, config ) {
-
-					self.objParser = new OBJLoader2Parser();
-					self.buffer = config.buffer;
-					context.postMessage( {
-						cmd: "init",
-						id: id
-					} );
-
-				},
-
-				workerObj2LegacyExec: function ( context, id, config ) {
-
-					self.objParser.setCallbackOnAssetAvailable( m => { self.postMessage( m ); } );
-					self.objParser.setCallbackOnProgress( text => { console.debug( 'WorkerRunner: progress: ' + text ) } );
-					self.objParser.objectId = config.id;
-					self.objParser.execute( self.buffer );
-
 				}
+
 			}
 
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );

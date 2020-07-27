@@ -4,6 +4,7 @@
  */
 
 import { FileLoader } from "../../../build/three.module.js";
+import { TaskManagerDefaultRouting } from "./worker/tmDefaultComRouting.js";
 
 /**
  * Register one to many tasks type to the TaskManager. Then init and enqueue a worker based execution by passing
@@ -329,23 +330,9 @@ class WorkerTypeDefinition {
         this.functions.execute.ref = executeFunction;
         this.functions.comRouting.ref = comRoutingFunction;
 
-        if ( this.fallback && this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
+        if ( this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
 
-            let comRouting = function ( message, init, execute ) {
-
-                let payload = message.data;
-                if ( payload.cmd === 'init' ) {
-
-                    init( self, payload.id, payload.config );
-
-                } else if ( payload.cmd === 'execute' ) {
-
-                    execute( self, payload.id, payload.config );
-
-                }
-
-            }
-            this.functions.comRouting.ref = comRouting;
+            this.functions.comRouting.ref = TaskManagerDefaultRouting.comRouting;
 
         }
     }
@@ -436,7 +423,7 @@ class WorkerTypeDefinition {
         this.workers.code.push( this.functions.init.code );
         this.workers.code.push( this.functions.execute.code );
         this.workers.code.push( this.functions.comRouting.code );
-        this.workers.code.push( 'self.addEventListener( "message", message => comRouting( message, init, execute ), false );' );
+        this.workers.code.push( 'self.addEventListener( "message", message => comRouting( self, message, null, init, execute ), false );' );
 
         return this.workers.code;
 
@@ -682,26 +669,12 @@ class MockedTaskWorker {
     postMessage( message, transfer ) {
 
         let scope = this;
-        let comRouting = function ( message ) {
-            let self = {
-                postMessage: function ( m ) {
-                    scope.onmessage( { data: m } )
-                },
+        let self = {
+            postMessage: function ( m ) {
+                scope.onmessage( { data: m } )
             }
-
-            let payload = message.data;
-            if ( payload.cmd === 'init' ) {
-
-                scope.functions.init( self, payload.id, payload.config );
-
-            }
-            else if ( payload.cmd === 'execute' ) {
-
-                scope.functions.execute( self, payload.id, payload.config );
-
-            }
-        };
-        comRouting( { data: message } )
+        }
+        TaskManagerDefaultRouting.comRouting( self, { data: message }, null, scope.functions.init, scope.functions.execute )
 
     }
 

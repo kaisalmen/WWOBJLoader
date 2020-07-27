@@ -21,6 +21,8 @@ import {
 	DefaultWorkerPayloadHandler,
 	ObjectManipulator
 } from "./obj2/worker/parallel/WorkerRunner.js";
+import { TaskManager } from "../taskmanager/TaskManager.js";
+import { OBJ2LoaderWorker } from "../taskmanager/worker/tmOBJLoader2.js";
 
 
 /**
@@ -34,11 +36,14 @@ const OBJLoader2Parallel = function ( manager ) {
 
 	OBJLoader2.call( this, manager );
 	this.preferJsmWorker = false;
+	this.initPerformed = false;
 	this.jsmWorkerUrl = null;
 
 	this.executeParallel = true;
 	this.workerExecutionSupport = new WorkerExecutionSupport();
 
+	this.taskManager = new TaskManager();
+	this.taskName = 'tmOBJLoader2';
 };
 
 OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '3.2.0';
@@ -93,30 +98,21 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	 * Provide instructions on what is to be contained in the worker.
 	 * @return {CodeBuilderInstructions}
 	 */
-	buildWorkerCode: function () {
+	_buildWorkerCode: function () {
 
-		let codeBuilderInstructions = new CodeBuilderInstructions( true, true, this.preferJsmWorker );
-		if ( codeBuilderInstructions.isSupportsJsmWorker() ) {
+		if ( this.preferJsmWorker ) {
 
-			codeBuilderInstructions.setJsmWorkerUrl( this.jsmWorkerUrl );
-
-		}
-		if ( codeBuilderInstructions.isSupportsStandardWorker() ) {
-
-			let objectManipulator = new ObjectManipulator();
-			let defaultWorkerPayloadHandler = new DefaultWorkerPayloadHandler( this.parser );
-			let workerRunner = new WorkerRunner( {} );
-
-			codeBuilderInstructions.addCodeFragment( 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n' );
-			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( ObjectManipulator, objectManipulator ) );
-			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( DefaultWorkerPayloadHandler, defaultWorkerPayloadHandler ) );
-			codeBuilderInstructions.addCodeFragment( CodeSerializer.serializeClass( WorkerRunner, workerRunner ) );
-
-			let startCode = 'new ' + workerRunner.constructor.name + '( new ' + defaultWorkerPayloadHandler.constructor.name + '( new ' + this.parser.constructor.name + '() ) );';
-			codeBuilderInstructions.addStartCode( startCode );
+			this.taskManager.registerTaskTypeModule( this.taskName, './jsm/taskmanager/module/tmOBJLoader2.js' );
 
 		}
-		return codeBuilderInstructions;
+		else {
+
+			let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
+			this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false, [ { code: obj2ParserDep } ]  );
+
+		}
+		this.taskManager.initTaskType( this.taskName, {} );
+		this.initPerformed = true;
 
 	},
 
@@ -163,49 +159,49 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 
 			}
 			// check if worker has been initialize before. If yes, skip init
-			if ( ! this.workerExecutionSupport.isWorkerLoaded( this.preferJsmWorker ) ) {
+			if ( ! this.initPerformed ) {
 
-				this.workerExecutionSupport.buildWorker( this.buildWorkerCode() );
-
-				let scope = this;
-				let scopedOnAssetAvailable = function ( payload ) {
-
-					scope._onAssetAvailable( payload );
-
-				};
-				function scopedOnLoad( message ) {
-
-					scope.parser.callbacks.onLoad( scope.baseObject3d, message );
-
-				}
-
-				this.workerExecutionSupport.updateCallbacks( scopedOnAssetAvailable, scopedOnLoad );
+				this._buildWorkerCode();
 
 			}
 
+			let scope = this;
+			function scopedOnLoad( message ) {
+
+				scope.parser.callbacks.onLoad( scope.baseObject3d, message );
+
+			}
 			// Create default materials beforehand, but do not override previously set materials (e.g. during init)
 			this.materialHandler.createDefaultMaterials( false );
 
-			this.workerExecutionSupport.executeParallel(
-				{
-					params: {
-						modelName: this.modelName,
-						instanceNo: this.instanceNo,
-						useIndices: this.parser.useIndices,
-						disregardNormals: this.parser.disregardNormals,
-						materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
-						useOAsMesh: this.parser.useOAsMesh,
-						materials: this.materialHandler.getMaterialsJSON()
-					},
-					data: {
-						input: content,
-						options: null
-					},
-					logging: {
-						enabled: this.parser.logging.enabled,
-						debug: this.parser.logging.debug
-					}
-				} );
+			let config = {
+				id: 42,
+				params: {
+					modelName: this.modelName,
+					instanceNo: this.instanceNo,
+					useIndices: this.parser.useIndices,
+					disregardNormals: this.parser.disregardNormals,
+					materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
+					useOAsMesh: this.parser.useOAsMesh,
+					materials: this.materialHandler.getMaterialsJSON()
+				},
+				data: {
+					input: content,
+					options: null
+				},
+				logging: {
+					enabled: this.parser.logging.enabled,
+					debug: this.parser.logging.debug
+				}
+			};
+			this.taskManager.enqueueForExecution( this.taskName, config, [ content.buffer ],
+				data => this._onAssetAvailable( data ) )
+				.then( data => {
+					this._onAssetAvailable( data );
+					this.parser.callbacks.onLoad( this.baseObject3d, 'finished' );
+				} )
+				.catch( e => console.error( e ) )
+
 
 			let dummy = new Object3D();
 			dummy.name = 'OBJLoader2ParallelDummy';
