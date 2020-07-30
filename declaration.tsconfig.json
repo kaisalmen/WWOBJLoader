@@ -1,8 +1,15 @@
 {
   "include": [
-    "examples/jsm/loaders/TaskManager.js",
-    "examples/jsm/loaders/obj2/utils/TransferableUtils.js",
-    "examples/jsm/loaders/obj2/utils/ResourceDescriptor.js"
+    "examples/jsm/taskmanager/TaskManager.js",
+    "examples/jsm/taskmanager/utils/*.js",
+    "examples/jsm/taskmanager/worker/tmOBJLoader2.js",
+    "examples/jsm/taskmanager/worker/tmDefaultComRouting.js",
+    "examples/jsm/loaders/OBJLoader2.js",
+    "examples/jsm/loaders/OBJLoader2Parallel.js",
+    "examples/jsm/loaders/obj2/OBJLoader2Parser.js",
+    "examples/jsm/loaders/obj2/utils/ResourceDescriptor.js",
+    "examples/jsm/loaders/obj2/shared/MaterialHandler.js",
+    "examples/jsm/loaders/obj2/shared/MeshReceiver.js"
   ],
   "compilerOptions": {
     "allowJs": true,

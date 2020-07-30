@@ -64,6 +64,8 @@
 			import { OBJLoader2Parallel } from "./jsm/loaders/OBJLoader2Parallel.js";
 			import { LoadedMeshUserOverride } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
 
+			import { TaskManager } from "./jsm/taskmanager/TaskManager.js";
+
 			const WWOBJLoader2Example = function ( elementToBindTo ) {
 				this.renderer = null;
 				this.canvas = elementToBindTo;
@@ -90,6 +92,8 @@
 
 				this.cube = null;
 				this.pivot = null;
+
+				this.taskManager = new TaskManager( 2 );
 			};
 
 			WWOBJLoader2Example.prototype = {
@@ -188,6 +192,7 @@
 					};
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
+//						.setTaskManager( this.taskManager )
 						.setModelName( modelName )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setCallbackOnLoad( callbackOnLoad )
@@ -244,6 +249,7 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
+//						.setTaskManager( this.taskManager )
 						.setModelName( modelName )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) );
 
@@ -271,6 +277,7 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
+//						.setTaskManager( this.taskManager )
 						.setModelName( local.name )
 						.setExecuteParallel( false );
 
@@ -291,12 +298,13 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
+//						.setTaskManager( this.taskManager )
 						.setModelName( local.name )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setBaseObject3d( local );
 
 					// Configure WorkerExecutionSupport to not disregard worker after execution
-					objLoader2Parallel.getWorkerExecutionSupport().setTerminateWorkerOnLoad( false );
+					objLoader2Parallel.setTerminateWorkerOnLoad( false );
 
 					function callbackMeshAlter ( event ) {
 						let override = new LoadedMeshUserOverride( false, true );
@@ -427,6 +435,7 @@
 				},
 
 				executeLoading: function () {
+
 					// Load a file with OBJLoader2.parse on main
 					this.useParseMain();
 
@@ -444,6 +453,7 @@
 
 					// Load a file with OBJLoader2Parallel.load in parallel in worker and add normals during onMeshAlter
 					this.useLoadParallelMeshAlter();
+
 				}
 
 			};

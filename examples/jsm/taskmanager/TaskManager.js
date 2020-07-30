@@ -377,7 +377,7 @@ class WorkerTypeDefinition {
     /**
      * Loads all dependencies and stores each as {@link ArrayBuffer} into the array. Returns if all loading is completed.
      *
-     * @return {Promise<ArrayBuffer[]>}
+     * @return {Promise<Object[]>}
      */
     async loadDependencies () {
 
@@ -394,7 +394,7 @@ class WorkerTypeDefinition {
             }
             if ( description.code ) {
 
-                dep = description.code;
+                dep = await new Promise( resolve => resolve( description.code ) );
 
             }
             this.functions.dependencies.code.push( dep );

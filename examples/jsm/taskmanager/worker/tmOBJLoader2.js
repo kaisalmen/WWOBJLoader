@@ -10,8 +10,18 @@ const OBJ2LoaderWorker = {
 
 	init: function ( context, id, config ) {
 
-		context.objParser = new OBJLoader2Parser();
-		context.buffer = config.buffer;
+		context.obj2 = {
+			objParser: new OBJLoader2Parser(),
+			buffer: null
+		}
+		context.obj2.objParser.setCallbackOnAssetAvailable( m => {
+			context.postMessage( m );
+		} );
+		context.obj2.objParser.setCallbackOnProgress( text => {
+			console.debug( 'WorkerRunner: progress: ' + text )
+		} );
+		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
+
 		context.postMessage( {
 			cmd: "init",
 			id: id
@@ -23,24 +33,15 @@ const OBJ2LoaderWorker = {
 		/*
 			let callbacks = {
 				callbackOnAssetAvailable: ( m => { self.postMessage( m ); } ),
-				callbackOnProgress: ( text => { console.debug( 'WorkerRunner: progress: ' + text ) } )
+				callbackOnProgress: ( text => { console.de bug( 'WorkerRunner: progress: ' + text ) } )
 			};
 			ObjectManipulator.applyProperties( objParser, payload.config, false );
 			ObjectManipulator.applyProperties( objParser, callbacks, false );
 		*/
-		if ( config.data && config.data.input === null ) {
+		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
 
-			context.buffer = config.data.input;
-
-		}
-		context.objParser.setCallbackOnAssetAvailable( m => {
-			context.postMessage( m );
-		} );
-		context.objParser.setCallbackOnProgress( text => {
-			console.debug( 'WorkerRunner: progress: ' + text )
-		} );
-		context.objParser.objectId = config.id;
-		context.objParser.execute( context.buffer );
+		context.obj2.objParser.objectId = config.id;
+		context.obj2.objParser.execute( context.obj2.buffer );
 
 	}
 
