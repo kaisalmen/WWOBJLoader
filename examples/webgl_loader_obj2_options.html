@@ -93,7 +93,7 @@
 				this.cube = null;
 				this.pivot = null;
 
-				this.taskManager = new TaskManager( 2 );
+				this.taskManager = new TaskManager( 1 );
 			};
 
 			WWOBJLoader2Example.prototype = {
@@ -192,7 +192,7 @@
 					};
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
-//						.setTaskManager( this.taskManager )
+						.setTaskManager( this.taskManager )
 						.setModelName( modelName )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setCallbackOnLoad( callbackOnLoad )
@@ -249,7 +249,7 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
-//						.setTaskManager( this.taskManager )
+						.setTaskManager( this.taskManager )
 						.setModelName( modelName )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) );
 
@@ -277,7 +277,7 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
-//						.setTaskManager( this.taskManager )
+						.setTaskManager( this.taskManager )
 						.setModelName( local.name )
 						.setExecuteParallel( false );
 
@@ -298,7 +298,7 @@
 					this.pivot.add( local );
 
 					let objLoader2Parallel = new OBJLoader2Parallel()
-//						.setTaskManager( this.taskManager )
+						.setTaskManager( this.taskManager )
 						.setModelName( local.name )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setBaseObject3d( local );

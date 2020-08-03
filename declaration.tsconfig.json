@@ -1,7 +1,7 @@
 {
   "include": [
     "examples/jsm/taskmanager/TaskManager.js",
-    "examples/jsm/taskmanager/utils/*.js",
+    "examples/jsm/taskmanager/utils/TransferableUtils.js",
     "examples/jsm/taskmanager/worker/tmOBJLoader2.js",
     "examples/jsm/taskmanager/worker/tmDefaultComRouting.js",
     "examples/jsm/loaders/OBJLoader2.js",

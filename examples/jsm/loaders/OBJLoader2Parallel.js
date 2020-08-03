@@ -24,12 +24,11 @@ const OBJLoader2Parallel = function ( manager ) {
 
 	OBJLoader2.call( this, manager );
 	this.preferJsmWorker = false;
-	this.initPerformed = false;
 	this.jsmWorkerUrl = null;
 
 	this.executeParallel = true;
 
-	this.taskManager = new TaskManager();
+	this.taskManager = null;
 	this.taskName = 'tmOBJLoader2';
 };
 
@@ -101,28 +100,20 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	 */
 	_buildWorkerCode: async function () {
 
-		if ( ! this.taskManager.supportsTaskType( this.taskName ) ) {
+		if ( ! this.taskManager instanceof TaskManager ) this.taskManager = new TaskManager();
+		if ( this.preferJsmWorker ) {
 
-			if ( this.preferJsmWorker ) {
-
-				this.taskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
-
-			} else {
-
-				let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
-				this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false, [{ code: obj2ParserDep }] );
-
-			}
-			await this.taskManager.initTaskType( this.taskName, {} ).catch( e => console.error( e ) );
+			this.taskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
 
 		}
 		else {
 
-			await new Promise( resolve => resolve( true ) );
+			let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
+			this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
+				[ { code: obj2ParserDep } ] );
 
 		}
-		this.initPerformed = true;
-		return this.initPerformed;
+		await this.taskManager.initTaskType( this.taskName, {} );
 
 	},
 
@@ -149,7 +140,6 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 			}
 
 		}
-
 		OBJLoader2.prototype.load.call( this, content, interceptOnLoad, onFileLoadProgress, onError, onMeshAlter );
 
 	},
@@ -163,21 +153,14 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 
 		if ( this.executeParallel ) {
 
-			// check if worker has been initialize before. If yes, skip init
-			if ( ! this.initPerformed ) {
-
-				this._buildWorkerCode()
-					.then( x => {
+			this._buildWorkerCode()
+				.then(
+					x => {
 						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
-						this._executeWorkerParse( content )
-					} );
+						this._executeWorkerParse( content );
+					}
+				).catch( e => console.error( e ) );
 
-			}
-			else {
-
-				this._executeWorkerParse( content );
-
-			}
 			let dummy = new Object3D();
 			dummy.name = 'OBJLoader2ParallelDummy';
 			return dummy;

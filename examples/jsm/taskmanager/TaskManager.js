@@ -30,6 +30,10 @@ class TaskManager {
          * @type {StoredExecution[]}
          */
         this.storedExecutions = [];
+        this.status = {
+            initStarted: false,
+            initComplete: false
+        }
 
     }
 
@@ -90,15 +94,20 @@ class TaskManager {
      * @param {function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
      * @param {boolean} fallback Set to true if execution should be performed in main
      * @param {Object[]} [dependencyDescriptions]
-     * @return {TaskManager}
+     * @return {boolean} Tells if registration is possible (new=true) or if task was already registered (existing=false)
      */
     registerTaskType ( taskType, initFunction, executeFunction, comRoutingFunction, fallback, dependencyDescriptions ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, fallback, this.verbose );
-        workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
-        workerTypeDefinition.setDependencyDescriptions( dependencyDescriptions );
-        this.taskTypes.set( taskType, workerTypeDefinition );
-        return this;
+        let allowedToRegister = ! this.supportsTaskType( taskType );
+        if ( allowedToRegister ) {
+
+            let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, fallback, this.verbose );
+            workerTypeDefinition.setFunctions( initFunction, executeFunction, comRoutingFunction );
+            workerTypeDefinition.setDependencyDescriptions( dependencyDescriptions );
+            this.taskTypes.set( taskType, workerTypeDefinition );
+
+        }
+        return allowedToRegister;
 
     }
 
@@ -107,14 +116,19 @@ class TaskManager {
      *
      * @param {string} taskType The name to be used for registration.
      * @param {string} workerModuleUrl The URL to be used for the Worker. Module must provide logic to handle "init" and "execute" messages.
-     * @return {TaskManager}
+     * @return {boolean} Tells if registration is possible (new=true) or if task was already registered (existing=false)
      */
     registerTaskTypeModule ( taskType, workerModuleUrl ) {
 
-        let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, false, this.verbose );
-        workerTypeDefinition.setWorkerModule( workerModuleUrl );
-        this.taskTypes.set( taskType, workerTypeDefinition );
-        return this;
+        let allowedToRegister = ! this.supportsTaskType( taskType );
+        if ( allowedToRegister ) {
+
+            let workerTypeDefinition = new WorkerTypeDefinition( taskType, this.maxParallelExecutions, false, this.verbose );
+            workerTypeDefinition.setWorkerModule( workerModuleUrl );
+            this.taskTypes.set( taskType, workerTypeDefinition );
+
+        }
+        return allowedToRegister;
 
     }
 
@@ -127,22 +141,43 @@ class TaskManager {
      */
     async initTaskType ( taskType, config, transferables ) {
 
-        let workerTypeDefinition = this.taskTypes.get( taskType );
-        if ( workerTypeDefinition.isWorkerModule() ) {
+        if ( ! this.status.initStarted ) {
 
-            return await workerTypeDefinition.createWorkerModules()
-                .then( instances => workerTypeDefinition.initWorkers( instances, config, transferables ) );
+            this.status.initStarted = true;
+            let workerTypeDefinition = this.taskTypes.get( taskType );
+            if ( workerTypeDefinition.isWorkerModule() ) {
+
+                await workerTypeDefinition.createWorkerModules()
+                    .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
+                    .catch( x => console.error( x ) );
+
+            } else {
+
+                await workerTypeDefinition.loadDependencies()
+                    .then( code => workerTypeDefinition.createWorkers() )
+                    .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
+                    .catch( x => console.error( x ) );
+
+            }
+            this.status.initComplete = true;
 
         }
-        else {
+        let wait = async function ( milliseconds ) {
 
-            return await workerTypeDefinition.loadDependencies()
-                .then( buffers => workerTypeDefinition.generateWorkerCode( buffers ) )
-                .then( code => workerTypeDefinition.createWorkers( code ) )
-                .then( instances => workerTypeDefinition.initWorkers( instances, config, transferables ) )
-                .catch( x => console.error( x ) );
+            return new Promise(resolve => {
+
+                setTimeout( resolve, milliseconds );
+
+            } );
 
         }
+        while ( ! this.status.initComplete ) {
+
+            await wait( 100 );
+
+        }
+        return this.status.initComplete;
+
     }
 
     /**
@@ -170,6 +205,7 @@ class TaskManager {
 
         while ( this.actualExecutionCount < this.maxParallelExecutions && this.storedExecutions.length > 0 ) {
 
+            // TODO: storedExecutions and results from worker seem to get mixed up
             let storedExecution = this.storedExecutions.shift();
             if ( storedExecution ) {
 
@@ -268,25 +304,14 @@ class WorkerTypeDefinition {
         this.taskType = taskType;
         this.fallback = fallback;
         this.verbose = verbose === true;
+        this.initialised = false;
         this.functions = {
-            init: {
-                /** @type {function} */
-                ref: null,
-                /** @type {string} */
-                code: null
-            },
-            execute: {
-                /** @type {function} */
-                ref: null,
-                /** @type {string} */
-                code: null
-            },
-            comRouting: {
-                /** @type {function} */
-                ref: null,
-                /** @type {string} */
-                code: null
-            },
+            /** @type {function} */
+            init: null,
+            /** @type {function} */
+            execute: null,
+            /** @type {function} */
+            comRouting: null,
             dependencies: {
                 /** @type {Object[]} */
                 descriptions: [],
@@ -319,6 +344,7 @@ class WorkerTypeDefinition {
 
     /**
      * Set the three functions. A default comRouting function is used if it is not passed here.
+     * Then it creates the code fr.
      *
      * @param {function} initFunction The function to be called when the worker is initialised
      * @param {function} executeFunction The function to be called when the worker is executed
@@ -326,15 +352,19 @@ class WorkerTypeDefinition {
      */
     setFunctions ( initFunction, executeFunction, comRoutingFunction ) {
 
-        this.functions.init.ref = initFunction;
-        this.functions.execute.ref = executeFunction;
-        this.functions.comRouting.ref = comRoutingFunction;
+        this.functions.init = initFunction;
+        this.functions.execute = executeFunction;
+        this.functions.comRouting = comRoutingFunction;
+        if ( this.functions.comRouting === undefined || this.functions.comRouting === null ) {
 
-        if ( this.functions.comRouting.ref === undefined || this.functions.comRouting.ref === null ) {
-
-            this.functions.comRouting.ref = TaskManagerDefaultRouting.comRouting;
+            this.functions.comRouting = TaskManagerDefaultRouting.comRouting;
 
         }
+        this.workers.code.push( 'const init = ' + this.functions.init.toString() + ';\n\n' );
+        this.workers.code.push( 'const execute = ' + this.functions.execute.toString() + ';\n\n' );
+        this.workers.code.push( 'const comRouting = ' + this.functions.comRouting.toString() + ';\n\n' );
+        this.workers.code.push( 'self.addEventListener( "message", message => comRouting( self, message, null, init, execute ), false );' );
+
     }
 
     /**
@@ -377,65 +407,38 @@ class WorkerTypeDefinition {
     /**
      * Loads all dependencies and stores each as {@link ArrayBuffer} into the array. Returns if all loading is completed.
      *
-     * @return {Promise<Object[]>}
+     * @return {<String[]>}
      */
     async loadDependencies () {
 
+        let promises = [];
         let fileLoader = new FileLoader();
         fileLoader.setResponseType( 'arraybuffer' );
         for ( let description of this.functions.dependencies.descriptions ) {
 
-            let dep;
             if ( description.url ) {
 
                 let url = new URL( description.url, window.location.href );
-                dep = await fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report ); } )
+                promises.push( fileLoader.loadAsync( url.href, report => { if ( this.verbose ) console.log( report ); } ) );
 
             }
             if ( description.code ) {
 
-                dep = await new Promise( resolve => resolve( description.code ) );
+                promises.push( new Promise( resolve => resolve( description.code ) ) );
 
             }
-            this.functions.dependencies.code.push( dep );
 
         }
         if ( this.verbose ) console.log( 'Task: ' + this.getTaskType() + ': Waiting for completion of loading of all dependencies.');
-        return await Promise.all( this.functions.dependencies.code );
-
-    }
-
-    /**
-     * Uses the configured values for init, execute and comRouting and embeds it in necessary glue code.
-     *
-     * @param {ArrayBuffer[]} dependencies
-     * @return {Promise<String[]>}
-     */
-    async generateWorkerCode ( dependencies ) {
-
-        this.functions.init.code = 'const init = ' + this.functions.init.ref.toString() + ';\n\n';
-        this.functions.execute.code = 'const execute = ' + this.functions.execute.ref.toString() + ';\n\n';
-        if ( this.functions.comRouting.ref !== null ) {
-
-            this.functions.comRouting.code = "const comRouting = " + this.functions.comRouting.ref.toString() + ";\n\n";
-
-        }
-        this.workers.code.push( this.functions.init.code );
-        this.workers.code.push( this.functions.execute.code );
-        this.workers.code.push( this.functions.comRouting.code );
-        this.workers.code.push( 'self.addEventListener( "message", message => comRouting( self, message, null, init, execute ), false );' );
-
-        return this.workers.code;
+        this.functions.dependencies.code = await Promise.all( promises );
 
     }
 
     /**
      * Creates workers based on the configured function and dependency strings.
      *
-     * @param {string} code
-     * @return {Promise<TaskWorker[]>}
      */
-    async createWorkers ( code ) {
+    async createWorkers () {
 
         let worker;
         if ( !this.fallback ) {
@@ -454,20 +457,18 @@ class WorkerTypeDefinition {
 
             for ( let i = 0; i < this.workers.instances.length; i ++ ) {
 
-                worker = new MockedTaskWorker( i, this.functions.init.ref, this.functions.execute.ref );
+                worker = new MockedTaskWorker( i, this.functions.init, this.functions.execute );
                 this.workers.instances[ i ] = worker;
 
             }
 
         }
-        return this.workers.instances;
 
     }
 
     /**
      * Creates module workers.
      *
-     * @return {Promise<TaskWorker[]>}
      */
     async createWorkerModules () {
 
@@ -477,23 +478,21 @@ class WorkerTypeDefinition {
             this.workers.instances[ i ] = worker;
 
         }
-        return this.workers.instances;
 
     }
 
     /**
      * Initialises all workers with common configuration data.
      *
-     * @param {TaskWorker[]|MockedTaskWorker[]} instances
      * @param {object} config
      * @param {Object} transferables
-     * @return {Promise<TaskWorker[]>}
      */
-    async initWorkers ( instances, config, transferables ) {
+    async initWorkers ( config, transferables ) {
 
-        for ( let taskWorker of instances ) {
+        let promises = [];
+        for ( let taskWorker of this.workers.instances ) {
 
-            await new Promise( ( resolveWorker, rejectWorker ) => {
+            let taskWorkerPromise = new Promise( ( resolveWorker, rejectWorker ) => {
 
                 taskWorker.onmessage = resolveWorker;
                 taskWorker.onerror = rejectWorker;
@@ -514,11 +513,12 @@ class WorkerTypeDefinition {
                 }, transferablesToWorker );
 
             } );
-            this.workers.available.push( taskWorker );
+            promises.push( taskWorkerPromise );
 
         }
         if ( this.verbose ) console.log( 'Task: ' + this.getTaskType() + ': Waiting for completion of initialization of all workers.');
-        return await Promise.all( this.workers.available );
+        await Promise.all( promises );
+        this.workers.available = this.workers.instances;
 
     }
 
