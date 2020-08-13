@@ -26,7 +26,6 @@ const OBJLoader2 = function ( manager ) {
 	this.parser = new OBJLoader2Parser();
 
 	this.modelName = '';
-	this.instanceNo = 0;
 	this.baseObject3d = new Object3D();
 
 	this.materialHandler = new MaterialHandler();

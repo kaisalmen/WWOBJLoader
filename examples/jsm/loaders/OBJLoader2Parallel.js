@@ -100,20 +100,28 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	 */
 	_buildWorkerCode: async function () {
 
-		if ( ! this.taskManager instanceof TaskManager ) this.taskManager = new TaskManager();
-		if ( this.preferJsmWorker ) {
+		if ( ! this.taskManager instanceof TaskManager ) {
 
-			this.taskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
-
-		}
-		else {
-
-			let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
-			this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
-				[ { code: obj2ParserDep } ] );
+			if ( this.parser.logging.debug ) console.log( 'Needed to create new TaskManager' );
+			this.taskManager = new TaskManager();
 
 		}
-		await this.taskManager.initTaskType( this.taskName, {} );
+		if ( ! this.taskManager.supportsTaskType( this.taskName ) ) {
+
+			if ( this.preferJsmWorker ) {
+
+				this.taskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
+
+			} else {
+
+				let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
+				this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
+					[{ code: obj2ParserDep }] );
+
+			}
+			await this.taskManager.initTaskType( this.taskName, {} );
+
+		}
 
 	},
 
@@ -179,10 +187,9 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 		this.materialHandler.createDefaultMaterials( false );
 
 		let config = {
-			id: 42,
+			id: Math.floor( Math.random() * Math.floor( 65536 ) ),
 			params: {
 				modelName: this.modelName,
-				instanceNo: this.instanceNo,
 				useIndices: this.parser.useIndices,
 				disregardNormals: this.parser.disregardNormals,
 				materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
@@ -204,8 +211,6 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 			.catch( e => console.error( e ) )
 
 	}
-
-
 
 } );
 

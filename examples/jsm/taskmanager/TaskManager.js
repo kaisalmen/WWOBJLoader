@@ -30,10 +30,8 @@ class TaskManager {
          * @type {StoredExecution[]}
          */
         this.storedExecutions = [];
-        this.status = {
-            initStarted: false,
-            initComplete: false
-        }
+        this.teardown = false;
+        this._kickExecutions().then( x => console.log( 'Teared down: ' + x ) );
 
     }
 
@@ -141,42 +139,51 @@ class TaskManager {
      */
     async initTaskType ( taskType, config, transferables ) {
 
-        if ( ! this.status.initStarted ) {
+        let workerTypeDefinition = this.taskTypes.get( taskType );
+        if ( workerTypeDefinition ) {
 
-            this.status.initStarted = true;
-            let workerTypeDefinition = this.taskTypes.get( taskType );
-            if ( workerTypeDefinition.isWorkerModule() ) {
+            if ( ! workerTypeDefinition.status.initStarted ) {
 
-                await workerTypeDefinition.createWorkerModules()
-                    .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
-                    .catch( x => console.error( x ) );
+                workerTypeDefinition.status.initStarted = true;
+                if ( workerTypeDefinition.isWorkerModule() ) {
 
-            } else {
+                    await workerTypeDefinition.createWorkerModules()
+                        .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
+                        .then( workerTypeDefinition.status.initComplete )
+                        .catch( x => console.error( x ) );
 
-                await workerTypeDefinition.loadDependencies()
-                    .then( code => workerTypeDefinition.createWorkers() )
-                    .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
-                    .catch( x => console.error( x ) );
+                } else {
+
+                    await workerTypeDefinition.loadDependencies()
+                        .then( code => workerTypeDefinition.createWorkers() )
+                        .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
+                        .then( workerTypeDefinition.status.initComplete )
+                        .catch( x => console.error( x ) );
+
+                }
 
             }
-            this.status.initComplete = true;
+            else {
+
+                while ( ! workerTypeDefinition.status.initComplete ) {
+
+                    await this.wait( 10 );
+
+                }
+
+            }
 
         }
-        let wait = async function ( milliseconds ) {
 
-            return new Promise(resolve => {
+    }
 
-                setTimeout( resolve, milliseconds );
+    async wait ( milliseconds ) {
 
-            } );
+        return new Promise(resolve => {
 
-        }
-        while ( ! this.status.initComplete ) {
+            setTimeout( resolve, milliseconds );
 
-            await wait( 100 );
-
-        }
-        return this.status.initComplete;
+        } );
 
     }
 
@@ -196,78 +203,88 @@ class TaskManager {
             this.storedExecutions.push( new StoredExecution( taskType, config, assetAvailableFunction, resolveUser, rejectUser, transferables ) );
 
         } );
-        this._kickExecutions();
         return localPromise;
 
     }
 
-    _kickExecutions () {
+    async _kickExecutions () {
 
-        while ( this.actualExecutionCount < this.maxParallelExecutions && this.storedExecutions.length > 0 ) {
+        while ( ! this.teardown ) {
 
-            // TODO: storedExecutions and results from worker seem to get mixed up
-            let storedExecution = this.storedExecutions.shift();
-            if ( storedExecution ) {
+            let counter = 0;
+            while ( this.storedExecutions.length > 0 ) {
 
-                let workerTypeDefinition = this.taskTypes.get( storedExecution.taskType );
-                if ( workerTypeDefinition.hasTask() ) {
+                if ( this.actualExecutionCount < this.maxParallelExecutions && counter < this.storedExecutions.length ) {
 
+                    // TODO: storedExecutions and results from worker seem to get mixed up
+                    let storedExecution = this.storedExecutions[ counter ];
+                    let workerTypeDefinition = this.taskTypes.get( storedExecution.taskType );
                     let taskWorker = workerTypeDefinition.getAvailableTask();
-                    this.actualExecutionCount++;
-                    let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
+                    if ( taskWorker ) {
 
-                        taskWorker.onmessage = function ( e ) {
+                        this.storedExecutions.splice( counter, 1 );
+                        this.actualExecutionCount ++;
+                        let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
-                            // allow intermediate asset provision before flagging execComplete
-                            if ( e.data.cmd === 'assetAvailable' ) {
+                            taskWorker.onmessage = function ( e ) {
 
-                                if ( storedExecution.assetAvailableFunction instanceof Function ) {
+                                // allow intermediate asset provision before flagging execComplete
+                                if ( e.data.cmd === 'assetAvailable' ) {
 
-                                    storedExecution.assetAvailableFunction( e.data );
+                                    if ( storedExecution.assetAvailableFunction instanceof Function ) {
+
+                                        storedExecution.assetAvailableFunction( e.data );
+
+                                    }
+
+                                } else {
+
+                                    console.log( e.data.id + ': ' + e.data.cmd );
+                                    resolveWorker( e );
 
                                 }
 
-                            }
-                            else {
+                            };
+                            taskWorker.onerror = rejectWorker;
 
-                                resolveWorker( e );
+                            taskWorker.postMessage( {
+                                cmd: "execute",
+                                workerId: taskWorker.getId(),
+                                config: storedExecution.config
+                            }, storedExecution.transferables );
 
-                            }
+                        } );
+                        promiseWorker.then( ( e ) => {
 
-                        };
-                        taskWorker.onerror = rejectWorker;
+                            workerTypeDefinition.returnAvailableTask( taskWorker );
+                            storedExecution.resolve( e.data );
+                            this.actualExecutionCount --;
+                            console.log( this.storedExecutions.length );
 
-                        taskWorker.postMessage( {
-                            cmd: "execute",
-                            workerId: taskWorker.getId(),
-                            config: storedExecution.config
-                        }, storedExecution.transferables );
+                        } ).catch( ( e ) => {
 
-                    } );
-                    promiseWorker.then( ( e ) => {
+                            storedExecution.reject( "Execution error: " + e );
 
-                        workerTypeDefinition.returnAvailableTask( taskWorker );
-                        storedExecution.resolve( e.data );
-                        this.actualExecutionCount --;
-                        this._kickExecutions();
+                        } );
 
-                    } ).catch( ( e ) => {
+                    } else {
 
-                        storedExecution.reject( "Execution error: " + e );
+                        counter ++;
 
-                    } );
+                    }
 
-                }
-                else {
+                } else {
 
-                    // try later again, add at the end for now
-                    this.storedExecutions.push( storedExecution );
+                    counter = 0;
+                    await this.wait( 1 );
 
                 }
 
             }
+            await this.wait( 1 );
 
         }
+
     }
 
     /**
@@ -276,6 +293,7 @@ class TaskManager {
      */
     dispose () {
 
+        this.teardown = true;
         for ( let workerTypeDefinition of this.taskTypes.values() ) {
 
             workerTypeDefinition.dispose();
@@ -333,6 +351,11 @@ class WorkerTypeDefinition {
             /** @type {TaskWorker[]|MockedTaskWorker[]} */
             available: []
         };
+
+        this.status = {
+            initStarted: false,
+            initComplete: false
+        }
 
     }
 
@@ -529,7 +552,13 @@ class WorkerTypeDefinition {
      */
     getAvailableTask () {
 
-        return this.workers.available.shift();
+        let task = undefined;
+        if ( this.hasTask() ) {
+
+            task = this.workers.available.shift();
+
+        }
+        return task;
 
     }
 

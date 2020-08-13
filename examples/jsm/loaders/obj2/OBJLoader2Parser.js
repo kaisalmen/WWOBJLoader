@@ -843,12 +843,6 @@ const OBJLoader2Parser = function () {
 			this._resetRawMesh();
 
 		}
-		this.callbacks.onAssetAvailable(
-			{
-				cmd: 'execComplete',
-				type: 'void'
-			} );
-
 		return haveMesh;
 
 	}
@@ -941,6 +935,7 @@ const OBJLoader2Parser = function () {
 				let payload = {
 					cmd: 'assetAvailable',
 					type: 'material',
+					id: this.objectId,
 					materials: {
 						materialCloneInstructions: materialCloneInstructions
 					}
@@ -1092,6 +1087,12 @@ const OBJLoader2Parser = function () {
 			console.info( parserFinalReport );
 
 		}
+		this.callbacks.onAssetAvailable(
+		{
+			cmd: 'execComplete',
+			type: 'void',
+			id: this.objectId
+		} );
 
 	}
 };

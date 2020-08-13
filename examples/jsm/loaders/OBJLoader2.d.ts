@@ -13,7 +13,6 @@ export class OBJLoader2 extends Loader {
 	constructor( manager?: LoadingManager );
 	parser: OBJLoader2Parser;
 	modelName: string;
-	instanceNo: number;
 	path: string;
 	resourcePath: string;
 	baseObject3d: Object3D;
