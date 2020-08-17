@@ -188,6 +188,7 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 
 		let config = {
 			id: Math.floor( Math.random() * Math.floor( 65536 ) ),
+			buffer: content,
 			params: {
 				modelName: this.modelName,
 				useIndices: this.parser.useIndices,
@@ -196,13 +197,12 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 				useOAsMesh: this.parser.useOAsMesh,
 				materials: this.materialHandler.getMaterialsJSON()
 			},
-			buffer: content,
 			logging: {
 				enabled: this.parser.logging.enabled,
 				debug: this.parser.logging.debug
 			}
 		};
-		this.taskManager.enqueueForExecution( this.taskName, config,data => this._onAssetAvailable( data ), { buffer: content.buffer } )
+		this.taskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )
 			.then( data => {
 				this._onAssetAvailable( data );
 				this.parser.callbacks.onLoad( this.baseObject3d, 'finished' );

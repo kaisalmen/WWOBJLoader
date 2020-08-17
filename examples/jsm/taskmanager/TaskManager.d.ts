@@ -5,17 +5,17 @@ export class TaskManager {
     maxParallelExecutions: number;
     actualExecutionCount: number;
     storedExecutions: StoredExecution[];
-    initComplete: boolean;
+    teardown: boolean;
     setVerbose(verbose: boolean): TaskManager;
     setMaxParallelExecutions(maxParallelExecutions: number): TaskManager;
     getMaxParallelExecutions(): number;
     supportsTaskType(taskType: string): boolean;
     registerTaskType(taskType: string, initFunction: Function, executeFunction: Function, comRoutingFunction: Function, fallback: boolean, dependencyDescriptions?: any[]): boolean;
     registerTaskTypeModule(taskType: string, workerModuleUrl: string): boolean;
-    initTaskType(taskType: string, config: object, transferables?: any): Promise<boolean>;
+    initTaskType(taskType: string, config: object, transferables?: any): Promise<void>;
     wait(milliseconds: any): Promise<any>;
     enqueueForExecution(taskType: string, config: object, assetAvailableFunction: Function, transferables?: any): Promise<any>;
-    _kickExecutions(): void;
+    _kickExecutions(): Promise<void>;
     dispose(): TaskManager;
 }
 declare class WorkerTypeDefinition {
@@ -38,6 +38,10 @@ declare class WorkerTypeDefinition {
         code: string[];
         instances: TaskWorker[] | MockedTaskWorker[];
         available: TaskWorker[] | MockedTaskWorker[];
+    };
+    status: {
+        initStarted: boolean;
+        initComplete: boolean;
     };
     getTaskType(): string;
     setFunctions(initFunction: Function, executeFunction: Function, comRoutingFunction?: Function): void;

@@ -38,6 +38,9 @@ const OBJ2LoaderWorker = {
 			ObjectManipulator.applyProperties( objParser, payload.config, false );
 			ObjectManipulator.applyProperties( objParser, callbacks, false );
 		*/
+		context.obj2.objParser._init();
+
+
 		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
 
 		context.obj2.objParser.objectId = config.id;

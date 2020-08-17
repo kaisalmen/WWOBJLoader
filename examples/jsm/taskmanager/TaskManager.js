@@ -239,7 +239,6 @@ class TaskManager {
 
                                 } else {
 
-                                    console.log( e.data.id + ': ' + e.data.cmd );
                                     resolveWorker( e );
 
                                 }
@@ -259,7 +258,6 @@ class TaskManager {
                             workerTypeDefinition.returnAvailableTask( taskWorker );
                             storedExecution.resolve( e.data );
                             this.actualExecutionCount --;
-                            console.log( this.storedExecutions.length );
 
                         } ).catch( ( e ) => {
 

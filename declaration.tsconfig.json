@@ -16,6 +16,7 @@
     "declaration": true,
     "noEmit": false,
     "emitDeclarationOnly": true,
-    "removeComments": true
+    "removeComments": true,
+    "outDir": "./build"
   }
 }
