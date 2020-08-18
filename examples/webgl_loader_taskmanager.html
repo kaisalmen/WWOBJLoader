@@ -34,6 +34,7 @@
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { TaskManager } from "./jsm/taskmanager/TaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/obj2/shared/MeshReceiver.js";
+			import { ObjectManipulator } from  "./jsm/taskmanager/utils/TransferableUtils.js"
 			import { OBJLoader2Parser } from "./jsm/loaders/obj2/OBJLoader2Parser.js";
 			import { MaterialHandler } from "./jsm/loaders/obj2/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/taskmanager/utils/TransferableUtils.js";
@@ -255,8 +256,10 @@
 					if ( taskDescr.use ) {
 
 						this.tasksToUse.push( taskDescr );
-						let obj2ParserDep = 'const OBJLoader2Parser = ' + OBJLoader2Parser.toString() + ';\n\n';
-						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, [ { code: obj2ParserDep } ]  );
+						let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
+						let objectManipulator = ObjectManipulator.toString() + ';\n\n';
+						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false,
+								[ { code: obj2ParserDep }, { code: objectManipulator } ] );
 						await this.loadFile( taskDescr.filename )
 							.then( buffer => {
 								let config = { buffer: buffer }

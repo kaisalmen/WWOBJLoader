@@ -19,91 +19,88 @@ import { MaterialHandler } from "./obj2/shared/MaterialHandler.js";
  * @param {LoadingManager} [manager] The loadingManager for the loader to use. Default is {@link LoadingManager}
  * @constructor
  */
-const OBJLoader2 = function ( manager ) {
+class OBJLoader2 extends Loader {
 
-	Loader.call( this, manager );
+	static OBJLOADER2_VERSION = '4.0.0-dev';
 
-	this.parser = new OBJLoader2Parser();
+	constructor ( manager ) {
+		super( manager );
 
-	this.modelName = '';
-	this.baseObject3d = new Object3D();
+		this.parser = new OBJLoader2Parser();
 
-	this.materialHandler = new MaterialHandler();
-	this.meshReceiver = new MeshReceiver( this.materialHandler );
+		this.modelName = '';
+		this.baseObject3d = new Object3D();
 
-	// as OBJLoader2 is no longer derived from OBJLoader2Parser, we need to override the default onAssetAvailable callback
-	let scope = this;
-	let defaultOnAssetAvailable = function ( payload ) {
+		this.materialHandler = new MaterialHandler();
+		this.meshReceiver = new MeshReceiver( this.materialHandler );
 
-		scope._onAssetAvailable( payload );
+		// as OBJLoader2 is no longer derived from OBJLoader2Parser, we need to override the default onAssetAvailable callback
+		let scope = this;
+		let defaultOnAssetAvailable = function ( payload ) {
 
-	};
-	this.parser.setCallbackOnAssetAvailable( defaultOnAssetAvailable );
+			scope._onAssetAvailable( payload );
 
-};
+		};
+		this.parser.setCallbackOnAssetAvailable( defaultOnAssetAvailable );
 
-OBJLoader2.OBJLOADER2_VERSION = '4.0.0-dev';
-console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
+		console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
 
-
-OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
-
-	constructor: OBJLoader2,
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setLogging}
 	 * @return {OBJLoader2}
 	 */
-	setLogging: function ( enabled, debug ) {
+	setLogging ( enabled, debug ) {
 
 		this.parser.setLogging( enabled, debug );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setMaterialPerSmoothingGroup}
 	 * @return {OBJLoader2}
 	 */
-	setMaterialPerSmoothingGroup: function ( materialPerSmoothingGroup ) {
+	setMaterialPerSmoothingGroup ( materialPerSmoothingGroup ) {
 
 		this.parser.setMaterialPerSmoothingGroup( materialPerSmoothingGroup );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setUseOAsMesh}
 	 * @return {OBJLoader2}
 	 */
-	setUseOAsMesh: function ( useOAsMesh ) {
+	setUseOAsMesh ( useOAsMesh ) {
 
 		this.parser.setUseOAsMesh( useOAsMesh );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setUseIndices}
 	 * @return {OBJLoader2}
 	 */
-	setUseIndices: function ( useIndices ) {
+	setUseIndices ( useIndices ) {
 
 		this.parser.setUseIndices( useIndices );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setDisregardNormals}
 	 * @return {OBJLoader2}
 	 */
-	setDisregardNormals: function ( disregardNormals ) {
+	setDisregardNormals ( disregardNormals ) {
 
 		this.parser.setDisregardNormals( disregardNormals );
 		return this;
 
-	},
+	}
 
 	/**
 	 * Set the name of the model.
@@ -111,12 +108,12 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {string} modelName
 	 * @return {OBJLoader2}
 	 */
-	setModelName: function ( modelName ) {
+	setModelName ( modelName ) {
 
 		this.modelName = modelName ? modelName : this.modelName;
 		return this;
 
-	},
+	}
 
 	/**
 	 * Set the node where the loaded objects will be attached directly.
@@ -124,12 +121,12 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
 	 * @return {OBJLoader2}
 	 */
-	setBaseObject3d: function ( baseObject3d ) {
+	setBaseObject3d ( baseObject3d ) {
 
 		this.baseObject3d = ( baseObject3d === undefined || baseObject3d === null ) ? this.baseObject3d : baseObject3d;
 		return this;
 
-	},
+	}
 
 	/**
 	 * Add materials as associated array.
@@ -138,56 +135,56 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param overrideExisting boolean Override existing material
 	 * @return {OBJLoader2}
 	 */
-	addMaterials: function ( materials, overrideExisting ) {
+	addMaterials ( materials, overrideExisting ) {
 
 		this.materialHandler.addMaterials( materials, overrideExisting );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setCallbackOnAssetAvailable}
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnAssetAvailable: function ( onAssetAvailable ) {
+	setCallbackOnAssetAvailable ( onAssetAvailable ) {
 
 		this.parser.setCallbackOnAssetAvailable( onAssetAvailable );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setCallbackOnProgress}
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnProgress: function ( onProgress ) {
+	setCallbackOnProgress ( onProgress ) {
 
 		this.parser.setCallbackOnProgress( onProgress );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setCallbackOnError}
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnError: function ( onError ) {
+	setCallbackOnError ( onError ) {
 
 		this.parser.setCallbackOnError( onError );
 		return this;
 
-	},
+	}
 
 	/**
 	 * See {@link OBJLoader2Parser.setCallbackOnLoad}
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnLoad: function ( onLoad ) {
+	setCallbackOnLoad ( onLoad ) {
 
 		this.parser.setCallbackOnLoad( onLoad );
 		return this;
 
-	},
+	}
 
 	/**
 	 * Register a function that is called once a single mesh is available and it could be altered by the supplied function.
@@ -195,12 +192,12 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {Function} [onMeshAlter]
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnMeshAlter: function ( onMeshAlter ) {
+	setCallbackOnMeshAlter ( onMeshAlter ) {
 
 		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
 		return this;
 
-	},
+	}
 
 	/**
 	 * Register a function that is called once all materials have been loaded and they could be altered by the supplied function.
@@ -208,12 +205,12 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {Function} [onLoadMaterials]
 	 * @return {OBJLoader2}
 	 */
-	setCallbackOnLoadMaterials: function ( onLoadMaterials ) {
+	setCallbackOnLoadMaterials ( onLoadMaterials ) {
 
 		this.materialHandler._setCallbacks( onLoadMaterials );
 		return this;
 
-	},
+	}
 
 	/**
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
@@ -224,7 +221,7 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {function} [onMeshAlter] Called after every single mesh is made available by the parser
 	 */
-	load: function ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
+	load ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
 		let scope = this;
 		if ( onLoad === null || onLoad === undefined || ! ( onLoad instanceof Function ) ) {
@@ -300,7 +297,7 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 		fileLoader.setResponseType( 'arraybuffer' );
 		fileLoader.load( filename, fileLoaderOnLoad, onFileLoadProgress, onError );
 
-	},
+	}
 
 	/**
 	 * Parses OBJ data synchronously from arraybuffer or string and returns the {@link Object3D}.
@@ -308,7 +305,7 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
 	 * @return {Object3D}
 	 */
-	parse: function ( content ) {
+	parse ( content ) {
 
 		// fast-fail in case of illegal data
 		if ( content === null || content === undefined ) {
@@ -350,9 +347,9 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 		}
 		return this.baseObject3d;
 
-	},
+	}
 
-	_onAssetAvailable: function ( payload ) {
+	_onAssetAvailable ( payload ) {
 
 		if ( payload.cmd !== 'assetAvailable' ) return;
 
@@ -373,6 +370,6 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 
 	}
 
-} );
+}
 
 export { OBJLoader2 };

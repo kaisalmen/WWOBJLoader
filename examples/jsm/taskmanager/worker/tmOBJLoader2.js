@@ -3,7 +3,7 @@
  */
 
 import { OBJLoader2Parser } from "../../loaders/obj2/OBJLoader2Parser.js";
-//import { ObjectManipulator } from "../../loaders/obj2/utils/TransferableUtils.js";
+import { ObjectManipulator } from "../../taskmanager/utils/TransferableUtils.js";
 import { TaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
 
 const OBJ2LoaderWorker = {
@@ -30,16 +30,12 @@ const OBJ2LoaderWorker = {
 	},
 
 	execute: function ( context, id, config ) {
-		/*
-			let callbacks = {
-				callbackOnAssetAvailable: ( m => { self.postMessage( m ); } ),
-				callbackOnProgress: ( text => { console.de bug( 'WorkerRunner: progress: ' + text ) } )
-			};
-			ObjectManipulator.applyProperties( objParser, payload.config, false );
-			ObjectManipulator.applyProperties( objParser, callbacks, false );
-		*/
-		context.obj2.objParser._init();
 
+		context.obj2.objParser._init();
+		if ( config.logging ) {
+			context.obj2.objParser.setLogging( config.logging.enabled, config.logging.debug );
+		}
+		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
 
 		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
 
