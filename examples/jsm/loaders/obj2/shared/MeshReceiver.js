@@ -17,24 +17,22 @@ import {
  * @param {MaterialHandler} materialHandler
  * @constructor
  */
-const MeshReceiver = function ( materialHandler ) {
+class MeshReceiver {
 
-	this.logging = {
-		enabled: false,
-		debug: false
-	};
+	constructor( materialHandler ) {
 
-	this.callbacks = {
-		onProgress: null,
-		onMeshAlter: null
-	};
-	this.materialHandler = materialHandler;
+		this.logging = {
+			enabled: false,
+			debug: false
+		};
 
-};
+		this.callbacks = {
+			onProgress: null,
+			onMeshAlter: null
+		};
+		this.materialHandler = materialHandler;
 
-MeshReceiver.prototype = {
-
-	constructor: MeshReceiver,
+	}
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -42,12 +40,12 @@ MeshReceiver.prototype = {
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
 	 */
-	setLogging:	function ( enabled, debug ) {
+	setLogging ( enabled, debug ) {
 
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 
-	},
+	}
 
 	/**
 	 *
@@ -55,7 +53,7 @@ MeshReceiver.prototype = {
 	 * @param {Function} onMeshAlter
 	 * @private
 	 */
-	_setCallbacks: function ( onProgress, onMeshAlter ) {
+	_setCallbacks ( onProgress, onMeshAlter ) {
 
 		if ( onProgress !== null && onProgress !== undefined && onProgress instanceof Function ) {
 
@@ -68,7 +66,7 @@ MeshReceiver.prototype = {
 
 		}
 
-	},
+	}
 
 	/**
 	 * Builds one or multiple meshes from the data described in the payload (buffers, params, material info).
@@ -76,7 +74,7 @@ MeshReceiver.prototype = {
 	 * @param {Object} meshPayload Raw mesh description (buffers, params, materials) used to build one to many meshes.
 	 * @returns {Mesh[]} mesh Array of {@link Mesh}
 	 */
-	buildMeshes: function ( meshPayload ) {
+	buildMeshes ( meshPayload ) {
 
 		let buffers = meshPayload.buffers;
 		let bufferGeometry = new BufferGeometry();
@@ -254,7 +252,7 @@ MeshReceiver.prototype = {
 
 	}
 
-};
+}
 
 /**
  * Object to return by callback onMeshAlter. Used to disregard a certain mesh or to return one to many meshes.
@@ -263,53 +261,50 @@ MeshReceiver.prototype = {
  * @param {boolean} disregardMesh=false Tell implementation to completely disregard this mesh
  * @param {boolean} disregardMesh=false Tell implementation that mesh(es) have been altered or added
  */
-const LoadedMeshUserOverride = function ( disregardMesh, alteredMesh ) {
+class LoadedMeshUserOverride {
 
-	this.disregardMesh = disregardMesh === true;
-	this.alteredMesh = alteredMesh === true;
-	this.meshes = [];
+	constructor ( disregardMesh, alteredMesh ) {
 
-};
+		this.disregardMesh = disregardMesh === true;
+		this.alteredMesh = alteredMesh === true;
+		this.meshes = [];
 
-
-LoadedMeshUserOverride.prototype = {
-
-	constructor: LoadedMeshUserOverride,
+	}
 
 	/**
 	 * Add a mesh created within callback.
 	 *
 	 * @param {Mesh} mesh
 	 */
-	addMesh: function ( mesh ) {
+	addMesh ( mesh ) {
 
 		this.meshes.push( mesh );
 		this.alteredMesh = true;
 
-	},
+	}
 
 	/**
 	 * Answers if mesh shall be disregarded completely.
 	 *
 	 * @returns {boolean}
 	 */
-	isDisregardMesh: function () {
+	isDisregardMesh () {
 
 		return this.disregardMesh;
 
-	},
+	}
 
 	/**
 	 * Answers if new mesh(es) were created.
 	 *
 	 * @returns {boolean}
 	 */
-	providesAlteredMeshes: function () {
+	providesAlteredMeshes () {
 
 		return this.alteredMesh;
 
 	}
-};
+}
 
 export {
 	MeshReceiver,

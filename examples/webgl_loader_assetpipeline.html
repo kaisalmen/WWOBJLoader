@@ -93,7 +93,7 @@
 						resourcePath: './models/obj/female02/',
 						materialOptions: {}
 					};
-					assetTask0.setAssetHandlerRef( MTLLoader, loaderConfigurationMtl );
+					assetTask0.setAssetHandler( new MTLLoader(), loaderConfigurationMtl );
 
 					let assetTask1 = new AssetTask( 'task1' );
 					assetTask1.setLinker( true );
@@ -102,7 +102,7 @@
 					let assetTask2 = new AssetTask( 'task2' );
 					let rdObj = new ResourceDescriptor( './models/obj/female02/female02.obj' );
 					assetTask2.setResourceDescriptor( rdObj );
-					assetTask2.setAssetHandlerRef( OBJLoader2 );
+					assetTask2.setAssetHandler( new OBJLoader2() );
 
 					let assetPipeline = new AssetPipeline();
 					assetPipeline.addAssetTask( assetTask0 );

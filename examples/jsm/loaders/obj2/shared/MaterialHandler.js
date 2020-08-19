@@ -12,23 +12,21 @@ import {
 } from "../../../../../build/three.module.js";
 
 
-const MaterialHandler = function () {
+class MaterialHandler {
 
-	this.logging = {
-		enabled: false,
-		debug: false
-	};
+	constructor() {
 
-	this.callbacks = {
-		onLoadMaterials: null
-	};
-	this.materials = {};
+		this.logging = {
+			enabled: false,
+			debug: false
+		};
 
-};
+		this.callbacks = {
+			onLoadMaterials: null
+		};
+		this.materials = {};
 
-MaterialHandler.prototype = {
-
-	constructor: MaterialHandler,
+	}
 
 	/**
 	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
@@ -36,14 +34,14 @@ MaterialHandler.prototype = {
 	 * @param {boolean} enabled True or false.
 	 * @param {boolean} debug True or false.
 	 */
-	setLogging:	function ( enabled, debug ) {
+	setLogging ( enabled, debug ) {
 
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
 
-	},
+	}
 
-	_setCallbacks: function ( onLoadMaterials ) {
+	_setCallbacks ( onLoadMaterials ) {
 
 		if ( onLoadMaterials !== undefined && onLoadMaterials !== null && onLoadMaterials instanceof Function ) {
 
@@ -51,14 +49,14 @@ MaterialHandler.prototype = {
 
 		}
 
-	},
+	}
 
 	/**
 	 * Creates default materials and adds them to the materials object.
 	 *
 	 * @param overrideExisting boolean Override existing material
 	 */
-	createDefaultMaterials: function ( overrideExisting ) {
+	createDefaultMaterials ( overrideExisting ) {
 
 		let defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 		defaultMaterial.name = 'defaultMaterial';
@@ -81,7 +79,7 @@ MaterialHandler.prototype = {
 
 		this.addMaterials( runtimeMaterials, overrideExisting );
 
-	},
+	}
 
 	/**
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
@@ -89,7 +87,7 @@ MaterialHandler.prototype = {
 	 * @param {Object} materialPayload Material update instructions
 	 * @returns {Object} Map of {@link Material}
 	 */
-	addPayloadMaterials: function ( materialPayload ) {
+	addPayloadMaterials ( materialPayload ) {
 
 		let material, materialName;
 		let materialCloneInstructions = materialPayload.materials.materialCloneInstructions;
@@ -153,7 +151,7 @@ MaterialHandler.prototype = {
 
 		return newMaterials;
 
-	},
+	}
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link Material}.
@@ -162,7 +160,7 @@ MaterialHandler.prototype = {
 	 * @param overrideExisting boolean Override existing material
 	 * @param newMaterials [Object] with named {@link Material}
 	 */
-	addMaterials: function ( materials, overrideExisting, newMaterials ) {
+	addMaterials ( materials, overrideExisting, newMaterials ) {
 
 		if ( newMaterials === undefined || newMaterials === null ) {
 
@@ -207,36 +205,36 @@ MaterialHandler.prototype = {
 		}
 		return newMaterials;
 
-	},
+	}
 
 	/**
 	 * Returns the mapping object of material name and corresponding material.
 	 *
 	 * @returns {Object} Map of {@link Material}
 	 */
-	getMaterials: function () {
+	getMaterials () {
 
 		return this.materials;
 
-	},
+	}
 
 	/**
 	 *
 	 * @param {String} materialName
 	 * @returns {Material}
 	 */
-	getMaterial: function ( materialName ) {
+	getMaterial ( materialName ) {
 
 		return this.materials[ materialName ];
 
-	},
+	}
 
 	/**
 	 * Returns the mapping object of material name and corresponding jsonified material.
 	 *
 	 * @returns {Object} Map of Materials in JSON representation
 	 */
-	getMaterialsJSON: function () {
+	getMaterialsJSON () {
 
 		let materialsJSON = {};
 		let material;
@@ -249,17 +247,17 @@ MaterialHandler.prototype = {
 
 		return materialsJSON;
 
-	},
+	}
 
 	/**
 	 * Removes all materials
 	 */
-	clearMaterials: function () {
+	clearMaterials () {
 
 		this.materials = {};
 
 	}
 
-};
+}
 
 export { MaterialHandler };
