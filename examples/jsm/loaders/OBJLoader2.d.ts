@@ -1,44 +1,31 @@
-import {
-	Loader,
-	LoadingManager,
-	Object3D,
-} from '../../../src/Three';
-
-import { OBJLoader2Parser } from './obj2/OBJLoader2Parser';
-import { MaterialHandler } from './obj2/shared/MaterialHandler';
-import { MeshReceiver } from './obj2/shared/MeshReceiver';
-
 export class OBJLoader2 extends Loader {
-
-	constructor( manager?: LoadingManager );
-	parser: OBJLoader2Parser;
-	modelName: string;
-	path: string;
-	resourcePath: string;
-	baseObject3d: Object3D;
-	materialHandler: MaterialHandler;
-	meshReceiver: MeshReceiver;
-
-	setLogging( enabled: boolean, debug: boolean ): this;
-	setMaterialPerSmoothingGroup( materialPerSmoothingGroup: boolean ): this;
-	setUseOAsMesh( useOAsMesh: boolean ): this;
-	setUseIndices( useIndices: boolean ): this;
-	setDisregardNormals( disregardNormals: boolean ): this;
-
-	setModelName( modelName: string ): this;
-	setPath( path: string ): this;
-	setResourcePath( path: string ): this;
-	setBaseObject3d( baseObject3d: Object3D ): this;
-	addMaterials( materials: object, overrideExisting: boolean ): this;
-
-	setCallbackOnAssetAvailable( onAssetAvailable: Function ): this;
-	setCallbackOnProgress( onProgress: Function ): this;
-	setCallbackOnError( onError: Function ): this;
-	setCallbackOnLoad( onLoad: Function ): this;
-	setCallbackOnMeshAlter( onMeshAlter: Function ): this;
-	setCallbackOnLoadMaterials( onLoadMaterials: Function ): this;
-
-	load( url: string, onLoad: ( object3d: Object3D ) => void, onProgress?: ( event: ProgressEvent ) => void, onError?: ( event: ErrorEvent ) => void, onMeshAlter?: ( meshData: object ) => void ): void;
-	parse( content: ArrayBuffer | string ): Object3D;
-
+    static OBJLOADER2_VERSION: string;
+    constructor(manager: any);
+    parser: OBJLoader2Parser;
+    modelName: string;
+    baseObject3d: Object3D;
+    materialHandler: MaterialHandler;
+    meshReceiver: MeshReceiver;
+    setLogging(enabled: any, debug: any): OBJLoader2;
+    setMaterialPerSmoothingGroup(materialPerSmoothingGroup: any): OBJLoader2;
+    setUseOAsMesh(useOAsMesh: any): OBJLoader2;
+    setUseIndices(useIndices: any): OBJLoader2;
+    setDisregardNormals(disregardNormals: any): OBJLoader2;
+    setModelName(modelName: string): OBJLoader2;
+    setBaseObject3d(baseObject3d: Object3D): OBJLoader2;
+    addMaterials(materials: any, overrideExisting: any): OBJLoader2;
+    setCallbackOnAssetAvailable(onAssetAvailable: any): OBJLoader2;
+    setCallbackOnProgress(onProgress: any): OBJLoader2;
+    setCallbackOnError(onError: any): OBJLoader2;
+    setCallbackOnLoad(onLoad: any): OBJLoader2;
+    setCallbackOnMeshAlter(onMeshAlter?: Function): OBJLoader2;
+    setCallbackOnLoadMaterials(onLoadMaterials?: Function): OBJLoader2;
+    load(url: string, onLoad: Function, onFileLoadProgress?: Function, onError?: Function, onMeshAlter?: Function): void;
+    parse(content: any | string): Object3D;
+    _onAssetAvailable(payload: any): void;
 }
+import { Loader } from "../../../build/three.module.js";
+import { OBJLoader2Parser } from "./obj2/OBJLoader2Parser.js";
+import { Object3D } from "../../../build/three.module.js";
+import { MaterialHandler } from "./obj2/shared/MaterialHandler.js";
+import { MeshReceiver } from "./obj2/shared/MeshReceiver.js";

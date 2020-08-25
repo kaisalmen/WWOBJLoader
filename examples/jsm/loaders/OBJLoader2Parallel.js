@@ -55,13 +55,15 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	}
 
 	/**
+	 * @param taskManager The {@link TaskManager}
+	 * @param [taskName] A specific taskName to allow distinction between legacy and module workers
 	 *
-	 * @param [TaskManager] taskManager
-	 * @return {OBJLoader2}
+	 * @return {OBJLoader2Parallel}
 	 */
-	setTaskManager ( taskManager ) {
+	setTaskManager ( taskManager, taskName ) {
 
 		this.taskManager = taskManager;
+		if ( taskName ) this.taskName = taskName;
 		return this;
 
 	}
@@ -98,8 +100,13 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	/**
 	 * Provide instructions on what is to be contained in the worker.
+	 *
+	 * @param {object} config Configuration object
+	 * @param {ArrayBuffer} [buffer] Optional buffer
+	 * @return {Promise<void>}
+	 * @private
 	 */
-	async _buildWorkerCode () {
+	async _buildWorkerCode ( config, buffer ) {
 
 		if ( ! this.taskManager instanceof TaskManager ) {
 
@@ -121,7 +128,17 @@ class OBJLoader2Parallel extends OBJLoader2 {
 					[ { code: obj2ParserDep }, { code: objectManipulator } ] );
 
 			}
-			await this.taskManager.initTaskType( this.taskName, {} );
+			if ( buffer ) {
+
+				config.buffer = buffer;
+				await this.taskManager.initTaskType( this.taskName, config, { buffer: buffer } );
+
+			}
+			else {
+
+				await this.taskManager.initTaskType( this.taskName, config );
+
+			}
 
 		}
 
@@ -163,7 +180,13 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		if ( this.executeParallel ) {
 
-			this._buildWorkerCode()
+			let config = {
+				logging: {
+					enabled: this.parser.logging.enabled,
+					debug: this.parser.logging.debug
+				},
+			}
+			this._buildWorkerCode( config )
 				.then(
 					x => {
 						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
@@ -198,10 +221,6 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
 				useOAsMesh: this.parser.useOAsMesh,
 				materials: this.materialHandler.getMaterialsJSON()
-			},
-			logging: {
-				enabled: this.parser.logging.enabled,
-				debug: this.parser.logging.debug
 			}
 		};
 		this.taskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )

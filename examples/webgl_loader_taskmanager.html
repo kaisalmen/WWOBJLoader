@@ -40,6 +40,8 @@
 			import { TransferableUtils } from "./jsm/taskmanager/utils/TransferableUtils.js";
 			import { FileLoader } from "../src/loaders/FileLoader.js";
 			import { OBJ2LoaderWorker } from "./jsm/taskmanager/worker/tmOBJLoader2.js";
+			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
+			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
 
 			class TaskManagerPrototypeExample {
 
@@ -131,7 +133,9 @@
 						use: true,
 						fallback: false,
 						module: './jsm/taskmanager/worker/tmOBJLoader2.js',
-						filename: './models/obj/female02/female02.obj'
+						filenameMtl: './models/obj/female02/female02.mtl',
+						filenameObj: './models/obj/female02/female02.obj',
+						materials: {}
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Legacy', {
 						name: 'tmOBJLoader2Legacy',
@@ -139,7 +143,9 @@
 						fallback: false,
 						funcInit: OBJ2LoaderWorker.init,
 						funcExec: OBJ2LoaderWorker.execute,
-						filename: './models/obj/male02/male02.obj'
+						filenameMtl: './models/obj/male02/male02.mtl',
+						filenameObj: './models/obj/male02/male02.obj',
+						materials: {}
 					} );
 
 					this.tasksToUse = [];
@@ -245,7 +251,7 @@
 
 						this.tasksToUse.push( taskDescr );
 						this.taskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
-						await this.loadFile( taskDescr.filename )
+						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
 								let config = { buffer: buffer }
 								awaiting.push( this.taskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
@@ -260,7 +266,7 @@
 						let objectManipulator = ObjectManipulator.toString() + ';\n\n';
 						this.taskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false,
 								[ { code: obj2ParserDep }, { code: objectManipulator } ] );
-						await this.loadFile( taskDescr.filename )
+						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
 								let config = { buffer: buffer }
 								awaiting.push( this.taskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
@@ -279,11 +285,23 @@
 					}
 				}
 
-				async loadFile ( file ) {
+				async loadObjMtl ( taskDescr ) {
 
 					let fileLoader = new FileLoader();
 					fileLoader.setResponseType( 'arraybuffer' );
-					return fileLoader.loadAsync( file )
+
+					let loadMtl = new Promise(resolve => {
+
+						let mtlLoader = new MTLLoader();
+						mtlLoader.load( taskDescr.filenameMtl, resolve );
+
+					} );
+					await loadMtl.then( mtlParseResult => {
+						let newMaterials = MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult );
+						this.materialHandler.addMaterials( newMaterials, true );
+						taskDescr.materials = this.materialHandler.getMaterialsJSON()
+					} ) ;
+					return await fileLoader.loadAsync( taskDescr.filenameObj );
 
 				}
 
@@ -326,7 +344,12 @@
 				_storeAddTaskPromise( taskNameIndex, globalCount ) {
 
 					let taskDescr = this.tasksToUse[ taskNameIndex ];
-					let promise = this.taskManager.enqueueForExecution( taskDescr.name, { id: globalCount },
+					let promise = this.taskManager.enqueueForExecution( taskDescr.name, {
+							id: globalCount,
+							params: {
+									materials: taskDescr.materials
+								}
+							},
 							data => this._processMessage( data ) )
 						.then( data => this._processMessage( data ) )
 						.catch( e => console.error( e ) )

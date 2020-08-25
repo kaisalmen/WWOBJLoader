@@ -10,6 +10,11 @@ class OBJLoader2Parser {
 
 	constructor() {
 
+		this.logging = {
+			enabled: false,
+			debug: false
+		};
+		this.usedBefore = false;
 		this._init();
 
 		let scope = this;
@@ -63,11 +68,6 @@ class OBJLoader2Parser {
 	}
 
 	_init () {
-
-		this.logging = {
-			enabled: false,
-			debug: false
-		};
 
 		this.contentRef = null;
 		this.legacyMode = false;
@@ -285,8 +285,20 @@ class OBJLoader2Parser {
 
 	}
 
+	/**
+	 * Tell if loader was used before.
+	 *
+	 * @return {boolean} True or false.
+	 */
+	isUsedBefore () {
+
+		return this.usedBefore;
+
+	}
+
 	_configure () {
 
+		this.usedBefore = true;
 		this._pushSmoothingGroup( 1 );
 		if ( this.logging.enabled ) {
 
