@@ -13,9 +13,9 @@ export class TaskManager {
     registerTaskType(taskType: string, initFunction: Function, executeFunction: Function, comRoutingFunction: Function, fallback: boolean, dependencyDescriptions?: any[]): boolean;
     registerTaskTypeModule(taskType: string, workerModuleUrl: string): boolean;
     initTaskType(taskType: string, config: object, transferables?: any): Promise<void>;
-    wait(milliseconds: any): Promise<any>;
+    _wait(milliseconds: any): Promise<any>;
     enqueueForExecution(taskType: string, config: object, assetAvailableFunction: Function, transferables?: any): Promise<any>;
-    _kickExecutions(): Promise<void>;
+    _depleteExecutions(): Promise<void>;
     dispose(): TaskManager;
 }
 declare class WorkerTypeDefinition {

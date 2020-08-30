@@ -104,26 +104,26 @@
 					this.taskDescriptions.clear();
 					this.taskDescriptions.set( 'tmProtoExample', {
 						name: 'tmProtoExample',
-						use: false,
+						use: true,
 						fallback: false,
 						funcInit: WorkerFunctions.workerLegacyInit,
 						funcExec: WorkerFunctions.workerLegacyExec
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
 						name: 'tmProtoExampleModule',
-						use: false,
+						use: true,
 						fallback: false,
 						module: './jsm/taskmanager/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
-						use: false,
+						use: true,
 						fallback: false,
 						module: './jsm/taskmanager/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',
-						use: false,
+						use: true,
 						fallback: true,
 						funcInit: WorkerFunctions.workerLegacyInit,
 						funcExec: WorkerFunctions.workerLegacyExec

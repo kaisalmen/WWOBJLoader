@@ -31,7 +31,6 @@ class TaskManager {
          */
         this.storedExecutions = [];
         this.teardown = false;
-        this._kickExecutions().then( x => console.log( 'Teared down: ' + x ) );
 
     }
 
@@ -167,7 +166,7 @@ class TaskManager {
 
                 while ( ! workerTypeDefinition.status.initComplete ) {
 
-                    await this.wait( 10 );
+                    await this._wait( 10 );
 
                 }
 
@@ -177,7 +176,7 @@ class TaskManager {
 
     }
 
-    async wait ( milliseconds ) {
+    async _wait ( milliseconds ) {
 
         return new Promise(resolve => {
 
@@ -201,85 +200,73 @@ class TaskManager {
         let localPromise = new Promise( ( resolveUser, rejectUser ) => {
 
             this.storedExecutions.push( new StoredExecution( taskType, config, assetAvailableFunction, resolveUser, rejectUser, transferables ) );
+            this._depleteExecutions();
 
         } );
         return localPromise;
 
     }
 
-    async _kickExecutions () {
+    _depleteExecutions () {
 
-        while ( ! this.teardown ) {
+        let counter = 0;
+        while ( this.actualExecutionCount < this.maxParallelExecutions && counter < this.storedExecutions.length ) {
 
-            let counter = 0;
-            while ( this.storedExecutions.length > 0 ) {
+            // TODO: storedExecutions and results from worker seem to get mixed up
+            let storedExecution = this.storedExecutions[ counter ];
+            let workerTypeDefinition = this.taskTypes.get( storedExecution.taskType );
+            let taskWorker = workerTypeDefinition.getAvailableTask();
+            if ( taskWorker ) {
 
-                if ( this.actualExecutionCount < this.maxParallelExecutions && counter < this.storedExecutions.length ) {
+                this.storedExecutions.splice( counter, 1 );
+                this.actualExecutionCount ++;
+                let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
 
-                    // TODO: storedExecutions and results from worker seem to get mixed up
-                    let storedExecution = this.storedExecutions[ counter ];
-                    let workerTypeDefinition = this.taskTypes.get( storedExecution.taskType );
-                    let taskWorker = workerTypeDefinition.getAvailableTask();
-                    if ( taskWorker ) {
+                    taskWorker.onmessage = function ( e ) {
 
-                        this.storedExecutions.splice( counter, 1 );
-                        this.actualExecutionCount ++;
-                        let promiseWorker = new Promise( ( resolveWorker, rejectWorker ) => {
+                        // allow intermediate asset provision before flagging execComplete
+                        if ( e.data.cmd === 'assetAvailable' ) {
 
-                            taskWorker.onmessage = function ( e ) {
+                            if ( storedExecution.assetAvailableFunction instanceof Function ) {
 
-                                // allow intermediate asset provision before flagging execComplete
-                                if ( e.data.cmd === 'assetAvailable' ) {
+                                storedExecution.assetAvailableFunction( e.data );
 
-                                    if ( storedExecution.assetAvailableFunction instanceof Function ) {
+                            }
 
-                                        storedExecution.assetAvailableFunction( e.data );
+                        } else {
 
-                                    }
+                            resolveWorker( e );
 
-                                } else {
+                        }
 
-                                    resolveWorker( e );
+                    };
+                    taskWorker.onerror = rejectWorker;
 
-                                }
+                    taskWorker.postMessage( {
+                        cmd: "execute",
+                        workerId: taskWorker.getId(),
+                        config: storedExecution.config
+                    }, storedExecution.transferables );
 
-                            };
-                            taskWorker.onerror = rejectWorker;
+                } );
+                promiseWorker.then( ( e ) => {
 
-                            taskWorker.postMessage( {
-                                cmd: "execute",
-                                workerId: taskWorker.getId(),
-                                config: storedExecution.config
-                            }, storedExecution.transferables );
+                    workerTypeDefinition.returnAvailableTask( taskWorker );
+                    storedExecution.resolve( e.data );
+                    this.actualExecutionCount --;
+                    this._depleteExecutions();
 
-                        } );
-                        promiseWorker.then( ( e ) => {
+                } ).catch( ( e ) => {
 
-                            workerTypeDefinition.returnAvailableTask( taskWorker );
-                            storedExecution.resolve( e.data );
-                            this.actualExecutionCount --;
+                    storedExecution.reject( "Execution error: " + e );
 
-                        } ).catch( ( e ) => {
+                } );
 
-                            storedExecution.reject( "Execution error: " + e );
+            } else {
 
-                        } );
-
-                    } else {
-
-                        counter ++;
-
-                    }
-
-                } else {
-
-                    counter = 0;
-                    await this.wait( 1 );
-
-                }
+                counter ++;
 
             }
-            await this.wait( 1 );
 
         }
 
