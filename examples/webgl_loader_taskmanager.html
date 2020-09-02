@@ -43,6 +43,24 @@
 			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
 			import { MtlObjBridge } from "./jsm/loaders/obj2/bridge/MtlObjBridge.js";
 
+			/**
+			 * The aim of this example is to show all possible ways how to use the {@link TaskManager}:
+			 * - Standard Workers with dependency loading
+			 * - Module Workers with and without additional dependencies
+			 * - Main Fallback without dependencies
+			 * - It also allows to use OBJLoader2Parser with and without modules.
+			 *
+			 * Via dat.gui it is possible to control various parameters of the example:
+			 * - The quantity of workers created for each task (default: 4)
+			 * - The absolute overall count of task executions (default: 1000000)
+			 * - The maximum amount of task executions per loop (=number of promises returned, default: 1000)
+			 * - How many meshes shall be kept as otherwise the continuous loading will (default: 750)
+			 *
+			 * The tasks perform the same loading operation over and over again. This shall demonstrate:
+			 * - A good CPU utilization can be achieved permanently if the selected amount of workers match the logical CPUs available
+			 * - No memory is leaked
+			 * - The exmaple is able
+			 */
 			class TaskManagerPrototypeExample {
 
 				constructor ( elementToBindTo ) {
@@ -106,8 +124,8 @@
 						name: 'tmProtoExample',
 						use: true,
 						fallback: false,
-						funcInit: WorkerFunctions.workerLegacyInit,
-						funcExec: WorkerFunctions.workerLegacyExec
+						funcInit: WorkerFunctions.workerStandardInit,
+						funcExec: WorkerFunctions.workerStandardExec
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
 						name: 'tmProtoExampleModule',
@@ -125,8 +143,8 @@
 						name: 'tmProtoExampleMain',
 						use: true,
 						fallback: true,
-						funcInit: WorkerFunctions.workerLegacyInit,
-						funcExec: WorkerFunctions.workerLegacyExec
+						funcInit: WorkerFunctions.workerStandardInit,
+						funcExec: WorkerFunctions.workerStandardExec
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2', {
 						name: 'tmOBJLoader2',
@@ -137,8 +155,8 @@
 						filenameObj: './models/obj/female02/female02.obj',
 						materials: {}
 					} );
-					this.taskDescriptions.set( 'tmOBJLoader2Legacy', {
-						name: 'tmOBJLoader2Legacy',
+					this.taskDescriptions.set( 'tmOBJLoader2Standard', {
+						name: 'tmOBJLoader2Standard',
 						use: true,
 						fallback: false,
 						funcInit: OBJ2LoaderWorker.init,
@@ -209,6 +227,11 @@
 					this.scene.add( helper );
 				}
 
+				/**
+				 * Registers any selected task at the {@link TaskManager} and initializes them.
+				 *
+				 * @return {Promise<any>}
+				 */
 				async initContent () {
 					let awaiting = [];
 					this.tasksToUse = [];
@@ -258,7 +281,7 @@
 							} );
 
 					}
-					taskDescr = this.taskDescriptions.get( 'tmOBJLoader2Legacy' );
+					taskDescr = this.taskDescriptions.get( 'tmOBJLoader2Standard' );
 					if ( taskDescr.use ) {
 
 						this.tasksToUse.push( taskDescr );
@@ -305,6 +328,12 @@
 
 				}
 
+				/**
+				 * Once all tasks are initialized a number of tasks (maxPerLoop) are enqueued.
+				 * This is repeated a configured number of times (loopCount) or the abort flag is set.
+				 *
+				 * @return {Promise<void>}
+				 */
 				async executeWorkers () {
 
 					if ( this.tasksToUse.length === 0 ) throw "No Tasks have been selected. Aborting..."
@@ -313,11 +342,22 @@
 					let globalCount = 0;
 					let taskToUseIndex = 0;
 					for ( let j = 0; j < this.loopCount && !this.abort; j++ ) {
-						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 
+						console.time( 'Completed ' + ( this.maxPerLoop + j * this.maxPerLoop ) );
 						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
 
-							this._storeAddTaskPromise( taskToUseIndex, globalCount );
+							let taskDescr = this.tasksToUse[ taskToUseIndex ];
+							let promise = this.taskManager.enqueueForExecution( taskDescr.name, {
+									id: globalCount,
+									params: {
+										materials: taskDescr.materials
+									}
+								},
+								data => this._processMessage( data ) )
+									.then( data => this._processMessage( data ) )
+									.catch( e => console.error( e ) )
+							this.executions.push( promise );
+
 							globalCount++;
 							taskToUseIndex++;
 							if ( taskToUseIndex === this.tasksToUse.length ) taskToUseIndex = 0;
@@ -338,22 +378,6 @@
 						this.resetAppContext();
 
 					}
-
-				}
-
-				_storeAddTaskPromise( taskNameIndex, globalCount ) {
-
-					let taskDescr = this.tasksToUse[ taskNameIndex ];
-					let promise = this.taskManager.enqueueForExecution( taskDescr.name, {
-							id: globalCount,
-							params: {
-									materials: taskDescr.materials
-								}
-							},
-							data => this._processMessage( data ) )
-						.then( data => this._processMessage( data ) )
-						.catch( e => console.error( e ) )
-					this.executions.push( promise );
 
 				}
 
@@ -503,7 +527,7 @@
 
 			const WorkerFunctions = {
 
-				workerLegacyInit: function ( context, id, config ) {
+				workerStandardInit: function ( context, id, config ) {
 					context.storage = {
 						whoami: config.id,
 					};
@@ -515,7 +539,7 @@
 
 				},
 
-				workerLegacyExec: function ( context, id, config ) {
+				workerStandardExec: function ( context, id, config ) {
 
 					let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 
@@ -579,8 +603,8 @@
 				tmProtoExampleModule: false,
 				tmProtoExampleModuleNoThree: false,
 				tmProtoExampleMain: false,
-				tmOBJLoader2: false,
-				tmOBJLoader2Legacy: false,
+				tmOBJLoader2Module: false,
+				tmOBJLoader2Standard: false,
 				maxParallelExecutions: 0,
 				overallExecutionCount: 0,
 				numberOfMeshesToKeep: 0,
@@ -591,8 +615,8 @@
 					this.tmProtoExampleModule = app.taskDescriptions.get( 'tmProtoExampleModule' ).use;
 					this.tmProtoExampleModuleNoThree = app.taskDescriptions.get( 'tmProtoExampleModuleNoThree' ).use;
 					this.tmProtoExampleMain = app.taskDescriptions.get( 'tmProtoExampleMain' ).use;
-					this.tmOBJLoader2 = app.taskDescriptions.get( 'tmOBJLoader2' ).use;
-					this.tmOBJLoader2Legacy = app.taskDescriptions.get( 'tmOBJLoader2Legacy' ).use;
+					this.tmOBJLoader2Module = app.taskDescriptions.get( 'tmOBJLoader2' ).use;
+					this.tmOBJLoader2Standard = app.taskDescriptions.get( 'tmOBJLoader2Standard' ).use;
 					this.maxParallelExecutions = app.taskManager.getMaxParallelExecutions();
 					this.overallExecutionCount = app.overallExecutionCount;
 					this.numberOfMeshesToKeep = app.numberOfMeshesToKeep;
@@ -668,13 +692,13 @@
 			let menuDiv = document.getElementById( 'dat' );
 			let gui = new GUI( {
 				autoPlace: false,
-				width: 320
+				width: 400
 			} );
 			menuDiv.appendChild( gui.domElement );
 
 			let taskName0 = 'tmProtoExample';
 			let index = 0;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Legacy + three' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName0 + 'Name' ).name( 'Worker Standard + three' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName0 ).use = value; } );
 
 			let taskName1 = 'tmProtoExampleModule';
@@ -689,17 +713,17 @@
 
 			let taskName3 = 'tmProtoExampleMain';
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName3 ).name( 'Worker Legacy Main' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName3 ).name( 'Worker Standard Main' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName3 ).use = value; } );
 
-			let taskName4 = 'tmOBJLoader2';
+			let taskName4 = 'tmOBJLoader2Module';
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2 Module' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2Parser Module' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName4 ).use = value; } );
 
-			let taskName5 = 'tmOBJLoader2Legacy';
+			let taskName5 = 'tmOBJLoader2Standard';
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName5 ).name( 'OBJLoader2 Legacy' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName5 ).name( 'OBJLoader2Parser Standard' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName5 ).use = value; } );
 
 			index++;
