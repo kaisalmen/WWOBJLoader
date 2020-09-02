@@ -339,7 +339,7 @@ class OBJLoader2Parser {
 		let slashesCount = 0;
 		let word = '';
 		let currentByte = 0;
-		for ( let code, currentByte = 0; currentByte < length; currentByte ++ ) {
+		for ( let code; currentByte < length; currentByte ++ ) {
 
 			code = arrayBufferView[ currentByte ];
 			switch ( code ) {

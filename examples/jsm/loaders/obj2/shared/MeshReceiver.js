@@ -76,8 +76,8 @@ class MeshReceiver {
 	 */
 	buildMeshes ( meshPayload ) {
 
-		let buffers = meshPayload.buffers;
-		let bufferGeometry = new BufferGeometry();
+		const buffers = meshPayload.buffers;
+		const bufferGeometry = new BufferGeometry();
 		if ( buffers.vertices !== undefined && buffers.vertices !== null ) {
 
 			bufferGeometry.setAttribute( 'position', new BufferAttribute( new Float32Array( buffers.vertices ), 3 ) );
@@ -157,11 +157,11 @@ class MeshReceiver {
 
 		}
 
-		let meshes = [];
+		const meshes = [];
 		let mesh;
 		let callbackOnMeshAlterResult;
 		let useOrgMesh = true;
-		let geometryType = meshPayload.params.geometryType ? meshPayload.params.geometryType : 0;
+		const geometryType = meshPayload.params.geometryType ? meshPayload.params.geometryType : 0;
 
 		if ( this.callbacks.onMeshAlter ) {
 
@@ -187,7 +187,7 @@ class MeshReceiver {
 
 			} else if ( callbackOnMeshAlterResult.providesAlteredMeshes() ) {
 
-				for ( let i in callbackOnMeshAlterResult.meshes ) {
+				for ( const i in callbackOnMeshAlterResult.meshes ) {
 
 					meshes.push( callbackOnMeshAlterResult.meshes[ i ] );
 
@@ -227,8 +227,8 @@ class MeshReceiver {
 		}
 		if ( meshes.length > 0 ) {
 
-			let meshNames = [];
-			for ( let i in meshes ) {
+			const meshNames = [];
+			for ( const i in meshes ) {
 
 				mesh = meshes[ i ];
 				meshNames[ i ] = mesh.name;

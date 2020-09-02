@@ -149,7 +149,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	 */
 	load ( content, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
- 		let scope = this;
+ 		const scope = this;
 		function interceptOnLoad( object3d, message ) {
 
 			if ( object3d.name === 'OBJLoader2ParallelDummy' ) {
