@@ -3,7 +3,7 @@
  */
 
 import { MeshMessageStructure } from "../utils/TransferableUtils.js";
-import { TaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
+import { WorkerTaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
 
 
 function init ( context, id, config ) {
@@ -40,4 +40,4 @@ function execute ( context, id, config ) {
 
 }
 
-self.addEventListener( 'message', message => TaskManagerDefaultRouting.comRouting( self, message, null, init, execute ), false );
+self.addEventListener( 'message', message => WorkerTaskManagerDefaultRouting.comRouting( self, message, null, init, execute ), false );

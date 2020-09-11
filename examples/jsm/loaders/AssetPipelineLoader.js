@@ -4,7 +4,7 @@
 
 import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
 import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
-import { ObjectManipulator } from "../taskmanager/utils/TransferableUtils.js";
+import { ObjectManipulator } from "./workerTaskManager/utils/TransferableUtils.js";
 
 
 /**

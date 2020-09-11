@@ -46,5 +46,5 @@ export class MeshMessageStructure {
 export class ObjectManipulator {
     static applyProperties(objToAlter: any, params: any, forceCreation: boolean): void;
 }
-import { Object3D } from "../../../../build/three.module.js";
-import { BufferGeometry } from "../../../../build/three.module.js";
+import { Object3D } from "../../../../../build/three.module.js";
+import { BufferGeometry } from "../../../../../build/three.module.js";

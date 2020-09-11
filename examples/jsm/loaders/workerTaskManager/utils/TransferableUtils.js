@@ -6,7 +6,7 @@
 import {
 	BufferGeometry,
 	Object3D
-} from "../../../../build/three.module.js";
+} from "../../../../../build/three.module.js";
 
 /**
  * Define a fixed structure that is used to ship data in between main and workers.

@@ -1,9 +1,9 @@
 {
   "include": [
-    "examples/jsm/taskmanager/TaskManager.js",
-    "examples/jsm/taskmanager/utils/TransferableUtils.js",
-    "examples/jsm/taskmanager/worker/tmOBJLoader2.js",
-    "examples/jsm/taskmanager/worker/tmDefaultComRouting.js",
+    "examples/jsm/loaders/workerTaskManager/TaskManager.js",
+    "examples/jsm/loaders/workerTaskManager/utils/TransferableUtils.js",
+    "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js",
+    "examples/jsm/loaders/workerTaskManager/worker/tmDefaultComRouting.js",
     "examples/jsm/loaders/OBJLoader2.js",
     "examples/jsm/loaders/OBJLoader2Parallel.js",
     "examples/jsm/loaders/obj2/OBJLoader2Parser.js",

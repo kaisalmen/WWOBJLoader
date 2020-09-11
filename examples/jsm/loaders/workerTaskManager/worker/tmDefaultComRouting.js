@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-const TaskManagerDefaultRouting = {
+const WorkerTaskManagerDefaultRouting = {
 
 	comRouting: function ( context, message, object, initFunction, executeFunction ) {
 
@@ -36,4 +36,4 @@ const TaskManagerDefaultRouting = {
 
 };
 
-export { TaskManagerDefaultRouting }
+export { WorkerTaskManagerDefaultRouting }

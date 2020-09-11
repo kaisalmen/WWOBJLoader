@@ -3,17 +3,17 @@
  * @author Kai Salmen / https://kaisalmen.de
  */
 
-import { FileLoader } from "../../../build/three.module.js";
-import { TaskManagerDefaultRouting } from "./worker/tmDefaultComRouting.js";
+import { FileLoader } from "../../../../build/three.module.js";
+import { WorkerTaskManagerDefaultRouting } from "./worker/tmDefaultComRouting.js";
 
 /**
- * Register one to many tasks type to the TaskManager. Then init and enqueue a worker based execution by passing
- * configuration and buffers. The TaskManager allows to execute a maximum number of executions in parallel.
+ * Register one to many tasks type to the WorkerTaskManager. Then init and enqueue a worker based execution by passing
+ * configuration and buffers. The WorkerTaskManager allows to execute a maximum number of executions in parallel.
  */
-class TaskManager {
+class WorkerTaskManager {
 
     /**
-     * Creates a new TaskManager instance.
+     * Creates a new WorkerTaskManager instance.
      *
      * @param {number} [maxParallelExecutions] How many workers are allowed to be executed in parallel.
      */
@@ -38,7 +38,7 @@ class TaskManager {
      * Set if logging should be verbose
      *
      * @param {boolean} verbose
-     * @return {TaskManager}
+     * @return {WorkerTaskManager}
      */
     setVerbose ( verbose ) {
 
@@ -51,7 +51,7 @@ class TaskManager {
      * Set the maximum number of parallel executions.
      *
      * @param {number} maxParallelExecutions How many workers are allowed to be executed in parallel.
-     * @return {TaskManager}
+     * @return {WorkerTaskManager}
      */
     setMaxParallelExecutions ( maxParallelExecutions ) {
 
@@ -274,7 +274,7 @@ class TaskManager {
 
     /**
      * Destroys all workers and associated resources.
-     * @return {TaskManager}
+     * @return {WorkerTaskManager}
      */
     dispose () {
 
@@ -365,7 +365,7 @@ class WorkerTypeDefinition {
         this.functions.comRouting = comRoutingFunction;
         if ( this.functions.comRouting === undefined || this.functions.comRouting === null ) {
 
-            this.functions.comRouting = TaskManagerDefaultRouting.comRouting;
+            this.functions.comRouting = WorkerTaskManagerDefaultRouting.comRouting;
 
         }
         this.workers.code.push( 'const init = ' + this.functions.init.toString() + ';\n\n' );
@@ -688,7 +688,7 @@ class MockedTaskWorker {
                 scope.onmessage( { data: m } )
             }
         }
-        TaskManagerDefaultRouting.comRouting( self, { data: message }, null, scope.functions.init, scope.functions.execute )
+        WorkerTaskManagerDefaultRouting.comRouting( self, { data: message }, null, scope.functions.init, scope.functions.execute )
 
     }
 
@@ -700,4 +700,4 @@ class MockedTaskWorker {
 }
 
 
-export { TaskManager };
+export { WorkerTaskManager };

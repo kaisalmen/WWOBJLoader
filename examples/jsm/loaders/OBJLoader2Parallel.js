@@ -9,9 +9,9 @@ import { OBJLoader2 } from "./OBJLoader2.js";
 
 // Imports only related to worker (when standard workers (modules aren't supported) are used)
 import { OBJLoader2Parser } from "./obj2/OBJLoader2Parser.js";
-import { TaskManager } from "../taskmanager/TaskManager.js";
-import { ObjectManipulator } from "../taskmanager/utils/TransferableUtils.js";
-import { OBJ2LoaderWorker } from "../taskmanager/worker/tmOBJLoader2.js";
+import { WorkerTaskManager } from "./workerTaskManager/WorkerTaskManager.js";
+import { ObjectManipulator } from "./workerTaskManager/utils/TransferableUtils.js";
+import { OBJ2LoaderWorker } from "./workerTaskManager/worker/tmOBJLoader2.js";
 
 
 /**
@@ -25,8 +25,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	static OBJLOADER2_PARALLEL_VERSION = '4.0.0-dev';
 
-	static DEFAULT_JSM_WORKER_PATH = './jsm/taskmanager/worker/tmOBJLoader2.js';
+	static DEFAULT_JSM_WORKER_PATH = './jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
+	/**
+	 *
+	 * @param {LoadingManager} manager
+	 */
 	constructor( manager ) {
 		super( manager );
 
@@ -35,7 +39,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		this.executeParallel = true;
 
-		this.taskManager = null;
+		this.workerTaskManager = null;
 		this.taskName = 'tmOBJLoader2';
 
 		console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
@@ -55,14 +59,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	}
 
 	/**
-	 * @param taskManager The {@link TaskManager}
-	 * @param [taskName] A specific taskName to allow distinction between legacy and module workers
+	 * @param {WorkerTaskManager} workerTaskManager The {@link WorkerTaskManager}
+	 * @param {string} [taskName] A specific taskName to allow distinction between legacy and module workers
 	 *
 	 * @return {OBJLoader2Parallel}
 	 */
-	setTaskManager ( taskManager, taskName ) {
+	setWorkerTaskManager ( workerTaskManager, taskName ) {
 
-		this.taskManager = taskManager;
+		this.workerTaskManager = workerTaskManager;
 		if ( taskName ) this.taskName = taskName;
 		return this;
 
@@ -108,35 +112,35 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	 */
 	async _buildWorkerCode ( config, buffer ) {
 
-		if ( ! this.taskManager instanceof TaskManager ) {
+		if ( ! this.workerTaskManager instanceof WorkerTaskManager ) {
 
-			if ( this.parser.logging.debug ) console.log( 'Needed to create new TaskManager' );
-			this.taskManager = new TaskManager();
+			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
+			this.workerTaskManager = new WorkerTaskManager();
 
 		}
-		if ( ! this.taskManager.supportsTaskType( this.taskName ) ) {
+		if ( ! this.workerTaskManager.supportsTaskType( this.taskName ) ) {
 
 			if ( this.preferJsmWorker ) {
 
-				this.taskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
+				this.workerTaskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
 
 			} else {
 
 				let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
 				let objectManipulator = ObjectManipulator.toString() + ';\n\n';
-				this.taskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
+				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
 					[ { code: obj2ParserDep }, { code: objectManipulator } ] );
 
 			}
 			if ( buffer ) {
 
 				config.buffer = buffer;
-				await this.taskManager.initTaskType( this.taskName, config, { buffer: buffer } );
+				await this.workerTaskManager.initTaskType( this.taskName, config, { buffer: buffer } );
 
 			}
 			else {
 
-				await this.taskManager.initTaskType( this.taskName, config );
+				await this.workerTaskManager.initTaskType( this.taskName, config );
 
 			}
 
@@ -223,11 +227,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				materials: this.materialHandler.getMaterialsJSON()
 			}
 		};
-		this.taskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )
+		this.workerTaskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )
 			.then( data => {
 				this._onAssetAvailable( data );
 				this.parser.callbacks.onLoad( this.baseObject3d, 'finished' );
-				if ( this.terminateWorkerOnLoad ) this.taskManager.dispose();
+				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
 			} )
 			.catch( e => console.error( e ) )
 

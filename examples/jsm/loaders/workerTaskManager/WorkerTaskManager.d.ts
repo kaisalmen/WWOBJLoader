@@ -1,4 +1,4 @@
-export class TaskManager {
+export class WorkerTaskManager {
     constructor(maxParallelExecutions?: number);
     taskTypes: Map<string, WorkerTypeDefinition>;
     verbose: boolean;
@@ -6,8 +6,8 @@ export class TaskManager {
     actualExecutionCount: number;
     storedExecutions: StoredExecution[];
     teardown: boolean;
-    setVerbose(verbose: boolean): TaskManager;
-    setMaxParallelExecutions(maxParallelExecutions: number): TaskManager;
+    setVerbose(verbose: boolean): WorkerTaskManager;
+    setMaxParallelExecutions(maxParallelExecutions: number): WorkerTaskManager;
     getMaxParallelExecutions(): number;
     supportsTaskType(taskType: string): boolean;
     registerTaskType(taskType: string, initFunction: Function, executeFunction: Function, comRoutingFunction: Function, fallback: boolean, dependencyDescriptions?: any[]): boolean;
@@ -16,7 +16,7 @@ export class TaskManager {
     _wait(milliseconds: any): Promise<any>;
     enqueueForExecution(taskType: string, config: object, assetAvailableFunction: Function, transferables?: any): Promise<any>;
     _depleteExecutions(): Promise<void>;
-    dispose(): TaskManager;
+    dispose(): WorkerTaskManager;
 }
 declare class WorkerTypeDefinition {
     constructor(taskType: string, maximumCount: number, fallback: boolean, verbose?: boolean);

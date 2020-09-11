@@ -2,9 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { OBJLoader2Parser } from "../../loaders/obj2/OBJLoader2Parser.js";
-import { ObjectManipulator } from "../../taskmanager/utils/TransferableUtils.js";
-import { TaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
+import { OBJLoader2Parser } from "../../obj2/OBJLoader2Parser.js";
+import { ObjectManipulator } from "../utils/TransferableUtils.js";
+import { WorkerTaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
 
 const OBJ2LoaderWorker = {
 
@@ -55,6 +55,6 @@ const OBJ2LoaderWorker = {
 
 };
 
-self.addEventListener( 'message', message => TaskManagerDefaultRouting.comRouting( self, message, OBJ2LoaderWorker, 'init', 'execute' ), false );
+self.addEventListener( 'message', message => WorkerTaskManagerDefaultRouting.comRouting( self, message, OBJ2LoaderWorker, 'init', 'execute' ), false );
 
 export { OBJ2LoaderWorker };

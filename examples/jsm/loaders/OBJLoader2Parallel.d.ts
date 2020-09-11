@@ -5,10 +5,10 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     preferJsmWorker: boolean;
     jsmWorkerUrl: URL;
     executeParallel: boolean;
-    taskManager: any;
+    workerTaskManager: WorkerTaskManager;
     taskName: string;
     setExecuteParallel(executeParallel: boolean): OBJLoader2Parallel;
-    setTaskManager(taskManager: any, taskName?: any): OBJLoader2Parallel;
+    setWorkerTaskManager(workerTaskManager: WorkerTaskManager, taskName?: string): OBJLoader2Parallel;
     setJsmWorker(preferJsmWorker: boolean, jsmWorkerUrl: URL): OBJLoader2Parallel;
     setTerminateWorkerOnLoad(terminateWorkerOnLoad: boolean): OBJLoader2Parallel;
     terminateWorkerOnLoad: boolean;
@@ -16,3 +16,4 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     _executeWorkerParse(content: any): void;
 }
 import { OBJLoader2 } from "./OBJLoader2.js";
+import { WorkerTaskManager } from "./workerTaskManager/WorkerTaskManager.js";
