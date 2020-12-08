@@ -1,6 +1,6 @@
 {
   "include": [
-    "examples/jsm/loaders/workerTaskManager/TaskManager.js",
+    "examples/jsm/loaders/workerTaskManager/WorkerTaskManager.js",
     "examples/jsm/loaders/workerTaskManager/utils/TransferableUtils.js",
     "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js",
     "examples/jsm/loaders/workerTaskManager/worker/tmDefaultComRouting.js",
@@ -12,10 +12,15 @@
     "examples/jsm/loaders/obj2/shared/MeshReceiver.js"
   ],
   "compilerOptions": {
+    "target": "ES2015",
+    "module": "es2015",
+    "strict": true,
+    "esModuleInterop": true,
+    "sourceMap": false,
     "allowJs": true,
     "declaration": true,
     "noEmit": false,
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": false,
     "removeComments": true,
     "outDir": "./build"
   }

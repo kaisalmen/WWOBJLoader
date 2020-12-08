@@ -727,7 +727,7 @@
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName5 ).use = value; } );
 
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, 'maxParallelExecutions', 1, 16 ).step( 1 ).name( 'Maximum Parallel Executions' );
+			tmControls.controls[ index ] = gui.add( tmControls, 'maxParallelExecutions', 1, 32 ).step( 1 ).name( 'Maximum Parallel Executions' );
 			tmControls.controls[ index ].onChange( value => { app.workerTaskManager.setMaxParallelExecutions( value ) } );
 
 			index++;
