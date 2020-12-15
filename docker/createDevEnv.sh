@@ -11,6 +11,18 @@ if [[ ! -d ${DIR_BASE}/build ]]; then
   mkdir ${DIR_BASE}/build
 fi
 
+if [[ ! -d ${DIR_BASE}/examples/jsm/controls ]]; then
+    mkdir ${DIR_BASE}/examples/jsm/controls
+fi
+
+if [[ ! -d ${DIR_BASE}/examples/jsm/helpers ]]; then
+    mkdir ${DIR_BASE}/examples/jsm/helpers
+fi
+
+if [[ ! -d ${DIR_BASE}/examples/jsm/libs ]]; then
+    mkdir ${DIR_BASE}/examples/jsm/libs
+fi
+
 echo "Executing npm install"
 ( cd ${DIR_BASE} && npm install )
 
