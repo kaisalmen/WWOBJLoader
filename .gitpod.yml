@@ -2,4 +2,4 @@ image:
   file: ./docker/gitpod.dockerfile
 
 tasks:
-  - init: ./docker/createDevEnv.sh
+  - init: bash ./docker/createDevEnv.sh
