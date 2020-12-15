@@ -1,0 +1,5 @@
+image:
+  file: ./docker/gitpod.dockerfile
+
+tasks:
+  - init: ./docker/createDevEnv.sh

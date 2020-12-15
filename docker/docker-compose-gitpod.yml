@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  obj2dev_gitpod:
+    image: obj2dev:gitpod
+    build:
+      dockerfile: docker/gitpod.dockerfile
+      context: ..
+    ports:
+      - 8085:80
+    volumes:
+      - ../:/workspace/WWOBJLoader/:rw
+    container_name: obj2dev_gitpod

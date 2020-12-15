@@ -9,6 +9,6 @@ services:
     ports:
       - 8085:80
     volumes:
-      - ./:/project/:rw
-    command: ["bash", "/project/docker/runDevEnv.sh"]
+      - ./:/workspace/WWOBJLoader/:rw
+    command: ["bash", "/workspace/WWOBJLoader/docker/runDevEnv.sh"]
     container_name: obj2dev
