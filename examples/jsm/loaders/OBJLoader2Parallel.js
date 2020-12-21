@@ -82,7 +82,8 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		this.preferJsmWorker = preferJsmWorker === true;
 		if ( jsmWorkerUrl === undefined || jsmWorkerUrl === null ) {
-			throw "The url to the jsm worker is not valid. Aborting..."
+
+			throw 'The url to the jsm worker is not valid. Aborting...';
 		}
 		this.jsmWorkerUrl = jsmWorkerUrl;
 		return this;

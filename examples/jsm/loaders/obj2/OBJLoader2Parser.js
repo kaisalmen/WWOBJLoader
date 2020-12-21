@@ -61,7 +61,7 @@ class OBJLoader2Parser {
 			},
 			onLoad: function ( object3d, message ) {
 
-				console.log( "You reached parser default onLoad callback: " + message );
+				console.log( 'You reached parser default onLoad callback: ' + message );
 
 			}
 		};
@@ -621,7 +621,7 @@ class OBJLoader2Parser {
 		let smoothingGroupInt = parseInt( smoothingGroup );
 		if ( isNaN( smoothingGroupInt ) ) {
 
-			smoothingGroupInt = smoothingGroup === "off" ? 0 : 1;
+			smoothingGroupInt = smoothingGroup === 'off' ? 0 : 1;
 
 		}
 

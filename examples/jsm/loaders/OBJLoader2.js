@@ -289,7 +289,7 @@ class OBJLoader2 extends Loader {
 		this.setCallbackOnMeshAlter( onMeshAlter );
 		const fileLoaderOnLoad = function ( content ) {
 
-			scope.parser.callbacks.onLoad( scope.parse( content ), "OBJLoader2#load: Parsing completed" );
+			scope.parser.callbacks.onLoad( scope.parse( content ), 'OBJLoader2#load: Parsing completed' );
 
 		};
 		const fileLoader = new FileLoader( this.manager );
