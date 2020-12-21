@@ -1,9 +1,8 @@
 /**
- * @author Kai Salmen / https://kaisalmen.de
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { MTLLoader } from "../../../../jsm/loaders/MTLLoader.js";
+import { MTLLoader } from '../../../../jsm/loaders/MTLLoader.js';
 
 
 const MtlObjBridge = {
@@ -31,12 +30,14 @@ const MtlObjBridge = {
 	addMaterialsFromMtlLoader: function ( materialCreator ) {
 
 		let newMaterials = {};
+
 		if ( materialCreator instanceof MTLLoader.MaterialCreator ) {
 
 			materialCreator.preload();
 			newMaterials = materialCreator.materials;
 
 		}
+
 		return newMaterials;
 
 	}

@@ -1,5 +1,4 @@
 /**
- * @author Kai Salmen / https://kaisalmen.de
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
@@ -87,8 +86,8 @@ CodeBuilderInstructions.prototype = {
 	 */
 	addLibraryImport: function ( libraryPath ) {
 
-		let libraryUrl = new URL( libraryPath, window.location.href ).href;
-		let code = 'importScripts( "' + libraryUrl + '" );';
+		const libraryUrl = new URL( libraryPath, window.location.href ).href;
+		const code = 'importScripts( "' + libraryUrl + '" );';
 		this.importStatements.push(	code );
 
 	},
@@ -120,13 +119,14 @@ CodeBuilderInstructions.prototype = {
 const WorkerExecutionSupport = function () {
 
 	// check worker support first
-	if ( window.Worker === undefined ) throw "This browser does not support web workers!";
-	if ( window.Blob === undefined ) throw "This browser does not support Blob!";
-	if ( typeof window.URL.createObjectURL !== 'function' ) throw "This browser does not support Object creation from URL!";
+	if ( window.Worker === undefined ) throw 'This browser does not support web workers!';
+	if ( window.Blob === undefined ) throw 'This browser does not support Blob!';
+	if ( typeof window.URL.createObjectURL !== 'function' ) throw 'This browser does not support Object creation from URL!';
 
 	this._reset();
 
 };
+
 WorkerExecutionSupport.WORKER_SUPPORT_VERSION = '3.2.0';
 console.info( 'Using WorkerSupport version: ' + WorkerExecutionSupport.WORKER_SUPPORT_VERSION );
 
@@ -142,12 +142,13 @@ WorkerExecutionSupport.prototype = {
 			debug: false
 		};
 
-		let scope = this;
-		let scopeTerminate = function ( ) {
+		const scope = this;
+		const scopeTerminate = function ( ) {
 
 			scope._terminate();
 
 		};
+
 		this.worker = {
 			native: null,
 			jsmWorker: false,
@@ -213,9 +214,11 @@ WorkerExecutionSupport.prototype = {
 				console.info( 'Worker is terminated immediately as it is not running!' );
 
 			}
+
 			this._terminate();
 
 		}
+
 		return this;
 
 	},
@@ -233,11 +236,13 @@ WorkerExecutionSupport.prototype = {
 			this.worker.callbacks.onAssetAvailable = onAssetAvailable;
 
 		}
+
 		if ( onLoad !== undefined && onLoad !== null ) {
 
 			this.worker.callbacks.onLoad = onLoad;
 
 		}
+
 		this._verifyCallbacks();
 
 	},
@@ -285,13 +290,13 @@ WorkerExecutionSupport.prototype = {
 	_buildWorkerJsm: function ( codeBuilderInstructions ) {
 
 		let jsmSuccess = true;
-		let timeLabel = 'buildWorkerJsm';
-		let workerAvailable = this._buildWorkerCheckPreconditions( true, timeLabel );
+		const timeLabel = 'buildWorkerJsm';
+		const workerAvailable = this._buildWorkerCheckPreconditions( true, timeLabel );
 		if ( ! workerAvailable ) {
 
 			try {
 
-				let worker = new Worker( codeBuilderInstructions.jsmWorkerUrl.href, { type: "module" } );
+				const worker = new Worker( codeBuilderInstructions.jsmWorkerUrl.href, { type: 'module' } );
 				this._configureWorkerCommunication( worker, true, codeBuilderInstructions.defaultGeometryType, timeLabel );
 
 			} catch ( e ) {
@@ -300,7 +305,7 @@ WorkerExecutionSupport.prototype = {
 				// Chrome throws this exception, but Firefox currently does not complain, but can't execute the worker afterwards
 				if ( e instanceof TypeError || e instanceof SyntaxError ) {
 
-					console.error( "Modules are not supported in workers." );
+					console.error( 'Modules are not supported in workers.' );
 
 				}
 
@@ -325,8 +330,8 @@ WorkerExecutionSupport.prototype = {
 	 */
 	_buildWorkerStandard: function ( codeBuilderInstructions ) {
 
-		let timeLabel = 'buildWorkerStandard';
-		let workerAvailable = this._buildWorkerCheckPreconditions( false, timeLabel );
+		const timeLabel = 'buildWorkerStandard';
+		const workerAvailable = this._buildWorkerCheckPreconditions( false, timeLabel );
 		if ( ! workerAvailable ) {
 
 			let concatenateCode = '';
@@ -344,8 +349,8 @@ WorkerExecutionSupport.prototype = {
 			concatenateCode += '\n';
 			concatenateCode += codeBuilderInstructions.getStartCode();
 
-			let blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
-			let worker = new Worker( window.URL.createObjectURL( blob ) );
+			const blob = new Blob( [ concatenateCode ], { type: 'application/javascript' } );
+			const worker = new Worker( window.URL.createObjectURL( blob ) );
 
 			this._configureWorkerCommunication( worker, false, codeBuilderInstructions.defaultGeometryType, timeLabel );
 
@@ -370,6 +375,7 @@ WorkerExecutionSupport.prototype = {
 			}
 
 		}
+
 		return workerAvailable;
 
 	},
@@ -379,12 +385,13 @@ WorkerExecutionSupport.prototype = {
 		this.worker.native = worker;
 		this.worker.jsmWorker = haveJsmWorker;
 
-		let scope = this;
-		let scopedReceiveWorkerMessage = function ( event ) {
+		const scope = this;
+		const scopedReceiveWorkerMessage = function ( event ) {
 
 			scope._receiveWorkerMessage( event );
 
 		};
+
 		this.worker.native.onmessage = scopedReceiveWorkerMessage;
 		this.worker.native.onerror = scopedReceiveWorkerMessage;
 		if ( defaultGeometryType !== undefined && defaultGeometryType !== null ) {
@@ -419,14 +426,15 @@ WorkerExecutionSupport.prototype = {
 	_receiveWorkerMessage: function ( event ) {
 
 		// fast-fail in case of error
-		if ( event.type === "error" ) {
+		if ( event.type === 'error' ) {
 
 			console.error( event );
 			return;
 
 		}
-		let payload = event.data;
-		let workerRunnerName = this.worker.workerRunner.name;
+
+		const payload = event.data;
+		const workerRunnerName = this.worker.workerRunner.name;
 		switch ( payload.cmd ) {
 
 			case 'assetAvailable':
@@ -441,6 +449,7 @@ WorkerExecutionSupport.prototype = {
 					this.worker.callbacks.onLoad( payload.msg );
 
 				}
+
 				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) {
@@ -448,9 +457,11 @@ WorkerExecutionSupport.prototype = {
 						console.info( 'WorkerSupport [' + workerRunnerName + ']: Run is complete. Terminating application on request!' );
 
 					}
+
 					this.worker.callbacks.terminate();
 
 				}
+
 				break;
 
 			case 'error':
@@ -462,6 +473,7 @@ WorkerExecutionSupport.prototype = {
 					this.worker.callbacks.onLoad( payload.msg );
 
 				}
+
 				if ( this.worker.terminateWorkerOnLoad ) {
 
 					if ( this.worker.logging.enabled ) {
@@ -469,9 +481,11 @@ WorkerExecutionSupport.prototype = {
 						console.info( 'WorkerSupport [' + workerRunnerName + ']: Run reported error. Terminating application on request!' );
 
 					}
+
 					this.worker.callbacks.terminate();
 
 				}
+
 				break;
 
 			default:
@@ -516,6 +530,7 @@ WorkerExecutionSupport.prototype = {
 			this.worker.started = true;
 
 		}
+
 		return ready;
 
 	},
@@ -536,11 +551,13 @@ WorkerExecutionSupport.prototype = {
 					transferables.push( this.worker.queuedMessage.payload.data.input );
 
 				}
+
 				if ( this.worker.queuedMessage.transferables.length > 0 ) {
 
 					transferables = transferables.concat( this.worker.queuedMessage.transferables );
 
 				}
+
 				this.worker.native.postMessage( this.worker.queuedMessage.payload, transferables );
 
 			} else {
