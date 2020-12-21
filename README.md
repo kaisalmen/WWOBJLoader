@@ -28,11 +28,11 @@ It will init all files required (build directory and src to get all used three.j
 Nginx configuration is stored here: `docker/nginx.conf`. Adjust according your needs and rebuild the container.
 If you want to update the npm configuration, e.g. change `package.json` then do:
 ```shell script
-docker exec -it obj2dev bash -c "cd /project && npm install"
+docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && npm install"
 ```
 If you want to run something with gulp do for example:
 ```shell script
-docker exec -it obj2dev bash -c "cd /project && gulp set-versions"
+docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && gulp set-versions"
 ```
 
 If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
