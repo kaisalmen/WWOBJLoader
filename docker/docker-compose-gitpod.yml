@@ -7,7 +7,8 @@ services:
       dockerfile: docker/gitpod.dockerfile
       context: ..
     ports:
-      - 8085:80
+      - 8080:80
+      - 8085:8085
     volumes:
       - ../:/workspace/WWOBJLoader/:rw
     container_name: obj2dev_gitpod
