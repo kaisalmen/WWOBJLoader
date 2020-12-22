@@ -3,9 +3,8 @@ image:
 
 ports:
   - port: 8080
+    onOpen: open-browser
 
 tasks:
   - init: bash ./docker/createDevEnv.sh
-  - name: nginx
-    command: >
-      nginx && multitail /var/log/nginx/access.log -I /var/log/nginx/error.log
+    command: nginx && multitail /var/log/nginx/access.log -I /var/log/nginx/error.log
