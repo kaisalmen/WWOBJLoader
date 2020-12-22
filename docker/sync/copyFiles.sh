@@ -17,3 +17,13 @@ cp -fv ${1}/examples/jsm/loaders/workerTaskManager/utils/* ${2}/examples/jsm/loa
 cp -fv ${1}/examples/jsm/loaders/workerTaskManager/worker/* ${2}/examples/jsm/loaders/workerTaskManager/worker/
 
 cp -fv ${1}/examples/models/obj/verify/* ${2}/examples/models/obj/verify/
+cp -fv ${1}/examples/models/obj/male02/male02.obj ${2}/examples/models/obj/male02/
+cp -fv ${1}/examples/models/obj/male02/male02.mtl ${2}/examples/models/obj/male02/
+cp -fv ${1}/examples/models/obj/male02/*.JPG ${2}/examples/models/obj/male02/
+cp -fv ${1}/examples/models/obj/female02/female02.obj ${2}/examples/models/obj/female02/
+cp -fv ${1}/examples/models/obj/female02/female02.mtl ${2}/examples/models/obj/female02/
+cp -fv ${1}/examples/models/obj/female02/*.JPG ${2}/examples/models/obj/female02/
+cp -fv ${1}/examples/models/obj/ninja/*.obj ${2}/examples/models/obj/ninja/
+cp -fv ${1}/examples/models/obj/cerberus/Cerberus.obj ${2}/examples/models/obj/cerberus/Cerberus.obj
+cp -fv ${1}/examples/models/obj/walt/WaltHead.* ${2}/examples/models/obj/walt/
+
