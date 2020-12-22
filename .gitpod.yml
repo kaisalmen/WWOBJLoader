@@ -2,9 +2,11 @@ image:
   file: ./docker/gitpod.dockerfile
 
 ports:
-  - port: 8080
+  - port: 8085
     onOpen: open-browser
 
 tasks:
-  - init: bash ./docker/createDevEnv.sh
+  - name: Terminal
+    init: bash ./docker/createDevEnv.sh
+  - name: nginx
     command: nginx && multitail /var/log/nginx/access.log -I /var/log/nginx/error.log
