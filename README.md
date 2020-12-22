@@ -1,7 +1,8 @@
-OBJLoader2 (sync&async) for three.js
+OBJLoader2 & WorkerTaskManager for three.js
 ===
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/master/LICENSE)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 
 OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker.
 
