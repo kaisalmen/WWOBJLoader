@@ -52,7 +52,6 @@
     "gulp-decompress": "^3.0.0",
     "gulp-jsdoc3": "^3.0.0",
     "gulp-remote-src": "^0.4.4",
-    "gulp-replace": "^1.0.0",
-    "npm": "^7.3.0"
+    "gulp-replace": "^1.0.0"
   }
 }
