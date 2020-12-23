@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-RUN apt update && apt upgrade -y && apt install -y curl nginx
+RUN apt update && apt upgrade -y && apt install -y curl nginx && mkdir /var/run/nginx
 
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt install -y nodejs

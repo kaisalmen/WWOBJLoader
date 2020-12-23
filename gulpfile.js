@@ -22,22 +22,15 @@ gulp.task( 'set-versions', function ( done ) {
 		[ 'examples/jsm/loaders/OBJLoader2.js' ]
 	)
 	.pipe( replace( /OBJLoader2\.OBJLOADER2_VERSION\s*=.*/g,
-		"OBJLoader2.OBJLOADER2_VERSION = '"+ packageContent.versions.obj_loader2 + "';" ) )
+		"OBJLoader2.OBJLOADER2_VERSION = '"+ packageContent.version + "';" ) )
 	.pipe( gulp.dest( "examples/jsm/loaders" ) );
 
 	gulp.src(
 		[ 'examples/jsm/loaders/OBJLoader2Parallel.js' ]
 	)
 	.pipe( replace( /OBJLoader2Parallel\.OBJLOADER2_PARALLEL_VERSION\s*=.*/g,
-		"OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '"+ packageContent.versions.obj_loader2_parallel + "';" ) )
+		"OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '"+ packageContent.version + "';" ) )
 	.pipe( gulp.dest( "examples/jsm/loaders" ) );
-
-	gulp.src(
-		[ 'examples/jsm/loaders/obj2/worker/main/WorkerExecutionSupport.js']
-	)
-	.pipe( replace( /WorkerExecutionSupport\.WORKER_SUPPORT_VERSION\s*=.*/g,
-		"WorkerExecutionSupport.WORKER_SUPPORT_VERSION = '"+ packageContent.versions.worker_execution_support + "';" ) )
-	.pipe( gulp.dest( "examples/jsm/loaders/obj2/worker/main" ) );
 	done();
 } );
 
@@ -66,60 +59,7 @@ gulp.task( 'create-docs', function ( done, cb ) {
 } );
 
 
-gulp.task( 'dl-female02', function( done ) {
-	log( 'Downloading female02:' );
-	return remoteSrc(
-		[ 'female02.obj', 'female02.mtl', 'female02_vertex_colors.obj', '01_-_Default1noCulling.JPG', '02_-_Default1noCulling.JPG', '03_-_Default1noCulling.JPG' ],	{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/female02/'
-		}
-	).pipe( gulp.dest( './resource/obj/female02/' ) );
-	done();
-});
-
-gulp.task( 'dl-male02', gulp.series( 'dl-female02', function( done ) {
-	log( 'Downloading male02:' );
-	return remoteSrc(
-		[ 'male02.obj', 'male02.mtl', '01_-_Default1noCulling.JPG', 'male-02-1noCulling.JPG', 'orig_02_-_Defaul1noCulling.JPG' ], {
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/male02/'
-		}
-	).pipe( gulp.dest( './resource/obj/male02/' ) );
-	done();
-} ) );
-
-gulp.task( 'dl-cerberus', gulp.series( 'dl-male02', function( done ) {
-	log( 'Downloading cerberus:' );
-	return remoteSrc(
-		[ 'Cerberus.obj' ],	{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/cerberus/'
-		}
-	)
-	.pipe( gulp.dest( './resource/obj/cerberus/' ) );
-	done();
-} ) );
-
-gulp.task( 'dl-ninja', gulp.series( 'dl-cerberus', function( done ) {
-	log( 'Downloading ninja:' );
-	return remoteSrc(
-		[ 'ninjaHead_Low.obj' ], {
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/ninja/'
-		}
-	)
-	.pipe( gulp.dest( './resource/obj/ninja/' ) );
-	done();
-} ) );
-
-gulp.task( 'dl-walt', gulp.series( 'dl-ninja', function( done ) {
-	log( 'Downloading walt:' );
-	return remoteSrc(
-		[ 'WaltHead.obj', 'WaltHead.mtl' ],	{
-			base: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/obj/walt/'
-		}
-	)
-	.pipe( gulp.dest( './resource/obj/walt/' ) );
-	done();
-} ) );
-
-gulp.task( 'dl-ptv1', gulp.series( 'dl-walt', function( done ) {
+gulp.task( 'dl-ptv1', function( done ) {
 	log( 'Downloading model PTV1:' );
 	return remoteSrc(
 		[ 'PTV1.zip' ],	{
@@ -129,7 +69,7 @@ gulp.task( 'dl-ptv1', gulp.series( 'dl-walt', function( done ) {
 	.pipe( decompress() )
 	.pipe( gulp.dest( './resource/obj/PTV1/' ) );
 	done();
-} ) );
+} );
 
 gulp.task( 'dl-sink', gulp.series( 'dl-ptv1', function( done ) {
 	log( 'Downloading model Sink created by Cornelius Dämmrich (https://corneliusdammrich.com/):' );
