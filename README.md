@@ -3,44 +3,57 @@ OBJLoader2 & WorkerTaskManager for three.js
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 
-***IMPORTANT: This README is outdated and in is the process of being updated.***
+***IMPORTANT: This README is in the process of being updated.***
 
 `OBJLoader2` is a loader for the `OBJ` file format included in [three.js](https://threejs.org). It is an alternative to `OBJLoader` offering more options. The parser `OBJLoader2Parser` is independent and can either be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
 
 New versions of `OBJLoader2` and `OBJLoader2Parallel` are now released via  three.js. I currently no longer plan to release them independently via npm.
 
-## **Main branches:**
+## Changelog
+Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
+
+# Development
+
+## Main Branches
 
 Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
 <br>
 Last stable release available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
-
-## Changelog
-Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
-
 
 ## Repository structure
 The directory structure now mimics the three.js directory structure to easy porting of changes:
 - **examples**: Contains Tests/HTML examples
 - **examples/jsm**: Contains the sources for the loaders
 - **examples/models**: Contains OBJs, MTLs and textures
+  
+Use the [index.html](./index.html) to easily access the different examples.
 
-## Prerequisites
-If you have docker & docker-compose available there is no need to install any npm related software.
-From the root of the repo just do:
+## Development Environments
+
+### Gitpod
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader) 
+
+The easiest way to get started is simple by using gitpod!
+
+### Local Container
+
+If you have docker & docker-compose available there is no need to install any software stacks (node, npm, gulp, etc.).
+From the root of the repo just invoke the following command:
 ```shell script
 docker-compose up -d --build
 ```
-It will init all files required (build directory and src to get all used three.js code working properly) and start a [local http server on port 8085](http://localhost:8085).
-Nginx configuration is stored here: `docker/nginx.conf`. Adjust according your needs and rebuild the container.
+It init perform initialisation and put all required files in place and start a [local nginx http server on port 8085](http://localhost:8085).
+All local build environment configuration configuration is stored in the `docker` folder. A
 If you want to update the npm configuration, e.g. change `package.json` then do:
+
+
+Bash into the running container to invoke any task.
 ```shell script
-docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && npm install"
+docker exec -it obj2dev bash
 ```
-If you want to run something with gulp do for example:
-```shell script
-docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && gulp set-versions"
-```
+
+### Local System
 
 If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
 After you have cloned this repository locally and have npm and gulp set-up, please run:<br>
@@ -48,20 +61,19 @@ After you have cloned this repository locally and have npm and gulp set-up, plea
 npm install
 ```
 
-## Build
-
 ### Docs
 From the project's root run `gulp` to create The documentation in directory **build/docs** and set the versions. No more bundling is performed.
  
 ### Models and resources
-Use gulp to download missing resources (OBJ, MTL files and textures):
+Use the following script to  download missing resources (OBJ, MTL files and textures):
 ```shell script
 gulp get-resources
 ```
 
 
 ## Implementation Overview
-***NOT YET UPDATED!***
+
+***OUTDATED: WILL BE UPDATED SOON!***
  
 ### Features
 `OBJLoader2` has all OBJ parsing capabilities of the existing `OBJLoader` and in addition to worker-processing it features indexed rendering including vertex reduction. Please see the following list of features:
@@ -76,18 +88,9 @@ gulp get-resources
 - Support for points and lines was added (since V2.3.0) 
 - New mesh detection relies 'g' occurrence or 'f', 'l' or 'p' type change (since V2.3.0). This allows mutiple mesh definitions within one group.
 - Negative face indices are supported (issue #28)
+- `WorkerExecutionSupport` offers utility functions used to serialize existing code into strings that are used to build the web worker code. Any loader that uses it must provide a function that builds the parser code (for example see `buildCode` inside `OBJLoader2.parseAsync`). `WorkerSupport` provides wrapper code to create the web worker and to organize communication with it. Configuration of the Parser inside the worker is handled by a configuration object that configures the parser identical to synchronous usage.
 
 
-### Web Worker Support
-***NOT YET UPDATED!*** `WorkerExecutionSupport` offers utility functions used to serialize existing code into strings that are used to build the web worker code. Any loader that uses it must provide a function that builds the parser code (for example see `buildCode` inside `OBJLoader2.parseAsync`). `WorkerSupport` provides wrapper code to create the web worker and to organize communication with it. Configuration of the Parser inside the worker is handled by a configuration object that configures the parser identical to synchronous usage.
-
-## Examples:
-***NOT YET UPDATED!***
-[OBJLoader2 basic usage](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
-[OBJLoader2 usage options](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
-[OBJLoader2 Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
-
-
-Have fun!
+Happy coding!
 
 Kai
