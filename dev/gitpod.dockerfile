@@ -2,4 +2,4 @@ FROM gitpod/workspace-full
 
 RUN npm install -g gulp-cli
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY dev/nginx.conf /etc/nginx/nginx.conf

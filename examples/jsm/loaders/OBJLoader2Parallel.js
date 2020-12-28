@@ -23,7 +23,7 @@ import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
  */
 class OBJLoader2Parallel extends OBJLoader2 {
 
-	static OBJLOADER2_PARALLEL_VERSION = '4.0.0-dev';
+	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
 	static DEFAULT_JSM_WORKER_PATH = './jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
@@ -32,17 +32,13 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	 * @param {LoadingManager} manager
 	 */
 	constructor( manager ) {
-		super( manager );
 
+		super( manager );
+		this.executeParallel = true;
 		this.preferJsmWorker = false;
 		this.jsmWorkerUrl = null;
-
-		this.executeParallel = true;
-
 		this.workerTaskManager = null;
 		this.taskName = 'tmOBJLoader2';
-
-		console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 	}
 
 	/**
@@ -185,6 +181,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		if ( this.executeParallel ) {
 
+			if ( this.parser.logging.enabled ) {
+
+				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
+
+			}
 			let config = {
 				logging: {
 					enabled: this.parser.logging.enabled,

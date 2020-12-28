@@ -8,4 +8,4 @@ RUN npm install -g gulp-cli
 
 RUN apt autoremove
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY dev/nginx.conf /etc/nginx/nginx.conf

@@ -24,8 +24,8 @@ class OBJLoader2 extends Loader {
 	static OBJLOADER2_VERSION = '4.0.0-dev';
 
 	constructor ( manager ) {
-		super( manager );
 
+		super( manager );
 		this.parser = new OBJLoader2Parser();
 
 		this.modelName = '';
@@ -42,8 +42,6 @@ class OBJLoader2 extends Loader {
 
 		};
 		this.parser.setCallbackOnAssetAvailable( defaultOnAssetAvailable );
-
-		console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
 
 	}
 
@@ -307,6 +305,11 @@ class OBJLoader2 extends Loader {
 	 */
 	parse ( content ) {
 
+		if ( this.parser.logging.enabled ) {
+
+			console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
+
+		}
 		// fast-fail in case of illegal data
 		if ( content === null || content === undefined ) {
 

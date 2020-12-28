@@ -34,21 +34,19 @@ Use the [index.html](./index.html) to easily access the different examples.
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader) 
 
-The easiest way to get started is simple by using gitpod!
+The easiest way to get started is simple by using gitpod! It offers all the possibilities the local environments do.
 
 ### Local Container
 
-If you have docker & docker-compose available there is no need to install any software stacks (node, npm, gulp, etc.).
+If you have docker & docker-compose available there is no need to install any software stacks (git, node, npm, gulp, etc.).
 From the root of the repo just invoke the following command:
 ```shell script
 docker-compose up -d --build
 ```
-It init perform initialisation and put all required files in place and start a [local nginx http server on port 8085](http://localhost:8085).
-All local build environment configuration configuration is stored in the `docker` folder. A
-If you want to update the npm configuration, e.g. change `package.json` then do:
+When the container starts it always performs the initialisation task which puts all required files in place and then launches a [local nginx http server on port 8085](http://localhost:8085).
+All local build environment configuration is stored in the `dev` folder.
 
-
-Bash into the running container to invoke any task.
+Bash into the running container for any manual task or script you want to run.
 ```shell script
 docker exec -it obj2dev bash
 ```
@@ -62,12 +60,12 @@ npm install
 ```
 
 ### Docs
-From the project's root run `gulp` to create The documentation in directory **build/docs** and set the versions. No more bundling is performed.
+From the project's root run `gulp` to create The documentation in directory **build/docs**.
  
-### Models and resources
-Use the following script to  download missing resources (OBJ, MTL files and textures):
+### Additional models and resources
+Use the following script to download missing resources (OBJ, MTL files and textures):
 ```shell script
-gulp get-resources
+bash dev/models/retrieveExtras.sh
 ```
 
 
