@@ -3,22 +3,20 @@ OBJLoader2 & WorkerTaskManager for three.js
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 
+***IMPORTANT: This README is outdated and in is the process of being updated.***
+
+`OBJLoader2` is a loader for the `OBJ` file format included in [three.js](https://threejs.org). It is an alternative to `OBJLoader` offering more options. The parser `OBJLoader2Parser` is independent and can either be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
+
+New versions of `OBJLoader2` and `OBJLoader2Parallel` are now released via  three.js. I currently no longer plan to release them independently via npm.
+
 ## **Main branches:**
 
 Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
 <br>
 Last stable release available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
 
-***IMPORTANT: This README is outdated and will be fully updated soon.***
-
-
-OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker.
-
+## Changelog
 Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
-
-
-
-From now on I will no longer release `OBJLoader2` and `OBJLoader2Parallel` and sub-sequent features on npm. Extensions&Updates will be made available via three.js monthly release.
 
 
 ## Repository structure

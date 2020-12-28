@@ -1,6 +1,9 @@
 # Changelog
 
-## 3.1.3-dev
+## 4.0.0-dev
+- Introduction of `WorkerTaskManager`
+
+## 3.2.0
 - Changed structure of the repository to mimic three.js layout
 - Fixes #18335 CodeSerializer works with uglified code
 - All multiple files loading examples now use `AssetPipelineLoader` prototype.
