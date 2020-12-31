@@ -1,17 +1,17 @@
 export class OBJLoader2Parallel extends OBJLoader2 {
     static OBJLOADER2_PARALLEL_VERSION: string;
     static DEFAULT_JSM_WORKER_PATH: string;
-    constructor(manager: any);
-    preferJsmWorker: boolean;
-    jsmWorkerUrl: URL;
+    constructor(manager?: any);
     executeParallel: boolean;
-    workerTaskManager: WorkerTaskManager;
+    preferJsmWorker: boolean;
+    jsmWorkerUrl: URL | null;
+    workerTaskManager: WorkerTaskManager | null;
     taskName: string;
     setExecuteParallel(executeParallel: boolean): OBJLoader2Parallel;
-    setWorkerTaskManager(workerTaskManager: WorkerTaskManager, taskName?: string): OBJLoader2Parallel;
+    setWorkerTaskManager(workerTaskManager: WorkerTaskManager, taskName?: string | undefined): OBJLoader2Parallel;
     setJsmWorker(preferJsmWorker: boolean, jsmWorkerUrl: URL): OBJLoader2Parallel;
     setTerminateWorkerOnLoad(terminateWorkerOnLoad: boolean): OBJLoader2Parallel;
-    terminateWorkerOnLoad: boolean;
+    terminateWorkerOnLoad: boolean | undefined;
     private _buildWorkerCode;
     _executeWorkerParse(content: any): void;
 }

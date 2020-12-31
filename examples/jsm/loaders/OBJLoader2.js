@@ -23,6 +23,10 @@ class OBJLoader2 extends Loader {
 
 	static OBJLOADER2_VERSION = '4.0.0-dev';
 
+	/**
+	 *
+	 * @param {LoadingManager} [manager]
+	 */
 	constructor ( manager ) {
 
 		super( manager );

@@ -1,6 +1,6 @@
 export class OBJLoader2 extends Loader {
     static OBJLOADER2_VERSION: string;
-    constructor(manager: any);
+    constructor(manager?: any);
     parser: OBJLoader2Parser;
     modelName: string;
     baseObject3d: Object3D;
@@ -13,14 +13,14 @@ export class OBJLoader2 extends Loader {
     setDisregardNormals(disregardNormals: any): OBJLoader2;
     setModelName(modelName: string): OBJLoader2;
     setBaseObject3d(baseObject3d: Object3D): OBJLoader2;
-    addMaterials(materials: any, overrideExisting: any): OBJLoader2;
+    addMaterials(materials: Object, overrideExisting: any): OBJLoader2;
     setCallbackOnAssetAvailable(onAssetAvailable: any): OBJLoader2;
     setCallbackOnProgress(onProgress: any): OBJLoader2;
     setCallbackOnError(onError: any): OBJLoader2;
     setCallbackOnLoad(onLoad: any): OBJLoader2;
-    setCallbackOnMeshAlter(onMeshAlter?: Function): OBJLoader2;
-    setCallbackOnLoadMaterials(onLoadMaterials?: Function): OBJLoader2;
-    load(url: string, onLoad: Function, onFileLoadProgress?: Function, onError?: Function, onMeshAlter?: Function): void;
+    setCallbackOnMeshAlter(onMeshAlter?: Function | undefined): OBJLoader2;
+    setCallbackOnLoadMaterials(onLoadMaterials?: Function | undefined): OBJLoader2;
+    load(url: string, onLoad: Function, onFileLoadProgress?: Function | undefined, onError?: Function | undefined, onMeshAlter?: Function | undefined): void;
     parse(content: any | string): Object3D;
     _onAssetAvailable(payload: any): void;
 }

@@ -29,7 +29,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	/**
 	 *
-	 * @param {LoadingManager} manager
+	 * @param {LoadingManager} [manager]
 	 */
 	constructor( manager ) {
 
