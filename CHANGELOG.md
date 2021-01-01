@@ -1,5 +1,7 @@
 # Changelog
 
+***IMPORTANT: This CHANGELOG is in the process of being updated.***
+
 ## 4.0.0-dev
 - Introduction of `WorkerTaskManager`
 
