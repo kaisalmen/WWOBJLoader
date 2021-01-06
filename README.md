@@ -23,7 +23,7 @@ The directory structure now mimics the three.js directory structure to easy port
 - **examples**: Contains Tests/HTML examples
 - **examples/jsm**: Contains the sources for the loaders
 - **examples/models**: Contains OBJs, MTLs and textures
-  
+
 Use the [index.html](./index.html) to easily access the different examples.
 
 ## Development Environments

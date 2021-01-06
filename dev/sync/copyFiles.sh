@@ -26,4 +26,3 @@ cp -fv ${1}/examples/models/obj/female02/*.JPG ${2}/examples/models/obj/female02
 cp -fv ${1}/examples/models/obj/ninja/*.obj ${2}/examples/models/obj/ninja/
 cp -fv ${1}/examples/models/obj/cerberus/Cerberus.obj ${2}/examples/models/obj/cerberus/Cerberus.obj
 cp -fv ${1}/examples/models/obj/walt/WaltHead.* ${2}/examples/models/obj/walt/
-

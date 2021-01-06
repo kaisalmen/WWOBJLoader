@@ -9,3 +9,5 @@ RUN npm install -g gulp-cli
 RUN apt autoremove
 
 COPY dev/nginx.conf /etc/nginx/nginx.conf
+
+WORKDIR /workspace/WWOBJLoader
