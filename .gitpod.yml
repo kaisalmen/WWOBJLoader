@@ -1,5 +1,5 @@
 image:
-  file: ./docker/gitpod.dockerfile
+  file: ./dev/gitpod.dockerfile
 
 ports:
   - port: 8085
@@ -7,6 +7,6 @@ ports:
 
 tasks:
   - name: Terminal
-    init: bash ./docker/createDevEnv.sh
+    init: bash ./dev/createDevEnv.sh
   - name: nginx
     command: nginx && multitail /var/log/nginx/access.log -I /var/log/nginx/error.log

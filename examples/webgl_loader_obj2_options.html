@@ -5,45 +5,16 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
-		<style>
-			#glFullscreen {
-				width: 100%;
-				height: 100vh;
-				min-width: 640px;
-				min-height: 360px;
-				position: relative;
-				overflow: hidden;
-				z-index: 0;
-			}
-			#example {
-				width: 100%;
-				height: 100%;
-				top: 0;
-				left: 0;
-				background-color: #000000;
-			}
-			#feedback {
-				color: darkorange;
-			}
-			#dat {
-				user-select: none;
-				position: absolute;
-				left: 0;
-				top: 0;
-				z-Index: 200;
-			}
-		</style>
-
 	</head>
 
 	<body>
 		<div id="glFullscreen">
-			<canvas id="example"></canvas>
+			<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
 		</div>
-		<div id="dat" class="dg ac"></div>
+		<div id="dat" style="user-select: none; position: absolute; left: 0; top: 0; z-Index: 200;"></div>
 		<div id="info">
 			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 usage options<br>Use module workers with Chromium based browser (80+)
-			<div id="feedback"></div>
+			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
 		<script type="module">
@@ -85,6 +56,12 @@
 				this.flatShading = false;
 				this.doubleSide = false;
 				this.useJsmWorker = false;
+				this.useIndices = false;
+				this.materialPerSmoothingGroup = false;
+				this.useOAsMesh = false;
+				this.disregardNormals = false;
+				this.regularLogging = false;
+				this.debugLogging = false;
 				this.loadCount = 6;
 
 				this.cube = null;
@@ -143,7 +120,12 @@
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
 					const objLoader2 = new OBJLoader2()
-						.setModelName( modelName );
+						.setModelName( modelName )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
 					function onLoadMtl( mtlParseResult ) {
@@ -201,6 +183,11 @@
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( modelName )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging )
 						.setCallbackOnLoad( callbackOnLoad )
 						.addMaterials( materials, true );
 
@@ -224,7 +211,11 @@
 
 					const objLoader2 = new OBJLoader2()
 						.setModelName( modelName )
-						.setUseIndices( true );
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
 					function callbackOnLoad( object3d, message ) {
@@ -266,7 +257,12 @@
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( modelName )
-						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) );
+						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
 					function callbackOnLoad( object3d, message ) {
@@ -300,7 +296,12 @@
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( local.name )
-						.setExecuteParallel( false );
+						.setExecuteParallel( false )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
 					function callbackOnLoad( object3d, message ) {
@@ -325,6 +326,11 @@
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( local.name )
 						.setJsmWorker( this.useJsmWorker, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging )
 						.setBaseObject3d( local );
 
 					// Configure WorkerExecutionSupport to not disregard worker after execution
@@ -526,6 +532,12 @@
 				flatShading: app.flatShading,
 				doubleSide: app.doubleSide,
 				useJsmWorker: app.useJsmWorker,
+				useIndices: app.useIndices,
+				materialPerSmoothingGroup: app.materialPerSmoothingGroup,
+				useOAsMesh: app.useOAsMesh,
+				disregardNormals: app.disregardNormals,
+				regularLogging: app.regularLogging,
+				debugLogging: app.debugLogging,
 				blockEvent: function ( event ) {
 
 					event.stopPropagation();
@@ -536,6 +548,13 @@
 					elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
 					elementHandle.domElement.parentElement.style.pointerEvents = 'none';
 					elementHandle.domElement.parentElement.style.opacity = 0.5;
+
+				},
+				enableElement: function ( elementHandle ) {
+
+					elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
+					elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
+					elementHandle.domElement.parentElement.style.opacity = 1.0;
 
 				},
 				executeLoading: function () {
@@ -552,6 +571,74 @@
 				width: 320
 			} );
 			menuDiv.appendChild( gui.domElement );
+
+			const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
+			const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
+			controlJsmWorker.onChange( function ( value ) {
+
+				console.log( 'Setting useJsmWorker to: ' + value );
+				app.useJsmWorker = value;
+
+			} );
+
+			const folderObjLoader2ParserOptions = gui.addFolder( 'OBJLoader2Parser Options' );
+			const controlUseIndices = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useIndices' ).name( 'Use Indices' );
+			controlUseIndices.onChange( function ( value ) {
+
+				console.log( 'Setting useIndices to: ' + value );
+				app.useIndices = value;
+
+			} );
+			const controlMaterialPerSmoothingGroup = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'materialPerSmoothingGroup' ).name( 'Use material per SG' );
+			controlMaterialPerSmoothingGroup.onChange( function ( value ) {
+
+				console.log( 'Setting materialPerSmoothingGroup to: ' + value );
+				app.materialPerSmoothingGroup = value;
+
+			} );
+			const controlUseOAsMesh = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useOAsMesh' ).name( 'Use useOAsMesh' );
+			controlUseOAsMesh.onChange( function ( value ) {
+
+				console.log( 'Setting useOAsMesh to: ' + value );
+				app.useOAsMesh = value;
+
+			} );
+			const controlDisregardNormals = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'disregardNormals' ).name( 'Use disregardNormals' );
+			controlDisregardNormals.onChange( function ( value ) {
+
+				console.log( 'Setting disregardNormals to: ' + value );
+				app.disregardNormals = value;
+
+			} );
+
+			const folderLoggingOptions = gui.addFolder( 'Logging' );
+			const controlRegularLogging = folderLoggingOptions.add( wwObjLoader2Control, 'regularLogging' ).name( 'Enable logging' );
+			const controlDebugLogging = folderLoggingOptions.add( wwObjLoader2Control, 'debugLogging' ).name( 'Enable debug logging' );
+
+			controlRegularLogging.onChange( value => {
+				console.log( 'Setting regularLogging to: ' + value );
+				app.regularLogging = value;
+				if ( ! app.regularLogging ) {
+
+					wwObjLoader2Control.disableElement( controlDebugLogging );
+
+				} else {
+
+					wwObjLoader2Control.enableElement( controlDebugLogging );
+
+				}
+			} );
+			controlDebugLogging.onChange( value => {
+				console.log( 'Setting debugLogging to: ' + value );
+				app.debugLogging = value;
+				if ( ! app.regularLogging ) {
+
+					app.regularLogging = app.debugLogging;
+					controlRegularLogging.setValue( app.debugLogging )
+
+				}
+			} );
+			wwObjLoader2Control.disableElement( controlDebugLogging );
 
 			const folderRenderingOptions = gui.addFolder( 'Rendering Options' );
 			const controlFlat = folderRenderingOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
@@ -570,21 +657,15 @@
 
 			} );
 
-			const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
-			const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
-			controlJsmWorker.onChange( function ( value ) {
-
-				console.log( 'Setting useJsmWorker to: ' + value );
-				app.useJsmWorker = value;
-
-			} );
 			const folderExecution = gui.addFolder( 'Execution' );
 			const handleExecuteLoading = folderExecution.add( wwObjLoader2Control, 'executeLoading' ).name( 'Run' );
 			handleExecuteLoading.domElement.id = 'startButton';
-			folderRenderingOptions.open();
-			folderObjLoader2ParallelOptions.open();
-			folderExecution.open();
 
+			folderObjLoader2ParallelOptions.open();
+			folderObjLoader2ParserOptions.open();
+			folderLoggingOptions.open();
+			folderRenderingOptions.open();
+			folderExecution.open();
 
 			// init three.js example application
 			function resizeWindow() {

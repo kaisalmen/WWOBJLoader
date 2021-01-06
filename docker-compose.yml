@@ -4,11 +4,11 @@ services:
   obj2dev:
     image: obj2dev
     build:
-      dockerfile: docker/Dockerfile
+      dockerfile: dev/Dockerfile
       context: .
     ports:
       - 8085:8085
     volumes:
       - ./:/workspace/WWOBJLoader/:rw
-    command: ["bash", "/workspace/WWOBJLoader/docker/runDevEnv.sh"]
+    command: ["bash", "/workspace/WWOBJLoader/dev/runDevEnv.sh"]
     container_name: obj2dev

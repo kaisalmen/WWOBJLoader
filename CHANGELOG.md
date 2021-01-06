@@ -1,6 +1,9 @@
 # Changelog
 
-## 3.1.3-dev
+## 3.2.1-dev
+- Updated Example `webgl_loader_obj2_options.html`: Expose parser options and logging configuration in UI
+
+## 3.2.0
 - Changed structure of the repository to mimic three.js layout
 - Fixes #18335 CodeSerializer works with uglified code
 - All multiple files loading examples now use `AssetPipelineLoader` prototype.

@@ -5,47 +5,13 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
-		<style>
-			#glFullscreen {
-				width: 100%;
-				height: 100vh;
-				min-width: 640px;
-				min-height: 360px;
-				position: relative;
-				overflow: hidden;
-				z-index: 0;
-			}
-			#example {
-				width: 100%;
-				height: 100%;
-				top: 0;
-				left: 0;
-				background-color: #000000;
-			}
-			#feedback {
-				color: darkorange;
-			}
-			#dat {
-				user-select: none;
-				position: absolute;
-				left: 0;
-				top: 0;
-				z-Index: 200;
-			}
-		</style>
-
 	</head>
 
 	<body>
-		<div id="glFullscreen">
-			<canvas id="example"></canvas>
-		</div>
-		<div id="dat">
-
-		</div>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
 		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 direct loader test
-			<div id="feedback"></div>
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - OBJLoader2 basic usage
+			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
 		<script type="module">
@@ -66,7 +32,6 @@
 				this.renderer = null;
 				this.canvas = elementToBindTo;
 				this.aspectRatio = 1;
-				this.recalcAspectRatio();
 
 				this.scene = null;
 				this.cameraDefaults = {
@@ -98,6 +63,7 @@
 
 					this.scene = new THREE.Scene();
 
+					this.recalcAspectRatio();
 					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
 					this.resetCamera();
 					this.controls = new TrackballControls( this.camera, this.renderer.domElement );

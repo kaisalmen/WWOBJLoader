@@ -41,7 +41,6 @@ const OBJLoader2Parallel = function ( manager ) {
 };
 
 OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION = '3.2.0';
-console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH = './jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js';
 
 OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototype ), {
@@ -162,6 +161,12 @@ OBJLoader2Parallel.prototype = Object.assign( Object.create( OBJLoader2.prototyp
 	parse: function ( content ) {
 
 		if ( this.executeParallel ) {
+
+			if ( this.parser.logging.enabled ) {
+
+				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
+
+			}
 
 			if ( this.parser.callbacks.onLoad === this.parser._onLoad ) {
 

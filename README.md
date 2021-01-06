@@ -1,24 +1,23 @@
-OBJLoader2 (sync&async) for three.js
+OBJLoader2 and OBJLoader2Parallel for three.js
 ===
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader/tree/stable)
 
-## **Main branches:**
+`OBJLoader2` is a loader for the `OBJ` file format included in [three.js](https://threejs.org). It is an alternative to `OBJLoader` offering more options. The parser `OBJLoader2Parser` is independent and can either be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
+
+New versions of `OBJLoader2` and `OBJLoader2Parallel` are now released via  three.js. I currently no longer plan to release them independently via npm.
+
+## Changelog
+Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
+
+# Development
+
+## Main Branches
 
 Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
 <br>
 Last stable release available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
-
-***IMPORTANT: This README is outdated and will be fully updated soon.***
-
-
-OBJLoader2 is a new loader for the OBJ file format that is additionally executable within a web worker.
-
-Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
-
-From now on I will no longer release `OBJLoader2` and `OBJLoader2Parallel` and sub-sequent features on npm. Extensions&Updates will be made available via three.js monthly release.
-
 
 ## Repository structure
 The directory structure now mimics the three.js directory structure to easy porting of changes:
@@ -26,22 +25,32 @@ The directory structure now mimics the three.js directory structure to easy port
 - **examples/jsm**: Contains the sources for the loaders
 - **examples/models**: Contains OBJs, MTLs and textures
 
-## Prerequisites
-If you have docker & docker-compose available there is no need to install any npm related software.
-From the root of the repo just do:
+Use the [index.html](./index.html) to easily access the different examples.
+
+## Development Environments
+
+### Gitpod
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader/tree/stable) 
+
+The easiest way to get started is simple by using gitpod! It offers all the possibilities the local environments do.
+
+### Local Container
+
+If you have docker & docker-compose available there is no need to install any software stacks (git, node, npm, gulp, etc.).
+From the root of the repo just invoke the following command:
 ```shell script
 docker-compose up -d --build
 ```
-It will init all files required (build directory and src to get all used three.js code working properly) and start a [local http server on port 8085](http://localhost:8085).
-Nginx configuration is stored here: `docker/nginx.conf`. Adjust according your needs and rebuild the container.
-If you want to update the npm configuration, e.g. change `package.json` then do:
+When the container starts it always performs the initialisation task which puts all required files in place and then launches a [local nginx http server on port 8085](http://localhost:8085).
+All local build environment configuration is stored in the `dev` folder.
+
+Bash into the running container for any manual task or script you want to run.
 ```shell script
-docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && npm install"
+docker exec -it obj2dev bash
 ```
-If you want to run something with gulp do for example:
-```shell script
-docker exec -it obj2dev bash -c "cd /workspace/WWOBJLoader && gulp set-versions"
-```
+
+### Local System
 
 If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
 After you have cloned this repository locally and have npm and gulp set-up, please run:<br>
@@ -49,45 +58,36 @@ After you have cloned this repository locally and have npm and gulp set-up, plea
 npm install
 ```
 
-## Build
-
 ### Docs
 From the project's root run `gulp` to create The documentation in directory **build/docs** and set the versions. No more bundling is performed.
  
-### Models and resources
-Use gulp to download missing resources (OBJ, MTL files and textures):
+### Additional models and resources
+Use the following script to download missing resources (OBJ, MTL files and textures):
 ```shell script
-gulp get-resources
+bash dev/models/retrieveExtras.sh
 ```
 
 
 ## Implementation Overview
-***NOT YET UPDATED!***
- 
-### Features
-`OBJLoader2` has all OBJ parsing capabilities of the existing `OBJLoader` and in addition to worker-processing it features indexed rendering including vertex reduction. Please see the following list of features:
+
+### `OBJLoader2Parser`
+The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing capabilities of `OBJLoader`. Please see the following list of features:
+- Parser can be executed in worker 
 - `OBJLoader2.parse` and `OBJLoader2Parallel.parse` methods accept `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower
-- Indexed rendering is available if switched on via `setUseIndices` (see `useLoadSync` in example **OBJLoader2 usage options** below).
+- It features indexed rendering including vertex reduction.
+- Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](./examples/webgl_loader_obj2_options.html)**).
 - Face N-Gons are supported
-- `OBJLoader2` must now be re-instantiated every time it is used, but caching of worker code via `WorkerExecutionSupport` is available
-- Console logging is deactivated by default, but can be switched on if desired (including debug logging)
-- Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16)
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
-- Support for points and lines was added (since V2.3.0) 
+- Support for points and lines was added (since V2.3.0)
 - New mesh detection relies 'g' occurrence or 'f', 'l' or 'p' type change (since V2.3.0). This allows mutiple mesh definitions within one group.
 - Negative face indices are supported (issue #28)
+- The parser is now a single function that can be easily embedded in module or standard Workers (since V4.0.0-dev)
 
-
-### Web Worker Support
-***NOT YET UPDATED!*** `WorkerExecutionSupport` offers utility functions used to serialize existing code into strings that are used to build the web worker code. Any loader that uses it must provide a function that builds the parser code (for example see `buildCode` inside `OBJLoader2.parseAsync`). `WorkerSupport` provides wrapper code to create the web worker and to organize communication with it. Configuration of the Parser inside the worker is handled by a configuration object that configures the parser identical to synchronous usage.
-
-## Examples:
-***NOT YET UPDATED!***
-[OBJLoader2 basic usage](https://kaisalmen.de/wwobjloader2/objloader2/main.min.html)<br>
-[OBJLoader2 usage options](https://kaisalmen.de/wwobjloader2/wwobjloader2/main.min.html)<br>
-[OBJLoader2 Stage](https://kaisalmen.de/wwobjloader2/wwobjloader2stage/main.min.html)<br>
-
+### General features 
+- Console logging is deactivated by default, but can be switched on if desired (including debug logging)
+- `OBJLoader2` and `OBJLoader2Parallel` must be re-instantiated every time they are used.
+- Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16)
 
 Have fun!
 

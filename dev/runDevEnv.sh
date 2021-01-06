@@ -5,7 +5,9 @@
 DIR_ME=$(realpath $(dirname ${0}))
 DIR_BASE=$(realpath ${DIR_ME}/..)
 
-bash ${DIR_BASE}/docker/createDevEnv.sh
-cp ${DIR_BASE}/docker/nginx.conf /etc/nginx/nginx.conf
+bash ${DIR_BASE}/dev/createDevEnv.sh
+if [[ ! -e /etc/nginx/nginx.conf ]]; then
+  cp ${DIR_BASE}/dev/nginx.conf /etc/nginx/nginx.conf
+fi
 
 nginx -g "daemon off;"

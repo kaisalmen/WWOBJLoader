@@ -21,7 +21,6 @@ import { MaterialHandler } from './obj2/shared/MaterialHandler.js';
 const OBJLoader2 = function ( manager ) {
 
 	Loader.call( this, manager );
-
 	this.parser = new OBJLoader2Parser();
 
 	this.modelName = '';
@@ -38,14 +37,11 @@ const OBJLoader2 = function ( manager ) {
 		scope._onAssetAvailable( payload );
 
 	};
-
 	this.parser.setCallbackOnAssetAvailable( defaultOnAssetAvailable );
 
 };
 
 OBJLoader2.OBJLOADER2_VERSION = '3.2.0';
-console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
-
 
 OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 
@@ -318,6 +314,11 @@ OBJLoader2.prototype = Object.assign( Object.create( Loader.prototype ), {
 	 */
 	parse: function ( content ) {
 
+		if ( this.parser.logging.enabled ) {
+
+			console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
+
+		}
 		// fast-fail in case of illegal data
 		if ( content === null || content === undefined ) {
 
