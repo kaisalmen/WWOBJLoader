@@ -2,10 +2,10 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { MaterialLoader } from "../../../../../src/loaders/MaterialLoader.js";
-import { OBJLoader } from "../../OBJLoader.js";
-import { TransferableUtils } from "../utils/TransferableUtils.js";
-import { WorkerTaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
+import { MaterialLoader } from "../../../../src/loaders/MaterialLoader.js";
+import { OBJLoader } from "../OBJLoader.js";
+import { TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 const OBJLoaderWorker = {
 

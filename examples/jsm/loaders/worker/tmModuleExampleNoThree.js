@@ -2,8 +2,8 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { MeshMessageStructure } from "../utils/TransferableUtils.js";
-import { WorkerTaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
+import { MeshMessageStructure } from "../workerTaskManager/utils/TransferableUtils.js";
+import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 
 function init ( context, id, config ) {

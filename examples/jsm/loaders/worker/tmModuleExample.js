@@ -2,9 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { TorusKnotBufferGeometry } from "../../../../../build/three.module.js";
-import { TransferableUtils } from "../utils/TransferableUtils.js";
-import { WorkerTaskManagerDefaultRouting } from "./tmDefaultComRouting.js";
+import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
+import { TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 
 function init ( context, id, config ) {

@@ -33,9 +33,9 @@
 			import { TransferableUtils } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
 			import { FileLoader } from "../src/loaders/FileLoader.js";
 			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
-			import { OBJLoaderWorker } from "./jsm/loaders/workerTaskManager/worker/tmOBJLoader.js";
+			import { OBJLoaderWorker } from "./jsm/loaders/worker/tmOBJLoader.js";
 
-			import { OBJ2LoaderWorker } from "./jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js";
+			import { OBJ2LoaderWorker } from "./jsm/loaders/worker/tmOBJLoader2.js";
 			import { OBJLoader2Parser } from "./jsm/loaders/obj2/OBJLoader2Parser.js";
 
 			/**
@@ -126,13 +126,13 @@
 						name: 'tmProtoExampleModule',
 						use: false,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmModuleExample.js'
+						module: './jsm/loaders/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
 						use: false,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
+						module: './jsm/loaders/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',
@@ -145,7 +145,7 @@
 						name: 'tmOBJLoaderModule',
 						use: true,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmOBJLoader.js',
+						module: './jsm/loaders/worker/tmOBJLoader.js',
 						filenameMtl: './models/obj/female02/female02.mtl',
 						filenameObj: './models/obj/female02/female02.obj',
 						materials: {}
@@ -164,7 +164,7 @@
 						name: 'tmOBJLoader2Module',
 						use: false,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js',
+						module: './jsm/loaders/worker/tmOBJLoader2.js',
 						filenameMtl: './models/obj/female02/female02.mtl',
 						filenameObj: './models/obj/female02/female02.obj',
 						materials: {}

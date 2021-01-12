@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - WorkerTaskManager Transferables Testbed</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="info">
+			WorkerTaskManager Transferables Testbed
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+		<div id="dat" style="user-select: none; position: absolute; left: 0; top: 0; z-Index: 200;"></div>
+
+		<script type="module">
+
+			'use strict';
+
+			import * as THREE from '../build/three.module.js';
+
+			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
+			import { MeshReceiver } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
+			import {
+				MeshMessageStructure,
+				ObjectManipulator
+			} from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js"
+			import { MaterialHandler } from "./jsm/loaders/workerTaskManager/shared/MaterialHandler.js";
+			import { TransferableUtils } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
+
+			class TransferableTestbed {
+
+				constructor () {
+					this.workerTaskManager = new WorkerTaskManager( 1 );
+					this.workerTaskManager.setVerbose( true );
+
+					this.materialHandler = new MaterialHandler();
+					this.materialHandler.createDefaultMaterials( true );
+					this.meshReceiver = new MeshReceiver( this.materialHandler );
+
+					this.taskTest1 = {
+						id: 74656,
+						name: 'transferableWorkerTest1',
+						module: './jsm/loaders/worker/transferableWorkerTest1.js',
+						materials: {}
+					};
+					this.taskTest2 = {
+						id: 74656,
+						name: 'transferableWorkerTest2',
+						module: './jsm/loaders/worker/transferableWorkerTest2.js',
+						materials: {}
+					};
+				}
+
+				/**
+				 * Registers any selected task at the {@link WorkerTaskManager} and initializes them.
+				 *
+				 * @return {Promise<any>}
+				 */
+				async initContent () {
+					let awaiting = [];
+
+					this.workerTaskManager.registerTaskTypeModule( this.taskTest1.name, this.taskTest1.module );
+					awaiting.push( this.workerTaskManager.initTaskType( this.taskTest1.name, { param1: 'test1' } ).catch( e => console.error( e ) ) );
+
+					this.workerTaskManager.registerTaskTypeModule( this.taskTest2.name, this.taskTest2.module );
+					awaiting.push( this.workerTaskManager.initTaskType( this.taskTest2.name, { param1: 'test2' } ).catch( e => console.error( e ) ) );
+
+					if ( awaiting.length > 0 ) {
+
+						return await Promise.all( awaiting );
+
+					}
+					else {
+
+						return new Promise( ( resolve, reject ) => { reject ( 'No task type has been configured' ) } )
+
+					}
+				}
+
+				async executeWorker ( taskDescr ) {
+
+					let promiseExec = this.workerTaskManager.enqueueForExecution( taskDescr.name, {
+							id: taskDescr.id,
+							params: {
+								materials: taskDescr.materials
+							}
+						},
+						data => this._processMessage( data ) )
+							.then( data => this._processMessage( data ) )
+							.catch( e => console.error( e ) )
+
+					await promiseExec;
+
+
+				}
+
+				_processMessage ( payload ) {
+					switch ( payload.cmd ) {
+						case 'test1':
+						case 'test2':
+							console.log( payload );
+							break;
+
+						case 'init':
+							console.log( 'Init Completed: ' + payload.id );
+							break;
+
+						case 'execComplete':
+						case 'assetAvailable':
+							switch ( payload.type ) {
+
+								case 'mesh':
+									let meshes = this.meshReceiver.buildMeshes( payload );
+									break;
+
+								case 'material':
+									this.materialHandler.addPayloadMaterials( payload );
+									break;
+
+								case 'void':
+									break;
+
+								default:
+									console.error( 'Provided payload.type was neither mesh nor assetAvailable: ' + payload.cmd );
+									break;
+
+							}
+							break;
+
+						default:
+							console.error( payload.id + ': Received unknown command: ' + payload.cmd );
+							break;
+					}
+				}
+
+				async run () {
+					console.time( 'Test1' );
+					await this.executeWorker( this.taskTest1 );
+					console.timeEnd( 'Test1' );
+
+					console.time( 'Test2' );
+					await this.executeWorker( this.taskTest2 );
+					console.timeEnd( 'Test2' );
+				}
+
+			}
+
+			let app = new TransferableTestbed();
+
+			console.time( 'All tasks have been initialized' );
+			app.initContent().then( x => {
+				app.run();
+				console.timeEnd( 'All tasks have been initialized' );
+			} ).catch( x => alert( x ) );
+
+		</script>
+	</body>
+</html>

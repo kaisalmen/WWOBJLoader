@@ -11,7 +11,7 @@ import { OBJLoader2 } from './OBJLoader2.js';
 import { OBJLoader2Parser } from './obj2/OBJLoader2Parser.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { ObjectManipulator } from './workerTaskManager/utils/TransferableUtils.js';
-import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
+import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
 
 
 /**
