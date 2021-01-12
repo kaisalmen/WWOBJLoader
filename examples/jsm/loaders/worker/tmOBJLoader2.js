@@ -4,7 +4,6 @@
 
 import { OBJLoader2Parser } from "../obj2/OBJLoader2Parser.js";
 import { ObjectManipulator } from "../workerTaskManager/utils/TransferableUtils.js";
-import { MaterialLoader } from "../../../../src/loaders/MaterialLoader.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 const OBJ2LoaderWorker = {
@@ -26,8 +25,6 @@ const OBJ2LoaderWorker = {
 			if ( context.obj2.objParser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 		} );
 
-
-
 		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
 		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
 
@@ -45,23 +42,6 @@ const OBJ2LoaderWorker = {
 			context.obj2.objParser._init();
 
 		}
-		const materialLoader = new MaterialLoader();
-		let material, materialJson;
-		let materialsIn = config.params.materials;
-		let materialsOut = {};
-		for ( let materialName in materialsIn ) {
-
-			materialJson = materialsIn[ materialName ];
-			if ( materialJson !== undefined && materialJson !== null ) {
-
-				material = materialLoader.parse( materialJson );
-//				console.info( 'De-serialized material with name "' + materialName + '" will be added.' );
-				materialsOut[ materialName ] = material;
-
-			}
-
-		}
-		context.obj2.objParser.setMaterials( materialsOut );
 
 		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
 		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;

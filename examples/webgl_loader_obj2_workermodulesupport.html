@@ -14,8 +14,6 @@
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
-		<link rel="modulepreload" href="jsm/loaders/obj2/worker/parallel/OBJLoader2JsmWorker.js">
-
 		<script type="module">
 
 			'use strict';
@@ -84,8 +82,8 @@
 
 					let scope = this;
 
-					let objLoader2Parallel = new OBJLoader2Parallel();
-					objLoader2Parallel.setModelName( modelName )
+					const objLoader2Parallel = new OBJLoader2Parallel()
+						.setModelName( modelName )
 						.setJsmWorker( true, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setExecuteParallel( true );
 

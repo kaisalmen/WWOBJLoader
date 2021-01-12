@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
+import { ResourceDescriptor } from "./pipeline/utils/ResourceDescriptor.js";
 import { FileLoaderBufferAsync } from "./pipeline/utils/FileLoaderBufferAsync.js";
 import { ObjectManipulator } from "./workerTaskManager/utils/TransferableUtils.js";
 

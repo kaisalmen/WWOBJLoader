@@ -3,7 +3,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { Zlib } from "../../../libs/gunzip.module.min.d.ts";
+import { Zlib } from "../../../libs/gunzip.module.min.js";
 
 /**
  * Encapsulates a url and derived values (filename, extension and path and stores the {@link ArrayBufer}
