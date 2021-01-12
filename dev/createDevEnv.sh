@@ -21,6 +21,14 @@ if [[ ! -d ${DIR_BASE}/examples/jsm/libs ]]; then
     mkdir ${DIR_BASE}/examples/jsm/libs
 fi
 
+if [[ ! -d ${DIR_BASE}/examples/js ]]; then
+    mkdir ${DIR_BASE}/examples/js
+fi
+
+if [[ ! -d ${DIR_BASE}/examples/js/loaders ]]; then
+    mkdir ${DIR_BASE}/examples/js/loaders
+fi
+
 echo "Executing npm install"
 ( cd ${DIR_BASE} && npm install )
 
@@ -32,8 +40,10 @@ cp -f ${DIR_BASE}/node_modules/three/examples/jsm/controls/TrackballControls.js 
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/controls/TrackballControls.d.ts ${DIR_BASE}/examples/jsm/controls/TrackballControls.d.ts
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.js ${DIR_BASE}/examples/jsm/loaders/MTLLoader.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/MTLLoader.d.ts
-cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.js ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
-cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
+cp -f ${DIR_BASE}/node_modules/three/examples/js/loaders/MTLLoader.js ${DIR_BASE}/examples/js/loaders/MTLLoader.js
+#cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.js ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
+#cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
+cp -f ${DIR_BASE}/node_modules/three/examples/js/loaders/OBJLoader.js ${DIR_BASE}/examples/js/loaders/OBJLoader.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/helpers/VertexNormalsHelper.d.ts ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.d.ts
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/libs/dat.gui.module.js ${DIR_BASE}/examples/jsm/libs/dat.gui.module.js

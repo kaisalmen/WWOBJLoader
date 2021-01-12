@@ -34,6 +34,8 @@ class MeshMessageStructure {
 				geometryType: 0
 			},
 			materials: {
+				/** @type {string|null} */
+				json: null,
 				multiMaterial: false,
 				/** @type {string[]} */
 				materialNames: [],

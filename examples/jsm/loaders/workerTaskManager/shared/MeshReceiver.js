@@ -8,7 +8,8 @@ import {
 	BufferGeometry,
 	LineSegments,
 	Mesh,
-	Points
+	Points,
+	MaterialLoader
 } from '../../../../../build/three.module.js';
 
 
@@ -128,35 +129,49 @@ class MeshReceiver {
 		let materialGroups = [];
 		if ( meshPayload.materials ) {
 
-			if ( meshPayload.materials.materialNames ) materialNames = meshPayload.materials.materialNames;
-			if ( meshPayload.materials.multiMaterial ) createMultiMaterial = meshPayload.materials.multiMaterial;
-			if ( meshPayload.materials.materialGroups ) materialGroups = meshPayload.materials.materialGroups;
+			if ( meshPayload.materials.json === undefined || meshPayload.materials.json === null ) {
 
-		}
-		if ( createMultiMaterial ) {
+				if ( meshPayload.materials.materialNames ) materialNames = meshPayload.materials.materialNames;
+				if ( meshPayload.materials.multiMaterial ) createMultiMaterial = meshPayload.materials.multiMaterial;
+				if ( meshPayload.materials.materialGroups ) materialGroups = meshPayload.materials.materialGroups;
 
-			for ( let key in materialNames ) {
+			} else {
 
-				let materialName = materialNames[ key ];
-				multiMaterials.push( this.materialHandler.getMaterial( materialName ).clone() );
-
-			}
-			material = multiMaterials;
-			for ( let key in materialGroups ) {
-
-				let materialGroup = materialGroups[ key ];
-				bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+				const materialFromJson = new MaterialLoader().parse( meshPayload.materials.json );
+				const loadedMaterials = {};
+				loadedMaterials[ materialFromJson.name ] = materialFromJson;
+				this.materialHandler.addMaterials( loadedMaterials, false );
+				material = this.materialHandler.getMaterial( materialFromJson.name );
 
 			}
 
 		}
-		else {
+		if ( ! material ) {
 
-			let materialName = materialNames[ 0 ];
-			if ( materialName ) material = this.materialHandler.getMaterial( materialName ).clone();
+			if ( createMultiMaterial ) {
+
+				for ( let key in materialNames ) {
+
+					let materialName = materialNames[ key ];
+					multiMaterials.push( this.materialHandler.getMaterial( materialName ).clone() );
+
+				}
+				material = multiMaterials;
+				for ( let key in materialGroups ) {
+
+					let materialGroup = materialGroups[ key ];
+					bufferGeometry.addGroup( materialGroup.start, materialGroup.count, materialGroup.index );
+
+				}
+
+			} else {
+
+				let materialName = materialNames[ 0 ];
+				if ( materialName ) material = this.materialHandler.getMaterial( materialName ).clone();
+
+			}
 
 		}
-
 		const meshes = [];
 		let mesh;
 		let callbackOnMeshAlterResult;

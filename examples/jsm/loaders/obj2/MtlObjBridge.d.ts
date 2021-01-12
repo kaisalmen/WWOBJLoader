@@ -1,6 +1,6 @@
 import {
 	MTLLoader
-} from '../../MTLLoader';
+} from '../MTLLoader';
 
 export namespace MtlObjBridge {
 	export function link( processResult: object, assetLoader: object ): void;

@@ -157,10 +157,10 @@ class MaterialHandler {
 	 * Set materials loaded by any supplier of an Array of {@link Material}.
 	 *
 	 * @param materials Object with named {@link Material}
-	 * @param overrideExisting boolean Override existing material
+	 * @param forceOverrideExisting boolean Override existing material
 	 * @param newMaterials [Object] with named {@link Material}
 	 */
-	addMaterials ( materials, overrideExisting, newMaterials ) {
+	addMaterials ( materials, forceOverrideExisting, newMaterials ) {
 
 		if ( newMaterials === undefined || newMaterials === null ) {
 
@@ -171,18 +171,28 @@ class MaterialHandler {
 
 			let material;
 			let existingMaterial;
-			let add;
+			let force;
 			for ( const materialName in materials ) {
 
 				material = materials[ materialName ];
-				add = overrideExisting === true;
-				if ( ! add ) {
+				force = forceOverrideExisting === true;
+				if ( ! force ) {
 
 					existingMaterial = this.materials[ materialName ];
-					add = ( existingMaterial === null || existingMaterial === undefined );
+					if ( existingMaterial ) {
 
-				}
-				if ( add ) {
+						if ( existingMaterial.uuid !== material.uuid ) {
+
+							console.log( 'Same material name "' + material.name + '" different uuid [' + existingMaterial.uuid + '|' + material.uuid + ']' );
+						}
+
+					} else {
+
+						this.materials[ materialName ] = material;
+
+					}
+
+				} else {
 
 					this.materials[ materialName ] = material;
 					newMaterials[ materialName ] = material;

@@ -4,6 +4,7 @@
 /build
 /docs/
 
+/examples/js
 /examples/jsm/controls/*.js
 /examples/jsm/controls/*.d.ts
 /examples/jsm/libs/*.js

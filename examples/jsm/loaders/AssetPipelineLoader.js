@@ -3,7 +3,7 @@
  */
 
 import { ResourceDescriptor } from "./obj2/utils/ResourceDescriptor.js";
-import { FileLoaderBufferAsync } from "./obj2/utils/FileLoaderBufferAsync.js";
+import { FileLoaderBufferAsync } from "./pipeline/utils/FileLoaderBufferAsync.js";
 import { ObjectManipulator } from "./workerTaskManager/utils/TransferableUtils.js";
 
 
