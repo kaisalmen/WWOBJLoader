@@ -50,7 +50,8 @@ const OBJLoaderWorker = {
 		for ( let mesh, i = 0; i < meshes.children.length; i ++ ) {
 
 			mesh = meshes.children[ i ];
-			let payload = TransferableUtils.packageBufferGeometry( mesh.geometry, config.id, mesh.name + config.id, 0 );
+			mesh.geometry.name = mesh.name + config.id;
+			let payload = TransferableUtils.packageBufferGeometry( mesh.geometry, config.id, 0 );
 			payload.main.materials.json = mesh.material.toJSON();
 			payload.postMessage( context );
 

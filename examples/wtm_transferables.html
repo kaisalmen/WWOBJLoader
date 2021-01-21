@@ -196,7 +196,7 @@
 						case this.taskTest4.name:
 							console.log( payload );
 
-							const bg = TransferableUtils.reconstructBufferGeometry( payload.serialised );
+							const bg = TransferableUtils.reconstructBufferGeometry( payload.geometry );
 							const mesh = new THREE.Mesh( bg, new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) }) );
 							this.scene.add( mesh );
 							break;

@@ -134,7 +134,7 @@ class WorkerTaskManager {
      *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
-     * @param {Object} [transferables] Any optional {@link ArrayBuffer} encapsulated in object..
+     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer} encapsulated in object..
      */
     async initTaskType ( taskType, config, transferables ) {
 
@@ -192,7 +192,7 @@ class WorkerTaskManager {
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
      * @param {Function} assetAvailableFunction Invoke this function if an asset become intermediately available
-     * @param {Object} [transferables] Any optional {@link ArrayBuffer} encapsulated in object.
+     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer} encapsulated in object.
      * @return {Promise}
      */
     async enqueueForExecution ( taskType, config, assetAvailableFunction, transferables ) {
@@ -493,7 +493,7 @@ class WorkerTypeDefinition {
      * Initialises all workers with common configuration data.
      *
      * @param {object} config
-     * @param {Object} transferables
+     * @param {Transferable[]} transferables
      */
     async initWorkers ( config, transferables ) {
 
@@ -508,9 +508,9 @@ class WorkerTypeDefinition {
                 // ensure all transferables are copies to all workers on init!
                 let transferablesToWorker;
                 if ( transferables ) {
-                    transferablesToWorker = {};
-                    for ( let [ key, transferable ] of Object.entries( transferables ) ) {
-                        transferablesToWorker[ key ] = transferable !== null ? transferable.slice( 0 ) : null;
+                    transferablesToWorker = [];
+                    for ( let i = 0; i < transferables.length; i++ ) {
+                        transferablesToWorker.push( transferables[ i ].slice( 0 ) );
                     }
                 }
 

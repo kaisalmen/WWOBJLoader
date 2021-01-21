@@ -8,7 +8,6 @@ import {
 	BufferAttribute,
 	Box3,
 	Sphere,
-	TorusKnotBufferGeometry,
 	Object3D
 } from "../../../../../build/three.module.js";
 
@@ -29,25 +28,22 @@ class MeshMessageStructure {
 		this.main = {
 			cmd: cmd,
 			type: 'mesh',
-			id: id,
-			meshName: meshName,
 			progress: {
 				numericalValue: 0
 			},
 			params: {
 				// 0: mesh, 1: line, 2: point
-				geometryType: 0
+				geometryType: 0,
+				id: id
 			},
 			materials: {
 				/** @type {string|null} */
 				json: null,
 				multiMaterial: false,
 				/** @type {string[]} */
-				materialNames: [],
-				/** @type {object[]} */
-				materialGroups: []
+				materialNames: []
 			},
-			serialised: null
+			geometry: null
 		};
 		this.transferables = [];
 
@@ -171,7 +167,7 @@ class TransferableUtils {
 			console.info( 'Walking: ' + object3d.name );
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], rootNode, object3d.name, 0,['TBD'] );
+				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], 1, 0,['TBD'] );
 				callback( payload.main, payload.transferables );
 
 			}
@@ -207,23 +203,22 @@ class TransferableUtils {
 	/**
 	 * Package {@link BufferGeometry} into {@link MeshMessageStructure}
 	 *
-	 * @param {BufferGeometry} bufferGeometry
+	 * @param {BufferGeometry} geometry
 	 * @param {string} id
-	 * @param {string} meshName
 	 * @param {number} geometryType
 	 * @param {string[]} [materialNames]
 	 * @return {MeshMessageStructure}
 	 */
-	static packageBufferGeometry( bufferGeometry, id, meshName, geometryType, materialNames ) {
-		let vertexBA = bufferGeometry.getAttribute( 'position' );
-		let normalBA = bufferGeometry.getAttribute( 'normal' );
-		let uvBA = bufferGeometry.getAttribute( 'uv' );
-		let colorBA = bufferGeometry.getAttribute( 'color' );
-		let skinIndexBA = bufferGeometry.getAttribute( 'skinIndex' );
-		let skinWeightBA = bufferGeometry.getAttribute( 'skinWeight' );
-		let indexBA = bufferGeometry.getIndex();
+	static packageBufferGeometry( geometry, id, geometryType, materialNames ) {
+		let vertexBA = geometry.getAttribute( 'position' );
+		let normalBA = geometry.getAttribute( 'normal' );
+		let uvBA = geometry.getAttribute( 'uv' );
+		let colorBA = geometry.getAttribute( 'color' );
+		let skinIndexBA = geometry.getAttribute( 'skinIndex' );
+		let skinWeightBA = geometry.getAttribute( 'skinWeight' );
+		let indexBA = geometry.getIndex();
 
-		let payload = new MeshMessageStructure( 'execComplete', id, meshName );
+		let payload = new MeshMessageStructure( 'execComplete', id, geometry.name );
 		if ( vertexBA !== null && vertexBA !== undefined ) payload.transferables.push( vertexBA.array.buffer );
 		if ( indexBA !== null && indexBA !== undefined ) payload.transferables.push( indexBA.array.buffer );
 		if ( colorBA !== null && colorBA !== undefined ) payload.transferables.push( colorBA.array.buffer );
@@ -232,25 +227,26 @@ class TransferableUtils {
 		if ( skinIndexBA !== null && skinIndexBA !== undefined ) payload.transferables.push( skinIndexBA.array.buffer );
 		if ( skinWeightBA !== null && skinWeightBA !== undefined ) payload.transferables.push( skinWeightBA.array.buffer );
 
-		payload.main.serialised = bufferGeometry;
+		payload.main.geometry = geometry;
 		payload.main.params.geometryType = geometryType;
 		payload.main.materials.materialNames = materialNames;
 
 		return payload;
 	}
 
-	static reconstructBufferGeometry ( transferredGeometry ) {
+	static reconstructBufferGeometry ( transferredGeometry, cloneBuffers ) {
 		const geometry = new BufferGeometry();
 
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.position, 'position' );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.normal, 'normal' );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.uv, 'uv' );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.color, 'color' );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinIndex, 'skinIndex' );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.position, 'position', cloneBuffers );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.normal, 'normal', cloneBuffers );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.uv, 'uv', cloneBuffers );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.color, 'color', cloneBuffers );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinIndex, 'skinIndex', cloneBuffers );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
 
 		const index = transferredGeometry.index;
-		if ( index ) geometry.setIndex( new BufferAttribute( index.array, index.itemSize, index.normalized ) );
+		const indexBuffer = cloneBuffers ? index.array : index.array.slice( 0 );
+		if ( index ) geometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
 
 		const boundingBox = transferredGeometry.boundingBox;
 		if ( boundingBox !== null ) geometry.boundingBox = Object.assign( new Box3(), boundingBox );
@@ -268,9 +264,10 @@ class TransferableUtils {
 		return geometry;
 	}
 
-	static assignAttribute( bg, attr, attrName ) {
+	static assignAttribute( bg, attr, attrName, cloneBuffer ) {
 		if ( attr ) {
-			bg.setAttribute( attrName, new BufferAttribute( attr.array, attr.itemSize, attr.normalized ) );
+			const buffer = cloneBuffer ? attr.array : attr.array.slice( 0 );
+			bg.setAttribute( attrName, new BufferAttribute( buffer, attr.itemSize, attr.normalized ) );
 		}
 	}
 

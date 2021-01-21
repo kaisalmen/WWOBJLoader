@@ -1,6 +1,6 @@
 export class TransferableUtils {
     static walkMesh(rootNode: Object3D, callback: Function): void;
-    static packageBufferGeometry(bufferGeometry: BufferGeometry, id: string, meshName: string, geometryType: number, materialNames?: string[]): MeshMessageStructure;
+    static packageBufferGeometry(bufferGeometry: BufferGeometry, id: string, geometryType: number, materialNames?: string[]): MeshMessageStructure;
 }
 export class MeshMessageStructure {
     static cloneMessageStructure(input: object | MeshMessageStructure): MeshMessageStructure;
