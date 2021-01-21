@@ -148,7 +148,7 @@ class WorkerTaskManager {
 
                     await workerTypeDefinition.createWorkerModules()
                         .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
-                        .then( workerTypeDefinition.status.initComplete )
+                        .then( y => workerTypeDefinition.status.initComplete = true )
                         .catch( x => console.error( x ) );
 
                 } else {
@@ -156,7 +156,7 @@ class WorkerTaskManager {
                     await workerTypeDefinition.loadDependencies()
                         .then( code => workerTypeDefinition.createWorkers() )
                         .then( instances => workerTypeDefinition.initWorkers( config, transferables ) )
-                        .then( workerTypeDefinition.status.initComplete )
+                        .then( y => workerTypeDefinition.status.initComplete = true )
                         .catch( x => console.error( x ) );
 
                 }
@@ -505,7 +505,7 @@ class WorkerTypeDefinition {
                 taskWorker.onmessage = resolveWorker;
                 taskWorker.onerror = rejectWorker;
 
-                // ensure all transferables are copies to all workers on int!
+                // ensure all transferables are copies to all workers on init!
                 let transferablesToWorker;
                 if ( transferables ) {
                     transferablesToWorker = {};

@@ -21,6 +21,7 @@
 
 			import * as THREE from '../build/three.module.js';
 
+			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
 			import {
@@ -32,7 +33,22 @@
 
 			class TransferableTestbed {
 
-				constructor () {
+				constructor ( elementToBindTo ) {
+					this.renderer = null;
+					this.canvas = elementToBindTo;
+					this.aspectRatio = 1;
+					this.scene = null;
+					this.cameraDefaults = {
+						posCamera: new THREE.Vector3( 1000.0, 1000.0, 1000.0 ),
+						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+						near: 0.1,
+						far: 10000,
+						fov: 45
+					};
+					this.camera = null;
+					this.cameraTarget = this.cameraDefaults.posCameraTarget;
+					this.controls = null;
+
 					this.workerTaskManager = new WorkerTaskManager( 1 );
 					this.workerTaskManager.setVerbose( true );
 
@@ -41,18 +57,97 @@
 					this.meshReceiver = new MeshReceiver( this.materialHandler );
 
 					this.taskTest1 = {
-						id: 74656,
+						id: 1,
 						name: 'transferableWorkerTest1',
 						module: './jsm/loaders/worker/transferableWorkerTest1.js',
-						materials: {}
+						materials: {},
+						segments: 0
 					};
 					this.taskTest2 = {
-						id: 74656,
+						id: 2,
 						name: 'transferableWorkerTest2',
 						module: './jsm/loaders/worker/transferableWorkerTest2.js',
-						materials: {}
+						materials: {},
+						segments: 0
+					};
+					this.taskTest3 = {
+						id: 3,
+						name: 'transferableWorkerTest3',
+						module: './jsm/loaders/worker/transferableWorkerTest3.js',
+						materials: {},
+						segments: 2048
+					};
+					this.taskTest4 = {
+						id: 4,
+						name: 'transferableWorkerTest4',
+						module: './jsm/loaders/worker/transferableWorkerTest4.js',
+						materials: {},
+						segments: 2048
 					};
 				}
+
+				initGL () {
+					this.renderer = new THREE.WebGLRenderer( {
+						canvas: this.canvas,
+						antialias: true,
+						autoClear: true
+					} );
+					this.renderer.setClearColor( 0x050505 );
+
+					this.scene = new THREE.Scene();
+
+					this.recalcAspectRatio();
+					this.camera = new THREE.PerspectiveCamera( this.cameraDefaults.fov, this.aspectRatio, this.cameraDefaults.near, this.cameraDefaults.far );
+					this.resetCamera();
+					this.controls = new TrackballControls( this.camera, this.renderer.domElement );
+
+					let ambientLight = new THREE.AmbientLight( 0x404040 );
+					let directionalLight1 = new THREE.DirectionalLight( 0xC0C090 );
+					let directionalLight2 = new THREE.DirectionalLight( 0xC0C090 );
+
+					directionalLight1.position.set( - 100, - 50, 100 );
+					directionalLight2.position.set( 100, 50, - 100 );
+
+					this.scene.add( directionalLight1 );
+					this.scene.add( directionalLight2 );
+					this.scene.add( ambientLight );
+
+					let helper = new THREE.GridHelper( 1000, 30, 0xFF4444, 0x404040 );
+					this.scene.add( helper );
+				}
+
+				resizeDisplayGL () {
+					this.controls.handleResize();
+
+					this.recalcAspectRatio();
+					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
+
+					this.updateCamera();
+				}
+
+				recalcAspectRatio () {
+					this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
+				}
+
+				resetCamera () {
+					this.camera.position.copy( this.cameraDefaults.posCamera );
+					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
+
+					this.updateCamera();
+				}
+
+				updateCamera () {
+					this.camera.aspect = this.aspectRatio;
+					this.camera.lookAt( this.cameraTarget );
+					this.camera.updateProjectionMatrix();
+				}
+
+				render() {
+					if ( !this.renderer.autoClear ) this.renderer.clear();
+					this.controls.update();
+					this.renderer.render( this.scene, this.camera );
+				}
+
 
 				/**
 				 * Registers any selected task at the {@link WorkerTaskManager} and initializes them.
@@ -60,32 +155,25 @@
 				 * @return {Promise<any>}
 				 */
 				async initContent () {
-					let awaiting = [];
-
-					this.workerTaskManager.registerTaskTypeModule( this.taskTest1.name, this.taskTest1.module );
-					awaiting.push( this.workerTaskManager.initTaskType( this.taskTest1.name, { param1: 'test1' } ).catch( e => console.error( e ) ) );
-
-					this.workerTaskManager.registerTaskTypeModule( this.taskTest2.name, this.taskTest2.module );
-					awaiting.push( this.workerTaskManager.initTaskType( this.taskTest2.name, { param1: 'test2' } ).catch( e => console.error( e ) ) );
-
-					if ( awaiting.length > 0 ) {
-
-						return await Promise.all( awaiting );
-
-					}
-					else {
-
-						return new Promise( ( resolve, reject ) => { reject ( 'No task type has been configured' ) } )
-
-					}
+					await this._initTask( this.taskTest1 );
+					await this._initTask( this.taskTest2 );
+					await this._initTask( this.taskTest3 );
+					await this._initTask( this.taskTest4 );
 				}
 
-				async executeWorker ( taskDescr ) {
+				_initTask( task ) {
+					this.workerTaskManager.registerTaskTypeModule( task.name, task.module );
+					return this.workerTaskManager.initTaskType( task.name, {} );
+				}
 
-					let promiseExec = this.workerTaskManager.enqueueForExecution( taskDescr.name, {
-							id: taskDescr.id,
+				async executeWorker ( task ) {
+
+					let promiseExec = this.workerTaskManager.enqueueForExecution( task.name, {
+							id: task.id,
 							params: {
-								materials: taskDescr.materials
+								name: task.name,
+								materials: task.materials,
+								segments: task.segments
 							}
 						},
 						data => this._processMessage( data ) )
@@ -99,9 +187,18 @@
 
 				_processMessage ( payload ) {
 					switch ( payload.cmd ) {
-						case 'test1':
-						case 'test2':
+						case this.taskTest1.name:
+						case this.taskTest2.name:
+						case this.taskTest3.name:
 							console.log( payload );
+							break;
+
+						case this.taskTest4.name:
+							console.log( payload );
+
+							const bg = TransferableUtils.reconstructBufferGeometry( payload.serialised );
+							const mesh = new THREE.Mesh( bg, new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) }) );
+							this.scene.add( mesh );
 							break;
 
 						case 'init':
@@ -137,18 +234,43 @@
 				}
 
 				async run () {
-					console.time( 'Test1' );
+					console.time( this.taskTest1.name );
 					await this.executeWorker( this.taskTest1 );
-					console.timeEnd( 'Test1' );
+					console.timeEnd( this.taskTest1.name );
 
-					console.time( 'Test2' );
+					console.time( this.taskTest2.name );
 					await this.executeWorker( this.taskTest2 );
-					console.timeEnd( 'Test2' );
+					console.timeEnd( this.taskTest2.name );
+
+					console.time( this.taskTest3.name );
+					await this.executeWorker( this.taskTest3 );
+					console.timeEnd( this.taskTest3.name );
+
+					console.time( this.taskTest4.name );
+					await this.executeWorker( this.taskTest4 );
+					console.timeEnd( this.taskTest4.name );
 				}
 
 			}
 
-			let app = new TransferableTestbed();
+			let app = new TransferableTestbed( document.getElementById( 'example' ) );
+
+			let resizeWindow = function () {
+				app.resizeDisplayGL();
+			};
+
+			let render = function () {
+				requestAnimationFrame( render );
+				app.render();
+			};
+
+			window.addEventListener( 'resize', resizeWindow, false );
+
+			console.log( 'Starting initialisation phase...' );
+			app.initGL();
+			app.resizeDisplayGL();
+
+			render();
 
 			console.time( 'All tasks have been initialized' );
 			app.initContent().then( x => {

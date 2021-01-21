@@ -5,6 +5,10 @@
 
 import {
 	BufferGeometry,
+	BufferAttribute,
+	Box3,
+	Sphere,
+	TorusKnotBufferGeometry,
 	Object3D
 } from "../../../../../build/three.module.js";
 
@@ -21,6 +25,7 @@ class MeshMessageStructure {
 	 * @param {string} meshName
 	 */
 	constructor( cmd, id, meshName ) {
+
 		this.main = {
 			cmd: cmd,
 			type: 'mesh',
@@ -42,39 +47,9 @@ class MeshMessageStructure {
 				/** @type {object[]} */
 				materialGroups: []
 			},
-			buffers: {
-				/** @type {ArrayBuffer}	*/
-				vertices: null,
-				/** @type {ArrayBuffer}	*/
-				indices: null,
-				/** @type {ArrayBuffer}	*/
-				colors: null,
-				/** @type {ArrayBuffer}	*/
-				normals: null,
-				/** @type {ArrayBuffer}	*/
-				uvs: null,
-				/** @type {ArrayBuffer}	*/
-				skinIndex: null,
-				/** @type {ArrayBuffer}	*/
-				skinWeight: null
-			}
+			serialised: null
 		};
-		this.transferables = {
-			/** @type {ArrayBuffer[]} */
-			vertex: null,
-			/** @type {ArrayBuffer[]} */
-			index: null,
-			/** @type {ArrayBuffer[]} */
-			color: null,
-			/** @type {ArrayBuffer[]} */
-			normal: null,
-			/** @type {ArrayBuffer[]} */
-			uv: null,
-			/** @type {ArrayBuffer[]} */
-			skinIndex: null,
-			/** @type {ArrayBuffer[]} */
-			skinWeight: null
-		};
+		this.transferables = [];
 
 	}
 
@@ -241,67 +216,62 @@ class TransferableUtils {
 	 */
 	static packageBufferGeometry( bufferGeometry, id, meshName, geometryType, materialNames ) {
 		let vertexBA = bufferGeometry.getAttribute( 'position' );
-		let indexBA = bufferGeometry.getIndex();
-		let colorBA = bufferGeometry.getAttribute( 'color' );
 		let normalBA = bufferGeometry.getAttribute( 'normal' );
 		let uvBA = bufferGeometry.getAttribute( 'uv' );
+		let colorBA = bufferGeometry.getAttribute( 'color' );
 		let skinIndexBA = bufferGeometry.getAttribute( 'skinIndex' );
 		let skinWeightBA = bufferGeometry.getAttribute( 'skinWeight' );
-		let vertexFA = (vertexBA !== null && vertexBA !== undefined) ? vertexBA.array : null;
-		let indexUA = (indexBA !== null && indexBA !== undefined) ? indexBA.array : null;
-		let colorFA = (colorBA !== null && colorBA !== undefined) ? colorBA.array : null;
-		let normalFA = (normalBA !== null && normalBA !== undefined) ? normalBA.array : null;
-		let uvFA = (uvBA !== null && uvBA !== undefined) ? uvBA.array : null;
-		let skinIndexFA = (skinIndexBA !== null && skinIndexBA !== undefined) ? skinIndexBA.array : null;
-		let skinWeightFA = (skinWeightBA !== null && skinWeightBA !== undefined) ? skinWeightBA.array : null;
-
+		let indexBA = bufferGeometry.getIndex();
 
 		let payload = new MeshMessageStructure( 'execComplete', id, meshName );
+		if ( vertexBA !== null && vertexBA !== undefined ) payload.transferables.push( vertexBA.array.buffer );
+		if ( indexBA !== null && indexBA !== undefined ) payload.transferables.push( indexBA.array.buffer );
+		if ( colorBA !== null && colorBA !== undefined ) payload.transferables.push( colorBA.array.buffer );
+		if ( normalBA !== null && normalBA !== undefined ) payload.transferables.push( normalBA.array.buffer );
+		if ( uvBA !== null && uvBA !== undefined ) payload.transferables.push( uvBA.array.buffer );
+		if ( skinIndexBA !== null && skinIndexBA !== undefined ) payload.transferables.push( skinIndexBA.array.buffer );
+		if ( skinWeightBA !== null && skinWeightBA !== undefined ) payload.transferables.push( skinWeightBA.array.buffer );
+
+		payload.main.serialised = bufferGeometry;
 		payload.main.params.geometryType = geometryType;
 		payload.main.materials.materialNames = materialNames;
-		if ( vertexFA !== null ) {
 
-			payload.main.buffers.vertices = vertexFA;
-			payload.transferables.vertex = [ vertexFA.buffer ];
-
-		}
-		if ( indexUA !== null ) {
-
-			payload.main.buffers.indices = indexUA;
-			payload.transferables.index = [ indexUA.buffer ];
-
-		}
-		if ( colorFA !== null ) {
-
-			payload.main.buffers.colors = colorFA;
-			payload.transferables.color = [ colorFA.buffer ];
-
-		}
-		if ( normalFA !== null ) {
-
-			payload.main.buffers.normals = normalFA;
-			payload.transferables.normal = [ normalFA.buffer ];
-
-		}
-		if ( uvFA !== null ) {
-
-			payload.main.buffers.uvs = uvFA;
-			payload.transferables.uv = [ uvFA.buffer ];
-
-		}
-		if ( skinIndexFA !== null ) {
-
-			payload.main.buffers.skinIndex = skinIndexFA;
-			payload.transferables.skinIndex = [ skinIndexFA.buffer ];
-
-		}
-		if ( skinWeightFA !== null ) {
-
-			payload.main.buffers.skinWeight = skinWeightFA;
-			payload.transferables.skinWeight = [ skinWeightFA.buffer ];
-
-		}
 		return payload;
+	}
+
+	static reconstructBufferGeometry ( transferredGeometry ) {
+		const geometry = new BufferGeometry();
+
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.position, 'position' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.normal, 'normal' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.uv, 'uv' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.color, 'color' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinIndex, 'skinIndex' );
+		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight' );
+
+		const index = transferredGeometry.index;
+		if ( index ) geometry.setIndex( new BufferAttribute( index.array, index.itemSize, index.normalized ) );
+
+		const boundingBox = transferredGeometry.boundingBox;
+		if ( boundingBox !== null ) geometry.boundingBox = Object.assign( new Box3(), boundingBox );
+
+		const boundingSphere = transferredGeometry.boundingSphere;
+		if ( boundingSphere !== null ) geometry.boundingSphere = Object.assign( new Sphere(), boundingSphere );
+
+		geometry.uuid = transferredGeometry.uuid;
+		geometry.name = transferredGeometry.name;
+		geometry.type = transferredGeometry.type;
+		geometry.groups = transferredGeometry.groups;
+		geometry.drawRange = transferredGeometry.drawRange;
+		geometry.userData = transferredGeometry.userData;
+
+		return geometry;
+	}
+
+	static assignAttribute( bg, attr, attrName ) {
+		if ( attr ) {
+			bg.setAttribute( attrName, new BufferAttribute( attr.array, attr.itemSize, attr.normalized ) );
+		}
 	}
 
 }
