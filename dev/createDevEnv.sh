@@ -41,8 +41,8 @@ cp -f ${DIR_BASE}/node_modules/three/examples/jsm/controls/TrackballControls.d.t
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.js ${DIR_BASE}/examples/jsm/loaders/MTLLoader.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/MTLLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/MTLLoader.d.ts
 cp -f ${DIR_BASE}/node_modules/three/examples/js/loaders/MTLLoader.js ${DIR_BASE}/examples/js/loaders/MTLLoader.js
-#cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.js ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
-#cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
+cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.js ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
+cp -f ${DIR_BASE}/node_modules/three/examples/jsm/loaders/OBJLoader.d.ts ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
 cp -f ${DIR_BASE}/node_modules/three/examples/js/loaders/OBJLoader.js ${DIR_BASE}/examples/js/loaders/OBJLoader.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.js
 cp -f ${DIR_BASE}/node_modules/three/examples/jsm/helpers/VertexNormalsHelper.d.ts ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.d.ts
