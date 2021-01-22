@@ -1,4 +1,5 @@
 export class MaterialHandler {
+    static getMaterialsJSON(materialsObject: any): {};
     logging: {
         enabled: boolean;
         debug: boolean;

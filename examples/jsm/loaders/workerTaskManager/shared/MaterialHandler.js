@@ -246,15 +246,20 @@ class MaterialHandler {
 	 */
 	getMaterialsJSON () {
 
+		return MaterialHandler.getMaterialsJSON( this.materials );
+
+	}
+
+	static getMaterialsJSON ( materialsObject ) {
+
 		const materialsJSON = {};
 		let material;
-		for ( const materialName in this.materials ) {
+		for ( const materialName in materialsObject ) {
 
-			material = this.materials[ materialName ];
+			material = materialsObject[ materialName ];
 			materialsJSON[ materialName ] = material.toJSON();
 
 		}
-
 		return materialsJSON;
 
 	}

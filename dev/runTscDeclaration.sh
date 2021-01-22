@@ -17,7 +17,7 @@ cp -f ${DIR_LOADER_SRC}/workerTaskManager/shared/MaterialHandler.d.ts ${DIR_LOAD
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/shared/MeshReceiver.d.ts ${DIR_LOADER_TRG}/workerTaskManager/shared/MeshReceiver.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/tmOBJLoader.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/tmOBJLoader.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/tmOBJLoader2.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/tmOBJLoader2.d.ts
-cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/AssetPipelineLoader.d.ts ${DIR_LOADER_TRG}/AssetPipelineLoader.d.ts
+cp -f ${DIR_LOADER_SRC}/AssetPipelineLoader.d.ts ${DIR_LOADER_TRG}/AssetPipelineLoader.d.ts
 cp -f ${DIR_LOADER_SRC}/OBJLoader2.d.ts ${DIR_LOADER_TRG}/OBJLoader2.d.ts
 cp -f ${DIR_LOADER_SRC}/OBJLoader2Parallel.d.ts ${DIR_LOADER_TRG}/OBJLoader2Parallel.d.ts
 cp -f ${DIR_LOADER_SRC}/obj2/OBJLoader2Parser.d.ts ${DIR_LOADER_TRG}/obj2/OBJLoader2Parser.d.ts

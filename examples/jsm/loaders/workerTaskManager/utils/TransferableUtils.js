@@ -7,42 +7,30 @@ import {
 	BufferGeometry,
 	BufferAttribute,
 	Box3,
-	Sphere
+	Sphere,
+	Texture
 } from "../../../../../build/three.module.js";
 
 /**
- * Define a fixed structure that is used to ship data in between main and workers.
+ * Define a base structure that is used to ship data in between main and workers.
  */
-class MeshMessageStructure {
+class StructuredWorkerMessage {
 
 	/**
-	 * Creates a new {@link MeshMessageStructure}.
+	 * Creates a new {@link StructuredWorkerMessage}.
 	 *
 	 * @param {string} cmd
-	 * @param {string} id
-	 * @param {string} meshName
 	 */
-	constructor( cmd, id, meshName ) {
+	constructor( cmd ) {
 
 		this.main = {
 			cmd: cmd,
-			type: 'mesh',
+			type: 'undefined',
 			progress: {
 				numericalValue: 0
 			},
 			params: {
-				// 0: mesh, 1: line, 2: point
-				geometryType: 0,
-				id: id
-			},
-			materials: {
-				/** @type {string|null} */
-				json: null,
-				multiMaterial: false,
-				/** @type {string[]} */
-				materialNames: []
-			},
-			geometry: null
+			}
 		};
 		this.transferables = [];
 
@@ -57,6 +45,80 @@ class MeshMessageStructure {
 
 		postMessageImpl.postMessage( this.main, this.transferables );
 
+	}
+}
+
+/**
+ * Define a structure that is used to ship materials data between main and workers.
+ */
+class MaterialsWorkerMessage extends StructuredWorkerMessage {
+
+	/**
+	 * Creates a new {@link MeshMessageStructure}.
+	 *
+	 * @param {string} cmd
+	 */
+	constructor( cmd) {
+		super( cmd );
+		this.main.type = 'materials';
+		this.main.materials = {};
+	}
+
+	setMaterials ( materials ) {
+		this.materials = materials;
+	}
+
+	cleanAndSetMaterials ( materials ) {
+		for ( let material of Object.values( materials ) ) {
+			Object.entries( material ).forEach( ( [key, value] ) => {
+				if ( value instanceof Texture || value === null ) {
+					material[ key ] = undefined;
+				}
+			} );
+		}
+		this.setMaterials( materials );
+	}
+
+}
+
+/**
+ * Define a structure that is used to ship geometry data between main and workers.
+ */
+class GeometryWorkerMessage extends StructuredWorkerMessage {
+
+	/**
+	 * Creates a new {@link MeshMessageStructure}.
+	 *
+	 * @param {string} cmd
+	 */
+	constructor( cmd) {
+		super( cmd );
+		this.main.type = 'geometry';
+		// 0: mesh, 1: line, 2: point
+		this.main.params.geometryType = 0;
+		this.main.geometry = {};
+	}
+
+}
+
+/**
+ * Define a structure that is used to ship mesh data between main and workers.
+ */
+class MeshMessageStructure extends GeometryWorkerMessage {
+
+	/**
+	 * Creates a new {@link MeshMessageStructure}.
+	 *
+	 * @param {string} cmd
+	 * @param {string} id
+	 * @param {string} meshName
+	 */
+	constructor( cmd, id, meshName ) {
+		super( cmd );
+		this.main.type = 'mesh';
+		this.main.params.id = id;
+		// needs to be added as we cannot inherit from both materials and geometry
+		this.main.materials = {};
 	}
 
 }
@@ -73,11 +135,10 @@ class TransferableUtils {
 	 * @param {BufferGeometry} geometry
 	 * @param {string} id
 	 * @param {number} geometryType
-	 * @param {string[]} [materialNames]
 	 * @param {boolean} cloneBuffers
 	 * @return {MeshMessageStructure}
 	 */
-	static packageBufferGeometry( geometry, id, geometryType, cloneBuffers, materialNames ) {
+	static packageBufferGeometry( geometry, id, geometryType, cloneBuffers ) {
 		let vertexBA = geometry.getAttribute( 'position' );
 		let normalBA = geometry.getAttribute( 'normal' );
 		let uvBA = geometry.getAttribute( 'uv' );
@@ -99,7 +160,6 @@ class TransferableUtils {
 
 		payload.main.geometry = geometry;
 		payload.main.params.geometryType = geometryType;
-		payload.main.materials.materialNames = materialNames;
 
 		return payload;
 	}
@@ -192,4 +252,11 @@ class ObjectManipulator {
 
 }
 
-export { TransferableUtils, MeshMessageStructure, ObjectManipulator }
+export {
+	TransferableUtils,
+	StructuredWorkerMessage,
+	GeometryWorkerMessage,
+	MaterialsWorkerMessage,
+	MeshMessageStructure,
+	ObjectManipulator
+}

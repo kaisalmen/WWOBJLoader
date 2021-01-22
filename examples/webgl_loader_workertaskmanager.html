@@ -26,6 +26,9 @@
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import { MeshReceiver } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
 			import {
+				StructuredWorkerMessage,
+				GeometryWorkerMessage,
+				MaterialsWorkerMessage,
 				MeshMessageStructure,
 				ObjectManipulator
 			} from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js"
@@ -115,6 +118,8 @@
 					this.meshReceiver = new MeshReceiver( this.materialHandler );
 
 					let transferableUtils = TransferableUtils.toString() + ';\n\n';
+					let structuredWorkerMessage = StructuredWorkerMessage.toString() + ';\n\n';
+					let geometryWorkerMessage = GeometryWorkerMessage.toString() + ';\n\n';
 					let meshMessageStructure = MeshMessageStructure.toString() + ';\n\n';
 					let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
 					let objectManipulator = ObjectManipulator.toString() + ';\n\n';
@@ -129,6 +134,8 @@
 						dependencies: [
 							{ url: "../build/three.js" },
 							{ code: transferableUtils },
+							{ code: structuredWorkerMessage },
+							{ code: geometryWorkerMessage },
 							{ code: meshMessageStructure }
 						]
 					} );
@@ -175,6 +182,8 @@
 							{ url: '../examples/js/loaders/OBJLoader.js' },
 							{ code: '\n\nconst OBJLoader = THREE.OBJLoader;\n\n' },
 							{ code: transferableUtils },
+							{ code: structuredWorkerMessage },
+							{ code: geometryWorkerMessage },
 							{ code: meshMessageStructure }
 						]
 					} );
@@ -385,8 +394,11 @@
 					await loadMtl.then( materialCreator => {
 
 						materialCreator.preload();
-						this.materialHandler.addMaterials( materialCreator.materials, false );
-						taskDescr.materials = this.materialHandler.getMaterialsJSON()
+//						this.materialHandler.addMaterials( materialCreator.materials, false );
+//						taskDescr.materials = this.materialHandler.getMaterialsJSON()
+
+						let materialsWorkerMessage = new MaterialsWorkerMessage( 'init' );
+						taskDescr.materials = materialsWorkerMessage.cleanAndSetMaterials( materialCreator.materials );
 
 					} ) ;
 					return await fileLoader.loadAsync( taskDescr.filenameObj );
@@ -616,7 +628,7 @@
 						vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
 
 					}
-					const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 0, false, [ 'meshNormalMaterial' ] );
+					const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 0, false );
 					payload.postMessage( context );
 
 				}
