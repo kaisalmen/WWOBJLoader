@@ -4,7 +4,8 @@
 /build
 /docs/
 
-/examples/js
+/examples/js/loaders/MTLLoader.js
+#/examples/js/loaders/OBJLoader.js
 /examples/jsm/controls/*.js
 /examples/jsm/controls/*.d.ts
 /examples/jsm/libs/*.js
@@ -13,8 +14,8 @@
 /examples/jsm/helpers/*.d.ts
 /examples/jsm/loaders/MTLLoader.js
 /examples/jsm/loaders/MTLLoader.d.ts
-/examples/jsm/loaders/OBJLoader.js
-/examples/jsm/loaders/OBJLoader.d.ts
+#/examples/jsm/loaders/OBJLoader.js
+#/examples/jsm/loaders/OBJLoader.d.ts
 /examples/models/draco
 /examples/models/gltf
 /examples/models/obj/14

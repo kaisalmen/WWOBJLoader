@@ -17,7 +17,7 @@ class MeshWalker {
 			console.info( 'Walking: ' + object3d.name );
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], 1, 0,['TBD'] );
+				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], 1, 0, false );
 				callback( payload.main, payload.transferables );
 
 			}

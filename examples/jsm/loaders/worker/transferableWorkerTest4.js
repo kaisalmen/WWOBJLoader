@@ -10,7 +10,7 @@ function execute ( context, id, config ) {
 	let bufferGeometry = new TorusKnotBufferGeometry( 20, 3, config.params.segments, config.params.segments );
 	bufferGeometry.name = config.params.name;
 
-	const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id,2, [] );
+	const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 2, false );
 	payload.main.cmd = config.params.name;
 	payload.postMessage( context );
 }

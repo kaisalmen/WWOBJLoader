@@ -616,7 +616,7 @@
 						vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
 
 					}
-					const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 0, ['meshNormalMaterial'] );
+					const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 0, false, [ 'meshNormalMaterial' ] );
 					payload.postMessage( context );
 
 				}

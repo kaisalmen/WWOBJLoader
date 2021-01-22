@@ -14,11 +14,11 @@ rm -fr ${DIR_BASE}/src
 echo "Removing various files from ./examples"
 rm -f ${DIR_BASE}/examples/jsm/controls/TrackballControls.js
 rm -f ${DIR_BASE}/examples/jsm/controls/TrackballControls.d.ts
+rm -f ${DIR_BASE}/examples/jsm/loaders/MTLLoader.js
+rm -f ${DIR_BASE}/examples/jsm/loaders/MTLLoader.d.ts
+rm -f ${DIR_BASE}/examples/js/loaders/MTLLoader.js
 #rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
 #rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
-#rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
-#rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
-#rm -f ${DIR_BASE}/examples/js/loaders/MTLLoader.js
 #rm -f ${DIR_BASE}/examples/js/loaders/OBJLoader.js
 rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.js
 rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.d.ts

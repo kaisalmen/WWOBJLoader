@@ -124,8 +124,12 @@ class TransferableUtils {
 		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
 
 		const index = transferredGeometry.index;
-		const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
-		if ( index ) geometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
+		if ( index !== null && index !== undefined ) {
+
+			const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
+			if ( index ) geometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
+
+		}
 
 		const boundingBox = transferredGeometry.boundingBox;
 		if ( boundingBox !== null ) geometry.boundingBox = Object.assign( new Box3(), boundingBox );

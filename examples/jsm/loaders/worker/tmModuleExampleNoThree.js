@@ -26,7 +26,7 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	const payload = TransferableUtils.packageBufferGeometry( geometry, config.id, 1, [ 'defaultLineMaterial' ] );
+	const payload = TransferableUtils.packageBufferGeometry( geometry, config.id, 1, false, [ 'defaultLineMaterial' ] );
 	let randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );
 	payload.main.params.color = {
