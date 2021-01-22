@@ -297,7 +297,7 @@
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						torus.name = 'torus';
 
-						let torusPayload = TransferableUtils.packageBufferGeometry( torus, '0', 0 );
+						let torusPayload = TransferableUtils.packageBufferGeometry( torus, '0', 0, false );
 						this.tasksToUse.push( taskDescr );
 						this.workerTaskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
 						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, torusPayload.main, torusPayload.transferables ).catch( e => console.error( e ) ) );

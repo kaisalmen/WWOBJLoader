@@ -7,8 +7,7 @@ import {
 	BufferGeometry,
 	BufferAttribute,
 	Box3,
-	Sphere,
-	Object3D
+	Sphere
 } from "../../../../../build/three.module.js";
 
 /**
@@ -50,93 +49,6 @@ class MeshMessageStructure {
 	}
 
 	/**
-	 * Clone the input which can be a complete {@link MeshMessageStructure} or a config following the structure to a
-	 * {@link MeshMessageStructure}.
-	 *
-	 * @param {object|MeshMessageStructure} input
-	 * @return {MeshMessageStructure}
-	 */
-	static cloneMessageStructure( input ) {
-		let output = new MeshMessageStructure( input.main.cmd, input.main.meshName );
-		output.main.type = input.main.type;
-		output.main.progress.numericalValue = input.main.progress.numericalValue;
-		output.main.params.geometryType = input.main.params.geometryType;
-		output.main.materials.multiMaterial = input.main.materials.multiMaterial;
-		output.main.materials.materialNames = input.main.materials.materialNames;
-		output.main.materials.materialGroups = input.main.materials.materialGroups;
-
-		if ( input.main.buffers.vertices !== null ) {
-
-			output.main.buffers.vertices = input.main.buffers.vertices;
-			let arrayOut = new Float32Array( input.main.buffers.vertices.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.vertices, arrayOut )
-			output.transferables.vertex = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.indices !== null ) {
-
-			output.main.buffers.indices = input.main.buffers.indices;
-			let arrayOut = new Uint32Array( input.main.buffers.indices );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.indices, arrayOut );
-			output.transferables.index = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.colors !== null ) {
-
-			output.main.buffers.colors = input.main.buffers.colors;
-			let arrayOut = new Float32Array( input.main.buffers.colors.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.colors, arrayOut )
-			output.transferables.color = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.normals !== null ) {
-
-			output.main.buffers.normals = input.main.buffers.normals;
-			let arrayOut = new Float32Array( input.main.buffers.normals.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.normals, arrayOut )
-			output.transferables.normal = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.uvs !== null ) {
-
-			output.main.buffers.uvs = input.main.buffers.uvs;
-			let arrayOut = new Float32Array( input.main.buffers.uvs.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.uvs, arrayOut )
-			output.transferables.uv = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.skinIndex !== null ) {
-
-			output.main.buffers.skinIndex = input.main.buffers.skinIndex;
-			let arrayOut = new Float32Array( input.main.buffers.skinIndex.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.skinIndex, arrayOut )
-			output.transferables.skinIndex = [ arrayOut.buffer ];
-
-		}
-		if ( input.main.buffers.skinWeight !== null ) {
-
-			output.main.buffers.skinWeight = input.main.buffers.skinWeight;
-			let arrayOut = new Float32Array( input.main.buffers.skinWeight.length );
-			MeshMessageStructure.copyTypedArray( input.main.buffers.skinWeight, arrayOut )
-			output.transferables.skinWeight = [ arrayOut.buffer ];
-
-		}
-		return output;
-
-	}
-
-	/**
-	 * Copies all values of input {@link ArrayBuffer} to output {@link ArrayBuffer}.
-	 * @param {ArrayBuffer} arrayIn
-	 * @param {ArrayBuffer} arrayOut
-	 */
-	static copyTypedArray ( arrayIn, arrayOut ) {
-
-		for ( let i = 0; i < arrayIn.length; i++ ) arrayOut[ i ] = arrayIn[ i ];
-
-	}
-
-	/**
 	 * Posts a message by invoking the method on the provided object.
 	 *
 	 * @param {object} postMessageImpl
@@ -156,60 +68,16 @@ class MeshMessageStructure {
 class TransferableUtils {
 
 	/**
-	 * Walk a mesh and on ever geometry call the callback function.
-	 *
-	 * @param {Object3D} rootNode
-	 * @param {Function} callback
-	 */
-	static walkMesh( rootNode, callback ) {
-		let scope = this;
-		let _walk_ = function ( object3d ) {
-			console.info( 'Walking: ' + object3d.name );
-
-			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], 1, 0,['TBD'] );
-				callback( payload.main, payload.transferables );
-
-			}
-			if ( object3d.hasOwnProperty( 'material' ) ) {
-
-				let mat = object3d.material;
-				if ( mat.hasOwnProperty( 'materials' ) ) {
-
-					let materials = mat.materials;
-					for ( let name in materials ) {
-
-						if ( materials.hasOwnProperty( name ) ) {
-
-							console.log( materials[ name ] );
-
-						}
-
-					}
-
-				} else {
-
-					console.log( mat.name );
-
-				}
-
-			}
-		};
-		rootNode.traverse( _walk_ );
-
-	}
-
-
-	/**
 	 * Package {@link BufferGeometry} into {@link MeshMessageStructure}
 	 *
 	 * @param {BufferGeometry} geometry
 	 * @param {string} id
 	 * @param {number} geometryType
 	 * @param {string[]} [materialNames]
+	 * @param {boolean} cloneBuffers
 	 * @return {MeshMessageStructure}
 	 */
-	static packageBufferGeometry( geometry, id, geometryType, materialNames ) {
+	static packageBufferGeometry( geometry, id, geometryType, cloneBuffers, materialNames ) {
 		let vertexBA = geometry.getAttribute( 'position' );
 		let normalBA = geometry.getAttribute( 'normal' );
 		let uvBA = geometry.getAttribute( 'uv' );
@@ -219,19 +87,30 @@ class TransferableUtils {
 		let indexBA = geometry.getIndex();
 
 		let payload = new MeshMessageStructure( 'execComplete', id, geometry.name );
-		if ( vertexBA !== null && vertexBA !== undefined ) payload.transferables.push( vertexBA.array.buffer );
-		if ( indexBA !== null && indexBA !== undefined ) payload.transferables.push( indexBA.array.buffer );
-		if ( colorBA !== null && colorBA !== undefined ) payload.transferables.push( colorBA.array.buffer );
-		if ( normalBA !== null && normalBA !== undefined ) payload.transferables.push( normalBA.array.buffer );
-		if ( uvBA !== null && uvBA !== undefined ) payload.transferables.push( uvBA.array.buffer );
-		if ( skinIndexBA !== null && skinIndexBA !== undefined ) payload.transferables.push( skinIndexBA.array.buffer );
-		if ( skinWeightBA !== null && skinWeightBA !== undefined ) payload.transferables.push( skinWeightBA.array.buffer );
+
+		TransferableUtils.addTransferable( vertexBA, cloneBuffers, payload.transferables );
+		TransferableUtils.addTransferable( normalBA, cloneBuffers, payload.transferables );
+		TransferableUtils.addTransferable( uvBA, cloneBuffers, payload.transferables );
+		TransferableUtils.addTransferable( colorBA, cloneBuffers, payload.transferables );
+		TransferableUtils.addTransferable( skinIndexBA, cloneBuffers, payload.transferables );
+		TransferableUtils.addTransferable( skinWeightBA, cloneBuffers, payload.transferables );
+
+		TransferableUtils.addTransferable( indexBA, cloneBuffers, payload.transferables );
 
 		payload.main.geometry = geometry;
 		payload.main.params.geometryType = geometryType;
 		payload.main.materials.materialNames = materialNames;
 
 		return payload;
+	}
+
+	static addTransferable( input, cloneBuffer, transferableArray ) {
+		if ( input !== null && input !== undefined ) {
+
+			const arrayBuffer = cloneBuffer ? input.array.slice( 0 ) : input.array;
+			transferableArray.push( arrayBuffer.buffer );
+
+		}
 	}
 
 	static reconstructBufferGeometry ( transferredGeometry, cloneBuffers ) {
@@ -245,7 +124,7 @@ class TransferableUtils {
 		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
 
 		const index = transferredGeometry.index;
-		const indexBuffer = cloneBuffers ? index.array : index.array.slice( 0 );
+		const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
 		if ( index ) geometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
 
 		const boundingBox = transferredGeometry.boundingBox;
@@ -266,7 +145,7 @@ class TransferableUtils {
 
 	static assignAttribute( bg, attr, attrName, cloneBuffer ) {
 		if ( attr ) {
-			const buffer = cloneBuffer ? attr.array : attr.array.slice( 0 );
+			const buffer = cloneBuffer ? attr.array.slice( 0 ) : attr.array;
 			bg.setAttribute( attrName, new BufferAttribute( buffer, attr.itemSize, attr.normalized ) );
 		}
 	}
@@ -306,6 +185,7 @@ class ObjectManipulator {
 		}
 
 	}
+
 }
 
 export { TransferableUtils, MeshMessageStructure, ObjectManipulator }
