@@ -5,13 +5,13 @@ export class MeshReceiver {
         debug: boolean;
     };
     callbacks: {
-        onProgress: any;
-        onMeshAlter: any;
+        onProgress: null;
+        onMeshAlter: null;
     };
     materialHandler: any;
     setLogging(enabled: boolean, debug: boolean): void;
     private _setCallbacks;
-    buildMeshes(meshPayload: any): Mesh[];
+    buildMeshes(meshPayload: Object): Mesh[];
 }
 export class LoadedMeshUserOverride {
     constructor(disregardMesh: any, alteredMesh: any);

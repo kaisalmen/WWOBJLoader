@@ -1,50 +1,32 @@
 export class TransferableUtils {
-    static walkMesh(rootNode: Object3D, callback: Function): void;
-    static packageBufferGeometry(bufferGeometry: BufferGeometry, id: string, geometryType: number, materialNames?: string[]): MeshMessageStructure;
+    static packageBufferGeometry(geometry: BufferGeometry, id: string, geometryType: number, cloneBuffers: boolean, materialNames?: string[] | undefined): MeshMessageStructure;
+    static addTransferable(input: any, cloneBuffer: any, transferableArray: any): void;
+    static reconstructBufferGeometry(transferredGeometry: any, cloneBuffers: any): BufferGeometry;
+    static assignAttribute(bg: any, attr: any, attrName: any, cloneBuffer: any): void;
 }
 export class MeshMessageStructure {
-    static cloneMessageStructure(input: object | MeshMessageStructure): MeshMessageStructure;
-    static copyTypedArray(arrayIn: ArrayBuffer, arrayOut: ArrayBuffer): void;
     constructor(cmd: string, id: string, meshName: string);
     main: {
         cmd: string;
         type: string;
-        id: string;
-        meshName: string;
         progress: {
             numericalValue: number;
         };
         params: {
             geometryType: number;
+            id: string;
         };
         materials: {
+            json: string | null;
             multiMaterial: boolean;
             materialNames: string[];
-            materialGroups: object[];
         };
-        buffers: {
-            vertices: ArrayBuffer;
-            indices: ArrayBuffer;
-            colors: ArrayBuffer;
-            normals: ArrayBuffer;
-            uvs: ArrayBuffer;
-            skinIndex: ArrayBuffer;
-            skinWeight: ArrayBuffer;
-        };
+        geometry: null;
     };
-    transferables: {
-        vertex: ArrayBuffer[];
-        index: ArrayBuffer[];
-        color: ArrayBuffer[];
-        normal: ArrayBuffer[];
-        uv: ArrayBuffer[];
-        skinIndex: ArrayBuffer[];
-        skinWeight: ArrayBuffer[];
-    };
+    transferables: any[];
     postMessage(postMessageImpl: object): void;
 }
 export class ObjectManipulator {
-    static applyProperties(objToAlter: any, params: any, forceCreation: boolean): void;
+    static applyProperties(objToAlter: Object, params: Object, forceCreation: boolean): void;
 }
-import { Object3D } from "../../../../../build/three.module.js";
 import { BufferGeometry } from "../../../../../build/three.module.js";

@@ -4,16 +4,16 @@ export class MaterialHandler {
         debug: boolean;
     };
     callbacks: {
-        onLoadMaterials: any;
+        onLoadMaterials: null;
     };
     materials: {};
     setLogging(enabled: boolean, debug: boolean): void;
     _setCallbacks(onLoadMaterials: any): void;
     createDefaultMaterials(overrideExisting: any): void;
-    addPayloadMaterials(materialPayload: any): any;
-    addMaterials(materials: any, overrideExisting: any, newMaterials: any): any;
-    getMaterials(): any;
+    addPayloadMaterials(materialPayload: Object): Object;
+    addMaterials(materials: any, forceOverrideExisting: any, newMaterials: any): any;
+    getMaterials(): Object;
     getMaterial(materialName: string): any;
-    getMaterialsJSON(): any;
+    getMaterialsJSON(): Object;
     clearMaterials(): void;
 }

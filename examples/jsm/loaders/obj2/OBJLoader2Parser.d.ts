@@ -11,26 +11,26 @@ export class OBJLoader2Parser {
         onLoad: (object3d: any, message: any) => void;
     };
     _init(): void;
-    contentRef: string | Uint8Array;
-    legacyMode: boolean;
-    materials: any;
-    materialPerSmoothingGroup: boolean;
-    useOAsMesh: boolean;
-    useIndices: boolean;
-    disregardNormals: boolean;
-    vertices: any[];
-    colors: any[];
-    normals: any[];
-    uvs: any[];
-    objectId: number;
+    contentRef: string | Uint8Array | null | undefined;
+    legacyMode: boolean | undefined;
+    materials: Object | undefined;
+    materialPerSmoothingGroup: boolean | undefined;
+    useOAsMesh: boolean | undefined;
+    useIndices: boolean | undefined;
+    disregardNormals: boolean | undefined;
+    vertices: any[] | undefined;
+    colors: any[] | undefined;
+    normals: any[] | undefined;
+    uvs: any[] | undefined;
+    objectId: number | undefined;
     rawMesh: {
         objectName: string;
         groupName: string;
         activeMtlName: string;
         mtllibName: string;
         faceType: number;
-        subGroups: any[];
-        subGroupInUse: any;
+        subGroups: never[];
+        subGroupInUse: null;
         smoothingGroup: {
             splitMaterials: boolean;
             normalized: number;
@@ -42,9 +42,9 @@ export class OBJLoader2Parser {
             mtlCount: number;
             smoothingGroupCount: number;
         };
-    };
-    inputObjectCount: number;
-    outputObjectCount: number;
+    } | undefined;
+    inputObjectCount: number | undefined;
+    outputObjectCount: number | undefined;
     globalCounts: {
         vertices: number;
         faces: number;
@@ -52,13 +52,13 @@ export class OBJLoader2Parser {
         lineByte: number;
         currentByte: number;
         totalBytes: number;
-    };
+    } | undefined;
     _resetRawMesh(): void;
     setMaterialPerSmoothingGroup(materialPerSmoothingGroup: boolean): OBJLoader2Parser;
     setUseOAsMesh(useOAsMesh: boolean): OBJLoader2Parser;
     setUseIndices(useIndices: boolean): OBJLoader2Parser;
     setDisregardNormals(disregardNormals: boolean): OBJLoader2Parser;
-    setMaterials(materials: any): void;
+    setMaterials(materials: Object): void;
     setCallbackOnAssetAvailable(onAssetAvailable: any): OBJLoader2Parser;
     setCallbackOnProgress(onProgress: Function): OBJLoader2Parser;
     setCallbackOnError(onError: Function): OBJLoader2Parser;
@@ -84,7 +84,7 @@ export class OBJLoader2Parser {
         absoluteUvCount: number;
         faceCount: number;
         doubleIndicesCount: number;
-    };
+    } | null;
     _processCompletedMesh(): boolean;
     _buildMesh(result: any): void;
     _finalizeParsing(): void;
