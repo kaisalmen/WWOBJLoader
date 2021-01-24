@@ -24,13 +24,13 @@
 
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
-			import { MeshReceiver } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
 			import {
 				StructuredWorkerMessage,
-				GeometryWorkerMessage,
+				GeometrySender,
+				GeometryReceiver,
+				MeshReceiver,
 				MaterialsWorkerMessage,
-				MeshMessageStructure,
-				ObjectManipulator
+				ObjectManipulator, MeshSender
 			} from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js"
 			import { MaterialHandler } from "./jsm/loaders/workerTaskManager/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
@@ -80,7 +80,6 @@
 
 					this.workerTaskManager = null;
 					this.materialHandler = null;
-					this.meshReceiver = null;
 
 					this.taskDescriptions = new Map ();
 					this.tasksToUse = [];
@@ -115,12 +114,11 @@
 					let meshNormalMaterial = new THREE.MeshNormalMaterial();
 					meshNormalMaterial.name = 'meshNormalMaterial';
 					this.materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
-					this.meshReceiver = new MeshReceiver( this.materialHandler );
 
 					let transferableUtils = TransferableUtils.toString() + ';\n\n';
 					let structuredWorkerMessage = StructuredWorkerMessage.toString() + ';\n\n';
-					let geometryWorkerMessage = GeometryWorkerMessage.toString() + ';\n\n';
-					let meshMessageStructure = MeshMessageStructure.toString() + ';\n\n';
+					let geometrySender = GeometrySender.toString() + ';\n\n';
+					let meshSender = MeshSender.toString() + ';\n\n';
 					let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
 					let objectManipulator = ObjectManipulator.toString() + ';\n\n';
 
@@ -135,8 +133,7 @@
 							{ url: "../build/three.js" },
 							{ code: transferableUtils },
 							{ code: structuredWorkerMessage },
-							{ code: geometryWorkerMessage },
-							{ code: meshMessageStructure }
+							{ code: geometrySender }
 						]
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
@@ -183,8 +180,8 @@
 							{ code: '\n\nconst OBJLoader = THREE.OBJLoader;\n\n' },
 							{ code: transferableUtils },
 							{ code: structuredWorkerMessage },
-							{ code: geometryWorkerMessage },
-							{ code: meshMessageStructure }
+							{ code: geometrySender },
+							{ code: meshSender }
 						]
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Module', {
@@ -306,10 +303,11 @@
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						torus.name = 'torus';
 
-						let torusPayload = TransferableUtils.packageBufferGeometry( torus, '0', 0, false );
+						const sender = new GeometrySender( 'init' );
+						sender.package( torus, 0, false );
 						this.tasksToUse.push( taskDescr );
 						this.workerTaskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
-						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, torusPayload.main, torusPayload.transferables ).catch( e => console.error( e ) ) );
+						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, sender.main, sender.transferables ).catch( e => console.error( e ) ) );
 
 					}
 					taskDescr = this.taskDescriptions.get( 'tmProtoExampleMain' );
@@ -394,10 +392,8 @@
 					await loadMtl.then( materialCreator => {
 
 						materialCreator.preload();
-//						this.materialHandler.addMaterials( materialCreator.materials, false );
-//						taskDescr.materials = this.materialHandler.getMaterialsJSON()
-
 						let materialsWorkerMessage = new MaterialsWorkerMessage( 'init' );
+						this.materialHandler.addMaterials( materialCreator.materials, false );
 						taskDescr.materials = materialsWorkerMessage.cleanAndSetMaterials( materialCreator.materials );
 
 					} ) ;
@@ -459,20 +455,31 @@
 				}
 
 				_processMessage ( payload ) {
+					let mesh, material;
 					switch ( payload.cmd ) {
 						case 'init':
 							console.log( 'Init Completed: ' + payload.id );
 							break;
 
+
 						case 'execComplete':
 						case 'assetAvailable':
 							switch ( payload.type ) {
 
+								case 'geometry':
+									const geometryReceiver = new GeometryReceiver( payload );
+									geometryReceiver.reconstruct( payload.geometry );
+									material = new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) } );
+ 									mesh = new THREE.Mesh( geometryReceiver.getBufferGeometry(), material );
+									this._addMesh( mesh, geometryReceiver );
+									break;
+
 								case 'mesh':
-//									let meshes = this.meshReceiver.buildMeshes( payload );
-									const geometry = TransferableUtils.reconstructBufferGeometry( payload.geometry );
-									const mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) }) );
-									this._addMesh( mesh, payload.params );
+									const meshReceiver = new MeshReceiver( payload );
+									meshReceiver.reconstruct( false );
+									material = this.materialHandler.getMaterial( payload.material.name );
+									mesh = new THREE.Mesh( meshReceiver.getBufferGeometry(), material );
+									this._addMesh( mesh, meshReceiver );
 									break;
 
 								case 'material':
@@ -496,13 +503,16 @@
 					}
 				}
 
-				_addMesh( mesh, params ) {
+				_addMesh( mesh, structuredMessage ) {
 
-					let storedPos = this.objectsUsed.get( params.id );
+					const id = structuredMessage.main.id;
+					const color = structuredMessage.main.params.color;
+					let storedPos = this.objectsUsed.get( id );
 					let pos;
 					if ( storedPos ) {
 
 						pos = storedPos.pos;
+
 					}
 					else {
 
@@ -510,17 +520,16 @@
 						pos.applyAxisAngle( this.baseVectorX, 2 * Math.PI * Math.random() );
 						pos.applyAxisAngle( this.baseVectorY, 2 * Math.PI * Math.random() );
 						pos.applyAxisAngle( this.baseVectorZ, 2 * Math.PI * Math.random() );
-						this.objectsUsed.set( params.id, { name: mesh.name, pos: pos } );
+						this.objectsUsed.set( id, { name: mesh.name, pos: pos } );
 
 					}
 					mesh.position.set( pos.x, pos.y, pos.z );
-					mesh.name = params.id + '' + mesh.name;
-					if ( params.color !== undefined ) {
+					mesh.name = id + '' + mesh.name;
+					if ( color !== undefined ) {
 
-						mesh.material.color = new THREE.Color( params.color.r, params.color.g, params.color.b );
+						mesh.material.color = new THREE.Color( color.r, color.g, color.b );
 
 					}
-
 					this.scene.add( mesh );
 					this.meshesAdded.push( mesh.name );
 					this.meshCount ++;
@@ -628,8 +637,9 @@
 						vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
 
 					}
-					const payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 0, false );
-					payload.postMessage( context );
+					const sender = new GeometrySender( 'execComplete', config.id );
+					sender.package( bufferGeometry, 0, false );
+					sender.postMessage( context );
 
 				}
 

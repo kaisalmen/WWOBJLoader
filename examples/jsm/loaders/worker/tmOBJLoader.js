@@ -4,7 +4,7 @@
 
 import { MaterialLoader } from "../../../../src/loaders/MaterialLoader.js";
 import { OBJLoader } from "../OBJLoader.js";
-import { TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+import { MeshSender } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 const OBJLoaderWorker = {
@@ -51,9 +51,10 @@ const OBJLoaderWorker = {
 
 			mesh = meshes.children[ i ];
 			mesh.geometry.name = mesh.name + config.id;
-			let payload = TransferableUtils.packageBufferGeometry( mesh.geometry, config.id, 0, false );
-			payload.main.materials.json = mesh.material.toJSON();
-			payload.postMessage( context );
+
+			const sender = new MeshSender( 'execComplete', config.id );
+			sender.package( mesh, 0, false );
+			sender.postMessage( context );
 
 		}
 

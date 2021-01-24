@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+import { GeometryReceiver, GeometrySender } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 
@@ -18,7 +18,8 @@ function init ( context, id, config ) {
 
 function execute ( context, id, config ) {
 
-	let geometry = TransferableUtils.reconstructBufferGeometry( context.config.geometry, true );
+	const receiver = new GeometryReceiver( context.config );
+	const geometry = receiver.reconstruct( true ).getBufferGeometry();
 	geometry.name = 'tmProto' + config.id;
 	let vertexArray = geometry.getAttribute( 'position' ).array;
 	for ( let i = 0; i < vertexArray.length; i++ ) {
@@ -26,16 +27,19 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	const payload = TransferableUtils.packageBufferGeometry( geometry, config.id, 1, false );
+
+	const sender = new GeometrySender( 'execComplete', config.id );
+	sender.package( geometry, 1, false );
+
 	let randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );
-	payload.main.params.color = {
+	sender.main.params.color = {
 		r: randArray[ 0 ] / 255,
 		g: randArray[ 1 ] / 255,
 		b: randArray[ 2 ] / 255
 	};
 
-	payload.postMessage( context );
+	sender.postMessage( context );
 
 }
 

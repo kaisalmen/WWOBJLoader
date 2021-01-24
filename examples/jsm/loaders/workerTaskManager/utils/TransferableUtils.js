@@ -20,11 +20,13 @@ class StructuredWorkerMessage {
 	 * Creates a new {@link StructuredWorkerMessage}.
 	 *
 	 * @param {string} cmd
+	 * @param {string} [id]
 	 */
-	constructor( cmd ) {
+	constructor( cmd, id ) {
 
 		this.main = {
 			cmd: cmd,
+			id: id,
 			type: 'undefined',
 			progress: {
 				numericalValue: 0
@@ -68,57 +70,205 @@ class MaterialsWorkerMessage extends StructuredWorkerMessage {
 		this.materials = materials;
 	}
 
+	/**
+	 *
+	 * @param {} materials
+	 */
 	cleanAndSetMaterials ( materials ) {
+		let clonedMaterials = {};
+		let clonedMaterial;
 		for ( let material of Object.values( materials ) ) {
-			Object.entries( material ).forEach( ( [key, value] ) => {
+			clonedMaterial = material.clone();
+			Object.entries( clonedMaterial ).forEach( ( [key, value] ) => {
 				if ( value instanceof Texture || value === null ) {
-					material[ key ] = undefined;
+					clonedMaterial[ key ] = undefined;
 				}
 			} );
+			clonedMaterials[ clonedMaterial.name ] = clonedMaterial;
 		}
-		this.setMaterials( materials );
+		this.setMaterials( clonedMaterial );
 	}
 
 }
 
 /**
- * Define a structure that is used to ship geometry data between main and workers.
+ * Define a structure that is used to send geometry data between main and workers.
  */
-class GeometryWorkerMessage extends StructuredWorkerMessage {
+class GeometrySender extends StructuredWorkerMessage {
 
 	/**
-	 * Creates a new {@link MeshMessageStructure}.
+	 * Creates a new {@link GeometrySender}.
 	 *
 	 * @param {string} cmd
+	 * @param {string} [id]
 	 */
-	constructor( cmd) {
-		super( cmd );
+	constructor( cmd, id ) {
+		super( cmd, id );
 		this.main.type = 'geometry';
 		// 0: mesh, 1: line, 2: point
-		this.main.params.geometryType = 0;
+		this.main.geometryType = 0;
 		this.main.geometry = {};
 	}
 
+	/**
+	 * Package {@link BufferGeometry}
+	 *
+	 * @param {BufferGeometry} geometry
+	 * @param {number} geometryType
+	 * @param {boolean} cloneBuffers
+	 * @return {MeshSender}
+	 */
+	package( geometry, geometryType, cloneBuffers ) {
+		this.main.geometry = geometry;
+		this.main.params.geometryType = geometryType;
+
+		let vertexBA = geometry.getAttribute( 'position' );
+		let normalBA = geometry.getAttribute( 'normal' );
+		let uvBA = geometry.getAttribute( 'uv' );
+		let colorBA = geometry.getAttribute( 'color' );
+		let skinIndexBA = geometry.getAttribute( 'skinIndex' );
+		let skinWeightBA = geometry.getAttribute( 'skinWeight' );
+		let indexBA = geometry.getIndex();
+
+		TransferableUtils.addTransferable( vertexBA, cloneBuffers, this.transferables );
+		TransferableUtils.addTransferable( normalBA, cloneBuffers, this.transferables );
+		TransferableUtils.addTransferable( uvBA, cloneBuffers, this.transferables );
+		TransferableUtils.addTransferable( colorBA, cloneBuffers, this.transferables );
+		TransferableUtils.addTransferable( skinIndexBA, cloneBuffers, this.transferables );
+		TransferableUtils.addTransferable( skinWeightBA, cloneBuffers, this.transferables );
+
+		TransferableUtils.addTransferable( indexBA, cloneBuffers, this.transferables );
+
+		return this;
+	}
 }
 
 /**
- * Define a structure that is used to ship mesh data between main and workers.
+ * Object that is used to receive geometry data between main and workers.
  */
-class MeshMessageStructure extends GeometryWorkerMessage {
+class GeometryReceiver extends StructuredWorkerMessage {
 
 	/**
-	 * Creates a new {@link MeshMessageStructure}.
+	 * Creates a new {@link GeometryReceiver}.
+	 *
+	 * @param {object} data Object that was sent from {@link GeometrySender}
+	 */
+	constructor( data ) {
+		super( data.cmd, data.id )
+		this.main.type = 'geometry';
+		/**
+		 * @type {number}
+		 * 0: mesh, 1: line, 2: point
+		 */
+		this.main.geometryType = data.geometryType;
+		/** @type {object} */
+		this.main.transferredGeometry = data.geometry;
+		/** @type {BufferGeometry} */
+		this.main.bufferGeometry = null;
+	}
+
+	/**
+	 * @param {boolean} cloneBuffers
+	 * @return {GeometryReceiver}
+	 */
+	reconstruct( cloneBuffers ) {
+		this.main.bufferGeometry = new BufferGeometry();
+
+		const transferredGeometry = this.main.transferredGeometry;
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.position, 'position', cloneBuffers );
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.normal, 'normal', cloneBuffers );
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.uv, 'uv', cloneBuffers );
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.color, 'color', cloneBuffers );
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.skinIndex, 'skinIndex', cloneBuffers );
+		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
+
+		const index = transferredGeometry.index;
+		if ( index !== null && index !== undefined ) {
+
+			const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
+			if ( index ) this.main.bufferGeometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
+
+		}
+		const boundingBox = transferredGeometry.boundingBox;
+		if ( boundingBox !== null ) this.main.bufferGeometry.boundingBox = Object.assign( new Box3(), boundingBox );
+
+		const boundingSphere = transferredGeometry.boundingSphere;
+		if ( boundingSphere !== null ) this.main.bufferGeometry.boundingSphere = Object.assign( new Sphere(), boundingSphere );
+
+		this.main.bufferGeometry.uuid = transferredGeometry.uuid;
+		this.main.bufferGeometry.name = transferredGeometry.name;
+		this.main.bufferGeometry.type = transferredGeometry.type;
+		this.main.bufferGeometry.groups = transferredGeometry.groups;
+		this.main.bufferGeometry.drawRange = transferredGeometry.drawRange;
+		this.main.bufferGeometry.userData = transferredGeometry.userData;
+
+		return this;
+	}
+
+	/**
+	 * @return {BufferGeometry|*}
+	 */
+	getBufferGeometry() {
+		return this.main.bufferGeometry
+	}
+
+}
+
+class MeshSender extends GeometrySender {
+
+	/**
+	 * Creates a new {@link MeshSender}.
 	 *
 	 * @param {string} cmd
-	 * @param {string} id
-	 * @param {string} meshName
+	 * @param {string} [id]
 	 */
 	constructor( cmd, id, meshName ) {
-		super( cmd );
+		super( cmd, id );
 		this.main.type = 'mesh';
-		this.main.params.id = id;
 		// needs to be added as we cannot inherit from both materials and geometry
-		this.main.materials = {};
+		this.main.material = {};
+	}
+
+	/**
+	 * Package {@link Mesh}
+	 *
+	 * @param {Mesh} mesh
+	 * @param {number} geometryType
+	 * @param {boolean} cloneBuffers
+	 * @return {MeshSender}
+	 */
+	package( mesh, geometryType, cloneBuffers ) {
+		super.package( mesh.geometry, geometryType, cloneBuffers );
+		this.main.material = mesh.material.toJSON();
+
+		return this;
+	}
+}
+
+class MeshReceiver extends GeometryReceiver {
+
+	/**
+ 	 * Creates a new {@link MeshReceiver}.
+	 *
+	 * @param {object} data Object that was sent from {@link MeshSender}
+	 */
+	constructor( data ) {
+		super( data );
+		this.main.type = 'mesh';
+		// needs to be added as we cannot inherit from both materials and geometry
+		this.main.material = data.material;
+	}
+
+	/**
+	 * @param {boolean} cloneBuffers
+	 * @return {MeshReceiver}
+	 */
+	reconstruct( cloneBuffers ) {
+		super.reconstruct( cloneBuffers );
+
+		// so far nothing needs to be done for material
+
+		return this;
 	}
 
 }
@@ -129,41 +279,6 @@ class MeshMessageStructure extends GeometryWorkerMessage {
  */
 class TransferableUtils {
 
-	/**
-	 * Package {@link BufferGeometry} into {@link MeshMessageStructure}
-	 *
-	 * @param {BufferGeometry} geometry
-	 * @param {string} id
-	 * @param {number} geometryType
-	 * @param {boolean} cloneBuffers
-	 * @return {MeshMessageStructure}
-	 */
-	static packageBufferGeometry( geometry, id, geometryType, cloneBuffers ) {
-		let vertexBA = geometry.getAttribute( 'position' );
-		let normalBA = geometry.getAttribute( 'normal' );
-		let uvBA = geometry.getAttribute( 'uv' );
-		let colorBA = geometry.getAttribute( 'color' );
-		let skinIndexBA = geometry.getAttribute( 'skinIndex' );
-		let skinWeightBA = geometry.getAttribute( 'skinWeight' );
-		let indexBA = geometry.getIndex();
-
-		let payload = new MeshMessageStructure( 'execComplete', id, geometry.name );
-
-		TransferableUtils.addTransferable( vertexBA, cloneBuffers, payload.transferables );
-		TransferableUtils.addTransferable( normalBA, cloneBuffers, payload.transferables );
-		TransferableUtils.addTransferable( uvBA, cloneBuffers, payload.transferables );
-		TransferableUtils.addTransferable( colorBA, cloneBuffers, payload.transferables );
-		TransferableUtils.addTransferable( skinIndexBA, cloneBuffers, payload.transferables );
-		TransferableUtils.addTransferable( skinWeightBA, cloneBuffers, payload.transferables );
-
-		TransferableUtils.addTransferable( indexBA, cloneBuffers, payload.transferables );
-
-		payload.main.geometry = geometry;
-		payload.main.params.geometryType = geometryType;
-
-		return payload;
-	}
-
 	static addTransferable( input, cloneBuffer, transferableArray ) {
 		if ( input !== null && input !== undefined ) {
 
@@ -171,40 +286,6 @@ class TransferableUtils {
 			transferableArray.push( arrayBuffer.buffer );
 
 		}
-	}
-
-	static reconstructBufferGeometry ( transferredGeometry, cloneBuffers ) {
-		const geometry = new BufferGeometry();
-
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.position, 'position', cloneBuffers );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.normal, 'normal', cloneBuffers );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.uv, 'uv', cloneBuffers );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.color, 'color', cloneBuffers );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinIndex, 'skinIndex', cloneBuffers );
-		TransferableUtils.assignAttribute( geometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
-
-		const index = transferredGeometry.index;
-		if ( index !== null && index !== undefined ) {
-
-			const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
-			if ( index ) geometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
-
-		}
-
-		const boundingBox = transferredGeometry.boundingBox;
-		if ( boundingBox !== null ) geometry.boundingBox = Object.assign( new Box3(), boundingBox );
-
-		const boundingSphere = transferredGeometry.boundingSphere;
-		if ( boundingSphere !== null ) geometry.boundingSphere = Object.assign( new Sphere(), boundingSphere );
-
-		geometry.uuid = transferredGeometry.uuid;
-		geometry.name = transferredGeometry.name;
-		geometry.type = transferredGeometry.type;
-		geometry.groups = transferredGeometry.groups;
-		geometry.drawRange = transferredGeometry.drawRange;
-		geometry.userData = transferredGeometry.userData;
-
-		return geometry;
 	}
 
 	static assignAttribute( bg, attr, attrName, cloneBuffer ) {
@@ -255,8 +336,10 @@ class ObjectManipulator {
 export {
 	TransferableUtils,
 	StructuredWorkerMessage,
-	GeometryWorkerMessage,
+	GeometrySender,
+	GeometryReceiver,
 	MaterialsWorkerMessage,
-	MeshMessageStructure,
+	MeshSender,
+	MeshReceiver,
 	ObjectManipulator
 }

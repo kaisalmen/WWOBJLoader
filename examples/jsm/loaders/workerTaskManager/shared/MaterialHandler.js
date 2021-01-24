@@ -5,7 +5,6 @@
 
 import {
 	LineBasicMaterial,
-	MaterialLoader,
 	MeshStandardMaterial,
 	PointsMaterial,
 	VertexColors
@@ -85,7 +84,6 @@ class MaterialHandler {
 	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
 	 *
 	 * @param {Object} materialPayload Material update instructions
-	 * @returns {Object} Map of {@link Material}
 	 */
 	addPayloadMaterials ( materialPayload ) {
 
@@ -120,70 +118,38 @@ class MaterialHandler {
 
 			}
 
-		}
-
-		let materials = materialPayload.materials.serializedMaterials;
-		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) {
-
-			const loader = new MaterialLoader();
-			let materialJson;
-			for ( materialName in materials ) {
-
-				materialJson = materials[ materialName ];
-				if ( materialJson !== undefined && materialJson !== null ) {
-
-					material = loader.parse( materialJson );
-					if ( this.logging.enabled ) {
-
-						console.info( 'De-serialized material with name "' + materialName + '" will be added.' );
-
-					}
-					this.materials[ materialName ] = material;
-					newMaterials[ materialName ] = material;
-
-				}
-
-			}
+			this.addMaterials( newMaterials, true );
 
 		}
-		materials = materialPayload.materials.runtimeMaterials;
-		newMaterials = this.addMaterials( materials, true, newMaterials );
-
-		return newMaterials;
 
 	}
 
 	/**
 	 * Set materials loaded by any supplier of an Array of {@link Material}.
 	 *
-	 * @param materials Object with named {@link Material}
+	 * @param newMaterials Object with named {@link Material}
 	 * @param forceOverrideExisting boolean Override existing material
-	 * @param newMaterials [Object] with named {@link Material}
 	 */
-	addMaterials ( materials, forceOverrideExisting, newMaterials ) {
+	addMaterials ( newMaterials, forceOverrideExisting ) {
 
-		if ( newMaterials === undefined || newMaterials === null ) {
-
-			newMaterials = {};
-
-		}
-		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) {
+		if ( newMaterials === undefined || newMaterials === null ) newMaterials = {};
+		if ( Object.keys( newMaterials ).length > 0 ) {
 
 			let material;
 			let existingMaterial;
 			let force;
-			for ( const materialName in materials ) {
+			for ( const materialName in newMaterials ) {
 
-				material = materials[ materialName ];
+				material = newMaterials[ materialName ];
 				force = forceOverrideExisting === true;
 				if ( ! force ) {
 
 					existingMaterial = this.materials[ materialName ];
 					if ( existingMaterial ) {
 
-						if ( existingMaterial.uuid !== material.uuid ) {
+						if ( existingMaterial.uuid !== existingMaterial.uuid ) {
 
-							console.log( 'Same material name "' + material.name + '" different uuid [' + existingMaterial.uuid + '|' + material.uuid + ']' );
+							console.log( 'Same material name "' + existingMaterial.name + '" different uuid [' + existingMaterial.uuid + '|' + material.uuid + ']' );
 						}
 
 					} else {
@@ -207,13 +173,7 @@ class MaterialHandler {
 			}
 
 		}
-
-		if ( this.callbacks.onLoadMaterials ) {
-
-			this.callbacks.onLoadMaterials( newMaterials );
-
-		}
-		return newMaterials;
+		if ( this.callbacks.onLoadMaterials ) this.callbacks.onLoadMaterials( newMaterials );
 
 	}
 

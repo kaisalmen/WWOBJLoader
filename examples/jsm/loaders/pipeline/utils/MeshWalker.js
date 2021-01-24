@@ -1,4 +1,4 @@
-import { TransferableUtils } from "../../workerTaskManager/utils/TransferableUtils.js";
+import { GeometrySender } from "../../workerTaskManager/utils/TransferableUtils.js";
 import {
 	BufferGeometry,
 	Object3D
@@ -17,8 +17,9 @@ class MeshWalker {
 			console.info( 'Walking: ' + object3d.name );
 
 			if ( object3d.hasOwnProperty( 'geometry' ) && object3d[ 'geometry' ] instanceof BufferGeometry ) {
-				let payload = TransferableUtils.packageBufferGeometry( object3d[ 'geometry' ], 1, 0, false );
-				callback( payload.main, payload.transferables );
+				const sender = new GeometrySender( 'execComplete' );
+				sender.package( object3d[ 'geometry' ], 0, false );
+				callback( sender.main, sender.transferables );
 
 			}
 			if ( object3d.hasOwnProperty( 'material' ) ) {
