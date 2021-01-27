@@ -6,11 +6,14 @@
 import {
 	FileLoader,
 	Object3D,
-	Loader
+	Loader,
+	Color,
+	Mesh,
+	MeshPhongMaterial
 } from '../../../build/three.module.js';
 
 import { OBJLoader2Parser } from './obj2/OBJLoader2Parser.js';
-import { MeshReceiver } from './workerTaskManager/shared/MeshReceiver.js';
+import { MeshTransport } from './workerTaskManager/utils/TransferableUtils.js';
 import { MaterialHandler } from './workerTaskManager/shared/MaterialHandler.js';
 
 /**
@@ -36,7 +39,6 @@ class OBJLoader2 extends Loader {
 		this.baseObject3d = new Object3D();
 
 		this.materialHandler = new MaterialHandler();
-		this.meshReceiver = new MeshReceiver( this.materialHandler );
 
 		// as OBJLoader2 is no longer derived from OBJLoader2Parser, we need to override the default onAssetAvailable callback
 		const scope = this;
@@ -196,7 +198,7 @@ class OBJLoader2 extends Loader {
 	 */
 	setCallbackOnMeshAlter ( onMeshAlter ) {
 
-		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
+//		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
 		return this;
 
 	}
@@ -358,20 +360,25 @@ class OBJLoader2 extends Loader {
 
 	_onAssetAvailable ( payload ) {
 
-		if ( payload.cmd !== 'assetAvailable' ) return;
+		if ( payload.main.cmd !== 'assetAvailable' ) return;
 
-		if ( payload.type === 'mesh' ) {
+		if ( payload.main.type === 'mesh' ) {
 
+			const meshTransport = new MeshTransport().loadData( payload.main ).reconstruct( false );
+			const material = new MeshPhongMaterial( { color: new Color( 0xff0000 ) } );
+			const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+			this.baseObject3d.add( mesh );
+/*
 			const meshes = this.meshReceiver.buildMeshes( payload );
 			for ( const mesh of meshes ) {
 
 				this.baseObject3d.add( mesh );
 
 			}
+*/
+		} else if ( payload.main.type === 'material' ) {
 
-		} else if ( payload.type === 'material' ) {
-
-			this.materialHandler.addPayloadMaterials( payload );
+//			this.materialHandler.addPayloadMaterials( payload );
 
 		}
 

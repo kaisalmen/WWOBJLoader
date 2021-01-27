@@ -3,6 +3,14 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
+import {
+	BufferGeometry,
+	BufferAttribute,
+	Material,
+	Mesh
+} from '../../../../build/three.module.js';
+import { MeshTransport, TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+
 /**
  * Parse OBJ data either from ArrayBuffer or string
  */
@@ -879,14 +887,28 @@ class OBJLoader2Parser {
 
 		const meshOutputGroups = result.subGroups;
 
-		const vertexFA = new Float32Array( result.absoluteVertexCount );
 		this.globalCounts.vertices += result.absoluteVertexCount / 3;
 		this.globalCounts.faces += result.faceCount;
 		this.globalCounts.doubleIndicesCount += result.doubleIndicesCount;
+
+		const geometry = new BufferGeometry();
+
+		const vertexFA = new Float32Array( result.absoluteVertexCount );
 		const indexUA = ( result.absoluteIndexCount > 0 ) ? new Uint32Array( result.absoluteIndexCount ) : null;
 		const colorFA = ( result.absoluteColorCount > 0 ) ? new Float32Array( result.absoluteColorCount ) : null;
 		const normalFA = ( result.absoluteNormalCount > 0 ) ? new Float32Array( result.absoluteNormalCount ) : null;
 		const uvFA = ( result.absoluteUvCount > 0 ) ? new Float32Array( result.absoluteUvCount ) : null;
+
+		TransferableUtils.assignAttribute( geometry, vertexFA, 'position', false );
+		TransferableUtils.assignAttribute( geometry, normalFA, 'normal', false );
+		TransferableUtils.assignAttribute( geometry, uvFA, 'uv', false );
+		TransferableUtils.assignAttribute( geometry, colorFA, 'color', false );
+
+		if ( indexUA !== null  ) {
+			geometry.setIndex( new BufferAttribute( indexUA, indexUA.length, false ) );
+		}
+
+
 		const haveVertexColors = colorFA !== null;
 
 		let meshOutputGroup;
@@ -955,11 +977,13 @@ class OBJLoader2Parser {
 					}
 				};
 				const payload = {
-					cmd: 'assetAvailable',
-					type: 'material',
-					id: this.objectId,
-					materials: {
-						materialCloneInstructions: materialCloneInstructions
+					main: {
+						cmd: 'assetAvailable',
+						type: 'material',
+						id: this.objectId,
+						materials: {
+							materialCloneInstructions: materialCloneInstructions
+						}
 					}
 				};
 				this.callbacks.onAssetAvailable( payload );
@@ -1005,28 +1029,28 @@ class OBJLoader2Parser {
 			vertexFA.set( meshOutputGroup.vertices, vertexFAOffset );
 			vertexFAOffset += meshOutputGroup.vertices.length;
 
-			if ( indexUA ) {
+			if ( indexUA !== null ) {
 
 				indexUA.set( meshOutputGroup.indices, indexUAOffset );
 				indexUAOffset += meshOutputGroup.indices.length;
 
 			}
 
-			if ( colorFA ) {
+			if ( colorFA !== null ) {
 
 				colorFA.set( meshOutputGroup.colors, colorFAOffset );
 				colorFAOffset += meshOutputGroup.colors.length;
 
 			}
 
-			if ( normalFA ) {
+			if ( normalFA !== null ) {
 
 				normalFA.set( meshOutputGroup.normals, normalFAOffset );
 				normalFAOffset += meshOutputGroup.normals.length;
 
 			}
 
-			if ( uvFA ) {
+			if ( uvFA !== null ) {
 
 				uvFA.set( meshOutputGroup.uvs, uvFAOffset );
 				uvFAOffset += meshOutputGroup.uvs.length;
@@ -1062,39 +1086,26 @@ class OBJLoader2Parser {
 		}
 
 		this.outputObjectCount ++;
-		this.callbacks.onAssetAvailable(
+
+		const mesh = new Mesh( geometry );
+		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
+
+		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
+			.setMesh( mesh, geometryType )
+//		if ( material !== null && material !== undefined ) meshSender.setMaterial( material );
+			.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes );
+
+		this.callbacks.onAssetAvailable( meshTransport );
+/*
 			{
-				cmd: 'assetAvailable',
-				type: 'mesh',
-				id: this.objectId,
-				meshName: result.name,
-				progress: {
-					numericalValue: this.globalCounts.currentByte / this.globalCounts.totalBytes
-				},
-				params: {
-					// 0: mesh, 1: line, 2: point
-					geometryType: this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1
-				},
 				materials: {
 					multiMaterial: createMultiMaterial,
 					materialNames: materialNames,
 					materialGroups: materialGroups
-				},
-				buffers: {
-					vertices: vertexFA,
-					indices: indexUA,
-					colors: colorFA,
-					normals: normalFA,
-					uvs: uvFA
 				}
-			},
-			[ vertexFA.buffer,
-			indexUA !== null ? indexUA.buffer : null,
-			colorFA !== null ? colorFA.buffer : null,
-			normalFA !== null ? normalFA.buffer : null,
-			uvFA !== null ? uvFA.buffer : null ]
+			}
 		);
-
+*/
 	}
 
 	_finalizeParsing () {
@@ -1111,9 +1122,11 @@ class OBJLoader2Parser {
 		}
 		this.callbacks.onAssetAvailable(
 		{
-			cmd: 'execComplete',
-			type: 'void',
-			id: this.objectId
+			main: {
+				cmd: 'execComplete',
+				type: 'void',
+				id: this.objectId
+			}
 		} );
 
 	}

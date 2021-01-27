@@ -23,9 +23,7 @@
 
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
-			import { MeshReceiver } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
-			import { MaterialHandler } from "./jsm/loaders/workerTaskManager/shared/MaterialHandler.js";
-			import { GeometryReceiver } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
+			import { GeometryTransport } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
 
 			class TransferableTestbed {
 
@@ -48,11 +46,8 @@
 					this.workerTaskManager = new WorkerTaskManager( 1 );
 					this.workerTaskManager.setVerbose( true );
 
-					this.materialHandler = new MaterialHandler();
-					this.materialHandler.createDefaultMaterials( true );
-					this.meshReceiver = new MeshReceiver( this.materialHandler );
-
 					this.taskTest1 = {
+						execute: true,
 						id: 1,
 						name: 'transferableWorkerTest1',
 						module: './jsm/loaders/worker/transferableWorkerTest1.js',
@@ -60,6 +55,7 @@
 						segments: 0
 					};
 					this.taskTest2 = {
+						execute: true,
 						id: 2,
 						name: 'transferableWorkerTest2',
 						module: './jsm/loaders/worker/transferableWorkerTest2.js',
@@ -67,6 +63,7 @@
 						segments: 0
 					};
 					this.taskTest3 = {
+						execute: true,
 						id: 3,
 						name: 'transferableWorkerTest3',
 						module: './jsm/loaders/worker/transferableWorkerTest3.js',
@@ -74,6 +71,7 @@
 						segments: 2048
 					};
 					this.taskTest4 = {
+						execute: true,
 						id: 4,
 						name: 'transferableWorkerTest4',
 						module: './jsm/loaders/worker/transferableWorkerTest4.js',
@@ -193,7 +191,7 @@
 							console.log( payload );
 
 							const mesh = new THREE.Mesh(
-								new GeometryReceiver( payload ).reconstruct( false ).getBufferGeometry(),
+								new GeometryTransport().loadData( payload ).reconstruct( false ).getBufferGeometry(),
 								new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) } )
 							);
 							this.scene.add( mesh );
@@ -208,11 +206,9 @@
 							switch ( payload.type ) {
 
 								case 'mesh':
-									let meshes = this.meshReceiver.buildMeshes( payload );
 									break;
 
 								case 'material':
-									this.materialHandler.addPayloadMaterials( payload );
 									break;
 
 								case 'void':
@@ -232,21 +228,20 @@
 				}
 
 				async run () {
-					console.time( this.taskTest1.name );
-					await this.executeWorker( this.taskTest1 );
-					console.timeEnd( this.taskTest1.name );
+					await this.executeTask( this.taskTest1 );
+					await this.executeTask( this.taskTest2 );
+					await this.executeTask( this.taskTest3 );
+					await this.executeTask( this.taskTest4 );
+				}
 
-					console.time( this.taskTest2.name );
-					await this.executeWorker( this.taskTest2 );
-					console.timeEnd( this.taskTest2.name );
+				async executeTask( task ) {
+					if ( task.execute ) {
 
-					console.time( this.taskTest3.name );
-					await this.executeWorker( this.taskTest3 );
-					console.timeEnd( this.taskTest3.name );
+						console.time( task.name );
+						await this.executeWorker( task );
+						console.timeEnd( task.name );
 
-					console.time( this.taskTest4.name );
-					await this.executeWorker( this.taskTest4 );
-					console.timeEnd( this.taskTest4.name );
+					}
 				}
 
 			}

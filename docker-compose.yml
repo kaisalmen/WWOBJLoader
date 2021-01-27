@@ -7,7 +7,10 @@ services:
       dockerfile: dev/Dockerfile
       context: .
     ports:
-      - 8085:8085
+      - target: 8085
+        published: 8085
+        protocol: tcp
+        mode: host
     volumes:
       - ./:/workspace/WWOBJLoader/:rw
     command: ["bash", "/workspace/WWOBJLoader/dev/runDevEnv.sh"]

@@ -134,7 +134,7 @@ class WorkerTaskManager {
      *
      * @param {string} taskType The name of the registered task type.
      * @param {object} config Configuration properties as serializable string.
-     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer} encapsulated in object..
+     * @param {Transferable[]} [transferables] Any optional {@link ArrayBuffer} encapsulated in object.
      */
     async initTaskType ( taskType, config, transferables ) {
 

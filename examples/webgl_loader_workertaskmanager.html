@@ -26,11 +26,10 @@
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import {
 				StructuredWorkerMessage,
-				GeometrySender,
-				GeometryReceiver,
-				MeshReceiver,
-				MaterialsWorkerMessage,
-				ObjectManipulator, MeshSender
+				GeometryTransport,
+				MeshTransport,
+				MaterialsTransport,
+				ObjectManipulator
 			} from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js"
 			import { MaterialHandler } from "./jsm/loaders/workerTaskManager/shared/MaterialHandler.js";
 			import { TransferableUtils } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
@@ -115,12 +114,14 @@
 					meshNormalMaterial.name = 'meshNormalMaterial';
 					this.materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
 
-					let transferableUtils = TransferableUtils.toString() + ';\n\n';
-					let structuredWorkerMessage = StructuredWorkerMessage.toString() + ';\n\n';
-					let geometrySender = GeometrySender.toString() + ';\n\n';
-					let meshSender = MeshSender.toString() + ';\n\n';
-					let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
-					let objectManipulator = ObjectManipulator.toString() + ';\n\n';
+					const bufferGeometry = THREE.BufferGeometry.toString() + ';\n\n';
+					const material = THREE.Material.toString() + ';\n\n';
+					const transferableUtils = TransferableUtils.toString() + ';\n\n';
+					const structuredWorkerMessage = StructuredWorkerMessage.toString() + ';\n\n';
+					const geometryTransport = GeometryTransport.toString() + ';\n\n';
+					const meshTransport = MeshTransport.toString() + ';\n\n';
+					const obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
+					const objectManipulator = ObjectManipulator.toString() + ';\n\n';
 
 					this.taskDescriptions.clear();
 					this.taskDescriptions.set( 'tmProtoExample', {
@@ -131,9 +132,10 @@
 						funcExec: WorkerFunctions.workerStandardExec,
 						dependencies: [
 							{ url: "../build/three.js" },
+							{ code: bufferGeometry },
 							{ code: transferableUtils },
 							{ code: structuredWorkerMessage },
-							{ code: geometrySender }
+							{ code: geometryTransport }
 						]
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
@@ -178,10 +180,12 @@
 							{ code: '\n\nconst MaterialLoader = THREE.MaterialLoader;\n\n' },
 							{ url: '../examples/js/loaders/OBJLoader.js' },
 							{ code: '\n\nconst OBJLoader = THREE.OBJLoader;\n\n' },
+							{ code: bufferGeometry },
+							{ code: material },
 							{ code: transferableUtils },
 							{ code: structuredWorkerMessage },
-							{ code: geometrySender },
-							{ code: meshSender }
+							{ code: geometryTransport },
+							{ code: meshTransport }
 						]
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Module', {
@@ -303,11 +307,10 @@
 						let torus = new THREE.TorusBufferGeometry( 25, 8, 16, 100 );
 						torus.name = 'torus';
 
-						const sender = new GeometrySender( 'init' );
-						sender.package( torus, 0, false );
+						const sender = new GeometryTransport().setGeometry( torus, 0 ).package( false );
 						this.tasksToUse.push( taskDescr );
 						this.workerTaskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
-						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, sender.main, sender.transferables ).catch( e => console.error( e ) ) );
+						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, sender.getMain(), sender.getTransferables() ).catch( e => console.error( e ) ) );
 
 					}
 					taskDescr = this.taskDescriptions.get( 'tmProtoExampleMain' );
@@ -392,9 +395,9 @@
 					await loadMtl.then( materialCreator => {
 
 						materialCreator.preload();
-						let materialsWorkerMessage = new MaterialsWorkerMessage( 'init' );
+						let materialsTransport = new MaterialsTransport( 'init' );
 						this.materialHandler.addMaterials( materialCreator.materials, false );
-						taskDescr.materials = materialsWorkerMessage.cleanAndSetMaterials( materialCreator.materials );
+						taskDescr.materials = materialsTransport.cleanAndSetMaterials( materialCreator.materials );
 
 					} ) ;
 					return await fileLoader.loadAsync( taskDescr.filenameObj );
@@ -467,19 +470,19 @@
 							switch ( payload.type ) {
 
 								case 'geometry':
-									const geometryReceiver = new GeometryReceiver( payload );
-									geometryReceiver.reconstruct( payload.geometry );
+									const geometryTransport = new GeometryTransport().loadData( payload );
+									geometryTransport.reconstruct( payload.geometry );
 									material = new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) } );
- 									mesh = new THREE.Mesh( geometryReceiver.getBufferGeometry(), material );
-									this._addMesh( mesh, geometryReceiver );
+ 									mesh = new THREE.Mesh( geometryTransport.getBufferGeometry(), material );
+									this._addMesh( mesh, geometryTransport );
 									break;
 
 								case 'mesh':
-									const meshReceiver = new MeshReceiver( payload );
-									meshReceiver.reconstruct( false );
+									const meshTransport = new MeshTransport().loadData( payload );
+									meshTransport.reconstruct( false );
 									material = this.materialHandler.getMaterial( payload.material.name );
-									mesh = new THREE.Mesh( meshReceiver.getBufferGeometry(), material );
-									this._addMesh( mesh, meshReceiver );
+									mesh = new THREE.Mesh( meshTransport.getBufferGeometry(), material );
+									this._addMesh( mesh, meshTransport );
 									break;
 
 								case 'material':
@@ -637,9 +640,10 @@
 						vertexArray[ i ] = vertexArray[ i ] * Math.random() * 0.48;
 
 					}
-					const sender = new GeometrySender( 'execComplete', config.id );
-					sender.package( bufferGeometry, 0, false );
-					sender.postMessage( context );
+					new GeometryTransport( 'execComplete', config.id )
+						.setGeometry( bufferGeometry, 0 )
+						.package( false )
+						.postMessage( context );
 
 				}
 

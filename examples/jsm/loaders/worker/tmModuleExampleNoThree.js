@@ -2,9 +2,8 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { GeometryReceiver, GeometrySender } from "../workerTaskManager/utils/TransferableUtils.js";
+import { GeometryTransport } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
-
 
 function init ( context, id, config ) {
 
@@ -18,8 +17,7 @@ function init ( context, id, config ) {
 
 function execute ( context, id, config ) {
 
-	const receiver = new GeometryReceiver( context.config );
-	const geometry = receiver.reconstruct( true ).getBufferGeometry();
+	const geometry = new GeometryTransport().loadData( context.config ).reconstruct( true ).getBufferGeometry();
 	geometry.name = 'tmProto' + config.id;
 	let vertexArray = geometry.getAttribute( 'position' ).array;
 	for ( let i = 0; i < vertexArray.length; i++ ) {
@@ -28,8 +26,9 @@ function execute ( context, id, config ) {
 
 	}
 
-	const sender = new GeometrySender( 'execComplete', config.id );
-	sender.package( geometry, 1, false );
+	const sender = new GeometryTransport( 'execComplete', config.id )
+		.setGeometry( geometry, 1 )
+		.package( false );
 
 	let randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );

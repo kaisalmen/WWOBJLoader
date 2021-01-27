@@ -8,7 +8,8 @@ import {
 	BufferAttribute,
 	Box3,
 	Sphere,
-	Texture
+	Texture,
+	Material
 } from "../../../../../build/three.module.js";
 
 /**
@@ -19,23 +20,46 @@ class StructuredWorkerMessage {
 	/**
 	 * Creates a new {@link StructuredWorkerMessage}.
 	 *
-	 * @param {string} cmd
+	 * @param {string} [cmd]
 	 * @param {string} [id]
 	 */
 	constructor( cmd, id ) {
 
 		this.main = {
-			cmd: cmd,
-			id: id,
+			cmd: ( cmd !== undefined ) ? cmd : 'unknown',
+			id: ( id !== undefined ) ? id : 0,
 			type: 'undefined',
-			progress: {
-				numericalValue: 0
-			},
+			/** @type {number} */
+			progress: 0,
 			params: {
 			}
 		};
 		this.transferables = [];
 
+	}
+
+	/**
+	 *
+	 * @return {*|{cmd: string, type: string, progress: {numericalValue: number}, params: {}}|{progress: number, cmd: (string|string), id: (string|number), type: string, params: {}}}
+	 */
+	getMain() {
+		return this.main;
+	}
+
+	/**
+	 *
+	 * @return {[]|any[]|*}
+	 */
+	getTransferables() {
+		return this.transferables;
+	}
+
+	/**
+	 *
+	 * @param {number} numericalValue
+	 */
+	setProgress( numericalValue ) {
+		this.main.progress = numericalValue;
 	}
 
 	/**
@@ -53,21 +77,26 @@ class StructuredWorkerMessage {
 /**
  * Define a structure that is used to ship materials data between main and workers.
  */
-class MaterialsWorkerMessage extends StructuredWorkerMessage {
+class MaterialsTransport extends StructuredWorkerMessage {
 
 	/**
 	 * Creates a new {@link MeshMessageStructure}.
 	 *
-	 * @param {string} cmd
+	 * @param {string} [cmd]
+	 * @param {string} [id]
 	 */
-	constructor( cmd) {
+	constructor( cmd, id ) {
 		super( cmd );
 		this.main.type = 'materials';
 		this.main.materials = {};
 	}
 
+	/**
+	 *
+	 * @param materials
+	 */
 	setMaterials ( materials ) {
-		this.materials = materials;
+		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) this.materials = materials;
 	}
 
 	/**
@@ -78,13 +107,19 @@ class MaterialsWorkerMessage extends StructuredWorkerMessage {
 		let clonedMaterials = {};
 		let clonedMaterial;
 		for ( let material of Object.values( materials ) ) {
-			clonedMaterial = material.clone();
-			Object.entries( clonedMaterial ).forEach( ( [key, value] ) => {
-				if ( value instanceof Texture || value === null ) {
-					clonedMaterial[ key ] = undefined;
-				}
-			} );
-			clonedMaterials[ clonedMaterial.name ] = clonedMaterial;
+
+			if ( material instanceof Material ) {
+
+				clonedMaterial = material.clone();
+				Object.entries( clonedMaterial ).forEach( ( [key, value] ) => {
+					if ( value instanceof Texture || value === null ) {
+						clonedMaterial[ key ] = undefined;
+					}
+				} );
+				clonedMaterials[ clonedMaterial.name ] = clonedMaterial;
+
+			}
+
 		}
 		this.setMaterials( clonedMaterial );
 	}
@@ -94,20 +129,54 @@ class MaterialsWorkerMessage extends StructuredWorkerMessage {
 /**
  * Define a structure that is used to send geometry data between main and workers.
  */
-class GeometrySender extends StructuredWorkerMessage {
+class GeometryTransport extends StructuredWorkerMessage {
 
 	/**
 	 * Creates a new {@link GeometrySender}.
 	 *
-	 * @param {string} cmd
+	 * @param {string} [cmd]
 	 * @param {string} [id]
 	 */
 	constructor( cmd, id ) {
 		super( cmd, id );
 		this.main.type = 'geometry';
-		// 0: mesh, 1: line, 2: point
+		/**
+		 * @type {number}
+		 * 0: mesh, 1: line, 2: point
+		 */
 		this.main.geometryType = 0;
+		/** @type {object} */
 		this.main.geometry = {};
+		/** @type {BufferGeometry} */
+		this.main.bufferGeometry = null;
+	}
+
+	/**
+	 *
+	 * @param {object} transportObject
+	 *
+	 * @return {GeometryTransport}
+	 */
+	loadData( transportObject ) {
+		this.main.cmd = transportObject.cmd;
+		this.main.id = transportObject.id;
+		return this.setGeometry( transportObject.geometry, transportObject.geometryType );
+	}
+
+	/**
+	 * Only add the {@link BufferGeometry}
+	 *
+	 * @param {BufferGeometry} geometry
+	 * @param {number} geometryType
+	 *
+	 * @return {GeometryTransport}
+	 */
+	setGeometry( geometry, geometryType ) {
+		this.main.geometry = geometry;
+		this.main.params.geometryType = geometryType;
+		if ( geometry instanceof BufferGeometry ) this.main.bufferGeometry = geometry;
+
+		return this;
 	}
 
 	/**
@@ -116,19 +185,17 @@ class GeometrySender extends StructuredWorkerMessage {
 	 * @param {BufferGeometry} geometry
 	 * @param {number} geometryType
 	 * @param {boolean} cloneBuffers
-	 * @return {MeshSender}
+	 *
+	 * @return {GeometryTransport}
 	 */
-	package( geometry, geometryType, cloneBuffers ) {
-		this.main.geometry = geometry;
-		this.main.params.geometryType = geometryType;
-
-		let vertexBA = geometry.getAttribute( 'position' );
-		let normalBA = geometry.getAttribute( 'normal' );
-		let uvBA = geometry.getAttribute( 'uv' );
-		let colorBA = geometry.getAttribute( 'color' );
-		let skinIndexBA = geometry.getAttribute( 'skinIndex' );
-		let skinWeightBA = geometry.getAttribute( 'skinWeight' );
-		let indexBA = geometry.getIndex();
+	package( cloneBuffers ) {
+		const vertexBA = this.main.geometry.getAttribute( 'position' );
+		const normalBA = this.main.geometry.getAttribute( 'normal' );
+		const uvBA = this.main.geometry.getAttribute( 'uv' );
+		const colorBA = this.main.geometry.getAttribute( 'color' );
+		const skinIndexBA = this.main.geometry.getAttribute( 'skinIndex' );
+		const skinWeightBA = this.main.geometry.getAttribute( 'skinWeight' );
+		const indexBA = this.main.geometry.getIndex();
 
 		TransferableUtils.addTransferable( vertexBA, cloneBuffers, this.transferables );
 		TransferableUtils.addTransferable( normalBA, cloneBuffers, this.transferables );
@@ -141,40 +208,17 @@ class GeometrySender extends StructuredWorkerMessage {
 
 		return this;
 	}
-}
-
-/**
- * Object that is used to receive geometry data between main and workers.
- */
-class GeometryReceiver extends StructuredWorkerMessage {
-
-	/**
-	 * Creates a new {@link GeometryReceiver}.
-	 *
-	 * @param {object} data Object that was sent from {@link GeometrySender}
-	 */
-	constructor( data ) {
-		super( data.cmd, data.id )
-		this.main.type = 'geometry';
-		/**
-		 * @type {number}
-		 * 0: mesh, 1: line, 2: point
-		 */
-		this.main.geometryType = data.geometryType;
-		/** @type {object} */
-		this.main.transferredGeometry = data.geometry;
-		/** @type {BufferGeometry} */
-		this.main.bufferGeometry = null;
-	}
 
 	/**
 	 * @param {boolean} cloneBuffers
-	 * @return {GeometryReceiver}
+	 *
+	 * @return {GeometryTransport}
 	 */
 	reconstruct( cloneBuffers ) {
+		if ( this.main.bufferGeometry instanceof BufferGeometry ) return this;
 		this.main.bufferGeometry = new BufferGeometry();
 
-		const transferredGeometry = this.main.transferredGeometry;
+		const transferredGeometry = this.main.geometry;
 		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.position, 'position', cloneBuffers );
 		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.normal, 'normal', cloneBuffers );
 		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.uv, 'uv', cloneBuffers );
@@ -186,7 +230,7 @@ class GeometryReceiver extends StructuredWorkerMessage {
 		if ( index !== null && index !== undefined ) {
 
 			const indexBuffer = cloneBuffers ? index.array.slice( 0 ) : index.array;
-			if ( index ) this.main.bufferGeometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
+			this.main.bufferGeometry.setIndex( new BufferAttribute( indexBuffer, index.itemSize, index.normalized ) );
 
 		}
 		const boundingBox = transferredGeometry.boundingBox;
@@ -206,7 +250,8 @@ class GeometryReceiver extends StructuredWorkerMessage {
 	}
 
 	/**
-	 * @return {BufferGeometry|*}
+	 *
+	 * @return {BufferGeometry|null}
 	 */
 	getBufferGeometry() {
 		return this.main.bufferGeometry
@@ -214,54 +259,81 @@ class GeometryReceiver extends StructuredWorkerMessage {
 
 }
 
-class MeshSender extends GeometrySender {
+class MeshTransport extends GeometryTransport {
 
 	/**
-	 * Creates a new {@link MeshSender}.
+	 * Creates a new {@link MeshTransport}.
 	 *
-	 * @param {string} cmd
+	 * @param {string} [cmd]
 	 * @param {string} [id]
 	 */
-	constructor( cmd, id, meshName ) {
+	constructor( cmd, id ) {
 		super( cmd, id );
+
 		this.main.type = 'mesh';
 		// needs to be added as we cannot inherit from both materials and geometry
 		this.main.material = {};
 	}
 
 	/**
-	 * Package {@link Mesh}
 	 *
-	 * @param {Mesh} mesh
-	 * @param {number} geometryType
-	 * @param {boolean} cloneBuffers
-	 * @return {MeshSender}
+	 * @param {object} transportObject
+	 *
+	 * @return {MeshTransport}
 	 */
-	package( mesh, geometryType, cloneBuffers ) {
-		super.package( mesh.geometry, geometryType, cloneBuffers );
-		this.main.material = mesh.material.toJSON();
+	loadData( transportObject ) {
+		super.loadData( transportObject );
+		this.main.meshName = transportObject.meshName;
+		this.main.material = transportObject.material
 
 		return this;
 	}
-}
-
-class MeshReceiver extends GeometryReceiver {
 
 	/**
- 	 * Creates a new {@link MeshReceiver}.
+	 * Only set the material.
 	 *
-	 * @param {object} data Object that was sent from {@link MeshSender}
+	 * @param {Material} material
+	 *
+	 * @return {MeshTransport}
 	 */
-	constructor( data ) {
-		super( data );
-		this.main.type = 'mesh';
-		// needs to be added as we cannot inherit from both materials and geometry
-		this.main.material = data.material;
+	setMaterial( material ) {
+		if ( material instanceof Material ) this.main.material = material.toJSON();
+
+		return this;
+	}
+
+	/**
+	 *
+	 * @param {Mesh} mesh
+	 * @param {number} geometryType
+	 *
+	 * @return {MeshTransport}
+	 */
+	setMesh( mesh, geometryType ) {
+		this.main.meshName = mesh.name;
+		super.setGeometry( mesh.geometry, geometryType );
+		this.setMaterial( mesh.material );
+
+		return this;
+	}
+
+	/**
+	 * Package {@link Mesh}
+	 *
+	 * @param {boolean} cloneBuffers
+	 *
+	 * @return {MeshTransport}
+	 */
+	package( cloneBuffers ) {
+		super.package( cloneBuffers );
+
+		return this;
 	}
 
 	/**
 	 * @param {boolean} cloneBuffers
-	 * @return {MeshReceiver}
+	 *
+	 * @return {MeshTransport}
 	 */
 	reconstruct( cloneBuffers ) {
 		super.reconstruct( cloneBuffers );
@@ -336,10 +408,8 @@ class ObjectManipulator {
 export {
 	TransferableUtils,
 	StructuredWorkerMessage,
-	GeometrySender,
-	GeometryReceiver,
-	MaterialsWorkerMessage,
-	MeshSender,
-	MeshReceiver,
+	GeometryTransport,
+	MaterialsTransport,
+	MeshTransport,
 	ObjectManipulator
 }

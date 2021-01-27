@@ -3,7 +3,7 @@
  */
 
 import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
-import { GeometrySender } from "../workerTaskManager/utils/TransferableUtils.js";
+import { GeometryTransport } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 
@@ -31,8 +31,9 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	const sender = new GeometrySender( 'execComplete', config.id );
-	sender.package( bufferGeometry, 2, false );
+	const sender = new GeometryTransport( 'execComplete', config.id )
+		.setGeometry( bufferGeometry, 2 )
+		.package( false );
 
 	let randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );
