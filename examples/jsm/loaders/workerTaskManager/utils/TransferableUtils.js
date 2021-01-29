@@ -9,7 +9,11 @@ import {
 	Box3,
 	Sphere,
 	Texture,
-	Material
+	Material,
+	MeshStandardMaterial,
+	LineBasicMaterial,
+	PointsMaterial,
+	VertexColors
 } from "../../../../../build/three.module.js";
 
 /**
@@ -89,6 +93,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 		super( cmd );
 		this.main.type = 'materials';
 		this.main.materials = {};
+		this.main.cloneInstructions = {}
 	}
 
 	/**
@@ -122,6 +127,24 @@ class MaterialsTransport extends StructuredWorkerMessage {
 
 		}
 		this.setMaterials( clonedMaterial );
+	}
+
+	package () {
+
+		this.main.materials = MaterialStore.getMaterialsJSON( this.main.materials );
+
+	}
+
+	hasSingleMaterial () {
+
+		return ( Object.keys( this.main.materials ).length === 1 ) && ( Object.keys( this.main.cloneInstructions ).length === 0 )
+
+	}
+
+	getSingleMaterial () {
+
+		return Object.entries( this.main.materials )[ 0 ][ 1 ];
+
 	}
 
 }
@@ -272,7 +295,7 @@ class MeshTransport extends GeometryTransport {
 
 		this.main.type = 'mesh';
 		// needs to be added as we cannot inherit from both materials and geometry
-		this.main.material = {};
+		this.main.materialTransport = new MaterialsTransport();
 	}
 
 	/**
@@ -284,7 +307,7 @@ class MeshTransport extends GeometryTransport {
 	loadData( transportObject ) {
 		super.loadData( transportObject );
 		this.main.meshName = transportObject.meshName;
-		this.main.material = transportObject.material
+		this.main.materialTransport = transportObject.materialTransport
 
 		return this;
 	}
@@ -292,14 +315,24 @@ class MeshTransport extends GeometryTransport {
 	/**
 	 * Only set the material.
 	 *
-	 * @param {Material} material
+	 * @param {MaterialsTransport} materialTransport
 	 *
 	 * @return {MeshTransport}
 	 */
-	setMaterial( material ) {
-		if ( material instanceof Material ) this.main.material = material.toJSON();
+	setMaterialsTransport( materialTransport ) {
 
+		if ( materialTransport instanceof MaterialsTransport ) this.main.materialTransport = materialTransport;
 		return this;
+
+	}
+
+	/**
+	 * @return {MaterialTransport}
+	 */
+	getMaterialTransport() {
+
+		return this.main.materialTransport;
+
 	}
 
 	/**
@@ -312,7 +345,6 @@ class MeshTransport extends GeometryTransport {
 	setMesh( mesh, geometryType ) {
 		this.main.meshName = mesh.name;
 		super.setGeometry( mesh.geometry, geometryType );
-		this.setMaterial( mesh.material );
 
 		return this;
 	}
@@ -326,6 +358,7 @@ class MeshTransport extends GeometryTransport {
 	 */
 	package( cloneBuffers ) {
 		super.package( cloneBuffers );
+		if ( this.main.materialTransport !== null ) this.main.materialTransport.package();
 
 		return this;
 	}
@@ -365,6 +398,234 @@ class TransferableUtils {
 			const buffer = cloneBuffer ? attr.array.slice( 0 ) : attr.array;
 			bg.setAttribute( attrName, new BufferAttribute( buffer, attr.itemSize, attr.normalized ) );
 		}
+	}
+
+}
+
+class MaterialCloneInstruction {
+
+	/**
+	 *
+	 * @param {string} materialNameOrg
+	 * @param {string} newMaterialName
+	 * @param {boolean} haveVertexColors
+	 * @param {number} smoothingGroup
+	 */
+	constructor ( materialNameOrg, newMaterialName, haveVertexColors, smoothingGroup ) {
+		this.materialNameOrg = materialNameOrg;
+		this.newMaterialName = newMaterialName;
+		this.materialProperties = {
+			vertexColors: haveVertexColors ? 2 : 0,
+			flatShading: smoothingGroup === 0
+		};
+	}
+
+}
+
+class MaterialStore {
+
+	constructor( createDefaultMaterials ) {
+
+		this.logging = {
+			enabled: false,
+			debug: false
+		};
+		this.materials = {};
+
+		if ( createDefaultMaterials ) {
+
+			const defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
+			defaultMaterial.name = 'defaultMaterial';
+
+			const defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
+			defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
+			defaultVertexColorMaterial.vertexColors = VertexColors;
+
+			const defaultLineMaterial = new LineBasicMaterial();
+			defaultLineMaterial.name = 'defaultLineMaterial';
+
+			const defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
+			defaultPointMaterial.name = 'defaultPointMaterial';
+
+			this.materials[ defaultMaterial.name ] = defaultMaterial;
+			this.materials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
+			this.materials[ defaultLineMaterial.name ] = defaultLineMaterial;
+			this.materials[ defaultPointMaterial.name ] = defaultPointMaterial;
+
+		}
+
+	}
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 */
+	setLogging ( enabled, debug ) {
+
+		this.logging.enabled = enabled === true;
+		this.logging.debug = debug === true;
+
+	}
+
+	/**
+	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
+	 *
+	 * @param {MaterialsTransport} materialTransport Material update instructions
+	 */
+	processMaterialTransport ( materialTransport ) {
+
+		let material, materialName;
+		const materialCloneInstructions = materialTransport.materials.materialCloneInstructions;
+		let newMaterials = {};
+
+		if ( materialCloneInstructions !== undefined && materialCloneInstructions !== null ) {
+
+			let materialNameOrg = materialCloneInstructions.materialNameOrg;
+			materialNameOrg = ( materialNameOrg !== undefined && materialNameOrg !== null ) ? materialNameOrg : '';
+			const materialOrg = this.materials[ materialNameOrg ];
+			if ( materialOrg ) {
+
+				material = materialOrg.clone();
+
+				materialName = materialCloneInstructions.materialName;
+				material.name = materialName;
+
+				Object.assign( material, materialCloneInstructions.materialProperties );
+
+				this.materials[ materialName ] = material;
+				newMaterials[ materialName ] = material;
+
+			} else {
+
+				if ( this.logging.enabled ) {
+
+					console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
+
+				}
+
+			}
+
+			this.addMaterials( newMaterials, true );
+
+		}
+
+	}
+
+	/**
+	 * Set materials loaded by any supplier of an Array of {@link Material}.
+	 *
+	 * @param newMaterials Object with named {@link Material}
+	 * @param forceOverrideExisting boolean Override existing material
+	 */
+	addMaterials ( newMaterials, forceOverrideExisting ) {
+
+		if ( newMaterials === undefined || newMaterials === null ) newMaterials = {};
+		if ( Object.keys( newMaterials ).length > 0 ) {
+
+			let material;
+			for ( const materialName in newMaterials ) {
+
+				material = newMaterials[ materialName ];
+				MaterialStore.addMaterial( this.materials, material, materialName, forceOverrideExisting === true );
+
+			}
+
+		}
+
+	}
+
+	/**
+	 *
+	 * @param {object} materialsObject
+	 * @param {Material|MaterialCloneInstruction} material
+	 * @param {string} materialName
+	 * @param {boolean} force
+	 * @param {boolena} [log]
+	 */
+	static addMaterial( materialsObject, material, materialName, force, log ) {
+		let existingMaterial;
+		if ( ! force ) {
+
+			existingMaterial = materialsObject[ materialName ];
+			if ( existingMaterial ) {
+
+				if ( existingMaterial.uuid !== existingMaterial.uuid ) {
+
+					if ( log ) console.log( 'Same material name "' + existingMaterial.name + '" different uuid [' + existingMaterial.uuid + '|' + material.uuid + ']' );
+
+				}
+
+			} else {
+
+				materialsObject[ materialName ] = material;
+				if ( log ) console.info( 'Material with name "' + materialName + '" was added.' );
+
+			}
+
+		} else {
+
+			materialsObject[ materialName ] = material;
+			if ( log ) console.info( 'Material with name "' + materialName + '" was forcefully overridden.' );
+
+		}
+	}
+
+	/**
+	 * Returns the mapping object of material name and corresponding material.
+	 *
+	 * @returns {Object} Map of {@link Material}
+	 */
+	getMaterials () {
+
+		return this.materials;
+
+	}
+
+	/**
+	 *
+	 * @param {String} materialName
+	 * @returns {Material}
+	 */
+	getMaterial ( materialName ) {
+
+		return this.materials[ materialName ];
+
+	}
+
+	/**
+	 * Returns the mapping object of material name and corresponding jsonified material.
+	 *
+	 * @returns {Object} Map of Materials in JSON representation
+	 */
+	getMaterialsJSON () {
+
+		return MaterialStore.getMaterialsJSON( this.materials );
+
+	}
+
+	static getMaterialsJSON ( materialsObject ) {
+
+		const materialsJSON = {};
+		let material;
+		for ( const materialName in materialsObject ) {
+
+			material = materialsObject[ materialName ];
+			if ( material instanceof Material ) materialsJSON[ materialName ] = material.toJSON();
+
+		}
+		return materialsJSON;
+
+	}
+
+	/**
+	 * Removes all materials
+	 */
+	clearMaterials () {
+
+		this.materials = {};
+
 	}
 
 }
@@ -409,7 +670,9 @@ export {
 	TransferableUtils,
 	StructuredWorkerMessage,
 	GeometryTransport,
-	MaterialsTransport,
 	MeshTransport,
+	MaterialsTransport,
+	MaterialStore,
+	MaterialCloneInstruction,
 	ObjectManipulator
 }
