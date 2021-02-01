@@ -93,7 +93,8 @@ class MaterialsTransport extends StructuredWorkerMessage {
 		super( cmd );
 		this.main.type = 'materials';
 		this.main.materials = {};
-		this.main.cloneInstructions = {}
+		this.main.multiMaterials = {};
+		this.main.cloneInstructions = {};
 	}
 
 	/**
@@ -137,7 +138,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 
 	hasSingleMaterial () {
 
-		return ( Object.keys( this.main.materials ).length === 1 ) && ( Object.keys( this.main.cloneInstructions ).length === 0 )
+		return ( Object.keys( this.main.multiMaterials ).length === 0 );
 
 	}
 
@@ -147,6 +148,59 @@ class MaterialsTransport extends StructuredWorkerMessage {
 
 	}
 
+	/**
+	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
+	 *
+	 * @param {Object.<string, Material>} materials
+	 * @param {boolean} log
+	 *
+	 * @return {Material|Material[]}
+	 */
+	processMaterialTransport ( materials, log ) {
+
+		Object.entries( this.main.cloneInstructions ).forEach( ( [ materialName, materialCloneInstructions ] ) => {
+			if ( materialCloneInstructions ) {
+
+				let materialNameOrg = materialCloneInstructions.materialNameOrg;
+				materialNameOrg = (materialNameOrg !== undefined && materialNameOrg !== null) ? materialNameOrg : '';
+				const materialOrg = materials[ materialNameOrg ];
+				if ( materialOrg ) {
+
+					let material = materialOrg.clone();
+					Object.assign( material, materialCloneInstructions.materialProperties );
+					MaterialStore.addMaterial( materials, material, materialName, true );
+
+				}
+				else {
+
+					if ( log ) console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
+
+				}
+
+			}
+
+		} );
+
+		let outputMaterial;
+		if ( this.hasSingleMaterial() ) {
+
+			outputMaterial = this.getSingleMaterial();
+
+		}
+		else {
+
+			// multi-material
+			outputMaterial = [];
+			Object.entries( this.main.multiMaterials ).forEach( ( [ materialName, index ] ) => {
+
+				outputMaterial[ index ] = materials[ materialName ];
+
+			} );
+
+		}
+		return outputMaterial;
+
+	}
 }
 
 /**
@@ -307,7 +361,7 @@ class MeshTransport extends GeometryTransport {
 	loadData( transportObject ) {
 		super.loadData( transportObject );
 		this.main.meshName = transportObject.meshName;
-		this.main.materialTransport = transportObject.materialTransport
+		this.main.materialsTransport = transportObject.materialsTransport
 
 		return this;
 	}
@@ -315,23 +369,23 @@ class MeshTransport extends GeometryTransport {
 	/**
 	 * Only set the material.
 	 *
-	 * @param {MaterialsTransport} materialTransport
+	 * @param {MaterialsTransport} materialsTransport
 	 *
 	 * @return {MeshTransport}
 	 */
-	setMaterialsTransport( materialTransport ) {
+	setMaterialsTransport( materialsTransport ) {
 
-		if ( materialTransport instanceof MaterialsTransport ) this.main.materialTransport = materialTransport;
+		if ( materialsTransport instanceof MaterialsTransport ) this.main.materialsTransport = materialsTransport;
 		return this;
 
 	}
 
 	/**
-	 * @return {MaterialTransport}
+	 * @return {MaterialsTransport}
 	 */
-	getMaterialTransport() {
+	getMaterialsTransport() {
 
-		return this.main.materialTransport;
+		return this.main.materialsTransport;
 
 	}
 
@@ -358,7 +412,7 @@ class MeshTransport extends GeometryTransport {
 	 */
 	package( cloneBuffers ) {
 		super.package( cloneBuffers );
-		if ( this.main.materialTransport !== null ) this.main.materialTransport.package();
+		if ( this.main.materialsTransport !== null ) this.main.materialsTransport.package();
 
 		return this;
 	}
@@ -413,8 +467,8 @@ class MaterialCloneInstruction {
 	 */
 	constructor ( materialNameOrg, newMaterialName, haveVertexColors, smoothingGroup ) {
 		this.materialNameOrg = materialNameOrg;
-		this.newMaterialName = newMaterialName;
 		this.materialProperties = {
+			name: newMaterialName,
 			vertexColors: haveVertexColors ? 2 : 0,
 			flatShading: smoothingGroup === 0
 		};
@@ -466,50 +520,6 @@ class MaterialStore {
 
 		this.logging.enabled = enabled === true;
 		this.logging.debug = debug === true;
-
-	}
-
-	/**
-	 * Updates the materials with contained material objects (sync) or from alteration instructions (async).
-	 *
-	 * @param {MaterialsTransport} materialTransport Material update instructions
-	 */
-	processMaterialTransport ( materialTransport ) {
-
-		let material, materialName;
-		const materialCloneInstructions = materialTransport.materials.materialCloneInstructions;
-		let newMaterials = {};
-
-		if ( materialCloneInstructions !== undefined && materialCloneInstructions !== null ) {
-
-			let materialNameOrg = materialCloneInstructions.materialNameOrg;
-			materialNameOrg = ( materialNameOrg !== undefined && materialNameOrg !== null ) ? materialNameOrg : '';
-			const materialOrg = this.materials[ materialNameOrg ];
-			if ( materialOrg ) {
-
-				material = materialOrg.clone();
-
-				materialName = materialCloneInstructions.materialName;
-				material.name = materialName;
-
-				Object.assign( material, materialCloneInstructions.materialProperties );
-
-				this.materials[ materialName ] = material;
-				newMaterials[ materialName ] = material;
-
-			} else {
-
-				if ( this.logging.enabled ) {
-
-					console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
-
-				}
-
-			}
-
-			this.addMaterials( newMaterials, true );
-
-		}
 
 	}
 

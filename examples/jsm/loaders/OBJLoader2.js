@@ -7,9 +7,7 @@ import {
 	FileLoader,
 	Object3D,
 	Loader,
-	Color,
 	Mesh,
-	MeshPhongMaterial,
 	BufferGeometry,
 	BufferAttribute
 } from '../../../build/three.module.js';
@@ -88,39 +86,21 @@ class OBJLoader2 extends Loader {
 			 */
 			onAssetAvailable: function ( asset ) {
 
-				if ( asset.main.cmd !== 'assetAvailable' ) return;
-
-				if ( asset.main.type === 'mesh' ) {
+				if ( asset.main.cmd !== 'assetAvailable' && asset.main.type === 'mesh' ) {
 
 					let mesh, meshTransport;
-					let material = new MeshPhongMaterial( { color: new Color( 0xff0000 ) } );
 					if ( asset instanceof MeshTransport ) {
 						meshTransport = asset;
-						const materialTransport = meshTransport.getMaterialTransport();
-						if ( materialTransport.hasSingleMaterial() ) {
-
-							material = materialTransport.getSingleMaterial();
-
-						}
-
 					}
 					else {
 						meshTransport = new MeshTransport().loadData( asset.main ).reconstruct( false );
 					}
 
+					const materialTransport = meshTransport.getMaterialsTransport();
+					const material = materialTransport.processMaterialTransport( scope.materials, scope.logging.enabled );
+
 					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
 					scope.baseObject3d.add( mesh );
-/*
-					const meshes = this.meshReceiver.buildMeshes( payload );
-					for ( const mesh of meshes ) {
-
-						this.baseObject3d.add( mesh );
-
-					}
- */
-				} else if ( asset.main.type === 'material' ) {
-
-//					scope.materialHandler.addPayloadMaterials( payload );
 
 				}
 
@@ -1159,14 +1139,10 @@ class OBJLoader2 extends Loader {
 		const haveVertexColors = colorFA !== null;
 
 		let meshOutputGroup;
-		const materialNames = [];
 
 		const createMultiMaterial = ( meshOutputGroups.length > 1 );
 		let materialIndex = 0;
-		const materialIndexMapping = [];
 		let selectedMaterialIndex;
-		let materialGroup;
-		const materialGroups = [];
 
 		let vertexFAOffset = 0;
 		let indexUAOffset = 0;
@@ -1221,43 +1197,34 @@ class OBJLoader2 extends Loader {
 
 			}
 
-			if ( material === undefined || material === null ) {
+			if ( material !== undefined && material !== null ) {
 
-				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, meshOutputGroup.smoothingGroup );
-				MaterialStore.addMaterial( materialsTransport.main.cloneInstructions, materialCloneInstruction, materialName, false, this.logging.enabled && this.logging.debug );
+				MaterialStore.addMaterial( materialsTransport.main.materials, material, materialName, false, this.logging.enabled && this.logging.debug );
 
 			}
 			else {
 
-				MaterialStore.addMaterial( materialsTransport.main.materials, material, materialName, false, this.logging.enabled && this.logging.debug );
+				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, meshOutputGroup.smoothingGroup );
+				MaterialStore.addMaterial( materialsTransport.main.cloneInstructions, materialCloneInstruction, materialName, false, this.logging.enabled && this.logging.debug );
 
 			}
 
 			if ( createMultiMaterial ) {
 
 				// re-use material if already used before. Reduces materials array size and eliminates duplicates
-				selectedMaterialIndex = materialIndexMapping[ materialName ];
+				selectedMaterialIndex = materialsTransport.main.multiMaterials[ materialName ];
 				if ( ! selectedMaterialIndex ) {
 
 					selectedMaterialIndex = materialIndex;
-					materialIndexMapping[ materialName ] = materialIndex;
-					materialNames.push( materialName );
+					materialsTransport.main.multiMaterials[ materialName ] = materialIndex;
 					materialIndex ++;
 
 				}
 
+
 				materialGroupLength = this.useIndices ? meshOutputGroup.indices.length : meshOutputGroup.vertices.length / 3;
-				materialGroup = {
-					start: materialGroupOffset,
-					count: materialGroupLength,
-					index: selectedMaterialIndex
-				};
-				materialGroups.push( materialGroup );
+				geometry.addGroup( materialGroupOffset, materialGroupLength, selectedMaterialIndex );
 				materialGroupOffset += materialGroupLength;
-
-			} else {
-
-				materialNames.push( materialName );
 
 			}
 
@@ -1331,16 +1298,7 @@ class OBJLoader2 extends Loader {
 		meshTransport.setMaterialsTransport( materialsTransport );
 
 		this.callbacks.onAssetAvailable( meshTransport );
-		/*
-					{
-						materials: {
-							multiMaterial: createMultiMaterial,
-							materialNames: materialNames,
-							materialGroups: materialGroups
-						}
-					}
-				);
-		*/
+
 	}
 
 	_finalizeParsing () {
