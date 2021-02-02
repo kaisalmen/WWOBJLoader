@@ -38,7 +38,8 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.125.2"
+    "three": "^0.125.2",
+    "fflate": "^0.6.1"
   },
   "devDependencies": {
     "del": "^6.0.0",

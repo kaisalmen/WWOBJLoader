@@ -86,7 +86,7 @@ class OBJLoader2 extends Loader {
 			 */
 			onAssetAvailable: function ( asset ) {
 
-				if ( asset.main.cmd !== 'assetAvailable' && asset.main.type === 'mesh' ) {
+				if ( asset.main.cmd === 'assetAvailable' && asset.main.type === 'mesh' ) {
 
 					let mesh, meshTransport;
 					if ( asset instanceof MeshTransport ) {
@@ -96,8 +96,8 @@ class OBJLoader2 extends Loader {
 						meshTransport = new MeshTransport().loadData( asset.main ).reconstruct( false );
 					}
 
-					const materialTransport = meshTransport.getMaterialsTransport();
-					const material = materialTransport.processMaterialTransport( scope.materials, scope.logging.enabled );
+					const materialsTransport = meshTransport.getMaterialsTransport();
+					const material = materialsTransport.processMaterialTransport( scope.materials, scope.logging.enabled );
 
 					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
 					scope.baseObject3d.add( mesh );

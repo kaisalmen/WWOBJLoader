@@ -2,7 +2,7 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { OBJLoader2Parser } from "../obj2/OBJLoader2Parser.js";
+import { OBJLoader2 } from "../OBJLoader2.js";
 import { ObjectManipulator } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
@@ -11,7 +11,7 @@ const OBJ2LoaderWorker = {
 	init: function ( context, id, config ) {
 
 		context.obj2 = {
-			objParser: new OBJLoader2Parser(),
+			objParser: new OBJLoader2(),
 			buffer: null
 		}
 		if ( config.logging ) {
@@ -44,10 +44,12 @@ const OBJ2LoaderWorker = {
 		}
 
 		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
-		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
+		context.obj2.buffer = config.buffers[ 'modelData' ];
 
-		context.obj2.objParser.objectId = config.id;
-		context.obj2.objParser.execute( context.obj2.buffer );
+		if ( context.obj2.buffer ) {
+			context.obj2.objParser.objectId = config.id;
+			context.obj2.objParser._execute( context.obj2.buffer );
+		}
 
 	}
 

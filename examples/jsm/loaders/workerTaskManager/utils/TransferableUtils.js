@@ -44,10 +44,26 @@ class StructuredWorkerMessage {
 
 	/**
 	 *
+	 * @param {object.<string, *>} params
+	 * @return {StructuredWorkerMessage}
+	 */
+	setParams( params ) {
+
+		if ( params !== null && params !== undefined ) {
+			this.main.params = params;
+		}
+		return this;
+
+	}
+
+	/**
+	 *
 	 * @return {*|{cmd: string, type: string, progress: {numericalValue: number}, params: {}}|{progress: number, cmd: (string|string), id: (string|number), type: string, params: {}}}
 	 */
 	getMain() {
+
 		return this.main;
+
 	}
 
 	/**
@@ -55,26 +71,93 @@ class StructuredWorkerMessage {
 	 * @return {[]|any[]|*}
 	 */
 	getTransferables() {
+
 		return this.transferables;
+
 	}
 
 	/**
 	 *
 	 * @param {number} numericalValue
+	 *
+	 * @return {StructuredWorkerMessage}
 	 */
 	setProgress( numericalValue ) {
+
 		this.main.progress = numericalValue;
+		return this;
+
 	}
 
 	/**
 	 * Posts a message by invoking the method on the provided object.
 	 *
 	 * @param {object} postMessageImpl
+	 *
+	 * @return {StructuredWorkerMessage}
 	 */
 	postMessage( postMessageImpl ) {
 
 		postMessageImpl.postMessage( this.main, this.transferables );
+		return this;
 
+	}
+}
+
+class DataTransport extends StructuredWorkerMessage {
+
+	/**
+	 * Creates a new {@link DataTransport}.
+	 *
+	 * @param {string} [cmd]
+	 * @param {string} [id]
+	 */
+	constructor( cmd, id ) {
+		super( cmd );
+		this.main.type = 'buffers';
+		this.main.buffers = {};
+	}
+
+	/**
+	 *
+	 * @param name
+	 * @param buffer
+	 * @return {DataTransport}
+	 */
+	addBuffer ( name, buffer ) {
+		this.main.buffers[ name ] = buffer;
+		return this;
+	}
+
+	/**
+	 * Package all data buffers
+	 *
+	 * @param {boolean} cloneBuffers
+	 *
+	 * @return {DataTransport}
+	 */
+	package( cloneBuffers ) {
+		for ( let buffer of Object.values( this.main.buffers ) ) {
+			this.addArrayBufferToTransferable( buffer, cloneBuffers );
+		}
+		return this;
+	}
+
+	/**
+	 *
+	 * @param buffer
+	 * @param cloneBuffer
+	 *
+	 * @return {DataTransport}
+	 */
+	addArrayBufferToTransferable( buffer, cloneBuffer ) {
+		if ( buffer !== null && buffer !== undefined ) {
+
+			const potentialClone = cloneBuffer ? buffer.slice( 0 ) : buffer;
+			this.transferables.push( potentialClone );
+
+		}
+		return this;
 	}
 }
 
@@ -259,8 +342,6 @@ class GeometryTransport extends StructuredWorkerMessage {
 	/**
 	 * Package {@link BufferGeometry}
 	 *
-	 * @param {BufferGeometry} geometry
-	 * @param {number} geometryType
 	 * @param {boolean} cloneBuffers
 	 *
 	 * @return {GeometryTransport}
@@ -274,14 +355,14 @@ class GeometryTransport extends StructuredWorkerMessage {
 		const skinWeightBA = this.main.geometry.getAttribute( 'skinWeight' );
 		const indexBA = this.main.geometry.getIndex();
 
-		TransferableUtils.addTransferable( vertexBA, cloneBuffers, this.transferables );
-		TransferableUtils.addTransferable( normalBA, cloneBuffers, this.transferables );
-		TransferableUtils.addTransferable( uvBA, cloneBuffers, this.transferables );
-		TransferableUtils.addTransferable( colorBA, cloneBuffers, this.transferables );
-		TransferableUtils.addTransferable( skinIndexBA, cloneBuffers, this.transferables );
-		TransferableUtils.addTransferable( skinWeightBA, cloneBuffers, this.transferables );
+		this.addBufferAttributeToTransferable( vertexBA, cloneBuffers );
+		this.addBufferAttributeToTransferable( normalBA, cloneBuffers );
+		this.addBufferAttributeToTransferable( uvBA, cloneBuffers );
+		this.addBufferAttributeToTransferable( colorBA, cloneBuffers );
+		this.addBufferAttributeToTransferable( skinIndexBA, cloneBuffers );
+		this.addBufferAttributeToTransferable( skinWeightBA, cloneBuffers );
 
-		TransferableUtils.addTransferable( indexBA, cloneBuffers, this.transferables );
+		this.addBufferAttributeToTransferable( indexBA, cloneBuffers );
 
 		return this;
 	}
@@ -296,12 +377,12 @@ class GeometryTransport extends StructuredWorkerMessage {
 		this.main.bufferGeometry = new BufferGeometry();
 
 		const transferredGeometry = this.main.geometry;
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.position, 'position', cloneBuffers );
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.normal, 'normal', cloneBuffers );
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.uv, 'uv', cloneBuffers );
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.color, 'color', cloneBuffers );
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.skinIndex, 'skinIndex', cloneBuffers );
-		TransferableUtils.assignAttribute( this.main.bufferGeometry, transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.position, 'position', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.normal, 'normal', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.uv, 'uv', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.color, 'color', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.skinIndex, 'skinIndex', cloneBuffers );
+		this.assignAttribute( transferredGeometry.attributes.skinWeight, 'skinWeight', cloneBuffers );
 
 		const index = transferredGeometry.index;
 		if ( index !== null && index !== undefined ) {
@@ -334,6 +415,39 @@ class GeometryTransport extends StructuredWorkerMessage {
 		return this.main.bufferGeometry
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param cloneBuffer
+	 *
+	 * @return {GeometryTransport}
+	 */
+	addBufferAttributeToTransferable( input, cloneBuffer ) {
+		if ( input !== null && input !== undefined ) {
+
+			const arrayBuffer = cloneBuffer ? input.array.slice( 0 ) : input.array;
+			this.transferables.push( arrayBuffer.buffer );
+
+		}
+		return this;
+	}
+
+	/**
+	 *
+	 * @param attr
+	 * @param attrName
+	 * @param cloneBuffer
+	 *
+	 * @return {GeometryTransport}
+	 */
+	assignAttribute( attr, attrName, cloneBuffer ) {
+		if ( attr ) {
+			const arrayBuffer = cloneBuffer ? attr.array.slice( 0 ) : attr.array;
+			this.main.bufferGeometry.setAttribute( attrName, new BufferAttribute( arrayBuffer, attr.itemSize, attr.normalized ) );
+		}
+		return this;
+	}
+
 }
 
 class MeshTransport extends GeometryTransport {
@@ -349,7 +463,7 @@ class MeshTransport extends GeometryTransport {
 
 		this.main.type = 'mesh';
 		// needs to be added as we cannot inherit from both materials and geometry
-		this.main.materialTransport = new MaterialsTransport();
+		this.main.materialsTransport = new MaterialsTransport();
 	}
 
 	/**
@@ -361,7 +475,7 @@ class MeshTransport extends GeometryTransport {
 	loadData( transportObject ) {
 		super.loadData( transportObject );
 		this.main.meshName = transportObject.meshName;
-		this.main.materialsTransport = transportObject.materialsTransport
+		this.main.materialsTransport = Object.assign( new MaterialsTransport(), transportObject.materialsTransport );
 
 		return this;
 	}
@@ -438,21 +552,7 @@ class MeshTransport extends GeometryTransport {
  */
 class TransferableUtils {
 
-	static addTransferable( input, cloneBuffer, transferableArray ) {
-		if ( input !== null && input !== undefined ) {
 
-			const arrayBuffer = cloneBuffer ? input.array.slice( 0 ) : input.array;
-			transferableArray.push( arrayBuffer.buffer );
-
-		}
-	}
-
-	static assignAttribute( bg, attr, attrName, cloneBuffer ) {
-		if ( attr ) {
-			const buffer = cloneBuffer ? attr.array.slice( 0 ) : attr.array;
-			bg.setAttribute( attrName, new BufferAttribute( buffer, attr.itemSize, attr.normalized ) );
-		}
-	}
 
 }
 
@@ -679,6 +779,7 @@ class ObjectManipulator {
 export {
 	TransferableUtils,
 	StructuredWorkerMessage,
+	DataTransport,
 	GeometryTransport,
 	MeshTransport,
 	MaterialsTransport,

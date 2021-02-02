@@ -8,10 +8,13 @@ import { Object3D } from '../../../build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
 
 // Imports only related to worker (when standard workers (modules aren't supported) are used)
-import { OBJLoader2Parser } from './obj2/OBJLoader2Parser.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { ObjectManipulator } from './workerTaskManager/utils/TransferableUtils.js';
 import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
+import {
+	DataTransport,
+	MaterialStore
+} from "./workerTaskManager/utils/TransferableUtils.js";
 
 
 /**
@@ -111,7 +114,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		if ( this.workerTaskManager === null || ! this.workerTaskManager instanceof WorkerTaskManager ) {
 
-			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
+			if ( this.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
 			this.workerTaskManager = new WorkerTaskManager();
 
 		}
@@ -123,10 +126,10 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			} else {
 
-				let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
+				let objloader2Dep = OBJLoader2.toString() + ';\n\n';
 				let objectManipulator = ObjectManipulator.toString() + ';\n\n';
 				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
-					[ { code: obj2ParserDep }, { code: objectManipulator } ] );
+					[ { code: objloader2Dep }, { code: objectManipulator } ] );
 
 			}
 			if ( buffer ) {
@@ -155,7 +158,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			if ( object3d.name === 'OBJLoader2ParallelDummy' ) {
 
-				if ( scope.parser.logging.enabled && scope.parser.logging.debug ) {
+				if ( scope.logging.enabled && scope.logging.debug ) {
 
 					console.debug( 'Received dummy answer from OBJLoader2Parallel#parse' );
 
@@ -181,21 +184,21 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 		if ( this.executeParallel ) {
 
-			if ( this.parser.logging.enabled ) {
+			if ( this.logging.enabled ) {
 
 				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 
 			}
 			let config = {
 				logging: {
-					enabled: this.parser.logging.enabled,
-					debug: this.parser.logging.debug
+					enabled: this.logging.enabled,
+					debug: this.logging.debug
 				},
 			}
 			this._buildWorkerCode( config )
 				.then(
 					x => {
-						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
+						if ( this.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
 						this._executeWorkerParse( content );
 					}
 				).catch( e => console.error( e ) );
@@ -215,24 +218,25 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	_executeWorkerParse ( content ) {
 
 		// Create default materials beforehand, but do not override previously set materials (e.g. during init)
-		this.materialHandler.createDefaultMaterials( false );
+//		this.materialHandler.createDefaultMaterials( false );
 
-		let config = {
-			id: Math.floor( Math.random() * Math.floor( 65536 ) ),
-			buffer: content,
-			params: {
+		const materialStore = new MaterialStore( true );
+
+		const dataTransport = new DataTransport( 'execute', Math.floor( Math.random() * Math.floor( 65536 ) ) );
+		dataTransport.setParams( {
 				modelName: this.modelName,
-				useIndices: this.parser.useIndices,
-				disregardNormals: this.parser.disregardNormals,
-				materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
-				useOAsMesh: this.parser.useOAsMesh,
-				materials: this.materialHandler.getMaterialsJSON()
-			}
-		};
-		this.workerTaskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )
+				useIndices: this.useIndices,
+				disregardNormals: this.disregardNormals,
+				materialPerSmoothingGroup: this.materialPerSmoothingGroup,
+				useOAsMesh: this.useOAsMesh,
+				materials: materialStore.getMaterialsJSON()
+			} )
+			.addBuffer( 'modelData', content )
+			.package( false );
+		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this._onAssetAvailable( data ), dataTransport.getTransferables() )
 			.then( data => {
-				this._onAssetAvailable( data );
-				this.parser.callbacks.onLoad( this.baseObject3d, 'finished' );
+				this.callbacks.onAssetAvailable( data );
+				this.callbacks.onLoad( this.baseObject3d, 'finished' );
 				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
 			} )
 			.catch( e => console.error( e ) )

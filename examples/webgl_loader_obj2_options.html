@@ -35,48 +35,46 @@
 
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 
-			const WWOBJLoader2Example = function ( elementToBindTo ) {
+			class WWOBJLoader2Example {
 
-				this.renderer = null;
-				this.canvas = elementToBindTo;
-				this.aspectRatio = 1;
-				this.recalcAspectRatio();
+				constructor ( elementToBindTo ) {
 
-				this.scene = null;
-				this.cameraDefaults = {
-					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
-					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-					near: 0.1,
-					far: 10000,
-					fov: 45
-				};
-				this.camera = null;
-				this.cameraTarget = this.cameraDefaults.posCameraTarget;
+					this.renderer = null;
+					this.canvas = elementToBindTo;
+					this.aspectRatio = 1;
+					this.recalcAspectRatio();
 
-				this.controls = null;
+					this.scene = null;
+					this.cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+						near: 0.1,
+						far: 10000,
+						fov: 45
+					};
+					this.camera = null;
+					this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-				this.flatShading = false;
-				this.doubleSide = false;
-				this.useJsmWorker = false;
-				this.useIndices = false;
-				this.materialPerSmoothingGroup = false;
-				this.useOAsMesh = false;
-				this.disregardNormals = false;
-				this.regularLogging = false;
-				this.debugLogging = false;
-				this.loadCount = 6;
+					this.controls = null;
 
-				this.cube = null;
-				this.pivot = null;
+					this.flatShading = false;
+					this.doubleSide = false;
+					this.useJsmWorker = true;
+					this.useIndices = false;
+					this.materialPerSmoothingGroup = false;
+					this.useOAsMesh = false;
+					this.disregardNormals = false;
+					this.regularLogging = false;
+					this.debugLogging = false;
+					this.loadCount = 6;
 
-				this.workerTaskManager = new WorkerTaskManager( 1 );
-			};
+					this.cube = null;
+					this.pivot = null;
 
-			WWOBJLoader2Example.prototype = {
+					this.workerTaskManager = new WorkerTaskManager( 1 );
+				}
 
-				constructor: WWOBJLoader2Example,
-
-				initGL: function () {
+				initGL () {
 
 					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
@@ -115,9 +113,9 @@
 					this.pivot.name = 'Pivot';
 					this.scene.add( this.pivot );
 
-				},
+				}
 
-				useParseMain: function () {
+				useParseMain () {
 
 					const modelName = 'female02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
@@ -158,9 +156,9 @@
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( 'models/obj/female02/female02.mtl', onLoadMtl );
 
-				},
+				}
 
-				useParseParallel: function () {
+				useParseParallel () {
 
 					const modelName = 'female02_vertex';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
@@ -193,7 +191,7 @@
 						.setDisregardNormals( this.disregardNormals )
 						.setLogging( this.regularLogging, this.debugLogging )
 						.setCallbackOnLoad( callbackOnLoad )
-						.addMaterials( materials, true );
+						.setMaterials( materials );
 
 					const fileLoader = new THREE.FileLoader();
 					fileLoader.setPath( '' );
@@ -206,22 +204,17 @@
 						}
 					);
 
-				},
+				}
 
-				useLoadMain: function () {
+				useLoadMain () {
 
 					const modelName = 'male02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					const objLoader2 = new OBJLoader2()
-						.setModelName( modelName )
-						.setUseIndices( this.useIndices )
-						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
-						.setUseOAsMesh( this.useOAsMesh )
-						.setDisregardNormals( this.disregardNormals )
-						.setLogging( this.regularLogging, this.debugLogging );
+					const objLoader2 = new OBJLoader2().setModelName( modelName ).setUseIndices( this.useIndices ).setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup ).setUseOAsMesh( this.useOAsMesh ).setDisregardNormals( this.disregardNormals ).setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
+
 					function callbackOnLoad( object3d, message ) {
 
 						const local = new THREE.Object3D();
@@ -245,9 +238,9 @@
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( 'models/obj/male02/male02.mtl', onLoadMtl );
 
-				},
+				}
 
-				useLoadParallel: function () {
+				useLoadParallel () {
 
 					const modelName = 'WaltHead';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
@@ -288,9 +281,9 @@
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( 'models/obj/walt/WaltHead.mtl', onLoadMtl );
 
-				},
+				}
 
-				useLoadMainFallback: function () {
+				useLoadMainFallback () {
 
 					const local = new THREE.Object3D();
 					local.name = 'Pivot_Cerberus';
@@ -320,9 +313,9 @@
 
 					objLoader2Parallel.load( 'models/obj/cerberus/Cerberus.obj', callbackOnLoad );
 
-				},
+				}
 
-				useLoadParallelMeshAlter: function () {
+				useLoadParallelMeshAlter () {
 
 					const local = new THREE.Object3D();
 					local.position.set( 175, - 100, 0 );
@@ -371,9 +364,9 @@
 
 					objLoader2Parallel.load( 'models/obj/ninja/ninjaHead_Low.obj', callbackOnLoad );
 
-				},
+				}
 
-				finalize: function () {
+				finalize () {
 
 					this.loadCount --;
 					if ( this.loadCount === 0 ) {
@@ -382,9 +375,9 @@
 
 					}
 
-				},
+				}
 
-				_reportProgress: function ( event ) {
+				_reportProgress ( event ) {
 
 					let output = '';
 					if ( event.detail !== null && event.detail !== undefined && event.detail.text ) {
@@ -396,9 +389,9 @@
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
 
-				},
+				}
 
-				resizeDisplayGL: function () {
+				resizeDisplayGL () {
 
 					this.controls.handleResize();
 
@@ -407,32 +400,32 @@
 
 					this.updateCamera();
 
-				},
+				}
 
-				recalcAspectRatio: function () {
+				recalcAspectRatio () {
 
 					this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
 
-				},
+				}
 
-				resetCamera: function () {
+				resetCamera () {
 
 					this.camera.position.copy( this.cameraDefaults.posCamera );
 					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 					this.updateCamera();
 
-				},
+				}
 
-				updateCamera: function () {
+				updateCamera () {
 
 					this.camera.aspect = this.aspectRatio;
 					this.camera.lookAt( this.cameraTarget );
 					this.camera.updateProjectionMatrix();
 
-				},
+				}
 
-				render: function () {
+				render () {
 
 					if ( ! this.renderer.autoClear ) this.renderer.clear();
 
@@ -443,9 +436,9 @@
 
 					this.renderer.render( this.scene, this.camera );
 
-				},
+				}
 
-				alterShading: function () {
+				alterShading () {
 
 					const scope = this;
 					scope.flatShading = ! scope.flatShading;
@@ -466,9 +459,9 @@
 
 					scope.pivot.traverse( scopeTraverse );
 
-				},
+				}
 
-				alterDouble: function () {
+				alterDouble () {
 
 					const scope = this;
 					scope.doubleSide = ! scope.doubleSide;
@@ -488,9 +481,9 @@
 
 					scope.pivot.traverse( scopeTraverse );
 
-				},
+				}
 
-				traverseScene: function ( object3d ) {
+				traverseScene ( object3d ) {
 
 					if ( Array.isArray( object3d.material ) ) {
 
@@ -507,16 +500,16 @@
 
 					}
 
-				},
+				}
 
-				executeLoading: function () {
+				executeLoading () {
 
 					// Load a file with OBJLoader2.parse on main
-					this.useParseMain();
+//					this.useParseMain();
 
 					// Load a file with OBJLoader2Parallel.parse in parallel in worker
 					this.useParseParallel();
-
+/*
 					// Load a file with OBJLoader.load on main
 					this.useLoadMain();
 
@@ -528,10 +521,10 @@
 
 					// Load a file with OBJLoader2Parallel.load in parallel in worker and add normals during onMeshAlter
 					this.useLoadParallelMeshAlter();
-
+*/
 				}
 
-			};
+			}
 
 			const app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
 

@@ -23,4 +23,3 @@ rm -f ${DIR_BASE}/examples/js/loaders/MTLLoader.js
 rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.js
 rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.d.ts
 rm -f ${DIR_BASE}/examples/jsm/libs/dat.gui.module.js
-rm -f ${DIR_BASE}/examples/jsm/libs/gunzip.module.min.js
