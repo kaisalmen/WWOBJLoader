@@ -177,10 +177,6 @@
 
 					}
 
-					const materials = {
-						tester: new THREE.MeshStandardMaterial()
-					};
-
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setWorkerTaskManager( this.workerTaskManager )
 						.setModelName( modelName )
@@ -190,8 +186,7 @@
 						.setUseOAsMesh( this.useOAsMesh )
 						.setDisregardNormals( this.disregardNormals )
 						.setLogging( this.regularLogging, this.debugLogging )
-						.setCallbackOnLoad( callbackOnLoad )
-						.setMaterials( materials );
+						.setCallbackOnLoad( callbackOnLoad );
 
 					const fileLoader = new THREE.FileLoader();
 					fileLoader.setPath( '' );

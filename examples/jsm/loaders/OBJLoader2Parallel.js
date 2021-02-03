@@ -217,11 +217,6 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	_executeWorkerParse ( content ) {
 
-		// Create default materials beforehand, but do not override previously set materials (e.g. during init)
-//		this.materialHandler.createDefaultMaterials( false );
-
-		const materialStore = new MaterialStore( true );
-
 		const dataTransport = new DataTransport( 'execute', Math.floor( Math.random() * Math.floor( 65536 ) ) );
 		dataTransport.setParams( {
 				modelName: this.modelName,
@@ -229,11 +224,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				disregardNormals: this.disregardNormals,
 				materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 				useOAsMesh: this.useOAsMesh,
-				materials: materialStore.getMaterialsJSON()
+				materials: MaterialStore.getMaterialsJSON( this.materials )
 			} )
 			.addBuffer( 'modelData', content )
 			.package( false );
-		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this._onAssetAvailable( data ), dataTransport.getTransferables() )
+		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this.callbacks.onAssetAvailable( data ), dataTransport.getTransferables() )
 			.then( data => {
 				this.callbacks.onAssetAvailable( data );
 				this.callbacks.onLoad( this.baseObject3d, 'finished' );

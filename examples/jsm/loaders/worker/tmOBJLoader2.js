@@ -18,8 +18,8 @@ const OBJ2LoaderWorker = {
 			context.obj2.objParser.setLogging( config.logging.enabled, config.logging.debug );
 		}
 
-		context.obj2.objParser.setCallbackOnAssetAvailable( m => {
-			context.postMessage( m );
+		context.obj2.objParser.setCallbackOnAssetAvailable( structuredWorkerMessage => {
+			structuredWorkerMessage.postMessage( context );
 		} );
 		context.obj2.objParser.setCallbackOnProgress( text => {
 			if ( context.obj2.objParser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );

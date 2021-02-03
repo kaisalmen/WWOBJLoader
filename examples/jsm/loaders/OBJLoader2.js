@@ -13,10 +13,11 @@ import {
 } from '../../../build/three.module.js';
 
 import {
+	StructuredWorkerMessage,
+	MeshTransport,
 	MaterialStore,
 	MaterialsTransport,
-	MaterialCloneInstruction,
-	MeshTransport
+	MaterialCloneInstruction
 } from './workerTaskManager/utils/TransferableUtils.js';
 
 /**
@@ -85,23 +86,28 @@ class OBJLoader2 extends Loader {
 			 * @param {StructuredWorkerMessage} asset
 			 */
 			onAssetAvailable: function ( asset ) {
-
-				if ( asset.main.cmd === 'assetAvailable' && asset.main.type === 'mesh' ) {
-
-					let mesh, meshTransport;
+				let cmd = asset instanceof StructuredWorkerMessage ? asset.main.cmd : asset.cmd;
+				if ( cmd === 'execComplete' ) {
+					if ( scope.logging.enabled ) console.log( 'Parsing completed!' );
+				}
+				else if ( cmd === 'assetAvailable' ) {
+					let meshTransport;
 					if ( asset instanceof MeshTransport ) {
 						meshTransport = asset;
 					}
 					else {
-						meshTransport = new MeshTransport().loadData( asset.main ).reconstruct( false );
+						meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
 					}
 
 					const materialsTransport = meshTransport.getMaterialsTransport();
 					const material = materialsTransport.processMaterialTransport( scope.materials, scope.logging.enabled );
 
-					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+					const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
 					scope.baseObject3d.add( mesh );
 
+				}
+				else {
+					console.error( 'Received unknown command: ' + cmd );
 				}
 
 			},
@@ -119,7 +125,7 @@ class OBJLoader2 extends Loader {
 		this.contentRef = null;
 		this.legacyMode = false;
 
-		this.materials = {};
+		this.materials = new MaterialStore( true ).getMaterials();
 		this.modelName = '';
 		this.baseObject3d = new Object3D();
 
@@ -1142,7 +1148,6 @@ class OBJLoader2 extends Loader {
 
 		const createMultiMaterial = ( meshOutputGroups.length > 1 );
 		let materialIndex = 0;
-		let selectedMaterialIndex;
 
 		let vertexFAOffset = 0;
 		let indexUAOffset = 0;
@@ -1211,20 +1216,12 @@ class OBJLoader2 extends Loader {
 
 			if ( createMultiMaterial ) {
 
-				// re-use material if already used before. Reduces materials array size and eliminates duplicates
-				selectedMaterialIndex = materialsTransport.main.multiMaterials[ materialName ];
-				if ( ! selectedMaterialIndex ) {
-
-					selectedMaterialIndex = materialIndex;
-					materialsTransport.main.multiMaterials[ materialName ] = materialIndex;
-					materialIndex ++;
-
-				}
-
+				materialsTransport.main.multiMaterials[ materialIndex ] = materialName;
 
 				materialGroupLength = this.useIndices ? meshOutputGroup.indices.length : meshOutputGroup.vertices.length / 3;
-				geometry.addGroup( materialGroupOffset, materialGroupLength, selectedMaterialIndex );
+				geometry.addGroup( materialGroupOffset, materialGroupLength, materialIndex );
 				materialGroupOffset += materialGroupLength;
+				materialIndex++;
 
 			}
 
@@ -1262,9 +1259,9 @@ class OBJLoader2 extends Loader {
 			if ( this.logging.enabled && this.logging.debug ) {
 
 				let materialIndexLine = '';
-				if ( selectedMaterialIndex ) {
+				if ( materialIndex > 0 ) {
 
-					materialIndexLine = '\n\t\tmaterialIndex: ' + selectedMaterialIndex;
+					materialIndexLine = '\n\t\tmaterialIndex: ' + materialIndex;
 
 				}
 
@@ -1313,14 +1310,7 @@ class OBJLoader2 extends Loader {
 			console.info( parserFinalReport );
 
 		}
-		this.callbacks.onAssetAvailable(
-			{
-				main: {
-					cmd: 'execComplete',
-					type: 'void',
-					id: this.objectId
-				}
-			} );
+		this.callbacks.onAssetAvailable( new StructuredWorkerMessage( 'execComplete', this.objectId ) );
 
 	}
 

@@ -267,14 +267,14 @@ class MaterialsTransport extends StructuredWorkerMessage {
 		let outputMaterial;
 		if ( this.hasSingleMaterial() ) {
 
-			outputMaterial = this.getSingleMaterial();
+			outputMaterial = materials[ this.getSingleMaterial().name ];
 
 		}
 		else {
 
 			// multi-material
 			outputMaterial = [];
-			Object.entries( this.main.multiMaterials ).forEach( ( [ materialName, index ] ) => {
+			Object.entries( this.main.multiMaterials ).forEach( ( [ index, materialName ] ) => {
 
 				outputMaterial[ index ] = materials[ materialName ];
 
