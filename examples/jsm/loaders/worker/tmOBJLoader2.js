@@ -2,30 +2,115 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { OBJLoader2 } from "../OBJLoader2.js";
-import { ObjectManipulator } from "../workerTaskManager/utils/TransferableUtils.js";
+// Imports only related to worker (when standard workers (modules aren't supported) are used)
+import {
+	MathUtils,
+	Color,
+	Vector2,
+	Vector3,
+	Matrix3,
+	Matrix4,
+	Euler,
+	Quaternion,
+	Layers,
+	Object3D,
+	Box3,
+	BufferAttribute,
+	BufferGeometry,
+	Mesh,
+	Material,
+	MeshBasicMaterial
+}
+from '../../../../build/three.module.js';
+import {
+	TransportBase,
+	GeometryTransport,
+	MaterialsTransport,
+	MaterialUtils,
+	MeshTransport,
+	CodeUtils,
+	ObjectManipulator
+} from "../workerTaskManager/utils/TransferableUtils.js";
+import { OBJLoader2Parser } from "../OBJLoader2.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 const OBJ2LoaderWorker = {
 
+	buildStandardWorker: function () {
+		return [
+			{ code: 'const FrontSide = 0;\n' },
+			{ code: 'const FlatShading = 1;\n' },
+			{ code: 'const NormalBlending = 1;\n' },
+			{ code: 'const LessEqualDepth = 3;\n' },
+			{ code: 'const AddEquation = 100;\n' },
+			{ code: 'const OneMinusSrcAlphaFactor = 205;\n' },
+			{ code: 'const SrcAlphaFactor = 204;\n' },
+			{ code: 'const AlwaysStencilFunc = 519;\n' },
+			{ code: 'const KeepStencilOp = 7680;\n' },
+			{ code: 'const TangentSpaceNormalMap = 0;\n' },
+			{ code: 'const VertexColors = 2;\n' },
+			{ code: 'const StaticDrawUsage = 35044;\n' },
+			{ code: 'const MultiplyOperation = 0;\n' },
+			{ code: 'const _lut = [];\n' },
+			{ code: CodeUtils.serializePrototype( MathUtils, null, 'MathUtils', false ) },
+			{ code: CodeUtils.serializeClass( Vector2 ) },
+			{ code: CodeUtils.serializeClass( Vector3 ) },
+			{ code: CodeUtils.serializeClass( Matrix3 ) },
+			{ code: CodeUtils.serializeClass( Matrix4 ) },
+			{ code: CodeUtils.serializeClass( Euler ) },
+			{ code: CodeUtils.serializeClass( Quaternion ) },
+			{ code: CodeUtils.serializeClass( Layers ) },
+			{ code: 'let _object3DId = 0;\n' },
+			{ code: CodeUtils.serializePrototype( Object3D, Object3D.prototype, 'Object3D', true ) },
+			{ code: 'Object3D.DefaultUp = new Vector3( 0, 1, 0 );' },
+			{ code: 'Object3D.DefaultMatrixAutoUpdate = true;' },
+			{ code: CodeUtils.serializeClass( Box3 ) },
+			{ code: CodeUtils.serializePrototype( BufferAttribute, BufferAttribute.prototype, 'BufferAttribute', true ) },
+			{ code: 'let _id = 0;\n' },
+			{ code: 'const _m1 = new Matrix4();\n' },
+			{ code: 'const _obj = new Object3D();\n' },
+			{ code: 'const _offset = new Vector3();\n' },
+			{ code: 'const _box = new Box3();\n' },
+			{ code: 'const _boxMorphTargets = new Box3();\n' },
+			{ code: 'const _vector = new Vector3();\n' },
+			{ code: CodeUtils.serializePrototype( BufferGeometry, BufferGeometry.prototype, 'BufferGeometry', true ) },
+			{ code: 'let materialId = 0;\n' },
+			{ code: CodeUtils.serializePrototype( Material, Material.prototype, 'Material', true ) },
+			{ code: CodeUtils.serializeClass( Color ) },
+			{ code: CodeUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
+			{ code: CodeUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
+			{ code: CodeUtils.serializeClass( TransportBase ) },
+			{ code: CodeUtils.serializeClass( GeometryTransport ) },
+			{ code: CodeUtils.serializeClass( MeshTransport ) },
+			{ code: CodeUtils.serializeClass( MaterialsTransport ) },
+			{ code: CodeUtils.serializeClass( MaterialUtils ) },
+			{ code: CodeUtils.serializeClass( OBJLoader2Parser ) },
+			{ code: CodeUtils.serializeClass( ObjectManipulator ) }
+		];
+	},
+
 	init: function ( context, id, config ) {
 
 		context.obj2 = {
-			objParser: new OBJLoader2(),
+			parser: new OBJLoader2Parser(),
 			buffer: null
 		}
 		if ( config.logging ) {
-			context.obj2.objParser.setLogging( config.logging.enabled, config.logging.debug );
+			context.obj2.parser.logging.enabled = config.logging.enabled === true;
+			context.obj2.parser.logging.debug = config.logging.debug === true;
 		}
 
-		context.obj2.objParser.setCallbackOnAssetAvailable( structuredWorkerMessage => {
+		context.obj2.parser.callbacks.onAssetAvailable = structuredWorkerMessage => {
 			structuredWorkerMessage.postMessage( context );
-		} );
-		context.obj2.objParser.setCallbackOnProgress( text => {
-			if ( context.obj2.objParser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
-		} );
+		};
+		context.obj2.parser.callbacks.onLoad = structuredWorkerMessage => {
+			structuredWorkerMessage.postMessage( context );
+		};
+		context.obj2.parser.callbacks.onProgress = text => {
+			if ( context.obj2.parser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
+		};
 
-		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
+		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
 		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
 
 		context.postMessage( {
@@ -37,18 +122,18 @@ const OBJ2LoaderWorker = {
 
 	execute: function ( context, id, config ) {
 
-		if ( context.obj2.objParser.isUsedBefore() ) {
+		if ( context.obj2.parser.usedBefore ) {
 
-			context.obj2.objParser._init();
+			context.obj2.parser._init();
 
 		}
 
-		ObjectManipulator.applyProperties( context.obj2.objParser, config.params, false );
+		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
 		context.obj2.buffer = config.buffers[ 'modelData' ];
 
 		if ( context.obj2.buffer ) {
-			context.obj2.objParser.objectId = config.id;
-			context.obj2.objParser._execute( context.obj2.buffer );
+			context.obj2.parser.objectId = config.id;
+			context.obj2.parser._execute( context.obj2.buffer );
 		}
 
 	}

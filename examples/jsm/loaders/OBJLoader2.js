@@ -5,19 +5,11 @@
 
 import {
 	FileLoader,
-	Object3D,
-	Loader,
-	Mesh,
-	BufferGeometry,
-	BufferAttribute
+	Loader
 } from '../../../build/three.module.js';
 
 import {
-	StructuredWorkerMessage,
-	MeshTransport,
-	MaterialStore,
-	MaterialsTransport,
-	MaterialCloneInstruction
+	MaterialStore
 } from './workerTaskManager/utils/TransferableUtils.js';
 
 /**
@@ -37,87 +29,375 @@ class OBJLoader2 extends Loader {
 	constructor ( manager ) {
 
 		super( manager );
+		this.parser = new OBJLoader2Parser();
+		this.materialStore = new MaterialStore( true );
+		this.parser.materials = this.materialStore.getMaterials()
 
+	}
+
+
+
+	/**
+	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
+	 *
+	 * @param {boolean} enabled True or false.
+	 * @param {boolean} debug True or false.
+	 *
+	 * @return {OBJLoader2}
+	 */
+	setLogging ( enabled, debug ) {
+
+		this.parser.logging.enabled = enabled === true;
+		this.parser.logging.debug = debug === true;
+		return this;
+
+	}
+
+	/**
+	 * Tells whether a material shall be created per smoothing group.
+	 *
+	 * @param {boolean} materialPerSmoothingGroup=false
+	 * @return {OBJLoader2}
+	 */
+	setMaterialPerSmoothingGroup ( materialPerSmoothingGroup ) {
+
+		this.parser.aterialPerSmoothingGroup = materialPerSmoothingGroup === true;
+		return this;
+
+	}
+
+	/**
+	 * Usually 'o' is meta-information and does not result in creation of new meshes, but mesh creation on occurrence of "o" can be enforced.
+	 *
+	 * @param {boolean} useOAsMesh=false
+	 * @return {OBJLoader2}
+	 */
+	setUseOAsMesh ( useOAsMesh ) {
+
+		this.parser.useOAsMesh = useOAsMesh === true;
+		return this;
+
+	}
+
+	/**
+	 * Instructs loaders to create indexed {@link BufferGeometry}.
+	 *
+	 * @param {boolean} useIndices=false
+	 * @return {OBJLoader2}
+	 */
+	setUseIndices ( useIndices ) {
+
+		this.parser.useIndices = useIndices === true;
+		return this;
+
+	}
+
+	/**
+	 * Tells whether normals should be completely disregarded and regenerated.
+	 *
+	 * @param {boolean} disregardNormals=false
+	 * @return {OBJLoader2}
+	 */
+	setDisregardNormals ( disregardNormals ) {
+
+		this.parser.disregardNormals = disregardNormals === true;
+		return this;
+
+	}
+
+	/**
+	 * Set the name of the model.
+	 *
+	 * @param {string} modelName
+	 * @return {OBJLoader2}
+	 */
+	setModelName ( modelName ) {
+
+		this.parser.modelName = modelName ? modelName : this.parser.modelName;
+		return this;
+
+	}
+
+	/**
+	 * Set the node where the loaded objects will be attached directly.
+	 *
+	 * @param {Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
+	 * @return {OBJLoader2}
+	 */
+	setBaseObject3d ( baseObject3d ) {
+
+		this.parser.baseObject3d = ( baseObject3d === undefined || baseObject3d === null ) ? this.parser.baseObject3d : baseObject3d;
+		return this;
+
+	}
+
+	/**
+	 * Clears materials object and sets the new ones.
+	 *
+	 * @param {Object} materials Object with named materials
+	 * @return {OBJLoader2}
+	 */
+	setMaterials ( materials ) {
+
+		this.materialStore.addMaterials( materials, false );
+		this.parser.materials = this.materialStore.getMaterials();
+		return this;
+
+	}
+
+	/**
+	 * Register a function that is called once an asset (mesh/material) becomes available.
+	 *
+	 * @param onAssetAvailable
+	 * @return {OBJLoader2}
+	 */
+	setCallbackOnAssetAvailable ( onAssetAvailable ) {
+
+		if ( onAssetAvailable !== null && onAssetAvailable !== undefined && onAssetAvailable instanceof Function ) {
+
+			this.parser.callbacks.onAssetAvailable = onAssetAvailable;
+
+		}
+		return this;
+
+	}
+
+	/**
+	 * Register a function that is used to report overall processing progress.
+	 *
+	 * @param {Function} onProgress
+	 * @return {OBJLoader2}
+	 */
+	setCallbackOnProgress ( onProgress ) {
+
+		if ( onProgress !== null && onProgress !== undefined && onProgress instanceof Function ) {
+
+			this.parser.callbacks.onProgress = onProgress;
+
+		}
+		return this;
+
+	}
+
+	/**
+	 * Register an error handler function that is called if errors occur. It can decide to just log or to throw an exception.
+	 *
+	 * @param {Function} onError
+	 * @return {OBJLoader2}
+	 */
+	setCallbackOnError ( onError ) {
+
+		if ( onError !== null && onError !== undefined && onError instanceof Function ) {
+
+			this.parser.callbacks.onError = onError;
+
+		}
+		return this;
+
+	}
+
+	/**
+	 * Register a function that is called when parsing was completed.
+	 *
+	 * @param {Function} onLoad
+	 * @return {OBJLoader2}
+	 */
+	setCallbackOnLoad ( onLoad ) {
+
+		if ( onLoad !== null && onLoad !== undefined && onLoad instanceof Function ) {
+
+			this.parser.callbacks.onLoad = onLoad;
+
+		}
+		return this;
+
+	}
+
+	/**
+	 * Register a function that is called once a single mesh is available and it could be altered by the supplied function.
+	 *
+	 * @param {Function} [onMeshAlter]
+	 * @return {OBJLoader2}
+	 */
+	setCallbackOnMeshAlter ( onMeshAlter ) {
+
+//		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
+		return this;
+
+	}
+
+	/**
+	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
+	 *
+	 * @param {string}  url A string containing the path/URL of the file to be loaded.
+	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+	 * @param {function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {function} [onMeshAlter] Called after every single mesh is made available by the parser
+	 */
+	load ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
+
+		if ( onLoad === null || onLoad === undefined || ! ( onLoad instanceof Function ) ) {
+
+			const errorMessage = 'onLoad is not a function! Aborting...';
+			this.parser.callbacks.onError( errorMessage );
+			throw errorMessage;
+
+		} else {
+
+			this.setCallbackOnLoad( onLoad );
+
+		}
+
+		const scope = this;
+		if ( onError === null || onError === undefined || ! ( onError instanceof Function ) ) {
+
+			onError = function ( event ) {
+
+				let errorMessage = event;
+				if ( event.currentTarget && event.currentTarget.statusText !== null ) {
+
+					errorMessage = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
+
+				}
+				scope.parser.callbacks.onError( errorMessage );
+
+			};
+
+		}
+		if ( ! url ) {
+
+			onError( 'An invalid url was provided. Unable to continue!' );
+
+		}
+		const urlFull = new URL( url, window.location.href ).href;
+		let filename = urlFull;
+		const urlParts = urlFull.split( '/' );
+		if ( urlParts.length > 2 ) {
+
+			filename = urlParts[ urlParts.length - 1 ];
+			let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
+			if ( urlPartsPath !== undefined ) this.path = urlPartsPath;
+
+		}
+		if ( onFileLoadProgress === null || onFileLoadProgress === undefined || ! ( onFileLoadProgress instanceof Function ) ) {
+
+			let numericalValueRef = 0;
+			let numericalValue = 0;
+			onFileLoadProgress = function ( event ) {
+
+				if ( ! event.lengthComputable ) return;
+
+				numericalValue = event.loaded / event.total;
+				if ( numericalValue > numericalValueRef ) {
+
+					numericalValueRef = numericalValue;
+					const output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
+					scope.parser.callbacks.onProgress( 'progressLoad', output, numericalValue );
+
+				}
+
+			};
+
+		}
+
+		this.setCallbackOnMeshAlter( onMeshAlter );
+		const fileLoaderOnLoad = function ( content ) {
+
+			scope.parser.callbacks.onLoad( scope.parse( content ), 'OBJLoader2#load: Parsing completed' );
+
+		};
+		const fileLoader = new FileLoader( this.manager );
+		fileLoader.setPath( this.path || this.resourcePath );
+		fileLoader.setResponseType( 'arraybuffer' );
+		fileLoader.load( filename, fileLoaderOnLoad, onFileLoadProgress, onError );
+
+	}
+
+	/**
+	 * Parses OBJ data synchronously from arraybuffer or string and returns the {@link Object3D}.
+	 *
+	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
+	 * @return {Object3D}
+	 */
+	parse ( content ) {
+
+		if ( this.parser.logging.enabled ) {
+
+			console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
+
+		}
+		// fast-fail in case of illegal data
+		if ( content === null || content === undefined ) {
+
+			throw 'Provided content is not a valid ArrayBuffer or String. Unable to continue parsing';
+
+		}
+		if ( this.parser.logging.enabled ) {
+
+			console.time( 'OBJLoader parse: ' + this.parser.modelName );
+
+		}
+
+		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
+
+			if ( this.parser.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
+			this.parser._execute( content );
+
+		} else if ( typeof ( content ) === 'string' || content instanceof String ) {
+
+			if ( this.parser.logging.enabled ) console.info( 'Parsing text...' );
+			this.parser._executeLegacy( content );
+
+		} else {
+
+			this.parser.callbacks.onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
+
+		}
+		if ( this.parser.logging.enabled ) {
+
+			console.timeEnd( 'OBJLoader parse: ' + this.parser.modelName );
+
+		}
+		return this.parser.baseObject3d;
+
+	}
+
+}
+
+
+import {
+	Object3D,
+	Mesh,
+	BufferGeometry,
+	BufferAttribute
+} from '../../../build/three.module.js';
+
+import {
+	TransportBase,
+	MeshTransport,
+	MaterialsTransport,
+	MaterialCloneInstruction,
+	MaterialUtils
+} from './workerTaskManager/utils/TransferableUtils.js';
+
+class OBJLoader2Parser {
+
+	constructor () {
 		this.logging = {
 			enabled: false,
 			debug: false
 		};
+
 		this.usedBefore = false;
 		this._init();
 
-		const scope = this;
 		this.callbacks = {
-
-			/**
-			 * Announce parse progress feedback which is logged to the console.
-			 * @private
-			 *
-			 * @param {string} text Textual description of the event
-			 */
-			onProgress: function ( text ) {
-
-				const message = text ? text : '';
-				if ( scope.logging.enabled && scope.logging.debug ) {
-
-					console.log( message );
-
-				}
-
-			},
-
-			/**
-			 * Announce error feedback which is logged as error message.
-			 * @private
-			 *
-			 * @param {String} errorMessage The event containing the error
-			 */
-			onError: function ( errorMessage ) {
-
-				if ( scope.logging.enabled && scope.logging.debug ) {
-
-					console.error( errorMessage );
-
-				}
-
-			},
-
-			/**
-			 *
-			 * @param {StructuredWorkerMessage} asset
-			 */
-			onAssetAvailable: function ( asset ) {
-				let cmd = asset instanceof StructuredWorkerMessage ? asset.main.cmd : asset.cmd;
-				if ( cmd === 'execComplete' ) {
-					if ( scope.logging.enabled ) console.log( 'Parsing completed!' );
-				}
-				else if ( cmd === 'assetAvailable' ) {
-					let meshTransport;
-					if ( asset instanceof MeshTransport ) {
-						meshTransport = asset;
-					}
-					else {
-						meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
-					}
-
-					const materialsTransport = meshTransport.getMaterialsTransport();
-					const material = materialsTransport.processMaterialTransport( scope.materials, scope.logging.enabled );
-
-					const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
-					scope.baseObject3d.add( mesh );
-
-				}
-				else {
-					console.error( 'Received unknown command: ' + cmd );
-				}
-
-			},
-			onLoad: function ( object3d, message ) {
-
-				console.log( 'You reached parser default onLoad callback: ' + message );
-
-			}
+			onAssetAvailable: x => this._onAssetAvailable( x ),
+			onLoad: x => this._onLoad( x ),
+			onError: x => this._onError( x ),
+			onProgress: x => this._onProgress( x )
 		};
-
 	}
 
 	_init () {
@@ -125,7 +405,7 @@ class OBJLoader2 extends Loader {
 		this.contentRef = null;
 		this.legacyMode = false;
 
-		this.materials = new MaterialStore( true ).getMaterials();
+		this.materials = {};
 		this.modelName = '';
 		this.baseObject3d = new Object3D();
 
@@ -173,354 +453,6 @@ class OBJLoader2 extends Loader {
 			currentByte: 0,
 			totalBytes: 0
 		};
-
-	}
-
-	/**
-	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 *
-	 * @param {boolean} enabled True or false.
-	 * @param {boolean} debug True or false.
-	 *
-	 * @return {OBJLoader2}
-	 */
-	setLogging ( enabled, debug ) {
-
-		this.logging.enabled = enabled === true;
-		this.logging.debug = debug === true;
-		return this;
-
-	}
-
-	/**
-	 * Tells whether a material shall be created per smoothing group.
-	 *
-	 * @param {boolean} materialPerSmoothingGroup=false
-	 * @return {OBJLoader2}
-	 */
-	setMaterialPerSmoothingGroup ( materialPerSmoothingGroup ) {
-
-		this.materialPerSmoothingGroup = materialPerSmoothingGroup === true;
-		return this;
-
-	}
-
-	/**
-	 * Usually 'o' is meta-information and does not result in creation of new meshes, but mesh creation on occurrence of "o" can be enforced.
-	 *
-	 * @param {boolean} useOAsMesh=false
-	 * @return {OBJLoader2}
-	 */
-	setUseOAsMesh ( useOAsMesh ) {
-
-		this.useOAsMesh = useOAsMesh === true;
-		return this;
-
-	}
-
-	/**
-	 * Instructs loaders to create indexed {@link BufferGeometry}.
-	 *
-	 * @param {boolean} useIndices=false
-	 * @return {OBJLoader2}
-	 */
-	setUseIndices ( useIndices ) {
-
-		this.useIndices = useIndices === true;
-		return this;
-
-	}
-
-	/**
-	 * Tells whether normals should be completely disregarded and regenerated.
-	 *
-	 * @param {boolean} disregardNormals=false
-	 * @return {OBJLoader2}
-	 */
-	setDisregardNormals ( disregardNormals ) {
-
-		this.disregardNormals = disregardNormals === true;
-		return this;
-
-	}
-
-	/**
-	 * Set the name of the model.
-	 *
-	 * @param {string} modelName
-	 * @return {OBJLoader2}
-	 */
-	setModelName ( modelName ) {
-
-		this.modelName = modelName ? modelName : this.modelName;
-		return this;
-
-	}
-
-	/**
-	 * Set the node where the loaded objects will be attached directly.
-	 *
-	 * @param {Object3D} baseObject3d Object already attached to scenegraph where new meshes will be attached to
-	 * @return {OBJLoader2}
-	 */
-	setBaseObject3d ( baseObject3d ) {
-
-		this.baseObject3d = ( baseObject3d === undefined || baseObject3d === null ) ? this.baseObject3d : baseObject3d;
-		return this;
-
-	}
-
-	/**
-	 * Clears materials object and sets the new ones.
-	 *
-	 * @param {Object} materials Object with named materials
-	 * @return {OBJLoader2}
-	 */
-	setMaterials ( materials ) {
-
-		this.materials = Object.assign( {}, materials );
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is called once an asset (mesh/material) becomes available.
-	 *
-	 * @param onAssetAvailable
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnAssetAvailable ( onAssetAvailable ) {
-
-		if ( onAssetAvailable !== null && onAssetAvailable !== undefined && onAssetAvailable instanceof Function ) {
-
-			this.callbacks.onAssetAvailable = onAssetAvailable;
-
-		}
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is used to report overall processing progress.
-	 *
-	 * @param {Function} onProgress
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnProgress ( onProgress ) {
-
-		if ( onProgress !== null && onProgress !== undefined && onProgress instanceof Function ) {
-
-			this.callbacks.onProgress = onProgress;
-
-		}
-		return this;
-
-	}
-
-	/**
-	 * Register an error handler function that is called if errors occur. It can decide to just log or to throw an exception.
-	 *
-	 * @param {Function} onError
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnError ( onError ) {
-
-		if ( onError !== null && onError !== undefined && onError instanceof Function ) {
-
-			this.callbacks.onError = onError;
-
-		}
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is called when parsing was completed.
-	 *
-	 * @param {Function} onLoad
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnLoad ( onLoad ) {
-
-		if ( onLoad !== null && onLoad !== undefined && onLoad instanceof Function ) {
-
-			this.callbacks.onLoad = onLoad;
-
-		}
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is called once a single mesh is available and it could be altered by the supplied function.
-	 *
-	 * @param {Function} [onMeshAlter]
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnMeshAlter ( onMeshAlter ) {
-
-//		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is called once all materials have been loaded and they could be altered by the supplied function.
-	 *
-	 * @param {Function} [onLoadMaterials]
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnLoadMaterials ( onLoadMaterials ) {
-
-		this.materialHandler._setCallbacks( onLoadMaterials );
-		return this;
-
-	}
-
-	/**
-	 * Tell if loader was used before.
-	 *
-	 * @return {boolean} True or false.
-	 */
-	isUsedBefore () {
-
-		return this.usedBefore;
-
-	}
-
-	/**
-	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
-	 *
-	 * @param {string}  url A string containing the path/URL of the file to be loaded.
-	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
-	 * @param {function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
-	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {function} [onMeshAlter] Called after every single mesh is made available by the parser
-	 */
-	load ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
-
-		const scope = this;
-		if ( onLoad === null || onLoad === undefined || ! ( onLoad instanceof Function ) ) {
-
-			const errorMessage = 'onLoad is not a function! Aborting...';
-			scope.callbacks.onError( errorMessage );
-			throw errorMessage;
-
-		} else {
-
-			this.setCallbackOnLoad( onLoad );
-
-		}
-		if ( onError === null || onError === undefined || ! ( onError instanceof Function ) ) {
-
-			onError = function ( event ) {
-
-				let errorMessage = event;
-				if ( event.currentTarget && event.currentTarget.statusText !== null ) {
-
-					errorMessage = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
-
-				}
-				scope.callbacks.onError( errorMessage );
-
-			};
-
-		}
-		if ( ! url ) {
-
-			onError( 'An invalid url was provided. Unable to continue!' );
-
-		}
-		const urlFull = new URL( url, window.location.href ).href;
-		let filename = urlFull;
-		const urlParts = urlFull.split( '/' );
-		if ( urlParts.length > 2 ) {
-
-			filename = urlParts[ urlParts.length - 1 ];
-			let urlPartsPath = urlParts.slice( 0, urlParts.length - 1 ).join( '/' ) + '/';
-			if ( urlPartsPath !== undefined && urlPartsPath !== null ) this.path = urlPartsPath;
-
-		}
-		if ( onFileLoadProgress === null || onFileLoadProgress === undefined || ! ( onFileLoadProgress instanceof Function ) ) {
-
-			let numericalValueRef = 0;
-			let numericalValue = 0;
-			onFileLoadProgress = function ( event ) {
-
-				if ( ! event.lengthComputable ) return;
-
-				numericalValue = event.loaded / event.total;
-				if ( numericalValue > numericalValueRef ) {
-
-					numericalValueRef = numericalValue;
-					const output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					scope.callbacks.onProgress( 'progressLoad', output, numericalValue );
-
-				}
-
-			};
-
-		}
-
-		this.setCallbackOnMeshAlter( onMeshAlter );
-		const fileLoaderOnLoad = function ( content ) {
-
-			scope.callbacks.onLoad( scope.parse( content ), 'OBJLoader2#load: Parsing completed' );
-
-		};
-		const fileLoader = new FileLoader( this.manager );
-		fileLoader.setPath( this.path || this.resourcePath );
-		fileLoader.setResponseType( 'arraybuffer' );
-		fileLoader.load( filename, fileLoaderOnLoad, onFileLoadProgress, onError );
-
-	}
-
-	/**
-	 * Parses OBJ data synchronously from arraybuffer or string and returns the {@link Object3D}.
-	 *
-	 * @param {arraybuffer|string} content OBJ data as Uint8Array or String
-	 * @return {Object3D}
-	 */
-	parse ( content ) {
-
-		if ( this.logging.enabled ) {
-
-			console.info( 'Using OBJLoader2 version: ' + OBJLoader2.OBJLOADER2_VERSION );
-
-		}
-		// fast-fail in case of illegal data
-		if ( content === null || content === undefined ) {
-
-			throw 'Provided content is not a valid ArrayBuffer or String. Unable to continue parsing';
-
-		}
-		if ( this.logging.enabled ) {
-
-			console.time( 'OBJLoader parse: ' + this.modelName );
-
-		}
-
-		if ( content instanceof ArrayBuffer || content instanceof Uint8Array ) {
-
-			if ( this.logging.enabled ) console.info( 'Parsing arrayBuffer...' );
-			this._execute( content );
-
-		} else if ( typeof ( content ) === 'string' || content instanceof String ) {
-
-			if ( this.logging.enabled ) console.info( 'Parsing text...' );
-			this._executeLegacy( content );
-
-		} else {
-
-			this.callbacks.onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
-
-		}
-		if ( this.logging.enabled ) {
-
-			console.timeEnd( 'OBJLoader parse: ' + this.modelName );
-
-		}
-		return this.baseObject3d;
 
 	}
 
@@ -1204,13 +1136,13 @@ class OBJLoader2 extends Loader {
 
 			if ( material !== undefined && material !== null ) {
 
-				MaterialStore.addMaterial( materialsTransport.main.materials, material, materialName, false, this.logging.enabled && this.logging.debug );
+				MaterialUtils.addMaterial( materialsTransport.main.materials, material, materialName, false, this.logging.enabled && this.logging.debug );
 
 			}
 			else {
 
 				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, meshOutputGroup.smoothingGroup );
-				MaterialStore.addMaterial( materialsTransport.main.cloneInstructions, materialCloneInstruction, materialName, false, this.logging.enabled && this.logging.debug );
+				MaterialUtils.addMaterial( materialsTransport.main.cloneInstructions, materialCloneInstruction, materialName, false, this.logging.enabled && this.logging.debug );
 
 			}
 
@@ -1288,11 +1220,10 @@ class OBJLoader2 extends Loader {
 
 		const mesh = new Mesh( geometry );
 		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
-
-		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId );
-		meshTransport.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes );
-		meshTransport.setMesh( mesh, geometryType );
-		meshTransport.setMaterialsTransport( materialsTransport );
+		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
+			.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes )
+			.setMesh( mesh, geometryType )
+			.setMaterialsTransport( materialsTransport );
 
 		this.callbacks.onAssetAvailable( meshTransport );
 
@@ -1310,10 +1241,83 @@ class OBJLoader2 extends Loader {
 			console.info( parserFinalReport );
 
 		}
-		this.callbacks.onAssetAvailable( new StructuredWorkerMessage( 'execComplete', this.objectId ) );
+		this.callbacks.onLoad( new TransportBase( 'execComplete', this.objectId ) );
 
 	}
 
+	/**
+	 * Announce parse progress feedback which is logged to the console.
+	 * @private
+	 *
+	 * @param {string} text Textual description of the event
+	 */
+	_onProgress ( text ) {
+
+		const message = text ? text : '';
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.log( message );
+
+		}
+
+	}
+
+	/**
+	 * Announce error feedback which is logged as error message.
+	 * @private
+	 *
+	 * @param {String} errorMessage The event containing the error
+	 */
+	_onError ( errorMessage ) {
+
+		if ( this.logging.enabled && this.logging.debug ) {
+
+			console.error( errorMessage );
+
+		}
+
+	}
+
+	/**
+	 *
+	 * @param {TransportBase} asset
+	 */
+	_onAssetAvailable ( asset ) {
+		let cmd = asset instanceof TransportBase ? asset.main.cmd : asset.cmd;
+		if ( cmd === 'assetAvailable' ) {
+			let meshTransport;
+			if ( asset instanceof MeshTransport ) {
+				meshTransport = asset;
+			}
+			else if ( asset.type === 'MeshTransport' ) {
+				meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
+			}
+			else {
+				console.error( 'Received unknown asset.type: ' + asset.type );
+			}
+			if ( meshTransport ) {
+				const materialsTransport = meshTransport.getMaterialsTransport();
+				const material = materialsTransport.processMaterialTransport( this.materials, this.logging.enabled );
+
+				const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+				this.baseObject3d.add( mesh );
+			}
+
+		}
+		else {
+			console.error( 'Received unknown command: ' + cmd );
+		}
+
+	}
+
+	_onLoad ( object3d, message ) {
+
+		console.log( 'You reached parser default onLoad callback: ' + message );
+
+	}
 }
 
-export { OBJLoader2 };
+export {
+	OBJLoader2,
+	OBJLoader2Parser
+};

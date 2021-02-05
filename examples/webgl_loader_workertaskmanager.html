@@ -25,7 +25,7 @@
 			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import {
-				StructuredWorkerMessage,
+				TransportBase,
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
@@ -117,7 +117,7 @@
 					const bufferGeometry = THREE.BufferGeometry.toString() + ';\n\n';
 					const material = THREE.Material.toString() + ';\n\n';
 					const transferableUtils = TransferableUtils.toString() + ';\n\n';
-					const structuredWorkerMessage = StructuredWorkerMessage.toString() + ';\n\n';
+					const transportBase = TransportBase.toString() + ';\n\n';
 					const geometryTransport = GeometryTransport.toString() + ';\n\n';
 					const meshTransport = MeshTransport.toString() + ';\n\n';
 					const obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
@@ -134,7 +134,7 @@
 							{ url: "../build/three.js" },
 							{ code: bufferGeometry },
 							{ code: transferableUtils },
-							{ code: structuredWorkerMessage },
+							{ code: transportBase },
 							{ code: geometryTransport }
 						]
 					} );
@@ -183,7 +183,7 @@
 							{ code: bufferGeometry },
 							{ code: material },
 							{ code: transferableUtils },
-							{ code: structuredWorkerMessage },
+							{ code: transportBase },
 							{ code: geometryTransport },
 							{ code: meshTransport }
 						]

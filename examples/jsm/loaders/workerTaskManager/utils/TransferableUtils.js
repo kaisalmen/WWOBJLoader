@@ -10,7 +10,7 @@ import {
 	Sphere,
 	Texture,
 	Material,
-	MeshStandardMaterial,
+	MeshBasicMaterial,
 	LineBasicMaterial,
 	PointsMaterial,
 	VertexColors
@@ -19,10 +19,10 @@ import {
 /**
  * Define a base structure that is used to ship data in between main and workers.
  */
-class StructuredWorkerMessage {
+class TransportBase {
 
 	/**
-	 * Creates a new {@link StructuredWorkerMessage}.
+	 * Creates a new {@link TransportBase}.
 	 *
 	 * @param {string} [cmd]
 	 * @param {string} [id]
@@ -32,7 +32,7 @@ class StructuredWorkerMessage {
 		this.main = {
 			cmd: ( cmd !== undefined ) ? cmd : 'unknown',
 			id: ( id !== undefined ) ? id : 0,
-			type: 'undefined',
+			type: 'TransportBase',
 			/** @type {number} */
 			progress: 0,
 			params: {
@@ -45,7 +45,7 @@ class StructuredWorkerMessage {
 	/**
 	 *
 	 * @param {object.<string, *>} params
-	 * @return {StructuredWorkerMessage}
+	 * @return {TransportBase}
 	 */
 	setParams( params ) {
 
@@ -80,7 +80,7 @@ class StructuredWorkerMessage {
 	 *
 	 * @param {number} numericalValue
 	 *
-	 * @return {StructuredWorkerMessage}
+	 * @return {TransportBase}
 	 */
 	setProgress( numericalValue ) {
 
@@ -94,7 +94,7 @@ class StructuredWorkerMessage {
 	 *
 	 * @param {object} postMessageImpl
 	 *
-	 * @return {StructuredWorkerMessage}
+	 * @return {TransportBase}
 	 */
 	postMessage( postMessageImpl ) {
 
@@ -104,7 +104,7 @@ class StructuredWorkerMessage {
 	}
 }
 
-class DataTransport extends StructuredWorkerMessage {
+class DataTransport extends TransportBase {
 
 	/**
 	 * Creates a new {@link DataTransport}.
@@ -114,7 +114,7 @@ class DataTransport extends StructuredWorkerMessage {
 	 */
 	constructor( cmd, id ) {
 		super( cmd );
-		this.main.type = 'buffers';
+		this.main.type = 'DataTransport';
 		this.main.buffers = {};
 	}
 
@@ -164,7 +164,7 @@ class DataTransport extends StructuredWorkerMessage {
 /**
  * Define a structure that is used to ship materials data between main and workers.
  */
-class MaterialsTransport extends StructuredWorkerMessage {
+class MaterialsTransport extends TransportBase {
 
 	/**
 	 * Creates a new {@link MeshMessageStructure}.
@@ -174,7 +174,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 	 */
 	constructor( cmd, id ) {
 		super( cmd );
-		this.main.type = 'materials';
+		this.main.type = 'MaterialsTransport';
 		this.main.materials = {};
 		this.main.multiMaterials = {};
 		this.main.cloneInstructions = {};
@@ -215,7 +215,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 
 	package () {
 
-		this.main.materials = MaterialStore.getMaterialsJSON( this.main.materials );
+		this.main.materials = MaterialUtils.getMaterialsJSON( this.main.materials );
 
 	}
 
@@ -251,7 +251,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 
 					let material = materialOrg.clone();
 					Object.assign( material, materialCloneInstructions.materialProperties );
-					MaterialStore.addMaterial( materials, material, materialName, true );
+					MaterialUtils.addMaterial( materials, material, materialName, true );
 
 				}
 				else {
@@ -289,7 +289,7 @@ class MaterialsTransport extends StructuredWorkerMessage {
 /**
  * Define a structure that is used to send geometry data between main and workers.
  */
-class GeometryTransport extends StructuredWorkerMessage {
+class GeometryTransport extends TransportBase {
 
 	/**
 	 * Creates a new {@link GeometrySender}.
@@ -299,7 +299,7 @@ class GeometryTransport extends StructuredWorkerMessage {
 	 */
 	constructor( cmd, id ) {
 		super( cmd, id );
-		this.main.type = 'geometry';
+		this.main.type = 'GeometryTransport';
 		/**
 		 * @type {number}
 		 * 0: mesh, 1: line, 2: point
@@ -461,7 +461,7 @@ class MeshTransport extends GeometryTransport {
 	constructor( cmd, id ) {
 		super( cmd, id );
 
-		this.main.type = 'mesh';
+		this.main.type = 'MeshTransport';
 		// needs to be added as we cannot inherit from both materials and geometry
 		this.main.materialsTransport = new MaterialsTransport();
 	}
@@ -546,16 +546,6 @@ class MeshTransport extends GeometryTransport {
 
 }
 
-/**
- * Utility class that helps to transform meshes and especially {@link BufferGeometry} to message with transferables.
- * Structure that is used to ship data in between main and workers is defined {@link MeshMessageStructure}.
- */
-class TransferableUtils {
-
-
-
-}
-
 class MaterialCloneInstruction {
 
 	/**
@@ -576,75 +566,7 @@ class MaterialCloneInstruction {
 
 }
 
-class MaterialStore {
-
-	constructor( createDefaultMaterials ) {
-
-		this.logging = {
-			enabled: false,
-			debug: false
-		};
-		this.materials = {};
-
-		if ( createDefaultMaterials ) {
-
-			const defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
-			defaultMaterial.name = 'defaultMaterial';
-
-			const defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
-			defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
-			defaultVertexColorMaterial.vertexColors = VertexColors;
-
-			const defaultLineMaterial = new LineBasicMaterial();
-			defaultLineMaterial.name = 'defaultLineMaterial';
-
-			const defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
-			defaultPointMaterial.name = 'defaultPointMaterial';
-
-			this.materials[ defaultMaterial.name ] = defaultMaterial;
-			this.materials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
-			this.materials[ defaultLineMaterial.name ] = defaultLineMaterial;
-			this.materials[ defaultPointMaterial.name ] = defaultPointMaterial;
-
-		}
-
-	}
-
-	/**
-	 * Enable or disable logging in general (except warn and error), plus enable or disable debug logging.
-	 *
-	 * @param {boolean} enabled True or false.
-	 * @param {boolean} debug True or false.
-	 */
-	setLogging ( enabled, debug ) {
-
-		this.logging.enabled = enabled === true;
-		this.logging.debug = debug === true;
-
-	}
-
-	/**
-	 * Set materials loaded by any supplier of an Array of {@link Material}.
-	 *
-	 * @param newMaterials Object with named {@link Material}
-	 * @param forceOverrideExisting boolean Override existing material
-	 */
-	addMaterials ( newMaterials, forceOverrideExisting ) {
-
-		if ( newMaterials === undefined || newMaterials === null ) newMaterials = {};
-		if ( Object.keys( newMaterials ).length > 0 ) {
-
-			let material;
-			for ( const materialName in newMaterials ) {
-
-				material = newMaterials[ materialName ];
-				MaterialStore.addMaterial( this.materials, material, materialName, forceOverrideExisting === true );
-
-			}
-
-		}
-
-	}
+class MaterialUtils {
 
 	/**
 	 *
@@ -683,6 +605,80 @@ class MaterialStore {
 	}
 
 	/**
+	 * Returns the mapping object of material name and corresponding jsonified material.
+	 *
+	 * @param {object.<string,Material>}
+	 * @returns {Object} Map of Materials in JSON representation
+	 */
+	static getMaterialsJSON ( materialsObject ) {
+
+		const materialsJSON = {};
+		let material;
+		for ( const materialName in materialsObject ) {
+
+			material = materialsObject[ materialName ];
+			if ( material instanceof Material ) materialsJSON[ materialName ] = material.toJSON();
+
+		}
+		return materialsJSON;
+
+	}
+
+}
+
+class MaterialStore {
+
+	constructor( createDefaultMaterials ) {
+
+		this.materials = {};
+		if ( createDefaultMaterials ) {
+
+			const defaultMaterial = new MeshBasicMaterial( { color: 0xDCF1FF } );
+			defaultMaterial.name = 'defaultMaterial';
+
+			const defaultVertexColorMaterial = new MeshBasicMaterial( { color: 0xDCF1FF } );
+			defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
+			defaultVertexColorMaterial.vertexColors = VertexColors;
+
+			const defaultLineMaterial = new LineBasicMaterial();
+			defaultLineMaterial.name = 'defaultLineMaterial';
+
+			const defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
+			defaultPointMaterial.name = 'defaultPointMaterial';
+
+			this.materials[ defaultMaterial.name ] = defaultMaterial;
+			this.materials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
+			this.materials[ defaultLineMaterial.name ] = defaultLineMaterial;
+			this.materials[ defaultPointMaterial.name ] = defaultPointMaterial;
+
+		}
+
+	}
+
+	/**
+	 * Set materials loaded by any supplier of an Array of {@link Material}.
+	 *
+	 * @param newMaterials Object with named {@link Material}
+	 * @param forceOverrideExisting boolean Override existing material
+	 */
+	addMaterials ( newMaterials, forceOverrideExisting ) {
+
+		if ( newMaterials === undefined || newMaterials === null ) newMaterials = {};
+		if ( Object.keys( newMaterials ).length > 0 ) {
+
+			let material;
+			for ( const materialName in newMaterials ) {
+
+				material = newMaterials[ materialName ];
+				MaterialUtils.addMaterial( this.materials, material, materialName, forceOverrideExisting === true );
+
+			}
+
+		}
+
+	}
+
+	/**
 	 * Returns the mapping object of material name and corresponding material.
 	 *
 	 * @returns {Object} Map of {@link Material}
@@ -705,31 +701,6 @@ class MaterialStore {
 	}
 
 	/**
-	 * Returns the mapping object of material name and corresponding jsonified material.
-	 *
-	 * @returns {Object} Map of Materials in JSON representation
-	 */
-	getMaterialsJSON () {
-
-		return MaterialStore.getMaterialsJSON( this.materials );
-
-	}
-
-	static getMaterialsJSON ( materialsObject ) {
-
-		const materialsJSON = {};
-		let material;
-		for ( const materialName in materialsObject ) {
-
-			material = materialsObject[ materialName ];
-			if ( material instanceof Material ) materialsJSON[ materialName ] = material.toJSON();
-
-		}
-		return materialsJSON;
-
-	}
-
-	/**
 	 * Removes all materials
 	 */
 	clearMaterials () {
@@ -738,6 +709,52 @@ class MaterialStore {
 
 	}
 
+}
+
+class CodeUtils {
+
+	static serializePrototype ( targetClass, targetPrototype, fullObjectName, processPrototype ) {
+
+		let prototypeFunctions = [];
+		let objectString = '';
+		let target;
+		if ( processPrototype ) {
+			objectString = targetClass.toString() + "\n\n"
+			target = targetPrototype;
+		}
+		else {
+			target = targetClass;
+		}
+		for ( let name in target ) {
+
+			let objectPart = target[ name ];
+			let code = objectPart.toString();
+
+			if ( typeof objectPart === 'function' ) {
+
+				prototypeFunctions.push( '\t' + name + ': ' + code + ',\n\n' );
+
+			}
+
+		}
+
+		let protoString = processPrototype ? '.prototype' : '';
+		objectString += fullObjectName + protoString + ' = {\n\n';
+		for ( let i = 0; i < prototypeFunctions.length; i ++ ) {
+
+			objectString += prototypeFunctions[ i ];
+
+		}
+		objectString += '\n}\n;';
+		return objectString;
+
+	}
+
+	static serializeClass ( targetClass ) {
+
+		return targetClass.toString() + "\n\n";
+
+	}
 }
 
 class ObjectManipulator {
@@ -777,13 +794,14 @@ class ObjectManipulator {
 }
 
 export {
-	TransferableUtils,
-	StructuredWorkerMessage,
+	TransportBase,
 	DataTransport,
 	GeometryTransport,
 	MeshTransport,
 	MaterialsTransport,
+	MaterialUtils,
 	MaterialStore,
 	MaterialCloneInstruction,
+	CodeUtils,
 	ObjectManipulator
 }
