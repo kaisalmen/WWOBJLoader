@@ -220,9 +220,9 @@ class OBJLoader2Parallel extends OBJLoader2 {
 			} )
 			.addBuffer( 'modelData', content )
 			.package( false );
-		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this.parser.callbacks.onAssetAvailable( data ), dataTransport.getTransferables() )
+		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this.parser._onAssetAvailable( data ), dataTransport.getTransferables() )
 			.then( data => {
-				this.parser.callbacks.onLoad( this.parser.baseObject3d, 'finished', data );
+				this.parser._onLoad( data, this.parser.baseObject3d );
 				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
 			} )
 			.catch( e => console.error( e ) )

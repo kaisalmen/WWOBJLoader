@@ -19,7 +19,8 @@ import {
 	BufferGeometry,
 	Mesh,
 	Material,
-	MeshBasicMaterial
+	MeshBasicMaterial,
+	MeshStandardMaterial
 }
 from '../../../../build/three.module.js';
 import {
@@ -77,6 +78,7 @@ const OBJ2LoaderWorker = {
 			{ code: 'let materialId = 0;\n' },
 			{ code: CodeUtils.serializePrototype( Material, Material.prototype, 'Material', true ) },
 			{ code: CodeUtils.serializeClass( Color ) },
+			{ code: CodeUtils.serializePrototype( MeshStandardMaterial, MeshStandardMaterial.prototype, 'MeshStandardMaterial', true ) },
 			{ code: CodeUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
 			{ code: CodeUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
 			{ code: CodeUtils.serializeClass( TransportBase ) },
@@ -100,7 +102,7 @@ const OBJ2LoaderWorker = {
 			context.obj2.parser.logging.debug = config.logging.debug === true;
 		}
 
-		context.obj2.parser.callbacks.onAssetAvailable = structuredWorkerMessage => {
+		context.obj2.parser._onAssetAvailable = structuredWorkerMessage => {
 			structuredWorkerMessage.postMessage( context );
 		};
 		context.obj2.parser.callbacks.onLoad = structuredWorkerMessage => {

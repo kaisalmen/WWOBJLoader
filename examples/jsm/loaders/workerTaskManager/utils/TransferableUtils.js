@@ -10,7 +10,7 @@ import {
 	Sphere,
 	Texture,
 	Material,
-	MeshBasicMaterial,
+	MeshStandardMaterial,
 	LineBasicMaterial,
 	PointsMaterial,
 	VertexColors
@@ -40,6 +40,21 @@ class TransportBase {
 		};
 		this.transferables = [];
 
+	}
+
+	/**
+	 *
+	 * @param {object} transportObject
+	 *
+	 * @return {TransportBase}
+	 */
+	loadData( transportObject ) {
+		this.main.cmd = transportObject.cmd;
+		this.main.id = transportObject.id;
+		this.main.type = 'TransportBase';
+		this.setProgress( transportObject.progress );
+		this.setParams( transportObject.params );
+		return this;
 	}
 
 	/**
@@ -318,8 +333,8 @@ class GeometryTransport extends TransportBase {
 	 * @return {GeometryTransport}
 	 */
 	loadData( transportObject ) {
-		this.main.cmd = transportObject.cmd;
-		this.main.id = transportObject.id;
+		super.loadData( transportObject );
+		this.main.type = 'GeometryTransport';
 		return this.setGeometry( transportObject.geometry, transportObject.geometryType );
 	}
 
@@ -474,6 +489,7 @@ class MeshTransport extends GeometryTransport {
 	 */
 	loadData( transportObject ) {
 		super.loadData( transportObject );
+		this.main.type = 'MeshTransport';
 		this.main.meshName = transportObject.meshName;
 		this.main.materialsTransport = Object.assign( new MaterialsTransport(), transportObject.materialsTransport );
 
@@ -633,10 +649,10 @@ class MaterialStore {
 		this.materials = {};
 		if ( createDefaultMaterials ) {
 
-			const defaultMaterial = new MeshBasicMaterial( { color: 0xDCF1FF } );
+			const defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 			defaultMaterial.name = 'defaultMaterial';
 
-			const defaultVertexColorMaterial = new MeshBasicMaterial( { color: 0xDCF1FF } );
+			const defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
 			defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
 			defaultVertexColorMaterial.vertexColors = VertexColors;
 

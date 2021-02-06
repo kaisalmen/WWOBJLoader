@@ -31,7 +31,6 @@
 			import { MtlObjBridge } from "./jsm/loaders/obj2/MtlObjBridge.js";
 			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
 			import { OBJLoader2Parallel } from "./jsm/loaders/OBJLoader2Parallel.js";
-			import { LoadedMeshUserOverride } from "./jsm/loaders/workerTaskManager/shared/MeshReceiver.js";
 
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 
@@ -56,6 +55,15 @@
 					this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
 					this.controls = null;
+
+					this.models = {
+						male02: true,
+						female02: true,
+						female02_vertex_colors: true,
+						waltHead: true,
+						ninjaHead: true,
+						cerberus: true
+					}
 
 					this.flatShading = false;
 					this.doubleSide = false;
@@ -131,7 +139,7 @@
 					const scope = this;
 					function onLoadMtl( mtlParseResult ) {
 
-						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
+						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 
 						const fileLoader = new THREE.FileLoader();
 						fileLoader.setPath( '' );
@@ -169,10 +177,10 @@
 					this.pivot.add( local );
 
 					const scope = this;
-					function callbackOnLoad( object3d, message ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + message } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + transportBase.main.cmd } } );
 						scope.finalize();
 
 					}
@@ -210,7 +218,7 @@
 
 					const scope = this;
 
-					function callbackOnLoad( object3d, message ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
 						const local = new THREE.Object3D();
 						local.name = 'Pivot_male02';
@@ -218,14 +226,14 @@
 						scope.pivot.add( local );
 						local.add( object3d );
 
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + message } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + transportBase.main.cmd } } );
 						scope.finalize();
 
 					}
 
 					function onLoadMtl( mtlParseResult ) {
 
-						objLoader2.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
+						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 						objLoader2.load( 'models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 
 					}
@@ -258,17 +266,17 @@
 						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
-					function callbackOnLoad( object3d, message ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + message } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + transportBase.main.cmd } } );
 						scope.finalize();
 
 					}
 
 					function onLoadMtl( mtlParseResult ) {
 
-						objLoader2Parallel.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
+						objLoader2Parallel.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 						objLoader2Parallel.load( 'models/obj/walt/WaltHead.obj', callbackOnLoad );
 
 					}
@@ -298,10 +306,10 @@
 						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
-					function callbackOnLoad( object3d, message ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + message } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + transportBase.main.cmd } } );
 						scope.finalize();
 
 					}
@@ -331,28 +339,22 @@
 					// Configure WorkerExecutionSupport to not disregard worker after execution
 					objLoader2Parallel.setTerminateWorkerOnLoad( false );
 
-					function callbackMeshAlter( event ) {
+					function callbackMeshAlter( mesh, baseObject3d ) {
 
-						const override = new LoadedMeshUserOverride( false, true );
-
-						const mesh = new THREE.Mesh( event.detail.bufferGeometry, event.detail.material );
-						mesh.name = event.detail.meshName;
 						const helper = new VertexNormalsHelper( mesh, 2, 0x00ff00 );
 						helper.name = 'VertexNormalsHelper';
 
-						override.addMesh( mesh );
-						override.addMesh( helper );
-
-						return override;
+						baseObject3d.add( mesh );
+						baseObject3d.add( helper );
 
 					}
 
 					objLoader2Parallel.setCallbackOnMeshAlter( callbackMeshAlter );
 
 					const scope = this;
-					function callbackOnLoad( object3d, message ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
-						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + message } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + transportBase.main.cmd } } );
 						scope.finalize();
 
 					}
@@ -500,23 +502,23 @@
 				executeLoading () {
 
 					// Load a file with OBJLoader2.parse on main
-//					this.useParseMain();
+					if ( this.models.female02 ) this.useParseMain();
 
 					// Load a file with OBJLoader2Parallel.parse in parallel in worker
-					this.useParseParallel();
-/*
+					if ( this.models.female02_vertex_colors ) this.useParseParallel();
+
 					// Load a file with OBJLoader.load on main
-					this.useLoadMain();
+					if ( this.models.male02 ) this.useLoadMain();
 
 					// Load a file with OBJLoader2Parallel.load in parallel in worker
-					this.useLoadParallel();
+					if ( this.models.waltHead ) this.useLoadParallel();
 
 					// Load a file with OBJLoader2Parallel.load on main with fallback to OBJLoader2.parse
-					this.useLoadMainFallback();
+					if ( this.models.cerberus ) this.useLoadMainFallback();
 
 					// Load a file with OBJLoader2Parallel.load in parallel in worker and add normals during onMeshAlter
-					this.useLoadParallelMeshAlter();
-*/
+					if ( this.models.ninjaHead ) this.useLoadParallelMeshAlter();
+
 				}
 
 			}
@@ -533,6 +535,14 @@
 				disregardNormals: app.disregardNormals,
 				regularLogging: app.regularLogging,
 				debugLogging: app.debugLogging,
+				models: {
+					male02: app.models.male02,
+					female02: app.models.female02,
+					female02_vertex_colors: app.models.female02_vertex_colors,
+					waltHead: app.models.waltHead,
+					ninjaHead: app.models.ninjaHead,
+					cerberus: app.models.cerberus
+				},
 				blockEvent: function ( event ) {
 
 					event.stopPropagation();
@@ -554,8 +564,13 @@
 				},
 				executeLoading: function () {
 
-					app.executeLoading();
-					this.disableElement( handleExecuteLoading );
+					if ( app.models.female02 || app.models.female02_vertex_colors || app.models.male02 ||
+						app.models.waltHead || app.models.cerberus || app.models.ninjaHead ) {
+
+						app.executeLoading();
+						this.disableElement( handleExecuteLoading );
+
+					}
 
 				},
 			};
@@ -566,6 +581,21 @@
 				width: 320
 			} );
 			menuDiv.appendChild( gui.domElement );
+
+			const folderObjLoader2Models = gui.addFolder( 'Model Selection' );
+
+			const controlModelFemale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02' );
+			controlModelFemale02.onChange( v => { console.log( 'Setting models.female02 to: ' + v ); app.models.female02 = v; } );
+			const controlModelFemale02VertexColors = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02_vertex_colors' );
+			controlModelFemale02VertexColors.onChange( v => { console.log( 'Setting models.female02_vertex_colors to: ' + v ); app.models.female02_vertex_colors = v; } );
+			const controlModelMale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'male02' );
+			controlModelMale02.onChange( v => { console.log( 'Setting models.male02 to: ' + v ); app.models.male02 = v; } );
+			const controlModelWaltHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'waltHead' );
+			controlModelWaltHead.onChange( v => { console.log( 'Setting models.waltHead to: ' + v ); app.models.waltHead = v; } );
+			const controlModelCerberus = folderObjLoader2Models.add( wwObjLoader2Control.models, 'cerberus' );
+			controlModelCerberus.onChange( v => { console.log( 'Setting models.cerberus to: ' + v ); app.models.cerberus = v; } );
+			const controlModelNinjaHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'ninjaHead' );
+			controlModelNinjaHead.onChange( v => { console.log( 'Setting models.ninjaHead to: ' + v ); app.models.ninjaHead = v; } );
 
 			const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
 			const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
@@ -656,10 +686,11 @@
 			const handleExecuteLoading = folderExecution.add( wwObjLoader2Control, 'executeLoading' ).name( 'Run' );
 			handleExecuteLoading.domElement.id = 'startButton';
 
+			folderObjLoader2Models.open();
 			folderObjLoader2ParallelOptions.open();
 			folderObjLoader2ParserOptions.open();
-			folderLoggingOptions.open();
-			folderRenderingOptions.open();
+			folderLoggingOptions.close();
+			folderRenderingOptions.close();
 			folderExecution.open();
 
 			// init three.js example application

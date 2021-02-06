@@ -89,11 +89,10 @@
 
 					const scope = this;
 					const objLoader2 = new OBJLoader2();
-					const callbackOnLoad = function ( object3d ) {
+					function callbackOnLoad( transportBase, object3d ) {
 
 						scope.scene.add( object3d );
-						console.log( 'Loading complete: ' + modelName );
-						scope._reportProgress( { detail: { text: '' } } );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + transportBase.main.cmd } } );
 
 					};
 

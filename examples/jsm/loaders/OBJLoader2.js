@@ -32,6 +32,7 @@ class OBJLoader2 extends Loader {
 		this.parser = new OBJLoader2Parser();
 		this.materialStore = new MaterialStore( true );
 		this.parser.materials = this.materialStore.getMaterials()
+		this.modelName = '';
 
 	}
 
@@ -113,7 +114,7 @@ class OBJLoader2 extends Loader {
 	 */
 	setModelName ( modelName ) {
 
-		this.parser.modelName = modelName ? modelName : this.parser.modelName;
+		this.modelName = modelName ? modelName : this.modelName;
 		return this;
 
 	}
@@ -141,23 +142,6 @@ class OBJLoader2 extends Loader {
 
 		this.materialStore.addMaterials( materials, false );
 		this.parser.materials = this.materialStore.getMaterials();
-		return this;
-
-	}
-
-	/**
-	 * Register a function that is called once an asset (mesh/material) becomes available.
-	 *
-	 * @param onAssetAvailable
-	 * @return {OBJLoader2}
-	 */
-	setCallbackOnAssetAvailable ( onAssetAvailable ) {
-
-		if ( onAssetAvailable !== null && onAssetAvailable !== undefined && onAssetAvailable instanceof Function ) {
-
-			this.parser.callbacks.onAssetAvailable = onAssetAvailable;
-
-		}
 		return this;
 
 	}
@@ -221,7 +205,11 @@ class OBJLoader2 extends Loader {
 	 */
 	setCallbackOnMeshAlter ( onMeshAlter ) {
 
-//		this.meshReceiver._setCallbacks( this.parser.callbacks.onProgress, onMeshAlter );
+		if ( onMeshAlter !== null && onMeshAlter !== undefined && onMeshAlter instanceof Function ) {
+
+			this.parser.callbacks.onMeshAlter = onMeshAlter;
+
+		}
 		return this;
 
 	}
@@ -240,7 +228,7 @@ class OBJLoader2 extends Loader {
 		if ( onLoad === null || onLoad === undefined || ! ( onLoad instanceof Function ) ) {
 
 			const errorMessage = 'onLoad is not a function! Aborting...';
-			this.parser.callbacks.onError( errorMessage );
+			this.parser._onError( errorMessage );
 			throw errorMessage;
 
 		} else {
@@ -260,7 +248,7 @@ class OBJLoader2 extends Loader {
 					errorMessage = 'Error occurred while downloading!\nurl: ' + event.currentTarget.responseURL + '\nstatus: ' + event.currentTarget.statusText;
 
 				}
-				scope.parser.callbacks.onError( errorMessage );
+				scope.parser._onError( errorMessage );
 
 			};
 
@@ -293,7 +281,7 @@ class OBJLoader2 extends Loader {
 
 					numericalValueRef = numericalValue;
 					const output = 'Download of "' + url + '": ' + ( numericalValue * 100 ).toFixed( 2 ) + '%';
-					scope.parser.callbacks.onProgress( 'progressLoad', output, numericalValue );
+					scope.parser._onProgress( 'progressLoad', output, numericalValue );
 
 				}
 
@@ -304,7 +292,7 @@ class OBJLoader2 extends Loader {
 		this.setCallbackOnMeshAlter( onMeshAlter );
 		const fileLoaderOnLoad = function ( content ) {
 
-			scope.parser.callbacks.onLoad( scope.parse( content ), 'OBJLoader2#load: Parsing completed' );
+			scope.parse( content );
 
 		};
 		const fileLoader = new FileLoader( this.manager );
@@ -335,7 +323,7 @@ class OBJLoader2 extends Loader {
 		}
 		if ( this.parser.logging.enabled ) {
 
-			console.time( 'OBJLoader parse: ' + this.parser.modelName );
+			console.time( 'OBJLoader parse: ' + this.modelName );
 
 		}
 
@@ -351,12 +339,12 @@ class OBJLoader2 extends Loader {
 
 		} else {
 
-			this.parser.callbacks.onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
+			this.parser._onError( 'Provided content was neither of type String nor Uint8Array! Aborting...' );
 
 		}
 		if ( this.parser.logging.enabled ) {
 
-			console.timeEnd( 'OBJLoader parse: ' + this.parser.modelName );
+			console.timeEnd( 'OBJLoader parse: ' + this.modelName );
 
 		}
 		return this.parser.baseObject3d;
@@ -393,10 +381,10 @@ class OBJLoader2Parser {
 		this._init();
 
 		this.callbacks = {
-			onAssetAvailable: x => this._onAssetAvailable( x ),
-			onLoad: x => this._onLoad( x ),
-			onError: x => this._onError( x ),
-			onProgress: x => this._onProgress( x )
+			onLoad: null,
+			onError: null,
+			onProgress: null,
+			onMeshAlter: null
 		};
 	}
 
@@ -406,7 +394,6 @@ class OBJLoader2Parser {
 		this.legacyMode = false;
 
 		this.materials = {};
-		this.modelName = '';
 		this.baseObject3d = new Object3D();
 
 		this.materialPerSmoothingGroup = false;
@@ -488,9 +475,10 @@ class OBJLoader2Parser {
 				+ '\n\tuseOAsMesh: ' + this.useOAsMesh
 				+ '\n\tuseIndices: ' + this.useIndices
 				+ '\n\tdisregardNormals: ' + this.disregardNormals;
-			printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
-			printedConfig += '\n\tcallbacks.onAssetAvailable: ' + this.callbacks.onAssetAvailable.name;
-			printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
+			if ( this.callbacks.onProgress !== null ) printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
+			if ( this.callbacks.onError !== null ) printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
+			if ( this.callbacks.onMeshAlter !== null ) printedConfig += '\n\tcallbacks.onMeshAlter: ' + this.callbacks.onMeshAlter.name;
+			if ( this.callbacks.onLoad !== null ) printedConfig += '\n\tcallbacks.onLoad: ' + this.callbacks.onLoad.name;
 			console.info( printedConfig );
 
 		}
@@ -1029,7 +1017,7 @@ class OBJLoader2Parser {
 
 			if ( this.colors.length > 0 && this.colors.length !== this.vertices.length ) {
 
-				this.callbacks.onError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
+				this._onError( 'Vertex Colors were detected, but vertex count and color count do not match!' );
 
 			}
 
@@ -1038,7 +1026,7 @@ class OBJLoader2Parser {
 
 			this._buildMesh( result );
 			const progressBytesPercent = this.globalCounts.currentByte / this.globalCounts.totalBytes;
-			this.callbacks.onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '' +
+			this._onProgress( 'Completed [o: ' + this.rawMesh.objectName + ' g:' + this.rawMesh.groupName + '' +
 				'] Total progress: ' + ( progressBytesPercent * 100 ).toFixed( 2 ) + '%' );
 			this._resetRawMesh();
 
@@ -1225,7 +1213,7 @@ class OBJLoader2Parser {
 			.setMesh( mesh, geometryType )
 			.setMaterialsTransport( materialsTransport );
 
-		this.callbacks.onAssetAvailable( meshTransport );
+		this._onAssetAvailable( meshTransport );
 
 	}
 
@@ -1241,7 +1229,7 @@ class OBJLoader2Parser {
 			console.info( parserFinalReport );
 
 		}
-		this.callbacks.onLoad( new TransportBase( 'execComplete', this.objectId ) );
+		this._onLoad( new TransportBase( 'execComplete', this.objectId ), this.baseObject3d );
 
 	}
 
@@ -1253,10 +1241,15 @@ class OBJLoader2Parser {
 	 */
 	_onProgress ( text ) {
 
-		const message = text ? text : '';
-		if ( this.logging.enabled && this.logging.debug ) {
+		if ( this.callbacks.onProgress !== null ) {
 
-			console.log( message );
+			this.callbacks.onProgress( text );
+
+		}
+		else {
+
+			const message = text ? text : '';
+			if ( this.logging.enabled && this.logging.debug ) console.log( message );
 
 		}
 
@@ -1270,9 +1263,14 @@ class OBJLoader2Parser {
 	 */
 	_onError ( errorMessage ) {
 
-		if ( this.logging.enabled && this.logging.debug ) {
+		if ( this.callbacks.onError !== null ) {
 
-			console.error( errorMessage );
+			this.callbacks.onError( errorMessage );
+
+		}
+		else {
+
+			if ( this.logging.enabled && this.logging.debug ) console.error( errorMessage );
 
 		}
 
@@ -1300,6 +1298,8 @@ class OBJLoader2Parser {
 				const material = materialsTransport.processMaterialTransport( this.materials, this.logging.enabled );
 
 				const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+
+				this._onMeshAlter( mesh );
 				this.baseObject3d.add( mesh );
 			}
 
@@ -1310,9 +1310,19 @@ class OBJLoader2Parser {
 
 	}
 
-	_onLoad ( object3d, message ) {
+	_onMeshAlter ( mesh )  {
 
-		console.log( 'You reached parser default onLoad callback: ' + message );
+		if ( this.callbacks.onMeshAlter !== null ) this.callbacks.onMeshAlter( mesh, this.baseObject3d );
+
+	}
+
+	_onLoad ( transportBase ) {
+
+		if ( ! ( transportBase instanceof TransportBase ) && transportBase.type === 'TransportBase' ) {
+			transportBase = new TransportBase().loadData( transportBase );
+		}
+
+		if ( transportBase instanceof TransportBase && this.callbacks.onLoad !== null ) this.callbacks.onLoad( transportBase, this.baseObject3d );
 
 	}
 }
