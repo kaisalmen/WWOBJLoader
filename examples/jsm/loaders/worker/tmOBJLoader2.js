@@ -129,12 +129,14 @@ const OBJ2LoaderWorker = {
 			context.obj2.parser._init();
 
 		}
-
 		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
-		context.obj2.buffer = config.buffers[ 'modelData' ];
+
+		const materialsTransport = new MaterialsTransport().loadData( config );
+		context.obj2.parser.materials = materialsTransport.getMaterials();
+//		context.obj2.buffer = config.buffers[ 'modelData' ];
 
 		if ( context.obj2.buffer ) {
-			context.obj2.parser.objectId = config.id;
+			context.obj2.parser.objectId = config.main.id;
 			context.obj2.parser._execute( context.obj2.buffer );
 		}
 

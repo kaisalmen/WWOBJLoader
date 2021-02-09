@@ -13,7 +13,8 @@ import {
 	MeshStandardMaterial,
 	LineBasicMaterial,
 	PointsMaterial,
-	VertexColors
+	VertexColors,
+	MaterialLoader
 } from "../../../../../build/three.module.js";
 
 /**
@@ -188,7 +189,7 @@ class MaterialsTransport extends TransportBase {
 	 * @param {string} [id]
 	 */
 	constructor( cmd, id ) {
-		super( cmd );
+		super( cmd, id );
 		this.main.type = 'MaterialsTransport';
 		this.main.materials = {};
 		this.main.multiMaterials = {};
@@ -197,10 +198,45 @@ class MaterialsTransport extends TransportBase {
 
 	/**
 	 *
+	 * @param {object} transportObject
+	 *
+	 * @return {MaterialsTransport}
+	 */
+	loadData( transportObject ) {
+		super.loadData( transportObject );
+		this.main.type = 'MaterialsTransport';
+		Object.assign( this, transportObject );
+
+		const materialLoader = new MaterialLoader();
+		Object.entries( this.main.materials ).forEach( ( [ name, materialObject ] ) => {
+
+			let parsedMaterial = materialLoader.parse( materialObject )
+			this.main.materials[ name ] = this._cleanMaterial( parsedMaterial );
+
+		} );
+		return this;
+	}
+
+	_cleanMaterial ( material ) {
+		Object.entries( material ).forEach( ( [key, value] ) => {
+			if ( value instanceof Texture || value === null ) {
+				material[ key ] = undefined;
+			}
+		} );
+		return material;
+	}
+
+	/**
+	 *
 	 * @param materials
 	 */
 	setMaterials ( materials ) {
-		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) this.materials = materials;
+		if ( materials !== undefined && materials !== null && Object.keys( materials ).length > 0 ) this.main.materials = materials;
+		return this;
+	}
+
+	getMaterials () {
+		return this.main.materials;
 	}
 
 	/**
@@ -215,28 +251,25 @@ class MaterialsTransport extends TransportBase {
 			if ( material instanceof Material ) {
 
 				clonedMaterial = material.clone();
-				Object.entries( clonedMaterial ).forEach( ( [key, value] ) => {
-					if ( value instanceof Texture || value === null ) {
-						clonedMaterial[ key ] = undefined;
-					}
-				} );
-				clonedMaterials[ clonedMaterial.name ] = clonedMaterial;
+				clonedMaterials[ clonedMaterial.name ] = this._cleanMaterial( clonedMaterial );
 
 			}
 
 		}
-		this.setMaterials( clonedMaterial );
+		this.setMaterials( clonedMaterials );
+		return this;
 	}
 
 	package () {
 
 		this.main.materials = MaterialUtils.getMaterialsJSON( this.main.materials );
+		return this;
 
 	}
 
-	hasSingleMaterial () {
+	hasMultiMaterial () {
 
-		return ( Object.keys( this.main.multiMaterials ).length === 0 );
+		return ( Object.keys( this.main.multiMaterials ).length > 0 );
 
 	}
 
@@ -280,12 +313,7 @@ class MaterialsTransport extends TransportBase {
 		} );
 
 		let outputMaterial;
-		if ( this.hasSingleMaterial() ) {
-
-			outputMaterial = materials[ this.getSingleMaterial().name ];
-
-		}
-		else {
+		if ( this.hasMultiMaterial() ) {
 
 			// multi-material
 			outputMaterial = [];
@@ -294,6 +322,13 @@ class MaterialsTransport extends TransportBase {
 				outputMaterial[ index ] = materials[ materialName ];
 
 			} );
+
+		}
+		else {
+
+			const singleMaterial = this.getSingleMaterial();
+			outputMaterial = materials[ singleMaterial.name ];
+			if ( ! outputMaterial ) outputMaterial = singleMaterial;
 
 		}
 		return outputMaterial;
@@ -491,7 +526,7 @@ class MeshTransport extends GeometryTransport {
 		super.loadData( transportObject );
 		this.main.type = 'MeshTransport';
 		this.main.meshName = transportObject.meshName;
-		this.main.materialsTransport = Object.assign( new MaterialsTransport(), transportObject.materialsTransport );
+		this.main.materialsTransport = new MaterialsTransport().loadData( transportObject.materialsTransport );
 
 		return this;
 	}
@@ -594,6 +629,8 @@ class MaterialUtils {
 	 */
 	static addMaterial( materialsObject, material, materialName, force, log ) {
 		let existingMaterial;
+		// ensure materialName is set
+		material.name = materialName;
 		if ( ! force ) {
 
 			existingMaterial = materialsObject[ materialName ];

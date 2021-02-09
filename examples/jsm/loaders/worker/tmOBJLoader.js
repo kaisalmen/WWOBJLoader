@@ -4,7 +4,7 @@
 
 import { MaterialLoader } from "../../../../src/loaders/MaterialLoader.js";
 import { OBJLoader } from "../OBJLoader.js";
-import { MeshTransport } from "../workerTaskManager/utils/TransferableUtils.js";
+import { MeshTransport, TransportBase } from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 const OBJLoaderWorker = {
@@ -51,12 +51,15 @@ const OBJLoaderWorker = {
 
 			mesh = meshes.children[ i ];
 			mesh.name = mesh.name + config.id;
-			new MeshTransport( 'execComplete', config.id )
+			new MeshTransport( 'assetAvailable', config.id )
 				.setMesh( mesh, 0 )
 				.package( false )
 				.postMessage( context );
 
 		}
+
+		// signal complete
+		new TransportBase( 'execComplete' ).postMessage( context );
 
 	}
 

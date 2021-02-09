@@ -29,16 +29,13 @@
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
-				ObjectManipulator
+				MaterialStore
 			} from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js"
-			import { MaterialHandler } from "./jsm/loaders/workerTaskManager/shared/MaterialHandler.js";
-			import { TransferableUtils } from "./jsm/loaders/workerTaskManager/utils/TransferableUtils.js";
 			import { FileLoader } from "../src/loaders/FileLoader.js";
 			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
 			import { OBJLoaderWorker } from "./jsm/loaders/worker/tmOBJLoader.js";
 
 			import { OBJ2LoaderWorker } from "./jsm/loaders/worker/tmOBJLoader2.js";
-			import { OBJLoader2Parser } from "./jsm/loaders/obj2/OBJLoader2Parser.js";
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -78,7 +75,7 @@
 					this.controls = null;
 
 					this.workerTaskManager = null;
-					this.materialHandler = null;
+					this.materialStore = null;
 
 					this.taskDescriptions = new Map ();
 					this.tasksToUse = [];
@@ -108,20 +105,13 @@
 					this.workerTaskManager = new WorkerTaskManager();
 					this.workerTaskManager.setVerbose( true );
 
-					this.materialHandler = new MaterialHandler();
-					this.materialHandler.createDefaultMaterials( true );
-					let meshNormalMaterial = new THREE.MeshNormalMaterial();
-					meshNormalMaterial.name = 'meshNormalMaterial';
-					this.materialHandler.addMaterials( { meshNormalMaterial: meshNormalMaterial }, true )
+					this.materialStore = new MaterialStore( true );
 
 					const bufferGeometry = THREE.BufferGeometry.toString() + ';\n\n';
 					const material = THREE.Material.toString() + ';\n\n';
-					const transferableUtils = TransferableUtils.toString() + ';\n\n';
 					const transportBase = TransportBase.toString() + ';\n\n';
 					const geometryTransport = GeometryTransport.toString() + ';\n\n';
 					const meshTransport = MeshTransport.toString() + ';\n\n';
-					const obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
-					const objectManipulator = ObjectManipulator.toString() + ';\n\n';
 
 					this.taskDescriptions.clear();
 					this.taskDescriptions.set( 'tmProtoExample', {
@@ -133,7 +123,6 @@
 						dependencies: [
 							{ url: "../build/three.js" },
 							{ code: bufferGeometry },
-							{ code: transferableUtils },
 							{ code: transportBase },
 							{ code: geometryTransport }
 						]
@@ -182,7 +171,6 @@
 							{ code: '\n\nconst OBJLoader = THREE.OBJLoader;\n\n' },
 							{ code: bufferGeometry },
 							{ code: material },
-							{ code: transferableUtils },
 							{ code: transportBase },
 							{ code: geometryTransport },
 							{ code: meshTransport }
@@ -206,13 +194,7 @@
 						filenameMtl: './models/obj/male02/male02.mtl',
 						filenameObj: './models/obj/male02/male02.obj',
 						materials: {},
-						dependencies: [
-							{ url: '../build/three.js' },
-//									{ code: '\nself.importScripts( \"http://localhost:8085/build/three.js\" );\n\n' },
-							{ code: '\n\nconst MaterialLoader = THREE.MaterialLoader;\n\n' },
-							{ code: obj2ParserDep },
-							{ code: objectManipulator },
-						]
+						dependencies: OBJ2LoaderWorker.buildStandardWorker()
 					} );
 
 					this.tasksToUse = [];
@@ -329,7 +311,7 @@
 						await this.loadObjMtl( taskDescr )
 						.then( buffer => {
 							let config = { buffer: buffer }
-							awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
+							awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, [ buffer ] ).catch( e => console.error( e ) ) );
 						} );
 
 					}
@@ -341,7 +323,7 @@
 						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
 								let config = { buffer: buffer }
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
+								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, [ buffer ] ).catch( e => console.error( e ) ) );
 							} );
 
 					}
@@ -353,7 +335,7 @@
 						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
 								let config = { buffer: buffer }
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
+								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, [ buffer ] ).catch( e => console.error( e ) ) );
 							} );
 
 					}
@@ -365,7 +347,7 @@
 						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
 								let config = { buffer: buffer }
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, { buffer: buffer } ).catch( e => console.error( e ) ) );
+								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, [ buffer ] ).catch( e => console.error( e ) ) );
 							} );
 
 					}
@@ -395,9 +377,7 @@
 					await loadMtl.then( materialCreator => {
 
 						materialCreator.preload();
-						let materialsTransport = new MaterialsTransport( 'init' );
-						this.materialHandler.addMaterials( materialCreator.materials, false );
-						taskDescr.materials = materialsTransport.cleanAndSetMaterials( materialCreator.materials );
+						this.materialStore.addMaterials( materialCreator.materials, false );
 
 					} ) ;
 					return await fileLoader.loadAsync( taskDescr.filenameObj );
@@ -423,12 +403,14 @@
 						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
 
 							let taskDescr = this.tasksToUse[ taskToUseIndex ];
-							let promise = this.workerTaskManager.enqueueForExecution( taskDescr.name, {
-									id: globalCount,
-									params: {
-										materials: taskDescr.materials
-									}
-								},
+							let promise = this.workerTaskManager.enqueueForExecution( taskDescr.name,
+									{
+										id: globalCount,
+										params: {
+											materials: taskDescr.materials
+										}
+									},
+//									new MaterialsTransport( 'execute', globalCount ).cleanAndSetMaterials( this.materialStore.getMaterials() ).package(),
 								data => this._processMessage( data ) )
 									.then( data => this._processMessage( data ) )
 									.catch( e => console.error( e ) )
@@ -464,32 +446,37 @@
 							console.log( 'Init Completed: ' + payload.id );
 							break;
 
-
 						case 'execComplete':
 						case 'assetAvailable':
 							switch ( payload.type ) {
 
-								case 'geometry':
-									const geometryTransport = new GeometryTransport().loadData( payload );
-									geometryTransport.reconstruct( payload.geometry );
-									material = new THREE.MeshPhongMaterial( { color: new THREE.Color( 0xff0000 ) } );
- 									mesh = new THREE.Mesh( geometryTransport.getBufferGeometry(), material );
+								case 'GeometryTransport':
+									const geometryTransport = new GeometryTransport().loadData( payload ).reconstruct( payload.geometry );
+
+									let randArray = new Uint8Array( 3 );
+									window.crypto.getRandomValues( randArray );
+									const color = new THREE.Color();
+									color.r = randArray[ 0 ] / 255;
+									color.g = randArray[ 1 ] / 255;
+									color.b = randArray[ 2 ] / 255;
+									material = new THREE.MeshPhongMaterial( { color: color } );
+
+									mesh = new THREE.Mesh( geometryTransport.getBufferGeometry(), material );
 									this._addMesh( mesh, geometryTransport );
 									break;
 
-								case 'mesh':
-									const meshTransport = new MeshTransport().loadData( payload );
-									meshTransport.reconstruct( false );
-									material = this.materialHandler.getMaterial( payload.material.name );
+								case 'MeshTransport' :
+									const meshTransport = new MeshTransport().loadData( payload ).reconstruct( false );
+
+									const materialsTransport = meshTransport.getMaterialsTransport();
+									material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), true );
+
 									mesh = new THREE.Mesh( meshTransport.getBufferGeometry(), material );
 									this._addMesh( mesh, meshTransport );
 									break;
 
-								case 'material':
-									this.materialHandler.addPayloadMaterials( payload );
-									break;
-
-								case 'void':
+								case 'TransportBase':
+									if ( payload.cmd !== 'execComplete' ) console.log( 'TransportBase' );
 									break;
 
 								default:
@@ -509,7 +496,6 @@
 				_addMesh( mesh, structuredMessage ) {
 
 					const id = structuredMessage.main.id;
-					const color = structuredMessage.main.params.color;
 					let storedPos = this.objectsUsed.get( id );
 					let pos;
 					if ( storedPos ) {
@@ -528,11 +514,6 @@
 					}
 					mesh.position.set( pos.x, pos.y, pos.z );
 					mesh.name = id + '' + mesh.name;
-					if ( color !== undefined ) {
-
-						mesh.material.color = new THREE.Color( color.r, color.g, color.b );
-
-					}
 					this.scene.add( mesh );
 					this.meshesAdded.push( mesh.name );
 					this.meshCount ++;
