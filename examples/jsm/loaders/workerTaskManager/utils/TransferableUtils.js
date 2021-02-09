@@ -72,6 +72,10 @@ class TransportBase {
 
 	}
 
+	getParams() {
+		return this.main.params;
+	}
+
 	/**
 	 *
 	 * @return {*|{cmd: string, type: string, progress: {numericalValue: number}, params: {}}|{progress: number, cmd: (string|string), id: (string|number), type: string, params: {}}}
@@ -129,9 +133,26 @@ class DataTransport extends TransportBase {
 	 * @param {string} [id]
 	 */
 	constructor( cmd, id ) {
-		super( cmd );
+		super( cmd, id );
 		this.main.type = 'DataTransport';
 		this.main.buffers = {};
+	}
+
+	/**
+	 *
+	 * @param {object} transportObject
+	 *
+	 * @return {TransportBase}
+	 */
+	loadData( transportObject ) {
+		super.loadData( transportObject );
+
+		if ( transportObject.buffers ) {
+			Object.entries( transportObject.buffers ).forEach( ( [name, buffer] ) => {
+				this.main.buffers[ name ] = buffer;
+			} );
+		}
+		return this;
 	}
 
 	/**
@@ -142,6 +163,15 @@ class DataTransport extends TransportBase {
 	 */
 	addBuffer ( name, buffer ) {
 		this.main.buffers[ name ] = buffer;
+		return this;
+	}
+
+	getBuffer( name ) {
+		return this.main.buffers[ name];
+	}
+
+	setParams( params ) {
+		super.setParams( params );
 		return this;
 	}
 
@@ -180,7 +210,7 @@ class DataTransport extends TransportBase {
 /**
  * Define a structure that is used to ship materials data between main and workers.
  */
-class MaterialsTransport extends TransportBase {
+class MaterialsTransport extends DataTransport {
 
 	/**
 	 * Creates a new {@link MeshMessageStructure}.
@@ -205,7 +235,7 @@ class MaterialsTransport extends TransportBase {
 	loadData( transportObject ) {
 		super.loadData( transportObject );
 		this.main.type = 'MaterialsTransport';
-		Object.assign( this, transportObject );
+		Object.assign( this.main, transportObject );
 
 		const materialLoader = new MaterialLoader();
 		Object.entries( this.main.materials ).forEach( ( [ name, materialObject ] ) => {
@@ -224,6 +254,21 @@ class MaterialsTransport extends TransportBase {
 			}
 		} );
 		return material;
+	}
+
+	/**
+	 *
+	 * @param name
+	 * @param buffer
+	 * @return {DataTransport}
+	 */
+	addBuffer( name, buffer ) {
+		return super.addBuffer( name, buffer );
+	}
+
+	setParams( params ) {
+		super.setParams( params );
+		return this;
 	}
 
 	/**
@@ -260,8 +305,9 @@ class MaterialsTransport extends TransportBase {
 		return this;
 	}
 
-	package () {
+	package ( cloneBuffers) {
 
+		super.package( cloneBuffers );
 		this.main.materials = MaterialUtils.getMaterialsJSON( this.main.materials );
 		return this;
 
@@ -371,6 +417,11 @@ class GeometryTransport extends TransportBase {
 		super.loadData( transportObject );
 		this.main.type = 'GeometryTransport';
 		return this.setGeometry( transportObject.geometry, transportObject.geometryType );
+	}
+
+	setParams( params ) {
+		super.setParams( params );
+		return this;
 	}
 
 	/**
@@ -526,8 +577,13 @@ class MeshTransport extends GeometryTransport {
 		super.loadData( transportObject );
 		this.main.type = 'MeshTransport';
 		this.main.meshName = transportObject.meshName;
-		this.main.materialsTransport = new MaterialsTransport().loadData( transportObject.materialsTransport );
+		this.main.materialsTransport = new MaterialsTransport().loadData( transportObject.materialsTransport.main );
 
+		return this;
+	}
+
+	setParams( params ) {
+		super.setParams( params );
 		return this;
 	}
 

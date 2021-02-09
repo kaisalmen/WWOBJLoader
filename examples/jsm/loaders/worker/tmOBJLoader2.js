@@ -19,12 +19,16 @@ import {
 	BufferGeometry,
 	Mesh,
 	Material,
+	LoadingManager,
+	Loader,
+	MaterialLoader,
 	MeshBasicMaterial,
 	MeshStandardMaterial
 }
 from '../../../../build/three.module.js';
 import {
 	TransportBase,
+	DataTransport,
 	GeometryTransport,
 	MaterialsTransport,
 	MaterialUtils,
@@ -75,6 +79,10 @@ const OBJ2LoaderWorker = {
 			{ code: 'const _boxMorphTargets = new Box3();\n' },
 			{ code: 'const _vector = new Vector3();\n' },
 			{ code: CodeUtils.serializePrototype( BufferGeometry, BufferGeometry.prototype, 'BufferGeometry', true ) },
+			{ code: 'const DefaultLoadingManager = new LoadingManager();' },
+			{ code: LoadingManager.toString() + ';\n' },
+			{ code: CodeUtils.serializePrototype( Loader, Loader.prototype, 'Loader', true ) },
+			{ code: CodeUtils.serializePrototype( MaterialLoader, MaterialLoader.prototype, 'MaterialLoader', true ) },
 			{ code: 'let materialId = 0;\n' },
 			{ code: CodeUtils.serializePrototype( Material, Material.prototype, 'Material', true ) },
 			{ code: CodeUtils.serializeClass( Color ) },
@@ -82,6 +90,7 @@ const OBJ2LoaderWorker = {
 			{ code: CodeUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
 			{ code: CodeUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
 			{ code: CodeUtils.serializeClass( TransportBase ) },
+			{ code: CodeUtils.serializeClass( DataTransport ) },
 			{ code: CodeUtils.serializeClass( GeometryTransport ) },
 			{ code: CodeUtils.serializeClass( MeshTransport ) },
 			{ code: CodeUtils.serializeClass( MaterialsTransport ) },
@@ -93,15 +102,16 @@ const OBJ2LoaderWorker = {
 
 	init: function ( context, id, config ) {
 
+		const materialsTransport = new MaterialsTransport().loadData( config );
 		context.obj2 = {
 			parser: new OBJLoader2Parser(),
-			buffer: null
+			buffer: null,
+			materials: materialsTransport.getMaterials()
 		}
 		if ( config.logging ) {
 			context.obj2.parser.logging.enabled = config.logging.enabled === true;
 			context.obj2.parser.logging.debug = config.logging.debug === true;
 		}
-
 		context.obj2.parser._onAssetAvailable = structuredWorkerMessage => {
 			structuredWorkerMessage.postMessage( context );
 		};
@@ -113,7 +123,8 @@ const OBJ2LoaderWorker = {
 		};
 
 		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
-		if ( config.buffer !== undefined && config.buffer !== null ) context.obj2.buffer = config.buffer;
+		const buffer = materialsTransport.getBuffer( 'data' )
+		if ( buffer !== undefined && buffer !== null ) context.obj2.buffer = buffer;
 
 		context.postMessage( {
 			cmd: "init",
@@ -129,14 +140,13 @@ const OBJ2LoaderWorker = {
 			context.obj2.parser._init();
 
 		}
-		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
+		context.obj2.parser.materials = context.obj2.materials;
 
-		const materialsTransport = new MaterialsTransport().loadData( config );
-		context.obj2.parser.materials = materialsTransport.getMaterials();
-//		context.obj2.buffer = config.buffers[ 'modelData' ];
+		const transportBase = new TransportBase().loadData( config );
+		ObjectManipulator.applyProperties( context.obj2.parser, transportBase.getParams(), false );
 
 		if ( context.obj2.buffer ) {
-			context.obj2.parser.objectId = config.main.id;
+			context.obj2.parser.objectId = transportBase.main.id;
 			context.obj2.parser._execute( context.obj2.buffer );
 		}
 

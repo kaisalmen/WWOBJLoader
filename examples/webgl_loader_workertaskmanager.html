@@ -75,7 +75,6 @@
 					this.controls = null;
 
 					this.workerTaskManager = null;
-					this.materialStore = null;
 
 					this.taskDescriptions = new Map ();
 					this.tasksToUse = [];
@@ -104,8 +103,6 @@
 				resetAppContext () {
 					this.workerTaskManager = new WorkerTaskManager();
 					this.workerTaskManager.setVerbose( true );
-
-					this.materialStore = new MaterialStore( true );
 
 					const bufferGeometry = THREE.BufferGeometry.toString() + ';\n\n';
 					const material = THREE.Material.toString() + ';\n\n';
@@ -178,22 +175,24 @@
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Module', {
 						name: 'tmOBJLoader2Module',
+						modelName: 'female02',
 						use: false,
 						fallback: false,
 						module: './jsm/loaders/worker/tmOBJLoader2.js',
 						filenameMtl: './models/obj/female02/female02.mtl',
 						filenameObj: './models/obj/female02/female02.obj',
-						materials: {}
+						materialStore: new MaterialStore( true )
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Standard', {
 						name: 'tmOBJLoader2Standard',
+						modelName: 'male02',
 						use: false,
 						fallback: false,
 						funcInit: OBJ2LoaderWorker.init,
 						funcExec: OBJ2LoaderWorker.execute,
 						filenameMtl: './models/obj/male02/male02.mtl',
 						filenameObj: './models/obj/male02/male02.obj',
-						materials: {},
+						materialStore: new MaterialStore( true ),
 						dependencies: OBJ2LoaderWorker.buildStandardWorker()
 					} );
 
@@ -334,8 +333,11 @@
 						this.workerTaskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
 						await this.loadObjMtl( taskDescr )
 							.then( buffer => {
-								let config = { buffer: buffer }
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, config, [ buffer ] ).catch( e => console.error( e ) ) );
+								const mt = new MaterialsTransport()
+									.addBuffer( "data", buffer )
+									.cleanAndSetMaterials( taskDescr.materialStore.getMaterials() )
+									.package( false );
+								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, mt.getMain(), mt.getTransferables() ).catch( e => console.error( e ) ) );
 							} );
 
 					}
@@ -377,7 +379,7 @@
 					await loadMtl.then( materialCreator => {
 
 						materialCreator.preload();
-						this.materialStore.addMaterials( materialCreator.materials, false );
+						taskDescr.materialStore.addMaterials( materialCreator.materials, false );
 
 					} ) ;
 					return await fileLoader.loadAsync( taskDescr.filenameObj );
@@ -403,16 +405,11 @@
 						for ( let i = 0; i < this.maxPerLoop; i ++ ) {
 
 							let taskDescr = this.tasksToUse[ taskToUseIndex ];
-							let promise = this.workerTaskManager.enqueueForExecution( taskDescr.name,
-									{
-										id: globalCount,
-										params: {
-											materials: taskDescr.materials
-										}
-									},
-//									new MaterialsTransport( 'execute', globalCount ).cleanAndSetMaterials( this.materialStore.getMaterials() ).package(),
-								data => this._processMessage( data ) )
-									.then( data => this._processMessage( data ) )
+
+							const tb = new TransportBase( 'execute', globalCount ).setParams( { modelName: taskDescr.name } );
+							let promise = this.workerTaskManager.enqueueForExecution( taskDescr.name, tb.getMain(),
+								data => this._processMessage( taskDescr, data ) )
+									.then( data => this._processMessage( taskDescr, data ) )
 									.catch( e => console.error( e ) )
 							this.executions.push( promise );
 
@@ -439,7 +436,7 @@
 
 				}
 
-				_processMessage ( payload ) {
+				_processMessage ( taskDescr, payload ) {
 					let mesh, material;
 					switch ( payload.cmd ) {
 						case 'init':
@@ -469,7 +466,7 @@
 									const meshTransport = new MeshTransport().loadData( payload ).reconstruct( false );
 
 									const materialsTransport = meshTransport.getMaterialsTransport();
-									material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), true );
+									material = materialsTransport.processMaterialTransport( taskDescr.materialStore ? taskDescr.materialStore.getMaterials() : {}, true );
 
 									mesh = new THREE.Mesh( meshTransport.getBufferGeometry(), material );
 									this._addMesh( mesh, meshTransport );

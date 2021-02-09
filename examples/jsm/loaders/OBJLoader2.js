@@ -32,7 +32,6 @@ class OBJLoader2 extends Loader {
 		this.parser = new OBJLoader2Parser();
 		this.materialStore = new MaterialStore( true );
 		this.parser.materials = this.materialStore.getMaterials()
-		this.modelName = '';
 
 	}
 
@@ -114,7 +113,9 @@ class OBJLoader2 extends Loader {
 	 */
 	setModelName ( modelName ) {
 
-		this.modelName = modelName ? modelName : this.modelName;
+		if ( modelName ) {
+			this.parser.modelName = modelName;
+		}
 		return this;
 
 	}
@@ -395,6 +396,7 @@ class OBJLoader2Parser {
 
 		this.materials = {};
 		this.baseObject3d = new Object3D();
+		this.modelName = 'noname';
 
 		this.materialPerSmoothingGroup = false;
 		this.useOAsMesh = false;
@@ -1210,6 +1212,7 @@ class OBJLoader2Parser {
 		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
 		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
 			.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes )
+			.setParams( { modelName: this.modelName } )
 			.setMesh( mesh, geometryType )
 			.setMaterialsTransport( materialsTransport );
 
