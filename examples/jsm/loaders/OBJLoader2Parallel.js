@@ -118,10 +118,9 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			} else {
 
-				let dependencies = OBJ2LoaderWorker.buildStandardWorker();
-				// build the standard worker from code imported here and don't reference three.js build here with fixed path
+				// build the standard worker from code imported here and don't reference three.js build with fixed path
 				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute,
-					null, false, dependencies );
+					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies() );
 
 			}
 			if ( buffer ) {

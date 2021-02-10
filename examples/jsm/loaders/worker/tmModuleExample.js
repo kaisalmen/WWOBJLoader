@@ -50,6 +50,7 @@ function execute ( context, id, config ) {
 
 	const materialsTransport = new MaterialsTransport();
 	MaterialUtils.addMaterial( materialsTransport.main.materials, material, 'randomColor' + config.id, false, false );
+	materialsTransport.cleanMaterials();
 
 	new MeshTransport( 'execComplete', config.id )
 		.setGeometry( bufferGeometry, 2 )

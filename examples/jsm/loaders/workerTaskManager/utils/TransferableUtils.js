@@ -240,8 +240,7 @@ class MaterialsTransport extends DataTransport {
 		const materialLoader = new MaterialLoader();
 		Object.entries( this.main.materials ).forEach( ( [ name, materialObject ] ) => {
 
-			let parsedMaterial = materialLoader.parse( materialObject )
-			this.main.materials[ name ] = this._cleanMaterial( parsedMaterial );
+			this.main.materials[ name ] = materialLoader.parse( materialObject )
 
 		} );
 		return this;
@@ -285,13 +284,12 @@ class MaterialsTransport extends DataTransport {
 	}
 
 	/**
-	 *
-	 * @param {} materials
+	 * Removes all textures and null values from all materials
 	 */
-	cleanAndSetMaterials ( materials ) {
+	cleanMaterials () {
 		let clonedMaterials = {};
 		let clonedMaterial;
-		for ( let material of Object.values( materials ) ) {
+		for ( let material of Object.values( this.main.materials ) ) {
 
 			if ( material instanceof Material ) {
 
@@ -308,6 +306,7 @@ class MaterialsTransport extends DataTransport {
 	package ( cloneBuffers) {
 
 		super.package( cloneBuffers );
+
 		this.main.materials = MaterialUtils.getMaterialsJSON( this.main.materials );
 		return this;
 
@@ -321,7 +320,12 @@ class MaterialsTransport extends DataTransport {
 
 	getSingleMaterial () {
 
-		return Object.entries( this.main.materials )[ 0 ][ 1 ];
+		if ( Object.keys( this.main.materials ).length > 0 ) {
+			return Object.entries( this.main.materials )[ 0 ][ 1 ];
+		}
+		else {
+			return new MeshStandardMaterial( { color: 0xFF0000 } );
+		}
 
 	}
 
@@ -373,8 +377,10 @@ class MaterialsTransport extends DataTransport {
 		else {
 
 			const singleMaterial = this.getSingleMaterial();
-			outputMaterial = materials[ singleMaterial.name ];
-			if ( ! outputMaterial ) outputMaterial = singleMaterial;
+			if (singleMaterial !== null ) {
+				outputMaterial = materials[ singleMaterial.name ];
+				if ( !outputMaterial ) outputMaterial = singleMaterial;
+			}
 
 		}
 		return outputMaterial;

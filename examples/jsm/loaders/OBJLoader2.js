@@ -1210,6 +1210,7 @@ class OBJLoader2Parser {
 
 		const mesh = new Mesh( geometry );
 		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
+		materialsTransport.cleanMaterials();
 		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
 			.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes )
 			.setParams( { modelName: this.modelName } )

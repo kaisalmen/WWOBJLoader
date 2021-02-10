@@ -32,6 +32,7 @@ import {
 	GeometryTransport,
 	MaterialsTransport,
 	MaterialUtils,
+	MaterialCloneInstruction,
 	MeshTransport,
 	CodeUtils,
 	ObjectManipulator
@@ -41,7 +42,30 @@ import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worke
 
 const OBJ2LoaderWorker = {
 
-	buildStandardWorker: function () {
+	buildStandardWorkerDependencies: function ( threeJsLocation ) {
+		return [
+			{ url: threeJsLocation },
+			{ code: '\n\n' },
+			{ code: 'const MathUtils = THREE.MathUtils;\n' },
+			{ code: 'const MaterialLoader = THREE.MaterialLoader;\n' },
+			{ code: 'const Material = THREE.Material;\n' },
+			{ code: 'const Texture = THREE.Texture;\n' },
+			{ code: 'const Object3D = THREE.Object3D;\n' },
+			{ code: 'const BufferAttribute = THREE.BufferAttribute;\n' },
+			{ code: 'const BufferGeometry = THREE.BufferGeometry;\n' },
+			{ code: 'const Mesh = THREE.Mesh;\n' },
+			{ code: '\n\n' },
+			{ code: CodeUtils.serializeClass( TransportBase ) },
+			{ code: CodeUtils.serializeClass( DataTransport ) },
+			{ code: CodeUtils.serializeClass( GeometryTransport ) },
+			{ code: CodeUtils.serializeClass( MeshTransport ) },
+			{ code: CodeUtils.serializeClass( MaterialsTransport ) },
+			{ code: CodeUtils.serializeClass( MaterialUtils ) },
+			{ code: CodeUtils.serializeClass( MaterialCloneInstruction ) },
+			{ code: CodeUtils.serializeClass( OBJLoader2Parser ) },
+			{ code: CodeUtils.serializeClass( ObjectManipulator ) }
+		]
+/*
 		return [
 			{ code: 'const FrontSide = 0;\n' },
 			{ code: 'const FlatShading = 1;\n' },
@@ -98,6 +122,7 @@ const OBJ2LoaderWorker = {
 			{ code: CodeUtils.serializeClass( OBJLoader2Parser ) },
 			{ code: CodeUtils.serializeClass( ObjectManipulator ) }
 		];
+ */
 	},
 
 	init: function ( context, id, config ) {
