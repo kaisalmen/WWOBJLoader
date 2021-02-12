@@ -7,9 +7,8 @@ cp -fv ${1}/examples/jsm/loaders/worker/tmModuleExampleNoThree.js ${2}/examples/
 cp -fv ${1}/examples/jsm/loaders/worker/tmOBJLoader.js ${2}/examples/jsm/loaders/worker/
 cp -fv ${1}/examples/jsm/loaders/workerTaskManager/WorkerTaskManager.js ${2}/examples/jsm/loaders/workerTaskManager
 cp -fv ${1}/examples/jsm/loaders/workerTaskManager/utils/*.js ${2}/examples/jsm/loaders/workerTaskManager/utils/
-cp -fv ${1}/examples/jsm/loaders/workerTaskManager/commm/worker/*.js ${2}/examples/jsm/loaders/workerTaskManager/worker/
+cp -fv ${1}/examples/jsm/loaders/workerTaskManager/comm/worker/*.js ${2}/examples/jsm/loaders/workerTaskManager/comm/worker/
 
-cp -fv ${1}/examples/models/obj/verify/* ${2}/examples/models/obj/verify/
 cp -fv ${1}/examples/models/obj/male02/male02.obj ${2}/examples/models/obj/male02/
 cp -fv ${1}/examples/models/obj/male02/male02.mtl ${2}/examples/models/obj/male02/
 cp -fv ${1}/examples/models/obj/male02/*.JPG ${2}/examples/models/obj/male02/

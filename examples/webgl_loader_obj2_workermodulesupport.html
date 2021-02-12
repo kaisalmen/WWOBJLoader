@@ -87,11 +87,10 @@
 						.setJsmWorker( true, new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ) )
 						.setExecuteParallel( true );
 
-					let callbackOnLoad = function ( message ) {
-						scope.scene.add( objLoader2Parallel.baseObject3d  );
-						scope._reportProgress( { detail: { text: 'Loading complete: ' + message } } );
+					let callbackOnLoad = function ( dataTransport, object3d ) {
+						scope.scene.add( object3d );
+						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
 					};
-
 					let filename = './models/obj/female02/female02_vertex_colors.obj';
 					objLoader2Parallel.load( filename, callbackOnLoad );
 

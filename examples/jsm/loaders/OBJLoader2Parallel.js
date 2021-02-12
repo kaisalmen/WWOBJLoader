@@ -7,7 +7,11 @@ import { Object3D } from '../../../build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
-import { DataTransport, MaterialUtils } from "./workerTaskManager/utils/TransferableUtils.js";
+import {
+	DataTransport,
+	MaterialsTransport,
+	MaterialUtils
+} from "./workerTaskManager/utils/TransferableUtils.js";
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -97,17 +101,16 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * Provide instructions on what is to be contained in the worker.
 	 *
-	 * @param {object} config Configuration object
-	 * @param {ArrayBuffer} [buffer] Optional buffer
+	 * @param {MaterialsTransport} materialsTransport Configuration object
 	 * @return {Promise<void>}
 	 * @private
 	 */
-	async _buildWorkerCode ( config, buffer ) {
+	async _buildWorkerCode ( materialsTransport ) {
 
 		if ( this.workerTaskManager === null || ! this.workerTaskManager instanceof WorkerTaskManager ) {
 
 			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
-			this.workerTaskManager = new WorkerTaskManager();
+			this.workerTaskManager = new WorkerTaskManager( 1 );
 
 		}
 		if ( ! this.workerTaskManager.supportsTaskType( this.taskName ) ) {
@@ -120,20 +123,10 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 				// build the standard worker from code imported here and don't reference three.js build with fixed path
 				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute,
-					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies() );
+					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies( '../build/three.js' ) );
 
 			}
-			if ( buffer ) {
-
-				config.buffer = buffer;
-				await this.workerTaskManager.initTaskType( this.taskName, config, { buffer: buffer } );
-
-			}
-			else {
-
-				await this.workerTaskManager.initTaskType( this.taskName, config );
-
-			}
+			await this.workerTaskManager.initTaskType( this.taskName, materialsTransport.getMain() );
 
 		}
 
@@ -180,13 +173,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 
 			}
-			let config = {
-				logging: {
-					enabled: this.parser.logging.enabled,
-					debug: this.parser.logging.debug
-				},
-			}
-			this._buildWorkerCode( config )
+			const materialsTransport = new MaterialsTransport().setParams( {
+					logging: {
+						enabled: this.parser.logging.enabled,
+						debug: this.parser.logging.debug
+					},
+				}
+			);
+			this._buildWorkerCode( materialsTransport )
 				.then(
 					x => {
 						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );

@@ -5,11 +5,24 @@
 
 import {
 	FileLoader,
-	Loader
+	Loader,
+	LineSegments,
+	Points,
+	// Parser only
+	Object3D,
+	Mesh,
+	BufferGeometry,
+	BufferAttribute,
 } from '../../../build/three.module.js';
 
 import {
-	MaterialStore
+	MaterialStore,
+	// Parser only
+	DataTransport,
+	MeshTransport,
+	MaterialsTransport,
+	MaterialCloneInstruction,
+	MaterialUtils
 } from './workerTaskManager/utils/TransferableUtils.js';
 
 /**
@@ -354,21 +367,6 @@ class OBJLoader2 extends Loader {
 
 }
 
-
-import {
-	Object3D,
-	Mesh,
-	BufferGeometry,
-	BufferAttribute
-} from '../../../build/three.module.js';
-
-import {
-	TransportBase,
-	MeshTransport,
-	MaterialsTransport,
-	MaterialCloneInstruction,
-	MaterialUtils
-} from './workerTaskManager/utils/TransferableUtils.js';
 
 class OBJLoader2Parser {
 
@@ -1208,7 +1206,15 @@ class OBJLoader2Parser {
 
 		this.outputObjectCount ++;
 
+		let normalBA = geometry.getAttribute( 'normal' );
+		if ( normalBA === undefined || normalBA === null ) {
+
+			geometry.computeVertexNormals();
+
+		}
+
 		const mesh = new Mesh( geometry );
+		mesh.name = result.name;
 		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
 		materialsTransport.cleanMaterials();
 		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
@@ -1233,7 +1239,7 @@ class OBJLoader2Parser {
 			console.info( parserFinalReport );
 
 		}
-		this._onLoad( new TransportBase( 'execComplete', this.objectId ), this.baseObject3d );
+		this._onLoad( new DataTransport( 'execComplete', this.objectId ), this.baseObject3d );
 
 	}
 
@@ -1282,10 +1288,10 @@ class OBJLoader2Parser {
 
 	/**
 	 *
-	 * @param {TransportBase} asset
+	 * @param {DataTransport} asset
 	 */
 	_onAssetAvailable ( asset ) {
-		let cmd = asset instanceof TransportBase ? asset.main.cmd : asset.cmd;
+		let cmd = asset instanceof DataTransport ? asset.main.cmd : asset.cmd;
 		if ( cmd === 'assetAvailable' ) {
 			let meshTransport;
 			if ( asset instanceof MeshTransport ) {
@@ -1301,8 +1307,20 @@ class OBJLoader2Parser {
 				const materialsTransport = meshTransport.getMaterialsTransport();
 				const material = materialsTransport.processMaterialTransport( this.materials, this.logging.enabled );
 
-				const mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+				let mesh;
+				if ( meshTransport.main.geometryType === 0 ) {
 
+					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+
+				} else if ( meshTransport.main.geometryType === 1 ) {
+
+					mesh = new LineSegments( meshTransport.getBufferGeometry(), material );
+
+				} else {
+
+					mesh = new Points( meshTransport.getBufferGeometry(), material );
+
+				}
 				this._onMeshAlter( mesh );
 				this.baseObject3d.add( mesh );
 			}
@@ -1320,13 +1338,13 @@ class OBJLoader2Parser {
 
 	}
 
-	_onLoad ( transportBase ) {
+	_onLoad ( dataTransport ) {
 
-		if ( ! ( transportBase instanceof TransportBase ) && transportBase.type === 'TransportBase' ) {
-			transportBase = new TransportBase().loadData( transportBase );
+		if ( ! ( dataTransport instanceof DataTransport ) && dataTransport.type === 'DataTransport' ) {
+			dataTransport = new DataTransport().loadData( dataTransport );
 		}
 
-		if ( transportBase instanceof TransportBase && this.callbacks.onLoad !== null ) this.callbacks.onLoad( transportBase, this.baseObject3d );
+		if ( dataTransport instanceof DataTransport && this.callbacks.onLoad !== null ) this.callbacks.onLoad( dataTransport, this.baseObject3d );
 
 	}
 }

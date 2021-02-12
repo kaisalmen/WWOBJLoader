@@ -27,7 +27,6 @@ import {
 }
 from '../../../../build/three.module.js';
 import {
-	TransportBase,
 	DataTransport,
 	GeometryTransport,
 	MaterialsTransport,
@@ -55,7 +54,6 @@ const OBJ2LoaderWorker = {
 			{ code: 'const BufferGeometry = THREE.BufferGeometry;\n' },
 			{ code: 'const Mesh = THREE.Mesh;\n' },
 			{ code: '\n\n' },
-			{ code: CodeUtils.serializeClass( TransportBase ) },
 			{ code: CodeUtils.serializeClass( DataTransport ) },
 			{ code: CodeUtils.serializeClass( GeometryTransport ) },
 			{ code: CodeUtils.serializeClass( MeshTransport ) },
@@ -113,7 +111,6 @@ const OBJ2LoaderWorker = {
 			{ code: CodeUtils.serializePrototype( MeshStandardMaterial, MeshStandardMaterial.prototype, 'MeshStandardMaterial', true ) },
 			{ code: CodeUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
 			{ code: CodeUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
-			{ code: CodeUtils.serializeClass( TransportBase ) },
 			{ code: CodeUtils.serializeClass( DataTransport ) },
 			{ code: CodeUtils.serializeClass( GeometryTransport ) },
 			{ code: CodeUtils.serializeClass( MeshTransport ) },
@@ -133,10 +130,6 @@ const OBJ2LoaderWorker = {
 			buffer: null,
 			materials: materialsTransport.getMaterials()
 		}
-		if ( config.logging ) {
-			context.obj2.parser.logging.enabled = config.logging.enabled === true;
-			context.obj2.parser.logging.debug = config.logging.debug === true;
-		}
 		context.obj2.parser._onAssetAvailable = structuredWorkerMessage => {
 			structuredWorkerMessage.postMessage( context );
 		};
@@ -147,8 +140,8 @@ const OBJ2LoaderWorker = {
 			if ( context.obj2.parser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );
 		};
 
-		ObjectManipulator.applyProperties( context.obj2.parser, config.params, false );
-		const buffer = materialsTransport.getBuffer( 'data' )
+		ObjectManipulator.applyProperties( context.obj2.parser, materialsTransport.getParams(), false );
+		const buffer = materialsTransport.getBuffer( 'modelData' )
 		if ( buffer !== undefined && buffer !== null ) context.obj2.buffer = buffer;
 
 		context.postMessage( {
@@ -167,11 +160,14 @@ const OBJ2LoaderWorker = {
 		}
 		context.obj2.parser.materials = context.obj2.materials;
 
-		const transportBase = new TransportBase().loadData( config );
-		ObjectManipulator.applyProperties( context.obj2.parser, transportBase.getParams(), false );
+		const dataTransport = new DataTransport().loadData( config );
+		ObjectManipulator.applyProperties( context.obj2.parser, dataTransport.getParams(), false );
+
+		const buffer = dataTransport.getBuffer( 'modelData' )
+		if ( buffer !== undefined && buffer !== null ) context.obj2.buffer = buffer;
 
 		if ( context.obj2.buffer ) {
-			context.obj2.parser.objectId = transportBase.main.id;
+			context.obj2.parser.objectId = dataTransport.getId();
 			context.obj2.parser._execute( context.obj2.buffer );
 		}
 
