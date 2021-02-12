@@ -83,15 +83,6 @@
 					this.scene.add( helper );
 				}
 
-				_reportProgress ( event ) {
-					let output = '';
-					if ( Validator.isValid( event.detail ) && Validator.isValid( event.detail.text ) ) {
-						output = event.detail.text;
-					}
-					console.log( 'Progress: ' + output );
-					document.getElementById( 'feedback' ).innerHTML = output;
-				}
-
 				resizeDisplayGL () {
 					this.controls.handleResize();
 
