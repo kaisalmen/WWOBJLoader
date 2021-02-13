@@ -3,16 +3,21 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-// Imports only related to wrapper
-import { Object3D } from '../../../build/three.module.js';
+import {
+	Object3D,
+	Mesh,
+	LineSegments,
+	Points
+} from '../../../build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
-
-// Imports only related to worker (when standard workers (modules aren't supported) are used)
-import { OBJLoader2Parser } from './obj2/OBJLoader2Parser.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
-import { ObjectManipulator } from './workerTaskManager/utils/TransferableUtils.js';
 import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
-
+import {
+	DataTransport,
+	MeshTransport,
+	MaterialsTransport,
+	MaterialUtils
+} from "./workerTaskManager/utils/TransferableUtils.js";
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -102,17 +107,16 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * Provide instructions on what is to be contained in the worker.
 	 *
-	 * @param {object} config Configuration object
-	 * @param {ArrayBuffer} [buffer] Optional buffer
+	 * @param {MaterialsTransport} materialsTransport Configuration object
 	 * @return {Promise<void>}
 	 * @private
 	 */
-	async _buildWorkerCode ( config, buffer ) {
+	async _buildWorkerCode ( materialsTransport ) {
 
 		if ( this.workerTaskManager === null || ! this.workerTaskManager instanceof WorkerTaskManager ) {
 
 			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
-			this.workerTaskManager = new WorkerTaskManager();
+			this.workerTaskManager = new WorkerTaskManager( 1 );
 
 		}
 		if ( ! this.workerTaskManager.supportsTaskType( this.taskName ) ) {
@@ -123,23 +127,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			} else {
 
-				let obj2ParserDep = OBJLoader2Parser.toString() + ';\n\n';
-				let objectManipulator = ObjectManipulator.toString() + ';\n\n';
-				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute, null, false,
-					[ { code: obj2ParserDep }, { code: objectManipulator } ] );
+				// build the standard worker from code imported here and don't reference three.js build with fixed path
+				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute,
+					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies( '../build/three.js' ) );
 
 			}
-			if ( buffer ) {
-
-				config.buffer = buffer;
-				await this.workerTaskManager.initTaskType( this.taskName, config, { buffer: buffer } );
-
-			}
-			else {
-
-				await this.workerTaskManager.initTaskType( this.taskName, config );
-
-			}
+			await this.workerTaskManager.initTaskType( this.taskName, materialsTransport.getMain() );
 
 		}
 
@@ -151,7 +144,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	load ( content, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
  		const scope = this;
-		function interceptOnLoad( object3d, message ) {
+		function interceptOnLoad( object3d, objectId ) {
 
 			if ( object3d.name === 'OBJLoader2ParallelDummy' ) {
 
@@ -163,7 +156,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			} else {
 
-				onLoad( object3d, message );
+				onLoad( object3d, objectId );
 
 			}
 
@@ -186,13 +179,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 
 			}
-			let config = {
-				logging: {
-					enabled: this.parser.logging.enabled,
-					debug: this.parser.logging.debug
-				},
-			}
-			this._buildWorkerCode( config )
+			const materialsTransport = new MaterialsTransport().setParams( {
+					logging: {
+						enabled: this.parser.logging.enabled,
+						debug: this.parser.logging.debug
+					},
+				}
+			);
+			this._buildWorkerCode( materialsTransport )
 				.then(
 					x => {
 						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
@@ -214,28 +208,85 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	_executeWorkerParse ( content ) {
 
-		// Create default materials beforehand, but do not override previously set materials (e.g. during init)
-		this.materialHandler.createDefaultMaterials( false );
-
-		let config = {
-			id: Math.floor( Math.random() * Math.floor( 65536 ) ),
-			buffer: content,
-			params: {
-				modelName: this.modelName,
+		const dataTransport = new DataTransport( 'execute', Math.floor( Math.random() * Math.floor( 65536 ) ) );
+		dataTransport.setParams( {
+				modelName: this.parser.modelName,
 				useIndices: this.parser.useIndices,
 				disregardNormals: this.parser.disregardNormals,
 				materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
 				useOAsMesh: this.parser.useOAsMesh,
-				materials: this.materialHandler.getMaterialsJSON()
-			}
-		};
-		this.workerTaskManager.enqueueForExecution( this.taskName, config, data => this._onAssetAvailable( data ), { buffer: content } )
-			.then( data => {
-				this._onAssetAvailable( data );
-				this.parser.callbacks.onLoad( this.baseObject3d, 'finished' );
+				materials: MaterialUtils.getMaterialsJSON( this.materialStore.getMaterials() )
+			} )
+			.addBuffer( 'modelData', content )
+			.package( false );
+		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(),meshTransport => this._onAssetAvailable( meshTransport ), dataTransport.getTransferables() )
+			.then( dataTransport => {
+				this._onLoad( dataTransport );
 				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
 			} )
 			.catch( e => console.error( e ) )
+
+	}
+
+	/**
+	 *
+	 * @param {Mesh} mesh
+	 * @param {object} materialMetaInfo
+	 */
+	_onAssetAvailable ( asset ) {
+
+		let cmd = asset.cmd;
+		if ( cmd === 'assetAvailable' ) {
+			let meshTransport;
+			if ( asset.type === 'MeshTransport' ) {
+				meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
+			}
+			else {
+				console.error( 'Received unknown asset.type: ' + asset.type );
+			}
+			if ( meshTransport ) {
+				const materialsTransport = meshTransport.getMaterialsTransport();
+				const material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), this.parser.logging.enabled );
+
+				let mesh;
+				if ( meshTransport.main.geometryType === 0 ) {
+
+					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+
+				} else if ( meshTransport.main.geometryType === 1 ) {
+
+					mesh = new LineSegments( meshTransport.getBufferGeometry(), material );
+
+				} else {
+
+					mesh = new Points( meshTransport.getBufferGeometry(), material );
+
+				}
+				this.parser._onMeshAlter( mesh );
+				this.parser.baseObject3d.add( mesh );
+			}
+
+		}
+		else {
+			console.error( 'Received unknown command: ' + cmd );
+		}
+
+	}
+
+	_onLoad ( dataTransport ) {
+
+		if ( dataTransport.type === 'DataTransport' ) {
+			dataTransport = new DataTransport().loadData( dataTransport );
+		}
+		else {
+			console.error( 'Received unknown asset.type: ' + dataTransport.type );
+		}
+
+		if ( dataTransport instanceof DataTransport && this.parser.callbacks.onLoad !== null ) {
+
+			this.parser.callbacks.onLoad( this.parser.baseObject3d, dataTransport.getId() );
+
+		}
 
 	}
 

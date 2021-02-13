@@ -1,8 +1,4 @@
-import {
-	MTLLoader
-} from '../MTLLoader';
-
-export namespace MtlObjBridge {
-	export function link( processResult: object, assetLoader: object ): void;
-	export function addMaterialsFromMtlLoader( materialCreator: MTLLoader.MaterialCreator ): object;
+export class MtlObjBridge {
+    static link(processResult: any, assetLoader: any): void;
+    static addMaterialsFromMtlLoader(materialCreator: any): {};
 }

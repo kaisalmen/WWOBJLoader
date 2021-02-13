@@ -15,9 +15,9 @@ class MtlObjBridge {
 	 */
 	static link ( processResult, assetLoader ) {
 
-		if ( typeof assetLoader.addMaterials === 'function' ) {
+		if ( typeof assetLoader.setMaterials === 'function' ) {
 
-			assetLoader.addMaterials( MtlObjBridge.addMaterialsFromMtlLoader( processResult ), true );
+			assetLoader.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( processResult ), true );
 
 		}
 

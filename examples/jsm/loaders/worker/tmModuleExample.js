@@ -2,8 +2,16 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
-import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
-import { TransferableUtils } from "../workerTaskManager/utils/TransferableUtils.js";
+import {
+	TorusKnotBufferGeometry,
+	Color,
+	MeshPhongMaterial
+} from "../../../../build/three.module.js";
+import {
+	MeshTransport,
+	MaterialsTransport,
+	MaterialUtils
+} from "../workerTaskManager/utils/TransferableUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
 
@@ -22,6 +30,7 @@ function init ( context, id, config ) {
 function execute ( context, id, config ) {
 
 	let bufferGeometry = new TorusKnotBufferGeometry( 20, 3, 100, 64 );
+	bufferGeometry.name = 'tmProto' + config.id;
 
 	let vertexBA = bufferGeometry.getAttribute( 'position' ) ;
 	let vertexArray = vertexBA.array;
@@ -30,16 +39,24 @@ function execute ( context, id, config ) {
 		vertexArray[ i ] = vertexArray[ i ] + 10 * ( Math.random() - 0.5 );
 
 	}
-	let payload = TransferableUtils.packageBufferGeometry( bufferGeometry, config.id, 'tmProto' + config.id, 2,[ 'defaultPointMaterial' ] );
 
-	let randArray = new Uint8Array( 3 );
+	const randArray = new Uint8Array( 3 );
 	context.crypto.getRandomValues( randArray );
-	payload.main.params.color = {
-		r: randArray[ 0 ] / 255,
-		g: randArray[ 1 ] / 255,
-		b: randArray[ 2 ] / 255
-	};
-	payload.postMessage( context );
+	const color = new Color();
+	color.r = randArray[ 0 ] / 255;
+	color.g = randArray[ 1 ] / 255;
+	color.b = randArray[ 2 ] / 255;
+	const material = new MeshPhongMaterial( { color: color } );
+
+	const materialsTransport = new MaterialsTransport();
+	MaterialUtils.addMaterial( materialsTransport.main.materials, material, 'randomColor' + config.id, false, false );
+	materialsTransport.cleanMaterials();
+
+	new MeshTransport( 'execComplete', config.id )
+		.setGeometry( bufferGeometry, 2 )
+	 	.setMaterialsTransport( materialsTransport )
+		.package( false )
+		.postMessage( context );
 
 }
 

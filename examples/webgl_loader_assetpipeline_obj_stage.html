@@ -455,6 +455,7 @@
 
 					let scope = this;
 					let loadAssetsProxy = function ( pipelineName, result ) {
+						console.timeEnd(pipelineLoader.name);
 						scope.processing = false;
 						scope.allAssets[ pipelineName ] = result;
 						scope.reloadAssets();
@@ -464,6 +465,7 @@
 
 					pipelineLoader.setOnComplete( loadAssetsProxy );
 
+					console.time(pipelineLoader.name);
 					pipelineLoader.run();
 				},
 

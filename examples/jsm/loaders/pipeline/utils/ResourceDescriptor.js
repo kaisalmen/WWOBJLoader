@@ -3,7 +3,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { Zlib } from "../../../libs/gunzip.module.min.js";
+import * as fflate from '../../../../../node_modules/fflate/esm/browser.js';
 
 /**
  * Encapsulates a url and derived values (filename, extension and path and stores the {@link ArrayBufer}
@@ -149,8 +149,7 @@ class ResourceDescriptor {
 		}
 		if ( this.isCompressed() ) {
 
-			let inflate = new Zlib.Gunzip( new Uint8Array( buffer ) ); // eslint-disable-line no-undef
-			this.buffer = inflate.decompress();
+			this.buffer = fflate.gunzipSync( new Uint8Array( buffer ) ); // eslint-disable-line no-undef
 
 		}
 		else {

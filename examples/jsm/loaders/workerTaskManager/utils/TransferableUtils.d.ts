@@ -1,50 +1,35 @@
 export class TransferableUtils {
-    static walkMesh(rootNode: Object3D, callback: Function): void;
-    static packageBufferGeometry(bufferGeometry: BufferGeometry, id: string, meshName: string, geometryType: number, materialNames?: string[]): MeshMessageStructure;
+    static packageBufferGeometry(geometry: BufferGeometry, id: string, geometryType: number, cloneBuffers: boolean): MeshMessageStructure;
+    static addTransferable(input: any, cloneBuffer: any, transferableArray: any): void;
+    static reconstructBufferGeometry(transferredGeometry: any, cloneBuffers: any): BufferGeometry;
+    static assignAttribute(bg: any, attr: any, attrName: any, cloneBuffer: any): void;
 }
-export class MeshMessageStructure {
-    static cloneMessageStructure(input: object | MeshMessageStructure): MeshMessageStructure;
-    static copyTypedArray(arrayIn: ArrayBuffer, arrayOut: ArrayBuffer): void;
-    constructor(cmd: string, id: string, meshName: string);
+export class StructuredWorkerMessage {
+    constructor(cmd: string);
     main: {
         cmd: string;
         type: string;
-        id: string;
-        meshName: string;
         progress: {
             numericalValue: number;
         };
-        params: {
-            geometryType: number;
-        };
-        materials: {
-            multiMaterial: boolean;
-            materialNames: string[];
-            materialGroups: object[];
-        };
-        buffers: {
-            vertices: ArrayBuffer;
-            indices: ArrayBuffer;
-            colors: ArrayBuffer;
-            normals: ArrayBuffer;
-            uvs: ArrayBuffer;
-            skinIndex: ArrayBuffer;
-            skinWeight: ArrayBuffer;
-        };
+        params: {};
     };
-    transferables: {
-        vertex: ArrayBuffer[];
-        index: ArrayBuffer[];
-        color: ArrayBuffer[];
-        normal: ArrayBuffer[];
-        uv: ArrayBuffer[];
-        skinIndex: ArrayBuffer[];
-        skinWeight: ArrayBuffer[];
-    };
+    transferables: any[];
     postMessage(postMessageImpl: object): void;
 }
-export class ObjectManipulator {
-    static applyProperties(objToAlter: any, params: any, forceCreation: boolean): void;
+export class GeometryWorkerMessage extends StructuredWorkerMessage {
+    constructor(cmd: string);
 }
-import { Object3D } from "../../../../../build/three.module.js";
+export class MaterialsWorkerMessage extends StructuredWorkerMessage {
+    constructor(cmd: string);
+    setMaterials(materials: any): void;
+    materials: any;
+    cleanAndSetMaterials(materials: any): void;
+}
+export class MeshMessageStructure extends GeometryWorkerMessage {
+    constructor(cmd: string, id: string, meshName: string);
+}
+export class ObjectManipulator {
+    static applyProperties(objToAlter: Object, params: Object, forceCreation: boolean): void;
+}
 import { BufferGeometry } from "../../../../../build/three.module.js";

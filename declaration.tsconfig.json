@@ -2,14 +2,17 @@
   "include": [
     "examples/jsm/loaders/workerTaskManager/WorkerTaskManager.js",
     "examples/jsm/loaders/workerTaskManager/utils/TransferableUtils.js",
+    "examples/jsm/loaders/workerTaskManager/comm/worker/defaultRouting.js",
+    "examples/jsm/loaders/workerTaskManager/shared/MaterialHandler.js",
+    "examples/jsm/loaders/workerTaskManager/shared/MeshReceiver.js",
+    "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader.js",
     "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js",
-    "examples/jsm/loaders/workerTaskManager/worker/tmDefaultComRouting.js",
+    "examples/jsm/loaders/AssetPipelineLoader.js",
     "examples/jsm/loaders/OBJLoader2.js",
     "examples/jsm/loaders/OBJLoader2Parallel.js",
     "examples/jsm/loaders/obj2/OBJLoader2Parser.js",
-    "examples/jsm/loaders/obj2/utils/ResourceDescriptor.js",
-    "examples/jsm/loaders/obj2/shared/MaterialHandler.js",
-    "examples/jsm/loaders/obj2/shared/MeshReceiver.js"
+    "examples/jsm/loaders/obj2/MtlObjBridge.js",
+    "examples/jsm/loaders/pipeline/utils/ResourceDescriptor.js"
   ],
   "compilerOptions": {
     "target": "ES2015",

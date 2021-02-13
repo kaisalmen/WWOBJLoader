@@ -25,7 +25,5 @@ export class OBJLoader2 extends Loader {
     _onAssetAvailable(payload: any): void;
 }
 import { Loader } from "../../../build/three.module.js";
-import { OBJLoader2Parser } from "./obj2/OBJLoader2Parser.js";
 import { Object3D } from "../../../build/three.module.js";
-import { MaterialHandler } from "./workerTaskManager/shared/MaterialHandler.js";
 import { MeshReceiver } from "./workerTaskManager/shared/MeshReceiver.js";

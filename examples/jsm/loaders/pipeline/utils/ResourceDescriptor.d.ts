@@ -3,7 +3,7 @@ export class ResourceDescriptor {
     url: URL;
     path: string;
     filename: string;
-    extension: string;
+    extension: string | null;
     buffer: ArrayBuffer;
     needStringOutput: boolean;
     compressed: boolean;
