@@ -3,12 +3,18 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { Object3D } from '../../../build/three.module.js';
+import {
+	Object3D,
+	Mesh,
+	LineSegments,
+	Points
+} from '../../../build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
 import {
 	DataTransport,
+	MeshTransport,
 	MaterialsTransport,
 	MaterialUtils
 } from "./workerTaskManager/utils/TransferableUtils.js";
@@ -138,7 +144,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	load ( content, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 
  		const scope = this;
-		function interceptOnLoad( object3d, message ) {
+		function interceptOnLoad( object3d, objectId ) {
 
 			if ( object3d.name === 'OBJLoader2ParallelDummy' ) {
 
@@ -150,7 +156,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			} else {
 
-				onLoad( object3d, message );
+				onLoad( object3d, objectId );
 
 			}
 
@@ -213,12 +219,74 @@ class OBJLoader2Parallel extends OBJLoader2 {
 			} )
 			.addBuffer( 'modelData', content )
 			.package( false );
-		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(), data => this.parser._onAssetAvailable( data ), dataTransport.getTransferables() )
-			.then( data => {
-				this.parser._onLoad( data, this.parser.baseObject3d );
+		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(),meshTransport => this._onAssetAvailable( meshTransport ), dataTransport.getTransferables() )
+			.then( dataTransport => {
+				this._onLoad( dataTransport );
 				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
 			} )
 			.catch( e => console.error( e ) )
+
+	}
+
+	/**
+	 *
+	 * @param {Mesh} mesh
+	 * @param {object} materialMetaInfo
+	 */
+	_onAssetAvailable ( asset ) {
+
+		let cmd = asset.cmd;
+		if ( cmd === 'assetAvailable' ) {
+			let meshTransport;
+			if ( asset.type === 'MeshTransport' ) {
+				meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
+			}
+			else {
+				console.error( 'Received unknown asset.type: ' + asset.type );
+			}
+			if ( meshTransport ) {
+				const materialsTransport = meshTransport.getMaterialsTransport();
+				const material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), this.parser.logging.enabled );
+
+				let mesh;
+				if ( meshTransport.main.geometryType === 0 ) {
+
+					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
+
+				} else if ( meshTransport.main.geometryType === 1 ) {
+
+					mesh = new LineSegments( meshTransport.getBufferGeometry(), material );
+
+				} else {
+
+					mesh = new Points( meshTransport.getBufferGeometry(), material );
+
+				}
+				this.parser._onMeshAlter( mesh );
+				this.parser.baseObject3d.add( mesh );
+			}
+
+		}
+		else {
+			console.error( 'Received unknown command: ' + cmd );
+		}
+
+	}
+
+	_onLoad ( dataTransport ) {
+
+		if ( dataTransport.type === 'DataTransport' ) {
+			dataTransport = new DataTransport().loadData( dataTransport );
+		}
+		else {
+			console.error( 'Received unknown asset.type: ' + dataTransport.type );
+		}
+
+		if ( dataTransport instanceof DataTransport && this.parser.callbacks.onLoad !== null ) {
+
+			this.parser.callbacks.onLoad( this.parser.baseObject3d, dataTransport.getId() );
+
+		}
 
 	}
 

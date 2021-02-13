@@ -157,10 +157,12 @@
 					objLoader2.setUseOAsMesh( true );
 
 					let scope = this;
-					let callbackOnLoad = function ( dataTransport, object3d ) {
+					let callbackOnLoad = function ( object3d, objectId ) {
+
 						scope.scene.add( object3d );
 						console.log( 'Loading complete: ' + modelName );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
+
 					};
 
 					let onLoadMtl = function ( mtlParseResult ) {

@@ -177,10 +177,10 @@
 					this.pivot.add( local );
 
 					const scope = this;
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}
@@ -218,7 +218,7 @@
 
 					const scope = this;
 
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
 						const local = new THREE.Object3D();
 						local.name = 'Pivot_male02';
@@ -226,7 +226,7 @@
 						scope.pivot.add( local );
 						local.add( object3d );
 
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}
@@ -266,10 +266,10 @@
 						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}
@@ -306,10 +306,10 @@
 						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2Parallel.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}
@@ -352,9 +352,9 @@
 					objLoader2Parallel.setCallbackOnMeshAlter( callbackMeshAlter );
 
 					const scope = this;
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
-						scope._reportProgress( { detail: { text: 'Loading of ' + objLoader2Parallel.modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2Parallel.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}

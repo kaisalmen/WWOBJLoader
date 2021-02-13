@@ -202,8 +202,8 @@ class MaterialsTransport extends DataTransport {
 		super( cmd, id );
 		this.main.type = 'MaterialsTransport';
 		this.main.materials = {};
-		this.main.multiMaterials = {};
-		this.main.cloneInstructions = {};
+		this.main.multiMaterialNames = {};
+		this.main.cloneInstructions = [];
 	}
 
 	/**
@@ -294,7 +294,7 @@ class MaterialsTransport extends DataTransport {
 
 	hasMultiMaterial () {
 
-		return ( Object.keys( this.main.multiMaterials ).length > 0 );
+		return ( Object.keys( this.main.multiMaterialNames ).length > 0 );
 
 	}
 
@@ -319,37 +319,20 @@ class MaterialsTransport extends DataTransport {
 	 */
 	processMaterialTransport ( materials, log ) {
 
-		Object.entries( this.main.cloneInstructions ).forEach( ( [ materialName, materialCloneInstructions ] ) => {
-			if ( materialCloneInstructions ) {
+		for ( let i = 0; i < this.main.cloneInstructions.length; i ++ ) {
 
-				let materialNameOrg = materialCloneInstructions.materialNameOrg;
-				materialNameOrg = (materialNameOrg !== undefined && materialNameOrg !== null) ? materialNameOrg : '';
-				const materialOrg = materials[ materialNameOrg ];
-				if ( materialOrg ) {
+			MaterialUtils.cloneMaterial( materials, this.main.cloneInstructions[ i ], log );
 
-					let material = materialOrg.clone();
-					Object.assign( material, materialCloneInstructions.materialProperties );
-					MaterialUtils.addMaterial( materials, material, materialName, true );
-
-				}
-				else {
-
-					if ( log ) console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
-
-				}
-
-			}
-
-		} );
+		}
 
 		let outputMaterial;
 		if ( this.hasMultiMaterial() ) {
 
 			// multi-material
 			outputMaterial = [];
-			Object.entries( this.main.multiMaterials ).forEach( ( [ index, materialName ] ) => {
+			Object.entries( this.main.multiMaterialNames ).forEach( ( [ materialIndex, materialName ] ) => {
 
-				outputMaterial[ index ] = materials[ materialName ];
+				outputMaterial[ materialIndex ] = materials[ materialName ];
 
 			} );
 
@@ -645,16 +628,16 @@ class MaterialCloneInstruction {
 	/**
 	 *
 	 * @param {string} materialNameOrg
-	 * @param {string} newMaterialName
+	 * @param {string} materialNameNew
 	 * @param {boolean} haveVertexColors
-	 * @param {number} smoothingGroup
+	 * @param {boolean} flatShading
 	 */
-	constructor ( materialNameOrg, newMaterialName, haveVertexColors, smoothingGroup ) {
+	constructor ( materialNameOrg, materialNameNew, haveVertexColors, flatShading ) {
 		this.materialNameOrg = materialNameOrg;
 		this.materialProperties = {
-			name: newMaterialName,
+			name: materialNameNew,
 			vertexColors: haveVertexColors ? 2 : 0,
-			flatShading: smoothingGroup === 0
+			flatShading: flatShading
 		};
 	}
 
@@ -720,6 +703,37 @@ class MaterialUtils {
 
 	}
 
+	/**
+	 *
+	 * @param {object.<String, Material>} materials
+	 * @param {MaterialCloneInstruction} materialCloneInstruction
+	 * @param {boolean} [log]
+	 */
+	static cloneMaterial ( materials, materialCloneInstruction, log ) {
+
+		let material;
+		if ( materialCloneInstruction ) {
+
+			let materialNameOrg = materialCloneInstruction.materialNameOrg;
+			materialNameOrg = ( materialNameOrg !== undefined && materialNameOrg !== null ) ? materialNameOrg : '';
+			const materialOrg = materials[ materialNameOrg ];
+			if ( materialOrg ) {
+
+				material = materialOrg.clone();
+				Object.assign( material, materialCloneInstruction.materialProperties );
+				MaterialUtils.addMaterial( materials, material, materialCloneInstruction.materialProperties.name, true );
+
+			}
+			else {
+
+				if ( log ) console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
+
+			}
+
+		}
+		return material;
+		
+	}
 }
 
 /**

@@ -130,11 +130,35 @@ const OBJ2LoaderWorker = {
 			buffer: null,
 			materials: materialsTransport.getMaterials()
 		}
-		context.obj2.parser._onAssetAvailable = structuredWorkerMessage => {
-			structuredWorkerMessage.postMessage( context );
+		context.obj2.parser._onMeshAlter = ( mesh, materialMetaInfo ) => {
+
+			const materialsTransport = new MaterialsTransport();
+			materialsTransport.main.multiMaterialNames = materialMetaInfo.multiMaterialNames;
+
+			// only makes sense if materials are newly created, what they currently are not
+			if ( Object.keys( materialsTransport.main.multiMaterialNames ).length === 0 ) {
+
+				const material = mesh.material;
+				MaterialUtils.addMaterial( materialsTransport.main.materials, material, material.name, false, false );
+
+			}
+			materialsTransport.main.cloneInstructions = materialMetaInfo.cloneInstructions;
+			materialsTransport.cleanMaterials();
+
+			const meshTransport = new MeshTransport( 'assetAvailable', materialMetaInfo.objectId )
+				.setProgress( materialMetaInfo.progress )
+				.setParams( { modelName: materialMetaInfo.modelName } )
+				.setMesh( mesh, materialMetaInfo.geometryType )
+				.setMaterialsTransport( materialsTransport );
+
+			meshTransport.postMessage( context );
+
 		};
-		context.obj2.parser.callbacks.onLoad = structuredWorkerMessage => {
-			structuredWorkerMessage.postMessage( context );
+		context.obj2.parser.callbacks.onLoad = () => {
+
+			const dataTransport = new DataTransport( 'execComplete', context.obj2.parser.objectId );
+			dataTransport.postMessage( context );
+
 		};
 		context.obj2.parser.callbacks.onProgress = text => {
 			if ( context.obj2.parser.logging.debug ) console.debug( 'WorkerRunner: progress: ' + text );

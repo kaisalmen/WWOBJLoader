@@ -18,9 +18,6 @@ import {
 import {
 	MaterialStore,
 	// Parser only
-	DataTransport,
-	MeshTransport,
-	MaterialsTransport,
 	MaterialCloneInstruction,
 	MaterialUtils
 } from './workerTaskManager/utils/TransferableUtils.js';
@@ -131,6 +128,14 @@ class OBJLoader2 extends Loader {
 		}
 		return this;
 
+	}
+
+	/**
+	 * Returns the name of the models
+	 * @return {String}
+	 */
+	getModelName () {
+		return this.parser.modelName;
 	}
 
 	/**
@@ -1062,12 +1067,7 @@ class OBJLoader2Parser {
 		if ( colorFA != null ) geometry.setAttribute( 'color', new BufferAttribute( colorFA, 3, false ) );
 		if ( indexUA !== null ) geometry.setIndex( new BufferAttribute( indexUA, 1, false ) );
 
-		const haveVertexColors = colorFA !== null;
-
 		let meshOutputGroup;
-
-		const createMultiMaterial = ( meshOutputGroups.length > 1 );
-		let materialIndex = 0;
 
 		let vertexFAOffset = 0;
 		let indexUAOffset = 0;
@@ -1077,23 +1077,35 @@ class OBJLoader2Parser {
 		let materialGroupOffset = 0;
 		let materialGroupLength = 0;
 
-		const materialsTransport = new MaterialsTransport();
-
+		const createMultiMaterial = ( meshOutputGroups.length > 1 );
+		const multiMaterial = [];
+		const haveVertexColors = colorFA !== null;
+		let flatShading;
+		let materialIndex = 0;
 		let materialOrg, material, materialName, materialNameOrg;
-		// only one specific face type
+		const materialMetaInfo = {
+			cloneInstructions: [],
+			multiMaterialNames: {},
+			modelName: this.modelName,
+			progress: this.globalCounts.currentByte / this.globalCounts.totalBytes,
+			geometryType: this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1,
+			objectId: this.objectId
+		}
+
 		for ( const oodIndex in meshOutputGroups ) {
 
 			if ( ! meshOutputGroups.hasOwnProperty( oodIndex ) ) continue;
 			meshOutputGroup = meshOutputGroups[ oodIndex ];
 
 			materialNameOrg = meshOutputGroup.materialName;
+			flatShading = meshOutputGroup.smoothingGroup === 0;
 			if ( this.rawMesh.faceType < 4 ) {
 
 				materialName = materialNameOrg;
 				if ( haveVertexColors ) {
 					materialName += '_vertexColor';
 				}
-				if ( meshOutputGroup.smoothingGroup === 0 ) {
+				if ( flatShading ) {
 					materialName += '_flat';
 				}
 
@@ -1102,7 +1114,6 @@ class OBJLoader2Parser {
 				materialName = this.rawMesh.faceType === 6 ? 'defaultPointMaterial' : 'defaultLineMaterial';
 
 			}
-
 			materialOrg = this.materials[ materialNameOrg ];
 			material = this.materials[ materialName ];
 
@@ -1122,24 +1133,22 @@ class OBJLoader2Parser {
 
 			}
 
-			if ( material !== undefined && material !== null ) {
+			if ( material === undefined || material === null ) {
 
-				MaterialUtils.addMaterial( materialsTransport.main.materials, material, materialName, false, this.logging.enabled && this.logging.debug );
-
-			}
-			else {
-
-				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, meshOutputGroup.smoothingGroup );
-				MaterialUtils.addMaterial( materialsTransport.main.cloneInstructions, materialCloneInstruction, materialName, false, this.logging.enabled && this.logging.debug );
+				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, flatShading );
+				material = MaterialUtils.cloneMaterial( this.materials, materialCloneInstruction, this.logging.enabled && this.logging.debug );
+				materialMetaInfo.cloneInstructions.push( materialCloneInstruction );
 
 			}
 
 			if ( createMultiMaterial ) {
 
-				materialsTransport.main.multiMaterials[ materialIndex ] = materialName;
-
 				materialGroupLength = this.useIndices ? meshOutputGroup.indices.length : meshOutputGroup.vertices.length / 3;
 				geometry.addGroup( materialGroupOffset, materialGroupLength, materialIndex );
+				material = this.materials[ materialName ];
+				multiMaterial[ materialIndex ] = material;
+				materialMetaInfo.multiMaterialNames[ materialIndex ] = material.name;
+
 				materialGroupOffset += materialGroupLength;
 				materialIndex++;
 
@@ -1203,27 +1212,30 @@ class OBJLoader2Parser {
 			}
 
 		}
-
 		this.outputObjectCount ++;
 
 		let normalBA = geometry.getAttribute( 'normal' );
-		if ( normalBA === undefined || normalBA === null ) {
+		if ( normalBA === undefined || normalBA === null ) geometry.computeVertexNormals();
 
-			geometry.computeVertexNormals();
+
+		let mesh;
+		const appliedMaterial = createMultiMaterial ? multiMaterial : material;
+		if ( materialMetaInfo.geometryType === 0 ) {
+
+			mesh = new Mesh( geometry, appliedMaterial );
+
+		} else if ( materialMetaInfo.geometryType === 1 ) {
+
+			mesh = new LineSegments( geometry, appliedMaterial );
+
+		} else {
+
+			mesh = new Points( geometry, appliedMaterial );
 
 		}
-
-		const mesh = new Mesh( geometry );
 		mesh.name = result.name;
-		const geometryType = this.rawMesh.faceType < 4 ? 0 : ( this.rawMesh.faceType === 6 ) ? 2 : 1;
-		materialsTransport.cleanMaterials();
-		const meshTransport = new MeshTransport( 'assetAvailable', this.objectId )
-			.setProgress( this.globalCounts.currentByte / this.globalCounts.totalBytes )
-			.setParams( { modelName: this.modelName } )
-			.setMesh( mesh, geometryType )
-			.setMaterialsTransport( materialsTransport );
 
-		this._onAssetAvailable( meshTransport );
+		this._onAssetAvailable( mesh, materialMetaInfo );
 
 	}
 
@@ -1239,7 +1251,7 @@ class OBJLoader2Parser {
 			console.info( parserFinalReport );
 
 		}
-		this._onLoad( new DataTransport( 'execComplete', this.objectId ), this.baseObject3d );
+		this._onLoad();
 
 	}
 
@@ -1288,47 +1300,14 @@ class OBJLoader2Parser {
 
 	/**
 	 *
-	 * @param {DataTransport} asset
+	 * @param {Mesh} mesh
+	 * @param {object} materialMetaInfo
 	 */
-	_onAssetAvailable ( asset ) {
-		let cmd = asset instanceof DataTransport ? asset.main.cmd : asset.cmd;
-		if ( cmd === 'assetAvailable' ) {
-			let meshTransport;
-			if ( asset instanceof MeshTransport ) {
-				meshTransport = asset;
-			}
-			else if ( asset.type === 'MeshTransport' ) {
-				meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
-			}
-			else {
-				console.error( 'Received unknown asset.type: ' + asset.type );
-			}
-			if ( meshTransport ) {
-				const materialsTransport = meshTransport.getMaterialsTransport();
-				const material = materialsTransport.processMaterialTransport( this.materials, this.logging.enabled );
+	_onAssetAvailable ( mesh, materialMetaInfo ) {
 
-				let mesh;
-				if ( meshTransport.main.geometryType === 0 ) {
-
-					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
-
-				} else if ( meshTransport.main.geometryType === 1 ) {
-
-					mesh = new LineSegments( meshTransport.getBufferGeometry(), material );
-
-				} else {
-
-					mesh = new Points( meshTransport.getBufferGeometry(), material );
-
-				}
-				this._onMeshAlter( mesh );
-				this.baseObject3d.add( mesh );
-			}
-
-		}
-		else {
-			console.error( 'Received unknown command: ' + cmd );
-		}
+		// hook for alteration or transfer to main when parser is run in worker
+		this._onMeshAlter( mesh, materialMetaInfo );
+		this.baseObject3d.add( mesh );
 
 	}
 
@@ -1338,13 +1317,9 @@ class OBJLoader2Parser {
 
 	}
 
-	_onLoad ( dataTransport ) {
+	_onLoad () {
 
-		if ( ! ( dataTransport instanceof DataTransport ) && dataTransport.type === 'DataTransport' ) {
-			dataTransport = new DataTransport().loadData( dataTransport );
-		}
-
-		if ( dataTransport instanceof DataTransport && this.callbacks.onLoad !== null ) this.callbacks.onLoad( dataTransport, this.baseObject3d );
+		if ( this.callbacks.onLoad !== null ) this.callbacks.onLoad( this.baseObject3d, this.objectId );
 
 	}
 }

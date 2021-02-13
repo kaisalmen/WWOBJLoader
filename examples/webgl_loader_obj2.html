@@ -89,10 +89,10 @@
 
 					const scope = this;
 					const objLoader2 = new OBJLoader2();
-					function callbackOnLoad( dataTransport, object3d ) {
+					function callbackOnLoad( object3d, objectId ) {
 
 						scope.scene.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of ' + modelName + ' completed: ' + dataTransport.main.cmd } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 
 					};
 
