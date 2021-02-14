@@ -14,6 +14,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     terminateWorkerOnLoad: boolean | undefined;
     private _buildWorkerCode;
     _executeWorkerParse(content: any): void;
+    _onLoad(dataTransport: any): void;
 }
 import { OBJLoader2 } from "./OBJLoader2.js";
 import { WorkerTaskManager } from "./workerTaskManager/WorkerTaskManager.js";

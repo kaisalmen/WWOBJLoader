@@ -15,9 +15,11 @@ import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
 import {
 	DataTransport,
 	MeshTransport,
-	MaterialsTransport,
+	MaterialsTransport
+} from "./workerTaskManager/utils/TransportUtils.js";
+import {
 	MaterialUtils
-} from "./workerTaskManager/utils/TransferableUtils.js";
+} from './workerTaskManager/utils/MaterialUtils.js';
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.

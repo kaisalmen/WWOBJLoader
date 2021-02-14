@@ -14,13 +14,13 @@ import {
 	BufferGeometry,
 	BufferAttribute,
 } from '../../../build/three.module.js';
-
+import { MaterialStore } from "./workerTaskManager/utils/MaterialStore.js"
+// Parser only
 import {
-	MaterialStore,
-	// Parser only
 	MaterialCloneInstruction,
 	MaterialUtils
-} from './workerTaskManager/utils/TransferableUtils.js';
+} from './workerTaskManager/utils/MaterialUtils.js';
+
 
 /**
  * Creates a new OBJLoader2. Use it to load OBJ data from files or to parse OBJ data from arraybuffer or text.

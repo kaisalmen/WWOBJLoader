@@ -30,12 +30,14 @@ import {
 	DataTransport,
 	GeometryTransport,
 	MaterialsTransport,
-	MaterialUtils,
-	MaterialCloneInstruction,
 	MeshTransport,
-	CodeUtils,
+	ObjectUtils,
 	ObjectManipulator
-} from "../workerTaskManager/utils/TransferableUtils.js";
+} from "../workerTaskManager/utils/TransportUtils.js";
+import {
+	MaterialCloneInstruction,
+	MaterialUtils
+} from '../workerTaskManager/utils/MaterialUtils.js';
 import { OBJLoader2Parser } from "../OBJLoader2.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 
@@ -54,14 +56,14 @@ const OBJ2LoaderWorker = {
 			{ code: 'const BufferGeometry = THREE.BufferGeometry;\n' },
 			{ code: 'const Mesh = THREE.Mesh;\n' },
 			{ code: '\n\n' },
-			{ code: CodeUtils.serializeClass( DataTransport ) },
-			{ code: CodeUtils.serializeClass( GeometryTransport ) },
-			{ code: CodeUtils.serializeClass( MeshTransport ) },
-			{ code: CodeUtils.serializeClass( MaterialsTransport ) },
-			{ code: CodeUtils.serializeClass( MaterialUtils ) },
-			{ code: CodeUtils.serializeClass( MaterialCloneInstruction ) },
-			{ code: CodeUtils.serializeClass( OBJLoader2Parser ) },
-			{ code: CodeUtils.serializeClass( ObjectManipulator ) }
+			{ code: ObjectUtils.serializeClass( DataTransport ) },
+			{ code: ObjectUtils.serializeClass( GeometryTransport ) },
+			{ code: ObjectUtils.serializeClass( MeshTransport ) },
+			{ code: ObjectUtils.serializeClass( MaterialsTransport ) },
+			{ code: ObjectUtils.serializeClass( MaterialUtils ) },
+			{ code: ObjectUtils.serializeClass( MaterialCloneInstruction ) },
+			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
+			{ code: ObjectUtils.serializeClass( ObjectManipulator ) }
 		]
 /*
 		return [
@@ -79,20 +81,20 @@ const OBJ2LoaderWorker = {
 			{ code: 'const StaticDrawUsage = 35044;\n' },
 			{ code: 'const MultiplyOperation = 0;\n' },
 			{ code: 'const _lut = [];\n' },
-			{ code: CodeUtils.serializePrototype( MathUtils, null, 'MathUtils', false ) },
-			{ code: CodeUtils.serializeClass( Vector2 ) },
-			{ code: CodeUtils.serializeClass( Vector3 ) },
-			{ code: CodeUtils.serializeClass( Matrix3 ) },
-			{ code: CodeUtils.serializeClass( Matrix4 ) },
-			{ code: CodeUtils.serializeClass( Euler ) },
-			{ code: CodeUtils.serializeClass( Quaternion ) },
-			{ code: CodeUtils.serializeClass( Layers ) },
+			{ code: ObjectUtils.serializePrototype( MathUtils, null, 'MathUtils', false ) },
+			{ code: ObjectUtils.serializeClass( Vector2 ) },
+			{ code: ObjectUtils.serializeClass( Vector3 ) },
+			{ code: ObjectUtils.serializeClass( Matrix3 ) },
+			{ code: ObjectUtils.serializeClass( Matrix4 ) },
+			{ code: ObjectUtils.serializeClass( Euler ) },
+			{ code: ObjectUtils.serializeClass( Quaternion ) },
+			{ code: ObjectUtils.serializeClass( Layers ) },
 			{ code: 'let _object3DId = 0;\n' },
-			{ code: CodeUtils.serializePrototype( Object3D, Object3D.prototype, 'Object3D', true ) },
+			{ code: ObjectUtils.serializePrototype( Object3D, Object3D.prototype, 'Object3D', true ) },
 			{ code: 'Object3D.DefaultUp = new Vector3( 0, 1, 0 );' },
 			{ code: 'Object3D.DefaultMatrixAutoUpdate = true;' },
-			{ code: CodeUtils.serializeClass( Box3 ) },
-			{ code: CodeUtils.serializePrototype( BufferAttribute, BufferAttribute.prototype, 'BufferAttribute', true ) },
+			{ code: ObjectUtils.serializeClass( Box3 ) },
+			{ code: ObjectUtils.serializePrototype( BufferAttribute, BufferAttribute.prototype, 'BufferAttribute', true ) },
 			{ code: 'let _id = 0;\n' },
 			{ code: 'const _m1 = new Matrix4();\n' },
 			{ code: 'const _obj = new Object3D();\n' },
@@ -100,24 +102,24 @@ const OBJ2LoaderWorker = {
 			{ code: 'const _box = new Box3();\n' },
 			{ code: 'const _boxMorphTargets = new Box3();\n' },
 			{ code: 'const _vector = new Vector3();\n' },
-			{ code: CodeUtils.serializePrototype( BufferGeometry, BufferGeometry.prototype, 'BufferGeometry', true ) },
+			{ code: ObjectUtils.serializePrototype( BufferGeometry, BufferGeometry.prototype, 'BufferGeometry', true ) },
 			{ code: 'const DefaultLoadingManager = new LoadingManager();' },
 			{ code: LoadingManager.toString() + ';\n' },
-			{ code: CodeUtils.serializePrototype( Loader, Loader.prototype, 'Loader', true ) },
-			{ code: CodeUtils.serializePrototype( MaterialLoader, MaterialLoader.prototype, 'MaterialLoader', true ) },
+			{ code: ObjectUtils.serializePrototype( Loader, Loader.prototype, 'Loader', true ) },
+			{ code: ObjectUtils.serializePrototype( MaterialLoader, MaterialLoader.prototype, 'MaterialLoader', true ) },
 			{ code: 'let materialId = 0;\n' },
-			{ code: CodeUtils.serializePrototype( Material, Material.prototype, 'Material', true ) },
-			{ code: CodeUtils.serializeClass( Color ) },
-			{ code: CodeUtils.serializePrototype( MeshStandardMaterial, MeshStandardMaterial.prototype, 'MeshStandardMaterial', true ) },
-			{ code: CodeUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
-			{ code: CodeUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
-			{ code: CodeUtils.serializeClass( DataTransport ) },
-			{ code: CodeUtils.serializeClass( GeometryTransport ) },
-			{ code: CodeUtils.serializeClass( MeshTransport ) },
-			{ code: CodeUtils.serializeClass( MaterialsTransport ) },
-			{ code: CodeUtils.serializeClass( MaterialUtils ) },
-			{ code: CodeUtils.serializeClass( OBJLoader2Parser ) },
-			{ code: CodeUtils.serializeClass( ObjectManipulator ) }
+			{ code: ObjectUtils.serializePrototype( Material, Material.prototype, 'Material', true ) },
+			{ code: ObjectUtils.serializeClass( Color ) },
+			{ code: ObjectUtils.serializePrototype( MeshStandardMaterial, MeshStandardMaterial.prototype, 'MeshStandardMaterial', true ) },
+			{ code: ObjectUtils.serializePrototype( MeshBasicMaterial, MeshBasicMaterial.prototype, 'MeshBasicMaterial', true ) },
+			{ code: ObjectUtils.serializePrototype( Mesh, Mesh.prototype, 'Mesh', true ) },
+			{ code: ObjectUtils.serializeClass( DataTransport ) },
+			{ code: ObjectUtils.serializeClass( GeometryTransport ) },
+			{ code: ObjectUtils.serializeClass( MeshTransport ) },
+			{ code: ObjectUtils.serializeClass( MaterialsTransport ) },
+			{ code: ObjectUtils.serializeClass( MaterialUtils ) },
+			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
+			{ code: ObjectUtils.serializeClass( ObjectManipulator ) }
 		];
  */
 	},

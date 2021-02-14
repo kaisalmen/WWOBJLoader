@@ -1,6 +1,6 @@
 import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
-import { GeometryTransport } from "../workerTaskManager/utils/TransferableUtils.js";
+import { GeometryTransport } from "../workerTaskManager/utils/TransportUtils.js";
 
 function init ( context, id, config ) {
 	context.postMessage( { cmd: "init", id: id } );

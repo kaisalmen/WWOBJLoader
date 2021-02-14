@@ -11,11 +11,11 @@ import {
 	Texture,
 	Material,
 	MeshStandardMaterial,
-	LineBasicMaterial,
-	PointsMaterial,
-	VertexColors,
 	MaterialLoader
 } from "../../../../../build/three.module.js";
+import {
+	MaterialUtils
+} from './MaterialUtils.js';
 
 /**
  * Define a base structure that is used to ship data in between main and workers.
@@ -623,210 +623,10 @@ class MeshTransport extends GeometryTransport {
 
 }
 
-class MaterialCloneInstruction {
 
-	/**
-	 *
-	 * @param {string} materialNameOrg
-	 * @param {string} materialNameNew
-	 * @param {boolean} haveVertexColors
-	 * @param {boolean} flatShading
-	 */
-	constructor ( materialNameOrg, materialNameNew, haveVertexColors, flatShading ) {
-		this.materialNameOrg = materialNameOrg;
-		this.materialProperties = {
-			name: materialNameNew,
-			vertexColors: haveVertexColors ? 2 : 0,
-			flatShading: flatShading
-		};
-	}
+class ObjectUtils {
 
-}
-
-class MaterialUtils {
-
-	/**
-	 *
-	 * @param {object} materialsObject
-	 * @param {Material|MaterialCloneInstruction} material
-	 * @param {string} materialName
-	 * @param {boolean} force
-	 * @param {boolena} [log]
-	 */
-	static addMaterial( materialsObject, material, materialName, force, log ) {
-		let existingMaterial;
-		// ensure materialName is set
-		material.name = materialName;
-		if ( ! force ) {
-
-			existingMaterial = materialsObject[ materialName ];
-			if ( existingMaterial ) {
-
-				if ( existingMaterial.uuid !== existingMaterial.uuid ) {
-
-					if ( log ) console.log( 'Same material name "' + existingMaterial.name + '" different uuid [' + existingMaterial.uuid + '|' + material.uuid + ']' );
-
-				}
-
-			} else {
-
-				materialsObject[ materialName ] = material;
-				if ( log ) console.info( 'Material with name "' + materialName + '" was added.' );
-
-			}
-
-		} else {
-
-			materialsObject[ materialName ] = material;
-			if ( log ) console.info( 'Material with name "' + materialName + '" was forcefully overridden.' );
-
-		}
-	}
-
-	/**
-	 * Returns the mapping object of material name and corresponding jsonified material.
-	 *
-	 * @param {object.<string,Material>}
-	 * @returns {Object} Map of Materials in JSON representation
-	 */
-	static getMaterialsJSON ( materialsObject ) {
-
-		const materialsJSON = {};
-		let material;
-		for ( const materialName in materialsObject ) {
-
-			material = materialsObject[ materialName ];
-			if ( material instanceof Material ) materialsJSON[ materialName ] = material.toJSON();
-
-		}
-		return materialsJSON;
-
-	}
-
-	/**
-	 *
-	 * @param {object.<String, Material>} materials
-	 * @param {MaterialCloneInstruction} materialCloneInstruction
-	 * @param {boolean} [log]
-	 */
-	static cloneMaterial ( materials, materialCloneInstruction, log ) {
-
-		let material;
-		if ( materialCloneInstruction ) {
-
-			let materialNameOrg = materialCloneInstruction.materialNameOrg;
-			materialNameOrg = ( materialNameOrg !== undefined && materialNameOrg !== null ) ? materialNameOrg : '';
-			const materialOrg = materials[ materialNameOrg ];
-			if ( materialOrg ) {
-
-				material = materialOrg.clone();
-				Object.assign( material, materialCloneInstruction.materialProperties );
-				MaterialUtils.addMaterial( materials, material, materialCloneInstruction.materialProperties.name, true );
-
-			}
-			else {
-
-				if ( log ) console.info( 'Requested material "' + materialNameOrg + '" is not available!' );
-
-			}
-
-		}
-		return material;
-		
-	}
-}
-
-/**
- * Store materials in an object and create and store default materials optionally.
- */
-class MaterialStore {
-
-	constructor( createDefaultMaterials ) {
-
-		this.materials = {};
-		if ( createDefaultMaterials ) {
-
-			const defaultMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
-			defaultMaterial.name = 'defaultMaterial';
-
-			const defaultVertexColorMaterial = new MeshStandardMaterial( { color: 0xDCF1FF } );
-			defaultVertexColorMaterial.name = 'defaultVertexColorMaterial';
-			defaultVertexColorMaterial.vertexColors = VertexColors;
-
-			const defaultLineMaterial = new LineBasicMaterial();
-			defaultLineMaterial.name = 'defaultLineMaterial';
-
-			const defaultPointMaterial = new PointsMaterial( { size: 0.1 } );
-			defaultPointMaterial.name = 'defaultPointMaterial';
-
-			this.materials[ defaultMaterial.name ] = defaultMaterial;
-			this.materials[ defaultVertexColorMaterial.name ] = defaultVertexColorMaterial;
-			this.materials[ defaultLineMaterial.name ] = defaultLineMaterial;
-			this.materials[ defaultPointMaterial.name ] = defaultPointMaterial;
-
-		}
-
-	}
-
-	/**
-	 * Set materials loaded by any supplier of an Array of {@link Material}.
-	 *
-	 * @param newMaterials Object with named {@link Material}
-	 * @param forceOverrideExisting boolean Override existing material
-	 */
-	addMaterials ( newMaterials, forceOverrideExisting ) {
-
-		if ( newMaterials === undefined || newMaterials === null ) newMaterials = {};
-		if ( Object.keys( newMaterials ).length > 0 ) {
-
-			let material;
-			for ( const materialName in newMaterials ) {
-
-				material = newMaterials[ materialName ];
-				MaterialUtils.addMaterial( this.materials, material, materialName, forceOverrideExisting === true );
-
-			}
-
-		}
-
-	}
-
-	/**
-	 * Returns the mapping object of material name and corresponding material.
-	 *
-	 * @returns {Object} Map of {@link Material}
-	 */
-	getMaterials () {
-
-		return this.materials;
-
-	}
-
-	/**
-	 *
-	 * @param {String} materialName
-	 * @returns {Material}
-	 */
-	getMaterial ( materialName ) {
-
-		return this.materials[ materialName ];
-
-	}
-
-	/**
-	 * Removes all materials
-	 */
-	clearMaterials () {
-
-		this.materials = {};
-
-	}
-
-}
-
-class CodeUtils {
-
-	static serializePrototype ( targetClass, targetPrototype, fullObjectName, processPrototype ) {
+	static serializePrototype( targetClass, targetPrototype, fullObjectName, processPrototype ) {
 
 		let prototypeFunctions = [];
 		let objectString = '';
@@ -834,8 +634,7 @@ class CodeUtils {
 		if ( processPrototype ) {
 			objectString = targetClass.toString() + "\n\n"
 			target = targetPrototype;
-		}
-		else {
+		} else {
 			target = targetClass;
 		}
 		for ( let name in target ) {
@@ -863,11 +662,12 @@ class CodeUtils {
 
 	}
 
-	static serializeClass ( targetClass ) {
+	static serializeClass( targetClass ) {
 
 		return targetClass.toString() + "\n\n";
 
 	}
+
 }
 
 class ObjectManipulator {
@@ -911,9 +711,6 @@ export {
 	GeometryTransport,
 	MeshTransport,
 	MaterialsTransport,
-	MaterialUtils,
-	MaterialStore,
-	MaterialCloneInstruction,
-	CodeUtils,
+	ObjectUtils,
 	ObjectManipulator
 }
