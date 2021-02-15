@@ -106,7 +106,7 @@ export class OBJLoader2Parser {
     _onMeshAlter(mesh: any): void;
     _onLoad(): void;
 }
-import { Loader } from "../../../build/three.module.js";
+import { Loader } from "../../../node_modules/three/build/three.module.js";
 import { MaterialStore } from "./workerTaskManager/utils/MaterialStore.js";
-import { Object3D } from "../../../build/three.module.js";
-import { Mesh } from "../../../build/three.module.js";
+import { Object3D } from "../../../node_modules/three/build/three.module.js";
+import { Mesh } from "../../../node_modules/three/build/three.module.js";

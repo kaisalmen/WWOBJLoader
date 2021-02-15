@@ -13,7 +13,7 @@ import {
 	Mesh,
 	BufferGeometry,
 	BufferAttribute,
-} from '../../../build/three.module.js';
+} from '../../../node_modules/three/build/three.module.js';
 import { MaterialStore } from "./workerTaskManager/utils/MaterialStore.js"
 // Parser only
 import {

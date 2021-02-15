@@ -5,7 +5,7 @@
 
 import {
 	FileLoader
-} from "../../../../../build/three.module.js";
+} from "../../../../../node_modules/three/build/three.module.js";
 
 /**
  * Extension of {@link FileLoader} that configures "arraybuffer" as default response type and carries a specific

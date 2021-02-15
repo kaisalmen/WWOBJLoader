@@ -14,12 +14,9 @@ import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { OBJ2LoaderWorker } from './worker/tmOBJLoader2.js';
 import {
 	DataTransport,
-	MeshTransport,
-	MaterialsTransport
+	MeshTransport
 } from "./workerTaskManager/utils/TransportUtils.js";
-import {
-	MaterialUtils
-} from './workerTaskManager/utils/MaterialUtils.js';
+import { MaterialUtils } from './workerTaskManager/utils/MaterialUtils.js';
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -33,6 +30,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
 	static DEFAULT_JSM_WORKER_PATH = './jsm/loaders/worker/tmOBJLoader2.js';
+	static DEFAULT_JSM_THREEJS_PATH = '../node_modules/three/build/three.js';
 
 	/**
 	 *
@@ -43,9 +41,15 @@ class OBJLoader2Parallel extends OBJLoader2 {
 		super( manager );
 		this.executeParallel = true;
 		this.preferJsmWorker = false;
-		this.jsmWorkerUrl = null;
+		this.urls = {
+			/** @type {URL} */
+			jsmWorker: new URL( OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href ),
+			/** @type {URL} */
+			threejs: new URL( OBJLoader2Parallel.DEFAULT_JSM_THREEJS_PATH, window.location.href )
+		};
 		this.workerTaskManager = null;
 		this.taskName = 'tmOBJLoader2';
+
 	}
 
 	/**
@@ -77,6 +81,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	/**
 	 * Set whether jsm modules in workers should be used. This requires browser support which is currently only experimental.
+	 *
 	 * @param {boolean} preferJsmWorker True or False
 	 * @param {URL} jsmWorkerUrl Provide complete jsm worker URL otherwise relative path to this module may not be correct
 	 * @return {OBJLoader2Parallel}
@@ -84,11 +89,30 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	setJsmWorker ( preferJsmWorker, jsmWorkerUrl ) {
 
 		this.preferJsmWorker = preferJsmWorker === true;
-		if ( jsmWorkerUrl === undefined || jsmWorkerUrl === null ) {
-
+		if ( jsmWorkerUrl === undefined || jsmWorkerUrl === null || ! ( jsmWorkerUrl instanceof URL ) ) {
 			throw 'The url to the jsm worker is not valid. Aborting...';
 		}
-		this.jsmWorkerUrl = jsmWorkerUrl;
+		else {
+			this.urls.jsmWorker = jsmWorkerUrl;
+		}
+		return this;
+
+	}
+
+	/**
+	 * Override the default URL for three.js. This is only required when standard workers are build (preferJsmWorker=false).
+	 *
+	 * @param {URL} threejsUrl Provide complete three.module.js URL otherwise relative path to this module may not be correct
+	 * @return {OBJLoader2Parallel}
+	 */
+	setThreejsLocation ( threejsUrl ) {
+
+		if ( threejsUrl === undefined || threejsUrl === null || ! ( threejsUrl instanceof URL ) ) {
+			throw 'The url to the jsm worker is not valid. Aborting...';
+		}
+		else {
+			this.urls.threejs = threejsUrl;
+		}
 		return this;
 
 	}
@@ -109,11 +133,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * Provide instructions on what is to be contained in the worker.
 	 *
-	 * @param {MaterialsTransport} materialsTransport Configuration object
+	 * @param {DataTransport} dataTransport Configuration object
 	 * @return {Promise<void>}
 	 * @private
 	 */
-	async _buildWorkerCode ( materialsTransport ) {
+	async _buildWorkerCode ( dataTransport ) {
 
 		if ( this.workerTaskManager === null || ! this.workerTaskManager instanceof WorkerTaskManager ) {
 
@@ -125,16 +149,16 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			if ( this.preferJsmWorker ) {
 
-				this.workerTaskManager.registerTaskTypeModule( this.taskName, OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH );
+				this.workerTaskManager.registerTaskTypeModule( this.taskName, this.urls.jsmWorker );
 
 			} else {
 
 				// build the standard worker from code imported here and don't reference three.js build with fixed path
 				this.workerTaskManager.registerTaskType( this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute,
-					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies( '../build/three.js' ) );
+					null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies( this.urls.threejs ) );
 
 			}
-			await this.workerTaskManager.initTaskType( this.taskName, materialsTransport.getMain() );
+			await this.workerTaskManager.initTaskType( this.taskName, dataTransport.getMain() );
 
 		}
 
@@ -181,14 +205,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 
 			}
-			const materialsTransport = new MaterialsTransport().setParams( {
+			const dataTransport = new DataTransport().setParams( {
 					logging: {
 						enabled: this.parser.logging.enabled,
 						debug: this.parser.logging.debug
 					},
 				}
 			);
-			this._buildWorkerCode( materialsTransport )
+			this._buildWorkerCode( dataTransport )
 				.then(
 					x => {
 						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );

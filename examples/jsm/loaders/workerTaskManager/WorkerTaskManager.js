@@ -3,7 +3,7 @@
  * @author Kai Salmen / https://kaisalmen.de
  */
 
-import { FileLoader } from "../../../../build/three.module.js";
+import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
 import { WorkerTaskManagerDefaultRouting } from "./comm/worker/defaultRouting.js";
 
 /**

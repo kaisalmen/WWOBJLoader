@@ -2,7 +2,7 @@ import { GeometryTransport } from "../../workerTaskManager/utils/TransportUtils.
 import {
 	BufferGeometry,
 	Object3D
-} from "../../../../../build/three.module.js";
+} from "../../../../../node_modules/three/build/three.module.js";
 
 class MeshWalker {
 

@@ -1,4 +1,4 @@
-import { TorusKnotBufferGeometry } from "../../../../build/three.module.js";
+import { TorusKnotBufferGeometry } from "../../../../node_modules/three/build/three.module.js";
 import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
 import { GeometryTransport } from "../workerTaskManager/utils/TransportUtils.js";
 
