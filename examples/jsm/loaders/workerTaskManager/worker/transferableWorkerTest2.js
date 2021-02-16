@@ -1,4 +1,4 @@
-import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
+import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
 function init ( context, id, config ) {
 	context.postMessage( { cmd: "init", id: id } );

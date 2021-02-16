@@ -9,13 +9,13 @@ import {
 	MeshTransport,
 	ObjectUtils,
 	ObjectManipulator
-} from "../workerTaskManager/utils/TransportUtils.js";
+} from "../utils/TransportUtils.js";
 import {
 	MaterialCloneInstruction,
 	MaterialUtils
-} from '../workerTaskManager/utils/MaterialUtils.js';
-import { OBJLoader2Parser } from "../OBJLoader2.js";
-import { WorkerTaskManagerDefaultRouting } from "../workerTaskManager/comm/worker/defaultRouting.js";
+} from '../utils/MaterialUtils.js';
+import { OBJLoader2Parser } from "../../OBJLoader2.js";
+import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
 const OBJ2LoaderWorker = {
 

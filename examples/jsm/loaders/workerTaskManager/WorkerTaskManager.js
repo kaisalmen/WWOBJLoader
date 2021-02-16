@@ -3,8 +3,8 @@
  * @author Kai Salmen / https://kaisalmen.de
  */
 
-import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
-import { WorkerTaskManagerDefaultRouting } from "./comm/worker/defaultRouting.js";
+import { FileLoader } from "../../../../build/three.module.js";
+import { WorkerTaskManagerDefaultRouting } from "./worker/defaultRouting.js";
 
 /**
  * Register one to many tasks type to the WorkerTaskManager. Then init and enqueue a worker based execution by passing

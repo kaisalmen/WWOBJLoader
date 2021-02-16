@@ -4,7 +4,7 @@
     "examples/jsm/loaders/workerTaskManager/utils/TransportUtils.js",
     "examples/jsm/loaders/workerTaskManager/utils/MaterialUtils.js",
     "examples/jsm/loaders/workerTaskManager/utils/MaterialStore.js",
-    "examples/jsm/loaders/workerTaskManager/comm/worker/defaultRouting.js",
+    "examples/jsm/loaders/workerTaskManager/worker/defaultRouting.js",
     "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader.js",
     "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js",
     "examples/jsm/loaders/AssetPipelineLoader.js",

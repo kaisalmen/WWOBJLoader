@@ -14,7 +14,7 @@ cp -f ${DIR_LOADER_SRC}/workerTaskManager/WorkerTaskManager.d.ts ${DIR_LOADER_TR
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/utils/TransportUtils.d.ts ${DIR_LOADER_TRG}/workerTaskManager/utils/TransportUtils.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/utils/MaterialUtils.d.ts ${DIR_LOADER_TRG}/workerTaskManager/utils/MaterialUtils.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/utils/MaterialStore.d.ts ${DIR_LOADER_TRG}/workerTaskManager/utils/MaterialStore.d.ts
-cp -f ${DIR_LOADER_SRC}/workerTaskManager/comm/worker/defaultRouting.d.ts ${DIR_LOADER_TRG}/workerTaskManager/comm/worker/defaultRouting.d.ts
+cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/defaultRouting.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/defaultRouting.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/tmOBJLoader.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/tmOBJLoader.d.ts
 cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/tmOBJLoader2.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/tmOBJLoader2.d.ts
 cp -f ${DIR_LOADER_SRC}/AssetPipelineLoader.d.ts ${DIR_LOADER_TRG}/AssetPipelineLoader.d.ts
