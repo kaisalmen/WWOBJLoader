@@ -7,7 +7,8 @@ import {
 	Object3D,
 	Mesh,
 	LineSegments,
-	Points
+	Points,
+	MeshStandardMaterial
 } from '../../../build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
@@ -272,14 +273,15 @@ class OBJLoader2Parallel extends OBJLoader2 {
 			}
 			if ( meshTransport ) {
 				const materialsTransport = meshTransport.getMaterialsTransport();
-				const material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), this.parser.logging.enabled );
+				let material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), this.parser.logging.enabled );
+				if ( material === null ) material = new MeshStandardMaterial( { color: 0xFF0000 } );
 
 				let mesh;
-				if ( meshTransport.main.geometryType === 0 ) {
+				if ( meshTransport.getGeometryType() === 0 ) {
 
 					mesh = new Mesh( meshTransport.getBufferGeometry(), material );
 
-				} else if ( meshTransport.main.geometryType === 1 ) {
+				} else if ( meshTransport.getGeometryType() === 1 ) {
 
 					mesh = new LineSegments( meshTransport.getBufferGeometry(), material );
 

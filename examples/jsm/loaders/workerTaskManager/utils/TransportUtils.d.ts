@@ -8,22 +8,23 @@ export class DataTransport {
         buffers: {};
         params: {};
     };
-    transferables: any[];
+    transferables: ArrayBuffer[];
     loadData(transportObject: object): DataTransport;
     getCmd(): string;
-    getId(): number | string;
+    getId(): string;
     setParams(params: any): DataTransport;
-    getParams(): {};
+    getParams(): any;
     setProgress(numericalValue: number): DataTransport;
-    addBuffer(name: any, buffer: any): DataTransport;
-    getBuffer(name: any): ArrayBuffer;
+    addBuffer(name: string, buffer: ArrayBuffer): DataTransport;
+    getBuffer(name: string): ArrayBuffer;
     package(cloneBuffers: boolean): DataTransport;
     getMain(): object;
-    getTransferables(): [] | any[] | any;
+    getTransferables(): [] | ArrayBuffer[];
     postMessage(postMessageImpl: object): DataTransport;
 }
 export class GeometryTransport extends DataTransport {
     constructor(cmd?: string | undefined, id?: string | undefined);
+    getGeometryType(): number;
     setGeometry(geometry: BufferGeometry, geometryType: number): GeometryTransport;
     reconstruct(cloneBuffers: boolean): GeometryTransport;
     getBufferGeometry(): BufferGeometry | null;
@@ -43,7 +44,7 @@ export class MaterialsTransport extends DataTransport {
     getMaterials(): any;
     cleanMaterials(): MaterialsTransport;
     hasMultiMaterial(): boolean;
-    getSingleMaterial(): any;
+    getSingleMaterial(): Material | null;
     processMaterialTransport(materials: {
         [x: string]: Material;
     }, log: boolean): Material | Material[];

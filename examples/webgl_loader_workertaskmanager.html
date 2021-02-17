@@ -467,6 +467,7 @@
 
 									const materialsTransport = meshTransport.getMaterialsTransport();
 									material = materialsTransport.processMaterialTransport( taskDescr.materialStore ? taskDescr.materialStore.getMaterials() : {}, true );
+									if ( material === null ) material = new THREE.MeshStandardMaterial( { color: 0xFF0000 } );
 
 									mesh = new THREE.Mesh( meshTransport.getBufferGeometry(), material );
 									this._addMesh( mesh, meshTransport.getId() );
