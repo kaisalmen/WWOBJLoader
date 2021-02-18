@@ -1,5 +1,5 @@
 /**
- * @author Kai Salmen / www.kaisalmen.de
+ * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
 import {
@@ -10,10 +10,7 @@ import {
 	ObjectUtils,
 	ObjectManipulator
 } from "../utils/TransportUtils.js";
-import {
-	MaterialCloneInstruction,
-	MaterialUtils
-} from '../utils/MaterialUtils.js';
+import { MaterialUtils } from '../utils/MaterialUtils.js';
 import { OBJLoader2Parser } from "../../OBJLoader2.js";
 import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
@@ -37,7 +34,6 @@ const OBJ2LoaderWorker = {
 			{ code: ObjectUtils.serializeClass( MeshTransport ) },
 			{ code: ObjectUtils.serializeClass( MaterialsTransport ) },
 			{ code: ObjectUtils.serializeClass( MaterialUtils ) },
-			{ code: ObjectUtils.serializeClass( MaterialCloneInstruction ) },
 			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
 			{ code: ObjectUtils.serializeClass( ObjectManipulator ) }
 		]

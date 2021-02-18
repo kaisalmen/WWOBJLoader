@@ -1,15 +1,6 @@
 export class MaterialUtils {
-    static addMaterial(materialsObject: object, material: Material | MaterialCloneInstruction, materialName: string, force: boolean, log?: any): void;
+    static addMaterial(materialsObject: any, material: Material, materialName: string, force: boolean, log?: boolean | undefined): void;
     static getMaterialsJSON(materialsObject: any): Object;
-    static cloneMaterial(materials: any, materialCloneInstruction: MaterialCloneInstruction, log?: boolean | undefined): any;
-}
-export class MaterialCloneInstruction {
-    constructor(materialNameOrg: string, materialNameNew: string, haveVertexColors: boolean, flatShading: boolean);
-    materialNameOrg: string;
-    materialProperties: {
-        name: string;
-        vertexColors: number;
-        flatShading: boolean;
-    };
+    static cloneMaterial(materials: any, materialCloneInstruction: object, log?: boolean | undefined): any;
 }
 import { Material } from "../../../../../build/three.module.js";

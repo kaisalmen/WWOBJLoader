@@ -16,10 +16,7 @@ import {
 } from '../../../node_modules/three/build/three.module.js';
 import { MaterialStore } from "./workerTaskManager/utils/MaterialStore.js"
 // Parser only
-import {
-	MaterialCloneInstruction,
-	MaterialUtils
-} from './workerTaskManager/utils/MaterialUtils.js';
+import { MaterialUtils } from './workerTaskManager/utils/MaterialUtils.js';
 
 
 /**
@@ -1135,7 +1132,14 @@ class OBJLoader2Parser {
 
 			if ( material === undefined || material === null ) {
 
-				const materialCloneInstruction = new MaterialCloneInstruction( materialNameOrg, materialName, haveVertexColors, flatShading );
+				const materialCloneInstruction = {
+					materialNameOrg: materialNameOrg,
+					materialProperties: {
+						name: materialName,
+						vertexColors: haveVertexColors ? 2 : 0,
+						flatShading: flatShading
+					}
+				};
 				material = MaterialUtils.cloneMaterial( this.materials, materialCloneInstruction, this.logging.enabled && this.logging.debug );
 				materialMetaInfo.cloneInstructions.push( materialCloneInstruction );
 

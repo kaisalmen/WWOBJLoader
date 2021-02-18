@@ -28,8 +28,8 @@ export class GeometryTransport extends DataTransport {
     setGeometry(geometry: BufferGeometry, geometryType: number): GeometryTransport;
     reconstruct(cloneBuffers: boolean): GeometryTransport;
     getBufferGeometry(): BufferGeometry | null;
-    addBufferAttributeToTransferable(input: any, cloneBuffer: any): GeometryTransport;
-    assignAttribute(attr: any, attrName: any, cloneBuffer: any): GeometryTransport;
+    _addBufferAttributeToTransferable(input: any, cloneBuffer: any): GeometryTransport;
+    _assignAttribute(attr: any, attrName: any, cloneBuffer: any): GeometryTransport;
 }
 export class MeshTransport extends GeometryTransport {
     constructor(cmd?: string | undefined, id?: string | undefined);
@@ -51,7 +51,7 @@ export class MaterialsTransport extends DataTransport {
 }
 export class ObjectUtils {
     static serializePrototype(targetClass: any, targetPrototype: any, fullObjectName: any, processPrototype: any): string;
-    static serializeClass(targetClass: any): string;
+    static serializeClass(targetClass: object): string;
 }
 export class ObjectManipulator {
     static applyProperties(objToAlter: Object, params: Object, forceCreation: boolean): void;

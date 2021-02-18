@@ -1,7 +1,7 @@
 export class MaterialStore {
-    constructor(createDefaultMaterials: any);
+    constructor(createDefaultMaterials: boolean);
     materials: {};
-    addMaterials(newMaterials: any, forceOverrideExisting: any): void;
+    addMaterials(newMaterials: any, forceOverrideExisting: boolean): void;
     getMaterials(): Object;
     getMaterial(materialName: string): Material;
     clearMaterials(): void;
