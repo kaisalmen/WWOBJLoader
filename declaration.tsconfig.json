@@ -21,9 +21,9 @@
     "sourceMap": false,
     "allowJs": true,
     "declaration": true,
+    "declarationDir": "./build",
+    "emitDeclarationOnly": true,
     "noEmit": false,
-    "emitDeclarationOnly": false,
-    "removeComments": true,
-    "outDir": "./build"
+    "removeComments": true
   }
 }
