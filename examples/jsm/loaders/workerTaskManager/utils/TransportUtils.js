@@ -10,7 +10,7 @@ import {
 	Texture,
 	Material,
 	MaterialLoader
-} from "../../../../../build/three.module.js";
+} from "../../../../../node_modules/three/build/three.module.js";
 import {
 	MaterialUtils
 } from './MaterialUtils.js';

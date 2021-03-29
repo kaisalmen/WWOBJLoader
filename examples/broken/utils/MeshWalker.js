@@ -1,8 +1,8 @@
-import { GeometryTransport } from "../../workerTaskManager/utils/TransportUtils.js";
+import { GeometryTransport } from "../../jsm/loaders/workerTaskManager/utils/TransportUtils.d.ts";
 import {
 	BufferGeometry,
 	Object3D
-} from "../../../../../node_modules/three/build/three.module.js";
+} from "three";
 
 class MeshWalker {
 

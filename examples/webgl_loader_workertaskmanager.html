@@ -19,9 +19,9 @@
 
 			'use strict';
 
-			import * as THREE from '../build/three.module.js';
+			import * as THREE from '../node_modules/three/build/three.module.js';
+			import { TrackballControls } from "../node_modules/three/examples/jsm/controls/TrackballControls.js";
 
-			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import {
 				DataTransport,
@@ -32,7 +32,6 @@
 			} from "./jsm/loaders/workerTaskManager/utils/TransportUtils.js"
 			import { MaterialUtils } from "./jsm/loaders/workerTaskManager/utils/MaterialUtils.js"
 			import { MaterialStore } from "./jsm/loaders/workerTaskManager/utils/MaterialStore.js"
-			import { FileLoader } from "../src/loaders/FileLoader.js";
 			import { OBJLoaderWorker } from "./jsm/loaders/workerTaskManager/worker/tmOBJLoader.js";
 
 			/**
@@ -151,7 +150,7 @@
 						name: 'InlineWorker',
 						funcInit: InlineWorker.workerStandardInit,
 						funcExec: InlineWorker.workerStandardExec,
-						dependencies: InlineWorker.buildStandardWorkerDependencies( "../build/three.min.js" )
+						dependencies: InlineWorker.buildStandardWorkerDependencies( "../node_modules/three/build/three.min.js" )
 					};
 					this.tasksToUse.push( taskDescr );
 					this.workerTaskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, taskDescr.dependencies );
@@ -162,12 +161,12 @@
 						filenameObj: './models/obj/female02/female02_vertex_colors.obj',
 						funcInit: OBJLoaderWorker.init,
 						funcExec: OBJLoaderWorker.execute,
-						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../build/three.min.js', '../examples/js/loaders/OBJLoader.js' )
+						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../node_modules/three/build/three.min.js', './js/loaders/OBJLoader.js' )
 					};
 					this.tasksToUse.push( taskDescrObj );
 					this.workerTaskManager.registerTaskType( taskDescrObj.name, taskDescrObj.funcInit, taskDescrObj.funcExec, null, false, taskDescrObj.dependencies );
 					const loadObj = async function ( filenameObj ) {
-						let fileLoader = new FileLoader();
+						let fileLoader = new THREE.FileLoader();
 						fileLoader.setResponseType( 'arraybuffer' );
 						return await fileLoader.loadAsync( filenameObj );
 					}

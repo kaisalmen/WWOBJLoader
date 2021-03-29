@@ -19,9 +19,9 @@
 
 			'use strict';
 
-			import * as THREE from '../build/three.module.js';
+			import * as THREE from '../node_modules/three/build/three.module.js';
+			import { TrackballControls } from "../node_modules/three/examples/jsm/controls/TrackballControls.js";
 
-			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import { GeometryTransport } from "./jsm/loaders/workerTaskManager/utils/TransportUtils.js";
 

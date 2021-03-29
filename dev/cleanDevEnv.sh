@@ -11,15 +11,16 @@ rm -fr ${DIR_BASE}/build
 echo "Removing ./src"
 rm -fr ${DIR_BASE}/src
 
+echo "Removing ./examples/jsm/controls"
+rm -fr ${DIR_BASE}/examples/jsm/controls
+
+echo "Removing ./examples/jsm/helpers"
+rm -fr ${DIR_BASE}/examples/jsm/helpers
+
+echo "Removing ./examples/jsm/libs"
+rm -fr ${DIR_BASE}/examples/jsm/libs
+
 echo "Removing various files from ./examples"
-rm -f ${DIR_BASE}/examples/jsm/controls/TrackballControls.js
-rm -f ${DIR_BASE}/examples/jsm/controls/TrackballControls.d.ts
-rm -f ${DIR_BASE}/examples/jsm/loaders/MTLLoader.js
-rm -f ${DIR_BASE}/examples/jsm/loaders/MTLLoader.d.ts
-rm -f ${DIR_BASE}/examples/js/loaders/MTLLoader.js
 #rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.js
 #rm -f ${DIR_BASE}/examples/jsm/loaders/OBJLoader.d.ts
 #rm -f ${DIR_BASE}/examples/js/loaders/OBJLoader.js
-rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.js
-rm -f ${DIR_BASE}/examples/jsm/helpers/VertexNormalsHelper.d.ts
-rm -f ${DIR_BASE}/examples/jsm/libs/dat.gui.module.js

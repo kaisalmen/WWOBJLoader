@@ -6,7 +6,7 @@ import {
 	TorusKnotBufferGeometry,
 	Color,
 	MeshPhongMaterial
-} from "../../../../../build/three.module.js";
+} from "../../../../../node_modules/three/build/three.module.js";
 import {
 	MeshTransport,
 	MaterialsTransport

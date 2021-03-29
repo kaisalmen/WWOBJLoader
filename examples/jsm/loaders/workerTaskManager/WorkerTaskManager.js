@@ -3,7 +3,7 @@
  * Proposed by Don McCurdy / https://www.donmccurdy.com
  */
 
-import { FileLoader } from "../../../../build/three.module.js";
+import { FileLoader } from "../../../../node_modules/three/build/three.module.js";
 import { WorkerTaskManagerDefaultRouting } from "./worker/defaultRouting.js";
 
 /**

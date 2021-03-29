@@ -2,7 +2,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { Material } from "../../../../../build/three.module.js";
+import { Material } from "../../../../../node_modules/three/build/three.module.js";
 
 /**
  * Static functions useful in the context of handling materials.

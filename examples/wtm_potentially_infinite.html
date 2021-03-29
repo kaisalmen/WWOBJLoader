@@ -19,10 +19,11 @@
 
 			'use strict';
 
-			import * as THREE from '../build/three.module.js';
-			import { GUI } from './jsm/libs/dat.gui.module.js';
+			import * as THREE from '../node_modules/three/build/three.module.js';
+			import { GUI } from '../node_modules/three/examples/jsm/libs/dat.gui.module.js';
+			import { TrackballControls } from "../node_modules/three/examples/jsm/controls/TrackballControls.js";
+			import { MTLLoader } from "../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 
-			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
 			import { WorkerTaskManager } from "./jsm/loaders/workerTaskManager/WorkerTaskManager.js";
 			import {
 				DataTransport,
@@ -32,9 +33,6 @@
 				ObjectUtils
 			} from "./jsm/loaders/workerTaskManager/utils/TransportUtils.js"
 			import { MaterialStore } from "./jsm/loaders/workerTaskManager/utils/MaterialStore.js"
-			import { FileLoader } from "../src/loaders/FileLoader.js";
-			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
-			import { OBJLoaderWorker } from "./jsm/loaders/workerTaskManager/worker/tmOBJLoader.js";
 			import { OBJ2LoaderWorker } from "./jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js";
 
 			/**
@@ -119,7 +117,7 @@
 						funcInit: WorkerFunctions.workerStandardInit,
 						funcExec: WorkerFunctions.workerStandardExec,
 						dependencies: [
-							{ url: "../build/three.min.js" },
+							{ url: "../node_modules/three/build/three.min.js" },
 							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
 							{ code: ObjectUtils.serializeClass( DataTransport ) },
 							{ code: ObjectUtils.serializeClass( GeometryTransport ) }
@@ -144,26 +142,6 @@
 						funcInit: WorkerFunctions.workerStandardInit,
 						funcExec: WorkerFunctions.workerStandardExec
 					} );
-					this.taskDescriptions.set( 'tmOBJLoaderModule', {
-						name: 'tmOBJLoaderModule',
-						use: true,
-						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmOBJLoader.js',
-						filenameMtl: './models/obj/female02/female02.mtl',
-						filenameObj: './models/obj/female02/female02.obj',
-						materialStore: new MaterialStore( true ),
-					} );
-					this.taskDescriptions.set( 'tmOBJLoaderStandard', {
-						name: 'tmOBJLoaderStandard',
-						use: true,
-						fallback: false,
-						funcInit: OBJLoaderWorker.init,
-						funcExec: OBJLoaderWorker.execute,
-						filenameMtl: './models/obj/male02/male02.mtl',
-						filenameObj: './models/obj/male02/male02.obj',
-						materialStore: new MaterialStore( true ),
-						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../build/three.min.js', '../examples/js/loaders/OBJLoader.js' )
-					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Module', {
 						name: 'tmOBJLoader2Module',
 						modelName: 'female02',
@@ -184,7 +162,7 @@
 						filenameMtl: './models/obj/male02/male02.mtl',
 						filenameObj: './models/obj/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
-						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../build/three.min.js' )
+						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../node_modules/three/build/three.min.js' )
 					} );
 
 					this.tasksToUse = [];
@@ -296,38 +274,6 @@
 						awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
 
 					}
-					taskDescr = this.taskDescriptions.get( 'tmOBJLoaderModule' );
-					if ( taskDescr.use ) {
-
-						this.tasksToUse.push( taskDescr );
-						this.workerTaskManager.registerTaskTypeModule( taskDescr.name, taskDescr.module );
-						await this.loadObjMtl( taskDescr )
-							.then( buffer => {
-								const mt = new MaterialsTransport()
-									.addBuffer( 'modelData', buffer )
-									.setMaterials( taskDescr.materialStore.getMaterials() )
-									.cleanMaterials()
-									.package( false );
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, mt.getMain(), mt.getTransferables() ).catch( e => console.error( e ) ) );
-							} );
-
-					}
-					taskDescr = this.taskDescriptions.get( 'tmOBJLoaderStandard' );
-					if ( taskDescr.use ) {
-
-						this.tasksToUse.push( taskDescr );
-						this.workerTaskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, taskDescr.dependencies );
-						await this.loadObjMtl( taskDescr )
-							.then( buffer => {
-								const mt = new MaterialsTransport()
-									.addBuffer( 'modelData', buffer )
-									.setMaterials( taskDescr.materialStore.getMaterials() )
-									.cleanMaterials()
-									.package( false );
-								awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, mt.getMain(), mt.getTransferables() ).catch( e => console.error( e ) ) );
-							} );
-
-					}
 					taskDescr = this.taskDescriptions.get( 'tmOBJLoader2Module' );
 					if ( taskDescr.use ) {
 
@@ -375,7 +321,7 @@
 				/** Only once needed for OBJ/MTL initialization */
 				async loadObjMtl ( taskDescr ) {
 
-					let fileLoader = new FileLoader();
+					let fileLoader = new THREE.FileLoader();
 					fileLoader.setResponseType( 'arraybuffer' );
 
 					let loadMtl = new Promise(resolve => {
@@ -666,8 +612,6 @@
 				tmProtoExampleModule: false,
 				tmProtoExampleModuleNoThree: false,
 				tmProtoExampleMain: false,
-				tmOBJLoaderModule: false,
-				tmOBJLoaderStandard: false,
 				tmOBJLoader2Module: false,
 				tmOBJLoader2Standard: false,
 				maxParallelExecutions: 0,
@@ -680,8 +624,6 @@
 					this.tmProtoExampleModule = app.taskDescriptions.get( 'tmProtoExampleModule' ).use;
 					this.tmProtoExampleModuleNoThree = app.taskDescriptions.get( 'tmProtoExampleModuleNoThree' ).use;
 					this.tmProtoExampleMain = app.taskDescriptions.get( 'tmProtoExampleMain' ).use;
-					this.tmOBJLoaderModule = app.taskDescriptions.get( 'tmOBJLoaderModule' ).use;
-					this.tmOBJLoaderStandard = app.taskDescriptions.get( 'tmOBJLoaderStandard' ).use;
 					this.tmOBJLoader2Module = app.taskDescriptions.get( 'tmOBJLoader2Module' ).use;
 					this.tmOBJLoader2Standard = app.taskDescriptions.get( 'tmOBJLoader2Standard' ).use;
 					this.maxParallelExecutions = app.workerTaskManager.getMaxParallelExecutions();
@@ -783,25 +725,15 @@
 			tmControls.controls[ index ] = gui.add( tmControls, taskName3 ).name( 'Worker Standard Main' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName3 ).use = value; } );
 
-			let taskName4 = 'tmOBJLoaderModule';
+			let taskName4 = 'tmOBJLoader2Module';
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader Module' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName4 ).name( 'OBJLoader2Parser Module' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName4 ).use = value; } );
 
-			let taskName5 = 'tmOBJLoaderStandard';
+			let taskName5 = 'tmOBJLoader2Standard';
 			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName5 ).name( 'OBJLoader Standard' );
+			tmControls.controls[ index ] = gui.add( tmControls, taskName5 ).name( 'OBJLoader2Parser Standard' );
 			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName5 ).use = value; } );
-
-			let taskName6 = 'tmOBJLoader2Module';
-			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName6 ).name( 'OBJLoader2Parser Module' );
-			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName6 ).use = value; } );
-
-			let taskName7 = 'tmOBJLoader2Standard';
-			index++;
-			tmControls.controls[ index ] = gui.add( tmControls, taskName7 ).name( 'OBJLoader2Parser Standard' );
-			tmControls.controls[ index ].onChange( value => { app.taskDescriptions.get( taskName7 ).use = value; } );
 
 			index++;
 			tmControls.controls[ index ] = gui.add( tmControls, 'maxParallelExecutions', 1, 32 ).step( 1 ).name( 'Maximum Parallel Executions' );

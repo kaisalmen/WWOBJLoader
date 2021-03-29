@@ -1,7 +1,7 @@
 {
   "name": "wwobjloader2",
   "version": "4.0.0-dev",
-  "description": "New OBJLoader utilizing web worker for three.js",
+  "description": "OBJLoader2 & WorkerTaskManager for three.js",
   "main": "build/WLOBJLoader2.js",
   "author": "kaisalmen",
   "license": "MIT",
@@ -17,34 +17,33 @@
     "LICENSE",
     "README.md",
     "CHANGELOG.md",
-    "examples/webgl_loader_assetpipeline.html",
-    "examples/webgl_loader_assetpipeline_obj_stage.html",
     "examples/webgl_loader_obj2.html",
-    "examples/webgl_loader_obj2_bugverify.html",
     "examples/webgl_loader_obj2_options.html",
     "examples/webgl_loader_obj2_workermodulesupport.html",
-    "examples/models/obj/verify/gulpfile.js",
-    "examples/models/obj/verify/verify.html",
-    "examples/models/obj/verify/verify.mtl",
-    "examples/models/obj/verify/verify.obj"
+    "examples/wtm_potentially_infinite.html",
+    "examples/wtm_transferables.html",
+    "examples/jsm/loaders/OBJLoader2.*",
+    "examples/jsm/loaders/OBJLoader2Parallel.*",
+    "examples/jsm/loaders/workerTaskManager/WorkerTaskManager.*",
+    "examples/jsm/loaders/workerTaskManager/utils/*",
+    "examples/jsm/loaders/workerTaskManager/worker/defaultRouting.*",
+    "examples/jsm/loaders/workerTaskManager/worker/tmModuleExample.*",
+    "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.*",
+    "examples/jsm/loaders/workerTaskManager/worker/transferableWorker*"
   ],
-  "directories": {
-    "resource": "resource",
-    "test": "test"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.125.2",
-    "fflate": "^0.6.2"
+    "three": "^0.126.1"
   },
   "devDependencies": {
     "del": "^6.0.0",
+    "fflate": "^0.6.9",
     "gulp": "^4.0.2",
     "gulp-jsdoc3": "^3.0.0",
-    "typescript": "^4.1.5"
+    "typescript": "^4.2.3"
   }
 }

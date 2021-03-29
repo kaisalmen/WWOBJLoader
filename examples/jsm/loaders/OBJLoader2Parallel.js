@@ -9,7 +9,7 @@ import {
 	LineSegments,
 	Points,
 	MeshStandardMaterial
-} from '../../../build/three.module.js';
+} from '../../../node_modules/three/build/three.module.js';
 import { OBJLoader2 } from './OBJLoader2.js';
 import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
 import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';

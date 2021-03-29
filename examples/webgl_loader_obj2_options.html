@@ -21,13 +21,12 @@
 
 			'use strict';
 
-			import * as THREE from '../build/three.module.js';
-			import { GUI } from './jsm/libs/dat.gui.module.js';
+			import * as THREE from '../node_modules/three/build/three.module.js';
+			import { GUI } from '../node_modules/three/examples/jsm/libs/dat.gui.module.js';
+			import { TrackballControls } from "../node_modules/three/examples/jsm/controls/TrackballControls.js";
+			import { VertexNormalsHelper } from "../node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js";
+			import { MTLLoader } from "../node_modules/three/examples/jsm/loaders/MTLLoader.js";
 
-			import { TrackballControls } from "./jsm/controls/TrackballControls.js";
-			import { VertexNormalsHelper } from "./jsm/helpers/VertexNormalsHelper.js";
-
-			import { MTLLoader } from "./jsm/loaders/MTLLoader.js";
 			import { MtlObjBridge } from "./jsm/loaders/obj2/MtlObjBridge.js";
 			import { OBJLoader2 } from "./jsm/loaders/OBJLoader2.js";
 			import { OBJLoader2Parallel } from "./jsm/loaders/OBJLoader2Parallel.js";

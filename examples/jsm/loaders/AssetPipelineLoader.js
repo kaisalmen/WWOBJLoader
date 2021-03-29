@@ -2,10 +2,9 @@
  * @author Kai Salmen / www.kaisalmen.de
  */
 
+import { FileLoader } from "../../../build/three.module.js";
 import { ResourceDescriptor } from "./pipeline/utils/ResourceDescriptor.js";
-import { FileLoaderBufferAsync } from "./pipeline/utils/FileLoaderBufferAsync.js";
 import { ObjectManipulator } from "./workerTaskManager/utils/TransportUtils.js";
-
 
 /**
  *
@@ -312,9 +311,10 @@ class AssetTask {
 	}
 
 	async loadResource () {
+		let fileLoader = new FileLoader();
+		fileLoader.setResponseType( 'arraybuffer' );
+		let buffer = await fileLoader.loadAsync( this.getResourceDescriptor().getUrl().href, report => console.log( report ) );
 
-		let fileLoaderBufferAsync = new FileLoaderBufferAsync();
-		let buffer = await fileLoaderBufferAsync.loadFileAsync( this.getResourceDescriptor().getUrl(), ( report => console.log( report.detail.text ) ) );
 		this.resourceDescriptor.setBuffer( buffer );
 		return this.resourceDescriptor;
 
