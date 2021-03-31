@@ -24,7 +24,7 @@ The directory structure now mimics the three.js directory structure to easy port
 - **examples/jsm**: Contains the sources for the loaders
 - **examples/models**: Contains OBJs, MTLs and textures
 
-Use the [index.html](./index.html) to easily access the different examples.
+Use the [index.html](public/index.html) to easily access the different examples.
 
 ## Development Environments
 
@@ -74,7 +74,7 @@ The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing cap
 - Parser can be executed in worker 
 - `OBJLoader2.parse` and `OBJLoader2Parallel.parse` methods accept `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower
 - It features indexed rendering including vertex reduction.
-- Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](./examples/webgl_loader_obj2_options.html)**).
+- Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](public/webgl_loader_obj2_options.html)**).
 - Face N-Gons are supported
 - Multi-Materials are created when needed
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.

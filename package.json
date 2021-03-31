@@ -2,7 +2,7 @@
   "name": "wwobjloader2",
   "version": "4.0.0-dev",
   "description": "OBJLoader2 & WorkerTaskManager for three.js",
-  "main": "build/WLOBJLoader2.js",
+  "main": "src/index.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
@@ -17,33 +17,36 @@
     "LICENSE",
     "README.md",
     "CHANGELOG.md",
-    "examples/webgl_loader_obj2.html",
-    "examples/webgl_loader_obj2_options.html",
-    "examples/webgl_loader_obj2_workermodulesupport.html",
-    "examples/wtm_potentially_infinite.html",
-    "examples/wtm_transferables.html",
-    "examples/jsm/loaders/OBJLoader2.*",
-    "examples/jsm/loaders/OBJLoader2Parallel.*",
-    "examples/jsm/loaders/workerTaskManager/WorkerTaskManager.*",
-    "examples/jsm/loaders/workerTaskManager/utils/*",
-    "examples/jsm/loaders/workerTaskManager/worker/defaultRouting.*",
-    "examples/jsm/loaders/workerTaskManager/worker/tmModuleExample.*",
-    "examples/jsm/loaders/workerTaskManager/worker/tmOBJLoader2.*",
-    "examples/jsm/loaders/workerTaskManager/worker/transferableWorker*"
+    "public/webgl_loader_obj2.html",
+    "public/webgl_loader_obj2_options.html",
+    "public/webgl_loader_obj2_workermodulesupport.html",
+    "public/wtm_potentially_infinite.html",
+    "public/wtm_transferables.html",
+    "src/loaders/OBJLoader2.*",
+    "src/loaders/OBJLoader2Parallel.*",
+    "src/loaders/workerTaskManager/WorkerTaskManager.*",
+    "src/loaders/workerTaskManager/utils/*",
+    "src/loaders/workerTaskManager/worker/defaultRouting.*",
+    "src/loaders/workerTaskManager/worker/tmModuleExample.*",
+    "src/loaders/workerTaskManager/worker/tmOBJLoader2.*",
+    "src/loaders/workerTaskManager/worker/transferableWorker*"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "snowpack dev",
+    "build": "snowpack build"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.126.1"
+    "three": "^0.127.0"
   },
   "devDependencies": {
     "del": "^6.0.0",
     "fflate": "^0.6.9",
     "gulp": "^4.0.2",
     "gulp-jsdoc3": "^3.0.0",
+    "snowpack": "^3.2.0",
     "typescript": "^4.2.3"
   }
 }
