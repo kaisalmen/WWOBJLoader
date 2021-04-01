@@ -9,24 +9,6 @@
 #/examples/jsm/loaders/OBJLoader.d.ts
 /public/models/draco
 /public/models/gltf
-/public/models/obj/14
-/public/models/obj/21
-/public/models/obj/27
-/public/models/obj/1701
-/public/models/obj/11707
-/public/models/obj/11811
-/public/models/obj/12120
-/public/models/obj/12324
-/public/models/obj/12597
-/public/models/obj/14032
-/public/models/obj/capsule
-/public/models/obj/datamogensen
-/public/models/obj/emmy3d
-/public/models/obj/PTV1
-/public/models/obj/rolleiflex
-/public/models/obj/totoro
-/public/models/obj/vive-controller
-/public/models/obj/zomax
-/public/models/pcd
+/public/models/obj/bugs/
 
 /node_modules

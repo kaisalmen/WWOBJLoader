@@ -31,7 +31,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
 	static DEFAULT_JSM_WORKER_PATH = './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
-	static DEFAULT_JSM_THREEJS_PATH = '../node_modules/three/build/three.min.js';
+	static DEFAULT_JSM_THREEJS_PATH = '../../libs/three.min.js';
 
 	/**
 	 *
@@ -140,7 +140,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	 */
 	async _buildWorkerCode ( dataTransport ) {
 
-		if ( this.workerTaskManager === null || ! this.workerTaskManager instanceof WorkerTaskManager ) {
+		if ( this.workerTaskManager === null || ! ( this.workerTaskManager instanceof WorkerTaskManager ) ) {
 
 			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
 			this.workerTaskManager = new WorkerTaskManager( 1 );

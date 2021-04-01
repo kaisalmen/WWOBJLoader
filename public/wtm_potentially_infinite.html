@@ -117,7 +117,7 @@
 						funcInit: WorkerFunctions.workerStandardInit,
 						funcExec: WorkerFunctions.workerStandardExec,
 						dependencies: [
-							{ url: "../node_modules/three/build/three.min.js" },
+							{ url: '../../libs/three.min.js' },
 							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
 							{ code: ObjectUtils.serializeClass( DataTransport ) },
 							{ code: ObjectUtils.serializeClass( GeometryTransport ) }
@@ -127,13 +127,13 @@
 						name: 'tmProtoExampleModule',
 						use: true,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmModuleExample.js'
+						module: './dist/loaders/workerTaskManager/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
 						use: true,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
+						module: './dist/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',
@@ -147,7 +147,7 @@
 						modelName: 'female02',
 						use: true,
 						fallback: false,
-						module: './jsm/loaders/workerTaskManager/worker/tmOBJLoader2.js',
+						module: './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js',
 						filenameMtl: './models/obj/female02/female02.mtl',
 						filenameObj: './models/obj/female02/female02.obj',
 						materialStore: new MaterialStore( true )
@@ -162,7 +162,7 @@
 						filenameMtl: './models/obj/male02/male02.mtl',
 						filenameObj: './models/obj/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
-						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../node_modules/three/build/three.min.js' )
+						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three.min.js' )
 					} );
 
 					this.tasksToUse = [];

@@ -5,7 +5,8 @@
 module.exports = {
   mount: {
     "src": "/dist",
-    "public": "/"
+    "public": "/",
+    "node_modules/three/build/": "/libs/"
   },
   plugins: [
     /* ... */
@@ -19,6 +20,12 @@ module.exports = {
   buildOptions: {
     /* ... */
   },
+  optimize: {
+    bundle: true,
+    minify: true,
+    target: 'es2018',
+    treeshake: true,
+  },
   exclude: [
     '**/*.sh',
     '**/*/*.d.ts',
@@ -28,9 +35,12 @@ module.exports = {
     '**/examples/**',
     '**/public/models/draco/**',
     '**/public/models/gltf/**',
+    '**/public/models/obj/bugs/**',
+    '**/public/models/obj/verify/**',
     '**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
     '**/src/loaders/OBJLoader.*',
     '**/public/webgl_loader_workertaskmanager.html',
+    '**/public/webgl_loader_assetpipeline_obj_stage.html',
     '**/LICENSE',
     '**/Dockerfile',
     '**/README.md',
