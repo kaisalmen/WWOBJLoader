@@ -1,4 +1,4 @@
-import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
+import { WorkerTaskManagerDefaultRouting } from './defaultRouting.js';
 
 const TransferableWorkerTest2 = {
 

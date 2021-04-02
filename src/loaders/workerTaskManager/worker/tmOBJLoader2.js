@@ -5,14 +5,14 @@ import {
 	MeshTransport,
 	ObjectUtils,
 	ObjectManipulator
-} from "../utils/TransportUtils.js";
+} from '../utils/TransportUtils.js';
 import { MaterialUtils } from '../utils/MaterialUtils.js';
-import { OBJLoader2Parser } from "../../OBJLoader2.js";
-import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
+import { OBJLoader2Parser } from '../../OBJLoader2.js';
+import { WorkerTaskManagerDefaultRouting } from './defaultRouting.js';
 
-const OBJ2LoaderWorker = {
+class OBJ2LoaderWorker {
 
-	buildStandardWorkerDependencies: function ( threeJsLocation ) {
+	static buildStandardWorkerDependencies ( threeJsLocation ) {
 		return [
 			{ url: threeJsLocation },
 			{ code: '\n\n' },
@@ -33,9 +33,9 @@ const OBJ2LoaderWorker = {
 			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
 			{ code: ObjectUtils.serializeClass( ObjectManipulator ) }
 		]
-	},
+	}
 
-	init: function ( context, id, config ) {
+	static init ( context, id, config ) {
 
 		const materialsTransport = new MaterialsTransport().loadData( config );
 		context.obj2 = {
@@ -86,9 +86,9 @@ const OBJ2LoaderWorker = {
 			id: id
 		} );
 
-	},
+	}
 
-	execute: function ( context, id, config ) {
+	static execute ( context, id, config ) {
 
 		if ( context.obj2.parser.usedBefore ) {
 

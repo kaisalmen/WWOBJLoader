@@ -83,14 +83,14 @@
 				Scene,
 				Vector3,
 				WebGLRenderer
-			} from "../../../../build/three.module.js";
+			} from 'three';
 
-			import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
-			import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+			import { TrackballControls } from 'three-stdlib';
+			import { MTLLoader } from 'three-stdlib';
 
-			import { MtlObjBridge } from "../../../../src/loaders/obj2/MtlObjBridge.js";
-			import { OBJLoader } from "../../../../src/loaders/OBJLoader.js";
-			import { OBJLoader2 } from "../../../../src/loaders/OBJLoader2.js";
+			import { MtlObjBridge } from '../../../../src/loaders/obj2/MtlObjBridge.js';
+			import { OBJLoader } from 'three-stdlib';
+			import { OBJLoader2 } from '../../../../src/loaders/OBJLoader2.js';
 
 			const OBJLoaderVerify = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -166,7 +166,7 @@
 					};
 
 					let onLoadMtl = function ( mtlParseResult ) {
-						objLoader.setMaterials( mtlParseResult.materials );
+						objLoader.setMaterials( mtlParseResult );
 						objLoader.load( './verify.obj', function ( object ) {
 							object.position.y = -100;
 							scope.scene.add( object );

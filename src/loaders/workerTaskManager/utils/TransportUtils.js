@@ -10,10 +10,8 @@ import {
 	Texture,
 	Material,
 	MaterialLoader
-} from "three";
-import {
-	MaterialUtils
-} from './MaterialUtils.js';
+} from 'three';
+import { MaterialUtils } from './MaterialUtils.js';
 
 /**
  * Define a base structure that is used to ship data in between main and workers.

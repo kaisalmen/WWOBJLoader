@@ -19,17 +19,17 @@
 			'use strict';
 
 			import * as THREE from 'three';
-			import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
-			import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+			import { TrackballControls } from 'three-stdlib';
+			import { MTLLoader } from 'three-stdlib';
 
-			import { OBJLoader2 } from "../src/loaders/OBJLoader2.js";
-			import { MtlObjBridge } from "../src/loaders/obj2/MtlObjBridge.js";
-			import { ResourceDescriptor } from "../src/loaders/pipeline/utils/ResourceDescriptor.js";
+			import { OBJLoader2 } from '../src/loaders/OBJLoader2.js';
+			import { MtlObjBridge } from '../src/loaders/obj2/MtlObjBridge.js';
+			import { ResourceDescriptor } from '../src/loaders/pipeline/utils/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from "../src/loaders/AssetPipelineLoader.js";
+			} from '../src/loaders/AssetPipelineLoader.js';
 
 
 			const AutoAssetLoaderExample = function ( elementToBindTo ) {

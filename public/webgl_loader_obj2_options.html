@@ -22,16 +22,15 @@
 			'use strict';
 
 			import * as THREE from 'three';
-			import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
-			import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
-			import { VertexNormalsHelper } from "three/examples/jsm/helpers/VertexNormalsHelper.js";
-			import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+			import { GUI } from 'dat.gui';
+			import { TrackballControls } from 'three-stdlib';
+			import { VertexNormalsHelper } from 'three-stdlib';
+			import { MTLLoader } from 'three-stdlib';
 
-			import { MtlObjBridge } from "../src/loaders/obj2/MtlObjBridge.js";
-			import { OBJLoader2 } from "../src/loaders/OBJLoader2.js";
-			import { OBJLoader2Parallel } from "../src/loaders/OBJLoader2Parallel.js";
-
-			import { WorkerTaskManager } from "../src/loaders/workerTaskManager/WorkerTaskManager.js";
+			import { MtlObjBridge } from '../src/loaders/obj2/MtlObjBridge.js';
+			import { OBJLoader2 } from '../src/loaders/OBJLoader2.js';
+			import { OBJLoader2Parallel } from '../src/loaders/OBJLoader2Parallel.js';
+			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
 
 			class WWOBJLoader2Example {
 

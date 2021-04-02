@@ -16,7 +16,7 @@ import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
 import {
 	DataTransport,
 	MeshTransport
-} from "./workerTaskManager/utils/TransportUtils.js";
+} from './workerTaskManager/utils/TransportUtils.js';
 import { MaterialUtils } from './workerTaskManager/utils/MaterialUtils.js';
 
 /**
@@ -31,7 +31,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
 	static DEFAULT_JSM_WORKER_PATH = './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
-	static DEFAULT_JSM_THREEJS_PATH = '../../libs/three.min.js';
+	static DEFAULT_JSM_THREEJS_PATH = '../libs/three.min.js';
 
 	/**
 	 *
@@ -103,7 +103,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * Override the default URL for three.js. This is only required when standard workers are build (preferJsmWorker=false).
 	 *
-	 * @param {URL} threejsUrl Provide complete three.module.js URL otherwise relative path to this module may not be correct
+	 * @param {URL} threejsUrl Provide complete three module URL otherwise relative path to this module may not be correct
 	 * @return {OBJLoader2Parallel}
 	 */
 	setThreejsLocation ( threejsUrl ) {

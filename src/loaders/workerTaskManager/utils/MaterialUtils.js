@@ -2,7 +2,7 @@
  * Development repository: https://github.com/kaisalmen/WWOBJLoader
  */
 
-import { Material } from "three";
+import { Material } from 'three';
 
 /**
  * Static functions useful in the context of handling materials.

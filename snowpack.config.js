@@ -12,19 +12,32 @@ module.exports = {
     /* ... */
   ],
   packageOptions: {
-    /* ... */
+/*
+      external: [
+        "three",
+        "three/examples/jsm/controls/TrackballControls.js",
+        "three/examples/jsm/libs/dat.gui.module.js",
+        "three/examples/jsm/helpers/VertexNormalsHelper.js"
+      ],
+*/
+    source: "local"
   },
   devOptions: {
-    /* ... */
+    open: "none"
   },
   buildOptions: {
     /* ... */
   },
   optimize: {
     bundle: true,
-    minify: true,
-    target: 'es2018',
-    treeshake: true,
+    minify: false,
+    treeshake: false,
+    target: 'es2020',
+    splitting: false,
+    preload: false,
+    entrypoints: "auto", /* ['src/obj2.js', 'src/wtm.js', 'src/obj2mtl.js'], */
+    sourcemap: 'external',
+    manifest: false
   },
   exclude: [
     '**/*.sh',
@@ -33,10 +46,9 @@ module.exports = {
     '**/archive/**',
     '**/dev/*',
     '**/examples/**',
-    '**/public/models/draco/**',
-    '**/public/models/gltf/**',
-    '**/public/models/obj/bugs/**',
-    '**/public/models/obj/verify/**',
+    '**/public/models/draco/**/*',
+    '**/public/models/gltf/**/*',
+    '**/public/models/obj/extra/**/*',
     '**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
     '**/src/loaders/OBJLoader.*',
     '**/public/webgl_loader_workertaskmanager.html',

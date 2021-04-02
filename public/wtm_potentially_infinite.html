@@ -20,20 +20,20 @@
 			'use strict';
 
 			import * as THREE from 'three';
-			import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
-			import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
-			import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
+			import { GUI } from 'dat.gui';
+			import { TrackballControls } from 'three-stdlib';
+			import { MTLLoader } from 'three-stdlib';
 
-			import { WorkerTaskManager } from "../src/loaders/workerTaskManager/WorkerTaskManager.js";
+			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
 			import {
 				DataTransport,
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from "../src/loaders/workerTaskManager/utils/TransportUtils.js"
-			import { MaterialStore } from "../src/loaders/workerTaskManager/utils/MaterialStore.js"
-			import { OBJ2LoaderWorker } from "../src/loaders/workerTaskManager/worker/tmOBJLoader2.js";
+			} from '../src/loaders/workerTaskManager/utils/TransportUtils.js';
+			import { MaterialStore } from '../src/loaders/workerTaskManager/utils/MaterialStore.js';
+			import { OBJ2LoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -114,8 +114,8 @@
 						name: 'tmProtoExample',
 						use: true,
 						fallback: false,
-						funcInit: WorkerFunctions.workerStandardInit,
-						funcExec: WorkerFunctions.workerStandardExec,
+						funcInit: WorkerFunctions.init,
+						funcExec: WorkerFunctions.execute,
 						dependencies: [
 							{ url: '../../libs/three.min.js' },
 							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
@@ -139,8 +139,8 @@
 						name: 'tmProtoExampleMain',
 						use: false,
 						fallback: true,
-						funcInit: WorkerFunctions.workerStandardInit,
-						funcExec: WorkerFunctions.workerStandardExec
+						funcInit: WorkerFunctions.init,
+						funcExec: WorkerFunctions.execute
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Module', {
 						name: 'tmOBJLoader2Module',
@@ -564,9 +564,9 @@
 			/**
 			 * Simplest way to define a worker for {@link WorkerTaskManager}
 			 */
-			const WorkerFunctions = {
+			class WorkerFunctions {
 
-				workerStandardInit: function ( context, id, config ) {
+				static init ( context, id, config ) {
 					context.storage = {
 						whoami: config.id,
 					};
@@ -576,9 +576,9 @@
 						id: id
 					} );
 
-				},
+				}
 
-				workerStandardExec: function ( context, id, config ) {
+				static execute ( context, id, config ) {
 
 					let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 					bufferGeometry.name = 'tmProto' + config.id;

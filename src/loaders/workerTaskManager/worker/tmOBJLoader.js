@@ -4,12 +4,12 @@ import {
 	GeometryTransport,
 	MeshTransport,
 	ObjectUtils,
-} from "../utils/TransportUtils.js";
+} from '../utils/TransportUtils.js';
 import {
 	MaterialUtils
 } from '../utils/MaterialUtils.js';
-import { OBJLoader } from "../../OBJLoader.js";
-import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
+import { OBJLoader } from 'three-stdlib';
+import { WorkerTaskManagerDefaultRouting } from './defaultRouting.js';
 
 const OBJLoaderWorker = {
 

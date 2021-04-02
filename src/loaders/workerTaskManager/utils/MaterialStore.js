@@ -8,8 +8,8 @@ import {
 	LineBasicMaterial,
 	PointsMaterial,
 	VertexColors
-} from "three";
-import { MaterialUtils } from "./MaterialUtils.js";
+} from 'three';
+import { MaterialUtils } from './MaterialUtils.js';
 
 /**
  * Helper class around an object storing materials by name.

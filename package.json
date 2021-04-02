@@ -2,7 +2,6 @@
   "name": "wwobjloader2",
   "version": "4.0.0-dev",
   "description": "OBJLoader2 & WorkerTaskManager for three.js",
-  "module": "src/index.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
@@ -34,12 +33,15 @@
   "scripts": {
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
     "dev": "snowpack dev",
-    "build": "snowpack build"
+    "build": "snowpack build",
+    "prepare": "echo hello"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.127.0"
+    "three": "^0.127.0",
+    "three-stdlib": "^1.1.4",
+    "dat.gui": "^0.7.7"
   },
   "devDependencies": {
     "del": "^6.0.0",

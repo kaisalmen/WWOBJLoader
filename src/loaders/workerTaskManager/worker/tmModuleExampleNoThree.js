@@ -1,9 +1,9 @@
 import { GeometryTransport } from "../utils/TransportUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
-const WTMModuleExampleNoThree = {
+class WTMModuleExampleNoThree {
 
-	init: function( context, id, config ) {
+	static init ( context, id, config ) {
 
 		context.config = config;
 		context.postMessage( {
@@ -11,9 +11,9 @@ const WTMModuleExampleNoThree = {
 			id: id
 		} );
 
-	},
+	}
 
-	execute: function ( context, id, config ) {
+	static execute ( context, id, config ) {
 
 		const geometry = new GeometryTransport().loadData( context.config ).reconstruct( true ).getBufferGeometry();
 		geometry.name = 'tmProto' + config.id;

@@ -20,19 +20,19 @@
 			'use strict';
 
 			import * as THREE from 'three';
-			import { TrackballControls } from "three/examples/jsm/controls/TrackballControls.js";
+			import { TrackballControls } from 'three-stdlib';
 
-			import { WorkerTaskManager } from "../src/loaders/workerTaskManager/WorkerTaskManager.js";
+			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
 			import {
 				DataTransport,
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from "../src/loaders/workerTaskManager/utils/TransportUtils.js"
-			import { MaterialUtils } from "../src/loaders/workerTaskManager/utils/MaterialUtils.js"
-			import { MaterialStore } from "../src/loaders/workerTaskManager/utils/MaterialStore.js"
-			import { OBJLoaderWorker } from "../src/loaders/workerTaskManager/worker/tmOBJLoader.js";
+			} from '../src/loaders/workerTaskManager/utils/TransportUtils.js';
+			import { MaterialUtils } from '../src/loaders/workerTaskManager/utils/MaterialUtils.js';
+			import { MaterialStore } from '../src/loaders/workerTaskManager/utils/MaterialStore.js';
+			import { OBJLoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader.js';
 
 			/**
 			 * The aim of this example is to show two possible ways how to use the {@link WorkerTaskManager}:

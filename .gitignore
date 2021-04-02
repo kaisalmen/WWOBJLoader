@@ -4,11 +4,9 @@
 /build
 /docs/
 
-#/examples/js/loaders/OBJLoader.js
-#/examples/jsm/loaders/OBJLoader.js
-#/examples/jsm/loaders/OBJLoader.d.ts
 /public/models/draco
 /public/models/gltf
-/public/models/obj/bugs/
+/public/models/obj/bugs
+/public/models/obj/extra
 
 /node_modules

@@ -3,8 +3,8 @@
  * Proposed by Don McCurdy / https://www.donmccurdy.com
  */
 
-import { FileLoader } from "three";
-import { WorkerTaskManagerDefaultRouting } from "./worker/defaultRouting.js";
+import { FileLoader } from 'three';
+import { WorkerTaskManagerDefaultRouting } from './worker/defaultRouting.js';
 
 /**
  * Register one to many tasks type to the WorkerTaskManager. Then init and enqueue a worker based execution by passing
@@ -368,10 +368,28 @@ class WorkerTypeDefinition {
             this.functions.comRouting = WorkerTaskManagerDefaultRouting.comRouting;
 
         }
-        this.workers.code.push( 'const init = ' + this.functions.init.toString() + ';\n\n' );
-        this.workers.code.push( 'const execute = ' + this.functions.execute.toString() + ';\n\n' );
-        this.workers.code.push( 'const comRouting = ' + this.functions.comRouting.toString() + ';\n\n' );
+        this._addWorkerCode( this.functions.init.toString() );
+        this._addWorkerCode( this.functions.execute.toString() );
+        this._addWorkerCode( this.functions.comRouting.toString() );
         this.workers.code.push( 'self.addEventListener( "message", message => comRouting( self, message, null, init, execute ), false );' );
+
+    }
+
+    /**
+     *
+     * @param {string} functionString A function as string
+     * @private
+     */
+    _addWorkerCode ( functionString ) {
+        if ( functionString.startsWith('function') ) {
+
+            this.workers.code.push( functionString + ';\n\n' );
+
+        } else {
+
+            this.workers.code.push( 'function ' + functionString + ';\n\n' );
+
+        }
 
     }
 

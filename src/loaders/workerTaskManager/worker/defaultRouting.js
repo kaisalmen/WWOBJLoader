@@ -1,6 +1,6 @@
-const WorkerTaskManagerDefaultRouting = {
+class WorkerTaskManagerDefaultRouting {
 
-	comRouting: function ( context, message, object, initFunction, executeFunction ) {
+	static comRouting ( context, message, object, initFunction, executeFunction ) {
 
 		let payload = message.data;
 		if ( payload.cmd === 'init' ) {
@@ -8,6 +8,7 @@ const WorkerTaskManagerDefaultRouting = {
 			if ( object !== undefined && object !== null ) {
 
 				object[ initFunction ]( context, payload.workerId, payload.config );
+
 			} else {
 
 				initFunction( context, payload.workerId, payload.config );
@@ -30,6 +31,6 @@ const WorkerTaskManagerDefaultRouting = {
 
 	}
 
-};
+}
 
 export { WorkerTaskManagerDefaultRouting }

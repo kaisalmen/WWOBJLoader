@@ -9,9 +9,5 @@ if [[ ! -d ${DIR_BASE}/build/ts ]]; then
   mkdir -p ${DIR_BASE}/build/ts
 fi
 
-if [[ ! -d ${DIR_BASE}/examples/js/loaders ]]; then
-    mkdir -p ${DIR_BASE}/examples/js/loaders
-fi
-
 echo "Executing npm install"
 ( cd ${DIR_BASE} && npm install )
