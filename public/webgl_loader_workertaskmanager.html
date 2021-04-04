@@ -29,9 +29,9 @@
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from '../src/loaders/workerTaskManager/utils/TransportUtils.js';
-			import { MaterialUtils } from '../src/loaders/workerTaskManager/utils/MaterialUtils.js';
-			import { MaterialStore } from '../src/loaders/workerTaskManager/utils/MaterialStore.js';
+			} from '../src/loaders/utils/TransportUtils.js';
+			import { MaterialUtils } from '../src/loaders/utils/MaterialUtils.js';
+			import { MaterialStore } from '../src/loaders/utils/MaterialStore.js';
 			import { OBJLoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader.js';
 
 			/**
@@ -150,7 +150,7 @@
 						name: 'InlineWorker',
 						funcInit: InlineWorker.workerStandardInit,
 						funcExec: InlineWorker.workerStandardExec,
-						dependencies: InlineWorker.buildStandardWorkerDependencies( '../../libs/three.min.js' )
+						dependencies: InlineWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js' )
 					};
 					this.tasksToUse.push( taskDescr );
 					this.workerTaskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, taskDescr.dependencies );
@@ -161,7 +161,7 @@
 						filenameObj: './models/obj/female02/female02_vertex_colors.obj',
 						funcInit: OBJLoaderWorker.init,
 						funcExec: OBJLoaderWorker.execute,
-						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../../libs/three.min.js', './js/loaders/OBJLoader.js' )
+						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js', '../../libs/loaders/OBJLoader.js' )
 					};
 					this.tasksToUse.push( taskDescrObj );
 					this.workerTaskManager.registerTaskType( taskDescrObj.name, taskDescrObj.funcInit, taskDescrObj.funcExec, null, false, taskDescrObj.dependencies );

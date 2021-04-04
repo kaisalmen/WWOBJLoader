@@ -1,4 +1,4 @@
-import { GeometryTransport } from "../utils/TransportUtils.js";
+import { GeometryTransport } from "../../utils/TransportUtils.js";
 import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
 class WTMModuleExampleNoThree {

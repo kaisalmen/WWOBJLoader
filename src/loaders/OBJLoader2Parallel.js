@@ -16,8 +16,8 @@ import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
 import {
 	DataTransport,
 	MeshTransport
-} from './workerTaskManager/utils/TransportUtils.js';
-import { MaterialUtils } from './workerTaskManager/utils/MaterialUtils.js';
+} from './utils/TransportUtils.js';
+import { MaterialUtils } from './utils/MaterialUtils.js';
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -31,7 +31,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
 	static DEFAULT_JSM_WORKER_PATH = './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
-	static DEFAULT_JSM_THREEJS_PATH = '../libs/three.min.js';
+	static DEFAULT_JSM_THREEJS_PATH = '../libs/three/three.min.js';
 
 	/**
 	 *

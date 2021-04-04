@@ -8,9 +8,9 @@ import {
 	MaterialsTransport,
 	ObjectUtils,
 	ObjectManipulator
-} from "./loaders/workerTaskManager/utils/TransportUtils.js";
-import { MaterialUtils } from "./loaders/workerTaskManager/utils/MaterialUtils.js";
-import { MaterialStore } from "./loaders/workerTaskManager/utils/MaterialStore.js";
+} from "./loaders/utils/TransportUtils.js";
+import { MaterialUtils } from "./loaders/utils/MaterialUtils.js";
+import { MaterialStore } from "./loaders/utils/MaterialStore.js";
 
 // examples
 /*

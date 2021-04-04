@@ -5,8 +5,8 @@ import {
 	MeshTransport,
 	ObjectUtils,
 	ObjectManipulator
-} from '../utils/TransportUtils.js';
-import { MaterialUtils } from '../utils/MaterialUtils.js';
+} from '../../utils/TransportUtils.js';
+import { MaterialUtils } from '../../utils/MaterialUtils.js';
 import { OBJLoader2Parser } from '../../OBJLoader2.js';
 import { WorkerTaskManagerDefaultRouting } from './defaultRouting.js';
 

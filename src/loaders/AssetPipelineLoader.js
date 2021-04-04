@@ -4,7 +4,7 @@
 
 import { FileLoader } from 'three';
 import { ResourceDescriptor } from './pipeline/utils/ResourceDescriptor.js';
-import { ObjectManipulator } from './workerTaskManager/utils/TransportUtils.js';
+import { ObjectManipulator } from './utils/TransportUtils.js';
 
 /**
  *

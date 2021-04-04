@@ -433,7 +433,7 @@ class WorkerTypeDefinition {
     /**
      * Loads all dependencies and stores each as {@link ArrayBuffer} into the array. Returns if all loading is completed.
      *
-     * @return {<String[]>}
+     * @return {String[]}
      */
     async loadDependencies () {
 

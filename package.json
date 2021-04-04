@@ -16,39 +16,44 @@
     "LICENSE",
     "README.md",
     "CHANGELOG.md",
+    "dist/${name}.commons.js",
+    "dist/${name}.commons.min.js",
+    "dist/${name}.module.js",
+    "dist/${name}.module.min.js",
     "public/webgl_loader_obj2.html",
     "public/webgl_loader_obj2_options.html",
     "public/webgl_loader_obj2_workermodulesupport.html",
     "public/wtm_potentially_infinite.html",
     "public/wtm_transferables.html",
-    "src/loaders/OBJLoader2.*",
-    "src/loaders/OBJLoader2Parallel.*",
-    "src/loaders/workerTaskManager/WorkerTaskManager.*",
-    "src/loaders/workerTaskManager/utils/*",
-    "src/loaders/workerTaskManager/worker/defaultRouting.*",
     "src/loaders/workerTaskManager/worker/tmModuleExample.*",
-    "src/loaders/workerTaskManager/worker/tmOBJLoader2.*",
     "src/loaders/workerTaskManager/worker/transferableWorker*"
   ],
   "scripts": {
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
-    "dev": "snowpack dev",
-    "build": "snowpack build",
-    "prepare": "echo hello"
+    "clean": "rimraf build",
+    "dev": "snowpack dev --verbose",
+    "doc": "jsdoc -c jsdoc.json",
+    "build": "rollup -c",
+    "prepare": "npm run clean && npm run build"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.127.0",
-    "three-stdlib": "^1.1.4",
-    "dat.gui": "^0.7.7"
+    "three": "^0.127.0"
   },
   "devDependencies": {
-    "del": "^6.0.0",
+    "three-stdlib": "^1.1.4",
+    "dat.gui": "^0.7.7",
     "fflate": "^0.6.9",
-    "gulp": "^4.0.2",
-    "gulp-jsdoc3": "^3.0.0",
+    "jsdoc": "^3.6.6",
+    "rimraf": "^3.0.2",
     "snowpack": "^3.2.2",
+    "snowpack-plugin-rollup-bundle": "^0.4.4",
+    "rollup": "^2.44.0",
+    "@rollup/plugin-babel": "^5.3.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "@babel/core": "^7.13.14",
+    "@babel/plugin-proposal-class-properties": "^7.13.0",
     "typescript": "^4.2.3"
   }
 }

@@ -14,9 +14,9 @@ import {
 	BufferGeometry,
 	BufferAttribute,
 } from 'three';
-import { MaterialStore } from './workerTaskManager/utils/MaterialStore.js';
+import { MaterialStore } from './utils/MaterialStore.js';
 // Parser only
-import { MaterialUtils } from './workerTaskManager/utils/MaterialUtils.js';
+import { MaterialUtils } from './utils/MaterialUtils.js';
 
 
 /**

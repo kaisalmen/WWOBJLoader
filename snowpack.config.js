@@ -3,64 +3,59 @@
 
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
-  mount: {
-    "src": "/dist",
-    "public": "/",
-    "node_modules/three/build/": "/libs/"
-  },
-  plugins: [
-    /* ... */
-  ],
-  packageOptions: {
+	mount: {
+		"src": "/dist",
+		"public": "/",
+		"node_modules/three/build": "/libs/three",
+		"node_modules/three/examples/js/loaders": "/libs/loaders"
+	},
+	plugins: [
+		/* ... */
+	],
+	packageOptions: {
+		source: "local"
+	},
+	devOptions: {
+		open: "none"
+	},
+	buildOptions: {
+		/* ... */
+	},
+	optimize: {
 /*
-      external: [
-        "three",
-        "three/examples/jsm/controls/TrackballControls.js",
-        "three/examples/jsm/libs/dat.gui.module.js",
-        "three/examples/jsm/helpers/VertexNormalsHelper.js"
-      ],
+		bundle: true,
+		minify: false,
+		treeshake: false,
+		target: 'es2020',
+		splitting: false,
+		preload: false,
+		entrypoints: "auto", // ['src/index.js'],
+		sourcemap: 'external',
+		manifest: false
 */
-    source: "local"
-  },
-  devOptions: {
-    open: "none"
-  },
-  buildOptions: {
-    /* ... */
-  },
-  optimize: {
-    bundle: true,
-    minify: false,
-    treeshake: false,
-    target: 'es2020',
-    splitting: false,
-    preload: false,
-    entrypoints: "auto", /* ['src/obj2.js', 'src/wtm.js', 'src/obj2mtl.js'], */
-    sourcemap: 'external',
-    manifest: false
-  },
-  exclude: [
-    '**/*.sh',
-    '**/*/*.d.ts',
-    '**/*.tgz',
-    '**/archive/**',
-    '**/dev/*',
-    '**/examples/**',
-    '**/public/models/draco/**/*',
-    '**/public/models/gltf/**/*',
-    '**/public/models/obj/extra/**/*',
-    '**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
-    '**/src/loaders/OBJLoader.*',
-    '**/public/webgl_loader_workertaskmanager.html',
-    '**/public/webgl_loader_assetpipeline_obj_stage.html',
-    '**/LICENSE',
-    '**/Dockerfile',
-    '**/README.md',
-    '**/CHANGELOG.md',
-    '**/gulpfile.js',
-    '**/docker-compose.yml',
-    '**/declaration.tsconfig.json',
-    '**/jsdoc.json'
-  ]
+	},
+	exclude: [
+		'**/*.sh',
+		'**/*/*.d.ts',
+		'**/*.tgz',
+		'**/archive/**',
+		'**/dev/*',
+		'**/examples/**',
+		'**/public/models/draco/**/*',
+		'**/public/models/gltf/**/*',
+		'**/public/models/obj/extra/**/*',
+		'**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
+		'**/src/loaders/OBJLoader.*',
+		'**/public/webgl_loader_workertaskmanager.html',
+		'**/public/webgl_loader_assetpipeline_obj_stage.html',
+		'**/LICENSE',
+		'**/Dockerfile',
+		'**/README.md',
+		'**/CHANGELOG.md',
+		'**/gulpfile.js',
+		'**/docker-compose.yml',
+		'**/declaration.tsconfig.json',
+		'**/jsdoc.json'
+	]
 };
 

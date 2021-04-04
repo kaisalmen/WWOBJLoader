@@ -1,10 +1,3 @@
-/**
- * @author Kai Salmen / https://kaisalmen.de
- * Development repository: https://github.com/kaisalmen/WWOBJLoader
- */
-
-import { MTLLoader } from 'three-stdlib';
-
 class MtlObjBridge {
 
 	/**
@@ -23,16 +16,16 @@ class MtlObjBridge {
 	}
 
 	/**
-	 * Returns the array instance of {@link MTLLoader.MaterialCreator}.
+	 * Returns the array instance of {@link Material}.
 	 *
-	 * @param materialCreator instance of {@link MTLLoader.MaterialCreator}
+	 * @param materialCreator instance of MTLLoader
 	 */
 	static addMaterialsFromMtlLoader( materialCreator ) {
 
 		let newMaterials = {};
-		if ( materialCreator instanceof MTLLoader.MaterialCreator ) {
+		if ( materialCreator[ 'preload' ] !== undefined && materialCreator[ 'preload' ] instanceof Function ) {
 
-			materialCreator.preload();
+			materialCreator[ 'preload' ]();
 			newMaterials = materialCreator.materials;
 
 		}

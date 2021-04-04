@@ -31,8 +31,8 @@
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from '../src/loaders/workerTaskManager/utils/TransportUtils.js';
-			import { MaterialStore } from '../src/loaders/workerTaskManager/utils/MaterialStore.js';
+			} from '../src/loaders/utils/TransportUtils.js';
+			import { MaterialStore } from '../src/loaders/utils/MaterialStore.js';
 			import { OBJ2LoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
 			/**
@@ -117,7 +117,7 @@
 						funcInit: WorkerFunctions.init,
 						funcExec: WorkerFunctions.execute,
 						dependencies: [
-							{ url: '../../libs/three.min.js' },
+							{ url: '../../libs/three/three.min.js' },
 							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
 							{ code: ObjectUtils.serializeClass( DataTransport ) },
 							{ code: ObjectUtils.serializeClass( GeometryTransport ) }
@@ -162,7 +162,7 @@
 						filenameMtl: './models/obj/male02/male02.mtl',
 						filenameObj: './models/obj/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
-						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three.min.js' )
+						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js' )
 					} );
 
 					this.tasksToUse = [];

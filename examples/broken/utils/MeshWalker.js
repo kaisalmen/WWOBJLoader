@@ -1,4 +1,4 @@
-import { GeometryTransport } from "../../../src/loaders/workerTaskManager/utils/TransportUtils.d.ts";
+import { GeometryTransport } from "../../../src/loaders/utils/TransportUtils.js";
 import {
 	BufferGeometry,
 	Object3D

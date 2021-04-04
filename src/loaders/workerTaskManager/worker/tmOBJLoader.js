@@ -4,16 +4,16 @@ import {
 	GeometryTransport,
 	MeshTransport,
 	ObjectUtils,
-} from '../utils/TransportUtils.js';
+} from '../../utils/TransportUtils.js';
 import {
 	MaterialUtils
-} from '../utils/MaterialUtils.js';
+} from '../../utils/MaterialUtils.js';
 import { OBJLoader } from 'three-stdlib';
 import { WorkerTaskManagerDefaultRouting } from './defaultRouting.js';
 
-const OBJLoaderWorker = {
+class OBJLoaderWorker {
 
-	buildStandardWorkerDependencies: function ( threeJsLocation, objLoaderLocation ) {
+	static buildStandardWorkerDependencies ( threeJsLocation, objLoaderLocation ) {
 		return [
 			{ url: threeJsLocation },
 			{ code: '\n\n' },
@@ -31,9 +31,9 @@ const OBJLoaderWorker = {
 			{ code: ObjectUtils.serializeClass( GeometryTransport ) },
 			{ code: ObjectUtils.serializeClass( MeshTransport ) }
 		]
-	},
+	}
 
-	init: function ( context, id, config ) {
+	static init ( context, id, config ) {
 
 		const materialsTransport = new MaterialsTransport().loadData( config );
 		context.objLoader = {
@@ -49,9 +49,9 @@ const OBJLoaderWorker = {
 			cmd: "init",
 			id: id
 		} );
-	},
+	}
 
-	execute: function ( context, id, config ) {
+	static execute ( context, id, config ) {
 
 		context.objLoader.loader = new OBJLoader();
 		const dataTransport = new DataTransport().loadData( config );

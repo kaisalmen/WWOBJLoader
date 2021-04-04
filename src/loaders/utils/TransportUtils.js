@@ -179,7 +179,7 @@ class DataTransport {
 
 	/**
 	 * Return all transferable in one array.
-	 * @return {[]|ArrayBuffer[]}
+	 * @return {ArrayBuffer[]}
 	 */
 	getTransferables() {
 
@@ -422,10 +422,8 @@ class GeometryTransport extends DataTransport {
 
 		super( cmd, id );
 		this.main.type = 'GeometryTransport';
-		/**
-		 * @type {number}
-		 * 0: mesh, 1: line, 2: point
-		 */
+		// 0: mesh, 1: line, 2: point
+		/** @type {number} */
 		this.main.geometryType = 0;
 		/** @type {object} */
 		this.main.geometry = {};
