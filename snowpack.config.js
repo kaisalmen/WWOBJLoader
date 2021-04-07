@@ -29,10 +29,10 @@ module.exports = {
 		target: 'es2020',
 		splitting: false,
 		preload: false,
-		entrypoints: "auto", // ['src/index.js'],
+		entrypoints: ['public/index.html'], // "auto",
 		sourcemap: 'external',
 		manifest: false
-*/
+ */
 	},
 	exclude: [
 		'**/*.sh',
@@ -40,7 +40,6 @@ module.exports = {
 		'**/*.tgz',
 		'**/archive/**',
 		'**/dev/*',
-		'**/examples/**',
 		'**/public/models/draco/**/*',
 		'**/public/models/gltf/**/*',
 		'**/public/models/obj/extra/**/*',

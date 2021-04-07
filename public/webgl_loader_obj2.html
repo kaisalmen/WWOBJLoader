@@ -165,32 +165,38 @@
 					this.renderer.render( this.scene, this.camera );
 
 				}
+
+				/**
+				 *
+				 * @param {OBJLoader2Example} app
+				 */
+				static executeExample (app) {
+
+					const resizeWindow = function () {
+
+						app.resizeDisplayGL();
+
+					};
+
+					const render = function () {
+
+						requestAnimationFrame( render );
+						app.render();
+
+					};
+
+					window.addEventListener( 'resize', resizeWindow, false );
+
+					console.log( 'Starting initialisation phase...' );
+					app.initGL();
+					app.resizeDisplayGL();
+					app.initContent();
+
+					render();
+				}
 			}
 
-			const app = new OBJLoader2Example( document.getElementById( 'example' ) );
-
-			const resizeWindow = function () {
-
-				app.resizeDisplayGL();
-
-			};
-
-			const render = function () {
-
-				requestAnimationFrame( render );
-				app.render();
-
-			};
-
-			window.addEventListener( 'resize', resizeWindow, false );
-
-			console.log( 'Starting initialisation phase...' );
-			app.initGL();
-			app.resizeDisplayGL();
-			app.initContent();
-
-			render();
-
+			OBJLoader2Example.executeExample( new OBJLoader2Example( document.getElementById( 'example' ) ) );
 		</script>
 	</body>
 </html>

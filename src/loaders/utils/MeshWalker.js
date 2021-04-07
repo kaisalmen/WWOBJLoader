@@ -1,4 +1,4 @@
-import { GeometryTransport } from "../../../src/loaders/utils/TransportUtils.js";
+import { GeometryTransport } from "./TransportUtils.js";
 import {
 	BufferGeometry,
 	Object3D

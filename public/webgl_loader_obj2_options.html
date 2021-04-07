@@ -519,201 +519,206 @@
 
 				}
 
-			}
+				/**
+				 *
+				 * @param {WWOBJLoader2Example} app
+				 */
+				static executeExample( app ) {
+					const wwObjLoader2Control = {
+						flatShading: app.flatShading,
+						doubleSide: app.doubleSide,
+						useJsmWorker: app.useJsmWorker,
+						useIndices: app.useIndices,
+						materialPerSmoothingGroup: app.materialPerSmoothingGroup,
+						useOAsMesh: app.useOAsMesh,
+						disregardNormals: app.disregardNormals,
+						regularLogging: app.regularLogging,
+						debugLogging: app.debugLogging,
+						models: {
+							male02: app.models.male02,
+							female02: app.models.female02,
+							female02_vertex_colors: app.models.female02_vertex_colors,
+							waltHead: app.models.waltHead,
+							ninjaHead: app.models.ninjaHead,
+							cerberus: app.models.cerberus
+						},
+						blockEvent: function ( event ) {
 
-			const app = new WWOBJLoader2Example( document.getElementById( 'example' ) );
+							event.stopPropagation();
 
-			const wwObjLoader2Control = {
-				flatShading: app.flatShading,
-				doubleSide: app.doubleSide,
-				useJsmWorker: app.useJsmWorker,
-				useIndices: app.useIndices,
-				materialPerSmoothingGroup: app.materialPerSmoothingGroup,
-				useOAsMesh: app.useOAsMesh,
-				disregardNormals: app.disregardNormals,
-				regularLogging: app.regularLogging,
-				debugLogging: app.debugLogging,
-				models: {
-					male02: app.models.male02,
-					female02: app.models.female02,
-					female02_vertex_colors: app.models.female02_vertex_colors,
-					waltHead: app.models.waltHead,
-					ninjaHead: app.models.ninjaHead,
-					cerberus: app.models.cerberus
-				},
-				blockEvent: function ( event ) {
+						},
+						disableElement ( elementHandle ) {
 
-					event.stopPropagation();
+							elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
+							elementHandle.domElement.parentElement.style.pointerEvents = 'none';
+							elementHandle.domElement.parentElement.style.opacity = 0.5;
 
-				},
-				disableElement ( elementHandle ) {
+						},
+						enableElement ( elementHandle ) {
 
-					elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
-					elementHandle.domElement.parentElement.style.pointerEvents = 'none';
-					elementHandle.domElement.parentElement.style.opacity = 0.5;
+							elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
+							elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
+							elementHandle.domElement.parentElement.style.opacity = 1.0;
 
-				},
-				enableElement ( elementHandle ) {
+						},
+						executeLoading: function () {
 
-					elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
-					elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
-					elementHandle.domElement.parentElement.style.opacity = 1.0;
+							if ( app.models.female02 || app.models.female02_vertex_colors || app.models.male02 ||
+									app.models.waltHead || app.models.cerberus || app.models.ninjaHead ) {
 
-				},
-				executeLoading: function () {
+								app.executeLoading();
+								this.disableElement( handleExecuteLoading );
 
-					if ( app.models.female02 || app.models.female02_vertex_colors || app.models.male02 ||
-						app.models.waltHead || app.models.cerberus || app.models.ninjaHead ) {
+							}
 
-						app.executeLoading();
-						this.disableElement( handleExecuteLoading );
+						},
+					};
+
+					const menuDiv = document.getElementById( 'dat' );
+					const gui = new GUI( {
+						autoPlace: false,
+						width: 320
+					} );
+					menuDiv.appendChild( gui.domElement );
+
+					const folderObjLoader2Models = gui.addFolder( 'Model Selection' );
+
+					const controlModelFemale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02' );
+					controlModelFemale02.onChange( v => { console.log( 'Setting models.female02 to: ' + v ); app.models.female02 = v; } );
+					const controlModelFemale02VertexColors = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02_vertex_colors' ).name('female02 (worker)' );
+					controlModelFemale02VertexColors.onChange( v => { console.log( 'Setting models.female02_vertex_colors to: ' + v ); app.models.female02_vertex_colors = v; } );
+					const controlModelMale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'male02' );
+					controlModelMale02.onChange( v => { console.log( 'Setting models.male02 to: ' + v ); app.models.male02 = v; } );
+					const controlModelWaltHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'waltHead' ).name('waltHead (worker)' );
+					controlModelWaltHead.onChange( v => { console.log( 'Setting models.waltHead to: ' + v ); app.models.waltHead = v; } );
+					const controlModelCerberus = folderObjLoader2Models.add( wwObjLoader2Control.models, 'cerberus' );
+					controlModelCerberus.onChange( v => { console.log( 'Setting models.cerberus to: ' + v ); app.models.cerberus = v; } );
+					const controlModelNinjaHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'ninjaHead' ).name('ninjaHead (worker)' );
+					controlModelNinjaHead.onChange( v => { console.log( 'Setting models.ninjaHead to: ' + v ); app.models.ninjaHead = v; } );
+
+					const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
+					const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
+					controlJsmWorker.onChange( function ( value ) {
+
+						console.log( 'Setting useJsmWorker to: ' + value );
+						app.useJsmWorker = value;
+
+					} );
+
+					const folderObjLoader2ParserOptions = gui.addFolder( 'OBJLoader2Parser Options' );
+					const controlUseIndices = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useIndices' ).name( 'Use Indices' );
+					controlUseIndices.onChange( function ( value ) {
+
+						console.log( 'Setting useIndices to: ' + value );
+						app.useIndices = value;
+
+					} );
+					const controlMaterialPerSmoothingGroup = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'materialPerSmoothingGroup' ).name( 'Use material per SG' );
+					controlMaterialPerSmoothingGroup.onChange( function ( value ) {
+
+						console.log( 'Setting materialPerSmoothingGroup to: ' + value );
+						app.materialPerSmoothingGroup = value;
+
+					} );
+					const controlUseOAsMesh = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useOAsMesh' ).name( 'Use useOAsMesh' );
+					controlUseOAsMesh.onChange( function ( value ) {
+
+						console.log( 'Setting useOAsMesh to: ' + value );
+						app.useOAsMesh = value;
+
+					} );
+					const controlDisregardNormals = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'disregardNormals' ).name( 'Use disregardNormals' );
+					controlDisregardNormals.onChange( function ( value ) {
+
+						console.log( 'Setting disregardNormals to: ' + value );
+						app.disregardNormals = value;
+
+					} );
+
+					const folderLoggingOptions = gui.addFolder( 'Logging' );
+					const controlRegularLogging = folderLoggingOptions.add( wwObjLoader2Control, 'regularLogging' ).name( 'Enable logging' );
+					const controlDebugLogging = folderLoggingOptions.add( wwObjLoader2Control, 'debugLogging' ).name( 'Enable debug logging' );
+
+					controlRegularLogging.onChange( value => {
+						console.log( 'Setting regularLogging to: ' + value );
+						app.regularLogging = value;
+						if ( ! app.regularLogging ) {
+
+							wwObjLoader2Control.disableElement( controlDebugLogging );
+
+						} else {
+
+							wwObjLoader2Control.enableElement( controlDebugLogging );
+
+						}
+					} );
+					controlDebugLogging.onChange( value => {
+						console.log( 'Setting debugLogging to: ' + value );
+						app.debugLogging = value;
+						if ( ! app.regularLogging ) {
+
+							app.regularLogging = app.debugLogging;
+							controlRegularLogging.setValue( app.debugLogging )
+
+						}
+					} );
+					wwObjLoader2Control.disableElement( controlDebugLogging );
+
+					const folderRenderingOptions = gui.addFolder( 'Rendering Options' );
+					const controlFlat = folderRenderingOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
+					controlFlat.onChange( function ( value ) {
+
+						console.log( 'Setting flatShading to: ' + value );
+						app.alterShading();
+
+					} );
+
+					const controlDouble = folderRenderingOptions.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
+					controlDouble.onChange( function ( value ) {
+
+						console.log( 'Setting doubleSide to: ' + value );
+						app.alterDouble();
+
+					} );
+
+					const folderExecution = gui.addFolder( 'Execution' );
+					const handleExecuteLoading = folderExecution.add( wwObjLoader2Control, 'executeLoading' ).name( 'Run' );
+					handleExecuteLoading.domElement.id = 'startButton';
+
+					folderObjLoader2Models.open();
+					folderObjLoader2ParallelOptions.open();
+					folderObjLoader2ParserOptions.open();
+					folderLoggingOptions.close();
+					folderRenderingOptions.close();
+					folderExecution.open();
+
+					// init three.js example application
+					function resizeWindow() {
+
+						app.resizeDisplayGL();
 
 					}
 
-				},
-			};
+					function render() {
 
-			const menuDiv = document.getElementById( 'dat' );
-			const gui = new GUI( {
-				autoPlace: false,
-				width: 320
-			} );
-			menuDiv.appendChild( gui.domElement );
+						requestAnimationFrame( render );
+						app.render();
 
-			const folderObjLoader2Models = gui.addFolder( 'Model Selection' );
+					}
 
-			const controlModelFemale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02' );
-			controlModelFemale02.onChange( v => { console.log( 'Setting models.female02 to: ' + v ); app.models.female02 = v; } );
-			const controlModelFemale02VertexColors = folderObjLoader2Models.add( wwObjLoader2Control.models, 'female02_vertex_colors' ).name('female02 (worker)' );
-			controlModelFemale02VertexColors.onChange( v => { console.log( 'Setting models.female02_vertex_colors to: ' + v ); app.models.female02_vertex_colors = v; } );
-			const controlModelMale02 = folderObjLoader2Models.add( wwObjLoader2Control.models, 'male02' );
-			controlModelMale02.onChange( v => { console.log( 'Setting models.male02 to: ' + v ); app.models.male02 = v; } );
-			const controlModelWaltHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'waltHead' ).name('waltHead (worker)' );
-			controlModelWaltHead.onChange( v => { console.log( 'Setting models.waltHead to: ' + v ); app.models.waltHead = v; } );
-			const controlModelCerberus = folderObjLoader2Models.add( wwObjLoader2Control.models, 'cerberus' );
-			controlModelCerberus.onChange( v => { console.log( 'Setting models.cerberus to: ' + v ); app.models.cerberus = v; } );
-			const controlModelNinjaHead = folderObjLoader2Models.add( wwObjLoader2Control.models, 'ninjaHead' ).name('ninjaHead (worker)' );
-			controlModelNinjaHead.onChange( v => { console.log( 'Setting models.ninjaHead to: ' + v ); app.models.ninjaHead = v; } );
+					window.addEventListener( 'resize', resizeWindow, false );
 
-			const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
-			const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
-			controlJsmWorker.onChange( function ( value ) {
+					console.log( 'Starting initialisation phase...' );
+					app.initGL();
+					app.resizeDisplayGL();
 
-				console.log( 'Setting useJsmWorker to: ' + value );
-				app.useJsmWorker = value;
-
-			} );
-
-			const folderObjLoader2ParserOptions = gui.addFolder( 'OBJLoader2Parser Options' );
-			const controlUseIndices = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useIndices' ).name( 'Use Indices' );
-			controlUseIndices.onChange( function ( value ) {
-
-				console.log( 'Setting useIndices to: ' + value );
-				app.useIndices = value;
-
-			} );
-			const controlMaterialPerSmoothingGroup = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'materialPerSmoothingGroup' ).name( 'Use material per SG' );
-			controlMaterialPerSmoothingGroup.onChange( function ( value ) {
-
-				console.log( 'Setting materialPerSmoothingGroup to: ' + value );
-				app.materialPerSmoothingGroup = value;
-
-			} );
-			const controlUseOAsMesh = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useOAsMesh' ).name( 'Use useOAsMesh' );
-			controlUseOAsMesh.onChange( function ( value ) {
-
-				console.log( 'Setting useOAsMesh to: ' + value );
-				app.useOAsMesh = value;
-
-			} );
-			const controlDisregardNormals = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'disregardNormals' ).name( 'Use disregardNormals' );
-			controlDisregardNormals.onChange( function ( value ) {
-
-				console.log( 'Setting disregardNormals to: ' + value );
-				app.disregardNormals = value;
-
-			} );
-
-			const folderLoggingOptions = gui.addFolder( 'Logging' );
-			const controlRegularLogging = folderLoggingOptions.add( wwObjLoader2Control, 'regularLogging' ).name( 'Enable logging' );
-			const controlDebugLogging = folderLoggingOptions.add( wwObjLoader2Control, 'debugLogging' ).name( 'Enable debug logging' );
-
-			controlRegularLogging.onChange( value => {
-				console.log( 'Setting regularLogging to: ' + value );
-				app.regularLogging = value;
-				if ( ! app.regularLogging ) {
-
-					wwObjLoader2Control.disableElement( controlDebugLogging );
-
-				} else {
-
-					wwObjLoader2Control.enableElement( controlDebugLogging );
-
+					// kick render loop
+					render();
 				}
-			} );
-			controlDebugLogging.onChange( value => {
-				console.log( 'Setting debugLogging to: ' + value );
-				app.debugLogging = value;
-				if ( ! app.regularLogging ) {
-
-					app.regularLogging = app.debugLogging;
-					controlRegularLogging.setValue( app.debugLogging )
-
-				}
-			} );
-			wwObjLoader2Control.disableElement( controlDebugLogging );
-
-			const folderRenderingOptions = gui.addFolder( 'Rendering Options' );
-			const controlFlat = folderRenderingOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
-			controlFlat.onChange( function ( value ) {
-
-				console.log( 'Setting flatShading to: ' + value );
-				app.alterShading();
-
-			} );
-
-			const controlDouble = folderRenderingOptions.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
-			controlDouble.onChange( function ( value ) {
-
-				console.log( 'Setting doubleSide to: ' + value );
-				app.alterDouble();
-
-			} );
-
-			const folderExecution = gui.addFolder( 'Execution' );
-			const handleExecuteLoading = folderExecution.add( wwObjLoader2Control, 'executeLoading' ).name( 'Run' );
-			handleExecuteLoading.domElement.id = 'startButton';
-
-			folderObjLoader2Models.open();
-			folderObjLoader2ParallelOptions.open();
-			folderObjLoader2ParserOptions.open();
-			folderLoggingOptions.close();
-			folderRenderingOptions.close();
-			folderExecution.open();
-
-			// init three.js example application
-			function resizeWindow() {
-
-				app.resizeDisplayGL();
 
 			}
 
-			function render() {
-
-				requestAnimationFrame( render );
-				app.render();
-
-			}
-
-			window.addEventListener( 'resize', resizeWindow, false );
-
-			console.log( 'Starting initialisation phase...' );
-			app.initGL();
-			app.resizeDisplayGL();
-
-			// kick render loop
-			render();
-
+			WWOBJLoader2Example.executeExample( new WWOBJLoader2Example( document.getElementById( 'example' ) ) );
 		</script>
 	</body>
 </html>
