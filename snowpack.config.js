@@ -42,7 +42,7 @@ module.exports = {
 		'**/dev/*',
 		'**/public/models/draco/**/*',
 		'**/public/models/gltf/**/*',
-		'**/public/models/obj/extra/**/*',
+		'**/public/models/obj/misc/**/*',
 		'**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
 		'**/src/loaders/OBJLoader.*',
 		'**/public/webgl_loader_workertaskmanager.html',

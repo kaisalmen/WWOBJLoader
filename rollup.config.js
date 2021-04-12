@@ -5,68 +5,101 @@ import { terser } from "rollup-plugin-terser";
 import { name, dependencies, devDependencies } from './package.json';
 
 // transformation instructions
-const patternOBJLoader2 = new RegExp('../src/loaders/OBJLoader2.js', 'g');
-const patternOBJLoader2Parallel = new RegExp('../src/loaders/OBJLoader2Parallel.js', 'g');
-const patternWorkerTaskManager = new RegExp('../src/loaders/workerTaskManager/WorkerTaskManager.js', 'g');
-const patternMtlObjBridge = new RegExp('../src/loaders/utils/MtlObjBridge.js', 'g');
-const packageModule = '../wwobjloader2.module.js';
+const patternOBJLoader2 = new RegExp('../../src/loaders/OBJLoader2.js', 'g');
+const patternOBJLoader2Parallel = new RegExp('../../src/loaders/OBJLoader2Parallel.js', 'g');
+const patternWorkerTaskManager = new RegExp('../../src/loaders/workerTaskManager/WorkerTaskManager.js', 'g');
+const patternMtlObjBridge = new RegExp('../../src/loaders/utils/MtlObjBridge.js', 'g');
+const patternTransportUtils = new RegExp('../../src/loaders/utils/TransportUtils.js', 'g');
+const patternMaterialStore = new RegExp('../../src/loaders/utils/MaterialStore.js', 'g');
+const patternOBJ2LoaderWorker = new RegExp('../../src/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
+const packageModule = '../npm/wwobjloader2.module.js';
 
 const copyConfig = {
   targets: [
-//    { src: 'public/index.html', dest: 'build/examples' },
+    { src: 'public/index.html', dest: 'build/public' },
     {
-      src: 'public/webgl_loader_obj2.html',
-      dest: 'build/npm/examples',
+      src: 'public/examples/webgl_loader_obj2.html',
+      dest: 'build/public/examples',
       transform: (contents, filename) => {
         let str = contents.toString();
         str = str.replace(patternMtlObjBridge, packageModule);
-        str = str.replace(patternOBJLoader2, packageModule);
-        return str;
+        return str.replace(patternOBJLoader2, packageModule);
       }
     },
     {
-      src: 'public/webgl_loader_obj2_options.html',
-      dest: 'build//npm/examples',
+      src: 'public/examples/webgl_loader_obj2_options.html',
+      dest: 'build/public/examples',
       transform: (contents, filename) => {
         let str = contents.toString();
         str = str.replace(patternMtlObjBridge, packageModule);
         str = str.replace(patternOBJLoader2, packageModule);
         str = str.replace(patternOBJLoader2Parallel, packageModule);
-        str = str.replace(patternWorkerTaskManager, packageModule);
-        return str;
+        return str.replace(patternWorkerTaskManager, packageModule);
       }
     },
     {
-      src: 'dev/build/index.html',
-      dest: 'build/npm'
+      src: 'public/examples/webgl_loader_obj2_workermodulesupport.html',
+      dest: 'build/public/examples',
+      transform: (contents, filename) => {
+        let str = contents.toString();
+        return str.replace(patternOBJLoader2Parallel, packageModule);
+      }
+    },
+    {
+      src: 'public/examples/webgl_loader_obj2_workermodulesupport.html',
+      dest: 'build/public/examples',
+      transform: (contents, filename) => {
+        let str = contents.toString();
+        return str.replace(patternOBJLoader2Parallel, packageModule);
+      }
+    },
+    {
+      src: 'public/examples/wtm_potentially_infinite.html',
+      dest: 'build/public/examples',
+      transform: (contents, filename) => {
+        let str = contents.toString();
+        str = str.replace(patternWorkerTaskManager, packageModule);
+        str = str.replace(patternTransportUtils, packageModule);
+        str = str.replace(patternMaterialStore, packageModule);
+        return str.replace(patternOBJ2LoaderWorker, packageModule);
+      }
+    },
+    {
+      src: 'public/examples/wtm_transferables.html',
+      dest: 'build/public/examples',
+      transform: (contents, filename) => {
+        let str = contents.toString();
+        str = str.replace(patternWorkerTaskManager, packageModule);
+        return str.replace(patternTransportUtils, packageModule);
+      }
     },
     {
       src: 'dev/build/snowpack.config.js',
       dest: 'build'
     },
     {
-      src: 'public/main.css',
-      dest: 'build/npm/examples'
+      src: 'public/examples/main.css',
+      dest: 'build/public/examples'
     },
     {
       src: 'public/models/obj/female02/*',
-      dest: 'build/npm/examples/models/obj/female02'
+      dest: 'build/public/examples/models/obj/female02'
     },
     {
       src: 'public/models/obj/male02/*',
-      dest: 'build/npm/examples/models/obj/male02'
+      dest: 'build/public/examples/models/obj/male02'
     },
     {
       src: 'public/models/obj/ninja/*',
-      dest: 'build/npm/examples/models/obj/ninja'
+      dest: 'build/public/examples/models/obj/ninja'
     },
     {
       src: 'public/models/obj/cerberus/*',
-      dest: 'build/npm/examples/models/obj/cerberus'
+      dest: 'build/public/examples/models/obj/cerberus'
     },
     {
       src: 'public/models/obj/walt/*',
-      dest: 'build/npm/examples/models/obj/walt'
+      dest: 'build/public/examples/models/obj/walt'
     }
   ]
 };

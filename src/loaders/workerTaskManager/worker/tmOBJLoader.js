@@ -57,6 +57,8 @@ class OBJLoaderWorker {
 		const dataTransport = new DataTransport().loadData( config );
 
 		context.objLoader.loader.objectId = dataTransport.getId();
+		let materials = context.objLoader.materials;
+		materials[ 'create' ] = function fakeMat( name ) { return materials[ name ]; };
 		context.objLoader.loader.setMaterials( context.objLoader.materials );
 
 		const enc = new TextDecoder("utf-8");
@@ -82,7 +84,7 @@ class OBJLoaderWorker {
 
 	}
 
-};
+}
 
 self.addEventListener( 'message', message => WorkerTaskManagerDefaultRouting.comRouting( self, message, OBJLoaderWorker, 'init', 'execute' ), false );
 

@@ -110,7 +110,7 @@ class OBJ2LoaderWorker {
 
 	}
 
-};
+}
 
 self.addEventListener( 'message', message => WorkerTaskManagerDefaultRouting.comRouting( self, message, OBJ2LoaderWorker, 'init', 'execute' ), false );
 

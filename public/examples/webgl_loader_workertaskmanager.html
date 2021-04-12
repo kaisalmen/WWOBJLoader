@@ -22,17 +22,17 @@
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three-stdlib';
 
-			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
+			import { WorkerTaskManager } from '../../src/loaders/workerTaskManager/WorkerTaskManager.js';
 			import {
 				DataTransport,
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from '../src/loaders/utils/TransportUtils.js';
-			import { MaterialUtils } from '../src/loaders/utils/MaterialUtils.js';
-			import { MaterialStore } from '../src/loaders/utils/MaterialStore.js';
-			import { OBJLoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader.js';
+			} from '../../src/loaders/utils/TransportUtils.js';
+			import { MaterialUtils } from '../../src/loaders/utils/MaterialUtils.js';
+			import { MaterialStore } from '../../src/loaders/utils/MaterialStore.js';
+			import { OBJLoaderWorker } from '../../src/loaders/workerTaskManager/worker/tmOBJLoader.js';
 
 			/**
 			 * The aim of this example is to show two possible ways how to use the {@link WorkerTaskManager}:
@@ -107,16 +107,16 @@
 				async initContent () {
 
 					/** Simplest way to define a worker for {@link WorkerTaskManager} */
-					const InlineWorker = {
+					class InlineWorker {
 
-						workerStandardInit: function ( context, id, config ) {
+						static init ( context, id, config ) {
 
 							context.storage = {	whoami: config.id };
 							context.postMessage( { cmd: "init",	id: id	} );
 
-						},
+						}
 
-						workerStandardExec: function ( context, id, config ) {
+						static execute ( context, id, config ) {
 
 							let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 							bufferGeometry.name = 'InlineWorker' + config.id;
@@ -127,9 +127,9 @@
 							.package( false )
 							.postMessage( context );
 
-						},
+						}
 
-						buildStandardWorkerDependencies( threeJsLocation ) {
+						static buildStandardWorkerDependencies( threeJsLocation ) {
 
 							return [
 								{ url: threeJsLocation },
@@ -148,8 +148,8 @@
 					let awaiting = [];
 					let taskDescr = {
 						name: 'InlineWorker',
-						funcInit: InlineWorker.workerStandardInit,
-						funcExec: InlineWorker.workerStandardExec,
+						funcInit: InlineWorker.init,
+						funcExec: InlineWorker.execute,
 						dependencies: InlineWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js' )
 					};
 					this.tasksToUse.push( taskDescr );
@@ -158,7 +158,7 @@
 
 					const taskDescrObj = {
 						name: 'OBJLoaderStandard',
-						filenameObj: './models/obj/female02/female02_vertex_colors.obj',
+						filenameObj: '../models/obj/female02/female02_vertex_colors.obj',
 						funcInit: OBJLoaderWorker.init,
 						funcExec: OBJLoaderWorker.execute,
 						dependencies: OBJLoaderWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js', '../../libs/loaders/OBJLoader.js' )

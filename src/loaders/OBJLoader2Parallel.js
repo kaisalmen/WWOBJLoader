@@ -30,7 +30,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
 
-	static DEFAULT_JSM_WORKER_PATH = './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
+	static DEFAULT_JSM_WORKER_PATH = '/dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 	static DEFAULT_JSM_THREEJS_PATH = '../libs/three/three.min.js';
 
 	/**

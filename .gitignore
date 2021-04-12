@@ -8,5 +8,6 @@
 /public/models/gltf
 /public/models/obj/bugs
 /public/models/obj/extra
+/public/models/obj/misc
 
 /node_modules

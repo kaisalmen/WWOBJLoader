@@ -22,14 +22,14 @@
 			import { TrackballControls } from 'three-stdlib';
 			import { MTLLoader } from 'three-stdlib';
 
-			import { OBJLoader2 } from '../src/loaders/OBJLoader2.js';
-			import { MtlObjBridge } from '../src/loaders/utils/MtlObjBridge.js';
-			import { ResourceDescriptor } from '../src/loaders/pipeline/utils/ResourceDescriptor.js';
+			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
+			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
+			import { ResourceDescriptor } from '../../src/loaders/pipeline/utils/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from '../src/loaders/AssetPipelineLoader.js';
+			} from '../../src/loaders/AssetPipelineLoader.js';
 
 
 			const AutoAssetLoaderExample = function ( elementToBindTo ) {
@@ -87,10 +87,10 @@
 
 				initContent: function () {
 					let assetTask0 = new AssetTask( 'task0' );
-					let rdMtl = new ResourceDescriptor( './models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
+					let rdMtl = new ResourceDescriptor( '../models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
 					assetTask0.setResourceDescriptor( rdMtl );
 					let loaderConfigurationMtl = {
-						resourcePath: './models/obj/female02/',
+						resourcePath: '../models/obj/female02/',
 						materialOptions: {}
 					};
 					assetTask0.setAssetHandler( new MTLLoader(), loaderConfigurationMtl );
@@ -100,7 +100,7 @@
 					assetTask1.setAssetHandler( MtlObjBridge );
 
 					let assetTask2 = new AssetTask( 'task2' );
-					let rdObj = new ResourceDescriptor( './models/obj/female02/female02.obj' );
+					let rdObj = new ResourceDescriptor( '../models/obj/female02/female02.obj' );
 					assetTask2.setResourceDescriptor( rdObj );
 					assetTask2.setAssetHandler( new OBJLoader2() );
 

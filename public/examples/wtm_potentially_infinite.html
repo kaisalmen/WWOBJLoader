@@ -24,16 +24,16 @@
 			import { TrackballControls } from 'three-stdlib';
 			import { MTLLoader } from 'three-stdlib';
 
-			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
+			import { WorkerTaskManager } from '../../src/loaders/workerTaskManager/WorkerTaskManager.js';
 			import {
 				DataTransport,
 				GeometryTransport,
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils
-			} from '../src/loaders/utils/TransportUtils.js';
-			import { MaterialStore } from '../src/loaders/utils/MaterialStore.js';
-			import { OBJ2LoaderWorker } from '../src/loaders/workerTaskManager/worker/tmOBJLoader2.js';
+			} from '../../src/loaders/utils/TransportUtils.js';
+			import { MaterialStore } from '../../src/loaders/utils/MaterialStore.js';
+			import { OBJ2LoaderWorker } from '../../src/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -127,13 +127,13 @@
 						name: 'tmProtoExampleModule',
 						use: true,
 						fallback: false,
-						module: './dist/loaders/workerTaskManager/worker/tmModuleExample.js'
+						module: '/dist/loaders/workerTaskManager/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
 						use: true,
 						fallback: false,
-						module: './dist/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
+						module: '/dist/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',
@@ -147,9 +147,9 @@
 						modelName: 'female02',
 						use: true,
 						fallback: false,
-						module: './dist/loaders/workerTaskManager/worker/tmOBJLoader2.js',
-						filenameMtl: './models/obj/female02/female02.mtl',
-						filenameObj: './models/obj/female02/female02.obj',
+						module: '/dist/loaders/workerTaskManager/worker/tmOBJLoader2.js',
+						filenameMtl: '../models/obj/female02/female02.mtl',
+						filenameObj: '../models/obj/female02/female02.obj',
 						materialStore: new MaterialStore( true )
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Standard', {
@@ -159,8 +159,8 @@
 						fallback: false,
 						funcInit: OBJ2LoaderWorker.init,
 						funcExec: OBJ2LoaderWorker.execute,
-						filenameMtl: './models/obj/male02/male02.mtl',
-						filenameObj: './models/obj/male02/male02.obj',
+						filenameMtl: '../models/obj/male02/male02.mtl',
+						filenameObj: '../models/obj/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
 						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js' )
 					} );

@@ -6,7 +6,8 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
 	mount: {
-		"npm": "/",
+		"npm": "/npm",
+		"public": "/",
 		"../node_modules/three/build": "/libs/three",
 		"../node_modules/three/examples/js/loaders": "/libs/loaders"
 	},

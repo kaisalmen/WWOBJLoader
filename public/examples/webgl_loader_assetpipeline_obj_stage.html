@@ -40,14 +40,14 @@
 			import { TrackballControls } from 'three-stdlib';
 			import { MTLLoader } from 'three-stdlib';
 
-			import { OBJLoader2 } from '../src/loaders/OBJLoader2.js';
-			import { MtlObjBridge } from '../src/loaders/utils/MtlObjBridge.js';
-			import { ResourceDescriptor } from '../src/loaders/pipeline/utils/ResourceDescriptor.js';
+			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
+			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
+			import { ResourceDescriptor } from '../../src/loaders/pipeline/utils/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from '../src/loaders/AssetPipelineLoader.js';
+			} from '../../src/loaders/AssetPipelineLoader.js';
 
 			const WWOBJLoader2Stage = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -179,11 +179,11 @@
 
 
 					let assetTaskMale02Mtl = new AssetTask( 'taskMale02Mtl' );
-					let resMale02 = new ResourceDescriptor( 'models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
+					let resMale02 = new ResourceDescriptor( '../models/obj/male02/male02.mtl' ).setNeedStringOutput( true );
 					assetTaskMale02Mtl.setResourceDescriptor( resMale02 );
 
 					assetTaskMale02Mtl.setAssetHandler( new MTLLoader(), {
-						resourcePath: 'models/obj/male02/',
+						resourcePath: '../models/obj/male02/',
 						materialOptions: {}
 					} );
 
@@ -192,7 +192,7 @@
 					assetTaskMale02MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskMale02Obj = new AssetTask( 'taskMale02Obj' );
-					let resFemale02 =  new ResourceDescriptor( 'models/obj/male02/male02.obj' );
+					let resFemale02 =  new ResourceDescriptor( '../models/obj/male02/male02.obj' );
 					assetTaskMale02Obj.setResourceDescriptor( resFemale02 );
 					assetTaskMale02Obj.setAssetHandler( new OBJLoader2() );
 
@@ -210,10 +210,10 @@
 
 
 					let assetTaskFemale02Mtl = new AssetTask( 'taskFemale02Mtl' );
-					let resFemale02Mtl = new ResourceDescriptor( 'models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
+					let resFemale02Mtl = new ResourceDescriptor( '../models/obj/female02/female02.mtl' ).setNeedStringOutput( true );
 					assetTaskFemale02Mtl.setResourceDescriptor( resFemale02Mtl );
 					assetTaskFemale02Mtl.setAssetHandler( new MTLLoader(), {
-						resourcePath: 'models/obj/female02/',
+						resourcePath: '../models/obj/female02/',
 						materialOptions: {}
 					} );
 
@@ -222,7 +222,7 @@
 					assetTaskFemale02MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskFemale02Obj = new AssetTask( 'taskFemale02Obj' );
-					let resFemale02Obj = new ResourceDescriptor( 'models/obj/female02/female02.obj' );
+					let resFemale02Obj = new ResourceDescriptor( '../models/obj/female02/female02.obj' );
 					assetTaskFemale02Obj.setResourceDescriptor( resFemale02Obj );
 					assetTaskFemale02Obj.setAssetHandler( new OBJLoader2() );
 
@@ -241,12 +241,12 @@
 
 
 					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1Mtl' );
-					let resPTV1Mtl = new ResourceDescriptor( 'models/obj/PTV1/PTV1.mtl.gz' )
+					let resPTV1Mtl = new ResourceDescriptor( '../models/obj/extra/PTV1/PTV1.mtl.gz' )
 						.setNeedStringOutput( true )
 						.setCompressed( true );
 					assetTaskPTV1Mtl.setResourceDescriptor( resPTV1Mtl );
 					assetTaskPTV1Mtl.setAssetHandler( new MTLLoader(), {
-						resourcePath: 'models/obj/PTV1/',
+						resourcePath: '../models/obj/PTV1/',
 						materialOptions: {}
 					} );
 
@@ -255,7 +255,7 @@
 					assetTaskPTV1MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskPTV1Obj = new AssetTask( 'taskPTV1Obj' );
-					let resPTV1Obj = new ResourceDescriptor( 'models/obj/PTV1/PTV1.obj.gz' ).setCompressed( true );
+					let resPTV1Obj = new ResourceDescriptor( '../models/obj/extra/PTV1/PTV1.obj.gz' ).setCompressed( true );
 					assetTaskPTV1Obj.setResourceDescriptor( resPTV1Obj );
 					assetTaskPTV1Obj.setAssetHandler( new OBJLoader2() );
 
@@ -273,7 +273,7 @@
 
 
 					let assetTaskCerberusObj = new AssetTask( 'taskCerberusObj' );
-					let resCerberusObj = new ResourceDescriptor( 'models/obj/cerberus/Cerberus.obj' );
+					let resCerberusObj = new ResourceDescriptor( '../models/obj/cerberus/Cerberus.obj' );
 					assetTaskCerberusObj.setResourceDescriptor( resCerberusObj );
 					assetTaskCerberusObj.setAssetHandler( new OBJLoader2(), {
 						useIndices: true
@@ -291,10 +291,10 @@
 
 
 					let assetTaskWaltHeadMtl = new AssetTask( 'taskWaltHeadMtl' );
-					let resWaltHeadMtl = new ResourceDescriptor( 'models/obj/walt/WaltHead.mtl' ).setNeedStringOutput( true );
+					let resWaltHeadMtl = new ResourceDescriptor( '../models/obj/walt/WaltHead.mtl' ).setNeedStringOutput( true );
 					assetTaskWaltHeadMtl.setResourceDescriptor( resWaltHeadMtl );
 					assetTaskWaltHeadMtl.setAssetHandler( new MTLLoader(), {
-						resourcePath: 'models/obj/walt/',
+						resourcePath: '../models/obj/walt/',
 						materialOptions: {}
 					} );
 
@@ -303,7 +303,7 @@
 					assetTaskWaltHeadMtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskWaltHeadObj = new AssetTask( 'taskWaltHeadObj' );
-					let resWaltHeadObj = new ResourceDescriptor( 'models/obj/walt/WaltHead.obj' );
+					let resWaltHeadObj = new ResourceDescriptor( '../models/obj/walt/WaltHead.obj' );
 					assetTaskWaltHeadObj.setResourceDescriptor( resWaltHeadObj );
 					assetTaskWaltHeadObj.setAssetHandler( new OBJLoader2(), {
 						useIndices: true
@@ -322,7 +322,7 @@
 
 
 					let assetTaskNinjaObj = new AssetTask( 'taskNinjaObj' );
-					let resNinjaObj = new ResourceDescriptor( 'models/obj/ninja/ninjaHead_Low.obj' );
+					let resNinjaObj = new ResourceDescriptor( '../models/obj/ninja/ninjaHead_Low.obj' );
 					assetTaskNinjaObj.setResourceDescriptor( resNinjaObj );
 					assetTaskNinjaObj.setAssetHandler( new OBJLoader2(), {
 						useIndices: true
@@ -339,7 +339,7 @@
 					this.assetsDef.objsNinja = aplNinja;
 
 					let assetTaskOvenObj = new AssetTask( 'taskOvenObj' );
-					let resOvenObj = new ResourceDescriptor( 'models/obj/zomax/zomax-net_haze-oven-scene.obj.gz' ).setCompressed( true );
+					let resOvenObj = new ResourceDescriptor( '../models/obj/extra/zomax/zomax-net_haze-oven-scene.obj.gz' ).setCompressed( true );
 
 					assetTaskOvenObj.setResourceDescriptor( resOvenObj );
 					assetTaskOvenObj.setAssetHandler( new OBJLoader2(), {
@@ -358,7 +358,7 @@
 
 
 					let assetTaskSinkObj = new AssetTask( 'taskSinkObj' );
-					let resSinkObj = new ResourceDescriptor( 'models/obj/zomax/zomax-net_haze-sink-scene.obj.gz' ).setCompressed( true );
+					let resSinkObj = new ResourceDescriptor( '../models/obj/extra/zomax/zomax-net_haze-sink-scene.obj.gz' ).setCompressed( true );
 
 					assetTaskSinkObj.setResourceDescriptor( resSinkObj );
 					assetTaskSinkObj.setAssetHandler( new OBJLoader2(), {
@@ -542,7 +542,7 @@
 			let folderOptions = gui.addFolder( 'WWOBJLoader2Stage Options' );
 			let handleMale, handleFemale, handleWalt, handleCerberus, handleNinja, handlePTV1, handleSink, handleOven;
 			let wwOBJLoader2StageControl = {
-				pathTexture: 'models/obj/female02/',
+				pathTexture: '../models/obj/female02/',
 				blockEvent: function ( event ) {
 					event.stopPropagation();
 				},

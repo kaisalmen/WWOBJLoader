@@ -27,10 +27,10 @@
 			import { VertexNormalsHelper } from 'three-stdlib';
 			import { MTLLoader } from 'three-stdlib';
 
-			import { MtlObjBridge } from '../src/loaders/utils/MtlObjBridge.js';
-			import { OBJLoader2 } from '../src/loaders/OBJLoader2.js';
-			import { OBJLoader2Parallel } from '../src/loaders/OBJLoader2Parallel.js';
-			import { WorkerTaskManager } from '../src/loaders/workerTaskManager/WorkerTaskManager.js';
+			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
+			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
+			import { OBJLoader2Parallel } from '../../src/loaders/OBJLoader2Parallel.js';
+			import { WorkerTaskManager } from '../../src/loaders/workerTaskManager/WorkerTaskManager.js';
 
 			class WWOBJLoader2Example {
 
@@ -142,7 +142,7 @@
 						const fileLoader = new THREE.FileLoader();
 						fileLoader.setPath( '' );
 						fileLoader.setResponseType( 'arraybuffer' );
-						fileLoader.load( 'models/obj/female02/female02.obj',
+						fileLoader.load( '../models/obj/female02/female02.obj',
 							function ( content ) {
 
 								const local = new THREE.Object3D();
@@ -160,7 +160,7 @@
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( 'models/obj/female02/female02.mtl', onLoadMtl );
+					mtlLoader.load( '../models/obj/female02/female02.mtl', onLoadMtl );
 
 				}
 
@@ -197,7 +197,7 @@
 					const fileLoader = new THREE.FileLoader();
 					fileLoader.setPath( '' );
 					fileLoader.setResponseType( 'arraybuffer' );
-					fileLoader.load( 'models/obj/female02/female02_vertex_colors.obj',
+					fileLoader.load( '../models/obj/female02/female02_vertex_colors.obj',
 						function ( content ) {
 
 							objLoader2Parallel.parse( content );
@@ -232,12 +232,12 @@
 					function onLoadMtl( mtlParseResult ) {
 
 						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
-						objLoader2.load( 'models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
+						objLoader2.load( '../models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
 
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( 'models/obj/male02/male02.mtl', onLoadMtl );
+					mtlLoader.load( '../models/obj/male02/male02.mtl', onLoadMtl );
 
 				}
 
@@ -275,12 +275,12 @@
 					function onLoadMtl( mtlParseResult ) {
 
 						objLoader2Parallel.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
-						objLoader2Parallel.load( 'models/obj/walt/WaltHead.obj', callbackOnLoad );
+						objLoader2Parallel.load( '../models/obj/walt/WaltHead.obj', callbackOnLoad );
 
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( 'models/obj/walt/WaltHead.mtl', onLoadMtl );
+					mtlLoader.load( '../models/obj/walt/WaltHead.mtl', onLoadMtl );
 
 				}
 
@@ -312,7 +312,7 @@
 
 					}
 
-					objLoader2Parallel.load( 'models/obj/cerberus/Cerberus.obj', callbackOnLoad );
+					objLoader2Parallel.load( '../models/obj/cerberus/Cerberus.obj', callbackOnLoad );
 
 				}
 
@@ -357,7 +357,7 @@
 
 					}
 
-					objLoader2Parallel.load( 'models/obj/ninja/ninjaHead_Low.obj', callbackOnLoad );
+					objLoader2Parallel.load( '../models/obj/ninja/ninjaHead_Low.obj', callbackOnLoad );
 
 				}
 
