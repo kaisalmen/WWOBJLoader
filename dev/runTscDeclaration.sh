@@ -6,6 +6,7 @@ DIR_LOADER_SRC=${DIR_BASE}/build/ts
 DIR_LOADER_TRG=${DIR_BASE}/src/loaders
 
 rm -fr ${DIR_BASE}/build/ts
+mkdir -p ${DIR_BASE}/build/ts
 
 tsc -p ${DIR_BASE}/declaration.tsconfig.json
 

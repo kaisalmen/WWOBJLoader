@@ -7,11 +7,12 @@ services:
       dockerfile: dev/Dockerfile
       context: .
     ports:
-      - target: 8085
-        published: 8085
+      - target: 8080
+        published: 8080
         protocol: tcp
         mode: host
     volumes:
-      - ./:/workspace/WWOBJLoader/:rw
-    command: ["bash", "/workspace/WWOBJLoader/dev/runDevEnv.sh"]
+      - ./:/home/obj2/workspace/:rw
+    command: ["bash", "-c", ". /home/obj2/.local/bin/env/configureN.sh && npm install && npm run dev"]
+    working_dir: /home/obj2/workspace
     container_name: obj2dev
