@@ -234,10 +234,10 @@ class OBJLoader2 extends Loader {
 	 * Use this convenient method to load a file at the given URL. By default the fileLoader uses an ArrayBuffer.
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
-	 * @param {function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
-	 * @param {function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
-	 * @param {function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
-	 * @param {function} [onMeshAlter] Called after every single mesh is made available by the parser
+	 * @param {Function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
+	 * @param {Function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {Function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
+	 * @param {Function} [onMeshAlter] Called after every single mesh is made available by the parser
 	 */
 	load ( url, onLoad, onFileLoadProgress, onError, onMeshAlter ) {
 

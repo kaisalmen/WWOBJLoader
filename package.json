@@ -28,7 +28,7 @@
     "dev": "snowpack dev --verbose",
     "doc": "jsdoc -c jsdoc.json",
     "build": "npm run clean && rollup -c",
-    "prepare": "npm run build"
+    "prepare": ""
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
@@ -41,7 +41,7 @@
     "fflate": "^0.6.9",
     "jsdoc": "^3.6.6",
     "rimraf": "^3.0.2",
-    "snowpack": "^3.2.2",
+    "snowpack": "^3.3.0",
     "rollup": "^2.45.2",
     "@rollup/plugin-babel": "^5.3.0",
     "rollup-plugin-copy": "^3.4.0",

@@ -1,16 +1,14 @@
 {
   "include": [
+    "src/loaders/utils/TransportUtils.js",
+    "src/loaders/utils/MaterialUtils.js",
+    "src/loaders/utils/MaterialStore.js",
     "src/loaders/workerTaskManager/WorkerTaskManager.js",
-    "src/loaders/workerTaskManager/utils/TransportUtils.js",
-    "src/loaders/workerTaskManager/utils/MaterialUtils.js",
-    "src/loaders/workerTaskManager/utils/MaterialStore.js",
     "src/loaders/workerTaskManager/worker/defaultRouting.js",
     "src/loaders/workerTaskManager/worker/tmOBJLoader2.js",
     "src/loaders/OBJLoader2.js",
     "src/loaders/OBJLoader2Parallel.js",
-    "src/loaders/obj2/MtlObjBridge.js",
-    "src/loaders/AssetPipelineLoader.js",
-    "src/loaders/pipeline/utils/ResourceDescriptor.js"
+    "src/loaders/utils/MtlObjBridge.js"
   ],
   "compilerOptions": {
     "target": "ES2020",

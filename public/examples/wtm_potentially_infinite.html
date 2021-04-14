@@ -564,9 +564,9 @@
 			/**
 			 * Simplest way to define a worker for {@link WorkerTaskManager}
 			 */
-			class WorkerFunctions {
+			const WorkerFunctions = {
 
-				static init ( context, id, config ) {
+				init: function ( context, id, config ) {
 					context.storage = {
 						whoami: config.id,
 					};
@@ -576,9 +576,9 @@
 						id: id
 					} );
 
-				}
+				},
 
-				static execute ( context, id, config ) {
+				execute: function ( context, id, config ) {
 
 					let bufferGeometry = new THREE.SphereBufferGeometry( 40, 64, 64 );
 					bufferGeometry.name = 'tmProto' + config.id;
@@ -595,7 +595,7 @@
 
 				}
 
-			}
+			};
 
 			let app = new TaskManagerPrototypeExample( document.getElementById( 'example' ) );
 			app.resetAppContext();

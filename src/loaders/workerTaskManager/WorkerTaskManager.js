@@ -86,9 +86,9 @@ class WorkerTaskManager {
      * Registers functions and dependencies for a new task type.
      *
      * @param {string} taskType The name to be used for registration.
-     * @param {function} initFunction The function to be called when the worker is initialised
-     * @param {function} executeFunction The function to be called when the worker is executed
-     * @param {function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
+     * @param {Function} initFunction The function to be called when the worker is initialised
+     * @param {Function} executeFunction The function to be called when the worker is executed
+     * @param {Function} comRoutingFunction The function that should handle communication, leave undefined for default behavior
      * @param {boolean} fallback Set to true if execution should be performed in main
      * @param {Object[]} [dependencyDescriptions]
      * @return {boolean} Tells if registration is possible (new=true) or if task was already registered (existing=false)
@@ -309,11 +309,11 @@ class WorkerTypeDefinition {
         this.verbose = verbose === true;
         this.initialised = false;
         this.functions = {
-            /** @type {function} */
+            /** @type {Function} */
             init: null,
-            /** @type {function} */
+            /** @type {Function} */
             execute: null,
-            /** @type {function} */
+            /** @type {Function} */
             comRouting: null,
             dependencies: {
                 /** @type {Object[]} */
@@ -354,9 +354,9 @@ class WorkerTypeDefinition {
      * Set the three functions. A default comRouting function is used if it is not passed here.
      * Then it creates the code fr.
      *
-     * @param {function} initFunction The function to be called when the worker is initialised
-     * @param {function} executeFunction The function to be called when the worker is executed
-     * @param {function} [comRoutingFunction] The function that should handle communication, leave undefined for default behavior
+     * @param {Function} initFunction The function to be called when the worker is initialised
+     * @param {Function} executeFunction The function to be called when the worker is executed
+     * @param {Function} [comRoutingFunction] The function that should handle communication, leave undefined for default behavior
      */
     setFunctions ( initFunction, executeFunction, comRoutingFunction ) {
 
@@ -368,22 +368,23 @@ class WorkerTypeDefinition {
             this.functions.comRouting = WorkerTaskManagerDefaultRouting.comRouting;
 
         }
-        this._addWorkerCode( this.functions.init.toString() );
-        this._addWorkerCode( this.functions.execute.toString() );
-        this._addWorkerCode( this.functions.comRouting.toString() );
+        this._addWorkerCode( 'init', this.functions.init.toString() );
+        this._addWorkerCode( 'execute', this.functions.execute.toString() );
+        this._addWorkerCode( 'comRouting', this.functions.comRouting.toString() );
         this.workers.code.push( 'self.addEventListener( "message", message => comRouting( self, message, null, init, execute ), false );' );
 
     }
 
     /**
      *
+     * @param {string} functionName Name of the function
      * @param {string} functionString A function as string
      * @private
      */
-    _addWorkerCode ( functionString ) {
+    _addWorkerCode ( functionName, functionString ) {
         if ( functionString.startsWith('function') ) {
 
-            this.workers.code.push( functionString + ';\n\n' );
+            this.workers.code.push( 'const ' + functionName + ' = ' + functionString + ';\n\n' );
 
         } else {
 
@@ -670,8 +671,8 @@ class MockedTaskWorker {
      * Creates a new instance.
      *
      * @param {number} id
-     * @param {function} initFunction
-     * @param {function} executeFunction
+     * @param {Function} initFunction
+     * @param {Function} executeFunction
      */
     constructor( id, initFunction, executeFunction ) {
 

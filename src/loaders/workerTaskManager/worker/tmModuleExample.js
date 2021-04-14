@@ -10,9 +10,9 @@ import {
 import { MaterialUtils } from '../../utils/MaterialUtils.js';
 import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
 
-class WTMModuleExample {
+const WTMModuleExample = {
 
-	static init ( context, id, config ) {
+	init: function ( context, id, config ) {
 		context.storage = {
 			whoami: id,
 		};
@@ -22,9 +22,9 @@ class WTMModuleExample {
 			id: id
 		} );
 
-	}
+	},
 
-	static execute ( context, id, config ) {
+	execute: function ( context, id, config ) {
 
 		let bufferGeometry = new TorusKnotBufferGeometry( 20, 3, 100, 64 );
 		bufferGeometry.name = 'tmProto' + config.id;
