@@ -2,13 +2,10 @@ version: '3'
 
 services:
   obj2dev:
-    image: obj2dev
-    build:
-      dockerfile: dev/Dockerfile
-      context: .
+    image: docker.pkg.github.com/kaisalmen/three-wtm/devbox:latest
     ports:
-      - target: 8080
-        published: 8080
+      - target: 8085
+        published: 8085
         protocol: tcp
         mode: host
     volumes:

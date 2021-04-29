@@ -3,7 +3,7 @@ export class OBJ2LoaderWorker {
         url: any;
         code?: undefined;
     } | {
-        code: string;
+        code: any;
         url?: undefined;
     })[];
     static init(context: any, id: any, config: any): void;

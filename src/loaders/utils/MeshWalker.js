@@ -1,8 +1,9 @@
-import { GeometryTransport } from "./TransportUtils.js";
 import {
 	BufferGeometry,
 	Object3D
 } from "three";
+import { GeometryTransport } from "three-wtm";
+
 
 class MeshWalker {
 

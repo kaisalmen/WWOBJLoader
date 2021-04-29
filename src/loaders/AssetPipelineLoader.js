@@ -3,8 +3,8 @@
  */
 
 import { FileLoader } from 'three';
+import { ObjectManipulator } from 'three-wtm';
 import { ResourceDescriptor } from './pipeline/utils/ResourceDescriptor.js';
-import { ObjectManipulator } from './utils/TransportUtils.js';
 
 /**
  *

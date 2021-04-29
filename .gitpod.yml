@@ -1,5 +1,4 @@
-image:
-  file: ./dev/gitpod.dockerfile
+image: gitpod/workspace-full
 
 ports:
   - port: 8080

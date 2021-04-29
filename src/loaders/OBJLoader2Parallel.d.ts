@@ -8,10 +8,10 @@ export class OBJLoader2Parallel extends OBJLoader2 {
         jsmWorker: URL;
         threejs: URL;
     };
-    workerTaskManager: WorkerTaskManager | null;
+    workerTaskManager: any;
     taskName: string;
     setExecuteParallel(executeParallel: boolean): OBJLoader2Parallel;
-    setWorkerTaskManager(workerTaskManager: WorkerTaskManager, taskName?: string | undefined): OBJLoader2Parallel;
+    setWorkerTaskManager(workerTaskManager: any, taskName?: string | undefined): OBJLoader2Parallel;
     setJsmWorker(preferJsmWorker: boolean, jsmWorkerUrl: URL): OBJLoader2Parallel;
     setThreejsLocation(threejsUrl: URL): OBJLoader2Parallel;
     setTerminateWorkerOnLoad(terminateWorkerOnLoad: boolean): OBJLoader2Parallel;
@@ -22,4 +22,3 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     _onLoad(dataTransport: any): void;
 }
 import { OBJLoader2 } from "./OBJLoader2.js";
-import { WorkerTaskManager } from "./workerTaskManager/WorkerTaskManager.js";

@@ -14,10 +14,10 @@ import {
 	BufferGeometry,
 	BufferAttribute,
 } from 'three';
-import { MaterialStore } from './utils/MaterialStore.js';
-// Parser only
-import { MaterialUtils } from './utils/MaterialUtils.js';
-
+import {
+	MaterialStore,
+	MaterialUtils
+} from 'three-wtm';
 
 /**
  * Creates a new OBJLoader2. Use it to load OBJ data from files or to parse OBJ data from arraybuffer or text.

@@ -16,7 +16,8 @@ module.exports = {
 		source: "local"
 	},
 	devOptions: {
-		open: "none"
+		open: "none",
+		port: 8085
 	},
 	buildOptions: {
 		/* ... */
@@ -43,15 +44,11 @@ module.exports = {
 		'**/public/models/draco/**/*',
 		'**/public/models/gltf/**/*',
 		'**/public/models/obj/misc/**/*',
-		'**/src/loaders/workerTaskManager/worker/tmOBJLoader.js',
-		'**/src/loaders/OBJLoader.*',
-		'**/public/webgl_loader_workertaskmanager.html',
 		'**/public/webgl_loader_assetpipeline_obj_stage.html',
 		'**/LICENSE',
 		'**/Dockerfile',
 		'**/README.md',
 		'**/CHANGELOG.md',
-		'**/gulpfile.js',
 		'**/docker-compose.yml',
 		'**/declaration.tsconfig.json',
 		'**/jsdoc.json'

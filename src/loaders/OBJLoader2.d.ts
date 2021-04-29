@@ -2,7 +2,7 @@ export class OBJLoader2 {
     static OBJLOADER2_VERSION: string;
     constructor(manager?: any);
     parser: OBJLoader2Parser;
-    materialStore: MaterialStore;
+    materialStore: any;
     setLogging(enabled: boolean, debug: boolean): OBJLoader2;
     setMaterialPerSmoothingGroup(materialPerSmoothingGroup: boolean): OBJLoader2;
     setUseOAsMesh(useOAsMesh: boolean): OBJLoader2;
@@ -107,4 +107,3 @@ export class OBJLoader2Parser {
     _onMeshAlter(mesh: any): void;
     _onLoad(): void;
 }
-import { MaterialStore } from "./utils/MaterialStore.js";

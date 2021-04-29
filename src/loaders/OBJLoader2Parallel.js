@@ -10,14 +10,15 @@ import {
 	Points,
 	MeshStandardMaterial
 } from 'three';
-import { OBJLoader2 } from './OBJLoader2.js';
-import { WorkerTaskManager } from './workerTaskManager/WorkerTaskManager.js';
-import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
 import {
+	WorkerTaskManager,
 	DataTransport,
-	MeshTransport
-} from './utils/TransportUtils.js';
-import { MaterialUtils } from './utils/MaterialUtils.js';
+	MeshTransport,
+	MaterialUtils
+} from 'three-wtm';
+import { OBJLoader2 } from './OBJLoader2.js';
+import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
+
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.

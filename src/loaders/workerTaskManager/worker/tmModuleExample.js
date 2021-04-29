@@ -5,10 +5,11 @@ import {
 } from "three";
 import {
 	MeshTransport,
-	MaterialsTransport
-} from "../../utils/TransportUtils.js";
-import { MaterialUtils } from '../../utils/MaterialUtils.js';
-import { WorkerTaskManagerDefaultRouting } from "./defaultRouting.js";
+	MaterialsTransport,
+	MaterialUtils,
+	WorkerTaskManagerDefaultRouting
+} from "three-wtm";
+
 
 const WTMModuleExample = {
 

@@ -7,12 +7,9 @@ import { name, dependencies, devDependencies } from './package.json';
 // transformation instructions
 const patternOBJLoader2 = new RegExp('../../src/loaders/OBJLoader2.js', 'g');
 const patternOBJLoader2Parallel = new RegExp('../../src/loaders/OBJLoader2Parallel.js', 'g');
-const patternWorkerTaskManager = new RegExp('../../src/loaders/workerTaskManager/WorkerTaskManager.js', 'g');
 const patternMtlObjBridge = new RegExp('../../src/loaders/utils/MtlObjBridge.js', 'g');
-const patternTransportUtils = new RegExp('../../src/loaders/utils/TransportUtils.js', 'g');
-const patternMaterialStore = new RegExp('../../src/loaders/utils/MaterialStore.js', 'g');
 const patternOBJ2LoaderWorker = new RegExp('../../src/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
-const packageModule = '../npm/wwobjloader2.module.js';
+const packageModule = `../npm/${name}.module.js`;
 
 const copyConfig = {
   targets: [
@@ -33,15 +30,6 @@ const copyConfig = {
         let str = contents.toString();
         str = str.replace(patternMtlObjBridge, packageModule);
         str = str.replace(patternOBJLoader2, packageModule);
-        str = str.replace(patternOBJLoader2Parallel, packageModule);
-        return str.replace(patternWorkerTaskManager, packageModule);
-      }
-    },
-    {
-      src: 'public/examples/webgl_loader_obj2_workermodulesupport.html',
-      dest: 'build/public/examples',
-      transform: (contents, filename) => {
-        let str = contents.toString();
         return str.replace(patternOBJLoader2Parallel, packageModule);
       }
     },
@@ -58,19 +46,7 @@ const copyConfig = {
       dest: 'build/public/examples',
       transform: (contents, filename) => {
         let str = contents.toString();
-        str = str.replace(patternWorkerTaskManager, packageModule);
-        str = str.replace(patternTransportUtils, packageModule);
-        str = str.replace(patternMaterialStore, packageModule);
         return str.replace(patternOBJ2LoaderWorker, packageModule);
-      }
-    },
-    {
-      src: 'public/examples/wtm_transferables.html',
-      dest: 'build/public/examples',
-      transform: (contents, filename) => {
-        let str = contents.toString();
-        str = str.replace(patternWorkerTaskManager, packageModule);
-        return str.replace(patternTransportUtils, packageModule);
       }
     },
     {
@@ -109,7 +85,6 @@ export default [
   {
     input: 'src/index.js',
     output: [
-/*
       {
         format: 'cjs',
         file: `build/${name}.common.js`,
@@ -121,7 +96,6 @@ export default [
         exports: 'auto',
         plugins: [terser()]
       },
-*/
       {
         format: 'es',
         file: `build/npm/${name}.module.js`,
