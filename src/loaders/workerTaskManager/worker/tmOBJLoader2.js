@@ -1,3 +1,4 @@
+/*
 import {
 	EventDispatcher,
 	Color,
@@ -18,6 +19,7 @@ import {
 	Mesh,
 	MathUtils,
 } from 'three';
+ */
 import {
 	DataTransport,
 	GeometryTransport,
