@@ -20,11 +20,11 @@
 			'use strict';
 
 			import * as THREE from 'three';
+			import { TrackballControls } from '../libs/three/examples/jsm/controls/TrackballControls.js';
+			import { MTLLoader } from '../libs/three/examples/jsm/loaders/MTLLoader.js';
+
 			import { GUI } from 'dat.gui';
-			import {
-				TrackballControls,
-				MTLLoader
-			} from 'three-stdlib';
+
 			import {
 				WorkerTaskManager,
 				DataTransport,
@@ -34,7 +34,7 @@
 				ObjectUtils,
 				MaterialStore
 			} from 'three-wtm';
-			import { OBJ2LoaderWorker } from '../../src/loaders/workerTaskManager/worker/tmOBJLoader2.js';
+			import { OBJ2LoaderWorker } from '../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -118,7 +118,7 @@
 						funcInit: WorkerFunctions.init,
 						funcExec: WorkerFunctions.execute,
 						dependencies: [
-							{ url: '../../libs/three/three.min.js' },
+							{ url: '../../libs/three/build/three.min.js' },
 							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
 							{ code: ObjectUtils.serializeClass( DataTransport ) },
 							{ code: ObjectUtils.serializeClass( GeometryTransport ) }
@@ -163,7 +163,7 @@
 						filenameMtl: '../models/obj/male02/male02.mtl',
 						filenameObj: '../models/obj/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
-						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/three.min.js' )
+						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/build/three.min.js' )
 					} );
 
 					this.tasksToUse = [];

@@ -10,6 +10,6 @@ services:
         mode: host
     volumes:
       - ./:/home/obj2/workspace/:rw
-    command: ["bash", "-c", ". /home/obj2/.local/bin/env/configureN.sh && npm install && npm run dev"]
+    command: ["bash", "-c", ". /home/devbox/.local/bin/env/configureN.sh && npm install && npm run dev"]
     working_dir: /home/obj2/workspace
     container_name: obj2dev

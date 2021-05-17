@@ -6,8 +6,7 @@ module.exports = {
 	mount: {
 		"src": "/dist",
 		"public": "/",
-		"node_modules/three/build": "/libs/three",
-		"node_modules/three/examples/js/loaders": "/libs/loaders"
+		"node_modules/three/": "/libs/three",
 	},
 	plugins: [
 		/* ... */

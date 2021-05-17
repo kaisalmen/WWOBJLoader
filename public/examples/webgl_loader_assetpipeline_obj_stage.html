@@ -35,21 +35,19 @@
 			'use strict';
 
 			import * as THREE from 'three';
+			import { TrackballControls } from '../libs/three/examples/jsm/controls/TrackballControls.js';
+			import { MTLLoader } from '../libs/three/examples/jsm/loaders/MTLLoader.js';
+
 			import { GUI } from 'dat.gui';
 
-			import {
-				TrackballControls,
-				MTLLoader
-			} from 'three-stdlib';
-
-			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
-			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
-			import { ResourceDescriptor } from '../../src/loaders/pipeline/utils/ResourceDescriptor.js';
+			import { OBJLoader2 } from '../../dist/loaders/OBJLoader2.js';
+			import { MtlObjBridge } from '../../dist/loaders/utils/MtlObjBridge.js';
+			import { ResourceDescriptor } from '../../dist/loaders/pipeline/utils/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from '../../src/loaders/AssetPipelineLoader.js';
+			} from '../../dist/loaders/AssetPipelineLoader.js';
 
 			const WWOBJLoader2Stage = function ( elementToBindTo ) {
 				this.renderer = null;

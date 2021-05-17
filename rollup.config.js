@@ -5,10 +5,10 @@ import { terser } from "rollup-plugin-terser";
 import { name, dependencies, devDependencies } from './package.json';
 
 // transformation instructions
-const patternOBJLoader2 = new RegExp('../../src/loaders/OBJLoader2.js', 'g');
-const patternOBJLoader2Parallel = new RegExp('../../src/loaders/OBJLoader2Parallel.js', 'g');
-const patternMtlObjBridge = new RegExp('../../src/loaders/utils/MtlObjBridge.js', 'g');
-const patternOBJ2LoaderWorker = new RegExp('../../src/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
+const patternOBJLoader2 = new RegExp('../../dist/loaders/OBJLoader2.js', 'g');
+const patternOBJLoader2Parallel = new RegExp('../../dist/loaders/OBJLoader2Parallel.js', 'g');
+const patternMtlObjBridge = new RegExp('../../dist/loaders/utils/MtlObjBridge.js', 'g');
+const patternOBJ2LoaderWorker = new RegExp('../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
 const packageModule = `../npm/${name}.module.js`;
 
 const copyConfig = {
