@@ -5,6 +5,7 @@
 ## 4.0.0-dev
 - Introduction of `WorkerTaskManager`
 - Updated Example `webgl_loader_obj2_options.html`: Expose parser options and logging configuration in UI
+- Removed gulp
 
 ## 3.2.0
 - Changed structure of the repository to mimic three.js layout

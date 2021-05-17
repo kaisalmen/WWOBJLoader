@@ -1,12 +1,9 @@
-image:
-  file: ./dev/gitpod.dockerfile
+image: gitpod/workspace-full
 
 ports:
-  - port: 8085
+  - port: 8080
     onOpen: open-browser
 
 tasks:
   - name: Terminal
-    init: bash ./dev/createDevEnv.sh
-  - name: nginx
-    command: nginx && multitail /var/log/nginx/access.log -I /var/log/nginx/error.log
+    init: npm install && npm run dev
