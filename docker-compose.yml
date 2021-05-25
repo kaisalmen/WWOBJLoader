@@ -8,8 +8,16 @@ services:
         published: 8085
         protocol: tcp
         mode: host
+      - target: 8086
+        published: 8086
+        protocol: tcp
+        mode: host
+      - target: 8087
+        published: 8087
+        protocol: tcp
+        mode: host
     volumes:
-      - ./:/home/obj2/workspace/:rw
+      - ./:/home/devbox/workspace/:rw
     command: ["bash", "-c", ". /home/devbox/.local/bin/env/configureN.sh && npm install && npm run dev"]
-    working_dir: /home/obj2/workspace
+    working_dir: /home/devbox/workspace
     container_name: obj2dev

@@ -4,10 +4,10 @@
 /build
 /docs/
 
-/public/models/draco
-/public/models/gltf
-/public/models/obj/bugs
-/public/models/obj/extra
-/public/models/obj/misc
+/public/examples/models/draco
+/public/examples/models/gltf
+/public/examples/models/obj/bugs
+/public/examples/models/obj/extra
+/public/examples/models/obj/misc
 
 /node_modules

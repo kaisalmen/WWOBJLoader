@@ -145,7 +145,7 @@
 						const fileLoader = new THREE.FileLoader();
 						fileLoader.setPath( '' );
 						fileLoader.setResponseType( 'arraybuffer' );
-						fileLoader.load( '../models/obj/female02/female02.obj',
+						fileLoader.load( './models/obj/main/female02/female02.obj',
 							function ( content ) {
 
 								const local = new THREE.Object3D();
@@ -163,7 +163,7 @@
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( '../models/obj/female02/female02.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/main/female02/female02.mtl', onLoadMtl );
 
 				}
 
@@ -200,7 +200,7 @@
 					const fileLoader = new THREE.FileLoader();
 					fileLoader.setPath( '' );
 					fileLoader.setResponseType( 'arraybuffer' );
-					fileLoader.load( '../models/obj/female02/female02_vertex_colors.obj',
+					fileLoader.load( './models/obj/main/female02/female02_vertex_colors.obj',
 						function ( content ) {
 
 							objLoader2Parallel.parse( content );
@@ -235,12 +235,12 @@
 					function onLoadMtl( mtlParseResult ) {
 
 						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
-						objLoader2.load( '../models/obj/male02/male02.obj', callbackOnLoad, null, null, null );
+						objLoader2.load( './models/obj/main/male02/male02.obj', callbackOnLoad, null, null, null );
 
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( '../models/obj/male02/male02.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/main/male02/male02.mtl', onLoadMtl );
 
 				}
 
@@ -278,12 +278,12 @@
 					function onLoadMtl( mtlParseResult ) {
 
 						objLoader2Parallel.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
-						objLoader2Parallel.load( '../models/obj/walt/WaltHead.obj', callbackOnLoad );
+						objLoader2Parallel.load( './models/obj/main/walt/WaltHead.obj', callbackOnLoad );
 
 					}
 
 					const mtlLoader = new MTLLoader();
-					mtlLoader.load( '../models/obj/walt/WaltHead.mtl', onLoadMtl );
+					mtlLoader.load( './models/obj/main/walt/WaltHead.mtl', onLoadMtl );
 
 				}
 
@@ -315,7 +315,7 @@
 
 					}
 
-					objLoader2Parallel.load( '../models/obj/cerberus/Cerberus.obj', callbackOnLoad );
+					objLoader2Parallel.load( './models/obj/main/cerberus/Cerberus.obj', callbackOnLoad );
 
 				}
 
@@ -360,7 +360,7 @@
 
 					}
 
-					objLoader2Parallel.load( '../models/obj/ninja/ninjaHead_Low.obj', callbackOnLoad );
+					objLoader2Parallel.load( './models/obj/main/ninja/ninjaHead_Low.obj', callbackOnLoad );
 
 				}
 

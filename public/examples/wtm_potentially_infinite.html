@@ -149,8 +149,8 @@
 						use: true,
 						fallback: false,
 						module: '/dist/loaders/workerTaskManager/worker/tmOBJLoader2.js',
-						filenameMtl: '../models/obj/female02/female02.mtl',
-						filenameObj: '../models/obj/female02/female02.obj',
+						filenameMtl: './models/obj/main/female02/female02.mtl',
+						filenameObj: './models/obj/main/female02/female02.obj',
 						materialStore: new MaterialStore( true )
 					} );
 					this.taskDescriptions.set( 'tmOBJLoader2Standard', {
@@ -160,8 +160,8 @@
 						fallback: false,
 						funcInit: OBJ2LoaderWorker.init,
 						funcExec: OBJ2LoaderWorker.execute,
-						filenameMtl: '../models/obj/male02/male02.mtl',
-						filenameObj: '../models/obj/male02/male02.obj',
+						filenameMtl: './models/obj/main/male02/male02.mtl',
+						filenameObj: './models/obj/main/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
 						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/build/three.min.js' )
 					} );
