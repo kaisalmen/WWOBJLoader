@@ -17,9 +17,10 @@ function buildCopyConfig(min) {
 
   // transformation instructions: Required to verify examples work with bundled lib
   const patternOBJLoader2 = new RegExp('../../dist/loaders/OBJLoader2.js', 'g');
+  const patternOBJLoader2InWorker = new RegExp('../../OBJLoader2.js', 'g');
   const patternOBJLoader2Parallel = new RegExp('../../dist/loaders/OBJLoader2Parallel.js', 'g');
   const patternMtlObjBridge = new RegExp('../../dist/loaders/utils/MtlObjBridge.js', 'g');
-  const patternOBJ2LoaderWorker = new RegExp('../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
+  const patternTmOBJ2Loader = new RegExp('../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
   return [
     {
       src: 'public/index.html',
@@ -57,7 +58,7 @@ function buildCopyConfig(min) {
       dest: examplesDir,
       transform: (contents, filename) => {
         let str = contents.toString();
-        return str.replace(patternOBJ2LoaderWorker, moduleReplacer);
+        return str.replace(patternTmOBJ2Loader, moduleReplacer);
       }
     },
     {
@@ -76,11 +77,8 @@ function buildCopyConfig(min) {
       src: 'src/loaders/workerTaskManager/worker/*',
       dest: examplesDir + '/worker/',
       transform: (contents, filename) => {
-//        let str = contents.toString();
-//        str = str.replace(patternDefaultRouting, moduleReplacerWorker);
-//        str = str.replace(patternMaterialUtils, moduleReplacerWorker);
-//        return str.replace(patternTransportUtils, moduleReplacerWorker);
-        return contents;
+        let str = contents.toString();
+        return str.replace(patternOBJLoader2InWorker, moduleReplacerWorker);
       }
     },
     {

@@ -2,7 +2,6 @@
 
 /archive
 /build
-/docs/
 
 /public/examples/models/draco
 /public/examples/models/gltf
@@ -11,3 +10,4 @@
 /public/examples/models/obj/misc
 
 /node_modules
+*.tgz

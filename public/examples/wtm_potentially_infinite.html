@@ -32,7 +32,8 @@
 				MeshTransport,
 				MaterialsTransport,
 				ObjectUtils,
-				MaterialStore
+				MaterialStore,
+				DeUglify
 			} from 'three-wtm';
 			import { OBJ2LoaderWorker } from '../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
 
@@ -119,22 +120,28 @@
 						funcExec: WorkerFunctions.execute,
 						dependencies: [
 							{ url: '../../libs/three/build/three.min.js' },
-							{ code: ObjectUtils.serializeClass( THREE.BufferGeometry ) },
+							{ code: '\n\n' },
+							{ code: DeUglify.buildThreeConst() },
+							{ code: '\n\n' },
+							{ code: DeUglify.buildUglifiedThreeMapping() },
+							{ code: '\n\n' },
 							{ code: ObjectUtils.serializeClass( DataTransport ) },
-							{ code: ObjectUtils.serializeClass( GeometryTransport ) }
+							{ code: ObjectUtils.serializeClass( GeometryTransport ) },
+							{ code: DeUglify.buildUglifiedThreeWtmMapping() },
+							{ code: '\n\n' }
 						]
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModule', {
 						name: 'tmProtoExampleModule',
 						use: true,
 						fallback: false,
-						module: '/dist/loaders/workerTaskManager/worker/tmModuleExample.js'
+						module: '/examples/worker/tmModuleExample.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleModuleNoThree', {
 						name: 'tmProtoExampleModuleNoThree',
 						use: true,
 						fallback: false,
-						module: '/dist/loaders/workerTaskManager/worker/tmModuleExampleNoThree.js'
+						module: '/examples/worker/tmModuleExampleNoThree.js'
 					} );
 					this.taskDescriptions.set( 'tmProtoExampleMain', {
 						name: 'tmProtoExampleMain',

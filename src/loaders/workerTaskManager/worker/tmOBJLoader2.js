@@ -1,25 +1,9 @@
-/*
 import {
-	EventDispatcher,
-	Color,
-	Vector2,
-	Vector3,
-	Matrix3,
-	Matrix4,
-	Euler,
-	Quaternion,
-	Layers,
 	Object3D,
-	LoadingManager,
-	Loader,
-	MaterialLoader,
 	Material,
-	BufferAttribute,
-	BufferGeometry,
 	Mesh,
 	MathUtils,
 } from 'three';
- */
 import {
 	DataTransport,
 	GeometryTransport,
@@ -28,62 +12,51 @@ import {
 	ObjectUtils,
 	ObjectManipulator,
 	MaterialUtils,
-	WorkerTaskManagerDefaultRouting
+	WorkerTaskManagerDefaultRouting,
+	DeUglify
 } from 'three-wtm';
 import { OBJLoader2Parser } from '../../OBJLoader2.js';
-
 
 class OBJ2LoaderWorker {
 
 	static buildStandardWorkerDependencies ( threeJsLocation ) {
 		return [
-/*
-			{ code: 'const StaticDrawUsage = 35044;\n' },
-			{ code: ObjectUtils.serializeClass( EventDispatcher ) },
-			{ code: 'let _object3DId = 0;\n' },
-			{ code: 'const _lut = [];\n' },
-			{ code: ObjectUtils.serializePrototype( MathUtils, null, 'MathUtils', false ) },
-			{ code: 'const generateUUID = MathUtils.generateUUID;\n' },
-			{ code: ObjectUtils.serializeClass( Color ) },
-			{ code: ObjectUtils.serializeClass( Vector2 ) },
-			{ code: ObjectUtils.serializeClass( Vector3 ) },
-			{ code: ObjectUtils.serializeClass( Matrix3 ) },
-			{ code: ObjectUtils.serializeClass( Matrix4 ) },
-			{ code: ObjectUtils.serializeClass( Euler ) },
-			{ code: ObjectUtils.serializeClass( Quaternion ) },
-			{ code: ObjectUtils.serializeClass( Layers ) },
-			{ code: 'let _id = 0;\n' },
-			{ code: ObjectUtils.serializeClass( Object3D ) },
-			{ code: 'Object3D.DefaultUp = new Vector3(0, 1, 0);\n' },
-			{ code: ObjectUtils.serializeClass( LoadingManager ) },
-			{ code: 'const DefaultLoadingManager = new LoadingManager();\n' },
-			{ code: ObjectUtils.serializeClass( Loader ) },
-			{ code: ObjectUtils.serializeClass( Material ) },
-			{ code: ObjectUtils.serializeClass( MaterialLoader ) },
-			{ code: ObjectUtils.serializeClass( BufferAttribute ) },
-			{ code: ObjectUtils.serializeClass( BufferGeometry ) },
-			{ code: ObjectUtils.serializeClass( Mesh ) },
-*/
 			{ url: threeJsLocation },
+			{ code: DeUglify.buildThreeConst() },
+			{ code: OBJ2LoaderWorker.buildThreeExtraConst() },
 			{ code: '\n\n' },
-			{ code: 'const MathUtils = THREE.MathUtils;\n' },
-			{ code: 'const MaterialLoader = THREE.MaterialLoader;\n' },
-			{ code: 'const Material = THREE.Material;\n' },
-			{ code: 'const Texture = THREE.Texture;\n' },
-			{ code: 'const Object3D = THREE.Object3D;\n' },
-			{ code: 'const BufferAttribute = THREE.BufferAttribute;\n' },
-			{ code: 'const BufferGeometry = THREE.BufferGeometry;\n' },
-			{ code: 'const Mesh = THREE.Mesh;\n' },
+			{ code: DeUglify.buildUglifiedThreeMapping() },
+			{ code: OBJ2LoaderWorker.buildUglifiedThreeExtraMapping() },
 			{ code: '\n\n' },
-
 			{ code: ObjectUtils.serializeClass( DataTransport ) },
 			{ code: ObjectUtils.serializeClass( GeometryTransport ) },
 			{ code: ObjectUtils.serializeClass( MeshTransport ) },
 			{ code: ObjectUtils.serializeClass( MaterialsTransport ) },
 			{ code: ObjectUtils.serializeClass( MaterialUtils ) },
 			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
-			{ code: ObjectUtils.serializeClass( ObjectManipulator ) }
+			{ code: ObjectUtils.serializeClass( ObjectManipulator ) },
+			{ code: DeUglify.buildUglifiedThreeWtmMapping() },
+			{ code: '\n\n' }
 		]
+	}
+
+	static buildThreeExtraConst () {
+		return 'const MathUtils = THREE.MathUtils;\n' +
+			'const Material = THREE.Material;\n' +
+			'const Object3D = THREE.Object3D;\n' +
+			'const Mesh = THREE.Mesh;\n';
+	}
+
+	static buildUglifiedThreeExtraMapping () {
+		function _MathUtils () { return MathUtils; }
+		function _Material () { return Material; }
+		function _Object3D () { return Object3D; }
+		function _Mesh () { return Mesh; }
+
+		return DeUglify.buildUglifiedNameAssignment( _MathUtils, 'MathUtils', /_MathUtils/, false ) +
+			DeUglify.buildUglifiedNameAssignment( _Material, 'Material', /_Material/, false ) +
+			DeUglify.buildUglifiedNameAssignment( _Object3D, 'Object3D', /_Object3D/, false ) +
+			DeUglify.buildUglifiedNameAssignment( _Mesh, 'Mesh', /_Mesh/, false );
 	}
 
 	static init ( context, id, config ) {

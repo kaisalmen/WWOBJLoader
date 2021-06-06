@@ -1,11 +1,14 @@
-OBJLoader2 & WorkerTaskManager for three.js
+OBJLoader2 & OBJLoader2Parallel for three.js
 ===
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 
-`OBJLoader2` is a loader for the `OBJ` file format included in [three.js](https://threejs.org). It is an alternative to `OBJLoader` offering more options. The parser `OBJLoader2Parser` is independent and can either be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
+`OBJLoader2` is a loader for the `OBJ` file format. It is an alternative to `OBJLoader` included in [three.js](https://threejs.org). The loader and its parser can be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
 
-New versions of `OBJLoader2` and `OBJLoader2Parallel` are now released via  three.js. I currently no longer plan to release them independently via npm.
+New versions of `OBJLoader2` and `OBJLoader2Parallel` are from now on again released as npm modules independent of three.js. The next stable version will be 4.0.0. 4.0.0-beta.0 is already available for testing
+
+
+***This README is outdated and will be updated soon...***
 
 ## Changelog
 Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
@@ -90,21 +93,8 @@ The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing cap
 - TypeScript definitions (d.ts) are generated from JSDoc definitions for free from it, see [declaration](./declaration.tsconfig.json)
 
 ### `WorkerTaskManager`
-The new `WorkerTaskManager` now replaces `WorkerExecutionSupport`. It offers a generalized approach for executing parser code in a web worker.
-- Standard workers
-  - Standard workers are implemented including Main-Execution fallback
-  - Dependency loading for standard workers is available
-- Module Workers
-  - Module workers are implemented, dependencies are declared regularly and therefore no extra functionality is required
-  - `exec` and `init` functions can be declared in modules and then be packaged in standard worker if needed. This feature is used this to define the worker code once to support both code paths in `OBJLoader2Parallel`
-- A new example is supplied
-  - It uses a dat.gui to configure the example. Let it run, stop and reset.
-  - It allows to select all outlined worker types (standard workers with dependencies, module workers that declare dependencies if required and standard workers that are executed on main) and OBJLoader2Parser (standard and module version).
-  - It also allows to set the maximum amount of workers, the overall executions count, and the number of meshes to keep.
-  - It is a potentially indefinitely running example executing over and over the same workers, This has already proven to be very helpful in identifying memory holes and in verifying that CPU is utilized as expected.
-- Class notation eases creation of worker code in case of standard workers.
-- Execution queue has been added to `WorkerTaskManager`
-- Caching of worker code is available
+
+See https://github.com/kaisalmen/three-wtm
 
 Happy coding!
 
