@@ -1,0 +1,14 @@
+{
+  "name": "vminobj2",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kai Salmen",
+  "license": "MIT",
+  "dependencies": {
+    "wwobjloader2": "file:../../wwobjloader2-4.0.0-beta.1.tgz",
+    "three-wtm": "file:../../../three-wtm/three-wtm-1.0.0-beta.5.tgz"
+  }
+}

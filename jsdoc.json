@@ -4,7 +4,7 @@
       "src/loaders/OBJLoader2.js",
       "src/loaders/OBJLoader2Parallel.js",
       "src/loaders/utils/MtlObjBridge.js",
-      "src/loaders/workerTaskManager/worker/tmOBJLoader2.js"
+      "src/loaders/tmOBJLoader2.js"
     ]
   },
   "tags": {

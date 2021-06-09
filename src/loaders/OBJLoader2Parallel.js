@@ -17,7 +17,7 @@ import {
 	MaterialUtils
 } from 'three-wtm';
 import { OBJLoader2 } from './OBJLoader2.js';
-import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
+import { OBJ2LoaderWorker } from './tmOBJLoader2.js';
 
 
 /**
@@ -30,9 +30,8 @@ import { OBJ2LoaderWorker } from './workerTaskManager/worker/tmOBJLoader2.js';
 class OBJLoader2Parallel extends OBJLoader2 {
 
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
-
-	static DEFAULT_JSM_WORKER_PATH = '/dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
-	static DEFAULT_JSM_THREEJS_PATH = '../libs/three/build/three.min.js';
+	static DEFAULT_JSM_WORKER_PATH = '/dist/loaders/tmOBJLoader2.js';
+	static DEFAULT_JSM_THREEJS_PATH = '/node_modules/three/build/three.min.js';
 
 	/**
 	 *

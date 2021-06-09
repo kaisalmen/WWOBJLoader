@@ -15,7 +15,7 @@ import {
 	WorkerTaskManagerDefaultRouting,
 	DeUglify
 } from 'three-wtm';
-import { OBJLoader2Parser } from '../../OBJLoader2.js';
+import { OBJLoader2Parser } from './OBJLoader2.js';
 
 class OBJ2LoaderWorker {
 

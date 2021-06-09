@@ -6,10 +6,10 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
 	mount: {
-		"libs/wwobjloader2": "/libs/wwobjloader2",
 		"public": "/",
-		"libs/three": "/libs/three",
-		"src": "/dist"
+		"node_modules/three": "/node_modules/three",
+		"node_modules/three-wtm": "/node_modules/three-wtm",
+		"node_modules/wwobjloader2": "/node_modules/wwobjloader2"
 	},
 	plugins: [
 		/* ... */

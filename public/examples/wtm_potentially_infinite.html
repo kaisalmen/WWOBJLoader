@@ -35,7 +35,7 @@
 				MaterialStore,
 				DeUglify
 			} from 'three-wtm';
-			import { OBJ2LoaderWorker } from '../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js';
+			import { OBJ2LoaderWorker } from '/dist/loaders/tmOBJLoader2.js';
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -119,7 +119,7 @@
 						funcInit: WorkerFunctions.init,
 						funcExec: WorkerFunctions.execute,
 						dependencies: [
-							{ url: '../../libs/three/build/three.min.js' },
+							{ url: '../../node_modules/three/build/three.min.js' },
 							{ code: '\n\n' },
 							{ code: DeUglify.buildThreeConst() },
 							{ code: '\n\n' },
@@ -155,7 +155,7 @@
 						modelName: 'female02',
 						use: true,
 						fallback: false,
-						module: '/dist/loaders/workerTaskManager/worker/tmOBJLoader2.js',
+						module: '/dist/loaders/tmOBJLoader2.js',
 						filenameMtl: './models/obj/main/female02/female02.mtl',
 						filenameObj: './models/obj/main/female02/female02.obj',
 						materialStore: new MaterialStore( true )
@@ -170,7 +170,7 @@
 						filenameMtl: './models/obj/main/male02/male02.mtl',
 						filenameObj: './models/obj/main/male02/male02.obj',
 						materialStore: new MaterialStore( true ),
-						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../libs/three/build/three.min.js' )
+						dependencies: OBJ2LoaderWorker.buildStandardWorkerDependencies( '../../node_modules/three/build/three.min.js' )
 					} );
 
 					this.tasksToUse = [];

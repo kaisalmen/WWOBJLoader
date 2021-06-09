@@ -12,7 +12,7 @@ tsc -p ${DIR_BASE}/declaration.tsconfig.json
 
 cp -f ${DIR_LOADER_SRC}/utils/MtlObjBridge.d.ts ${DIR_LOADER_TRG}/utils/MtlObjBridge.d.ts
 
-cp -f ${DIR_LOADER_SRC}/workerTaskManager/worker/tmOBJLoader2.d.ts ${DIR_LOADER_TRG}/workerTaskManager/worker/tmOBJLoader2.d.ts
+cp -f ${DIR_LOADER_SRC}/worker/tmOBJLoader2.d.ts ${DIR_LOADER_TRG}/worker/tmOBJLoader2.d.ts
 
 cp -f ${DIR_LOADER_SRC}/OBJLoader2.d.ts ${DIR_LOADER_TRG}/OBJLoader2.d.ts
 cp -f ${DIR_LOADER_SRC}/OBJLoader2Parallel.d.ts ${DIR_LOADER_TRG}/OBJLoader2Parallel.d.ts

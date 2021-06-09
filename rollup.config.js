@@ -12,15 +12,15 @@ const copyConfig = {
 function buildCopyConfig(min) {
   const basedir = min ? 'build/verifymin' : 'build/verify';
   const examplesDir = basedir + '/public/examples';
-  const moduleReplacer = min ? '../libs/wwobjloader2/wwobjloader2.module.min.js' : '../libs/wwobjloader2/wwobjloader2.module.js';
-  const moduleReplacerWorker = min ? '../../libs/wwobjloader2/wwobjloader2.module.min.js' : '../../libs/wwobjloader2/wwobjloader2.module.js';
+  const moduleReplacer = 'wwobjloader2';
+  const tmOBJLoader2Replacer = '../node_modules/wwobjloader2/build/tmOBJLoader2.js';
 
   // transformation instructions: Required to verify examples work with bundled lib
   const patternOBJLoader2 = new RegExp('../../dist/loaders/OBJLoader2.js', 'g');
-  const patternOBJLoader2InWorker = new RegExp('../../OBJLoader2.js', 'g');
+  const patternOBJLoader2Worker = new RegExp('./OBJLoader2.js', 'g');
   const patternOBJLoader2Parallel = new RegExp('../../dist/loaders/OBJLoader2Parallel.js', 'g');
   const patternMtlObjBridge = new RegExp('../../dist/loaders/utils/MtlObjBridge.js', 'g');
-  const patternTmOBJ2Loader = new RegExp('../../dist/loaders/workerTaskManager/worker/tmOBJLoader2.js', 'g');
+  const patternTmOBJLoader2Html = new RegExp('/dist/loaders/tmOBJLoader2.js', 'g');
   return [
     {
       src: 'public/index.html',
@@ -40,6 +40,7 @@ function buildCopyConfig(min) {
       dest: examplesDir,
       transform: (contents, filename) => {
         let str = contents.toString();
+        str = str.replace(patternTmOBJLoader2Html, tmOBJLoader2Replacer);
         str = str.replace(patternMtlObjBridge, moduleReplacer);
         str = str.replace(patternOBJLoader2, moduleReplacer);
         return str.replace(patternOBJLoader2Parallel, moduleReplacer);
@@ -50,6 +51,7 @@ function buildCopyConfig(min) {
       dest: examplesDir,
       transform: (contents, filename) => {
         let str = contents.toString();
+        str = str.replace(patternTmOBJLoader2Html, tmOBJLoader2Replacer);
         return str.replace(patternOBJLoader2Parallel, moduleReplacer);
       }
     },
@@ -58,11 +60,15 @@ function buildCopyConfig(min) {
       dest: examplesDir,
       transform: (contents, filename) => {
         let str = contents.toString();
-        return str.replace(patternTmOBJ2Loader, moduleReplacer);
+        return str.replace(patternTmOBJLoader2Html, tmOBJLoader2Replacer);
       }
     },
     {
       src: min ? 'dev/verify/min/snowpack.config.js' : 'dev/verify/snowpack.config.js',
+      dest: basedir
+    },
+    {
+      src: min ? 'dev/verify/min/package.json' : 'dev/verify/package.json',
       dest: basedir
     },
     {
@@ -74,21 +80,13 @@ function buildCopyConfig(min) {
       dest: examplesDir + '/models/obj/main'
     },
     {
-      src: 'src/loaders/workerTaskManager/worker/*',
-      dest: examplesDir + '/worker/',
+      src: 'src/loaders/tmOBJLoader2.js',
+      dest: 'build',
       transform: (contents, filename) => {
         let str = contents.toString();
-        return str.replace(patternOBJLoader2InWorker, moduleReplacerWorker);
+        return str.replace(patternOBJLoader2Worker, moduleReplacer);
       }
     },
-    {
-      src: 'node_modules/three',
-      dest: basedir + '/libs'
-    },
-    {
-      src: min ? 'build/wwobjloader2.module.min.js' : 'build/wwobjloader2.module.js',
-      dest: basedir + '/libs/wwobjloader2'
-    }
   ]
 };
 

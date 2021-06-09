@@ -6,7 +6,7 @@ module.exports = {
 	mount: {
 		"src": "/dist",
 		"public": "/",
-		"node_modules/three/": "/libs/three",
+		"node_modules/three/": "/node_modules/three",
 	},
 	plugins: [
 		/* ... */
@@ -22,17 +22,7 @@ module.exports = {
 		/* ... */
 	},
 	optimize: {
-/*
-		bundle: true,
-		minify: false,
-		treeshake: false,
-		target: 'es2020',
-		splitting: false,
-		preload: false,
-		entrypoints: ['public/index.html'], // "auto",
-		sourcemap: 'external',
-		manifest: false
- */
+		/* ... */
 	},
 	exclude: [
 		'**/*.sh',
