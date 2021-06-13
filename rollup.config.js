@@ -1,8 +1,10 @@
 import babel from '@rollup/plugin-babel';
 import copy from 'rollup-plugin-copy';
 import resolve from '@rollup/plugin-node-resolve';
-import { terser } from "rollup-plugin-terser";
+import { terser } from 'rollup-plugin-terser';
+import modify from 'rollup-plugin-modify';
 import { name, dependencies, devDependencies } from './package.json';
+
 
 const copyConfig = {
   targets: buildCopyConfig(false).concat(buildCopyConfig(true)),
@@ -12,15 +14,16 @@ const copyConfig = {
 function buildCopyConfig(min) {
   const basedir = min ? 'build/verifymin' : 'build/verify';
   const examplesDir = basedir + '/public/examples';
-  const moduleReplacer = 'wwobjloader2';
+  const moduleReplacer = min ? 'wwobjloader2/build/wwobjloader2.module.min.js' : 'wwobjloader2';
   const tmOBJLoader2Replacer = '../node_modules/wwobjloader2/build/tmOBJLoader2.js';
 
   // transformation instructions: Required to verify examples work with bundled lib
-  const patternOBJLoader2 = new RegExp('../../dist/loaders/OBJLoader2.js', 'g');
+  const patternOBJLoader2 = new RegExp('../../src/loaders/OBJLoader2.js', 'g');
   const patternOBJLoader2Worker = new RegExp('./OBJLoader2.js', 'g');
-  const patternOBJLoader2Parallel = new RegExp('../../dist/loaders/OBJLoader2Parallel.js', 'g');
-  const patternMtlObjBridge = new RegExp('../../dist/loaders/utils/MtlObjBridge.js', 'g');
-  const patternTmOBJLoader2Html = new RegExp('/dist/loaders/tmOBJLoader2.js', 'g');
+  const patternOBJLoader2Parallel = new RegExp('../../src/loaders/OBJLoader2Parallel.js', 'g');
+  const patternMtlObjBridge = new RegExp('../../src/loaders/utils/MtlObjBridge.js', 'g');
+  const patternTmOBJLoader2Html = new RegExp('/src/loaders/tmOBJLoader2.js', 'g');
+
   return [
     {
       src: 'public/index.html',
@@ -80,6 +83,10 @@ function buildCopyConfig(min) {
       dest: examplesDir + '/models/obj/main'
     },
     {
+      src: 'public/examples/worker/*',
+      dest: examplesDir + '/worker'
+    },
+    {
       src: 'src/loaders/tmOBJLoader2.js',
       dest: 'build',
       transform: (contents, filename) => {
@@ -115,7 +122,7 @@ export default [
       },
       {
         format: 'es',
-        file: `build/${name}.module.js`,
+        file: `build/${name}.module.js`
       },
       {
         format: 'es',
@@ -129,7 +136,11 @@ export default [
     plugins: [
       resolve(),
       babel(),
-      copy(copyConfig)
+      copy(copyConfig),
+      modify({
+        find: /self.addEventListener.*message.*/,
+        replace: ""
+      })
     ]
   }
 ];

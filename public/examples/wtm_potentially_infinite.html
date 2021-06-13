@@ -35,7 +35,7 @@
 				MaterialStore,
 				DeUglify
 			} from 'three-wtm';
-			import { OBJ2LoaderWorker } from '/dist/loaders/tmOBJLoader2.js';
+			import { OBJ2LoaderWorker } from '/src/loaders/tmOBJLoader2.js';
 
 			/**
 			 * The aim of this example is to show all possible ways how to use the {@link WorkerTaskManager}:
@@ -155,7 +155,7 @@
 						modelName: 'female02',
 						use: true,
 						fallback: false,
-						module: '/dist/loaders/tmOBJLoader2.js',
+						module: '/src/loaders/tmOBJLoader2.js',
 						filenameMtl: './models/obj/main/female02/female02.mtl',
 						filenameObj: './models/obj/main/female02/female02.obj',
 						materialStore: new MaterialStore( true )

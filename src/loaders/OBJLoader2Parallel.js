@@ -30,7 +30,7 @@ import { OBJ2LoaderWorker } from './tmOBJLoader2.js';
 class OBJLoader2Parallel extends OBJLoader2 {
 
 	static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
-	static DEFAULT_JSM_WORKER_PATH = '/dist/loaders/tmOBJLoader2.js';
+	static DEFAULT_JSM_WORKER_PATH = '/src/loaders/tmOBJLoader2.js';
 	static DEFAULT_JSM_THREEJS_PATH = '/node_modules/three/build/three.min.js';
 
 	/**
@@ -144,6 +144,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
 
 			if ( this.parser.logging.debug ) console.log( 'Needed to create new WorkerTaskManager' );
 			this.workerTaskManager = new WorkerTaskManager( 1 );
+			this.workerTaskManager.setVerbose( this.parser.logging.enabled && this.parser.logging.debug );
 
 		}
 		if ( ! this.workerTaskManager.supportsTaskType( this.taskName ) ) {
@@ -214,13 +215,10 @@ class OBJLoader2Parallel extends OBJLoader2 {
 				}
 			);
 			this._buildWorkerCode( dataTransport )
-				.then(
-					x => {
-						if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed: ' + x );
-						this._executeWorkerParse( content );
-					}
-				).catch( e => console.error( e ) );
-
+				.then( () => {
+					if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed' );
+					this._executeWorkerParse( content );
+				} ).catch( e => console.error( e ) );
 			let dummy = new Object3D();
 			dummy.name = 'OBJLoader2ParallelDummy';
 			return dummy;
@@ -246,7 +244,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
 			} )
 			.addBuffer( 'modelData', content )
 			.package( false );
-		this.workerTaskManager.enqueueForExecution( this.taskName, dataTransport.getMain(),meshTransport => this._onAssetAvailable( meshTransport ), dataTransport.getTransferables() )
+		this.workerTaskManager.enqueueForExecution(
+				this.taskName,
+				dataTransport.getMain(),
+				dataTransport => this._onLoad( dataTransport ),
+				dataTransport.getTransferables() )
 			.then( dataTransport => {
 				this._onLoad( dataTransport );
 				if ( this.terminateWorkerOnLoad ) this.workerTaskManager.dispose();
@@ -260,18 +262,23 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	 * @param {Mesh} mesh
 	 * @param {object} materialMetaInfo
 	 */
-	_onAssetAvailable ( asset ) {
+	_onLoad ( asset ) {
 
 		let cmd = asset.cmd;
 		if ( cmd === 'assetAvailable' ) {
+
 			let meshTransport;
 			if ( asset.type === 'MeshTransport' ) {
+
 				meshTransport = new MeshTransport().loadData( asset ).reconstruct( false );
-			}
-			else {
+
+			} else {
+
 				console.error( 'Received unknown asset.type: ' + asset.type );
+
 			}
 			if ( meshTransport ) {
+
 				const materialsTransport = meshTransport.getMaterialsTransport();
 				let material = materialsTransport.processMaterialTransport( this.materialStore.getMaterials(), this.parser.logging.enabled );
 				if ( material === null ) material = new MeshStandardMaterial( { color: 0xFF0000 } );
@@ -295,24 +302,28 @@ class OBJLoader2Parallel extends OBJLoader2 {
 			}
 
 		}
+		else if ( cmd === 'execComplete' ) {
+
+			let dataTransport;
+			if ( asset.type === 'DataTransport' ) {
+
+				dataTransport = new DataTransport().loadData( asset );
+				if ( dataTransport instanceof DataTransport && this.parser.callbacks.onLoad !== null ) {
+
+					this.parser.callbacks.onLoad( this.parser.baseObject3d, dataTransport.getId() );
+
+				}
+
+			} else {
+
+				console.error( 'Received unknown asset.type: ' + asset.type );
+
+			}
+
+		}
 		else {
+
 			console.error( 'Received unknown command: ' + cmd );
-		}
-
-	}
-
-	_onLoad ( dataTransport ) {
-
-		if ( dataTransport.type === 'DataTransport' ) {
-			dataTransport = new DataTransport().loadData( dataTransport );
-		}
-		else {
-			console.error( 'Received unknown asset.type: ' + dataTransport.type );
-		}
-
-		if ( dataTransport instanceof DataTransport && this.parser.callbacks.onLoad !== null ) {
-
-			this.parser.callbacks.onLoad( this.parser.baseObject3d, dataTransport.getId() );
 
 		}
 

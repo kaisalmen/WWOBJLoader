@@ -105,10 +105,7 @@ class OBJ2LoaderWorker {
 		const buffer = materialsTransport.getBuffer( 'modelData' )
 		if ( buffer !== undefined && buffer !== null ) context.obj2.buffer = buffer;
 
-		context.postMessage( {
-			cmd: "init",
-			id: id
-		} );
+		new DataTransport( 'init', id ).postMessage( context );
 
 	}
 

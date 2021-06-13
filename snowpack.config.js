@@ -4,7 +4,7 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
 	mount: {
-		"src": "/dist",
+		"src": "/src",
 		"public": "/",
 		"node_modules/three/": "/node_modules/three",
 	},

@@ -20,7 +20,7 @@
 
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
-			import { OBJLoader2Parallel } from '../../dist/loaders/OBJLoader2Parallel.js';
+			import { OBJLoader2Parallel } from '../../src/loaders/OBJLoader2Parallel.js';
 
 			const WorkerModuleSupportExample = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -83,7 +83,8 @@
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( modelName )
-						.setJsmWorker( true, new URL( '/dist/loaders/tmOBJLoader2.js', window.location.href ) )
+						.setLogging( true, true )
+						.setJsmWorker( true, new URL( '/src/loaders/tmOBJLoader2.js', window.location.href ) )
 						.setExecuteParallel( true );
 
 					let callbackOnLoad = function ( object3d, objectId ) {
