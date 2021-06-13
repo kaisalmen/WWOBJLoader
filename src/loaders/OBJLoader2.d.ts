@@ -21,6 +21,7 @@ export class OBJLoader2 {
     parse(content: any | string): any;
 }
 export class OBJLoader2Parser {
+    static buildUglifiedMapping(): any;
     logging: {
         enabled: boolean;
         debug: boolean;

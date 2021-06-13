@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "wwobjloader2": "file:../../wwobjloader2-4.0.0-beta.1.tgz",
-    "three-wtm": "file:../../../three-wtm/three-wtm-1.0.0-beta.5.tgz"
+    "three-wtm": "^1.0.0-beta.6"
   }
 }

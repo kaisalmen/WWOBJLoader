@@ -41,7 +41,7 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
     "three": "^0.129.0",
-    "three-wtm": "~1.0.0-beta.5"
+    "three-wtm": "~1.0.0-beta.6"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
