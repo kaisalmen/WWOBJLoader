@@ -16,7 +16,8 @@ import {
 } from 'three';
 import {
 	MaterialStore,
-	MaterialUtils
+	MaterialUtils,
+	DeUglify
 } from 'three-wtm';
 
 /**
@@ -1325,6 +1326,12 @@ class OBJLoader2Parser {
 
 		if ( this.callbacks.onLoad !== null ) this.callbacks.onLoad( this.baseObject3d, this.objectId );
 
+	}
+
+	static buildUglifiedMapping () {
+		function _OBJLoader2Parser () { return OBJLoader2Parser; }
+
+		return DeUglify.buildUglifiedNameAssignment( _OBJLoader2Parser, 'OBJLoader2Parser', /_OBJLoader2Parser/, true );
 	}
 }
 

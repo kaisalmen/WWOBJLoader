@@ -36,6 +36,8 @@ class OBJ2LoaderWorker {
 			{ code: ObjectUtils.serializeClass( OBJLoader2Parser ) },
 			{ code: ObjectUtils.serializeClass( ObjectManipulator ) },
 			{ code: DeUglify.buildUglifiedThreeWtmMapping() },
+			{ code: '\n\n' },
+			{ code: OBJLoader2Parser.buildUglifiedMapping() },
 			{ code: '\n\n' }
 		]
 	}

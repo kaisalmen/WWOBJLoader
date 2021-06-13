@@ -14,6 +14,7 @@ const copyConfig = {
 function buildCopyConfig(min) {
   const basedir = min ? 'build/verifymin' : 'build/verify';
   const examplesDir = basedir + '/public/examples';
+  const snowpackConfig = min ? 'dev/verify/min/snowpack.config.js' : 'dev/verify/snowpack.config.js';
   const moduleReplacer = min ? 'wwobjloader2/build/wwobjloader2.module.min.js' : 'wwobjloader2';
   const tmOBJLoader2Replacer = '../node_modules/wwobjloader2/build/tmOBJLoader2.js';
 
@@ -67,7 +68,7 @@ function buildCopyConfig(min) {
       }
     },
     {
-      src: min ? 'dev/verify/min/snowpack.config.js' : 'dev/verify/snowpack.config.js',
+      src: snowpackConfig,
       dest: basedir
     },
     {
@@ -97,11 +98,6 @@ function buildCopyConfig(min) {
   ]
 };
 
-const terserConfig = {
-  keep_classnames: true,
-  module: true
-}
-
 export default [
   // everything in one package
   {
@@ -117,7 +113,7 @@ export default [
         file: `build/${name}.common.min.js`,
         exports: 'auto',
         plugins: [
-            terser(terserConfig)
+            terser()
         ]
       },
       {
@@ -128,7 +124,7 @@ export default [
         format: 'es',
         file: `build/${name}.module.min.js`,
         plugins: [
-            terser(terserConfig)
+            terser()
         ]
       }
     ],
