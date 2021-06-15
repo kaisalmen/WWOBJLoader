@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-rc.0",
   "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
   "author": "kaisalmen",
   "license": "MIT",
@@ -13,6 +13,7 @@
   },
   "main": "build/wwobjloader2.common.js",
   "module": "build/wwobjloader2.module.js",
+  "types": "src/index.d.ts",
   "files": [
     "package.json",
     "LICENSE",
@@ -23,7 +24,7 @@
     "build/wwobjloader2.common.min.js",
     "build/wwobjloader2.module.js",
     "build/wwobjloader2.module.min.js",
-    "src/index.js",
+    "src/index.*",
     "src/loaders/OBJLoader2.*",
     "src/loaders/OBJLoader2Parallel.*",
     "src/loaders/workerTaskManager/worker/*",
@@ -33,22 +34,23 @@
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
     "clean": "rimraf build",
     "dev": "snowpack dev --verbose",
+    "def": "dev/runTscDeclaration.sh",
     "doc": "jsdoc -c jsdoc.json",
     "build": "npm run clean && rollup -c",
+    "prerelease": "npm run build && npm run def && npm run doc && npm pack",
     "prepare": ""
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
-  "dependencies": {
+  "peerDependencies": {
     "three": "^0.129.0",
-    "three-wtm": "~1.0.0-beta.6"
+    "three-wtm": "~1.0.0-rc.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.14.5",
+    "@babel/core": "^7.14.6",
     "@babel/plugin-proposal-class-properties": "^7.14.5",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
-    "dat.gui": "^0.7.7",
     "fflate": "^0.7.0",
     "jsdoc": "^3.6.7",
     "rimraf": "^3.0.2",
