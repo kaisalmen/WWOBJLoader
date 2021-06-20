@@ -1,7 +1,12 @@
 # Changelog
 
-## 3.2.1-dev
+## 4.0.0
+- All worker related functionality has been moved to external `WorkerTaskManager`, see [three-wtm](https://github.com/kaisalmen/three-wtm).
+- Introduction of potentially Infinite running `WorkerTaskManager` example `wtm_potentially_infinite.html`
 - Updated Example `webgl_loader_obj2_options.html`: Expose parser options and logging configuration in UI
+- Completely removed the need to use gulp.
+- Use snowpack for development.
+- Use rollup for library creation and used rollup and snowpack for supplement of the library verification environment.
 
 ## 3.2.0
 - Changed structure of the repository to mimic three.js layout

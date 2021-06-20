@@ -1,4 +1,12 @@
 {
+  "source": {
+    "include": [
+      "src/loaders/OBJLoader2.js",
+      "src/loaders/OBJLoader2Parallel.js",
+      "src/loaders/utils/MtlObjBridge.js",
+      "src/loaders/tmOBJLoader2.js"
+    ]
+  },
   "tags": {
     "allowUnknownTags": true
   },

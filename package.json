@@ -1,13 +1,7 @@
 {
   "name": "wwobjloader2",
-  "version": "3.2.0",
-  "versions": {
-    "obj_loader2": "3.2.0",
-    "obj_loader2_parallel": "3.2.0",
-    "worker_execution_support": "3.2.0"
-  },
-  "description": "New OBJLoader utilizing web worker for three.js",
-  "main": "build/WLOBJLoader2.js",
+  "version": "4.0.0",
+  "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
   "author": "kaisalmen",
   "license": "MIT",
   "repository": {
@@ -17,38 +11,53 @@
   "bugs": {
     "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
   },
+  "main": "build/wwobjloader2.common.js",
+  "module": "build/wwobjloader2.module.js",
+  "types": "src/index.d.ts",
   "files": [
     "package.json",
     "LICENSE",
     "README.md",
-    "CHANGELOG.md",
-    "examples/webgl_loader_assetpipeline.html",
-    "examples/webgl_loader_assetpipeline_obj_stage.html",
-    "examples/webgl_loader_obj2.html",
-    "examples/webgl_loader_obj2_bugverify.html",
-    "examples/webgl_loader_obj2_options.html",
-    "examples/webgl_loader_obj2_workermodulesupport.html",
-    "examples/models/obj/verify/gulpfile.js",
-    "examples/models/obj/verify/verify.html",
-    "examples/models/obj/verify/verify.mtl",
-    "examples/models/obj/verify/verify.obj"
+    "build/tmOBJLoader2.js",
+    "build/wwobjloader2.common.js",
+    "build/wwobjloader2.common.min.js",
+    "build/wwobjloader2.module.js",
+    "build/wwobjloader2.module.min.js",
+    "src/index.*",
+    "src/loaders/OBJLoader2.*",
+    "src/loaders/OBJLoader2Parallel.*",
+    "src/loaders/workerTaskManager/worker/*",
+    "src/loaders/utils/MtlObjBridge.*"
   ],
-  "directories": {
-    "resource": "resource",
-    "test": "test"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \\\"Error: no libs specified\\\" && exit 1",
+    "clean": "rimraf build",
+    "dev": "snowpack dev --verbose",
+    "def": "dev/runTscDeclaration.sh",
+    "doc": "jsdoc -c jsdoc.json",
+    "build": "npm run clean && rollup -c",
+    "prerelease": "npm run build && npm run def && npm run doc && npm pack",
+    "prepare": ""
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
-  "dependencies": {
-    "three": "^0.124.0"
+  "peerDependencies": {
+    "three": "^0.129.0",
+    "three-wtm": "^1.0.0"
   },
   "devDependencies": {
-    "del": "^6.0.0",
-    "gulp": "^4.0.2",
-    "gulp-jsdoc3": "^3.0.0",
-    "gulp-replace": "^1.0.0"
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "fflate": "^0.7.1",
+    "jsdoc": "^3.6.7",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.52.1",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-modify": "^3.0.0",
+    "snowpack": "^3.5.9",
+    "typescript": "^4.3.4"
   }
 }
