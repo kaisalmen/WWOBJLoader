@@ -25,6 +25,14 @@ If you run snowpack locally you require a `nodejs` and `npm`. The Gitpod and loc
 
 In any environment the server is reachable on port 8085.
 
+## Examples
+
+If you want to get started see take a look at the following examples. They get more advanced from top to bottom:  
+* [OBJLoader2 direct loader Test](public/examples/webgl_loader_obj2.html)
+* [OBJLoader2Parallel Worker Module Support](public/examples/webgl_loader_obj2_workermodulesupport.html)
+* [OBJLoader2(Parallel) usage options](public/examples/webgl_loader_obj2_options.html)
+* [WorkerTaskManager: Potentially Infinite](public/examples/wtm_potentially_infinite.html)
+
 ## Main Branches
 
 Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
@@ -38,29 +46,25 @@ Run `npm run doc` to create the documentation in directory **build/docs**.
 Use the following script `bash dev/models/retrieveExtras.sh` to download missing resources (OBJ, MTL files and textures). 
 
 
-# Implementation Overview
-
-**Still needs further refinement**
+# Feature Overview
 
 ## OBJLoader2Parser
-The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing capabilities of `OBJLoader`. Please see the following list of features:
-- Parser can be executed in worker 
-- `OBJLoader2.parse` and `OBJLoader2Parallel.parse` methods accept `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower
-- It features indexed rendering including vertex reduction.
-- Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](public/examples/webgl_loader_obj2_options.html)**).
-- Face N-Gons are supported
-- Multi-Materials are created when needed
+The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing capabilities of `OBJLoader` from three.js, plus some extra feature. Please see the following list:
+- The `parse` methods of `OBJLoader2Parser` accepts `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower.
+- In case `OBJLoader2Parallel` the of Parser `OBJLoader2Parser` is executed inside a worker.
+- `OBJLoader2Parser` features indexed rendering including vertex reduction.
+- Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](public/examples/webgl_loader_obj2_options.html#L133)**).
+- Face N-Gons are supported.
+- Multi-Materials are created when needed.
 - Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
-- Support for points and lines was added (since V2.3.0)
-- New mesh detection relies 'g' occurrence or 'f', 'l' or 'p' type change (since V2.3.0). This allows mutiple mesh definitions within one group.
+- Support for points and lines is available since V2.3.0.
+- New mesh detection relies on 'g' occurrence or 'f', 'l' or 'p' type change (since V2.3.0). This allows multiple mesh definitions within one group.
 - Negative face indices are supported (issue #28)
-- The parser is now a single function that can be easily embedded in module or standard Workers (since V4.0.0-dev)
+- The parser is now a single class that can be directly stored as string and therefore embedded in module or standard Workers (since V4.0.0).
 
 ## OBJLoader2 & OBJLoader2Parallel 
-- Console logging is deactivated by default, but can be switched on if desired (including debug logging)
-- `OBJLoader2` and `OBJLoader2Parallel` must be re-instantiated every time they are used.
-- Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16)
-- TypeScript definitions (d.ts) are generated from JSDoc definitions for free from it, see [declaration](./declaration.tsconfig.json)
+- Console logging is deactivated by default. It can be enabled by switching [here]() including debug logging.
+- TypeScript definitions (d.ts) are generated from JSDoc definitions for free from it, see [declaration](./dev/declaration.tsconfig.json)
 
 ## WorkerTaskManager
 

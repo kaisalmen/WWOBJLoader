@@ -214,7 +214,13 @@
 					const modelName = 'male02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
-					const objLoader2 = new OBJLoader2().setModelName( modelName ).setUseIndices( this.useIndices ).setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup ).setUseOAsMesh( this.useOAsMesh ).setDisregardNormals( this.disregardNormals ).setLogging( this.regularLogging, this.debugLogging );
+					const objLoader2 = new OBJLoader2()
+						.setModelName( modelName )
+						.setUseIndices( this.useIndices )
+						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
+						.setUseOAsMesh( this.useOAsMesh )
+						.setDisregardNormals( this.disregardNormals )
+						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
 
@@ -295,10 +301,8 @@
 					local.scale.set( scale, scale, scale );
 					this.pivot.add( local );
 
-					const objLoader2Parallel = new OBJLoader2Parallel()
-						.setWorkerTaskManager( this.workerTaskManager )
+					const objLoader2 = new OBJLoader2()
 						.setModelName( local.name )
-						.setExecuteParallel( false )
 						.setUseIndices( this.useIndices )
 						.setMaterialPerSmoothingGroup( this.materialPerSmoothingGroup )
 						.setUseOAsMesh( this.useOAsMesh )
@@ -309,12 +313,12 @@
 					function callbackOnLoad( object3d, objectId ) {
 
 						local.add( object3d );
-						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2Parallel.getModelName() + '|' + objectId + '] was successfully completed.' } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 
 					}
 
-					objLoader2Parallel.load( './models/obj/main/cerberus/Cerberus.obj', callbackOnLoad );
+					objLoader2.load( './models/obj/main/cerberus/Cerberus.obj', callbackOnLoad );
 
 				}
 

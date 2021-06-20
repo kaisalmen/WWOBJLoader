@@ -40,7 +40,6 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	constructor( manager ) {
 
 		super( manager );
-		this.executeParallel = true;
 		this.preferJsmWorker = false;
 		this.urls = {
 			/** @type {URL} */
@@ -50,19 +49,6 @@ class OBJLoader2Parallel extends OBJLoader2 {
 		};
 		this.workerTaskManager = null;
 		this.taskName = 'tmOBJLoader2';
-
-	}
-
-	/**
-	 * Execution of parse in parallel via Worker is default, but normal {OBJLoader2} parsing can be enforced via false here.
-	 *
-	 * @param {boolean} executeParallel True or False
-	 * @return {OBJLoader2Parallel}
-	 */
-	setExecuteParallel ( executeParallel ) {
-
-		this.executeParallel = executeParallel === true;
-		return this;
 
 	}
 
@@ -196,38 +182,29 @@ class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * See {@link OBJLoader2.parse}
 	 * The callback onLoad needs to be set to be able to receive the content if used in parallel mode.
-	 * Fallback is possible via {@link OBJLoader2Parallel#setExecuteParallel}.
 	 */
 	parse ( content ) {
 
-		if ( this.executeParallel ) {
+		if ( this.parser.logging.enabled ) {
 
-			if ( this.parser.logging.enabled ) {
-
-				console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
-
-			}
-			const dataTransport = new DataTransport().setParams( {
-					logging: {
-						enabled: this.parser.logging.enabled,
-						debug: this.parser.logging.debug
-					},
-				}
-			);
-			this._buildWorkerCode( dataTransport )
-				.then( () => {
-					if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed' );
-					this._executeWorkerParse( content );
-				} ).catch( e => console.error( e ) );
-			let dummy = new Object3D();
-			dummy.name = 'OBJLoader2ParallelDummy';
-			return dummy;
-
-		} else {
-
-			return OBJLoader2.prototype.parse.call( this, content );
+			console.info( 'Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION );
 
 		}
+		const dataTransport = new DataTransport().setParams( {
+				logging: {
+					enabled: this.parser.logging.enabled,
+					debug: this.parser.logging.debug
+				},
+			}
+		);
+		this._buildWorkerCode( dataTransport )
+			.then( () => {
+				if ( this.parser.logging.debug ) console.log( 'OBJLoader2Parallel init was performed' );
+				this._executeWorkerParse( content );
+			} ).catch( e => console.error( e ) );
+		let dummy = new Object3D();
+		dummy.name = 'OBJLoader2ParallelDummy';
+		return dummy;
 
 	}
 
