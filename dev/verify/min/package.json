@@ -9,7 +9,7 @@
   "author": "Kai Salmen",
   "license": "MIT",
   "dependencies": {
-    "wwobjloader2": "file:../../wwobjloader2-4.0.0-beta.1.tgz",
-    "three-wtm": "^1.0.0-beta.6"
+    "wwobjloader2": "file:../../wwobjloader2-4.0.0.tgz",
+    "three-wtm": "^1.0.0"
   }
 }

@@ -5,74 +5,44 @@ OBJLoader2 & OBJLoader2Parallel for three.js
 
 `OBJLoader2` is a loader for the `OBJ` file format. It is an alternative to `OBJLoader` included in [three.js](https://threejs.org). The loader and its parser can be used on Main via `OBJLoader2` or in parallel inside a web worker via `OBJLoader2Parallel`.
 
-New versions of `OBJLoader2` and `OBJLoader2Parallel` are from now on again released as npm modules independent of three.js. The next stable version will be 4.0.0. 4.0.0-beta.0 is already available for testing
-
-
-***This README is outdated and will be updated soon...***
+New versions of `OBJLoader2` and `OBJLoader2Parallel` are from now on again released as npm modules independent of three.js. The first stable version that was released independent again is 4.0.0. Versions 3.x.y were never released as independent npm and only in combination with three.js itself.
 
 ## Changelog
 Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
 
 # Development
 
+## Getting Started
+
+There exist three possibilities:
+* Press the `Gitpod` button above and start coding and using the examples directly in the browser
+* Checkout the repository and use `docker-compose up -d` to spin up local snowpack dev server.
+* Checkout the repository and run `npm install` and then `npm run dev` to spin up local snowpack dev server
+
+Whatever environment you choose to start [snowpack](https://www.snowpack.dev/) is used to serve the code and the examples using it. With this setup you are able to change the code and examples without invoking an additional bundler. Snowpack ensures all imported npm modules are available if previously installed in local environment (see `npm install`).
+
+If you run snowpack locally you require a `nodejs` and `npm`. The Gitpod and local docker environment ensure all prerequisites are fulfilled.
+
+In any environment the server is reachable on port 8085.
+
 ## Main Branches
 
 Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
 <br>
-Last stable release available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
+The stable branch contains the release versions available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
 
-## Repository structure
-The directory structure now mimics the three.js directory structure to easy porting of changes:
-- **examples**: Contains Tests/HTML examples
-- **examples/jsm**: Contains the sources for the loaders
-- **examples/models**: Contains OBJs, MTLs and textures
-
-Use the [index.html](public/index.html) to easily access the different examples.
-
-## Development Environments
-
-### Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader) 
-
-The easiest way to get started is simple by using gitpod! It offers all the possibilities the local environments do.
-
-### Local Container
-
-If you have docker & docker-compose available there is no need to install any software stacks (git, node, npm, gulp, etc.).
-From the root of the repo just invoke the following command:
-```shell script
-docker-compose up -d --build
-```
-When the container starts it always performs the initialisation task which puts all required files in place and then launches a [local nginx http server on port 8085](http://localhost:8085).
-All local build environment configuration is stored in the `dev` folder.
-
-Bash into the running container for any manual task or script you want to run.
-```shell script
-docker exec -it obj2dev bash
-```
-
-### Local System
-
-If you don't want to use the docker environment, then you need to set-up and **[npm](https://nodejs.org)** and **[gulp](http://gulpjs.com/)** locally on your local platform.
-After you have cloned this repository locally and have npm and gulp set-up, please run:<br>
-```shell script
-npm install
-```
-
-### Docs
-From the project's root run `gulp` to create The documentation in directory **build/docs**.
+## Docs
+Run `npm run doc` to create the documentation in directory **build/docs**.
  
-### Additional models and resources
-Use the following script to download missing resources (OBJ, MTL files and textures):
-```shell script
-bash dev/models/retrieveExtras.sh
-```
+## Additional models and resources
+Use the following script `bash dev/models/retrieveExtras.sh` to download missing resources (OBJ, MTL files and textures). 
 
 
-## Implementation Overview
+# Implementation Overview
 
-### `OBJLoader2Parser`
+**Still needs further refinement**
+
+## OBJLoader2Parser
 The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing capabilities of `OBJLoader`. Please see the following list of features:
 - Parser can be executed in worker 
 - `OBJLoader2.parse` and `OBJLoader2Parallel.parse` methods accept `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower
@@ -86,15 +56,15 @@ The parser used by `OBJLoader2` and `OBJLoader2Parallel` has all OBJ parsing cap
 - Negative face indices are supported (issue #28)
 - The parser is now a single function that can be easily embedded in module or standard Workers (since V4.0.0-dev)
 
-### General features 
+## OBJLoader2 & OBJLoader2Parallel 
 - Console logging is deactivated by default, but can be switched on if desired (including debug logging)
 - `OBJLoader2` and `OBJLoader2Parallel` must be re-instantiated every time they are used.
 - Progress callbacks provide numerical values to indicate overall progress of download or parsing (issue #16)
 - TypeScript definitions (d.ts) are generated from JSDoc definitions for free from it, see [declaration](./declaration.tsconfig.json)
 
-### `WorkerTaskManager`
+## WorkerTaskManager
 
-See https://github.com/kaisalmen/three-wtm
+The [WorkerTaskManager](https://github.com/kaisalmen/three-wtm) handles everything regarding workers. This is now a completely independent project and library that is utilized by `OBJLoader2Parallel`. 
 
 Happy coding!
 
