@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.1
+- `three.js` is no longer a **peerDependency**. It is just a **dependency**. This resolves issue #58.
+- Updated **devDependencies** to resolve potential security issues.
+
 ## 4.0.0
 - All worker related functionality has been moved to external `WorkerTaskManager`, see [three-wtm](https://github.com/kaisalmen/three-wtm).
 - Introduction of potentially Infinite running `WorkerTaskManager` example `wtm_potentially_infinite.html`
