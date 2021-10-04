@@ -35,9 +35,9 @@ If you want to get started see take a look at the following examples. They get m
 
 ## Main Branches
 
-Main development now takes place on branch [dev](https://github.com/kaisalmen/WWOBJLoader/tree/dev).
+Main development now takes place on branch [main](https://github.com/kaisalmen/WWOBJLoader/tree/main).
 <br>
-The stable branch contains the release versions available with three.js is available on branch [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable).
+The [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable) branch contains the release versions.
 
 ## Docs
 Run `npm run doc` to create the documentation in directory **build/docs**.
