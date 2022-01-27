@@ -42,7 +42,7 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "dependencies": {
-    "three": "^0.133.1"
+    "three": "^0.137.0"
   },
   "peerDependencies": {
     "three-wtm": "^1.0.1"
