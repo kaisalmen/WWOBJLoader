@@ -1,0 +1,34 @@
+{
+  "name": "wwobjloader2",
+  "version": "5.0.0-next.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "clean": "shx rm -fr ./dist",
+    "dev": "vite",
+    "doc": "jsdoc -c jsdoc.json",
+    "lint": "npx eslint src",
+    "build": "npm run clean && tsc",
+    "serve": "tsc && vite preview"
+  },
+  "dependencies": {
+    "three": "^0.138.3",
+    "@types/three": "^0.138.0",
+    "three-wtm": "^2.0.0-next.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.6.10"
+  }
+}

@@ -1,11 +1,5 @@
 {
-  "include": [
-    "../src/loaders/tmOBJLoader2.js",
-    "../src/loaders/OBJLoader2.js",
-    "../src/loaders/OBJLoader2Parallel.js",
-    "../src/loaders/utils/MtlObjBridge.js",
-    "../src/index.js"
-  ],
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "es2020",
@@ -13,9 +7,16 @@
     "esModuleInterop": true,
     "allowJs": true,
     "declaration": true,
-    "declarationDir": "../build/ts",
+    "declarationDir": "./dist",
     "emitDeclarationOnly": true,
     "noEmit": false,
     "removeComments": true
-  }
+  },
+  "include": [
+    "./src/**/*.js"
+  ],
+  "exclude": [
+    "./dist",
+    "./node_modules"
+  ]
 }

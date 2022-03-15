@@ -1,8 +1,8 @@
 {
   "name": "wwobjloader2",
-  "version": "4.0.1",
   "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
   "author": "kaisalmen",
+  "private": "true",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,53 +11,29 @@
   "bugs": {
     "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
   },
-  "main": "build/wwobjloader2.common.js",
-  "module": "build/wwobjloader2.module.js",
-  "types": "src/index.d.ts",
-  "files": [
-    "package.json",
-    "LICENSE",
-    "README.md",
-    "build/tmOBJLoader2.js",
-    "build/wwobjloader2.common.js",
-    "build/wwobjloader2.common.min.js",
-    "build/wwobjloader2.module.js",
-    "build/wwobjloader2.module.min.js",
-    "src/index.*",
-    "src/loaders/OBJLoader2.*",
-    "src/loaders/OBJLoader2Parallel.*",
-    "src/loaders/workerTaskManager/worker/*",
-    "src/loaders/utils/MtlObjBridge.*"
-  ],
-  "scripts": {
+ "scripts": {
+    "clean": "npm run clean --workspaces",
+    "lint": "npm run lint --workspaces",
+    "doc": "npm run doc --workspace packages/objloader2",
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspace packages/examples",
+    "prerelease": "npm run build && npm run doc",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
-    "clean": "rimraf build",
-    "dev": "snowpack dev --verbose",
-    "def": "dev/runTscDeclaration.sh",
-    "doc": "jsdoc -c jsdoc.json",
-    "build": "npm run clean && rollup -c",
-    "prerelease": "npm run build && npm run def && npm run doc && npm pack",
     "prepare": ""
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
-  "dependencies": {
-    "three": "^0.133.1",
-    "three-wtm": "../three-wtm/three-wtm-1.1.0.tgz"
-  },
   "devDependencies": {
-    "@babel/core": "^7.16.12",
-    "@babel/plugin-proposal-class-properties": "^7.16.7",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-node-resolve": "^13.1.3",
-    "fflate": "^0.7.3",
-    "jsdoc": "^3.6.10",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.66.1",
-    "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-modify": "^3.0.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "snowpack": "^3.8.8",
-    "typescript": "^4.5.5"
-  }
+    "@types/node": "^16.11.7",
+    "vite": "^2.8.6",
+    "typescript": "^4.6.2",
+    "eslint": "^8.11.0",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "editorconfig": "^0.15.3",
+    "shx": "^0.3.4"
+  },
+  "workspaces": [
+    "packages/objloader2",
+    "packages/examples"
+  ]
 }

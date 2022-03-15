@@ -1,0 +1,17 @@
+{
+  "name": "objloader2-examples",
+  "version": "5.0.0-next.0",
+  "type": "module",
+  "private": "true",
+  "scripts": {
+    "clean": "shx rm -fr ./dist",
+    "dev": "npm run build-worker && vite",
+    "lint": "npx eslint src",
+    "build-worker": "npx shx rm ./dist/helloWorldWorkerStandard.js && vite -c vite.config.worker.ts build",
+    "build": "npm run clean && npm run build-worker && tsc",
+    "serve": "tsc && vite preview"
+  },
+  "dependencies": {
+    "wwobjloader2": "../packages/objloader2"
+  }
+}

@@ -1,17 +1,17 @@
 {
   "source": {
     "include": [
-      "src/loaders/OBJLoader2.js",
-      "src/loaders/OBJLoader2Parallel.js",
-      "src/loaders/utils/MtlObjBridge.js",
-      "src/loaders/tmOBJLoader2.js"
+      "src/OBJLoader2.js",
+      "src/OBJLoader2Parallel.js",
+      "src/MtlObjBridge.js",
+      "src/tmOBJLoader2.js"
     ]
   },
   "tags": {
     "allowUnknownTags": true
   },
   "opts": {
-    "destination": "./build/docs"
+    "destination": "./dist/docs"
   },
   "plugins": [
     "plugins/markdown"
