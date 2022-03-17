@@ -132,7 +132,7 @@ class OBJLoader2 extends Loader {
      * @return {OBJLoader2}
      */
     setMaterials(materials) {
-        this.materialStore.addMaterials(materials, false);
+        this.materialStore.addMaterialsFromObject(materials, false);
         this.parser.materials = this.materialStore.getMaterials();
         return this;
     }
@@ -315,7 +315,7 @@ class OBJLoader2Parser {
         this.contentRef = null;
         this.legacyMode = false;
 
-        this.materials = {};
+        this.materials = new Map();
         this.baseObject3d = new Object3D();
         this.modelName = 'noname';
 
@@ -385,7 +385,7 @@ class OBJLoader2Parser {
         this.usedBefore = true;
         this._pushSmoothingGroup(1);
         if (this.logging.enabled) {
-            const matKeys = Object.keys(this.materials);
+            const matKeys = this.materials.keys();
             const matNames = (matKeys.length > 0) ? '\n\tmaterialNames:\n\t\t- ' + matKeys.join('\n\t\t- ') : '\n\tmaterialNames: None';
             let printedConfig = 'OBJLoader2 Parser configuration:'
                 + matNames
@@ -898,13 +898,13 @@ class OBJLoader2Parser {
             else {
                 materialName = this.rawMesh.faceType === 6 ? 'defaultPointMaterial' : 'defaultLineMaterial';
             }
-            materialOrg = this.materials[materialNameOrg];
-            material = this.materials[materialName];
+            materialOrg = this.materials.get(materialNameOrg);
+            material = this.materials.get(materialName);
 
             // both original and derived names do not lead to an existing material => need to use a default material
             if ((materialOrg === undefined || materialOrg === null) && (material === undefined || material === null)) {
                 materialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
-                material = this.materials[materialName];
+                material = this.materials.get(materialName);
 
                 if (this.logging.enabled) {
                     console.info('object_group "' + meshOutputGroup.objectName + '_' +
@@ -930,7 +930,7 @@ class OBJLoader2Parser {
             if (createMultiMaterial) {
                 materialGroupLength = this.useIndices ? meshOutputGroup.indices.length : meshOutputGroup.vertices.length / 3;
                 geometry.addGroup(materialGroupOffset, materialGroupLength, materialIndex);
-                material = this.materials[materialName];
+                material = this.materials.get(materialName);
                 multiMaterial[materialIndex] = material;
                 materialMetaInfo.multiMaterialNames[materialIndex] = material.name;
 

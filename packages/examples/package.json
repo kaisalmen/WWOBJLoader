@@ -5,13 +5,12 @@
   "private": "true",
   "scripts": {
     "clean": "shx rm -fr ./dist",
-    "dev": "npm run build-worker && vite",
+    "dev": "vite --debug",
     "lint": "npx eslint src",
-    "build-worker": "npx shx rm ./dist/helloWorldWorkerStandard.js && vite -c vite.config.worker.ts build",
-    "build": "npm run clean && npm run build-worker && tsc",
+    "build": "npm run clean && tsc",
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "wwobjloader2": "../packages/objloader2"
+    "wwobjloader2": "file:../objloader2"
   }
 }

@@ -1,7 +1,10 @@
 {
   "name": "wwobjloader2",
   "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
-  "author": "kaisalmen",
+  "author": {
+    "name": "kaisalmen",
+    "url": "https://www.kaisalmen.de"
+  },
   "private": "true",
   "license": "MIT",
   "repository": {
@@ -11,11 +14,12 @@
   "bugs": {
     "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
   },
- "scripts": {
+  "scripts": {
     "clean": "npm run clean --workspaces",
     "lint": "npm run lint --workspaces",
     "doc": "npm run doc --workspace packages/objloader2",
     "build": "npm run build --workspaces",
+    "build-obj2": "npm run build --workspace packages/objloader2",
     "dev": "npm run dev --workspace packages/examples",
     "prerelease": "npm run build && npm run doc",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
@@ -25,12 +29,12 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "vite": "^2.8.6",
-    "typescript": "^4.6.2",
-    "eslint": "^8.11.0",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "editorconfig": "^0.15.3",
-    "shx": "^0.3.4"
+    "eslint": "^8.11.0",
+    "shx": "^0.3.4",
+    "typescript": "^4.6.2",
+    "vite": "^2.8.6"
   },
   "workspaces": [
     "packages/objloader2",

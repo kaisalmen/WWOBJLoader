@@ -7,13 +7,13 @@ import {
 } from 'three';
 import {
     WorkerTaskManager,
-    DataTransport,
-    MeshTransport,
-    MaterialUtils
+    MaterialUtils,
+    DataTransportPayload,
+    DataTransportPayloadUtils,
+    MeshTransportPayloadUtils,
+    MeshTransportPayload
 } from 'three-wtm';
-import { OBJLoader2 } from './OBJLoader2.js';
-import { OBJ2LoaderWorker } from './tmOBJLoader2.js';
-
+import { OBJLoader2 } from './OBJLoader2';
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -25,8 +25,7 @@ import { OBJ2LoaderWorker } from './tmOBJLoader2.js';
 class OBJLoader2Parallel extends OBJLoader2 {
 
     static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
-    static DEFAULT_JSM_WORKER_PATH = '/src/loaders/tmOBJLoader2.js';
-    static DEFAULT_JSM_THREEJS_PATH = '/node_modules/three/build/three.min.js';
+    static DEFAULT_JSM_WORKER_PATH = './worker/OBJLoader2Worker.js';
 
     /**
      *
@@ -34,15 +33,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
      */
     constructor(manager) {
         super(manager);
-        this.moduleWorker = false;
-        this.urls = {
-            /** @type {URL|null} */
-            workerUrl: null,
-            /** @type {URL} */
-            threejs: new URL(OBJLoader2Parallel.DEFAULT_JSM_THREEJS_PATH, window.location.href)
-        };
+        this.moduleWorker = true;
+        /** @type {URL|undefined} */
+        this.workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
         this.workerTaskManager = null;
-        this.taskName = 'tmOBJLoader2';
+        this.taskName = 'OBJLoader2Worker';
     }
 
     /**
@@ -71,29 +66,13 @@ class OBJLoader2Parallel extends OBJLoader2 {
             throw 'The provided URL for the worker is not valid. Aborting...';
         }
         else {
-            this.urls.workerUrl = workerUrl;
+            this.workerUrl = workerUrl;
         }
         return this;
     }
 
     static getModuleWorkerDefaultUrl() {
-        return new URL(OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, window.location.href);
-    }
-
-    /**
-     * Override the default URL for three.js. This is only required when standard workers are build (moduleWorker=false).
-     *
-     * @param {URL} threejsUrl Provide complete three module URL otherwise relative path to this module may not be correct
-     * @return {OBJLoader2Parallel}
-     */
-    setThreejsLocation(threejsUrl) {
-        if (threejsUrl === undefined || threejsUrl === null || !(threejsUrl instanceof URL)) {
-            throw 'The URL to three.js is not valid. Aborting...';
-        }
-        else {
-            this.urls.threejs = threejsUrl;
-        }
-        return this;
+        return new URL(OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, import.meta.url);
     }
 
     /**
@@ -110,27 +89,21 @@ class OBJLoader2Parallel extends OBJLoader2 {
     /**
      * Provide instructions on what is to be contained in the worker.
      *
-     * @param {DataTransport} dataTransport Configuration object
+     * @param {DataTransportPayload} payload Configuration object
      * @return {Promise<void>}
      * @private
      */
-    async _buildWorkerCode(dataTransport) {
+    async _buildWorkerCode(payload) {
         if (this.workerTaskManager === null || !(this.workerTaskManager instanceof WorkerTaskManager)) {
             if (this.parser.logging.debug) console.log('Needed to create new WorkerTaskManager');
             this.workerTaskManager = new WorkerTaskManager(1);
             this.workerTaskManager.setVerbose(this.parser.logging.enabled && this.parser.logging.debug);
         }
         if (!this.workerTaskManager.supportsTaskType(this.taskName)) {
+            this.workerTaskManager.registerTask(this.taskName, this.moduleWorker, this.workerUrl);
+            const packed = DataTransportPayloadUtils.packDataTransportPayload(payload);
 
-            if (this.urls.workerUrl) {
-                this.workerTaskManager.registerTaskTypeWithUrl(this.taskName, this.moduleWorker, this.urls.workerUrl);
-            }
-            else {
-                // build the standard worker from code imported here and don't reference three.js build with fixed path
-                this.workerTaskManager.registerTaskTypeStandard(this.taskName, OBJ2LoaderWorker.init, OBJ2LoaderWorker.execute,
-                    null, false, OBJ2LoaderWorker.buildStandardWorkerDependencies(this.urls.threejs));
-            }
-            await this.workerTaskManager.initTaskType(this.taskName, dataTransport.getMain());
+            await this.workerTaskManager.initTaskType(this.taskName, packed.payload, packed.transferables);
         }
     }
 
@@ -160,14 +133,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
         if (this.parser.logging.enabled) {
             console.info('Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION);
         }
-        const dataTransport = new DataTransport().setParams({
-            logging: {
-                enabled: this.parser.logging.enabled,
-                debug: this.parser.logging.debug
-            },
-        }
-        );
-        this._buildWorkerCode(dataTransport)
+        const dTP = new DataTransportPayload();
+        dTP.params.logging = {
+            enabled: this.parser.logging.enabled,
+            debug: this.parser.logging.debug
+        };
+        this._buildWorkerCode(dTP)
             .then(() => {
                 if (this.parser.logging.debug) console.log('OBJLoader2Parallel init was performed');
                 this._executeWorkerParse(content);
@@ -178,24 +149,23 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     _executeWorkerParse(content) {
-        const dataTransport = new DataTransport('execute', Math.floor(Math.random() * Math.floor(65536)));
-        dataTransport.setParams({
-            modelName: this.parser.modelName,
-            useIndices: this.parser.useIndices,
-            disregardNormals: this.parser.disregardNormals,
-            materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
-            useOAsMesh: this.parser.useOAsMesh,
-            materials: MaterialUtils.getMaterialsJSON(this.materialStore.getMaterials())
-        })
-            .addBuffer('modelData', content)
-            .package(false);
+        const dTP = new DataTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
+        dTP.params.modelName = this.parser.modelName;
+        dTP.params.useIndices = this.parser.useIndices;
+        dTP.params.disregardNormals = this.parser.disregardNormals;
+        dTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
+        dTP.params.useOAsMesh = this.parser.useOAsMesh;
+        dTP.params.materials = MaterialUtils.getMaterialsJSON(this.materialStore.getMaterials());
+        dTP.buffers.set('modelData', content);
+        const packed = DataTransportPayloadUtils.packDataTransportPayload(dTP);
+
         this.workerTaskManager.enqueueForExecution(
             this.taskName,
-            dataTransport.getMain(),
-            dataTransport => this._onLoad(dataTransport),
-            dataTransport.getTransferables())
-            .then(dataTransport => {
-                this._onLoad(dataTransport);
+            packed.payload,
+            receivedPayload => this._onLoad(receivedPayload),
+            packed.transferables)
+            .then(receivedPayload => {
+                this._onLoad(receivedPayload);
                 if (this.terminateWorkerOnLoad) this.workerTaskManager.dispose();
             })
             .catch(e => console.error(e))
@@ -209,16 +179,17 @@ class OBJLoader2Parallel extends OBJLoader2 {
     _onLoad(asset) {
         const cmd = asset.cmd;
         if (cmd === 'assetAvailable') {
-            let meshTransport;
-            if (asset.type === 'MeshTransport') {
-                meshTransport = new MeshTransport().loadData(asset).reconstruct(false);
+            let mTS;
+            if (asset.type === 'MeshTransportPayload') {
+                mTS = MeshTransportPayloadUtils.unpackMeshTransportPayload(asset, false);
             }
             else {
                 console.error('Received unknown asset.type: ' + asset.type);
             }
-            if (meshTransport) {
-                const materialsTransport = meshTransport.getMaterialsTransport();
-                let material = materialsTransport.processMaterialTransport(this.materialStore.getMaterials(), this.parser.logging.enabled);
+            if (mTS) {
+                const materialsTransport = mTS.getMaterialsTransport();
+                let material = MaterialsTransportPayloadUtils.processMaterialTransport(mtp.materialsTransportPayload,
+                    this.materialStore.getMaterials(), this.parser.logging.enabled);
                 if (material === null) material = new MeshStandardMaterial({ color: 0xFF0000 });
                 let mesh;
                 if (meshTransport.getGeometryType() === 0) {
@@ -235,11 +206,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
             }
         }
         else if (cmd === 'execComplete') {
-            let dataTransport;
-            if (asset.type === 'DataTransport') {
-                dataTransport = new DataTransport().loadData(asset);
-                if (dataTransport instanceof DataTransport && this.parser.callbacks.onLoad !== null) {
-                    this.parser.callbacks.onLoad(this.parser.baseObject3d, dataTransport.getId());
+            if (asset.type === 'DataTransportPayload') {
+                const dTS = new DatDataTransportPayload()
+                DataTransportPayloadUtils.unpackDataTransportPayload(dTS);
+
+                if (this.parser.callbacks.onLoad !== null) {
+                    this.parser.callbacks.onLoad(this.parser.baseObject3d, dTS.id);
                 }
             }
             else {

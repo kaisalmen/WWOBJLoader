@@ -12,20 +12,20 @@ export default defineConfig({
         rollupOptions: {
             external: [
                 'three',
-                'three/examples/jsm/controls/TrackballControls'
+                'three/examples/jsm/controls/TrackballControls',
+                'three/examples/jsm/loaders/MTLLoader'
             ],
             input: {
-                main: path.resolve(__dirname, 'index.html'),
-                helloworld: path.resolve(__dirname, 'helloworld.html'),
-                transferables: path.resolve(__dirname, 'transferables.html'),
-                threejsobj: path.resolve(__dirname, 'threejs.html')
+                index: path.resolve(__dirname, 'index.html'),
+                obj2_basic: path.resolve(__dirname, 'obj2_basic.html'),
+                obj2parallel_basic: path.resolve(__dirname, 'obj2parallel_basic.html')
             },
             plugins: [
             ]
         }
     },
     server: {
-        port: 8080,
+        port: 8085,
         host: '0.0.0.0'
     }
 });

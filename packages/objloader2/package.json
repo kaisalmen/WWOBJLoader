@@ -16,19 +16,30 @@
     "src"
   ],
   "scripts": {
-    "clean": "shx rm -fr ./dist",
-    "dev": "vite",
+    "clean": "shx rm -rf ./dist",
     "doc": "jsdoc -c jsdoc.json",
     "lint": "npx eslint src",
-    "build": "npm run clean && tsc",
+    "build-worker": "npx shx rm -f ./dist/OBJLoader2WorkerStandard.js && vite -c vite.config.worker.ts build",
+    "build": "npm run clean && npm run build-worker && tsc",
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "three": "^0.138.3",
     "@types/three": "^0.138.0",
-    "three-wtm": "^2.0.0-next.0"
+    "three": "^0.138.3",
+    "three-wtm": "../three-wtm/packages/three-wtm/dist/index.js"
   },
   "devDependencies": {
     "jsdoc": "^3.6.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaisalmen/WWOBJLoader",
+    "directory": "packages/objloader2"
+  },
+  "homepage": "https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/objloader2/README.md",
+  "bugs": "https://github.com/kaisalmen/WWOBJLoader/issues",
+  "author": {
+    "name": "kaisalmen",
+    "url": "https://www.kaisalmen.de"
   }
 }

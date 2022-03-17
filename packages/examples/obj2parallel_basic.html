@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - OBJLoader2Parallel Worker Module Support</title>
+		<title>OBJLoader2Parallel Worker Module Support</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -20,7 +20,7 @@
 
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
-			import { OBJLoader2Parallel } from '../../src/loaders/OBJLoader2Parallel.js';
+			import { OBJLoader2Parallel } from '../objLoader2/src/OBJLoader2Parallel.js';
 
 			const WorkerModuleSupportExample = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -83,8 +83,8 @@
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( modelName )
-						.setLogging( true, true )
-						.setWorkerUrl( true, new URL( '/src/loaders/tmOBJLoader2.js', window.location.href ) );
+						.setLogging( true, true );
+						//.setWorkerUrl( true, new URL( '/src/loaders/tmOBJLoader2.js', window.location.href ) );
 
 					let callbackOnLoad = function ( object3d, objectId ) {
 
