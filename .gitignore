@@ -2,6 +2,7 @@
 
 archive
 dist
+node_modules
 
 /packages/examples/models/draco
 /packages/examples/models/gltf
@@ -9,5 +10,5 @@ dist
 /packages/examples/models/obj/extra
 /packages/examples/models/obj/misc
 
-node_modules
+tsconfig.tsbuildinfo
 *.tgz

@@ -13,7 +13,6 @@
     "removeComments": true
   },
   "include": [
-    "./src/**/*.ts",
     "./src/**/*.js"
   ],
   "exclude": [

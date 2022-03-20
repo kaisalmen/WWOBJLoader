@@ -11,7 +11,9 @@ import {
     DataTransportPayload,
     DataTransportPayloadUtils,
     MeshTransportPayloadUtils,
-    MeshTransportPayload
+    MeshTransportPayload,
+    MaterialsTransportPayloadUtils,
+    MaterialsTransportPayload
 } from 'three-wtm';
 import { OBJLoader2 } from './OBJLoader2';
 
@@ -149,15 +151,15 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     _executeWorkerParse(content) {
-        const dTP = new DataTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
-        dTP.params.modelName = this.parser.modelName;
-        dTP.params.useIndices = this.parser.useIndices;
-        dTP.params.disregardNormals = this.parser.disregardNormals;
-        dTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
-        dTP.params.useOAsMesh = this.parser.useOAsMesh;
-        dTP.params.materials = MaterialUtils.getMaterialsJSON(this.materialStore.getMaterials());
-        dTP.buffers.set('modelData', content);
-        const packed = DataTransportPayloadUtils.packDataTransportPayload(dTP);
+        const mTP = new MaterialsTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
+        mTP.params.modelName = this.parser.modelName;
+        mTP.params.useIndices = this.parser.useIndices;
+        mTP.params.disregardNormals = this.parser.disregardNormals;
+        mTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
+        mTP.params.useOAsMesh = this.parser.useOAsMesh;
+        mTP.materials = this.materialStore.getMaterials();
+        mTP.buffers.set('modelData', content);
+        const packed = MaterialsTransportPayloadUtils.packMaterialsTransportPayload(mTP, false);
 
         this.workerTaskManager.enqueueForExecution(
             this.taskName,
@@ -187,19 +189,22 @@ class OBJLoader2Parallel extends OBJLoader2 {
                 console.error('Received unknown asset.type: ' + asset.type);
             }
             if (mTS) {
-                const materialsTransport = mTS.getMaterialsTransport();
-                let material = MaterialsTransportPayloadUtils.processMaterialTransport(mtp.materialsTransportPayload,
+                const materialsTransport = mTS.materialsTransportPayload;
+                let material = MaterialsTransportPayloadUtils.processMaterialTransport(mTS.materialsTransportPayload,
                     this.materialStore.getMaterials(), this.parser.logging.enabled);
-                if (material === null) material = new MeshStandardMaterial({ color: 0xFF0000 });
-                let mesh;
-                if (meshTransport.getGeometryType() === 0) {
-                    mesh = new Mesh(meshTransport.getBufferGeometry(), material);
+                if (!material) {
+                    console.warn('Material not found!');
+                    material = new MeshStandardMaterial({ color: 0xFF0000 });
                 }
-                else if (meshTransport.getGeometryType() === 1) {
-                    mesh = new LineSegments(meshTransport.getBufferGeometry(), material);
+                let mesh;
+                if (mTS.geometryType === 0) {
+                    mesh = new Mesh(mTS.bufferGeometry, material);
+                }
+                else if (mTS.geometryType === 1) {
+                    mesh = new LineSegments(mTS.bufferGeometry, material);
                 }
                 else {
-                    mesh = new Points(meshTransport.getBufferGeometry(), material);
+                    mesh = new Points(mTS.bufferGeometry, material);
                 }
                 this.parser._onMeshAlter(mesh);
                 this.parser.baseObject3d.add(mesh);
@@ -207,7 +212,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
         }
         else if (cmd === 'execComplete') {
             if (asset.type === 'DataTransportPayload') {
-                const dTS = new DatDataTransportPayload()
+                const dTS = new DataTransportPayload()
                 DataTransportPayloadUtils.unpackDataTransportPayload(dTS);
 
                 if (this.parser.callbacks.onLoad !== null) {

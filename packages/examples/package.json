@@ -7,10 +7,13 @@
     "clean": "shx rm -fr ./dist",
     "dev": "vite --debug",
     "lint": "npx eslint src",
-    "build": "npm run clean && tsc",
+    "build": "echo \\\"Nothing to build\\\"",
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "wwobjloader2": "file:../objloader2"
+    "wwobjloader2": "../objloader2"
+  },
+  "devDependencies": {
+    "npm": "^8.5.5"
   }
 }

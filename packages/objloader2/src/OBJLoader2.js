@@ -873,7 +873,7 @@ class OBJLoader2Parser {
         let materialOrg, material, materialName, materialNameOrg;
         const materialMetaInfo = {
             cloneInstructions: [],
-            multiMaterialNames: {},
+            multiMaterialNames: new Map(),
             modelName: this.modelName,
             progress: this.globalCounts.currentByte / this.globalCounts.totalBytes,
             geometryType: this.rawMesh.faceType < 4 ? 0 : (this.rawMesh.faceType === 6) ? 2 : 1,
@@ -932,7 +932,7 @@ class OBJLoader2Parser {
                 geometry.addGroup(materialGroupOffset, materialGroupLength, materialIndex);
                 material = this.materials.get(materialName);
                 multiMaterial[materialIndex] = material;
-                materialMetaInfo.multiMaterialNames[materialIndex] = material.name;
+                materialMetaInfo.multiMaterialNames.set(materialIndex, material.name);
 
                 materialGroupOffset += materialGroupLength;
                 materialIndex++;
@@ -1057,12 +1057,16 @@ class OBJLoader2Parser {
         this.baseObject3d.add(mesh);
     }
 
-    _onMeshAlter(mesh) {
-        if (this.callbacks.onMeshAlter !== null) this.callbacks.onMeshAlter(mesh, this.baseObject3d);
+    _onMeshAlter(mesh, materialMetaInfo) {
+        if (this.callbacks.onMeshAlter !== null) {
+            this.callbacks.onMeshAlter(mesh, this.baseObject3d);
+        }
     }
 
     _onLoad() {
-        if (this.callbacks.onLoad !== null) this.callbacks.onLoad(this.baseObject3d, this.objectId);
+        if (this.callbacks.onLoad !== null) {
+            this.callbacks.onLoad(this.baseObject3d, this.objectId);
+        }
     }
 }
 

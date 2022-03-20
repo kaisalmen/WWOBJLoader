@@ -26,10 +26,11 @@
   "dependencies": {
     "@types/three": "^0.138.0",
     "three": "^0.138.3",
-    "three-wtm": "../three-wtm/packages/three-wtm/dist/index.js"
+    "three-wtm": "^2.0.0-next.1"
   },
   "devDependencies": {
-    "jsdoc": "^3.6.10"
+    "jsdoc": "^3.6.10",
+    "npm": "^8.5.5"
   },
   "repository": {
     "type": "git",

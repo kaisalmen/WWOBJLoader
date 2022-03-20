@@ -6,7 +6,8 @@ import {
     DataTransportPayload,
     DataTransportPayloadUtils,
     ObjectManipulator,
-    MaterialsTransportPayload
+    MaterialsTransportPayload,
+    MaterialUtils
 } from 'three-wtm';
 import { OBJLoader2Parser } from '../OBJLoader2';
 
@@ -22,18 +23,14 @@ class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
         super();
 
         this._localData.parser._onMeshAlter = (mesh, materialMetaInfo) => {
-            const materialTP = new MaterialsTransportPayload();
+            const materialTP = new MaterialsTransportPayload('assetAvailable', materialMetaInfo.objectId);
             materialTP.multiMaterialNames = materialMetaInfo.multiMaterialNames;
 
-            // only makes sense if materials are newly created, what they currently are not
-            /*
-                        if (materialTP.multiMaterialNames.size > 0) {
-                            const material = mesh.material;
-                            MaterialUtils.addMaterial(materialTP.materials, material.name, material, false, false);
-                        }
-                        materialTP.cloneInstructions = materialMetaInfo.cloneInstructions;
-                        MaterialsTransportPayloadUtils.cleanMaterials();
-            */
+            // add matrial of the mesh required for proper re-construction
+            MaterialUtils.addMaterial(materialTP.materials, mesh.material.name, mesh.material, false, false);
+            materialTP.cloneInstructions = materialMetaInfo.cloneInstructions;
+            MaterialsTransportPayloadUtils.cleanMaterials(materialTP);
+
             const meshTP = new MeshTransportPayload('assetAvailable', materialMetaInfo.objectId);
             meshTP.progress = materialMetaInfo.progress;
             meshTP.params.modelName = materialMetaInfo.modelName;
@@ -47,7 +44,7 @@ class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
         this._localData.parser.callbacks.onLoad = () => {
             const dTP = new DataTransportPayload('execComplete', this._localData.parser.objectId);
             // no packing required as no Transferables here
-            dataTransport.postMessage(dTP);
+            self.postMessage(dTP);
         };
 
         this._localData.parser.callbacks.onProgress = text => {

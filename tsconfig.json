@@ -6,6 +6,7 @@
     "lib": ["ESNext", "DOM", "webworker"],
     "moduleResolution": "Node",
     "strict": true,
+    "composite": true,
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
