@@ -9,7 +9,7 @@ const config = defineConfig({
             fileName: () => 'OBJLoader2WorkerStandard.js',
             formats: ['iife']
         },
-        outDir: 'dist',
+        outDir: 'src/worker',
         emptyOutDir: false
     }
 });

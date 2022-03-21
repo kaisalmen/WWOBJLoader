@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - OBJLoader2 usage options</title>
+		<title>OBJLoader2 usage options</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -13,31 +13,25 @@
 		</div>
 		<div id="dat" style="user-select: none; position: absolute; left: 0; top: 0; z-Index: 200;"></div>
 		<div id="info">
-			OBJLoader2 usage options<br>Use module workers with Chromium based browser (80+)
+			OBJLoader2 usage options
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
 		<script type="module">
-
 			'use strict';
 
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 			import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper.js';
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-			import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
 
+            import { GUI } from 'lil-gui';
 			import { WorkerTaskManager } from 'three-wtm';
-
-			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
-			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
-			import { OBJLoader2Parallel } from '../../src/loaders/OBJLoader2Parallel.js';
-
+            import { OBJLoader2, OBJLoader2Parallel, MtlObjBridge } from 'wwobjloader2';
 
 			class WWOBJLoader2Example {
 
 				constructor ( elementToBindTo ) {
-
 					this.renderer = null;
 					this.canvas = elementToBindTo;
 					this.aspectRatio = 1;
@@ -83,7 +77,6 @@
 				}
 
 				initGL () {
-
 					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
 						antialias: true,
@@ -120,11 +113,9 @@
 					this.pivot = new THREE.Object3D();
 					this.pivot.name = 'Pivot';
 					this.scene.add( this.pivot );
-
 				}
 
 				useParseMain () {
-
 					const modelName = 'female02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
@@ -138,7 +129,6 @@
 
 					const scope = this;
 					function onLoadMtl( mtlParseResult ) {
-
 						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 
 						const fileLoader = new THREE.FileLoader();
@@ -158,25 +148,22 @@
 
 							}
 						);
-
 					}
 
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( './models/obj/main/female02/female02.mtl', onLoadMtl );
-
 				}
 
 				getWorkerUrl() {
 					if (this.useJsmWorker) {
-						return OBJLoader2Parallel.getModuleWorkerDefaultUrl()
+						return OBJLoader2Parallel.getModuleWorkerDefaultUrl();
 					}
 					else {
-						return new URL('/examples/worker/OBJLoader2WorkerStandard.js', import.meta.url);
+						return OBJLoader2Parallel.getStandardWorkerDefaultUrl();
 					}
 				}
 
 				useParseParallel () {
-
 					const modelName = 'female02_vertex';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
@@ -187,11 +174,9 @@
 
 					const scope = this;
 					function callbackOnLoad( object3d, objectId ) {
-
 						local.add( object3d );
 						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
-
 					}
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
@@ -210,16 +195,12 @@
 					fileLoader.setResponseType( 'arraybuffer' );
 					fileLoader.load( './models/obj/main/female02/female02_vertex_colors.obj',
 						function ( content ) {
-
 							objLoader2Parallel.parse( content );
-
 						}
 					);
-
 				}
 
 				useLoadMain () {
-
 					const modelName = 'male02';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
@@ -232,9 +213,7 @@
 						.setLogging( this.regularLogging, this.debugLogging );
 
 					const scope = this;
-
 					function callbackOnLoad( object3d, objectId ) {
-
 						const local = new THREE.Object3D();
 						local.name = 'Pivot_male02';
 						local.position.set( 0, 0, - 75 );
@@ -243,23 +222,18 @@
 
 						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
-
 					}
 
 					function onLoadMtl( mtlParseResult ) {
-
 						objLoader2.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 						objLoader2.load( './models/obj/main/male02/male02.obj', callbackOnLoad, null, null, null );
-
 					}
 
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( './models/obj/main/male02/male02.mtl', onLoadMtl );
-
 				}
 
 				useLoadParallel () {
-
 					const modelName = 'WaltHead';
 					this._reportProgress( { detail: { text: 'Loading: ' + modelName } } );
 
@@ -282,27 +256,21 @@
 
 					const scope = this;
 					function callbackOnLoad( object3d, objectId ) {
-
 						local.add( object3d );
 						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
-
 					}
 
 					function onLoadMtl( mtlParseResult ) {
-
 						objLoader2Parallel.setMaterials( MtlObjBridge.addMaterialsFromMtlLoader( mtlParseResult ), true );
 						objLoader2Parallel.load( './models/obj/main/walt/WaltHead.obj', callbackOnLoad );
-
 					}
 
 					const mtlLoader = new MTLLoader();
 					mtlLoader.load( './models/obj/main/walt/WaltHead.mtl', onLoadMtl );
-
 				}
 
 				useLoadMainFallback () {
-
 					const local = new THREE.Object3D();
 					local.name = 'Pivot_Cerberus';
 					local.position.set( 0, 0, 100 );
@@ -320,19 +288,15 @@
 
 					const scope = this;
 					function callbackOnLoad( object3d, objectId ) {
-
 						local.add( object3d );
 						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
-
 					}
 
 					objLoader2.load( './models/obj/main/cerberus/Cerberus.obj', callbackOnLoad );
-
 				}
 
 				useLoadParallelMeshAlter () {
-
 					const local = new THREE.Object3D();
 					local.position.set( 175, - 100, 0 );
 					local.name = 'Pivot_ninjaHead';
@@ -353,167 +317,121 @@
 					objLoader2Parallel.setTerminateWorkerOnLoad( false );
 
 					function callbackMeshAlter( mesh, baseObject3d ) {
-
 						const helper = new VertexNormalsHelper( mesh, 2, 0x00ff00 );
 						helper.name = 'VertexNormalsHelper';
 
 						baseObject3d.add( mesh );
 						baseObject3d.add( helper );
-
 					}
 
 					objLoader2Parallel.setCallbackOnMeshAlter( callbackMeshAlter );
 
 					const scope = this;
 					function callbackOnLoad( object3d, objectId ) {
-
 						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2Parallel.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
-
 					}
 
 					objLoader2Parallel.load( './models/obj/main/ninja/ninjaHead_Low.obj', callbackOnLoad );
-
 				}
 
 				finalize () {
-
 					this.loadCount --;
 					if ( this.loadCount === 0 ) {
-
 						this._reportProgress( { detail: { text: '' } } );
-
 					}
-
 				}
 
 				_reportProgress ( event ) {
-
 					let output = '';
 					if ( event.detail !== null && event.detail !== undefined && event.detail.text ) {
-
 						output = event.detail.text;
-
 					}
 
 					console.log( 'Progress: ' + output );
 					document.getElementById( 'feedback' ).innerHTML = output;
-
 				}
 
 				resizeDisplayGL () {
-
 					this.controls.handleResize();
 
 					this.recalcAspectRatio();
 					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 					this.updateCamera();
-
 				}
 
 				recalcAspectRatio () {
-
 					this.aspectRatio = ( this.canvas.offsetHeight === 0 ) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-
 				}
 
 				resetCamera () {
-
 					this.camera.position.copy( this.cameraDefaults.posCamera );
 					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
-
 					this.updateCamera();
-
 				}
 
 				updateCamera () {
-
 					this.camera.aspect = this.aspectRatio;
 					this.camera.lookAt( this.cameraTarget );
 					this.camera.updateProjectionMatrix();
-
 				}
 
 				render () {
-
-					if ( ! this.renderer.autoClear ) this.renderer.clear();
-
+					if ( ! this.renderer.autoClear ) {
+                        this.renderer.clear();
+                    }
 					this.controls.update();
 
 					this.cube.rotation.x += 0.05;
 					this.cube.rotation.y += 0.05;
 
-					this.renderer.render( this.scene, this.camera );
-
+                    this.renderer.render( this.scene, this.camera );
 				}
 
 				alterShading () {
-
 					const scope = this;
 					scope.flatShading = ! scope.flatShading;
 					console.log( scope.flatShading ? 'Enabling flat shading' : 'Enabling smooth shading' );
 
 					scope.traversalFunction = function ( material ) {
-
 						material.flatShading = scope.flatShading;
 						material.needsUpdate = true;
-
 					};
 
 					function scopeTraverse( object3d ) {
-
 						scope.traverseScene( object3d );
-
 					}
-
 					scope.pivot.traverse( scopeTraverse );
-
 				}
 
 				alterDouble () {
-
 					const scope = this;
 					scope.doubleSide = ! scope.doubleSide;
 					console.log( scope.doubleSide ? 'Enabling THREE.DoubleSide materials' : 'Enabling THREE.FrontSide materials' );
 
 					scope.traversalFunction = function ( material ) {
-
 						material.side = scope.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
-
 					};
 
 					function scopeTraverse( object3d ) {
-
 						scope.traverseScene( object3d );
-
 					}
-
 					scope.pivot.traverse( scopeTraverse );
-
 				}
 
 				traverseScene ( object3d ) {
-
 					if ( Array.isArray( object3d.material ) ) {
-
 						const materials = object3d.material.materials;
 						for ( const name in materials ) {
-
 							if ( materials.hasOwnProperty( name ) )	this.traversalFunction( materials[ name ] );
-
 						}
-
 					} else if ( object3d.material ) {
-
 						this.traversalFunction( object3d.material );
-
 					}
-
 				}
 
 				executeLoading () {
-
 					// Load a file with OBJLoader2.parse on main
 					if ( this.models.female02 ) this.useParseMain();
 
@@ -531,7 +449,6 @@
 
 					// Load a file with OBJLoader2Parallel.load in parallel in worker and add normals during onMeshAlter
 					if ( this.models.ninjaHead ) this.useLoadParallelMeshAlter();
-
 				}
 
 				/**
@@ -558,34 +475,25 @@
 							cerberus: app.models.cerberus
 						},
 						blockEvent: function ( event ) {
-
 							event.stopPropagation();
-
 						},
 						disableElement ( elementHandle ) {
-
 							elementHandle.domElement.addEventListener( 'click', this.blockEvent, true );
 							elementHandle.domElement.parentElement.style.pointerEvents = 'none';
 							elementHandle.domElement.parentElement.style.opacity = 0.5;
-
 						},
 						enableElement ( elementHandle ) {
-
 							elementHandle.domElement.removeEventListener( 'click', this.blockEvent, true );
 							elementHandle.domElement.parentElement.style.pointerEvents = 'auto';
 							elementHandle.domElement.parentElement.style.opacity = 1.0;
-
 						},
 						executeLoading: function () {
-
 							if ( app.models.female02 || app.models.female02_vertex_colors || app.models.male02 ||
 									app.models.waltHead || app.models.cerberus || app.models.ninjaHead ) {
 
 								app.executeLoading();
 								this.disableElement( handleExecuteLoading );
-
 							}
-
 						},
 					};
 
@@ -614,40 +522,30 @@
 					const folderObjLoader2ParallelOptions = gui.addFolder( 'OBJLoader2Parallel Options' );
 					const controlJsmWorker = folderObjLoader2ParallelOptions.add( wwObjLoader2Control, 'useJsmWorker' ).name( 'Use Module Workers' );
 					controlJsmWorker.onChange( function ( value ) {
-
 						console.log( 'Setting useJsmWorker to: ' + value );
 						app.useJsmWorker = value;
-
 					} );
 
 					const folderObjLoader2ParserOptions = gui.addFolder( 'OBJLoader2Parser Options' );
 					const controlUseIndices = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useIndices' ).name( 'Use Indices' );
 					controlUseIndices.onChange( function ( value ) {
-
 						console.log( 'Setting useIndices to: ' + value );
 						app.useIndices = value;
-
 					} );
 					const controlMaterialPerSmoothingGroup = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'materialPerSmoothingGroup' ).name( 'Use material per SG' );
 					controlMaterialPerSmoothingGroup.onChange( function ( value ) {
-
 						console.log( 'Setting materialPerSmoothingGroup to: ' + value );
 						app.materialPerSmoothingGroup = value;
-
 					} );
 					const controlUseOAsMesh = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'useOAsMesh' ).name( 'Use useOAsMesh' );
 					controlUseOAsMesh.onChange( function ( value ) {
-
 						console.log( 'Setting useOAsMesh to: ' + value );
 						app.useOAsMesh = value;
-
 					} );
 					const controlDisregardNormals = folderObjLoader2ParserOptions.add( wwObjLoader2Control, 'disregardNormals' ).name( 'Use disregardNormals' );
 					controlDisregardNormals.onChange( function ( value ) {
-
 						console.log( 'Setting disregardNormals to: ' + value );
 						app.disregardNormals = value;
-
 					} );
 
 					const folderLoggingOptions = gui.addFolder( 'Logging' );
@@ -658,23 +556,18 @@
 						console.log( 'Setting regularLogging to: ' + value );
 						app.regularLogging = value;
 						if ( ! app.regularLogging ) {
-
 							wwObjLoader2Control.disableElement( controlDebugLogging );
-
 						} else {
-
 							wwObjLoader2Control.enableElement( controlDebugLogging );
-
 						}
 					} );
 					controlDebugLogging.onChange( value => {
 						console.log( 'Setting debugLogging to: ' + value );
-						app.debugLogging = value;
-						if ( ! app.regularLogging ) {
 
+                        app.debugLogging = value;
+						if ( ! app.regularLogging ) {
 							app.regularLogging = app.debugLogging;
 							controlRegularLogging.setValue( app.debugLogging )
-
 						}
 					} );
 					wwObjLoader2Control.disableElement( controlDebugLogging );
@@ -682,18 +575,14 @@
 					const folderRenderingOptions = gui.addFolder( 'Rendering Options' );
 					const controlFlat = folderRenderingOptions.add( wwObjLoader2Control, 'flatShading' ).name( 'Flat Shading' );
 					controlFlat.onChange( function ( value ) {
-
 						console.log( 'Setting flatShading to: ' + value );
 						app.alterShading();
-
 					} );
 
 					const controlDouble = folderRenderingOptions.add( wwObjLoader2Control, 'doubleSide' ).name( 'Double Side Materials' );
 					controlDouble.onChange( function ( value ) {
-
 						console.log( 'Setting doubleSide to: ' + value );
 						app.alterDouble();
-
 					} );
 
 					const folderExecution = gui.addFolder( 'Execution' );
@@ -709,16 +598,12 @@
 
 					// init three.js example application
 					function resizeWindow() {
-
 						app.resizeDisplayGL();
-
 					}
 
 					function render() {
-
 						requestAnimationFrame( render );
 						app.render();
-
 					}
 
 					window.addEventListener( 'resize', resizeWindow, false );
@@ -730,7 +615,6 @@
 					// kick render loop
 					render();
 				}
-
 			}
 
 			WWOBJLoader2Example.executeExample( new WWOBJLoader2Example( document.getElementById( 'example' ) ) );

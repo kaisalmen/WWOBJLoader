@@ -10,5 +10,7 @@ node_modules
 /packages/examples/models/obj/extra
 /packages/examples/models/obj/misc
 
+/packages/objloader2/src/worker/OBJLoader2WorkerStandard.js
+
 tsconfig.tsbuildinfo
 *.tgz

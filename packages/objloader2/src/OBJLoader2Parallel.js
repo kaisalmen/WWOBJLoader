@@ -27,7 +27,8 @@ import { OBJLoader2 } from './OBJLoader2';
 class OBJLoader2Parallel extends OBJLoader2 {
 
     static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
-    static DEFAULT_JSM_WORKER_PATH = './worker/OBJLoader2Worker.js';
+    static DEFAULT_MODULE_WORKER_PATH = './worker/OBJLoader2Worker.js';
+    static DEFAULT_STANDARD_WORKER_PATH = './worker/OBJLoader2WorkerStandard.js';
 
     /**
      *
@@ -74,7 +75,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     static getModuleWorkerDefaultUrl() {
-        return new URL(OBJLoader2Parallel.DEFAULT_JSM_WORKER_PATH, import.meta.url);
+        return new URL(OBJLoader2Parallel.DEFAULT_MODULE_WORKER_PATH, import.meta.url);
+    }
+
+    static getStandardWorkerDefaultUrl() {
+        return new URL(OBJLoader2Parallel.DEFAULT_STANDARD_WORKER_PATH, import.meta.url);
     }
 
     /**
