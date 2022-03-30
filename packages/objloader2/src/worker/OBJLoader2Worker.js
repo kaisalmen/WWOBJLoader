@@ -4,7 +4,6 @@ import {
     MeshTransportPayload,
     MeshTransportPayloadUtils,
     DataTransportPayload,
-    DataTransportPayloadUtils,
     ObjectManipulator,
     MaterialsTransportPayload,
     MaterialUtils

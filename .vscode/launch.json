@@ -6,7 +6,7 @@
             "type": "pwa-chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost:8086",
+            "url": "http://localhost:8085",
             "webRoot": "${workspaceFolder}"
         }
     ]

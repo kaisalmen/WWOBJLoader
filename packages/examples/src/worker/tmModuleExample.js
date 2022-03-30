@@ -4,57 +4,51 @@ import {
     MeshPhongMaterial
 } from "three";
 import {
-    MeshTransport,
-    MaterialsTransport,
     MaterialUtils,
-    WorkerTaskManagerDefaultRouting
+    MeshTransportPayload,
+    MaterialsTransportPayload,
+    MaterialsTransportPayloadUtils,
+    MeshTransportPayloadUtils,
+    WorkerTaskManagerDefaultWorker
 } from "three-wtm";
 
+class WTMModuleExample extends WorkerTaskManagerDefaultWorker {
 
-const WTMModuleExample = {
+    init(payload) {
+        payload.cmd = 'initComplete';
+        self.postMessage(payload);
+    }
 
-    init: function(context, id, config) {
-        context.storage = {
-            whoami: id,
-        };
-
-        context.postMessage({
-            cmd: "init",
-            id: id
-        });
-
-    },
-
-    execute: function(context, id, config) {
-
+    execute(payload) {
         let bufferGeometry = new TorusKnotBufferGeometry(20, 3, 100, 64);
-        bufferGeometry.name = 'tmProto' + config.id;
+        bufferGeometry.name = 'tmProto' + payload.id;
 
         let vertexBA = bufferGeometry.getAttribute('position');
         let vertexArray = vertexBA.array;
         for (let i = 0; i < vertexArray.length; i++) {
-
             vertexArray[i] = vertexArray[i] + 10 * (Math.random() - 0.5);
-
         }
 
         const randArray = new Uint8Array(3);
-        context.crypto.getRandomValues(randArray);
+        self.crypto.getRandomValues(randArray);
         const color = new Color();
         color.r = randArray[0] / 255;
         color.g = randArray[1] / 255;
         color.b = randArray[2] / 255;
         const material = new MeshPhongMaterial({ color: color });
 
-        const materialsTransport = new MaterialsTransport();
-        MaterialUtils.addMaterial(materialsTransport.main.materials, 'randomColor' + config.id, material, false, false);
-        materialsTransport.cleanMaterials();
+        const materialTP = new MaterialsTransportPayload('execComplete', payload.id);
+        MaterialUtils.addMaterial(materialTP.materials, 'randomColor' + payload.id, material, false, false);
+        MaterialsTransportPayloadUtils.cleanMaterials(materialTP);
 
-        new MeshTransport('execComplete', config.id).setGeometry(bufferGeometry, 2).setMaterialsTransport(materialsTransport).package(false).postMessage(context);
+        const meshTP = new MeshTransportPayload('execComplete', payload.id);
+        MeshTransportPayloadUtils.setBufferGeometry(meshTP, bufferGeometry, 2);
+        meshTP.materialsTransportPayload = materialTP;
 
+        const packed = MeshTransportPayloadUtils.packMeshTransportPayload(meshTP, false);
+        self.postMessage(packed.payload, packed.transferables);
     }
 }
 
-self.addEventListener('message', message => WorkerTaskManagerDefaultRouting.comRouting(self, message, WTMModuleExample, 'init', 'execute'), false);
-
-export { WTMModuleExample }
+const worker = new WTMModuleExample();
+self.onmessage = message => worker.comRouting(message);
