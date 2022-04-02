@@ -13,10 +13,7 @@
   "dependencies": {
     "wwobjloader2": "../objloader2",
     "three-wtm": "^2.0.0-next.1",
-    "three": "^0.138.3",
+    "three": "^0.139.2",
     "lil-gui": "^0.16.1"
-  },
-  "devDependencies": {
-    "npm": "^8.5.5"
   }
 }

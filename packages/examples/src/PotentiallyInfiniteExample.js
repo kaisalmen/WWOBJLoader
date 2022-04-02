@@ -6,10 +6,10 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
 import { GUI } from 'lil-gui';
 import {
+    WorkerTypeDefinition,
     WorkerTaskManager,
     DataTransportPayload,
     MaterialStore,
-    WorkerTaskManagerDefaultWorker,
     MeshTransportPayload,
     MeshTransportPayloadUtils,
     MaterialsTransportPayloadUtils
@@ -92,15 +92,17 @@ class PotentiallyInfiniteExample {
         this.taskDescriptions.set('tmProtoExample', {
             id: 0,
             name: 'tmProtoExample',
-            use: false,
-            module: false,
-            workerUrl: undefined, // need to Blob URL
+            use: true,
+            module: true,
+            blob: true,
+            workerUrl: simpleWorkerBlobURL
         });
         this.taskDescriptions.set('tmProtoExampleModule', {
             id: 1,
             name: 'tmProtoExampleModule',
             use: true,
             module: true,
+            blob: false,
             workerUrl: new URL('./worker/tmModuleExample.js', import.meta.url)
         });
         this.taskDescriptions.set('tmProtoExampleModuleNoThree', {
@@ -108,6 +110,7 @@ class PotentiallyInfiniteExample {
             name: 'tmProtoExampleModuleNoThree',
             use: true,
             module: true,
+            blob: false,
             workerUrl: new URL('./worker/tmModuleExampleNoThree.js', import.meta.url)
         });
         this.taskDescriptions.set('tmOBJLoader2Module', {
@@ -116,6 +119,7 @@ class PotentiallyInfiniteExample {
             modelName: 'female02',
             use: false,
             module: true,
+            blob: false,
             workerUrl: new URL('wwobjloader2/OBJLoader2Worker', import.meta.url),
             filenameMtl: '../models/obj/main/female02/female02.mtl',
             filenameObj: '../models/obj/main/female02/female02.obj',
@@ -127,6 +131,7 @@ class PotentiallyInfiniteExample {
             modelName: 'male02',
             use: false,
             module: false,
+            blob: false,
             workerUrl: new URL('wwobjloader2/OBJLoader2WorkerStandard', import.meta.url),
             filenameMtl: '../models/obj/main/male02/male02.mtl',
             filenameObj: '../models/obj/main/male02/male02.obj',
@@ -179,9 +184,9 @@ class PotentiallyInfiniteExample {
         this.resetCamera();
         this.controls = new TrackballControls(this.camera, this.renderer.domElement);
 
-        let ambientLight = new THREE.AmbientLight(0x404040);
-        let directionalLight1 = new THREE.DirectionalLight(0xC0C090);
-        let directionalLight2 = new THREE.DirectionalLight(0xC0C090);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        const directionalLight1 = new THREE.DirectionalLight(0xC0C090);
+        const directionalLight2 = new THREE.DirectionalLight(0xC0C090);
 
         directionalLight1.position.set(- 100, - 50, 100);
         directionalLight2.position.set(100, 50, - 100);
@@ -190,7 +195,7 @@ class PotentiallyInfiniteExample {
         this.scene.add(directionalLight2);
         this.scene.add(ambientLight);
 
-        let helper = new THREE.GridHelper(1000, 30, 0xFF4444, 0x404040);
+        const helper = new THREE.GridHelper(1000, 30, 0xFF4444, 0x404040);
         this.scene.add(helper);
     }
 
@@ -203,21 +208,29 @@ class PotentiallyInfiniteExample {
      */
     async initContent() {
 
-        let awaiting = [];
+        const awaiting = [];
         this.tasksToUse = [];
 
         let taskDescr = this.taskDescriptions.get('tmProtoExample');
-        /*
-                if ( taskDescr.use ) {
-                    this.tasksToUse.push( taskDescr );
-                    this.workerTaskManager.registerTaskType( taskDescr.name, taskDescr.funcInit, taskDescr.funcExec, null, false, taskDescr.dependencies );
-                    awaiting.push( this.workerTaskManager.initTaskType( taskDescr.name, { param1: 'param1value' } ).catch( e => console.error( e ) ) );
-                }
-        */
+        if (taskDescr.use) {
+            this.tasksToUse.push(taskDescr);
+            this.workerTaskManager.registerTask(taskDescr.name, {
+                module: taskDescr.module,
+                blob: taskDescr.blob,
+                url: taskDescr.workerUrl
+            });
+            const payload = new DataTransportPayload('init', taskDescr.id, taskDescr.name);
+            awaiting.push(this.workerTaskManager.initTaskType(taskDescr.name, payload));
+        }
         taskDescr = this.taskDescriptions.get('tmProtoExampleModule');
         if (taskDescr.use) {
             this.tasksToUse.push(taskDescr);
-            this.workerTaskManager.registerTask(taskDescr.name, taskDescr.module, taskDescr.workerUrl);
+            this.workerTaskManager.registerTask(taskDescr.name, {
+                module: taskDescr.module,
+                blob: taskDescr.blob,
+                url: taskDescr.workerUrl
+            });
+
             const payload = new DataTransportPayload('init', taskDescr.id, taskDescr.name);
             payload.params = {
                 param1: 'param1value'
@@ -226,14 +239,17 @@ class PotentiallyInfiniteExample {
         }
         taskDescr = this.taskDescriptions.get('tmProtoExampleModuleNoThree');
         if (taskDescr.use) {
+            this.tasksToUse.push(taskDescr);
+            this.workerTaskManager.registerTask(taskDescr.name, {
+                module: taskDescr.module,
+                blob: taskDescr.blob,
+                url: taskDescr.workerUrl
+            });
+
             const torus = new THREE.TorusBufferGeometry(25, 8, 16, 100);
             torus.name = 'torus';
             const payloadToSend = new MeshTransportPayload('init', taskDescr.id, taskDescr.name);
             MeshTransportPayloadUtils.setBufferGeometry(payloadToSend, torus, 0);
-
-            this.tasksToUse.push(taskDescr);
-            this.workerTaskManager.registerTask(taskDescr.name, taskDescr.module, taskDescr.workerUrl);
-
             const packed = MeshTransportPayloadUtils.packMeshTransportPayload(payloadToSend, false);
             awaiting.push(this.workerTaskManager.initTaskType(taskDescr.name, packed.payload, packed.transferables));
         }
@@ -277,11 +293,11 @@ class PotentiallyInfiniteExample {
 
     /** Only once needed for OBJ/MTL initialization */
     async loadObjMtl(taskDescr) {
-        let fileLoader = new THREE.FileLoader();
+        const fileLoader = new THREE.FileLoader();
         fileLoader.setResponseType('arraybuffer');
 
-        let loadMtl = new Promise(resolve => {
-            let mtlLoader = new MTLLoader();
+        const loadMtl = new Promise(resolve => {
+            const mtlLoader = new MTLLoader();
             mtlLoader.load(taskDescr.filenameMtl, resolve);
         });
         await loadMtl.then(materialCreator => {
@@ -305,13 +321,13 @@ class PotentiallyInfiniteExample {
         for (let j = 0; j < this.loopCount && !this.abort; j++) {
             console.time('Completed ' + (this.maxPerLoop + j * this.maxPerLoop));
             for (let i = 0; i < this.maxPerLoop; i++) {
-                let taskDescr = this.tasksToUse[taskToUseIndex];
+                const taskDescr = this.tasksToUse[taskToUseIndex];
 
                 const tb = new DataTransportPayload('execute', globalCount);
                 tb.params = {
                     modelName: taskDescr.name
                 };
-                let promise = this.workerTaskManager.enqueueForExecution(taskDescr.name, tb,
+                const promise = this.workerTaskManager.enqueueForExecution(taskDescr.name, tb,
                     data => this._processMessage(taskDescr, data))
                     .then(data => this._processMessage(taskDescr, data))
                     .catch(e => console.error(e))
@@ -382,8 +398,9 @@ class PotentiallyInfiniteExample {
                         break;
 
                     case 'DataTransportPayload':
-                        if (payload.cmd !== 'execComplete') {
-                            console.log('DataTransport');
+                        if (payload.cmd === 'execComplete') {
+                            // This is the end-point for the
+                            //console.log(`DataTransport: name: ${payload.name} id: ${payload.id} cmd: ${payload.cmd} workerId: ${payload.workerId}`);
                         }
                         break;
 
@@ -405,7 +422,7 @@ class PotentiallyInfiniteExample {
      * Add mesh at random position, but keep sub-meshes of an object together
      */
     _addMesh(mesh, id) {
-        let storedPos = this.objectsUsed.get(id);
+        const storedPos = this.objectsUsed.get(id);
         let pos;
         if (storedPos) {
             pos = storedPos.pos;
@@ -444,7 +461,7 @@ class PotentiallyInfiniteExample {
         let deleteCount = 0;
         let i = 0;
         while (deleteCount < deleteRange && i < this.meshesAdded.length) {
-            let meshName = this.meshesAdded[i];
+            const meshName = this.meshesAdded[i];
             toBeRemoved = this.scene.getObjectByName(meshName);
             if (toBeRemoved) {
                 toBeRemoved.geometry.dispose();
@@ -495,10 +512,8 @@ class PotentiallyInfiniteExample {
     }
 }
 
-/**
- * Simplest way to define a worker for {@link WorkerTaskManager}
- */
-class WorkerFunctions extends WorkerTaskManagerDefaultWorker {
+// Simplest way to define a worker, but can't be a module worker
+class SimpleBlobWorker {
 
     init(payload) {
         payload.cmd = 'initComplete';
@@ -506,27 +521,40 @@ class WorkerFunctions extends WorkerTaskManagerDefaultWorker {
     }
 
     execute(payload) {
-        let bufferGeometry = new THREE.SphereBufferGeometry(40, 64, 64);
-        bufferGeometry.name = 'tmProto' + config.id;
-        let vertexArray = bufferGeometry.getAttribute('position').array;
-        for (let i = 0; i < vertexArray.length; i++) {
-            vertexArray[i] = vertexArray[i] * Math.random() * 0.48;
-        }
-        const meshTP = new MeshTransportPayload('execComplete', payload.id);
-        MeshTransportPayloadUtils.setBufferGeometry(meshTP, bufferGeometry, 0);
-
-        const packed = MeshTransportPayloadUtils.packMeshTransportPayload(meshTP, false);
-        self.postMessage(packed.payload, packed.transferables);
+        payload.cmd = 'execComplete';
+        payload.params = {
+            hello: "say hello"
+        };
+        self.postMessage(payload);
     }
-};
 
-let app = new PotentiallyInfiniteExample(document.getElementById('example'));
+    comRouting(message) {
+        const payload = message.data;
+        if (payload) {
+            if (payload.cmd === 'init') {
+                this.init(payload);
+            }
+            else if (payload.cmd === 'execute') {
+                this.execute(payload);
+            }
+        }
+    }
+
+};
+const simpleWorkerDefinition = `${SimpleBlobWorker.toString()}
+
+worker = new SimpleBlobWorker();
+self.onmessage = message => worker.comRouting(message);
+`;
+const simpleWorkerBlobURL = WorkerTypeDefinition.createWorkerBlob([simpleWorkerDefinition]);
+
+const app = new PotentiallyInfiniteExample(document.getElementById('example'));
 app.resetAppContext();
 
 /**
  * DAT UI configuration and behaviour.
  */
-let tmControls = {
+const tmControls = {
     controls: [],
     controlStop: null,
     controlReset: null,
@@ -586,7 +614,7 @@ let tmControls = {
         app.abort = true;
     },
     resetExecution() {
-        let scope = this;
+        const scope = this;
         function scopeReset() {
             scope.resetContent();
         }
@@ -601,34 +629,34 @@ let tmControls = {
     }
 };
 
-let menuDiv = document.getElementById('dat');
-let gui = new GUI({
+const menuDiv = document.getElementById('dat');
+const gui = new GUI({
     autoPlace: false,
     width: 400
 });
 menuDiv.appendChild(gui.domElement);
 
-let taskName0 = 'tmProtoExample';
+const taskName0 = 'tmProtoExample';
 let index = 0;
 tmControls.controls[index] = gui.add(tmControls, taskName0 + 'Name').name('Worker Standard + three');
 tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName0).use = value; });
 
-let taskName1 = 'tmProtoExampleModule';
+const taskName1 = 'tmProtoExampleModule';
 index++;
 tmControls.controls[index] = gui.add(tmControls, taskName1).name('Worker Module + three');
 tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName1).use = value; });
 
-let taskName2 = 'tmProtoExampleModuleNoThree';
+const taskName2 = 'tmProtoExampleModuleNoThree';
 index++;
 tmControls.controls[index] = gui.add(tmControls, taskName2).name('Worker Module solo');
 tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName2).use = value; });
 
-let taskName3 = 'tmOBJLoader2Module';
+const taskName3 = 'tmOBJLoader2Module';
 index++;
 tmControls.controls[index] = gui.add(tmControls, taskName3).name('OBJLoader2Parser Module');
 tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName3).use = value; });
 
-let taskName4 = 'tmOBJLoader2Standard';
+const taskName4 = 'tmOBJLoader2Standard';
 index++;
 tmControls.controls[index] = gui.add(tmControls, taskName4).name('OBJLoader2Parser Standard');
 tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName4).use = value; });
@@ -658,11 +686,11 @@ tmControls.controlReset = gui.add(tmControls, 'resetExecution').name('Reset');
 
 tmControls.resetContent();
 
-let resizeWindow = function() {
+const resizeWindow = function() {
     app.resizeDisplayGL();
 };
 
-let render = function() {
+const render = function() {
     requestAnimationFrame(render);
     app.render();
 };

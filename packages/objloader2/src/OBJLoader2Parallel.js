@@ -107,7 +107,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
             this.workerTaskManager.setVerbose(this.parser.logging.enabled && this.parser.logging.debug);
         }
         if (!this.workerTaskManager.supportsTaskType(this.taskName)) {
-            this.workerTaskManager.registerTask(this.taskName, this.moduleWorker, this.workerUrl);
+            this.workerTaskManager.registerTask(this.taskName, {
+                module: this.moduleWorker,
+                blob: false,
+                url: this.workerUrl
+            });
             const packed = DataTransportPayloadUtils.packDataTransportPayload(payload);
 
             await this.workerTaskManager.initTaskType(this.taskName, packed.payload, packed.transferables);
@@ -186,14 +190,8 @@ class OBJLoader2Parallel extends OBJLoader2 {
     _onLoad(asset) {
         const cmd = asset.cmd;
         if (cmd === 'assetAvailable') {
-            let mTS;
             if (asset.type === 'MeshTransportPayload') {
-                mTS = MeshTransportPayloadUtils.unpackMeshTransportPayload(asset, false);
-            }
-            else {
-                console.error('Received unknown asset.type: ' + asset.type);
-            }
-            if (mTS) {
+                const mTS = MeshTransportPayloadUtils.unpackMeshTransportPayload(asset, false);
                 const materialsTransport = mTS.materialsTransportPayload;
                 let material = MaterialsTransportPayloadUtils.processMaterialTransport(mTS.materialsTransportPayload,
                     this.materialStore.getMaterials(), this.parser.logging.enabled);
@@ -213,6 +211,9 @@ class OBJLoader2Parallel extends OBJLoader2 {
                 }
                 this.parser._onMeshAlter(mesh);
                 this.parser.baseObject3d.add(mesh);
+            }
+            else {
+                console.error('Received unknown asset.type: ' + asset.type);
             }
         }
         else if (cmd === 'execComplete') {
