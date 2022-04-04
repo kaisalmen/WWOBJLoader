@@ -173,13 +173,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
         this.workerTaskManager.enqueueForExecution(
             this.taskName,
             packed.payload,
-            receivedPayload => this._onLoad(receivedPayload),
-            packed.transferables)
-            .then(receivedPayload => {
+            receivedPayload => {
                 this._onLoad(receivedPayload);
                 if (this.terminateWorkerOnLoad) this.workerTaskManager.dispose();
-            })
-            .catch(e => console.error(e))
+            },
+            receivedPayload => this._onLoad(receivedPayload),
+            packed.transferables);
     }
 
     /**
@@ -189,7 +188,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
      */
     _onLoad(asset) {
         const cmd = asset.cmd;
-        if (cmd === 'assetAvailable') {
+        if (cmd === 'intermediate') {
             if (asset.type === 'MeshTransportPayload') {
                 const mTS = MeshTransportPayloadUtils.unpackMeshTransportPayload(asset, false);
                 const materialsTransport = mTS.materialsTransportPayload;

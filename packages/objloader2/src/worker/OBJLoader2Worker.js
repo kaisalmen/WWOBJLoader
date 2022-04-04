@@ -22,7 +22,7 @@ class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
         super();
 
         this._localData.parser._onMeshAlter = (mesh, materialMetaInfo) => {
-            const materialTP = new MaterialsTransportPayload('assetAvailable', materialMetaInfo.objectId);
+            const materialTP = new MaterialsTransportPayload('intermediate', materialMetaInfo.objectId);
             materialTP.multiMaterialNames = materialMetaInfo.multiMaterialNames;
 
             // add matrial of the mesh required for proper re-construction
@@ -30,7 +30,7 @@ class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
             materialTP.cloneInstructions = materialMetaInfo.cloneInstructions;
             MaterialsTransportPayloadUtils.cleanMaterials(materialTP);
 
-            const meshTP = new MeshTransportPayload('assetAvailable', materialMetaInfo.objectId);
+            const meshTP = new MeshTransportPayload('intermediate', materialMetaInfo.objectId);
             meshTP.progress = materialMetaInfo.progress;
             meshTP.params.modelName = materialMetaInfo.modelName;
             MeshTransportPayloadUtils.setMesh(meshTP, mesh, materialMetaInfo.geometryType);
