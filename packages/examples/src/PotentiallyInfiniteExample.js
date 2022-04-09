@@ -85,7 +85,7 @@ class PotentiallyInfiniteExample {
 
     resetAppContext() {
         this.workerTaskManager = new WorkerTaskManager();
-        this.workerTaskManager.setVerbose(true);
+        this.workerTaskManager.setVerbose(false);
 
         // configure all task that shall be usable on register to the WorkerTaskManager
         this.taskDescriptions.clear();
@@ -95,7 +95,8 @@ class PotentiallyInfiniteExample {
             use: true,
             module: true,
             blob: true,
-            workerUrl: simpleWorkerBlobURL
+            workerUrl: simpleWorkerBlobURL,
+            workerCount: this.workerTaskManager.getDefaultMaxParallelExecutions()
         });
         this.taskDescriptions.set('tmProtoExampleModule', {
             id: 1,
@@ -103,7 +104,8 @@ class PotentiallyInfiniteExample {
             use: true,
             module: true,
             blob: false,
-            workerUrl: new URL('./worker/tmModuleExample.js', import.meta.url)
+            workerUrl: new URL('./worker/tmModuleExample.js', import.meta.url),
+            workerCount: this.workerTaskManager.getDefaultMaxParallelExecutions()
         });
         this.taskDescriptions.set('tmProtoExampleModuleNoThree', {
             id: 2,
@@ -111,7 +113,8 @@ class PotentiallyInfiniteExample {
             use: true,
             module: true,
             blob: false,
-            workerUrl: new URL('./worker/tmModuleExampleNoThree.js', import.meta.url)
+            workerUrl: new URL('./worker/tmModuleExampleNoThree.js', import.meta.url),
+            workerCount: this.workerTaskManager.getDefaultMaxParallelExecutions()
         });
         this.taskDescriptions.set('tmOBJLoader2Module', {
             id: 3,
@@ -121,6 +124,7 @@ class PotentiallyInfiniteExample {
             module: true,
             blob: false,
             workerUrl: new URL('wwobjloader2/OBJLoader2Worker', import.meta.url),
+            workerCount: this.workerTaskManager.getDefaultMaxParallelExecutions(),
             filenameMtl: '../models/obj/main/female02/female02.mtl',
             filenameObj: '../models/obj/main/female02/female02.obj',
             materialStore: new MaterialStore(true)
@@ -133,6 +137,7 @@ class PotentiallyInfiniteExample {
             module: false,
             blob: false,
             workerUrl: new URL('wwobjloader2/OBJLoader2WorkerStandard', import.meta.url),
+            workerCount: this.workerTaskManager.getDefaultMaxParallelExecutions(),
             filenameMtl: '../models/obj/main/male02/male02.mtl',
             filenameObj: '../models/obj/main/male02/male02.obj',
             materialStore: new MaterialStore(true),
@@ -207,7 +212,6 @@ class PotentiallyInfiniteExample {
      * @return {Promise<any>}
      */
     async initContent() {
-
         const awaiting = [];
         this.tasksToUse = [];
 
@@ -218,7 +222,7 @@ class PotentiallyInfiniteExample {
                 module: taskDescr.module,
                 blob: taskDescr.blob,
                 url: taskDescr.workerUrl
-            });
+            }, taskDescr.workerCount);
             const payload = new DataTransportPayload('init', taskDescr.id, taskDescr.name);
             awaiting.push(this.workerTaskManager.initTaskType(taskDescr.name, payload));
         }
@@ -229,7 +233,7 @@ class PotentiallyInfiniteExample {
                 module: taskDescr.module,
                 blob: taskDescr.blob,
                 url: taskDescr.workerUrl
-            });
+            }, taskDescr.workerCount);
 
             const payload = new DataTransportPayload('init', taskDescr.id, taskDescr.name);
             payload.params = {
@@ -244,7 +248,7 @@ class PotentiallyInfiniteExample {
                 module: taskDescr.module,
                 blob: taskDescr.blob,
                 url: taskDescr.workerUrl
-            });
+            }, taskDescr.workerCount);
 
             const torus = new THREE.TorusBufferGeometry(25, 8, 16, 100);
             torus.name = 'torus';
@@ -313,15 +317,20 @@ class PotentiallyInfiniteExample {
      * @return {Promise<void>}
      */
     async executeWorkers() {
-        if (this.tasksToUse.length === 0) throw "No Tasks have been selected. Aborting..."
+        if (this.tasksToUse.length === 0) {
+            throw "No Tasks have been selected. Aborting...";
+        }
 
         console.time('start');
         let globalCount = 0;
-        let taskToUseIndex = 0;
+        const taskSelector = this._createTaskSelector();
+
         for (let j = 0; j < this.loopCount && !this.abort; j++) {
             console.time('Completed ' + (this.maxPerLoop + j * this.maxPerLoop));
+
             for (let i = 0; i < this.maxPerLoop; i++) {
-                const taskDescr = this.tasksToUse[taskToUseIndex];
+                let indexToUse = Math.floor(Math.random() * taskSelector.totalWorkers);
+                const taskDescr = taskSelector.taskSelectorArray[indexToUse];
 
                 const tb = new DataTransportPayload('execute', globalCount);
                 tb.params = {
@@ -333,10 +342,6 @@ class PotentiallyInfiniteExample {
                 this.executions.push(promise);
 
                 globalCount++;
-                taskToUseIndex++;
-                if (taskToUseIndex === this.tasksToUse.length) {
-                    taskToUseIndex = 0;
-                }
             }
             await Promise.all(this.executions).then(x => {
                 this.executions = [];
@@ -348,6 +353,25 @@ class PotentiallyInfiniteExample {
 
         if (this.reset) {
             this.resetAppContext();
+        }
+    }
+
+    _createTaskSelector() {
+        const taskCount = this.tasksToUse.length;
+        let totalWorkers = 0;
+        const taskSelectorArray = [];
+
+        for (const task of this.tasksToUse) {
+            const taskWorkerCount = task.workerCount;
+            totalWorkers += taskWorkerCount;
+            for (let i = 0; i < taskWorkerCount; i++) {
+                taskSelectorArray.push(task);
+            }
+        }
+
+        return {
+            totalWorkers: totalWorkers,
+            taskSelectorArray: taskSelectorArray
         }
     }
 
@@ -574,50 +598,81 @@ class PotentiallyInfiniteExampleUI {
         controlStop: null,
         controlReset: null,
         started: false,
-        simpleBlobWorker: false,
-        tmProtoExampleModule: false,
-        tmProtoExampleModuleNoThree: false,
-        tmOBJLoader2Module: false,
-        tmOBJLoader2Standard: false,
-        maxParallelExecutions: 0,
+        simpleBlobWorker: app.taskDescriptions.get('simpleBlobWorker').use,
+        simpleBlobWorkerCount: app.taskDescriptions.get('simpleBlobWorker').workerCount,
+        tmProtoExampleModule: app.taskDescriptions.get('tmProtoExampleModule').use,
+        tmProtoExampleModuleCount: app.taskDescriptions.get('tmProtoExampleModule').workerCount,
+        tmProtoExampleModuleNoThree: app.taskDescriptions.get('tmProtoExampleModuleNoThree').use,
+        tmProtoExampleModuleNoThreeCount: app.taskDescriptions.get('tmProtoExampleModuleNoThree').workerCount,
+        tmOBJLoader2Module: app.taskDescriptions.get('tmOBJLoader2Module').use,
+        tmOBJLoader2ModuleCount: app.taskDescriptions.get('tmOBJLoader2Module').workerCount,
+        tmOBJLoader2Standard: app.taskDescriptions.get('tmOBJLoader2Standard').use,
+        tmOBJLoader2StandardCount: app.taskDescriptions.get('tmOBJLoader2Standard').workerCount,
         overallExecutionCount: 0,
         numberOfMeshesToKeep: 0,
         maxPerLoop: 0,
+        resetSingleControl(control, enable) {
+            this.flipElement(control, enable);
+            control.updateDisplay();
+        },
         resetContent() {
-            this.simpleBlobWorker = app.taskDescriptions.get('simpleBlobWorker').use;
+            this.simpleBlobWorker = app.taskDescriptions.get('simpleBlobWorker').use
+            this.resetSingleControl(this.controls[0], true);
+            this.simpleBlobWorkerCount = app.taskDescriptions.get('simpleBlobWorker').workerCount
+            this.resetSingleControl(this.controls[1], this.simpleBlobWorker);
+
             this.tmProtoExampleModule = app.taskDescriptions.get('tmProtoExampleModule').use;
+            this.resetSingleControl(this.controls[2], true);
+            this.tmProtoExampleModuleCount = app.taskDescriptions.get('tmProtoExampleModule').workerCount;
+            this.resetSingleControl(this.controls[3], this.tmProtoExampleModule);
+
             this.tmProtoExampleModuleNoThree = app.taskDescriptions.get('tmProtoExampleModuleNoThree').use;
+            this.resetSingleControl(this.controls[4], true);
+            this.tmProtoExampleModuleNoThreeCount = app.taskDescriptions.get('tmProtoExampleModuleNoThree').workerCount;
+            this.resetSingleControl(this.controls[5], this.tmProtoExampleModuleNoThree);
+
             this.tmOBJLoader2Module = app.taskDescriptions.get('tmOBJLoader2Module').use;
+            this.resetSingleControl(this.controls[6], true);
+            this.tmOBJLoader2ModuleCount = app.taskDescriptions.get('tmOBJLoader2Module').workerCount;
+            this.resetSingleControl(this.controls[7], this.tmOBJLoader2Module);
+
             this.tmOBJLoader2Standard = app.taskDescriptions.get('tmOBJLoader2Standard').use;
-            this.maxParallelExecutions = app.workerTaskManager.getMaxParallelExecutions();
+            this.resetSingleControl(this.controls[8], true);
+            this.tmOBJLoader2StandardCount = app.taskDescriptions.get('tmOBJLoader2Standard').workerCount;
+            this.resetSingleControl(this.controls[9], this.tmOBJLoader2Standard);
+
             this.overallExecutionCount = app.overallExecutionCount;
             this.numberOfMeshesToKeep = app.numberOfMeshesToKeep;
             this.maxPerLoop = app.maxPerLoop;
-            for (let control of this.controls) {
-                this.enableElement(control);
-                control.updateDisplay();
-            }
-            this.disableElement(this.controlStop);
+
+            this.resetSingleControl(this.controls[10], true);
+            this.resetSingleControl(this.controls[11], true);
+            this.resetSingleControl(this.controls[12], true);
+            this.resetSingleControl(this.controls[13], true);
+
+            this.flipElement(this.controlStop, false);
         },
         blockEvent(event) {
             event.stopPropagation();
         },
-        disableElement(elementHandle) {
-            elementHandle.domElement.addEventListener('click', this.blockEvent, true);
-            elementHandle.domElement.style.pointerEvents = 'none';
-            elementHandle.domElement.style.opacity = 0.5;
-        },
-        enableElement(elementHandle) {
-            elementHandle.domElement.removeEventListener('click', this.blockEvent, true);
-            elementHandle.domElement.style.pointerEvents = 'auto';
-            elementHandle.domElement.style.opacity = 1.0;
+        flipElement(elementHandle, enable) {
+            if (enable) {
+                elementHandle.domElement.removeEventListener('click', this.blockEvent, true);
+                elementHandle.domElement.style.pointerEvents = 'auto';
+                elementHandle.domElement.style.opacity = 1.0;
+            }
+            else {
+                elementHandle.domElement.addEventListener('click', this.blockEvent, true);
+                elementHandle.domElement.style.pointerEvents = 'none';
+                elementHandle.domElement.style.opacity = 0.1;
+            }
         },
         executeLoading() {
             this.started = true;
             for (let control of this.controls) {
-                this.disableElement(control);
+                this.flipElement(control, false);
             }
-            this.enableElement(this.controlStop);
+            this.flipElement(this.controlStop, true);
             console.time('All tasks have been initialized');
             app.initContent().then(x => {
                 console.timeEnd('All tasks have been initialized');
@@ -651,46 +706,96 @@ class PotentiallyInfiniteExampleUI {
     bindControls() {
         const tmControls = this.tmControls;
         const gui = this.gui;
+
         const taskName0 = 'simpleBlobWorker';
         let index = 0;
         tmControls.controls[index] = gui.add(tmControls, taskName0).name('Blob Worker Standard');
-        tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName0).use = value; });
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName0).use = value;
+            tmControls.flipElement(tmControls.controls[1], value);
+        });
+
+        index++;
+        tmControls.controls[index] = gui.add(tmControls, 'simpleBlobWorkerCount', 1, 32).step(1).name('Worker Count');
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName0).workerCount = value;
+        });
 
         const taskName1 = 'tmProtoExampleModule';
         index++;
         tmControls.controls[index] = gui.add(tmControls, taskName1).name('Worker Module + three');
-        tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName1).use = value; });
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName1).use = value;
+            tmControls.flipElement(tmControls.controls[3], value);
+        });
+
+        index++;
+        tmControls.controls[index] = gui.add(tmControls, 'tmProtoExampleModuleCount', 1, 32).step(1).name('Worker Count');
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName1).workerCount = value;
+        });
 
         const taskName2 = 'tmProtoExampleModuleNoThree';
         index++;
         tmControls.controls[index] = gui.add(tmControls, taskName2).name('Worker Module solo');
-        tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName2).use = value; });
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName2).use = value;
+            tmControls.flipElement(tmControls.controls[5], value);
+        });
+
+        index++;
+        tmControls.controls[index] = gui.add(tmControls, 'tmProtoExampleModuleNoThreeCount', 1, 32).step(1).name('Worker Count');
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName2).workerCount = value;
+        });
 
         const taskName3 = 'tmOBJLoader2Module';
         index++;
         tmControls.controls[index] = gui.add(tmControls, taskName3).name('OBJLoader2Parser Module');
-        tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName3).use = value; });
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName3).use = value;
+            tmControls.flipElement(tmControls.controls[7], value);
+        });
+
+        index++;
+        tmControls.controls[index] = gui.add(tmControls, 'tmOBJLoader2ModuleCount', 1, 32).step(1).name('Worker Count');
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName3).workerCount = value;
+        });
 
         const taskName4 = 'tmOBJLoader2Standard';
         index++;
         tmControls.controls[index] = gui.add(tmControls, taskName4).name('OBJLoader2Parser Standard');
-        tmControls.controls[index].onChange(value => { app.taskDescriptions.get(taskName4).use = value; });
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName4).use = value;
+            tmControls.flipElement(tmControls.controls[9], value);
+        });
 
         index++;
-        tmControls.controls[index] = gui.add(tmControls, 'maxParallelExecutions', 1, 32).step(1).name('Maximum Parallel Executions');
-        tmControls.controls[index].onChange(value => { app.workerTaskManager.setMaxParallelExecutions(value) });
+        tmControls.controls[index] = gui.add(tmControls, 'tmOBJLoader2StandardCount', 1, 32).step(1).name('Worker Count');
+        tmControls.controls[index].onChange(value => {
+            app.taskDescriptions.get(taskName4).workerCount = value;
+        });
 
         index++;
         tmControls.controls[index] = gui.add(tmControls, 'overallExecutionCount', 1000, 10000000).step(1000).name('Overall Execution Count');
-        tmControls.controls[index].onChange(value => { app.overallExecutionCount = value; app._recalcExecutionNumbers() });
+        tmControls.controls[index].onChange(value => {
+            app.overallExecutionCount = value;
+            app._recalcExecutionNumbers();
+        });
 
         index++;
         tmControls.controls[index] = gui.add(tmControls, 'maxPerLoop', 1, 10000).step(100).name('Loop executions');
-        tmControls.controls[index].onChange(value => { app.maxPerLoop = value; app._recalcExecutionNumbers() });
+        tmControls.controls[index].onChange(value => {
+            app.maxPerLoop = value;
+            app._recalcExecutionNumbers();
+        });
 
         index++;
         tmControls.controls[index] = gui.add(tmControls, 'numberOfMeshesToKeep', 100, 10000).step(25).name('Keep N Meshes');
-        tmControls.controls[index].onChange(value => { app.numberOfMeshesToKeep = value });
+        tmControls.controls[index].onChange(value => {
+            app.numberOfMeshesToKeep = value;
+        });
 
         index++;
         tmControls.controls[index] = gui.add(tmControls, 'executeLoading').name('Engage');
