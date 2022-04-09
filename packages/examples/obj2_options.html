@@ -26,7 +26,6 @@
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
             import { GUI } from 'lil-gui';
-			import { WorkerTaskManager } from 'three-wtm';
             import { OBJLoader2, OBJLoader2Parallel, MtlObjBridge } from 'wwobjloader2';
 
 			class WWOBJLoader2Example {
@@ -72,8 +71,6 @@
 
 					this.cube = null;
 					this.pivot = null;
-
-					this.workerTaskManager = new WorkerTaskManager( 1 );
 				}
 
 				initGL () {
@@ -180,7 +177,6 @@
 					}
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
-						.setWorkerTaskManager( this.workerTaskManager )
 						.setModelName( modelName )
 						.setWorkerUrl( this.useJsmWorker, this.getWorkerUrl() )
 						.setUseIndices( this.useIndices )
@@ -245,7 +241,6 @@
 					this.pivot.add( local );
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
-						.setWorkerTaskManager( this.workerTaskManager )
 						.setModelName( modelName )
 						.setWorkerUrl( this.useJsmWorker, this.getWorkerUrl() )
 						.setUseIndices( this.useIndices )
@@ -303,7 +298,6 @@
 					this.pivot.add( local );
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
-						.setWorkerTaskManager( this.workerTaskManager )
 						.setModelName( local.name )
 						.setWorkerUrl( this.useJsmWorker, this.getWorkerUrl() )
 						.setUseIndices( this.useIndices )

@@ -6,7 +6,7 @@ import {
     MeshStandardMaterial
 } from 'three';
 import {
-    WorkerTaskManager,
+    WorkerTypeDefinition,
     MaterialUtils,
     DataTransportPayload,
     DataTransportPayloadUtils,
@@ -37,22 +37,11 @@ class OBJLoader2Parallel extends OBJLoader2 {
     constructor(manager) {
         super(manager);
         this.moduleWorker = true;
-        /** @type {URL|undefined} */
+        /** @type {URL} */
         this.workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
-        this.workerTaskManager = null;
         this.taskName = 'OBJLoader2Worker';
-    }
 
-    /**
-     * @param {WorkerTaskManager} workerTaskManager The {@link WorkerTaskManager}
-     * @param {string} [taskName] A specific taskName to allow distinction between legacy and module workers
-     *
-     * @return {OBJLoader2Parallel}
-     */
-    setWorkerTaskManager(workerTaskManager, taskName) {
-        this.workerTaskManager = workerTaskManager;
-        if (taskName) this.taskName = taskName;
-        return this;
+        this.updateWorkerStory(1);
     }
 
     /**
@@ -94,28 +83,25 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     /**
-     * Provide instructions on what is to be contained in the worker.
-     *
-     * @param {DataTransportPayload} payload Configuration object
-     * @return {Promise<void>}
-     * @private
+     * @param {arraybuffer|string} content OBJ data as Uint8Array or String
      */
-    async _buildWorkerCode(payload) {
-        if (this.workerTaskManager === null || !(this.workerTaskManager instanceof WorkerTaskManager)) {
-            if (this.parser.logging.debug) console.log('Needed to create new WorkerTaskManager');
-            this.workerTaskManager = new WorkerTaskManager(1);
-            this.workerTaskManager.setVerbose(this.parser.logging.enabled && this.parser.logging.debug);
-        }
-        if (!this.workerTaskManager.supportsTaskType(this.taskName)) {
-            this.workerTaskManager.registerTask(this.taskName, {
-                module: this.moduleWorker,
-                blob: false,
-                url: this.workerUrl
-            });
-            const packed = DataTransportPayloadUtils.packDataTransportPayload(payload);
+    updateWorkerStory(objToParse) {
+        this.workerStory = new WorkerTypeDefinition(this.taskName, 1, {
+            module: this.moduleWorker,
+            blob: false,
+            url: this.workerUrl
+        }, this.parser.logging.debug);
 
-            await this.workerTaskManager.initTaskType(this.taskName, packed.payload, packed.transferables);
-        }
+        const mTP = new MaterialsTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
+        mTP.params.modelName = this.parser.modelName;
+        mTP.params.useIndices = this.parser.useIndices;
+        mTP.params.disregardNormals = this.parser.disregardNormals;
+        mTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
+        mTP.params.useOAsMesh = this.parser.useOAsMesh;
+        mTP.materials = this.materialStore.getMaterials();
+        mTP.buffers.set('modelData', objToParse);
+
+        return mTP;
     }
 
     /**
@@ -140,45 +126,65 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * See {@link OBJLoader2.parse}
      * The callback onLoad needs to be set to be able to receive the content if used in parallel mode.
      */
-    parse(content) {
+    parse(objToParse) {
         if (this.parser.logging.enabled) {
             console.info('Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION);
         }
-        const dTP = new DataTransportPayload();
-        dTP.params.logging = {
-            enabled: this.parser.logging.enabled,
-            debug: this.parser.logging.debug
-        };
-        this._buildWorkerCode(dTP)
-            .then(() => {
-                if (this.parser.logging.debug) console.log('OBJLoader2Parallel init was performed');
-                this._executeWorkerParse(content);
-            }).catch(e => console.error(e));
+        this._initWorkerParse(objToParse);
         let dummy = new Object3D();
         dummy.name = 'OBJLoader2ParallelDummy';
         return dummy;
     }
 
-    _executeWorkerParse(content) {
-        const mTP = new MaterialsTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
-        mTP.params.modelName = this.parser.modelName;
-        mTP.params.useIndices = this.parser.useIndices;
-        mTP.params.disregardNormals = this.parser.disregardNormals;
-        mTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
-        mTP.params.useOAsMesh = this.parser.useOAsMesh;
-        mTP.materials = this.materialStore.getMaterials();
-        mTP.buffers.set('modelData', content);
+    async _initWorkerParse(objToParse) {
+        const mTP = this.updateWorkerStory(objToParse);
+
+        await this._initWorker()
+            .then(() => {
+                if (this.parser.logging.debug) {
+                    console.log('OBJLoader2Parallel init was performed');
+                }
+                this._executeWorker(mTP)
+
+            }).catch(e => console.error(e));
+    }
+
+    /**
+     * Provide instructions on what is to be contained in the worker.
+     *
+     * @return {Promise<void>}
+     * @private
+     */
+    _initWorker() {
+        const dTP = new DataTransportPayload();
+        dTP.params.logging = {
+            enabled: this.parser.logging.enabled,
+            debug: this.parser.logging.debug
+        };
+        return this.workerStory.initWorker(dTP);
+    }
+
+    async _executeWorker(mTP) {
         const packed = MaterialsTransportPayloadUtils.packMaterialsTransportPayload(mTP, false);
 
-        this.workerTaskManager.enqueueForExecution(
-            this.taskName,
-            packed.payload,
-            receivedPayload => {
+        await this.workerStory.executeWorker({
+            payload: mTP,
+            taskTypeName: this.taskName,
+            onIntermediate: (receivedPayload) => {
                 this._onLoad(receivedPayload);
-                if (this.terminateWorkerOnLoad) this.workerTaskManager.dispose();
             },
-            receivedPayload => this._onLoad(receivedPayload),
-            packed.transferables);
+            onComplete: (receivedPayload) => {
+                this._onLoad(receivedPayload);
+                if (this.terminateWorkerOnLoad) {
+                    this.workerStory.dispose();
+                }
+            },
+            transferables: packed.transferables
+        })
+            .then(() => {
+                console.log('Worker execution completed successfully.');
+            })
+            .catch(e => console.error(e));
     }
 
     /**
