@@ -8,14 +8,15 @@ import {
     MaterialsTransportPayload,
     MaterialUtils
 } from 'three-wtm';
-import { OBJLoader2Parser } from '../OBJLoader2';
+import { OBJLoader2Parser } from 'wwobjloader2';
 
 class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
 
     _localData = {
         /** @type {OBJLoader2Parser} */
         parser: new OBJLoader2Parser(),
-        buffer: undefined
+        buffer: undefined,
+        materials: new Map()
     };
 
     constructor() {
@@ -73,16 +74,24 @@ class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
             this._localData.parser.objectId = payload.id;
             this._localData.parser._execute(this._localData.buffer);
         }
+        else {
+            self.postMessage(new Error('No ArrayBuffer was provided for parsing.'));
+        }
     }
 
     _processPayload(payload) {
         if (payload.type === 'MaterialsTransportPayload') {
             const materialsTransportPayload = Object.assign(new MaterialsTransportPayload(), payload);
             MaterialsTransportPayloadUtils.unpackMaterialsTransportPayload(materialsTransportPayload, payload);
-            this._localData.parser.materials = materialsTransportPayload.materials;
+            this._localData.materials = materialsTransportPayload.materials;
         }
         ObjectManipulator.applyProperties(this._localData.parser, payload.params, false);
-        this._localData.buffer = payload.buffers?.get('modelData');
+        const modelData = payload.buffers?.get('modelData');
+        if (modelData) {
+            this._localData.buffer = modelData;
+        }
+        // buffer material if parser is re-used
+        this._localData.parser.materials = this._localData.materials;
     }
 
 }

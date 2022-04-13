@@ -19,7 +19,7 @@
     "lint": "npm run lint --workspaces",
     "doc": "npm run doc --workspace packages/objloader2",
     "build": "npm run build --workspaces",
-    "build-obj2": "npm run build --workspace packages/objloader2",
+    "build:obj2": "npm run build --workspace packages/objloader2",
     "dev": "npm run dev --workspace packages/examples",
     "prerelease": "npm run build && npm run doc",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",

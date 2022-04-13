@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@types/three": "^0.138.0",
+    "wwobjloader2": ".",
     "three": "^0.138.3",
     "three-wtm": "../../../three-wtm/packages/three-wtm"
   },
