@@ -1,16 +1,18 @@
 import {
-    WorkerTaskManagerDefaultWorker,
-    MaterialsTransportPayloadUtils,
-    MeshTransportPayload,
-    MeshTransportPayloadUtils,
+    WorkerTaskDirectorDefaultWorker,
     DataTransportPayload,
-    ObjectManipulator,
+    ObjectManipulator
+} from 'wtd';
+import {
     MaterialsTransportPayload,
-    MaterialUtils
+    MaterialsTransportPayloadUtils,
+    MaterialUtils,
+    MeshTransportPayload,
+    MeshTransportPayloadUtils
 } from 'three-wtm';
 import { OBJLoader2Parser } from 'wwobjloader2';
 
-class OBJLoader2Worker extends WorkerTaskManagerDefaultWorker {
+class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
     _localData = {
         /** @type {OBJLoader2Parser} */

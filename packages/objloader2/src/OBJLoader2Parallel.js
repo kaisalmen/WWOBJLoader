@@ -6,10 +6,12 @@ import {
     MeshStandardMaterial
 } from 'three';
 import {
-    WorkerTypeDefinition,
-    MaterialUtils,
+    WorkerTask,
     DataTransportPayload,
     DataTransportPayloadUtils,
+} from 'wtd';
+import {
+    MaterialUtils,
     MeshTransportPayloadUtils,
     MeshTransportPayload,
     MaterialsTransportPayloadUtils,
@@ -86,7 +88,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * @param {arraybuffer|string} content OBJ data as Uint8Array or String
      */
     updateWorkerStory(objToParse) {
-        this.workerStory = new WorkerTypeDefinition(this.taskName, 1, {
+        this.workerStory = new WorkerTask(this.taskName, 1, {
             module: this.moduleWorker,
             blob: false,
             url: this.workerUrl

@@ -30,9 +30,10 @@
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.138.0",
+    "@types/three": "^0.139.0",
     "wwobjloader2": ".",
-    "three": "^0.138.3",
+    "three": "^0.139.2",
+    "wtd": "../../../three-wtm/packages/wtd",
     "three-wtm": "../../../three-wtm/packages/three-wtm"
   },
   "devDependencies": {
