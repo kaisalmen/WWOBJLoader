@@ -2,14 +2,14 @@ import {
     WorkerTaskDirectorDefaultWorker,
     DataTransportPayload,
     ObjectManipulator
-} from 'wtd';
+} from 'wtd-core';
 import {
     MaterialsTransportPayload,
     MaterialsTransportPayloadUtils,
     MaterialUtils,
     MeshTransportPayload,
     MeshTransportPayloadUtils
-} from 'three-wtm';
+} from 'wtd-three-ext';
 import { OBJLoader2Parser } from 'wwobjloader2';
 
 class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {

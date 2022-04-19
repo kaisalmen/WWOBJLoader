@@ -9,14 +9,14 @@ import {
     WorkerTask,
     DataTransportPayload,
     DataTransportPayloadUtils,
-} from 'wtd';
+} from 'wtd-core';
 import {
     MaterialUtils,
     MeshTransportPayloadUtils,
     MeshTransportPayload,
     MaterialsTransportPayloadUtils,
     MaterialsTransportPayload
-} from 'three-wtm';
+} from 'wtd-three-ext';
 import { OBJLoader2 } from './OBJLoader2';
 
 /**

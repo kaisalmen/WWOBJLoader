@@ -12,7 +12,7 @@ export default defineConfig({
         },
         lib: {
             entry: path.resolve(__dirname, 'src/index.ts'),
-            name: 'three-wtm',
+            name: 'objloader2',
             fileName: 'index.js',
             formats: ['es']
         }

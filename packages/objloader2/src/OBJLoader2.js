@@ -12,7 +12,7 @@ import {
 import {
     MaterialStore,
     MaterialUtils
-} from 'three-wtm';
+} from 'wtd-three-ext';
 
 /**
  * Creates a new OBJLoader2. Use it to load OBJ data from files or to parse OBJ data from arraybuffer or text.

@@ -3,7 +3,7 @@
  */
 
 import { FileLoader } from 'three';
-import { ObjectManipulator } from 'three-wtm';
+import { ObjectManipulator } from 'wtd-three-ext';
 import { ResourceDescriptor } from './pipeline/utils/ResourceDescriptor.js';
 
 /**
@@ -14,51 +14,51 @@ import { ResourceDescriptor } from './pipeline/utils/ResourceDescriptor.js';
  */
 class AssetPipelineLoader {
 
-	static ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
+    static ASSET_PIPELINE_LOADER_VERSION = '1.0.0-alpha';
 
-	constructor ( name, assetPipeline ) {
+    constructor(name, assetPipeline) {
 
-		this.name = name;
-		this.assetPipeline = assetPipeline;
-		this.baseObject3d = undefined;
-		this.onComplete = null;
+        this.name = name;
+        this.assetPipeline = assetPipeline;
+        this.baseObject3d = undefined;
+        this.onComplete = null;
 
-		console.info( 'Using AssetPipelineLoader version: ' + AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION );
-	}
+        console.info('Using AssetPipelineLoader version: ' + AssetPipelineLoader.ASSET_PIPELINE_LOADER_VERSION);
+    }
 
-	/**
-	 *
-	 * @param {Object3D} baseObject3d
-	 * @returns {AssetPipelineLoader}
-	 */
-	setBaseObject3d ( baseObject3d ) {
+    /**
+     *
+     * @param {Object3D} baseObject3d
+     * @returns {AssetPipelineLoader}
+     */
+    setBaseObject3d(baseObject3d) {
 
-		this.baseObject3d = baseObject3d;
-		return this;
+        this.baseObject3d = baseObject3d;
+        return this;
 
-	}
+    }
 
-	/**
-	 *
-	 * @param {Function} onComplete
-	 */
-	setOnComplete ( onComplete ) {
+    /**
+     *
+     * @param {Function} onComplete
+     */
+    setOnComplete(onComplete) {
 
-		this.onComplete = onComplete;
+        this.onComplete = onComplete;
 
-	}
+    }
 
-	/**
-	 *
-	 * @return {AssetPipelineLoader}
-	 */
-	run () {
+    /**
+     *
+     * @return {AssetPipelineLoader}
+     */
+    run() {
 
-		this.assetPipeline.initPipeline( this.name, this.onComplete );
-		this.assetPipeline.runPipeline( this.baseObject3d );
-		return this;
+        this.assetPipeline.initPipeline(this.name, this.onComplete);
+        this.assetPipeline.runPipeline(this.baseObject3d);
+        return this;
 
-	}
+    }
 
 }
 
@@ -68,110 +68,110 @@ class AssetPipelineLoader {
  */
 class AssetPipeline {
 
-	constructor() {
+    constructor() {
 
-		this.name = null;
-		this.onComplete = null;
-		this.assetTasks = new Map();
+        this.name = null;
+        this.onComplete = null;
+        this.assetTasks = new Map();
 
-	}
+    }
 
-	/**
-	 *
-	 * @param {AssetTask} assetTask
-	 * @returns {AssetPipeline}
-	 */
-	addAssetTask ( assetTask ) {
+    /**
+     *
+     * @param {AssetTask} assetTask
+     * @returns {AssetPipeline}
+     */
+    addAssetTask(assetTask) {
 
-		this.assetTasks.set( assetTask.getName(), assetTask );
-		return this;
+        this.assetTasks.set(assetTask.getName(), assetTask);
+        return this;
 
-	}
+    }
 
-	/**
-	 * Init all {@link AssetTask}
-	 *
-	 * @param {string} name Name of the pipeline
-	 * @return {AssetPipeline}
-	 */
-	initPipeline ( name, onComplete) {
+    /**
+     * Init all {@link AssetTask}
+     *
+     * @param {string} name Name of the pipeline
+     * @return {AssetPipeline}
+     */
+    initPipeline(name, onComplete) {
 
-		this.name = name;
-		this.onComplete = onComplete;
-		let assetTaskBefore = null;
-		this.assetTasks.forEach( function ( assetTask, key ) {
+        this.name = name;
+        this.onComplete = onComplete;
+        let assetTaskBefore = null;
+        this.assetTasks.forEach(function(assetTask, key) {
 
-			if ( assetTaskBefore !== null ) {
+            if (assetTaskBefore !== null) {
 
-				assetTask.setTaskBefore( assetTaskBefore );
-				assetTaskBefore.setTaskAfter( assetTask )
+                assetTask.setTaskBefore(assetTaskBefore);
+                assetTaskBefore.setTaskAfter(assetTask)
 
-			}
-			assetTaskBefore = assetTask;
+            }
+            assetTaskBefore = assetTask;
 
-			assetTask.init();
+            assetTask.init();
 
-		} );
-		return this;
+        });
+        return this;
 
-	}
+    }
 
-	/**
-	 * 	/**
-	 * Run the pipeline: First load resources and then execute the parsing functions
-	 * @param {Object3D} baseObject3d
-	 * @return {AssetPipeline}
-	 */
-	runPipeline ( baseObject3d ) {
+    /**
+     * 	/**
+     * Run the pipeline: First load resources and then execute the parsing functions
+     * @param {Object3D} baseObject3d
+     * @return {AssetPipeline}
+     */
+    runPipeline(baseObject3d) {
 
-		let onComplete = x => console.log( "Done loading: " + x );
-		let scope = this;
-		if ( scope.onComplete !== undefined && scope.onComplete !== null ) {
+        let onComplete = x => console.log("Done loading: " + x);
+        let scope = this;
+        if (scope.onComplete !== undefined && scope.onComplete !== null) {
 
-			onComplete = scope.onComplete;
+            onComplete = scope.onComplete;
 
-		}
-		loadResources( this.assetTasks )
-			.then( x => processAssets( x, this.assetTasks ) )
-			.then( x => onComplete( scope.name, "Completed Loading" ) )
-			.catch( x => console.error( x ) );
+        }
+        loadResources(this.assetTasks)
+            .then(x => processAssets(x, this.assetTasks))
+            .then(x => onComplete(scope.name, "Completed Loading"))
+            .catch(x => console.error(x));
 
 
-		function processAssets( loadResults, assetTasks ) {
+        function processAssets(loadResults, assetTasks) {
 
-			console.log( 'Count of loaded resources: ' + loadResults.length );
-			let assetTask;
-			for ( assetTask of assetTasks.values() ) {
+            console.log('Count of loaded resources: ' + loadResults.length);
+            let assetTask;
+            for (assetTask of assetTasks.values()) {
 
-				// TODO: process must be async, so we can process worker based workloads
-				assetTask.process();
+                // TODO: process must be async, so we can process worker based workloads
+                assetTask.process();
 
-			}
-			baseObject3d.add( assetTask.getProcessResult() );
+            }
+            baseObject3d.add(assetTask.getProcessResult());
 
-		}
+        }
 
-		async function loadResources( assetTasks ) {
+        async function loadResources(assetTasks) {
 
-			let loadPromises = [ assetTasks.size ];
-			let index = 0;
-			for ( let assetTask of assetTasks.values() ) {
+            let loadPromises = [assetTasks.size];
+            let index = 0;
+            for (let assetTask of assetTasks.values()) {
 
-				if ( assetTask.getResourceDescriptor() ) {
+                if (assetTask.getResourceDescriptor()) {
 
-					loadPromises[ index ] = await assetTask.loadResource( assetTask.getName() );
-					index ++;
+                    loadPromises[index] = await assetTask.loadResource(assetTask.getName());
+                    index++;
 
-				}
+                }
 
-			}
-			console.log( 'Waiting for completion of loading of all assets!');
-			return await Promise.all( loadPromises );
+            }
+            console.log('Waiting for completion of loading of all assets!');
+            return await Promise.all(loadPromises);
 
-		}
-		return this;
+        }
+        return this;
 
-	}
+    }
 
 }
 
@@ -183,167 +183,167 @@ class AssetPipeline {
  */
 class AssetTask {
 
-	constructor ( name ) {
+    constructor(name) {
 
-		this.name = name;
-		this.resourceDescriptor = undefined;
-		this.assetLoader = {
-			ref: null,
-			instance: null,
-			config: {},
-			processFunctionName: 'parse'
-		};
-		this.relations = {
-			before: null,
-			after: null
-		};
-		this.linker = false;
-		this.processResult = undefined;
+        this.name = name;
+        this.resourceDescriptor = undefined;
+        this.assetLoader = {
+            ref: null,
+            instance: null,
+            config: {},
+            processFunctionName: 'parse'
+        };
+        this.relations = {
+            before: null,
+            after: null
+        };
+        this.linker = false;
+        this.processResult = undefined;
 
-	}
+    }
 
-	/**
-	 *
-	 * @returns {String}
-	 */
-	getName () {
+    /**
+     *
+     * @returns {String}
+     */
+    getName() {
 
-		return this.name;
+        return this.name;
 
-	}
+    }
 
-	/**
-	 * Change the name of the process function of the assetHandler instance. Default is "parse".
-	 *
-	 * @param {String} processFunctionName
-	 * @returns {AssetTask}
-	 */
-	setProcessFunctionName ( processFunctionName ) {
+    /**
+     * Change the name of the process function of the assetHandler instance. Default is "parse".
+     *
+     * @param {String} processFunctionName
+     * @returns {AssetTask}
+     */
+    setProcessFunctionName(processFunctionName) {
 
-		this.assetLoader.processFunctionName = processFunctionName;
-		return this;
+        this.assetLoader.processFunctionName = processFunctionName;
+        return this;
 
-	}
+    }
 
-	/**
-	 *
-	 * @param {ResourceDescriptor} resourceDescriptor
-	 * @returns {AssetTask}
-	 */
-	setResourceDescriptor ( resourceDescriptor ) {
+    /**
+     *
+     * @param {ResourceDescriptor} resourceDescriptor
+     * @returns {AssetTask}
+     */
+    setResourceDescriptor(resourceDescriptor) {
 
-		this.resourceDescriptor = resourceDescriptor;
-		return this;
+        this.resourceDescriptor = resourceDescriptor;
+        return this;
 
-	}
+    }
 
-	/**
-	 *
-	 * @returns {ResourceDescriptor}
-	 */
-	getResourceDescriptor () {
+    /**
+     *
+     * @returns {ResourceDescriptor}
+     */
+    getResourceDescriptor() {
 
-		return this.resourceDescriptor;
+        return this.resourceDescriptor;
 
-	}
+    }
 
-	setTaskBefore ( assetTask ) {
+    setTaskBefore(assetTask) {
 
-		this.relations.before = assetTask;
+        this.relations.before = assetTask;
 
-	}
+    }
 
-	setTaskAfter ( assetTask ) {
+    setTaskAfter(assetTask) {
 
-		this.relations.after = assetTask;
+        this.relations.after = assetTask;
 
-	}
+    }
 
-	setLinker ( linker ) {
+    setLinker(linker) {
 
-		this.linker = linker;
-		this.setProcessFunctionName( 'link' );
+        this.linker = linker;
+        this.setProcessFunctionName('link');
 
-	}
+    }
 
-	isLinker () {
+    isLinker() {
 
-		return this.linker;
+        return this.linker;
 
-	}
+    }
 
-	getProcessResult () {
+    getProcessResult() {
 
-		return this.processResult;
+        return this.processResult;
 
-	}
+    }
 
-	/**
-	 *
-	 * @param {Object} assetHandlerRef
-	 * @param {Object} [loaderConfig]
-	 * @returns {AssetTask}
-	 */
-	setAssetHandler ( assetHandler, assetHandlerConfig ) {
+    /**
+     *
+     * @param {Object} assetHandlerRef
+     * @param {Object} [loaderConfig]
+     * @returns {AssetTask}
+     */
+    setAssetHandler(assetHandler, assetHandlerConfig) {
 
-		if ( assetHandler ) {
+        if (assetHandler) {
 
-			this.assetLoader.instance = assetHandler;
+            this.assetLoader.instance = assetHandler;
 
-		}
-		if ( assetHandlerConfig !== undefined && assetHandlerConfig !== null ) {
+        }
+        if (assetHandlerConfig !== undefined && assetHandlerConfig !== null) {
 
-			this.assetLoader.config = assetHandlerConfig;
+            this.assetLoader.config = assetHandlerConfig;
 
-		}
-		return this;
+        }
+        return this;
 
-	}
+    }
 
-	/**
-	 *
-	 */
-	init () {
+    /**
+     *
+     */
+    init() {
 
-		console.log( this.name + ': Performing init' );
-		ObjectManipulator.applyProperties( this.assetLoader.instance, this.assetLoader.config, false );
+        console.log(this.name + ': Performing init');
+        ObjectManipulator.applyProperties(this.assetLoader.instance, this.assetLoader.config, false);
 
-	}
+    }
 
-	async loadResource () {
-		let fileLoader = new FileLoader();
-		fileLoader.setResponseType( 'arraybuffer' );
-		let buffer = await fileLoader.loadAsync( this.getResourceDescriptor().getUrl().href, report => console.log( report ) );
+    async loadResource() {
+        let fileLoader = new FileLoader();
+        fileLoader.setResponseType('arraybuffer');
+        let buffer = await fileLoader.loadAsync(this.getResourceDescriptor().getUrl().href, report => console.log(report));
 
-		this.resourceDescriptor.setBuffer( buffer );
-		return this.resourceDescriptor;
+        this.resourceDescriptor.setBuffer(buffer);
+        return this.resourceDescriptor;
 
-	}
+    }
 
-	/**
-	 *
-	 */
-	process () {
+    /**
+     *
+     */
+    process() {
 
-		if ( ! this.isLinker() ) {
+        if (!this.isLinker()) {
 
-			let data = this.resourceDescriptor.isNeedStringOutput() ? this.resourceDescriptor.getBufferAsString() : this.resourceDescriptor.getBuffer();
-			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ]( data );
+            let data = this.resourceDescriptor.isNeedStringOutput() ? this.resourceDescriptor.getBufferAsString() : this.resourceDescriptor.getBuffer();
+            this.processResult = this.assetLoader.instance[this.assetLoader.processFunctionName](data);
 
-		} else {
+        } else {
 
-			this.processResult = this.assetLoader.instance[ this.assetLoader.processFunctionName ](
-				this.relations.before.processResult, this.relations.after.assetLoader.instance );
+            this.processResult = this.assetLoader.instance[this.assetLoader.processFunctionName](
+                this.relations.before.processResult, this.relations.after.assetLoader.instance);
 
-		}
+        }
 
-	}
+    }
 
 }
 
 
 export {
-	AssetPipelineLoader,
-	AssetPipeline,
-	AssetTask
+    AssetPipelineLoader,
+    AssetPipeline,
+    AssetTask
 }
