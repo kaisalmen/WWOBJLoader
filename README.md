@@ -17,21 +17,20 @@ Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
 There exist three possibilities:
 * Press the `Gitpod` button above and start coding and using the examples directly in the browser
 * Checkout the repository and use `docker-compose up -d` to spin up local snowpack dev server.
-* Checkout the repository and run `npm install` and then `npm run dev` to spin up local snowpack dev server
+* Checkout the repository and run `npm install`, `npm run build` and then `npm run dev` to spin up local Vite dev server
 
-Whatever environment you choose to start [snowpack](https://www.snowpack.dev/) is used to serve the code and the examples using it. With this setup you are able to change the code and examples without invoking an additional bundler. Snowpack ensures all imported npm modules are available if previously installed in local environment (see `npm install`).
+Whatever environment you choose to start [Vite](https://vitejs.dev/) is used to serve the code and the examples using it. With this setup you are able to change the code and examples without invoking an additional bundler. Snowpack ensures all imported npm modules are available if previously installed in local environment (see `npm install`).
 
-If you run snowpack locally you require a `nodejs` and `npm`. The Gitpod and local docker environment ensure all prerequisites are fulfilled.
+If you run Vite locally you require a `nodejs` and `npm`. The Gitpod and local docker environment ensure all prerequisites are fulfilled.
 
 In any environment the server is reachable on port 8085.
 
 ## Examples
 
-If you want to get started see take a look at the following examples. They get more advanced from top to bottom:  
-* [OBJLoader2 direct loader Test](public/examples/webgl_loader_obj2.html)
-* [OBJLoader2Parallel Worker Module Support](public/examples/webgl_loader_obj2_workermodulesupport.html)
-* [OBJLoader2(Parallel) usage options](public/examples/webgl_loader_obj2_options.html)
-* [WorkerTaskManager: Potentially Infinite](public/examples/wtm_potentially_infinite.html)
+If you want to get started see take a look at the following examples. They get more advanced from top to bottom:
+* [OBJLoader2 basic usage](./packages/examples/obj2_basic.html)
+* [OBJLoader2Parallel Worker Module Support](./packages/examples/obj2parallel_basic.html)
+* [OBJLoader2 usage options](./packages/examples/obj2_options.html)
 
 ## Main Branches
 
@@ -41,9 +40,9 @@ The [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable) branch contai
 
 ## Docs
 Run `npm run doc` to create the documentation in directory **build/docs**.
- 
+
 ## Additional models and resources
-Use the following script `bash dev/models/retrieveExtras.sh` to download missing resources (OBJ, MTL files and textures). 
+Use the following script `bash dev/models/retrieveExtras.sh` to download missing resources (OBJ, MTL files and textures).
 
 
 # Feature Overview
@@ -62,13 +61,13 @@ The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has 
 - Negative face indices are supported (issue #28)
 - The parser is now a single class that can be directly stored as string and therefore embedded in module or standard Workers (since V4.0.0).
 
-## OBJLoader2 & OBJLoader2Parallel 
+## OBJLoader2 & OBJLoader2Parallel
 - Console logging is deactivated by default. It can be enabled by switching [here]() including debug logging.
 - TypeScript definitions (d.ts) are generated from JSDoc definitions for free from it, see [declaration](./dev/declaration.tsconfig.json)
 
-## WorkerTaskManager
+## WorkerTaskDirector Core Library
 
-The [WorkerTaskManager](https://github.com/kaisalmen/three-wtm) handles everything regarding workers. This is now a completely independent project and library that is utilized by `OBJLoader2Parallel`. 
+`WorkerTask` from [wtd-core](https://github.com/kaisalmen/three-wtm) is used to control everything regarding workers. This library was separated with the 4.0.0 release. It now evolves as independent library that is utilized by `OBJLoader2Parallel`.
 
 Happy coding!
 

@@ -1,0 +1,18 @@
+{
+    "editor.guides.bracketPairs": true,
+    "editor.formatOnSave": false,
+    "workbench.editor.revealIfOpen": true,
+    "[javascript]": {
+        "editor.formatOnSave": true
+    },
+    "[typescript]": {
+        "editor.formatOnSave": true
+    },
+    "eslint.validate": [
+        "javascript",
+        "typescript"
+    ],
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    }
+}

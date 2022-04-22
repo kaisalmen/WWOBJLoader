@@ -1,0 +1,55 @@
+{
+  "name": "wwobjloader2",
+  "version": "5.0.0-beta.1",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./OBJLoader2Worker": {
+      "import": "./src/worker/OBJLoader2Worker.js"
+    },
+    "./OBJLoader2WorkerStandard": {
+      "import": "./src/worker/OBJLoader2WorkerStandard.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "shx rm -rf ./dist",
+    "doc": "jsdoc -c jsdoc.json",
+    "lint": "npx eslint src",
+    "build-worker": "npx shx rm -f ./src/worker/OBJLoader2WorkerStandard.js && vite -c vite.config.worker.ts build",
+    "build": "npm run clean && npm run build-worker && tsc",
+    "serve": "tsc && vite preview"
+  },
+  "dependencies": {
+    "@types/three": "^0.139.0",
+    "wwobjloader2": ".",
+    "three": "^0.139.2",
+    "wtd-core": "^2.0.0-beta.1",
+    "wtd-three-ext": "^2.0.0-beta.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.6.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaisalmen/WWOBJLoader",
+    "directory": "packages/objloader2"
+  },
+  "homepage": "https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/objloader2/README.md",
+  "bugs": "https://github.com/kaisalmen/WWOBJLoader/issues",
+  "author": {
+    "name": "kaisalmen",
+    "url": "https://www.kaisalmen.de"
+  }
+}

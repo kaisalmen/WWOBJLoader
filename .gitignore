@@ -1,13 +1,16 @@
 .idea
 
-/archive
-/build
+archive
+dist
+node_modules
 
-/public/examples/models/draco
-/public/examples/models/gltf
-/public/examples/models/obj/bugs
-/public/examples/models/obj/extra
-/public/examples/models/obj/misc
+/packages/examples/models/draco
+/packages/examples/models/gltf
+/packages/examples/models/obj/bugs
+/packages/examples/models/obj/extra
+/packages/examples/models/obj/misc
 
-/node_modules
+/packages/objloader2/src/worker/OBJLoader2WorkerStandard.js
+
+tsconfig.tsbuildinfo
 *.tgz

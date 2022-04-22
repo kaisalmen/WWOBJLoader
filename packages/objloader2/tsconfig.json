@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "es2020",
+    "rootDir": "src",
+    "declarationDir": "dist",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "noEmit": false,
+    "removeComments": true
+  },
+  "include": [
+    "./src/**/*.js"
+  ],
+  "exclude": [
+    "./dist",
+    "./node_modules",
+    "./src/worker/**/*.js"
+  ]
+}

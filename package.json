@@ -1,8 +1,11 @@
 {
-  "name": "wwobjloader2",
-  "version": "4.0.1",
+  "name": "objloader2-workspace",
   "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
-  "author": "kaisalmen",
+  "author": {
+    "name": "kaisalmen",
+    "url": "https://www.kaisalmen.de"
+  },
+  "private": "true",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -11,55 +14,30 @@
   "bugs": {
     "url": "https://github.com/kaisalmen/WWOBJLoader/issues"
   },
-  "main": "build/wwobjloader2.common.js",
-  "module": "build/wwobjloader2.module.js",
-  "types": "src/index.d.ts",
-  "files": [
-    "package.json",
-    "LICENSE",
-    "README.md",
-    "build/tmOBJLoader2.js",
-    "build/wwobjloader2.common.js",
-    "build/wwobjloader2.common.min.js",
-    "build/wwobjloader2.module.js",
-    "build/wwobjloader2.module.min.js",
-    "src/index.*",
-    "src/loaders/OBJLoader2.*",
-    "src/loaders/OBJLoader2Parallel.*",
-    "src/loaders/workerTaskManager/worker/*",
-    "src/loaders/utils/MtlObjBridge.*"
-  ],
   "scripts": {
+    "clean": "npm run clean --workspaces",
+    "lint": "npm run lint --workspaces",
+    "doc": "npm run doc --workspace packages/objloader2",
+    "build": "npm run build --workspaces",
+    "build:obj2": "npm run build --workspace packages/objloader2",
+    "dev": "npm run dev --workspace packages/examples",
+    "prerelease": "npm run build && npm run doc",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
-    "clean": "rimraf build",
-    "dev": "snowpack dev --verbose",
-    "def": "dev/runTscDeclaration.sh",
-    "doc": "jsdoc -c jsdoc.json",
-    "build": "npm run clean && rollup -c",
-    "prerelease": "npm run build && npm run def && npm run doc && npm pack",
     "prepare": ""
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
-  "dependencies": {
-    "three": "^0.133.1"
-  },
-  "peerDependencies": {
-    "three-wtm": "^1.0.1"
-  },
   "devDependencies": {
-    "@babel/core": "^7.15.5",
-    "@babel/plugin-proposal-class-properties": "^7.14.5",
-    "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-node-resolve": "^13.0.5",
-    "fflate": "^0.7.1",
-    "jsdoc": "^3.6.7",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.58.0",
-    "rollup-plugin-copy": "^3.4.0",
-    "rollup-plugin-modify": "^3.0.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "snowpack": "^3.8.8",
-    "typescript": "^4.4.2"
-  }
+    "@types/node": "^16.11.7",
+    "vite": "^2.9.5",
+    "typescript": "^4.6.3",
+    "eslint": "^8.13.0",
+    "@typescript-eslint/eslint-plugin": "^5.20.0",
+    "editorconfig": "^0.15.3",
+    "shx": "^0.3.4"
+  },
+  "workspaces": [
+    "packages/objloader2",
+    "packages/examples"
+  ]
 }

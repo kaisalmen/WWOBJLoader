@@ -1,0 +1,30 @@
+{
+  "source": {
+    "include": [
+      "src/OBJLoader2.js",
+      "src/OBJLoader2Parallel.js",
+      "src/MtlObjBridge.js",
+      "src/tmOBJLoader2.js"
+    ]
+  },
+  "tags": {
+    "allowUnknownTags": true
+  },
+  "opts": {
+    "destination": "./dist/docs"
+  },
+  "plugins": [
+    "plugins/markdown"
+  ],
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false,
+    "default": {
+      "outputSourceFiles": true
+    },
+    "path": "ink-docstrap",
+    "navType": "vertical",
+    "linenums": true,
+    "dateFormat": "MMMM Do YYYY, h:mm:ss a"
+  }
+}
