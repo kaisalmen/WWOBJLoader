@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0-beta.0",
+  "version": "5.0.0-beta.1",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
@@ -35,8 +35,8 @@
     "@types/three": "^0.139.0",
     "wwobjloader2": ".",
     "three": "^0.139.2",
-    "wtd-core": "../../../three-wtm/packages/wtd-core",
-    "wtd-three-ext": "../../../three-wtm/packages/wtd-three-ext"
+    "wtd-core": "^2.0.0-beta.1",
+    "wtd-three-ext": "^2.0.0-beta.1"
   },
   "devDependencies": {
     "jsdoc": "^3.6.10"

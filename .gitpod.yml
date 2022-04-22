@@ -6,4 +6,4 @@ ports:
 
 tasks:
   - name: Terminal
-    init: npm install && npm run dev
+    init: npm install && npm run build && npm run dev

@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.0.0-beta.*
+- Clean-up and uncluttering
+  - Remove all code related to worker online assembly and minification workarounds
+- Fully rely on module workers. Use vite config to generate standard workers from module workers at build time
+- Use new versions of `three-wtm` into `wtd-core`
+  - `OBJLoader2Parallel` is no longer using `WorkerTaskDirector`, but only using the generic `WorkerTask`
+
 ## 4.0.1
 - `three.js` is no longer a **peerDependency**. It is just a **dependency**. This resolves issue #58.
 - Updated **devDependencies** to resolve potential security issues.
@@ -24,7 +31,7 @@
   - The parser in DefaultWorkerPayloadHandler should not be limited to `OBJ2LoaderParser`. js and ts was not aligned here.
 
 ## 3.1.1.
-- three.js issue 17615/17711: ObjLoader2Parser materials are not applied in worker 
+- three.js issue 17615/17711: ObjLoader2Parser materials are not applied in worker
 - Additionally, allow material override from `OBJLoader2#addMaterials` to `MaterialHandler#addMaterials`
 
 ## 3.1.0
@@ -76,8 +83,8 @@
   - One buildFace function is used for all four face types, lines and points including indices (=vertex reduction) creation if wanted.
   - String processing (o, g, mtllib and usemtl) just concatenates chars
   - Overall speed improvements due simpler code paths
-- Removed THREE.LoaderSupport.ConsoleLogger: Added setLogging function as replacement where required. Console logging is behind boolean flags. **Important:** Code adjustments are required. 
-- Removed THREE.LoaderSupport.LoaderBase: Many functions are coupled with OBJLoader2. It was simply not generic enough and added unneeded complexity. 
+- Removed THREE.LoaderSupport.ConsoleLogger: Added setLogging function as replacement where required. Console logging is behind boolean flags. **Important:** Code adjustments are required.
+- Removed THREE.LoaderSupport.LoaderBase: Many functions are coupled with OBJLoader2. It was simply not generic enough and added unneeded complexity.
 - Reduced THREE.LoaderSupport.PrepData to minimum set of generic functions. Simple properties are added by demand and are no longer enforced.
 - Renamed THREE.LoaderSupport.Builder to THREE.LoaderSupport.MeshBuilder
 - Added objverify to npm package
@@ -98,7 +105,7 @@
 - Issue #29: Cleaned loadMtl API and clarified `WorkerSupport.run` contract. Transferable is automatically attached if data is an ArrayBuffer.
 
 ## 2.2.0
-- WorkerRunnerRefImpl changes: No longer required `THREE.LoaderSupport.Validator` and `THREE.LoaderSupport.ConsoleLogger` which reduces size of worker. Default workers only include WorkerRunnerRefImpl for establishing communication and no longer need the Validator or the ConsoleLogger. 
+- WorkerRunnerRefImpl changes: No longer required `THREE.LoaderSupport.Validator` and `THREE.LoaderSupport.ConsoleLogger` which reduces size of worker. Default workers only include WorkerRunnerRefImpl for establishing communication and no longer need the Validator or the ConsoleLogger.
 - LoaderWorkerSupport changes: It always ensures logConfig parameters are properly initialized before being passed to worker. Fixed logging problems.
 - Issue #25: OBJLoader2 now logs an error if `THREE.LoaderSupport` is not included as script in HTML. The same is true for missing `THRE.MTLLoader`, but only if method `loadMtl` is used.
 - Issue #26: `WorkerSuport` now contains a inner private class `LoaderWorker` that encapsulates the native worker. This separates the runtime functionality from the setup and interaction. Workers are now terminated when immediately when they are not running otherwise `LoaderWorker.terminateRequested` ensures termination when final execution status is reached. `WorkerDirector` now properly handles shutdown of workers. Evaluation of status is always performed in `WorkerDirector.processQueue`. `WorkerDirector.callbackOnFinishedProcessing` is called when processing is completed and all workers are terminated. This allows to clear all meshes, for example.
@@ -108,17 +115,17 @@
 - Issue #21 Part2: Fixed new mesh detection (offset and not) solely relies on 'v' and 'f' occurrences. 'o' and 'g' are meta information, that no longer drive the decision
 - Issue #22: WorkerDirector now only allows implementations that have property callbacks
 - Example WWOBJLoader2Stage: Added validity checks to ZipTools
-- Fixed worker code generated from minified version is broken 
+- Fixed worker code generated from minified version is broken
 
 ## 2.1.1
-- Issue #21: Fixed 'o' or 'g' declaration lead to early cleanup of stored vertex data 
+- Issue #21: Fixed 'o' or 'g' declaration lead to early cleanup of stored vertex data
 - WorkerSupport: Added worker payloads "imageData" and "error"
 
 ## 2.1.0
 - Issue #18: Builder enhancements:
   - Materials can be added to it as regular objects, as jsonified objects (e.g. from worker) and as clone instruction (map of property and value)
   - Separated mesh processing from material processing
-  - Builder no longer defines default materials. This is no the responsibility of the user (loader) 
+  - Builder no longer defines default materials. This is no the responsibility of the user (loader)
 - WorkerSupport is now able to load arbitrary js files into Blob used to create the Worker (as exemplary shown and used in MeshSpray)
 
 ## 2.0.1
