@@ -29,10 +29,10 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "vite": "^2.9.5",
-    "typescript": "^4.6.3",
-    "eslint": "^8.13.0",
-    "@typescript-eslint/eslint-plugin": "^5.20.0",
+    "vite": "^2.9.7",
+    "typescript": "^4.6.4",
+    "eslint": "^8.14.0",
+    "@typescript-eslint/eslint-plugin": "^5.22.0",
     "editorconfig": "^0.15.3",
     "shx": "^0.3.4"
   },

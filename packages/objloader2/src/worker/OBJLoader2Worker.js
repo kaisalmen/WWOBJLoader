@@ -25,7 +25,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
         super();
 
         this._localData.parser._onMeshAlter = (mesh, materialMetaInfo) => {
-            const materialTP = new MaterialsTransportPayload('intermediate', materialMetaInfo.objectId);
+            const materialTP = new MaterialsTransportPayload({});
             materialTP.multiMaterialNames = materialMetaInfo.multiMaterialNames;
 
             // add matrial of the mesh required for proper re-construction
@@ -33,7 +33,10 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
             materialTP.cloneInstructions = materialMetaInfo.cloneInstructions;
             MaterialsTransportPayloadUtils.cleanMaterials(materialTP);
 
-            const meshTP = new MeshTransportPayload('intermediate', materialMetaInfo.objectId);
+            const meshTP = new MeshTransportPayload({
+                cmd: 'intermediate',
+                id: materialMetaInfo.objectId
+            });
             meshTP.progress = materialMetaInfo.progress;
             meshTP.params.modelName = materialMetaInfo.modelName;
             MeshTransportPayloadUtils.setMesh(meshTP, mesh, materialMetaInfo.geometryType);
@@ -44,7 +47,10 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
         };
 
         this._localData.parser.callbacks.onLoad = () => {
-            const dTP = new DataTransportPayload('execComplete', this._localData.parser.objectId);
+            const dTP = new DataTransportPayload({
+                cmd: 'execComplete',
+                id: this._localData.parser.objectId
+            });
             // no packing required as no Transferables here
             self.postMessage(dTP);
         };
@@ -83,7 +89,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
     _processPayload(payload) {
         if (payload.type === 'MaterialsTransportPayload') {
-            const materialsTransportPayload = Object.assign(new MaterialsTransportPayload(), payload);
+            const materialsTransportPayload = Object.assign(new MaterialsTransportPayload({}), payload);
             MaterialsTransportPayloadUtils.unpackMaterialsTransportPayload(materialsTransportPayload, payload);
             this._localData.materials = materialsTransportPayload.materials;
         }

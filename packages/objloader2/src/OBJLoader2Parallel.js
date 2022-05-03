@@ -158,11 +158,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * @private
      */
     _initWorker() {
-        const dTP = new DataTransportPayload();
-        dTP.params.logging = {
-            enabled: this.parser.logging.enabled,
-            debug: this.parser.logging.debug
-        };
+        const dTP = new DataTransportPayload({
+            params: {
+                logging: {
+                    enabled: this.parser.logging.enabled,
+                    debug: this.parser.logging.debug
+                }
+            }
+        });
         return this.workerStory.initWorker(dTP);
     }
 
@@ -225,11 +228,10 @@ class OBJLoader2Parallel extends OBJLoader2 {
         }
         else if (cmd === 'execComplete') {
             if (asset.type === 'DataTransportPayload') {
-                const dTS = new DataTransportPayload()
-                DataTransportPayloadUtils.unpackDataTransportPayload(dTS);
+                const dts = DataTransportPayloadUtils.unpackDataTransportPayload(asset);
 
                 if (this.parser.callbacks.onLoad !== null) {
-                    this.parser.callbacks.onLoad(this.parser.baseObject3d, dTS.id);
+                    this.parser.callbacks.onLoad(this.parser.baseObject3d, dts.id);
                 }
             }
             else {
