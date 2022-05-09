@@ -29,9 +29,9 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "vite": "^2.9.7",
+    "vite": "^2.9.8",
     "typescript": "^4.6.4",
-    "eslint": "^8.14.0",
+    "eslint": "^8.15.0",
     "@typescript-eslint/eslint-plugin": "^5.22.0",
     "editorconfig": "^0.15.3",
     "shx": "^0.3.4"

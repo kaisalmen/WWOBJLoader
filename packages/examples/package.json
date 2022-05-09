@@ -1,6 +1,6 @@
 {
   "name": "objloader2-examples",
-  "version": "5.0.0-beta.1",
+  "version": "5.0.0-beta.2",
   "type": "module",
   "private": "true",
   "scripts": {

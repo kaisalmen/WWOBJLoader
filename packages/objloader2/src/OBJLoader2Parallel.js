@@ -7,15 +7,13 @@ import {
 } from 'three';
 import {
     WorkerTask,
-    DataTransportPayload,
-    DataTransportPayloadUtils,
+    WorkerTaskMessage,
+    DataPayload,
 } from 'wtd-core';
 import {
     MaterialUtils,
-    MeshTransportPayloadUtils,
-    MeshTransportPayload,
-    MaterialsTransportPayloadUtils,
-    MaterialsTransportPayload
+    MeshPayload,
+    MaterialsPayload
 } from 'wtd-three-ext';
 import { OBJLoader2 } from './OBJLoader2';
 
@@ -31,6 +29,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
     static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
     static DEFAULT_MODULE_WORKER_PATH = './worker/OBJLoader2Worker.js';
     static DEFAULT_STANDARD_WORKER_PATH = './worker/OBJLoader2WorkerStandard.js';
+    static TASK_NAME = 'OBJLoader2Worker';
 
     /**
      *
@@ -41,9 +40,6 @@ class OBJLoader2Parallel extends OBJLoader2 {
         this.moduleWorker = true;
         /** @type {URL} */
         this.workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
-        this.taskName = 'OBJLoader2Worker';
-
-        this.updateWorkerStory(1);
     }
 
     /**
@@ -84,26 +80,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
         return this;
     }
 
-    /**
-     * @param {arraybuffer|string} content OBJ data as Uint8Array or String
-     */
-    updateWorkerStory(objToParse) {
-        this.workerStory = new WorkerTask(this.taskName, 1, {
+    _initWorkerTask() {
+        this.workerStory = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
             module: this.moduleWorker,
             blob: false,
             url: this.workerUrl
         }, this.parser.logging.debug);
-
-        const mTP = new MaterialsTransportPayload('execute', Math.floor(Math.random() * Math.floor(65536)));
-        mTP.params.modelName = this.parser.modelName;
-        mTP.params.useIndices = this.parser.useIndices;
-        mTP.params.disregardNormals = this.parser.disregardNormals;
-        mTP.params.materialPerSmoothingGroup = this.parser.materialPerSmoothingGroup;
-        mTP.params.useOAsMesh = this.parser.useOAsMesh;
-        mTP.materials = this.materialStore.getMaterials();
-        mTP.buffers.set('modelData', objToParse);
-
-        return mTP;
     }
 
     /**
@@ -139,14 +121,14 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     async _initWorkerParse(objToParse) {
-        const mTP = this.updateWorkerStory(objToParse);
+        this._initWorkerTask();
 
         await this._initWorker()
             .then(() => {
                 if (this.parser.logging.debug) {
                     console.log('OBJLoader2Parallel init was performed');
                 }
-                this._executeWorker(mTP)
+                this._executeWorker(objToParse);
 
             }).catch(e => console.error(e));
     }
@@ -158,33 +140,57 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * @private
      */
     _initWorker() {
-        const dTP = new DataTransportPayload({
-            params: {
-                logging: {
-                    enabled: this.parser.logging.enabled,
-                    debug: this.parser.logging.debug
-                }
-            }
+        const initMessage = new WorkerTaskMessage({
+            cmd: 'init'
         });
-        return this.workerStory.initWorker(dTP);
+        const dataPayload = new DataPayload();
+        dataPayload.params = {
+            logging: {
+                enabled: this.parser.logging.enabled,
+                debug: this.parser.logging.debug
+            }
+        };
+
+        initMessage.addPayload(dataPayload);
+        return this.workerStory.initWorker(initMessage);
     }
 
-    async _executeWorker(mTP) {
-        const packed = MaterialsTransportPayloadUtils.packMaterialsTransportPayload(mTP, false);
+    async _executeWorker(objToParse) {
+        const execMessage = new WorkerTaskMessage({
+            cmd: 'execute',
+            id: Math.floor(Math.random() * Math.floor(65536))
+        });
+        const dataPayload = new DataPayload();
+        dataPayload.params = {
+            modelName: this.parser.modelName,
+            useIndices: this.parser.useIndices,
+            disregardNormals: this.parser.disregardNormals,
+            materialPerSmoothingGroup: this.parser.materialPerSmoothingGroup,
+            useOAsMesh: this.parser.useOAsMesh
+        };
+        dataPayload.buffers.set('modelData', objToParse);
+
+        const materialsPayload = new MaterialsPayload();
+        materialsPayload.materials = this.materialStore.getMaterials();
+
+        execMessage.addPayload(dataPayload);
+        execMessage.addPayload(materialsPayload);
+
+        const transferables = execMessage.pack(false);
 
         await this.workerStory.executeWorker({
-            payload: mTP,
-            taskTypeName: this.taskName,
-            onIntermediate: (receivedPayload) => {
-                this._onLoad(receivedPayload);
+            message: execMessage,
+            taskTypeName: OBJLoader2Parallel.TASK_NAME,
+            onIntermediate: (message) => {
+                this._onLoad(message);
             },
-            onComplete: (receivedPayload) => {
-                this._onLoad(receivedPayload);
+            onComplete: (message) => {
+                this._onLoad(message);
                 if (this.terminateWorkerOnLoad) {
                     this.workerStory.dispose();
                 }
             },
-            transferables: packed.transferables
+            transferables: transferables
         })
             .then(() => {
                 console.log('Worker execution completed successfully.');
@@ -197,27 +203,32 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * @param {Mesh} mesh
      * @param {object} materialMetaInfo
      */
-    _onLoad(asset) {
-        const cmd = asset.cmd;
-        if (cmd === 'intermediate') {
-            if (asset.type === 'MeshTransportPayload') {
-                const mTS = MeshTransportPayloadUtils.unpackMeshTransportPayload(asset, false);
-                const materialsTransport = mTS.materialsTransportPayload;
-                let material = MaterialsTransportPayloadUtils.processMaterialTransport(mTS.materialsTransportPayload,
-                    this.materialStore.getMaterials(), this.parser.logging.enabled);
+    _onLoad(message) {
+        const wtm = WorkerTaskMessage.unpack(message, false);
+        if (wtm.cmd === 'intermediate') {
+            if (wtm.payloads.length > 0) {
+
+                const meshPayload = wtm.payloads[0];
+                let material;
+                if (wtm.payloads.length === 2) {
+                    const materialyPayload = wtm.payloads[1];
+                    material = materialyPayload.processMaterialTransport(this.materialStore.getMaterials(), this.parser.logging.enabled);
+                }
+
                 if (!material) {
                     console.warn('Material not found!');
                     material = new MeshStandardMaterial({ color: 0xFF0000 });
                 }
+
                 let mesh;
-                if (mTS.geometryType === 0) {
-                    mesh = new Mesh(mTS.bufferGeometry, material);
+                if (meshPayload.geometryType === 0) {
+                    mesh = new Mesh(meshPayload.bufferGeometry, material);
                 }
-                else if (mTS.geometryType === 1) {
-                    mesh = new LineSegments(mTS.bufferGeometry, material);
+                else if (meshPayload.geometryType === 1) {
+                    mesh = new LineSegments(meshPayload.bufferGeometry, material);
                 }
                 else {
-                    mesh = new Points(mTS.bufferGeometry, material);
+                    mesh = new Points(meshPayload.bufferGeometry, material);
                 }
                 this.parser._onMeshAlter(mesh);
                 this.parser.baseObject3d.add(mesh);
@@ -226,16 +237,9 @@ class OBJLoader2Parallel extends OBJLoader2 {
                 console.error('Received unknown asset.type: ' + asset.type);
             }
         }
-        else if (cmd === 'execComplete') {
-            if (asset.type === 'DataTransportPayload') {
-                const dts = DataTransportPayloadUtils.unpackDataTransportPayload(asset);
-
-                if (this.parser.callbacks.onLoad !== null) {
-                    this.parser.callbacks.onLoad(this.parser.baseObject3d, dts.id);
-                }
-            }
-            else {
-                console.error('Received unknown asset.type: ' + asset.type);
+        else if (wtm.cmd === 'execComplete') {
+            if (this.parser.callbacks.onLoad !== null) {
+                this.parser.callbacks.onLoad(this.parser.baseObject3d, wtm.id);
             }
         }
         else {

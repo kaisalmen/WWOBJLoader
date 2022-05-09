@@ -1,14 +1,12 @@
 import {
     WorkerTaskDirectorDefaultWorker,
-    DataTransportPayload,
-    ObjectManipulator
+    WorkerTaskMessage,
+    DataPayloadHandler
 } from 'wtd-core';
 import {
-    MaterialsTransportPayload,
-    MaterialsTransportPayloadUtils,
+    MaterialsPayload,
     MaterialUtils,
-    MeshTransportPayload,
-    MeshTransportPayloadUtils
+    MeshPayload
 } from 'wtd-three-ext';
 import { OBJLoader2Parser } from 'wwobjloader2';
 
@@ -25,34 +23,38 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
         super();
 
         this._localData.parser._onMeshAlter = (mesh, materialMetaInfo) => {
-            const materialTP = new MaterialsTransportPayload({});
-            materialTP.multiMaterialNames = materialMetaInfo.multiMaterialNames;
+            const intermediateMessage = new WorkerTaskMessage({
+                cmd: 'intermediate',
+                id: materialMetaInfo.objectId,
+                progress: materialMetaInfo.progress
+            });
+
+            const meshPayload = new MeshPayload();
+            meshPayload.params.modelName = materialMetaInfo.modelName;
+            meshPayload.setMesh(mesh, materialMetaInfo.geometryType);
+
+            const materialsPayload = new MaterialsPayload();
+            materialsPayload.multiMaterialNames = materialMetaInfo.multiMaterialNames;
 
             // add matrial of the mesh required for proper re-construction
-            MaterialUtils.addMaterial(materialTP.materials, mesh.material.name, mesh.material, false, false);
-            materialTP.cloneInstructions = materialMetaInfo.cloneInstructions;
-            MaterialsTransportPayloadUtils.cleanMaterials(materialTP);
+            MaterialUtils.addMaterial(materialsPayload.materials, mesh.material.name, mesh.material, false, false);
+            materialsPayload.cloneInstructions = materialMetaInfo.cloneInstructions;
+            materialsPayload.cleanMaterials();
 
-            const meshTP = new MeshTransportPayload({
-                cmd: 'intermediate',
-                id: materialMetaInfo.objectId
-            });
-            meshTP.progress = materialMetaInfo.progress;
-            meshTP.params.modelName = materialMetaInfo.modelName;
-            MeshTransportPayloadUtils.setMesh(meshTP, mesh, materialMetaInfo.geometryType);
-            meshTP.materialsTransportPayload = materialTP;
+            intermediateMessage.addPayload(meshPayload);
+            intermediateMessage.addPayload(materialsPayload);
 
-            const packed = MeshTransportPayloadUtils.packMeshTransportPayload(meshTP, false);
-            self.postMessage(packed.payload, packed.transferables);
+            const transferables = intermediateMessage.pack(false);
+            self.postMessage(intermediateMessage, transferables);
         };
 
         this._localData.parser.callbacks.onLoad = () => {
-            const dTP = new DataTransportPayload({
+            const execMessage = new WorkerTaskMessage({
                 cmd: 'execComplete',
                 id: this._localData.parser.objectId
             });
             // no packing required as no Transferables here
-            self.postMessage(dTP);
+            self.postMessage(execMessage);
         };
 
         this._localData.parser.callbacks.onProgress = text => {
@@ -62,24 +64,30 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
         };
     }
 
-    init(payload) {
-        console.log(`OBJLoader2Worker#init: name: ${payload.name} id: ${payload.id} cmd: ${payload.cmd} workerId: ${payload.workerId}`);
+    init(message) {
+        const wtm = this._processMessage(message);
+        wtm.cleanPayloads();
 
-        this._processPayload(payload);
+        if (this._localData.parser.logging.debug) {
+            console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+        }
 
-        payload.cmd = 'initComplete';
-        self.postMessage(payload);
+        wtm.cmd = 'initComplete';
+        self.postMessage(wtm);
     }
 
-    execute(payload) {
+    execute(message) {
         if (this._localData.parser.usedBefore) {
             this._localData.parser._init();
         }
+        this._processMessage(message);
 
-        this._processPayload(payload);
+        if (this._localData.parser.logging.debug) {
+            console.log(`OBJLoader2Worker#execute: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+        }
 
         if (this._localData.buffer) {
-            this._localData.parser.objectId = payload.id;
+            this._localData.parser.objectId = message.id;
             this._localData.parser._execute(this._localData.buffer);
         }
         else {
@@ -87,19 +95,24 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
         }
     }
 
-    _processPayload(payload) {
-        if (payload.type === 'MaterialsTransportPayload') {
-            const materialsTransportPayload = Object.assign(new MaterialsTransportPayload({}), payload);
-            MaterialsTransportPayloadUtils.unpackMaterialsTransportPayload(materialsTransportPayload, payload);
-            this._localData.materials = materialsTransportPayload.materials;
+    _processMessage(message) {
+        const wtm = WorkerTaskMessage.unpack(message, false);
+
+        const dataPayload = wtm.payloads[0];
+        if (wtm.payloads.length === 2) {
+            const materialsPayload = wtm.payloads[1];
+            this._localData.materials = materialsPayload.materials;
         }
-        ObjectManipulator.applyProperties(this._localData.parser, payload.params, false);
-        const modelData = payload.buffers?.get('modelData');
+
+        DataPayloadHandler.applyProperties(this._localData.parser, dataPayload.params, false);
+        const modelData = dataPayload.buffers?.get('modelData');
         if (modelData) {
             this._localData.buffer = modelData;
         }
         // buffer material if parser is re-used
         this._localData.parser.materials = this._localData.materials;
+
+        return wtm;
     }
 
 }

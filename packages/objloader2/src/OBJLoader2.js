@@ -22,7 +22,7 @@ import {
  */
 class OBJLoader2 extends Loader {
 
-    static OBJLOADER2_VERSION = '4.0.0-dev';
+    static OBJLOADER2_VERSION = '5.0.0-beta.2';
 
     /**
      *
