@@ -66,14 +66,13 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
     init(message) {
         const wtm = this._processMessage(message);
-        wtm.cleanPayloads();
 
         if (this._localData.parser.logging.debug) {
             console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
-        wtm.cmd = 'initComplete';
-        self.postMessage(wtm);
+        const initComplete = WorkerTaskMessage.createFromExisting(wtm, 'initComplete');
+        self.postMessage(initComplete);
     }
 
     execute(message) {
