@@ -34,9 +34,12 @@
   "dependencies": {
     "@types/three": "^0.140.0",
     "wwobjloader2": ".",
-    "three": "^0.140.0",
+    "three": "^0.140.2",
     "wtd-core": "../../../three-wtm/packages/wtd-core",
     "wtd-three-ext": "../../../three-wtm/packages/wtd-three-ext"
+  },
+  "peerDependencies": {
+    "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
     "jsdoc": "^3.6.10"

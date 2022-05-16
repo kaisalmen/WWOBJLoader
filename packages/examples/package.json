@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "wwobjloader2": "../objloader2",
-    "three": "^0.139.2",
     "lil-gui": "^0.16.1"
   }
 }
