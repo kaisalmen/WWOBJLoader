@@ -35,8 +35,8 @@
     "@types/three": "^0.140.0",
     "wwobjloader2": ".",
     "three": "^0.140.2",
-    "wtd-core": "^2.0.0-rc.0",
-    "wtd-three-ext": "^2.0.0-rc.0"
+    "wtd-core": "^2.0.0",
+    "wtd-three-ext": "^2.0.0"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"
