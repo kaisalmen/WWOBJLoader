@@ -81,7 +81,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     _initWorkerTask() {
-        this.workerStory = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
+        this.workerTask = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
             module: this.moduleWorker,
             blob: false,
             url: this.workerUrl
@@ -152,7 +152,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
         };
 
         initMessage.addPayload(dataPayload);
-        return this.workerStory.initWorker(initMessage);
+        return this.workerTask.initWorker(initMessage);
     }
 
     async _executeWorker(objToParse) {
@@ -169,16 +169,12 @@ class OBJLoader2Parallel extends OBJLoader2 {
             useOAsMesh: this.parser.useOAsMesh
         };
         dataPayload.buffers.set('modelData', objToParse);
-
-        const materialsPayload = new MaterialsPayload();
-        materialsPayload.materials = this.materialStore.getMaterials();
+        dataPayload.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
 
         execMessage.addPayload(dataPayload);
-        execMessage.addPayload(materialsPayload);
-
         const transferables = execMessage.pack(false);
 
-        await this.workerStory.executeWorker({
+        await this.workerTask.executeWorker({
             message: execMessage,
             taskTypeName: OBJLoader2Parallel.TASK_NAME,
             onIntermediate: (message) => {
@@ -187,7 +183,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
             onComplete: (message) => {
                 this._onLoad(message);
                 if (this.terminateWorkerOnLoad) {
-                    this.workerStory.dispose();
+                    this.workerTask.dispose();
                 }
             },
             transferables: transferables
@@ -231,7 +227,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
                     mesh = new Points(meshPayload.bufferGeometry, material);
                 }
                 this.parser._onMeshAlter(mesh);
-                this.parser.baseObject3d.add(mesh);
+                this.baseObject3d.add(mesh);
             }
             else {
                 console.error('Received unknown asset.type: ' + asset.type);
@@ -239,7 +235,7 @@ class OBJLoader2Parallel extends OBJLoader2 {
         }
         else if (wtm.cmd === 'execComplete') {
             if (this.parser.callbacks.onLoad !== null) {
-                this.parser.callbacks.onLoad(this.parser.baseObject3d, wtm.id);
+                this.parser.callbacks.onLoad(this.baseObject3d, wtm.id);
             }
         }
         else {
