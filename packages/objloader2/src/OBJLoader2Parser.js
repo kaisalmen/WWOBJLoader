@@ -565,11 +565,11 @@ export class OBJLoader2Parser {
         const createMultiMaterial = (meshOutputGroups.length > 1);
         const multiMaterial = [];
         const haveVertexColors = colorFA !== null;
-        let flatShading;
         let materialIndex = 0;
-        let materialOrg, material, materialName, materialNameOrg;
+
         const materialMetaInfo = {
-            cloneInstructions: [],
+            materialCloneInstructions: [],
+            materialName: undefined,
             multiMaterialNames: new Map(),
             modelName: this.modelName,
             progress: this.globalCounts.currentByte / this.globalCounts.totalBytes,
@@ -580,8 +580,10 @@ export class OBJLoader2Parser {
             if (!meshOutputGroups.hasOwnProperty(oodIndex)) continue;
             meshOutputGroup = meshOutputGroups[oodIndex];
 
-            materialNameOrg = meshOutputGroup.materialName;
-            flatShading = meshOutputGroup.smoothingGroup === 0;
+            let materialName;
+            let materialNameOrg = meshOutputGroup.materialName;
+            let flatShading = meshOutputGroup.smoothingGroup === 0;
+
             if (this.rawMesh.faceType < 4) {
                 materialName = materialNameOrg;
                 if (haveVertexColors) {
@@ -594,22 +596,25 @@ export class OBJLoader2Parser {
             else {
                 materialName = this.rawMesh.faceType === 6 ? 'defaultPointMaterial' : 'defaultLineMaterial';
             }
-            materialOrg = this.materialNames.has(materialNameOrg);
-            material = this.materialNames.has(materialName);
+
+            materialMetaInfo.materialName = materialName;
+            const haveMaterialOrg = this.materialNames.has(materialNameOrg);
+            const haveMaterial = this.materialNames.has(materialName);
+            let useDefaultMaterial = !haveMaterialOrg && !haveMaterial;
 
             // both original and derived names do not lead to an existing material => need to use a default material
-            if (!materialOrg && !material) {
-                materialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
-                material = this.materialNames.has(materialName);
+            if (useDefaultMaterial) {
+                const defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 
                 if (this.logging.enabled) {
                     console.info('object_group "' + meshOutputGroup.objectName + '_' +
                         meshOutputGroup.groupName + '" was defined with unresolvable material "' +
-                        materialNameOrg + '"! Assigning "' + materialName + '".');
+                        materialNameOrg + '"! Assigning "' + defaultMaterialName + '".');
                 }
             }
 
-            if (!material) {
+            // only clone
+            if (!haveMaterial && !useDefaultMaterial) {
                 const materialCloneInstruction = {
                     materialNameOrg: materialNameOrg,
                     materialProperties: {
@@ -618,8 +623,7 @@ export class OBJLoader2Parser {
                         flatShading: flatShading
                     }
                 };
-                //material = MaterialUtils.cloneMaterial(this.materials, materialCloneInstruction, this.logging.enabled && this.logging.debug);
-                materialMetaInfo.cloneInstructions.push(materialCloneInstruction);
+                materialMetaInfo.materialCloneInstructions.push(materialCloneInstruction);
             }
 
             if (createMultiMaterial) {
@@ -629,10 +633,8 @@ export class OBJLoader2Parser {
                     materialGroupLength: materialGroupLength,
                     materialIndex: materialIndex
                 });
-                //geometry.addGroup(materialGroupOffset, materialGroupLength, materialIndex);
-                //material = this.materials.get(materialName);
                 multiMaterial[materialIndex] = materialName;
-                materialMetaInfo.multiMaterialNames.set(materialIndex, material.name);
+                materialMetaInfo.multiMaterialNames.set(materialIndex, materialName);
 
                 materialGroupOffset += materialGroupLength;
                 materialIndex++;

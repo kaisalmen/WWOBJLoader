@@ -38,7 +38,7 @@
   },
   "volta": {
     "node": "16.16.0",
-    "npm": "8.15.0"
+    "npm": "8.15.1"
   },
   "workspaces": [
     "packages/objloader2",

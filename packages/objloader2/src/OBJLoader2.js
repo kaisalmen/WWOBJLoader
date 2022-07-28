@@ -367,11 +367,11 @@ export class OBJLoader2 extends Loader {
     }) {
 
         const geometry = new BufferGeometry();
-
         geometry.setAttribute('position', new BufferAttribute(vertexFA, 3, false));
-
         if (normalFA != null) {
             geometry.setAttribute('normal', new BufferAttribute(normalFA, 3, false));
+        }
+        else {
             geometry.computeVertexNormals();
         }
         if (uvFA != null) {
@@ -385,19 +385,32 @@ export class OBJLoader2 extends Loader {
         }
 
         if (geometryGroups.length > 0) {
-            for (const geometryGroup in geometryGroups) {
+            for (const geometryGroup of geometryGroups) {
                 geometry.addGroup(geometryGroup.materialGroupOffset, geometryGroup.materialGroupLength, geometryGroup.materialIndex);
             }
         }
 
+        if (materialMetaInfo.materialCloneInstructions.length > 0) {
+            for (const materialCloneInstruction of materialMetaInfo.materialCloneInstructions) {
 
-        // TODO: Material cloning
+                // TODO clone instruction is not working
+                const material = MaterialUtils.cloneMaterial(this.materialStore.getMaterials(), materialCloneInstruction, this.logging.enabled && this.logging.debug);
+            }
+        }
+        const material = this.materialStore.getMaterials().get(materialMetaInfo.materialName);
+
+        const realMultiMaterials = [];
+        if (createMultiMaterial) {
+            for (let i = 0; i < multiMaterial.length; i++) {
+                realMultiMaterials[i] = this.materialStore.getMaterials().get(multiMaterial[i]);
+            }
+        }
 
         let mesh;
-        //const appliedMaterial = createMultiMaterial ? multiMaterial : material;
+        const appliedMaterial = createMultiMaterial ? realMultiMaterials : material;
         if (materialMetaInfo.geometryType === 0) {
-            //mesh = new Mesh(geometry, appliedMaterial);
-            mesh = new Mesh(geometry, new MeshStandardMaterial());
+            mesh = new Mesh(geometry, appliedMaterial);
+            //mesh = new Mesh(geometry, new MeshStandardMaterial());
         }
         else if (materialMetaInfo.geometryType === 1) {
             mesh = new LineSegments(geometry, appliedMaterial);
