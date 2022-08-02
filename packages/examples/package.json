@@ -1,11 +1,11 @@
 {
   "name": "objloader2-examples",
-  "version": "5.0.0-beta.3",
   "type": "module",
   "private": "true",
   "scripts": {
     "clean": "shx rm -fr ./dist",
-    "dev": "vite --debug",
+    "dev": "vite",
+    "dev:debug": "vite --debug --force",
     "lint": "npx eslint src",
     "build": "echo \\\"Nothing to build\\\"",
     "serve": "tsc && vite preview"

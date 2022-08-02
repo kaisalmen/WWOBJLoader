@@ -24,11 +24,11 @@ import { OBJLoader2 } from './OBJLoader2';
  * @param [LoadingManager] manager The loadingManager for the loader to use. Default is {@link LoadingManager}
  * @constructor
  */
-class OBJLoader2Parallel extends OBJLoader2 {
+export class OBJLoader2Parallel extends OBJLoader2 {
 
     static OBJLOADER2_PARALLEL_VERSION = OBJLoader2.OBJLOADER2_VERSION;
-    static DEFAULT_MODULE_WORKER_PATH = './worker/OBJLoader2Worker.js';
-    static DEFAULT_STANDARD_WORKER_PATH = './worker/OBJLoader2WorkerStandard.js';
+    static DEFAULT_MODULE_WORKER_PATH = './worker/OBJLoader2WorkerModule.js';
+    static DEFAULT_STANDARD_WORKER_PATH = './worker/OBJLoader2WorkerClassic.js';
     static TASK_NAME = 'OBJLoader2Worker';
 
     /**
@@ -178,10 +178,10 @@ class OBJLoader2Parallel extends OBJLoader2 {
             message: execMessage,
             taskTypeName: OBJLoader2Parallel.TASK_NAME,
             onIntermediate: (message) => {
-                this._onLoad(message);
+                this._onWorkerMessage(message);
             },
             onComplete: (message) => {
-                this._onLoad(message);
+                this._onWorkerMessage(message);
                 if (this.terminateWorkerOnLoad) {
                     this.workerTask.dispose();
                 }
@@ -199,50 +199,23 @@ class OBJLoader2Parallel extends OBJLoader2 {
      * @param {Mesh} mesh
      * @param {object} materialMetaInfo
      */
-    _onLoad(message) {
+    _onWorkerMessage(message) {
         const wtm = WorkerTaskMessage.unpack(message, false);
         if (wtm.cmd === 'intermediate') {
-            if (wtm.payloads.length > 0) {
-
-                const meshPayload = wtm.payloads[0];
-                let material;
-                if (wtm.payloads.length === 2) {
-                    const materialyPayload = wtm.payloads[1];
-                    material = materialyPayload.processMaterialTransport(this.materialStore.getMaterials(), this.parser.logging.enabled);
-                }
-
-                if (!material) {
-                    console.warn('Material not found!');
-                    material = new MeshStandardMaterial({ color: 0xFF0000 });
-                }
-
-                let mesh;
-                if (meshPayload.geometryType === 0) {
-                    mesh = new Mesh(meshPayload.bufferGeometry, material);
-                }
-                else if (meshPayload.geometryType === 1) {
-                    mesh = new LineSegments(meshPayload.bufferGeometry, material);
-                }
-                else {
-                    mesh = new Points(meshPayload.bufferGeometry, material);
-                }
-                this.parser._onMeshAlter(mesh);
-                this.baseObject3d.add(mesh);
+            if (wtm.payloads.length === 1) {
+                const dataPayload = wtm.payloads[0];
+                this._buildThreeMesh(dataPayload.params.preparedMesh);
             }
             else {
-                console.error('Received unknown asset.type: ' + asset.type);
+                console.error('Received intermediate message without a payload');
             }
         }
         else if (wtm.cmd === 'execComplete') {
-            if (this.parser.callbacks.onLoad !== null) {
-                this.parser.callbacks.onLoad(this.baseObject3d, wtm.id);
-            }
+            this.objectId = wtm.id;
+            this._onLoad();
         }
         else {
-            console.error('Received unknown command: ' + cmd);
+            console.error(`Received unknown command: ${cmd}`);
         }
     }
-
 }
-
-export { OBJLoader2Parallel };

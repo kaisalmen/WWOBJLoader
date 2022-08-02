@@ -20,8 +20,7 @@ export default defineConfig({
                 index: path.resolve(__dirname, 'index.html'),
                 obj2_basic: path.resolve(__dirname, 'obj2_basic.html'),
                 obj2parallel_basic: path.resolve(__dirname, 'obj2parallel_basic.html'),
-                obj2_options: path.resolve(__dirname, 'obj2_options.html'),
-                wtm_potentially_infinite: path.resolve(__dirname, 'wtm_potentially_infinite.html')
+                obj2_options: path.resolve(__dirname, 'obj2_options.html')
             },
             plugins: [
             ]

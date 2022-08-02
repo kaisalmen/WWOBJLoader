@@ -604,17 +604,17 @@ export class OBJLoader2Parser {
 
             // both original and derived names do not lead to an existing material => need to use a default material
             if (useDefaultMaterial) {
-                const defaultMaterialName = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
+                materialNameOrg = haveVertexColors ? 'defaultVertexColorMaterial' : 'defaultMaterial';
 
                 if (this.logging.enabled) {
                     console.info('object_group "' + meshOutputGroup.objectName + '_' +
                         meshOutputGroup.groupName + '" was defined with unresolvable material "' +
-                        materialNameOrg + '"! Assigning "' + defaultMaterialName + '".');
+                        materialNameOrg + '"! Assigning "' + materialNameOrg + '".');
                 }
             }
 
             // only clone
-            if (!haveMaterial && !useDefaultMaterial) {
+            if (!haveMaterial) {
                 const materialCloneInstruction = {
                     materialNameOrg: materialNameOrg,
                     materialProperties: {

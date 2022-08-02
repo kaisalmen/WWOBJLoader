@@ -392,8 +392,6 @@ export class OBJLoader2 extends Loader {
 
         if (materialMetaInfo.materialCloneInstructions.length > 0) {
             for (const materialCloneInstruction of materialMetaInfo.materialCloneInstructions) {
-
-                // TODO clone instruction is not working
                 const material = MaterialUtils.cloneMaterial(this.materialStore.getMaterials(), materialCloneInstruction, this.logging.enabled && this.logging.debug);
             }
         }
@@ -410,7 +408,6 @@ export class OBJLoader2 extends Loader {
         const appliedMaterial = createMultiMaterial ? realMultiMaterials : material;
         if (materialMetaInfo.geometryType === 0) {
             mesh = new Mesh(geometry, appliedMaterial);
-            //mesh = new Mesh(geometry, new MeshStandardMaterial());
         }
         else if (materialMetaInfo.geometryType === 1) {
             mesh = new LineSegments(geometry, appliedMaterial);

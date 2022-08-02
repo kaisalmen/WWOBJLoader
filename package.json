@@ -21,6 +21,7 @@
     "build": "npm run build --workspaces",
     "build:obj2": "npm run build --workspace packages/objloader2",
     "dev": "npm run dev --workspace packages/examples",
+    "dev:debug": "npm run dev:debug --workspace packages/examples",
     "prerelease": "npm run build && npm run doc",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1",
     "prepare": ""
@@ -29,10 +30,10 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
     "@types/node": "^16.11.7",
-    "vite": "^3.0.3",
+    "vite": "^3.0.4",
     "typescript": "^4.7.4",
-    "eslint": "^8.20.0",
-    "@typescript-eslint/eslint-plugin": "^5.31.0",
+    "eslint": "^8.21.0",
+    "@typescript-eslint/eslint-plugin": "^5.32.0",
     "editorconfig": "^0.15.3",
     "shx": "^0.3.4"
   },
