@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0-beta.3",
+  "version": "5.0.0-beta.4",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
@@ -32,9 +32,8 @@
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.140.0",
-    "wwobjloader2": ".",
-    "three": "^0.140.2",
+    "@types/three": "^0.143.0",
+    "three": "^0.143.0",
     "wtd-core": "^2.0.0",
     "wtd-three-ext": "^2.0.0"
   },
@@ -42,7 +41,7 @@
     "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
-    "jsdoc": "^3.6.10"
+    "jsdoc": "^3.6.11"
   },
   "repository": {
     "type": "git",

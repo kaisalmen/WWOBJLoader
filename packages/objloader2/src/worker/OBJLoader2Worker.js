@@ -1,14 +1,12 @@
 import {
     WorkerTaskDirectorDefaultWorker,
     WorkerTaskMessage,
-    DataPayloadHandler
+    DataPayloadHandler,
+    DataPayload
 } from 'wtd-core';
 import {
-    MaterialsPayload,
-    MaterialUtils,
-    MeshPayload
-} from 'wtd-three-ext';
-import { OBJLoader2Parser } from 'wwobjloader2';
+    OBJLoader2Parser
+} from '../OBJLoader2Parser.js';
 
 class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
@@ -22,33 +20,38 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
     constructor() {
         super();
 
-        this._localData.parser._onMeshAlter = (mesh, materialMetaInfo) => {
+        this._localData.parser._onAssetAvailable = preparedMesh => {
             const intermediateMessage = new WorkerTaskMessage({
                 cmd: 'intermediate',
-                id: materialMetaInfo.objectId,
-                progress: materialMetaInfo.progress
+                id: preparedMesh.materialMetaInfo.objectId,
+                progress: preparedMesh.materialMetaInfo.progress
             });
 
-            const meshPayload = new MeshPayload();
-            meshPayload.params.modelName = materialMetaInfo.modelName;
-            meshPayload.setMesh(mesh, materialMetaInfo.geometryType);
+            const dataPayload = new DataPayload();
+            dataPayload.params.preparedMesh = preparedMesh;
 
-            const materialsPayload = new MaterialsPayload();
-            materialsPayload.multiMaterialNames = materialMetaInfo.multiMaterialNames;
-
-            // add matrial of the mesh required for proper re-construction
-            MaterialUtils.addMaterial(materialsPayload.materials, mesh.material.name, mesh.material, false, false);
-            materialsPayload.cloneInstructions = materialMetaInfo.cloneInstructions;
-            materialsPayload.cleanMaterials();
-
-            intermediateMessage.addPayload(meshPayload);
-            intermediateMessage.addPayload(materialsPayload);
+            if (preparedMesh.vertexFA !== null) {
+                dataPayload.buffers.set('vertexFA', preparedMesh.vertexFA);
+            }
+            if (preparedMesh.normalFA !== null) {
+                dataPayload.buffers.set('normalFA', preparedMesh.normalFA);
+            }
+            if (preparedMesh.uvFA !== null) {
+                dataPayload.buffers.set('uvFA', preparedMesh.uvFA);
+            }
+            if (preparedMesh.colorFA !== null) {
+                dataPayload.buffers.set('colorFA', preparedMesh.colorFA);
+            }
+            if (preparedMesh.indexUA !== null) {
+                dataPayload.buffers.set('indexUA', preparedMesh.indexUA);
+            }
+            intermediateMessage.addPayload(dataPayload);
 
             const transferables = intermediateMessage.pack(false);
             self.postMessage(intermediateMessage, transferables);
         };
 
-        this._localData.parser.callbacks.onLoad = () => {
+        this._localData.parser._onLoad = () => {
             const execMessage = new WorkerTaskMessage({
                 cmd: 'execComplete',
                 id: this._localData.parser.objectId
@@ -57,7 +60,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
             self.postMessage(execMessage);
         };
 
-        this._localData.parser.callbacks.onProgress = text => {
+        this._localData.parser._onProgress = text => {
             if (this._localData.parser.logging.debug) {
                 console.debug('WorkerRunner: progress: ' + text);
             }
@@ -96,12 +99,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
     _processMessage(message) {
         const wtm = WorkerTaskMessage.unpack(message, false);
-
         const dataPayload = wtm.payloads[0];
-        if (wtm.payloads.length === 2) {
-            const materialsPayload = wtm.payloads[1];
-            this._localData.materials = materialsPayload.materials;
-        }
 
         DataPayloadHandler.applyProperties(this._localData.parser, dataPayload.params, false);
         const modelData = dataPayload.buffers?.get('modelData');

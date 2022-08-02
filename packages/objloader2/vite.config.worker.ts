@@ -6,8 +6,8 @@ const config = defineConfig({
         lib: {
             entry: path.resolve(__dirname, 'src/worker/OBJLoader2Worker.js'),
             name: 'OBJLoader2WorkerStandard',
-            fileName: () => 'OBJLoader2WorkerStandard.js',
-            formats: ['iife']
+            fileName: (format) => format === 'iife' ? 'OBJLoader2WorkerClassic.js' : 'OBJLoader2WorkerModule.js',
+            formats: ['iife', 'es'],
         },
         outDir: 'src/worker',
         emptyOutDir: false

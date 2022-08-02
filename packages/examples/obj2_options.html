@@ -235,7 +235,7 @@
 
 					const local = new THREE.Object3D();
 					local.name = 'Pivot_WaltHead';
-					local.position.set( - 175, 50, 0 );
+					local.position.set( -75, 0, 100 );
 					const scale = 0.5;
 					local.scale.set( scale, scale, scale );
 					this.pivot.add( local );
@@ -293,7 +293,7 @@
 
 				useLoadParallelMeshAlter () {
 					const local = new THREE.Object3D();
-					local.position.set( 175, - 100, 0 );
+					local.position.set( 75, -150, 100 );
 					local.name = 'Pivot_ninjaHead';
 					this.pivot.add( local );
 
@@ -305,23 +305,20 @@
 						.setUseOAsMesh( this.useOAsMesh )
 						.setDisregardNormals( this.disregardNormals )
 						.setLogging( this.regularLogging, this.debugLogging )
-						.setBaseObject3d( local );
-
-					// Configure WorkerExecutionSupport to not disregard worker after execution
-					objLoader2Parallel.setTerminateWorkerOnLoad( false );
+						// Configure WorkerExecutionSupport to not disregard worker after execution
+						.setTerminateWorkerOnLoad( false );
 
 					function callbackMeshAlter( mesh, baseObject3d ) {
 						const helper = new VertexNormalsHelper( mesh, 2, 0x00ff00 );
 						helper.name = 'VertexNormalsHelper';
-
-						baseObject3d.add( mesh );
-						baseObject3d.add( helper );
+						baseObject3d.add(helper);
 					}
 
 					objLoader2Parallel.setCallbackOnMeshAlter( callbackMeshAlter );
 
 					const scope = this;
 					function callbackOnLoad( object3d, objectId ) {
+						local.add( object3d );
 						scope._reportProgress( { detail: { text: 'Loading of [' + objLoader2Parallel.getModelName() + '|' + objectId + '] was successfully completed.' } } );
 						scope.finalize();
 					}
