@@ -7,28 +7,45 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.js"
     },
-    "./OBJLoader2Worker": {
-      "import": "./src/worker/OBJLoader2Worker.js"
+    "./bundle": {
+      "types": "./dist/index.d.ts",
+      "default": "./lib/objloader2.js"
     },
-    "./OBJLoader2WorkerStandard": {
-      "import": "./src/worker/OBJLoader2WorkerStandard.js"
+    "./worker": {
+      "default": "./src/worker/OBJLoader2Worker.js"
+    },
+    "./worker/bundle/module": {
+      "default": "./src/worker/OBJLoader2WorkerModule.js"
+    },
+    "./worker/bundle/classic": {
+      "default": "./src/worker/OBJLoader2WorkerClassic.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "bundle": [
+        "lib/OBJLoader2"
+      ]
     }
   },
   "files": [
     "dist",
+    "lib",
     "src",
     "LICENSE",
     "README.md"
   ],
   "scripts": {
-    "clean": "shx rm -rf ./dist",
-    "doc": "jsdoc -c jsdoc.json",
+    "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js",
+    "doc": "npx jsdoc -c jsdoc.json",
     "lint": "npx eslint src",
-    "build-worker": "npx shx rm -f ./src/worker/OBJLoader2WorkerStandard.js && vite -c vite.config.worker.ts build",
-    "build": "npm run clean && npm run build-worker && tsc",
+    "build:worker": "npx vite -c vite.config.worker.ts build",
+    "build:lib": "npx vite build",
+    "compile": "tsc",
+    "build": "npm run clean && npm run compile && npm run build:worker && npm run build:lib",
     "serve": "tsc && vite preview"
   },
   "dependencies": {

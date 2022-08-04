@@ -6,14 +6,13 @@ export default defineConfig({
     build: {
         emptyOutDir: true,
         rollupOptions: {
-            external: ['three'],
-            plugins: [
-            ]
+            external: ['three']
         },
+        outDir: 'lib',
         lib: {
-            entry: path.resolve(__dirname, 'src/index.ts'),
+            entry: path.resolve(__dirname, 'src/index.js'),
             name: 'objloader2',
-            fileName: 'index.js',
+            fileName: 'objloader2',
             formats: ['es']
         }
     }

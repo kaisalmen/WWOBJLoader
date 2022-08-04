@@ -2,6 +2,7 @@
 
 archive
 dist
+lib
 node_modules
 
 /packages/examples/models/draco
