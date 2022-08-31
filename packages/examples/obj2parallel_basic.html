@@ -83,7 +83,8 @@
 
 					const objLoader2Parallel = new OBJLoader2Parallel()
 						.setModelName( modelName )
-						.setLogging( true, true );
+						.setLogging( true, true )
+						.setUseIndices(true);
 						//.setWorkerUrl( true, new URL( '/src/loaders/tmOBJLoader2.js', window.location.href ) );
 
 					let callbackOnLoad = function ( object3d, objectId ) {

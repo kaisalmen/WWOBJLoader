@@ -10,7 +10,7 @@
     "build": "echo \\\"Nothing to build\\\"",
     "serve": "tsc && vite preview"
   },
-  "dependencies": {
+  "devDependencies": {
     "wwobjloader2": "../objloader2",
     "lil-gui": "^0.17.0"
   }

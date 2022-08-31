@@ -18,7 +18,6 @@
   ],
   "exclude": [
     "./dist",
-    "./node_modules",
-    "./src/worker/**/*.js"
+    "./node_modules"
   ]
 }

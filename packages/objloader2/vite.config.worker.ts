@@ -9,7 +9,7 @@ const config = defineConfig({
             fileName: (format) => format === 'iife' ? 'OBJLoader2WorkerClassic.js' : 'OBJLoader2WorkerModule.js',
             formats: ['iife', 'es'],
         },
-        outDir: 'src/worker',
+        outDir: 'lib/worker',
         emptyOutDir: false
     }
 });

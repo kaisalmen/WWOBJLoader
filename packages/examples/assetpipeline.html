@@ -22,15 +22,13 @@
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
-			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
-			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
-			import { ResourceDescriptor } from '../../src/loaders/pipeline/utils/ResourceDescriptor.js';
+            import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
+			import { ResourceDescriptor } from './src/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from '../../src/loaders/AssetPipelineLoader.js';
-
+			} from './src/AssetPipelineLoader.js';
 
 			const AutoAssetLoaderExample = function ( elementToBindTo ) {
 				this.renderer = null;

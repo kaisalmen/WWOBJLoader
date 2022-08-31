@@ -37,16 +37,15 @@
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-			import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
+            import { GUI } from 'lil-gui';
 
-			import { OBJLoader2 } from '../../src/loaders/OBJLoader2.js';
-			import { MtlObjBridge } from '../../src/loaders/utils/MtlObjBridge.js';
-			import { ResourceDescriptor } from '../../src/loaders/pipeline/utils/ResourceDescriptor.js';
+			import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
+			import { ResourceDescriptor } from './src/ResourceDescriptor.js';
 			import {
 				AssetPipelineLoader,
 				AssetPipeline,
 				AssetTask
-			} from '../../src/loaders/AssetPipelineLoader.js';
+			} from './src/AssetPipelineLoader.js';
 
 			const WWOBJLoader2Stage = function ( elementToBindTo ) {
 				this.renderer = null;
@@ -240,9 +239,7 @@
 
 
 					let assetTaskPTV1Mtl = new AssetTask( 'taskPTV1Mtl' );
-					let resPTV1Mtl = new ResourceDescriptor( './models/obj/extra/PTV1/PTV1.mtl.gz' )
-						.setNeedStringOutput( true )
-						.setCompressed( true );
+					let resPTV1Mtl = new ResourceDescriptor( './models/obj/extra/PTV1/PTV1.mtl' ).setNeedStringOutput( true );
 					assetTaskPTV1Mtl.setResourceDescriptor( resPTV1Mtl );
 					assetTaskPTV1Mtl.setAssetHandler( new MTLLoader(), {
 						resourcePath: './models/obj/PTV1/',
@@ -254,7 +251,7 @@
 					assetTaskPTV1MtlObjLink.setAssetHandler( MtlObjBridge );
 
 					let assetTaskPTV1Obj = new AssetTask( 'taskPTV1Obj' );
-					let resPTV1Obj = new ResourceDescriptor( './models/obj/extra/PTV1/PTV1.obj.gz' ).setCompressed( true );
+					let resPTV1Obj = new ResourceDescriptor( './models/obj/extra/PTV1/PTV1.obj' );
 					assetTaskPTV1Obj.setResourceDescriptor( resPTV1Obj );
 					assetTaskPTV1Obj.setAssetHandler( new OBJLoader2() );
 
@@ -338,11 +335,15 @@
 					this.assetsDef.objsNinja = aplNinja;
 
 					let assetTaskOvenObj = new AssetTask( 'taskOvenObj' );
-					let resOvenObj = new ResourceDescriptor( './models/obj/extra/zomax/zomax-net_haze-oven-scene.obj.gz' ).setCompressed( true );
+					let resOvenObj = new ResourceDescriptor( './models/obj/extra/zomax/zomax-net_haze-oven-scene.obj' );
 
 					assetTaskOvenObj.setResourceDescriptor( resOvenObj );
 					assetTaskOvenObj.setAssetHandler( new OBJLoader2(), {
-						useIndices: true
+						useIndices: true,
+						logging: {
+							enabled: true,
+							debug: true
+						}
 					} );
 					let assetPipelineOven = new AssetPipeline();
 					assetPipelineOven.addAssetTask( assetTaskOvenObj );
@@ -357,11 +358,11 @@
 
 
 					let assetTaskSinkObj = new AssetTask( 'taskSinkObj' );
-					let resSinkObj = new ResourceDescriptor( './models/obj/extra/zomax/zomax-net_haze-sink-scene.obj.gz' ).setCompressed( true );
+					let resSinkObj = new ResourceDescriptor( './models/obj/extra/zomax/zomax-net_haze-sink-scene.obj' );
 
 					assetTaskSinkObj.setResourceDescriptor( resSinkObj );
 					assetTaskSinkObj.setAssetHandler( new OBJLoader2(), {
-						useIndices: true
+						useIndices: false
 					} );
 					let assetPipelineSink = new AssetPipeline();
 					assetPipelineSink.addAssetTask( assetTaskSinkObj );
@@ -428,7 +429,6 @@
 							this._reportProgress( { detail: { text: 'Will not reload: ' + prepData.name } } );
 
 						}
-
 					}
 				},
 

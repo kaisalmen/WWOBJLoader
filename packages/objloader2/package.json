@@ -10,24 +10,34 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.js"
     },
+    "./worker": {
+      "types": "./dist/worker/OBJLoader2Worker.d.ts",
+      "default": "./src/worker/OBJLoader2Worker.js"
+    },
     "./bundle": {
       "types": "./dist/index.d.ts",
       "default": "./lib/objloader2.js"
     },
-    "./worker": {
-      "default": "./src/worker/OBJLoader2Worker.js"
+    "./bundle/worker/module": {
+      "default": "./lib/worker/OBJLoader2WorkerModule.js"
     },
-    "./worker/bundle/module": {
-      "default": "./src/worker/OBJLoader2WorkerModule.js"
-    },
-    "./worker/bundle/classic": {
-      "default": "./src/worker/OBJLoader2WorkerClassic.js"
+    "./bundle/worker/classic": {
+      "default": "./lib/worker/OBJLoader2WorkerClassic.js"
     }
   },
   "typesVersions": {
     "*": {
       "bundle": [
-        "lib/OBJLoader2"
+        "dist/OBJLoader2"
+      ],
+      "worker": [
+        "dist/worker/OBJLoader2Worker"
+      ],
+      "bundle/worker/module": [
+        "dist/worker/OBJLoader2WorkerModule"
+      ],
+      "bundle/worker/classic": [
+        "dist/worker/OBJLoader2WorkerClassic"
       ]
     }
   },
@@ -39,17 +49,18 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js",
+    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js",
     "doc": "npx jsdoc -c jsdoc.json",
     "lint": "npx eslint src",
+    "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
     "build:worker": "npx vite -c vite.config.worker.ts build",
     "build:lib": "npx vite build",
     "compile": "tsc",
-    "build": "npm run clean && npm run compile && npm run build:worker && npm run build:lib",
+    "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.143.0",
+    "@types/three": "^0.143.2",
     "three": "^0.143.0",
     "wtd-core": "^2.0.0",
     "wtd-three-ext": "^2.0.0"
@@ -59,6 +70,10 @@
   },
   "devDependencies": {
     "jsdoc": "^3.6.11"
+  },
+  "volta": {
+    "node": "16.16.0",
+    "npm": "8.16.0"
   },
   "repository": {
     "type": "git",
