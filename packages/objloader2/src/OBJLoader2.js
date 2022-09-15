@@ -369,19 +369,15 @@ export class OBJLoader2 extends Loader {
 		multiMaterial: multiMaterial,
 		materialMetaInfo: materialMetaInfo
 	}) {
-
 		const geometry = new BufferGeometry();
 		geometry.setAttribute('position', new BufferAttribute(vertexFA, 3, false));
-		if (normalFA != null) {
+		if (normalFA !== null) {
 			geometry.setAttribute('normal', new BufferAttribute(normalFA, 3, false));
 		}
-		else {
-			geometry.computeVertexNormals();
-		}
-		if (uvFA != null) {
+		if (uvFA !== null) {
 			geometry.setAttribute('uv', new BufferAttribute(uvFA, 2, false));
 		}
-		if (colorFA != null) {
+		if (colorFA !== null) {
 			geometry.setAttribute('color', new BufferAttribute(colorFA, 3, false));
 		}
 		if (indexUA !== null) {
@@ -392,6 +388,11 @@ export class OBJLoader2 extends Loader {
 			for (const geometryGroup of geometryGroups) {
 				geometry.addGroup(geometryGroup.materialGroupOffset, geometryGroup.materialGroupLength, geometryGroup.materialIndex);
 			}
+		}
+
+		// compute missing vertex normals only after indices have been added!
+		if (normalFA === null) {
+			geometry.computeVertexNormals();
 		}
 
 		let material;

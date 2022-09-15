@@ -60,8 +60,8 @@
     "serve": "tsc && vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.143.2",
-    "three": "^0.143.0",
+    "@types/three": "^0.144.0",
+    "three": "^0.144.0",
     "wtd-core": "^2.0.0",
     "wtd-three-ext": "^2.0.0"
   },
