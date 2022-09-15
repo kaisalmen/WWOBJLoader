@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - OBJLoader2/OBJLoader verification</title>
+		<title>OBJLoader2/OBJLoader verification</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
@@ -89,8 +89,7 @@
 			import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
-			import { MtlObjBridge } from '../../../../../src/loaders/utils/MtlObjBridge.js';
-			import { OBJLoader2 } from '../../../../../src/loaders/OBJLoader2.js';
+			import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
 
 			const OBJLoaderVerify = function ( elementToBindTo ) {
 				this.renderer = null;
