@@ -26,20 +26,20 @@
   },
   "typesVersions": {
     "*": {
-			".": [
+      ".": [
         "dist/index"
       ],
-      "bundle": [
-        "dist/OBJLoader2"
-      ],
       "worker": [
-        "dist/worker/OBJLoader2Worker"
+        "src/worker/OBJLoader2Worker"
+      ],
+      "bundle": [
+        "lib/objloader2"
       ],
       "bundle/worker/module": [
-        "dist/worker/OBJLoader2WorkerModule"
+        "lib/worker/OBJLoader2WorkerModule"
       ],
       "bundle/worker/classic": [
-        "dist/worker/OBJLoader2WorkerClassic"
+        "lib/worker/OBJLoader2WorkerClassic"
       ]
     }
   },
