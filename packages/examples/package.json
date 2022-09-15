@@ -11,7 +11,7 @@
     "serve": "tsc && vite preview"
   },
   "devDependencies": {
-    "wwobjloader2": "5.0.0-beta.4",
+    "wwobjloader2": "5.0.0-beta.5",
     "lil-gui": "^0.17.0"
   }
 }
