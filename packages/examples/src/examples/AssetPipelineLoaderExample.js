@@ -1,9 +1,16 @@
 import * as THREE from 'three';
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
-import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
 
-export class OBJLoader2BasicExample {
+import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
+import { ResourceDescriptor } from '../ResourceDescriptor.js';
+import {
+	AssetPipelineLoader,
+	AssetPipeline,
+	AssetTask
+} from '../AssetPipelineLoader.js';
+
+export class AssetPipelineLoaderExample {
 
 	constructor(elementToBindTo) {
 		this.renderer = null;
@@ -20,6 +27,7 @@ export class OBJLoader2BasicExample {
 		};
 		this.camera = null;
 		this.cameraTarget = this.cameraDefaults.posCameraTarget;
+
 		this.controls = null;
 	}
 
@@ -38,9 +46,9 @@ export class OBJLoader2BasicExample {
 		this.resetCamera();
 		this.controls = new TrackballControls(this.camera, this.renderer.domElement);
 
-		const ambientLight = new THREE.AmbientLight(0x404040);
-		const directionalLight1 = new THREE.DirectionalLight(0xC0C090);
-		const directionalLight2 = new THREE.DirectionalLight(0xC0C090);
+		let ambientLight = new THREE.AmbientLight(0x404040);
+		let directionalLight1 = new THREE.DirectionalLight(0xC0C090);
+		let directionalLight2 = new THREE.DirectionalLight(0xC0C090);
 
 		directionalLight1.position.set(- 100, - 50, 100);
 		directionalLight2.position.set(100, 50, - 100);
@@ -49,40 +57,37 @@ export class OBJLoader2BasicExample {
 		this.scene.add(directionalLight2);
 		this.scene.add(ambientLight);
 
-		const helper = new THREE.GridHelper(1200, 60, 0xFF4444, 0x404040);
+		let helper = new THREE.GridHelper(1200, 60, 0xFF4444, 0x404040);
 		this.scene.add(helper);
 	}
 
 	initContent() {
-		const modelName = 'female02';
-		this._reportProgress({ detail: { text: 'Loading: ' + modelName } });
-
-		const scope = this;
-		const objLoader2 = new OBJLoader2();
-		function callbackOnLoad(object3d, objectId) {
-			scope.scene.add(object3d);
-			scope._reportProgress({ detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } });
+		let assetTask0 = new AssetTask('task0');
+		let rdMtl = new ResourceDescriptor('./models/obj/main/female02/female02.mtl').setNeedStringOutput(true);
+		assetTask0.setResourceDescriptor(rdMtl);
+		let loaderConfigurationMtl = {
+			resourcePath: './models/obj/main/female02/',
+			materialOptions: {}
 		};
+		assetTask0.setAssetHandler(new MTLLoader(), loaderConfigurationMtl);
 
-		const onLoadMtl = function(mtlParseResult) {
-			objLoader2.setModelName(modelName);
-			objLoader2.setLogging(true, true);
-			objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-			objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad, null, null, null);
-		};
+		let assetTask1 = new AssetTask('task1');
+		assetTask1.setLinker(true);
+		assetTask1.setAssetHandler(MtlObjBridge);
 
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
-	}
+		let assetTask2 = new AssetTask('task2');
+		let rdObj = new ResourceDescriptor('./models/obj/main/female02/female02.obj');
+		assetTask2.setResourceDescriptor(rdObj);
+		assetTask2.setAssetHandler(new OBJLoader2());
 
-	_reportProgress(event) {
-		let output = '';
-		if (event.detail !== null && event.detail !== undefined && event.detail.text) {
-			output = event.detail.text;
-		}
+		let assetPipeline = new AssetPipeline();
+		assetPipeline.addAssetTask(assetTask0);
+		assetPipeline.addAssetTask(assetTask1);
+		assetPipeline.addAssetTask(assetTask2);
 
-		console.log('Progress: ' + output);
-		document.getElementById('feedback').innerHTML = output;
+		let assetPipelineLoader = new AssetPipelineLoader('testAssetPipelineLoader', assetPipeline);
+		assetPipelineLoader.setBaseObject3d(this.scene);
+		assetPipelineLoader.run();
 	}
 
 	resizeDisplayGL() {
@@ -118,11 +123,11 @@ export class OBJLoader2BasicExample {
 	}
 
 	static executeExample(app) {
-		const resizeWindow = function() {
+		let resizeWindow = function() {
 			app.resizeDisplayGL();
 		};
 
-		const render = function() {
+		let render = function() {
 			requestAnimationFrame(render);
 			app.render();
 		};

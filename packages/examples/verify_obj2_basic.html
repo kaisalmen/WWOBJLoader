@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>OBJLoader2 basic usage</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="info">
+			OBJLoader2 basic usage
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./libs/three.module.js",
+					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
+					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"wwobjloader2": "./libs/objLoader2.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+			import { OBJLoader2BasicExample } from './src/examples/OBJLoader2BasicExample.js';
+
+			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'));
+			OBJLoader2BasicExample.executeExample(exampleApp);
+		</script>
+	</body>
+</html>

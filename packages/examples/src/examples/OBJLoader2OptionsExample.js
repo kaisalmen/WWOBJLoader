@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
-import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper.js';
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
+import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 
 import { GUI } from 'lil-gui';
 import { OBJLoader2, OBJLoader2Parallel, MtlObjBridge } from 'wwobjloader2';

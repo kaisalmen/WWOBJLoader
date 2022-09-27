@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>OBJLoader2 usage options</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+
+	<body>
+		<div id="glFullscreen">
+			<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		</div>
+		<div id="dat" style="user-select: none; position: absolute; left: 0; top: 0; z-Index: 200;"></div>
+		<div id="info">
+			OBJLoader2 usage options
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./libs/three.module.js",
+					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
+					"three/examples/jsm/helpers/VertexNormalsHelper": "./libs/VertexNormalsHelper.js",
+					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"lil-gui": "./libs/lil-gui.esm.js",
+					"wwobjloader2": "./libs/objLoader2.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+			import { OBJLoader2OptionsExample } from './src/examples/OBJLoader2OptionsExample.js';
+
+			const exampleApp = new OBJLoader2OptionsExample(document.getElementById('example'));
+			OBJLoader2OptionsExample.executeExample(exampleApp);
+		</script>
+	</body>
+</html>

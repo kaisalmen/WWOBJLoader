@@ -31,6 +31,19 @@
 		</div>
 		<input id="fileUploadInput" type="file" name="files[]" multiple accept=".obj,.mtl" />
 
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./libs/three.module.js",
+					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
+					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"lil-gui": "./libs/lil-gui.esm.js",
+					"wtd-core": "./libs/wtd-core/DataPayload.js",
+					"wwobjloader2": "./libs/objLoader2.js"
+				}
+			}
+		</script>
+
 		<script type="module">
 			import { OBJLoader2Stage } from './src/examples/OBJLoader2Stage.js';
 
