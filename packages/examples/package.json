@@ -3,15 +3,22 @@
   "type": "module",
   "private": "true",
   "scripts": {
-    "clean": "shx rm -fr ./dist",
+    "clean": "npx shx rm -fr ./dist ./libs",
     "dev": "vite",
     "dev:debug": "vite --debug --force",
     "lint": "npx eslint src",
-    "build": "echo \\\"Nothing to build\\\"",
-    "serve": "tsc && vite preview"
+    "copy:prepare": "npx shx mkdir -p ./libs/worker",
+    "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
+    "copy:three:trackball": "npx shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
+    "copy:objloader2": "npx shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
+    "copy:objloader2:worker": "npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
+    "build": "npm run clean && npm run copy:prepare && npm run copy:three && npm run copy:three:trackball && npm run copy:objloader2 && npm run copy:objloader2:worker",
+    "serve": "tsc && vite preview",
+    "verify": "http-server --port 20001 ./"
   },
   "devDependencies": {
     "wwobjloader2": "5.0.0-beta.5",
-    "lil-gui": "^0.17.0"
+    "lil-gui": "^0.17.0",
+    "http-server": "^14.1.1"
   }
 }

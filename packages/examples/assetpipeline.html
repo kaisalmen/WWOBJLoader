@@ -15,9 +15,6 @@
 		</div>
 
 		<script type="module">
-
-			'use strict';
-
 			import * as THREE from 'three';
 			import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 			import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
@@ -30,30 +27,28 @@
 				AssetTask
 			} from './src/AssetPipelineLoader.js';
 
-			const AutoAssetLoaderExample = function ( elementToBindTo ) {
-				this.renderer = null;
-				this.canvas = elementToBindTo;
-				this.aspectRatio = 1;
+			class AutoAssetLoaderExample {
 
-				this.scene = null;
-				this.cameraDefaults = {
-					posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
-					posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
-					near: 0.1,
-					far: 10000,
-					fov: 45
-				};
-				this.camera = null;
-				this.cameraTarget = this.cameraDefaults.posCameraTarget;
+				constructor ( elementToBindTo ) {
+					this.renderer = null;
+					this.canvas = elementToBindTo;
+					this.aspectRatio = 1;
 
-				this.controls = null;
-			};
+					this.scene = null;
+					this.cameraDefaults = {
+						posCamera: new THREE.Vector3( 0.0, 175.0, 500.0 ),
+						posCameraTarget: new THREE.Vector3( 0, 0, 0 ),
+						near: 0.1,
+						far: 10000,
+						fov: 45
+					};
+					this.camera = null;
+					this.cameraTarget = this.cameraDefaults.posCameraTarget;
 
-			AutoAssetLoaderExample.prototype = {
+					this.controls = null;
+				}
 
-				constructor: AutoAssetLoaderExample,
-
-				initGL: function () {
+				initGL() {
 					this.renderer = new THREE.WebGLRenderer( {
 						canvas: this.canvas,
 						antialias: true,
@@ -81,9 +76,9 @@
 
 					let helper = new THREE.GridHelper( 1200, 60, 0xFF4444, 0x404040 );
 					this.scene.add( helper );
-				},
+				}
 
-				initContent: function () {
+				initContent() {
 					let assetTask0 = new AssetTask( 'task0' );
 					let rdMtl = new ResourceDescriptor( './models/obj/main/female02/female02.mtl' ).setNeedStringOutput( true );
 					assetTask0.setResourceDescriptor( rdMtl );
@@ -110,35 +105,35 @@
 					let assetPipelineLoader = new AssetPipelineLoader( 'testAssetPipelineLoader', assetPipeline );
 					assetPipelineLoader.setBaseObject3d( this.scene );
 					assetPipelineLoader.run();
-				},
+				}
 
-				resizeDisplayGL: function () {
+				resizeDisplayGL() {
 					this.controls.handleResize();
 
 					this.recalcAspectRatio();
 					this.renderer.setSize( this.canvas.offsetWidth, this.canvas.offsetHeight, false );
 
 					this.updateCamera();
-				},
+				}
 
-				recalcAspectRatio: function () {
+				recalcAspectRatio() {
 					this.aspectRatio = (this.canvas.offsetHeight === 0) ? 1 : this.canvas.offsetWidth / this.canvas.offsetHeight;
-				},
+				}
 
-				resetCamera: function () {
+				resetCamera() {
 					this.camera.position.copy( this.cameraDefaults.posCamera );
 					this.cameraTarget.copy( this.cameraDefaults.posCameraTarget );
 
 					this.updateCamera();
-				},
+				}
 
-				updateCamera: function () {
+				updateCamera() {
 					this.camera.aspect = this.aspectRatio;
 					this.camera.lookAt( this.cameraTarget );
 					this.camera.updateProjectionMatrix();
-				},
+				}
 
-				render: function () {
+				render() {
 					if ( !this.renderer.autoClear ) this.renderer.clear();
 					this.controls.update();
 					this.renderer.render( this.scene, this.camera );
