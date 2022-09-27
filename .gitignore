@@ -5,6 +5,7 @@ dist
 lib
 node_modules
 
+/packages/examples/libs
 /packages/examples/models/draco
 /packages/examples/models/gltf
 /packages/examples/models/obj/bugs

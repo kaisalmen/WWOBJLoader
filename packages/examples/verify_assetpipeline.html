@@ -14,6 +14,18 @@
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./libs/three.module.js",
+					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
+					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"wtd-core": "./libs/wtd-core/DataPayload.js",
+					"wwobjloader2": "./libs/objLoader2.js"
+				}
+			}
+		</script>
+
 		<script type="module">
 			import { AssetPipelineLoaderExample } from './src/examples/AssetPipelineLoaderExample.js';
 

@@ -40,6 +40,14 @@ canvas {
 	z-index: 1; /* TODO Solve this in HTML */
 }
 
+b {
+	color: #bbbbbb
+}
+
+h1, h2 {
+	color: darkorange
+}
+
 a, button, input, select {
 	pointer-events: auto;
 }
