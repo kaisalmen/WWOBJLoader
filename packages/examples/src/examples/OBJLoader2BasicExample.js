@@ -59,9 +59,9 @@ export class OBJLoader2BasicExample {
 
 		const scope = this;
 		const objLoader2 = new OBJLoader2();
-		function callbackOnLoad(object3d, objectId) {
+		function callbackOnLoad(object3d) {
 			scope.scene.add(object3d);
-			scope._reportProgress({ detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } });
+			scope._reportProgress({ detail: { text: 'Loading of [' + modelName + '] was successfully completed.' } });
 		};
 
 		const onLoadMtl = function(mtlParseResult) {

@@ -65,10 +65,10 @@ export class OBJLoader2ParalleleBasicExample {
 			.setLogging(true, true)
 			.setUseIndices(true);
 
-		let callbackOnLoad = function(object3d, objectId) {
+		let callbackOnLoad = function(object3d) {
 
 			scope.scene.add(object3d);
-			scope._reportProgress({ detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } });
+			scope._reportProgress({ detail: { text: 'Loading of [' + modelName + '] was successfully completed.' } });
 
 		};
 		let filename = './models/obj/main/female02/female02_vertex_colors.obj';

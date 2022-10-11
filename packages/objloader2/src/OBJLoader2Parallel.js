@@ -87,14 +87,14 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 */
 	load(content, onLoad, onFileLoadProgress, onError, onMeshAlter) {
 		const scope = this;
-		function interceptOnLoad(object3d, objectId) {
+		function interceptOnLoad(object3d) {
 			if (object3d.name === 'OBJLoader2ParallelDummy') {
 				if (scope.parser.logging.enabled && scope.parser.logging.debug) {
 					console.debug('Received dummy answer from OBJLoader2Parallel#parse');
 				}
 			}
 			else {
-				onLoad(object3d, objectId);
+				onLoad(object3d);
 			}
 		}
 		OBJLoader2.prototype.load.call(this, content, interceptOnLoad, onFileLoadProgress, onError, onMeshAlter);
@@ -172,7 +172,6 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 			disregardNormals: this.disregardNormals,
 			materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 			useOAsMesh: this.useOAsMesh,
-			objectId: this.objectId,
 			logging: {
 				enabled: this.logging.enabled,
 				debug: this.logging.debug
@@ -214,14 +213,18 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 		if (wtm.cmd === 'intermediate') {
 			if (wtm.payloads.length === 1) {
 				const dataPayload = wtm.payloads[0];
-				this._buildThreeMesh(dataPayload.params.preparedMesh);
+				const preparedMesh = dataPayload.params.preparedMesh;
+				const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.logging.enabled && this.logging.debug);
+				if (mesh) {
+					this._onMeshAlter(mesh, preparedMesh.materialMetaInfo);
+					this.baseObject3d.add(mesh);
+				}
 			}
 			else {
 				console.error('Received intermediate message without a payload');
 			}
 		}
 		else if (wtm.cmd === 'execComplete') {
-			this.objectId = wtm.id;
 			this._onLoad();
 		}
 		else {

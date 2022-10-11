@@ -28,7 +28,7 @@ import {
  */
 export class OBJLoader2 extends Loader {
 
-	static OBJLOADER2_VERSION = '5.0.0-beta.5';
+	static OBJLOADER2_VERSION = '5.0.0-beta.6';
 
 	/**
 	 *
@@ -39,7 +39,6 @@ export class OBJLoader2 extends Loader {
 		this.parser = new OBJLoader2Parser();
 		this.baseObject3d = new Object3D();
 		this.materialStore = new MaterialStore(true);
-		this.objectId = 0;
 		this.callbacks = {
 			onLoad: null,
 			onError: null,
@@ -326,11 +325,14 @@ export class OBJLoader2 extends Loader {
 		this.parser.useIndices = this.useIndices;
 		this.parser.disregardNormals = this.disregardNormals;
 		this.parser.modelName = this.modelName;
-		this.parser.objectId = this.objectId;
 		this.parser.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
 
 		this.parser._onAssetAvailable = preparedMesh => {
-			this._buildThreeMesh(preparedMesh);
+			const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.logging.enabled && this.logging.debug);
+			if (mesh) {
+				this._onMeshAlter(mesh, preparedMesh.materialMetaInfo);
+				this.baseObject3d.add(mesh);
+			}
 		};
 		this.parser._onLoad = () => {
 			this._onLoad();
@@ -357,7 +359,7 @@ export class OBJLoader2 extends Loader {
 		}
 	}
 
-	_buildThreeMesh({
+	static buildThreeMesh({
 		meshName: meshName,
 		vertexFA: vertexFA,
 		normalFA: normalFA,
@@ -368,7 +370,7 @@ export class OBJLoader2 extends Loader {
 		geometryGroups: geometryGroups,
 		multiMaterial: multiMaterial,
 		materialMetaInfo: materialMetaInfo
-	}) {
+	}, materials, debugLogging) {
 		const geometry = new BufferGeometry();
 		geometry.setAttribute('position', new BufferAttribute(vertexFA, 3, false));
 		if (normalFA !== null) {
@@ -398,17 +400,17 @@ export class OBJLoader2 extends Loader {
 		let material;
 		if (materialMetaInfo.materialCloneInstructions.length > 0) {
 			for (const materialCloneInstruction of materialMetaInfo.materialCloneInstructions) {
-				material = MaterialUtils.cloneMaterial(this.materialStore.getMaterials(), materialCloneInstruction, this.logging.enabled && this.logging.debug);
+				material = MaterialUtils.cloneMaterial(materials, materialCloneInstruction, debugLogging);
 			}
 		}
 		else {
-			material = this.materialStore.getMaterials().get(materialMetaInfo.materialName);
+			material = materials.get(materialMetaInfo.materialName);
 		}
 
 		const realMultiMaterials = [];
 		if (createMultiMaterial) {
 			for (let i = 0; i < multiMaterial.length; i++) {
-				realMultiMaterials[i] = this.materialStore.getMaterials().get(multiMaterial[i]);
+				realMultiMaterials[i] = materials.get(multiMaterial[i]);
 			}
 		}
 
@@ -423,12 +425,10 @@ export class OBJLoader2 extends Loader {
 		else {
 			mesh = new Points(geometry, appliedMaterial);
 		}
-
 		if (mesh) {
 			mesh.name = meshName;
-			this._onMeshAlter(mesh, materialMetaInfo);
-			this.baseObject3d.add(mesh);
 		}
+		return mesh;
 	}
 
 	_onProgress(text) {
@@ -458,7 +458,7 @@ export class OBJLoader2 extends Loader {
 
 	_onLoad() {
 		if (this.callbacks.onLoad !== null) {
-			this.callbacks.onLoad(this.baseObject3d, this.objectId);
+			this.callbacks.onLoad(this.baseObject3d);
 		}
 	}
 

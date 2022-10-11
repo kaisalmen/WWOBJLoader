@@ -156,11 +156,11 @@
 					objLoader2.setUseOAsMesh( true );
 
 					let scope = this;
-					let callbackOnLoad = function ( object3d, objectId ) {
+					let callbackOnLoad = function ( object3d ) {
 
 						scope.scene.add( object3d );
 						console.log( 'Loading complete: ' + modelName );
-						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '|' + objectId + '] was successfully completed.' } } );
+						scope._reportProgress( { detail: { text: 'Loading of [' + modelName + '] was successfully completed.' } } );
 
 					};
 

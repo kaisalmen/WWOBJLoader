@@ -16,7 +16,6 @@ export class OBJLoader2Parser {
 
 		this.materialNames = new Set();
 		this.modelName = 'noname';
-		this.objectId = 0;
 
 		this.materialPerSmoothingGroup = false;
 		this.useOAsMesh = false;
@@ -572,7 +571,6 @@ export class OBJLoader2Parser {
 			materialName: undefined,
 			multiMaterialNames: new Map(),
 			modelName: this.modelName,
-			progress: this.globalCounts.currentByte / this.globalCounts.totalBytes,
 			geometryType: this.rawMesh.faceType < 4 ? 0 : (this.rawMesh.faceType === 6) ? 2 : 1
 		}
 
@@ -700,7 +698,8 @@ export class OBJLoader2Parser {
 			createMultiMaterial: createMultiMaterial,
 			geometryGroups: geometryGroups,
 			multiMaterial: multiMaterial,
-			materialMetaInfo: materialMetaInfo
+			materialMetaInfo: materialMetaInfo,
+			progress: this.globalCounts.currentByte / this.globalCounts.totalBytes
 		};
 	}
 

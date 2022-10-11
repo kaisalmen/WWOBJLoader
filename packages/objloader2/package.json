@@ -1,23 +1,27 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0-beta.5",
+  "version": "5.0.0-beta.6",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "module": "./src/index.js",
       "default": "./src/index.js"
     },
     "./worker": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
+      "module": "./src/worker/OBJLoader2Worker.js",
       "default": "./src/worker/OBJLoader2Worker.js"
     },
     "./bundle": {
       "types": "./dist/index.d.ts",
+      "module": "./lib/objloader2.js",
       "default": "./lib/objloader2.js"
     },
     "./bundle/worker/module": {
+      "module": "./lib/worker/OBJLoader2WorkerModule.js",
       "default": "./lib/worker/OBJLoader2WorkerModule.js"
     },
     "./bundle/worker/classic": {
@@ -30,16 +34,13 @@
         "dist/index"
       ],
       "worker": [
-        "src/worker/OBJLoader2Worker"
+        "dist/worker/OBJLoader2Worker"
       ],
       "bundle": [
-        "lib/objloader2"
+        "dist/index"
       ],
       "bundle/worker/module": [
-        "lib/worker/OBJLoader2WorkerModule"
-      ],
-      "bundle/worker/classic": [
-        "lib/worker/OBJLoader2WorkerClassic"
+        "dist/worker/OBJLoader2Worker"
       ]
     }
   },
@@ -61,21 +62,20 @@
     "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
     "serve": "tsc && vite preview"
   },
+  "volta": {
+    "node": "16.17.1",
+    "npm": "8.19.2"
+  },
   "dependencies": {
-    "@types/three": "^0.144.0",
-    "three": "^0.144.0",
-    "wtd-core": "^2.0.0",
-    "wtd-three-ext": "^2.0.0"
+    "three": "^0.145.0",
+    "wtd-core": "^2.1.0-next.0",
+    "wtd-three-ext": "^2.1.0-next.0"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
     "jsdoc": "^3.6.11"
-  },
-  "volta": {
-    "node": "16.16.0",
-    "npm": "8.16.0"
   },
   "repository": {
     "type": "git",

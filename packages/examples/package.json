@@ -4,8 +4,6 @@
   "private": "true",
   "scripts": {
     "clean": "npx shx rm -fr ./dist ./libs",
-    "dev": "vite",
-    "dev:debug": "vite --debug --force",
     "lint": "npx eslint src",
     "copy:prepare": "npx shx mkdir -p ./libs/worker",
     "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
@@ -20,9 +18,15 @@
     "serve": "tsc && vite preview",
     "verify": "http-server --port 20001 ./"
   },
+  "volta": {
+    "node": "16.17.1",
+    "npm": "8.19.2"
+  },
   "dependencies": {
-    "wwobjloader2": "5.0.0-beta.5",
-    "wtd-core": "^2.0.0",
+    "wwobjloader2": "5.0.0-beta.6",
+    "three": "^0.145.0",
+    "wtd-core": "2.1.0-next.0",
+    "wtd-three-ext": "2.1.0-next.0",
     "lil-gui": "^0.17.0",
     "http-server": "^14.1.1"
   }
