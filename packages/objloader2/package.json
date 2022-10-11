@@ -1,9 +1,10 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0-beta.6",
+  "version": "5.0.0-beta.7",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -21,10 +22,12 @@
       "default": "./lib/objloader2.js"
     },
     "./bundle/worker/module": {
+      "types": "./dist/worker/OBJLoader2Worker.d.ts",
       "module": "./lib/worker/OBJLoader2WorkerModule.js",
       "default": "./lib/worker/OBJLoader2WorkerModule.js"
     },
     "./bundle/worker/classic": {
+      "types": "./dist/worker/OBJLoader2Worker.d.ts",
       "default": "./lib/worker/OBJLoader2WorkerClassic.js"
     }
   },
@@ -40,6 +43,9 @@
         "dist/index"
       ],
       "bundle/worker/module": [
+        "dist/worker/OBJLoader2Worker"
+      ],
+      "bundle/worker/classic": [
         "dist/worker/OBJLoader2Worker"
       ]
     }
