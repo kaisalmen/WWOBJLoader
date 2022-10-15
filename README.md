@@ -68,7 +68,7 @@ The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has 
 
 ## Docs
 
-Run `npm run doc` to create the documentation in [directory]((./packages/objloader2/dist/doc).
+Run `npm run doc` to create the documentation in [directory]((./packages/objloader2/docs).
 
 Happy coding!
 

@@ -1,7 +1,6 @@
-.idea
-
 archive
 dist
+docs
 lib
 node_modules
 
