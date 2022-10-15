@@ -5,10 +5,17 @@
 - Clean-up and uncluttering
   - Remove all code related to worker online assembly and minification workarounds
 - Fully rely on module workers. Use vite config to generate standard workers from module workers at build time
-- Use latest versions of `three-wtm` into `wtd-core`
+- Upgrade to versions `2.1.0` of `three-wtm` into `wtd-core`
   - `OBJLoader2Parallel` is no longer using `WorkerTaskDirector`, but only using the generic `WorkerTask`
 - Make parser independent and thereby reduce worker size to a minimum
-- Export an esm bundle along with raw code
+- Transformed repository to npm workspaces
+- Switched to vite for development and bundle creation
+- `package.json` now exports:
+  - `wwobjloader2`: Unpacked javascript module code
+  - `wwobjloader2/bundle`: An esm bundle
+  - `wwobjloader2/worker`: The raw module parser worker
+  - `bundle/worker/module`: Pre-packaged module parser worker
+  - `bundle/worker/classic`: Pre-packaged classic parser worker
 
 ## 4.0.1
 
