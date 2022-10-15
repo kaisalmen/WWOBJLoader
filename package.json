@@ -23,7 +23,7 @@
     "dev": "npm run dev --workspace packages/examples",
     "dev:debug": "npm run dev:debug --workspace packages/examples",
     "verify": "npm run verify --workspace packages/examples",
-    "prerelease": "npm run build && npm run doc",
+    "prerelease": "npm run build && npm run doc && npx shx cp -f README.md packages/objloader2/README.md",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1"
   },
   "keywords": [],

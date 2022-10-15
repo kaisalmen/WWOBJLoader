@@ -2,9 +2,9 @@
   "source": {
     "include": [
       "src/OBJLoader2.js",
+      "src/OBJLoader2Parser.js",
       "src/OBJLoader2Parallel.js",
-      "src/MtlObjBridge.js",
-      "src/tmOBJLoader2.js"
+      "src/MtlObjBridge.js"
     ]
   },
   "tags": {

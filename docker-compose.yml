@@ -2,22 +2,16 @@ version: '3'
 
 services:
   obj2dev:
-    image: docker.pkg.github.com/kaisalmen/three-wtm/devbox:latest
+    build:
+      dockerfile: ./Dockerfile
+      context: .
     ports:
       - target: 8085
         published: 8085
         protocol: tcp
         mode: host
-      - target: 8086
-        published: 8086
-        protocol: tcp
-        mode: host
-      - target: 8087
-        published: 8087
-        protocol: tcp
-        mode: host
     volumes:
       - ./:/home/devbox/workspace/:rw
-    command: ["bash", "-c", ". /home/devbox/.local/bin/env/configureN.sh && npm install && npm run dev"]
+    command: ["bash", "-c", "npm install && npm run build && npm run dev"]
     working_dir: /home/devbox/workspace
     container_name: obj2dev

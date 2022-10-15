@@ -282,7 +282,7 @@ export class OBJLoader2 extends Loader {
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {Function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {Function} [onMeshAlter] Called after every single mesh is made available by the parser} url
-	 * @returns
+	 * @returns Promise
 	 */
 	loadAsync(url, onProgress, onMeshAlter) {
 		const scope = this;

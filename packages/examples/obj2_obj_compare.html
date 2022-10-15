@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>OBJLoader2 / OBJLoader parser capability comparison</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+		<link type="text/css" rel="stylesheet" href="main.css" />
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="info">
+			OBJLoader2/OBJLoader verification
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+
+		<script type="module">
+			import { OBJLoader2OBJLoaderCompareExample } from './src/examples/OBJLoader2OBJLoaderCompareExample.js';
+
+			const exampleApp = new OBJLoader2OBJLoaderCompareExample(document.getElementById('example'));
+			OBJLoader2OBJLoaderCompareExample.executeExample(exampleApp);
+		</script>
+	</body>
+</html>

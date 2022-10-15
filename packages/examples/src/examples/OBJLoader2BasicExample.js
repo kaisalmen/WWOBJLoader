@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls';
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
 
 export class OBJLoader2BasicExample {
@@ -42,8 +42,8 @@ export class OBJLoader2BasicExample {
 		const directionalLight1 = new THREE.DirectionalLight(0xC0C090);
 		const directionalLight2 = new THREE.DirectionalLight(0xC0C090);
 
-		directionalLight1.position.set(- 100, - 50, 100);
-		directionalLight2.position.set(100, 50, - 100);
+		directionalLight1.position.set(-100, -50, 100);
+		directionalLight2.position.set(100, 50, -100);
 
 		this.scene.add(directionalLight1);
 		this.scene.add(directionalLight2);
