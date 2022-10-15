@@ -85,7 +85,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * See {@link OBJLoader2.load}
 	 */
-	load(content, onLoad, onFileLoadProgress, onError, onMeshAlter) {
+	load(content, onLoad, onProgress, onError, onMeshAlter) {
 		const scope = this;
 		function interceptOnLoad(object3d) {
 			if (object3d.name === 'OBJLoader2ParallelDummy') {
@@ -97,7 +97,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 				onLoad(object3d);
 			}
 		}
-		OBJLoader2.prototype.load.call(this, content, interceptOnLoad, onFileLoadProgress, onError, onMeshAlter);
+		OBJLoader2.prototype.load.call(this, content, interceptOnLoad, onProgress, onError, onMeshAlter);
 	}
 
 	/**

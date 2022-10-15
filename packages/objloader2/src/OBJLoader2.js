@@ -216,11 +216,11 @@ export class OBJLoader2 extends Loader {
 	 *
 	 * @param {string}  url A string containing the path/URL of the file to be loaded.
 	 * @param {Function} onLoad A function to be called after loading is successfully completed. The function receives loaded Object3D as an argument.
-	 * @param {Function} [onFileLoadProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {Function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
 	 * @param {Function} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
 	 * @param {Function} [onMeshAlter] Called after every single mesh is made available by the parser
 	 */
-	load(url, onLoad, onFileLoadProgress, onError, onMeshAlter) {
+	load(url, onLoad, onProgress, onError, onMeshAlter) {
 		if (onLoad === null || onLoad === undefined || !(onLoad instanceof Function)) {
 			const errorMessage = 'onLoad is not a function! Aborting...';
 			this._onError(errorMessage);
@@ -251,10 +251,10 @@ export class OBJLoader2 extends Loader {
 			let urlPartsPath = urlParts.slice(0, urlParts.length - 1).join('/') + '/';
 			if (urlPartsPath !== undefined) this.path = urlPartsPath;
 		}
-		if (onFileLoadProgress === null || onFileLoadProgress === undefined || !(onFileLoadProgress instanceof Function)) {
+		if (onProgress === null || onProgress === undefined || !(onProgress instanceof Function)) {
 			let numericalValueRef = 0;
 			let numericalValue = 0;
-			onFileLoadProgress = function(event) {
+			onProgress = function(event) {
 				if (!event.lengthComputable) return;
 
 				numericalValue = event.loaded / event.total;
@@ -273,7 +273,22 @@ export class OBJLoader2 extends Loader {
 		const fileLoader = new FileLoader(this.manager);
 		fileLoader.setPath(this.path || this.resourcePath);
 		fileLoader.setResponseType('arraybuffer');
-		fileLoader.load(filename, fileLoaderOnLoad, onFileLoadProgress, onError);
+		fileLoader.load(filename, fileLoaderOnLoad, onProgress, onError);
+	}
+
+	/**
+	 * Overrides the implementation of THREE.Loader, so it supports onMeshAlter.
+	 *
+	 * @param {string}  url A string containing the path/URL of the file to be loaded.
+	 * @param {Function} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
+	 * @param {Function} [onMeshAlter] Called after every single mesh is made available by the parser} url
+	 * @returns
+	 */
+	loadAsync(url, onProgress, onMeshAlter) {
+		const scope = this;
+		return new Promise(function(resolve, reject) {
+			scope.load(url, resolve, onProgress, reject, onMeshAlter);
+		});
 	}
 
 	/**

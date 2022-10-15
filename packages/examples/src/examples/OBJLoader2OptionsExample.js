@@ -79,7 +79,7 @@ export class OBJLoader2OptionsExample {
 		const helper = new THREE.GridHelper(1200, 60, 0xFF4444, 0x404040);
 		this.scene.add(helper);
 
-		const geometry = new THREE.BoxBufferGeometry(10, 10, 10);
+		const geometry = new THREE.BoxGeometry(10, 10, 10);
 		const material = new THREE.MeshNormalMaterial();
 		this.cube = new THREE.Mesh(geometry, material);
 		this.cube.position.set(0, 0, 0);
@@ -243,7 +243,7 @@ export class OBJLoader2OptionsExample {
 		mtlLoader.load('./models/obj/main/walt/WaltHead.mtl', onLoadMtl);
 	}
 
-	useLoadMainFallback() {
+	async useLoadMainFallback() {
 		const local = new THREE.Object3D();
 		local.name = 'Pivot_Cerberus';
 		local.position.set(0, 0, 100);
@@ -259,14 +259,14 @@ export class OBJLoader2OptionsExample {
 			.setDisregardNormals(this.disregardNormals)
 			.setLogging(this.regularLogging, this.debugLogging);
 
-		const scope = this;
-		function callbackOnLoad(object3d) {
-			local.add(object3d);
-			scope._reportProgress({ detail: { text: 'Loading of [' + objLoader2.getModelName() + '] was successfully completed.' } });
-			scope.finalize();
-		}
-
-		objLoader2.load('./models/obj/main/cerberus/Cerberus.obj', callbackOnLoad);
+		await objLoader2.loadAsync('./models/obj/main/cerberus/Cerberus.obj')
+			.then((object3d) => {
+				local.add(object3d);
+				this._reportProgress({ detail: { text: 'Loading of [' + objLoader2.getModelName() + '] was successfully completed.' } });
+				this.finalize();
+			})
+			.catch((e) => console.error(e));
+		console.log("Awaited Cerberus.obj loading!");
 	}
 
 	useLoadParallelMeshAlter() {
