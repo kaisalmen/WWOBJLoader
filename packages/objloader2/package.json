@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0-beta.7",
+  "version": "5.0.0",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
@@ -9,21 +9,25 @@
     ".": {
       "types": "./dist/index.d.ts",
       "module": "./src/index.js",
+      "import": "./src/index.js",
       "default": "./src/index.js"
     },
     "./worker": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
       "module": "./src/worker/OBJLoader2Worker.js",
+      "import": "./src/worker/OBJLoader2Worker.js",
       "default": "./src/worker/OBJLoader2Worker.js"
     },
     "./bundle": {
       "types": "./dist/index.d.ts",
       "module": "./lib/objloader2.js",
+      "import": "./lib/objloader2.js",
       "default": "./lib/objloader2.js"
     },
     "./bundle/worker/module": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
       "module": "./lib/worker/OBJLoader2WorkerModule.js",
+      "import": "./lib/worker/OBJLoader2WorkerModule.js",
       "default": "./lib/worker/OBJLoader2WorkerModule.js"
     },
     "./bundle/worker/classic": {
@@ -69,13 +73,13 @@
     "serve": "tsc && vite preview"
   },
   "volta": {
-    "node": "16.17.1",
+    "node": "16.18.0",
     "npm": "8.19.2"
   },
   "dependencies": {
     "three": "^0.145.0",
-    "wtd-core": "^2.1.0-next.0",
-    "wtd-three-ext": "^2.1.0-next.0"
+    "wtd-core": "^2.1.0",
+    "wtd-three-ext": "^2.1.0"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"

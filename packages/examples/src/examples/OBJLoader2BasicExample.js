@@ -68,7 +68,7 @@ export class OBJLoader2BasicExample {
 			objLoader2.setModelName(modelName);
 			objLoader2.setLogging(true, true);
 			objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-			objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad, null, null, null);
+			objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
 		};
 
 		const mtlLoader = new MTLLoader();

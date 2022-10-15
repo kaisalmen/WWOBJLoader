@@ -5,6 +5,8 @@
   "scripts": {
     "clean": "npx shx rm -fr ./dist ./libs",
     "lint": "npx eslint src",
+    "dev": "vite",
+    "dev:debug": "vite --debug --force",
     "copy:prepare": "npx shx mkdir -p ./libs/worker",
     "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
     "copy:three:trackball": "npx shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
@@ -19,14 +21,14 @@
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
-    "node": "16.17.1",
+    "node": "16.18.0",
     "npm": "8.19.2"
   },
   "dependencies": {
-    "wwobjloader2": "5.0.0-beta.7",
+    "wwobjloader2": "^5.0.0",
     "three": "^0.145.0",
-    "wtd-core": "2.1.0-next.0",
-    "wtd-three-ext": "2.1.0-next.0",
+    "wtd-core": "^2.1.0",
+    "wtd-three-ext": "^2.1.0",
     "lil-gui": "^0.17.0",
     "http-server": "^14.1.1"
   }
