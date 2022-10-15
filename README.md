@@ -31,12 +31,12 @@ In any environment the server is reachable on port 8085.
 
 If you want to get started see take a look at the following examples. They get more advanced from top to bottom:
 
-* [OBJLoader2 basic usage](./packages/examples/obj2_basic.html)
-* [OBJLoader2Parallel basic](./packages/examples/obj2parallel_basic.html)
-* [OBJLoader2 usage options](./packages/examples/obj2_options.html)
-* [OBJLoader2 / OBJLoader parser capability comparison](./packages/examples/obj2_obj_compare.html)
-* [OBJLoader2 in react with a .jpg texture](./packages/examples/obj2_react.html)
-* [OBJLoader2 in react with a .mtl material](./packages/examples/obj2_react-mtl.html)
+* OBJLoader2 basic usage: [[html](./packages/examples/obj2_basic.html)] [[js](./packages/examples/src/examples/OBJLoader2BasicExample.js)]
+* OBJLoader2Parallel basic: [[html](./packages/examples/obj2parallel_basic.html)] [[js](./packages/examples/src/examples/OBJLoader2ParalleleBasicExample.js)]
+* OBJLoader2 usage options: [[html](./packages/examples/obj2_options.html)] [[js](./packages/examples/src/examples/OBJLoader2OptionsExample.js)]
+* OBJLoader2 / OBJLoader parser capability comparison: [[html](./packages/examples/obj2_obj_compare.html)] [[js](./packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.js)]
+* OBJLoader2 in react with a .jpg texture: [[html](./packages/examples/obj2_react.html)] [[js](./packages/examples/src/examples/ReactExample.js)]
+* OBJLoader2 in react with a .mtl material: [[html](./packages/examples/obj2_react-mtl.html)] [[js](./packages/examples/src/examples/ReactExampleMtl.js)]
 
 ### Main Branches
 
@@ -64,7 +64,7 @@ The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has 
 
 ## WorkerTaskDirector Core Library
 
-`WorkerTask` from [wtd-core](https://github.com/kaisalmen/three-wtm) is used to control everything regarding workers. This library was separated with the 4.0.0 release. It now evolves as independent library that is utilized by `OBJLoader2Parallel`.
+`WorkerTask` from [wtd-core](https://github.com/kaisalmen/wtd/tree/main/packages/wtd-core) is used to control everything regarding workers. This library was separated with the 4.0.0 release. It now evolves as independent library that is utilized by `OBJLoader2Parallel`.
 
 ## Docs
 
