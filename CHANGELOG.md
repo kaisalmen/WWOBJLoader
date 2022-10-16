@@ -4,18 +4,22 @@
 
 - Clean-up and uncluttering
   - Remove all code related to worker online assembly and minification workarounds
-- Fully rely on module workers. Use vite config to generate standard workers from module workers at build time
 - Upgrade to versions `2.1.0` of `three-wtm` into `wtd-core`
   - `OBJLoader2Parallel` is no longer using `WorkerTaskDirector`, but only using the generic `WorkerTask`
-- Make parser independent and thereby reduce worker size to a minimum
 - Transformed repository to npm workspaces
-- Switched to vite for development and bundle creation
-- `package.json` now exports:
-  - `wwobjloader2`: Unpacked javascript module code
-  - `wwobjloader2/bundle`: An esm bundle
-  - `wwobjloader2/worker`: The raw module parser worker
-  - `bundle/worker/module`: Pre-packaged module parser worker
-  - `bundle/worker/classic`: Pre-packaged classic parser worker
+- Switched to vite for development and bundle creation [#63](https://github.com/kaisalmen/WWOBJLoader/issues/63)
+- Webworker with three-wtm and webpack [#60](https://github.com/kaisalmen/WWOBJLoader/issues/60)
+  - Make parser independent and thereby reduce worker size to a minimum
+  - Fully rely on module workers. Use vite config to generate standard workers from module workers at build time
+  - `package.json` now exports:
+    - `wwobjloader2`: Unpacked javascript module code
+    - `wwobjloader2/bundle`: An esm bundle
+    - `wwobjloader2/worker`: The raw module parser worker
+    - `bundle/worker/module`: Pre-packaged module parser worker
+    - `bundle/worker/classic`: Pre-packaged classic parser worker
+- Add @react-three/fiber examples [#69](https://github.com/kaisalmen/WWOBJLoader/pull/69)
+- Explore aligning types with the core loaders [#68](https://github.com/kaisalmen/WWOBJLoader/issues/68)
+- three.js versioning in package file [#65](https://github.com/kaisalmen/WWOBJLoader/issues/65)
 
 ## 4.0.1
 

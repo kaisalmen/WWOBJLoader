@@ -62,7 +62,7 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js",
+    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs ",
     "doc": "npx jsdoc -c jsdoc.json",
     "lint": "npx eslint src",
     "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",

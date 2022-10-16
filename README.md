@@ -31,12 +31,12 @@ In any environment the server is reachable on port 8085.
 
 If you want to get started see take a look at the following examples. They get more advanced from top to bottom:
 
-* OBJLoader2 basic usage: [[html](./packages/examples/obj2_basic.html)] [[js](./packages/examples/src/examples/OBJLoader2BasicExample.js)]
-* OBJLoader2Parallel basic: [[html](./packages/examples/obj2parallel_basic.html)] [[js](./packages/examples/src/examples/OBJLoader2ParalleleBasicExample.js)]
-* OBJLoader2 usage options: [[html](./packages/examples/obj2_options.html)] [[js](./packages/examples/src/examples/OBJLoader2OptionsExample.js)]
-* OBJLoader2 / OBJLoader parser capability comparison: [[html](./packages/examples/obj2_obj_compare.html)] [[js](./packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.js)]
-* OBJLoader2 in react with a .jpg texture: [[html](./packages/examples/obj2_react.html)] [[js](./packages/examples/src/examples/ReactExample.js)]
-* OBJLoader2 in react with a .mtl material: [[html](./packages/examples/obj2_react-mtl.html)] [[js](./packages/examples/src/examples/ReactExampleMtl.js)]
+* OBJLoader2 basic usage: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExample.js)]
+* OBJLoader2Parallel basic: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2parallel_basic.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2ParalleleBasicExample.js)]
+* OBJLoader2 usage options: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_options.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.js)]
+* OBJLoader2 / OBJLoader parser capability comparison: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_obj_compare.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.js)]
+* OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.js)]
+* OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.js)]
 
 ### Main Branches
 
@@ -53,7 +53,7 @@ The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has 
 * The `parse` methods of `OBJLoader2Parser` accepts `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower.
 * In case `OBJLoader2Parallel` the of Parser `OBJLoader2Parser` is executed inside a worker.
 * `OBJLoader2Parser` features indexed rendering including vertex reduction.
-* Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](./packages/examples/src/examples/OBJLoader2OptionsExample.js#L99)**).
+* Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.js#L99)**).
 * Face N-Gons are supported.
 * Multi-Materials are created when needed.
 * Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.
