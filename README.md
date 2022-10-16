@@ -9,7 +9,7 @@ New versions of **OBJLoader2** and **OBJLoader2Parallel** are from now on again 
 
 ## Changelog
 
-Interested in recent changes? Check the [CHANGELOG](CHANGELOG.md).
+Interested in recent changes? Check the [CHANGELOG](https://github.com/kaisalmen/WWOBJLoader/blob/main/CHANGELOG.md).
 
 ## Development
 
