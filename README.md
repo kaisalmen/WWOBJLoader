@@ -38,11 +38,9 @@ If you want to get started see take a look at the following examples. They get m
 * OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.js)]
 * OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.js)]
 
-### Main Branches
+### Main Branch
 
-Main development now takes place on branch [main](https://github.com/kaisalmen/WWOBJLoader/tree/main).
-
-The [stable](https://github.com/kaisalmen/WWOBJLoader/tree/stable) branch contains the release versions.
+Main development now takes place on branch [main](https://github.com/kaisalmen/WWOBJLoader/tree/main). Tags identify the releases. The stable branch has been retired.
 
 ## Feature Overview
 
