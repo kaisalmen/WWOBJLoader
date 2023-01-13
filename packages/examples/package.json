@@ -1,12 +1,11 @@
 {
   "name": "objloader2-examples",
+  "version": "0.0.0",
   "type": "module",
   "private": "true",
   "scripts": {
     "clean": "npx shx rm -fr ./dist ./libs",
     "lint": "npx eslint src",
-    "dev": "vite",
-    "dev:debug": "vite --debug --force",
     "copy:prepare": "npx shx mkdir -p ./libs/worker",
     "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
     "copy:three:trackball": "npx shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
@@ -17,19 +16,19 @@
     "copy:objloader2": "npx shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
     "copy:objloader2:worker": "npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
     "build": "npm run clean && npm run copy:prepare && npm run copy:three && npm run copy:three:trackball && npm run copy:three:mtlloader && npm run copy:three:vertexnormalshelper && npm run copy:lil-gui && npm run copy:wtd-core && npm run copy:objloader2 && npm run copy:objloader2:worker",
-    "serve": "tsc && vite preview",
+    "serve": "npx tsc && npx vite preview",
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
-    "node": "16.18.0",
-    "npm": "8.19.2"
+    "node": "16.19.0",
+    "npm": "8.19.3"
   },
   "dependencies": {
-    "wwobjloader2": "^5.0.0",
-    "three": "^0.145.0",
-    "wtd-core": "^2.1.0",
-    "wtd-three-ext": "^2.1.0",
-    "lil-gui": "^0.17.0",
-    "http-server": "^14.1.1"
+    "wwobjloader2": "5.1.0-next.0",
+    "three": "~0.148.0",
+    "wtd-core": "~2.2.0-next.0",
+    "wtd-three-ext": "~2.2.0-next.0",
+    "lil-gui": "~0.17.0",
+    "http-server": "~14.1.1"
   }
 }

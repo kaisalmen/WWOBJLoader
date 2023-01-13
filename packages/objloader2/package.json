@@ -1,22 +1,22 @@
 {
   "name": "wwobjloader2",
-  "version": "5.0.0",
+  "version": "5.1.0-next.0",
   "type": "module",
-  "main": "./src/index.js",
-  "module": "./src/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "module": "./src/index.js",
-      "import": "./src/index.js",
-      "default": "./src/index.js"
+      "module": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./worker": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
-      "module": "./src/worker/OBJLoader2Worker.js",
-      "import": "./src/worker/OBJLoader2Worker.js",
-      "default": "./src/worker/OBJLoader2Worker.js"
+      "module": "./dist/worker/OBJLoader2Worker.js",
+      "import": "./dist/worker/OBJLoader2Worker.js",
+      "default": "./dist/worker/OBJLoader2Worker.js"
     },
     "./bundle": {
       "types": "./dist/index.d.ts",
@@ -68,24 +68,26 @@
     "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
     "build:worker": "npx vite -c vite.config.worker.ts build",
     "build:lib": "npx vite build",
-    "compile": "tsc",
+    "compile": "npx tsc",
+    "watch": "npx tsc -w",
     "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
-    "serve": "tsc && vite preview"
+    "serve": "npx tsc && npx vite preview"
   },
   "volta": {
-    "node": "16.18.0",
-    "npm": "8.19.2"
+    "node": "16.19.0",
+    "npm": "8.19.3"
   },
   "dependencies": {
-    "three": "^0.145.0",
-    "wtd-core": "^2.1.0",
-    "wtd-three-ext": "^2.1.0"
+    "three": "~0.148.0",
+    "wtd-core": "~2.2.0-next.0",
+    "wtd-three-ext": "~2.2.0-next.0"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
-    "jsdoc": "^3.6.11"
+    "@types/three": "~0.148.0",
+    "jsdoc": "~4.0.0"
   },
   "repository": {
     "type": "git",

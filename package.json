@@ -1,11 +1,13 @@
 {
   "name": "objloader2-workspace",
+  "version": "0.0.0",
   "description": "OBJLoader2 & OBJLoader2Parallel for three.js",
   "author": {
     "name": "kaisalmen",
     "url": "https://www.kaisalmen.de"
   },
   "private": "true",
+  "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -18,10 +20,12 @@
     "clean": "npm run clean --workspaces",
     "lint": "npm run lint --workspaces",
     "doc": "npm run doc --workspace packages/objloader2",
+    "compile": "npx tsc --build tsconfig.build.json",
+    "watch": "npx tsc --build tsconfig.build.json --watch",
     "build": "npm run build --workspaces",
     "build:obj2": "npm run build --workspace packages/objloader2",
-    "dev": "npm run dev --workspace packages/examples",
-    "dev:debug": "npm run dev:debug --workspace packages/examples",
+    "dev": "npx vite",
+    "dev:debug": "npx vite --debug --force",
     "verify": "npm run verify --workspace packages/examples",
     "prerelease": "npm run build && npm run doc && npx shx cp -f README.md packages/objloader2/README.md",
     "test": "echo \\\"Error: no libs specified\\\" && exit 1"
@@ -29,17 +33,17 @@
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
-    "@types/node": "^16.11.59",
-    "vite": "^3.1.8",
-    "typescript": "^4.8.4",
-    "eslint": "^8.25.0",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "editorconfig": "^0.15.3",
-    "shx": "^0.3.4"
+    "@types/node": "~16.18.1",
+    "vite": "~4.0.4",
+    "typescript": "~4.9.4",
+    "eslint": "~8.31.0",
+    "@typescript-eslint/eslint-plugin": "~5.48.1",
+    "editorconfig": "~1.0.1",
+    "shx": "~0.3.4"
   },
   "volta": {
-    "node": "16.18.0",
-    "npm": "8.19.2"
+    "node": "16.19.0",
+    "npm": "8.19.3"
   },
   "workspaces": [
     "packages/objloader2",
