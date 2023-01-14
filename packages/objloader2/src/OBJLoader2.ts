@@ -62,7 +62,7 @@ export class OBJLoader2 extends Loader {
 	 *
 	 * @param {LoadingManager} [manager]
 	 */
-	constructor(manager: LoadingManager) {
+	constructor(manager?: LoadingManager) {
 		super(manager);
 		this.callbacks = {
 			onLoad: null,
