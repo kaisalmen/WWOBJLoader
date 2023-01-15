@@ -36,7 +36,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 *
 	 * @param {LoadingManager} [manager]
 	 */
-	constructor(manager: LoadingManager) {
+	constructor(manager?: LoadingManager) {
 		super(manager);
 	}
 

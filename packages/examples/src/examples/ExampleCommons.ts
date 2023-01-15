@@ -9,7 +9,7 @@ export type CameraDefaults = {
 	fov: number;
 };
 
-export interface ExampleDefinition {
+export type ExampleDefinition = {
 	render: () => void;
 	run: () => void;
 	getSetup(): ThreeDefaultSetup;
@@ -85,7 +85,7 @@ export function createThreeDefaultSetup(elementToBindTo: HTMLElement | null, cam
 	setup.scene.add(directionalLight2);
 	setup.scene.add(ambientLight);
 
-	const helper = new GridHelper(1000, 30, 0xFF4444, 0x404040);
+	const helper = new GridHelper(1200, 60, 0xFF4444, 0x404040);
 	helper.name = 'grid';
 	setup.scene.add(helper);
 

@@ -1,9 +1,8 @@
 import { Object3D, Vector3 } from 'three';
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
+import { OBJLoader2Parallel } from 'wwobjloader2';
 import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, ThreeDefaultSetup } from './ExampleCommons.js';
 
-export class OBJLoader2BasicExample implements ExampleDefinition {
+export class OBJLoader2ParalleleBasicExample implements ExampleDefinition {
 
 	private setup: ThreeDefaultSetup;
 
@@ -27,11 +26,17 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
 	}
 
 	run() {
-		const modelName = 'female02';
+		let modelName = 'female02_vertex';
 		reportProgress({ detail: { text: 'Loading: ' + modelName } });
 
-		const scope = this;
-		const objLoader2 = new OBJLoader2();
+		let scope = this;
+
+		const objLoader2Parallel = new OBJLoader2Parallel()
+			.setWorkerUrl(false, new URL('./libs/worker/OBJLoader2WorkerClassic.js', window.location.href))
+			.setModelName(modelName)
+			.setLogging(true, true)
+			.setUseIndices(true);
+
 		const callbackOnLoad = (object3d: Object3D) => {
 			scope.setup.scene.add(object3d);
 			reportProgress({
@@ -39,17 +44,11 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
 					text: `Loading of [${modelName}] was successfully completed.`
 				}
 			});
-		};
 
-		const onLoadMtl = (mtlParseResult: MTLLoader.MaterialCreator) => {
-			objLoader2.setModelName(modelName);
-			objLoader2.setLogging(true, true);
-			objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-			objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
 		};
+		let filename = './models/obj/main/female02/female02_vertex_colors.obj';
+		objLoader2Parallel.load(filename, callbackOnLoad);
 
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
 	}
 
 }
