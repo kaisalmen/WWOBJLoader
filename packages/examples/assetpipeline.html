@@ -15,10 +15,11 @@
 		</div>
 
 		<script type="module">
-			import { AssetPipelineLoaderExample } from './src/examples/AssetPipelineLoaderExample.js';
+			import { AssetPipelineLoaderExample } from './src/examples/AssetPipelineLoaderExample.ts';
+			import { executeExample } from './src/examples/ExampleCommons.ts';
 
 			const exampleApp = new AssetPipelineLoaderExample(document.getElementById('example'));
-			AssetPipelineLoaderExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

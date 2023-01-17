@@ -12,6 +12,7 @@ import {
 	LoadingManager
 } from 'three';
 import {
+	AssociatedMaterialArrayType,
 	MaterialStore,
 	MaterialUtils
 } from 'wtd-three-ext';
@@ -167,7 +168,7 @@ export class OBJLoader2 extends Loader {
 	 * @param {Object} materials Object with named materials
 	 * @return {OBJLoader2}
 	 */
-	setMaterials(materials: Record<string, Material>) {
+	setMaterials(materials: AssociatedMaterialArrayType) {
 		this.materialStore.addMaterialsFromObject(materials, false);
 		return this;
 	}

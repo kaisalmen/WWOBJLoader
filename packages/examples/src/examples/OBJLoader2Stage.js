@@ -5,12 +5,8 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader';
 import { GUI } from 'lil-gui';
 
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
-import { ResourceDescriptor } from '../ResourceDescriptor.js';
-import {
-	AssetPipelineLoader,
-	AssetPipeline,
-	AssetTask
-} from '../AssetPipelineLoader.js';
+import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
+import { AssetPipelineLoader, AssetPipeline, AssetTask } from './utils/AssetPipelineLoader.js';
 
 export class OBJLoader2Stage {
 

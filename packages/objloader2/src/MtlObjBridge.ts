@@ -11,11 +11,6 @@ export type MaterialCreatorPartialType = {
 
 class MtlObjBridge {
 
-	/**
-	 *
-	 * @param processResult
-	 * @param assetLoader
-	 */
 	static link(processResult: MaterialCreatorPartialType, assetLoader: AssetLoaderPartialType) {
 		if (typeof assetLoader.setMaterials === 'function') {
 			assetLoader.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(processResult));

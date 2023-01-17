@@ -1,17 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { useLoader, Canvas } from "@react-three/fiber";
-import { OBJLoader2 } from 'wwobjloader2';
-import { Object3D, TextureLoader } from "three";
+import { useLoader, Canvas } from '@react-three/fiber';
+import { Object3D, TextureLoader } from 'three';
+import { OBJLoader2React } from './utils/ReactHelper.js';
 
 function Model(_props: {}) {
 	const obj = useLoader(
-		OBJLoader2,
-		"./models/obj/main/female02/female02.obj"
+		OBJLoader2React,
+		'./models/obj/main/female02/female02.obj'
 	);
 	const texture = useLoader(
 		TextureLoader,
-		"./models/obj/main/female02/uv_grid_opengl.jpg"
+		'./models/obj/main/female02/uv_grid_opengl.jpg'
 	);
 
 	return (
@@ -22,7 +22,7 @@ function Model(_props: {}) {
 		</group>);
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root")!);
+const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
 	(<Canvas camera={{ position: [0, 175, 300] }}>
 		<Model/>

@@ -3,12 +3,8 @@ import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
-import { ResourceDescriptor } from '../ResourceDescriptor.js';
-import {
-	AssetPipelineLoader,
-	AssetPipeline,
-	AssetTask
-} from '../AssetPipelineLoader.js';
+import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
+import { AssetPipelineLoader, AssetPipeline, AssetTask } from './utils/AssetPipelineLoader.js';
 
 export class OBJLoader2BugVerify {
 
