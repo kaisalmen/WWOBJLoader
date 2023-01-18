@@ -4,11 +4,11 @@ import { ResourceDescriptor } from './ResourceDescriptor.js';
 
 export type CallbackCompleteType = ((description: string, extra?: string) => void) | null;
 
-export type ParserType = {
+export type ParserType = AssociatedArrayType & {
 	parse: (data: ArrayBufferLike | string) => Object3D;
 }
 
-export type LinkType = {
+export type LinkType = AssociatedArrayType & {
 	link: (data: Object3D, nextTask: AssociatedArrayType) => Object3D;
 }
 
@@ -135,7 +135,7 @@ class AssetTask {
 	private name: string;
 	private resourceDescriptor: ResourceDescriptor | undefined;
 	private assetLoader = {
-		instance: {} as AssociatedArrayType,
+		instance: {} as ParserType | LinkType,
 		config: {} as AssociatedArrayType,
 	};
 	private relations = {
@@ -182,7 +182,7 @@ class AssetTask {
 		return this.processResult;
 	}
 
-	setAssetHandler(assetHandler: AssociatedArrayType, assetHandlerConfig?: AssociatedArrayType) {
+	setAssetHandler(assetHandler: ParserType | LinkType, assetHandlerConfig?: AssociatedArrayType) {
 		this.assetLoader.instance = assetHandler;
 		this.assetLoader.config = assetHandlerConfig ?? {};
 		return this;

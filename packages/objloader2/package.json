@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "5.1.0-next.1",
+  "version": "5.1.0-next.2",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -79,8 +79,8 @@
   },
   "dependencies": {
     "three": "~0.148.0",
-    "wtd-core": "~2.2.0-next.1",
-    "wtd-three-ext": "~2.2.0-next.1"
+    "wtd-core": "2.2.0-next.2",
+    "wtd-three-ext": "2.2.0-next.2"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"

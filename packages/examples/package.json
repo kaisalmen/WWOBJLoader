@@ -25,7 +25,9 @@
   },
   "dependencies": {
     "@react-three/fiber": "~8.10.0",
-    "wwobjloader2": "5.1.0-next.1",
+    "wwobjloader2": "5.1.0-next.2",
+    "wtd-core": "2.2.0-next.2",
+    "wtd-three-ext": "2.2.0-next.2",
     "lil-gui": "~0.17.0",
     "http-server": "~14.1.1",
     "react": "~18.2.0",
