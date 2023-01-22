@@ -15,10 +15,11 @@
 		</div>
 
 		<script type="module">
-			import { OBJLoader2BugVerify } from './src/examples/OBJLoader2BugVerify.js';
+			import { OBJLoader2BugVerify } from './src/examples/OBJLoader2BugVerify.ts';
+			import { executeExample } from './src/examples/ExampleCommons.ts';
 
 			const exampleApp = new OBJLoader2BugVerify(document.getElementById('example'));
-			OBJLoader2BugVerify.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

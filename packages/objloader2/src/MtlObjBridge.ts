@@ -1,20 +1,19 @@
 import { Material } from 'three';
+import { AssociatedArrayType } from 'wtd-core';
+import { LinkType } from './utils/AssetPipelineLoader.js';
 
-export type AssetLoaderPartialType = {
-	setMaterials: (materials: { [key: string]: Material }) => void;
-}
-
-export type MaterialCreatorPartialType = {
+export type MaterialCreatorPartialType = AssociatedArrayType & {
 	materials: { [key: string]: Material };
 	preload(): void;
 }
 
-class MtlObjBridge {
+class MtlObjBridge implements LinkType {
 
-	static link(processResult: MaterialCreatorPartialType, assetLoader: AssetLoaderPartialType) {
+	link(processResult: AssociatedArrayType, assetLoader: AssociatedArrayType) {
 		if (typeof assetLoader.setMaterials === 'function') {
-			assetLoader.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(processResult));
+			assetLoader.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(processResult as MaterialCreatorPartialType));
 		}
+		return undefined;
 	}
 
 	/**

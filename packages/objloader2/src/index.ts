@@ -38,15 +38,34 @@ import {
 } from "./MtlObjBridge.js";
 
 import type {
-	AssetLoaderPartialType,
 	MaterialCreatorPartialType
 } from "./MtlObjBridge.js";
+
+import {
+	ResourceDescriptor
+} from './utils/ResourceDescriptor.js';
+
+import type {
+	CallbackCompleteType,
+	ParserType,
+	LinkType
+} from './utils/AssetPipelineLoader.js';
+
+import {
+	AssetPipelineLoader,
+	AssetPipeline,
+	AssetTask
+} from './utils/AssetPipelineLoader.js';
 
 export {
 	OBJLoader2,
 	OBJLoader2Parser,
 	OBJLoader2Parallel,
-	MtlObjBridge
+	MtlObjBridge,
+	ResourceDescriptor,
+	AssetPipelineLoader,
+	AssetPipeline,
+	AssetTask
 };
 
 export type {
@@ -68,6 +87,8 @@ export type {
 	FileLoaderOnErrorType,
 	FileLoaderOnLoadType,
 	FileLoaderOnProgressType,
-	AssetLoaderPartialType,
-	MaterialCreatorPartialType
+	MaterialCreatorPartialType,
+	CallbackCompleteType,
+	ParserType,
+	LinkType
 };

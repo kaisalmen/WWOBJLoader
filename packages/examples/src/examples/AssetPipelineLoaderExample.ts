@@ -2,8 +2,8 @@ import { Vector3 } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
-import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
-import { AssetPipelineLoader, AssetPipeline, AssetTask, ParserType, LinkType } from './utils/AssetPipelineLoader.js';
+import { ResourceDescriptor } from 'wwobjloader2';
+import { AssetPipelineLoader, AssetPipeline, AssetTask } from 'wwobjloader2';
 import { createThreeDefaultSetup, ExampleDefinition, renderDefault, ThreeDefaultSetup } from './ExampleCommons.js';
 
 export class AssetPipelineLoaderExample implements ExampleDefinition {
@@ -37,16 +37,15 @@ export class AssetPipelineLoaderExample implements ExampleDefinition {
 			resourcePath: './models/obj/main/female02/',
 			materialOptions: {}
 		};
-		assetTask0.setAssetHandler(new MTLLoader() as unknown as ParserType, loaderConfigurationMtl);
+		assetTask0.setLoader(new MTLLoader(), loaderConfigurationMtl);
 
 		let assetTask1 = new AssetTask('task1');
-		assetTask1.setLinker(true);
-		assetTask1.setAssetHandler(MtlObjBridge as unknown as LinkType);
+		assetTask1.setLinker(new MtlObjBridge());
 
 		let assetTask2 = new AssetTask('task2');
 		let rdObj = new ResourceDescriptor('./models/obj/main/female02/female02.obj');
 		assetTask2.setResourceDescriptor(rdObj);
-		assetTask2.setAssetHandler(new OBJLoader2() as unknown as ParserType);
+		assetTask2.setLoader(new OBJLoader2());
 
 		let assetPipeline = new AssetPipeline();
 		assetPipeline.addAssetTask(assetTask0);

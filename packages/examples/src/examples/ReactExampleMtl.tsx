@@ -4,7 +4,7 @@ import { useLoader, Canvas } from '@react-three/fiber';
 import { Object3D } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { MtlObjBridge } from 'wwobjloader2';
-import { OBJLoader2React } from './utils/ReactHelper.js';
+import { OBJLoader2React } from './ReactHelper.js';
 
 function Model(_props: {}) {
 	const obj = useLoader(

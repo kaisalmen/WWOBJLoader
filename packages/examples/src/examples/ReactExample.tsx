@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { useLoader, Canvas } from '@react-three/fiber';
 import { Object3D, TextureLoader } from 'three';
-import { OBJLoader2React } from './utils/ReactHelper.js';
+import { OBJLoader2React } from './ReactHelper.js';
 
 function Model(_props: {}) {
 	const obj = useLoader(

@@ -1,15 +1,15 @@
-import { FileLoader, Object3D } from 'three';
+import { FileLoader, Loader, Object3D } from 'three';
 import { AssociatedArrayType, DataPayloadHandler } from 'wtd-core';
 import { ResourceDescriptor } from './ResourceDescriptor.js';
 
-export type CallbackCompleteType = ((description: string, extra?: string) => void) | null;
+export type CallbackCompleteType = ((description: string, extra?: Object3D) => void) | null;
 
 export type ParserType = AssociatedArrayType & {
 	parse: (data: ArrayBufferLike | string) => Object3D;
 }
 
-export type LinkType = AssociatedArrayType & {
-	link: (data: Object3D, nextTask: AssociatedArrayType) => Object3D;
+export type LinkType = {
+	link: (data: AssociatedArrayType, nextTask: AssociatedArrayType) => Object3D | undefined;
 }
 
 class AssetPipelineLoader {
@@ -22,6 +22,10 @@ class AssetPipelineLoader {
 	constructor(name: string, assetPipeline: AssetPipeline) {
 		this.name = name;
 		this.assetPipeline = assetPipeline;
+	}
+
+	getName() {
+		return this.name;
 	}
 
 	setBaseObject3d(baseObject3d: Object3D) {
@@ -109,7 +113,7 @@ class AssetPipeline {
 
 		loadResources(this.assetTasks)
 			.then(x => processAssets(x))
-			.then(x => onComplete(scope.name!, `Completed Loading: ${x}`))
+			.then(x => onComplete(scope.name!, x))
 			.catch(x => console.error(x));
 
 		const processAssets = (loadResults: ResourceDescriptor[]) => {
@@ -123,6 +127,8 @@ class AssetPipeline {
 			if (assetTask && assetTask.getProcessResult()) {
 				baseObject3d.add(assetTask.getProcessResult()!);
 			}
+
+			return baseObject3d;
 		}
 
 		return this;
@@ -135,14 +141,16 @@ class AssetTask {
 	private name: string;
 	private resourceDescriptor: ResourceDescriptor | undefined;
 	private assetLoader = {
-		instance: {} as ParserType | LinkType,
-		config: {} as AssociatedArrayType,
+		loader: {
+			instance: undefined as ParserType | undefined,
+			config: {} as AssociatedArrayType
+		},
+		linker: undefined as LinkType | undefined
 	};
 	private relations = {
 		before: undefined as AssetTask | undefined,
 		after: undefined as AssetTask | undefined,
 	};
-	private linker = false;
 	private processResult: Object3D | undefined = undefined;
 
 	constructor(name: string) {
@@ -170,21 +178,22 @@ class AssetTask {
 		this.relations.after = assetTask;
 	}
 
-	setLinker(linker: boolean) {
-		this.linker = linker;
-	}
-
-	isLinker() {
-		return this.linker;
-	}
-
 	getProcessResult() {
 		return this.processResult;
 	}
 
-	setAssetHandler(assetHandler: ParserType | LinkType, assetHandlerConfig?: AssociatedArrayType) {
-		this.assetLoader.instance = assetHandler;
-		this.assetLoader.config = assetHandlerConfig ?? {};
+	setLinker(linker: LinkType) {
+		this.assetLoader.linker = linker;
+	}
+
+	setLoader(loader: Loader, loaderConfig?: AssociatedArrayType) {
+		const parser = loader as unknown as ParserType;
+		if (typeof parser.parse === 'function') {
+			this.assetLoader.loader.instance = parser
+		} else {
+			throw new Error('Provide loader has now parse method! Aborting...');
+		}
+		this.assetLoader.loader.config = loaderConfig ?? {};
 		return this;
 	}
 
@@ -193,7 +202,7 @@ class AssetTask {
 	 */
 	init() {
 		console.log(this.name + ': Performing init');
-		DataPayloadHandler.applyProperties(this.assetLoader.instance, this.assetLoader.config, false);
+		DataPayloadHandler.applyProperties(this.assetLoader.loader.instance, this.assetLoader.loader.config, false);
 	}
 
 	async loadResource() {
@@ -209,21 +218,22 @@ class AssetTask {
 	}
 
 	process() {
-		if (this.isLinker()) {
+		if (this.assetLoader.linker) {
 			const resultBefore = this.relations.before?.processResult;
-			const nextTask = this.relations.after?.assetLoader.instance;
-			this.processResult = (this.assetLoader.instance as LinkType).link(resultBefore!, nextTask!);
-		} else {
+			const nextTask = this.relations.after?.assetLoader.loader.instance;
+			if (resultBefore) {
+				this.processResult = this.assetLoader.linker.link(resultBefore as unknown as AssociatedArrayType, nextTask!);
+			}
+		} else if (this.assetLoader.loader.instance) {
 			if (this.resourceDescriptor?.isNeedStringOutput()) {
 				let dataAsString = this.resourceDescriptor.getBufferAsString();
-				this.processResult = (this.assetLoader.instance as ParserType).parse(dataAsString);
+				this.processResult = this.assetLoader.loader.instance.parse(dataAsString);
 			} else {
 				let dataAsBuffer = this.resourceDescriptor?.getBuffer() as ArrayBufferLike;
-				this.processResult = (this.assetLoader.instance as ParserType).parse(dataAsBuffer);
+				this.processResult = this.assetLoader.loader.instance.parse(dataAsBuffer);
 			}
 		}
 	}
-
 }
 
 export {

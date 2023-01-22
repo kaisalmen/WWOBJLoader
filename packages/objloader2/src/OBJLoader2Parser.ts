@@ -1,3 +1,5 @@
+import { Color } from "three";
+
 export type RawMeshType = {
 	objectName: string;
 	groupName: string;
@@ -371,9 +373,15 @@ export class OBJLoader2Parser {
 				this.vertices.push(parseFloat(buffer[2]));
 				this.vertices.push(parseFloat(buffer[3]));
 				if (bufferPointer > 4) {
-					this.colors.push(parseFloat(buffer[4]));
-					this.colors.push(parseFloat(buffer[5]));
-					this.colors.push(parseFloat(buffer[6]));
+					const color = new Color();
+					color.setRGB(
+						parseFloat(buffer[4]),
+						parseFloat(buffer[5]),
+						parseFloat(buffer[6])
+					).convertSRGBToLinear();
+					this.colors.push(color.r);
+					this.colors.push(color.g);
+					this.colors.push(color.b);
 				}
 				break;
 			case 'vt':
