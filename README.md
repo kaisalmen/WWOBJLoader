@@ -5,7 +5,7 @@
 
 **OBJLoader2** is a loader for the **OBJ** file format. It is an alternative to [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/jsm/loaders/OBJLoader.js) included in [three.js](https://threejs.org). The loader and its parser can be used on Main via **OBJLoader2** or in parallel inside a web worker via **OBJLoader2Parallel**.
 
-New versions of **OBJLoader2** and **OBJLoader2Parallel** are from now on again released as npm modules independent of three.js. The first stable version that was released independent again is 4.0.0. Versions 3.x.y were never released as independent npm and only in combination with three.js itself.
+New versions of **OBJLoader2** and **OBJLoader2Parallel** are from now on again released as npm modules independent of three.js. The first stable version that was released independent again is 4.0.0. Versions 3.x.y were never released as independent npm and only in combination with three.ts itself.
 
 ## Changelog
 
@@ -31,12 +31,12 @@ In any environment the server is reachable on port 8085.
 
 If you want to get started see take a look at the following examples. They get more advanced from top to bottom:
 
-* OBJLoader2 basic usage: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExample.js)]
-* OBJLoader2Parallel basic: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2parallel_basic.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2ParalleleBasicExample.js)]
-* OBJLoader2 usage options: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_options.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.js)]
-* OBJLoader2 / OBJLoader parser capability comparison: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_obj_compare.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.js)]
-* OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.js)]
-* OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[js](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.js)]
+* OBJLoader2 basic usage: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExample.ts)]
+* OBJLoader2Parallel basic: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2parallel_basic.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2ParallelsBasicExample.ts)]
+* OBJLoader2 usage options: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_options.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.ts)]
+* OBJLoader2 / OBJLoader parser capability comparison: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_obj_compare.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.ts)]
+* OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.tsx)]
+* OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.tsx)]
 
 ### Main Branch
 
@@ -51,7 +51,7 @@ The parser `OBJLoader2Parser` used by `OBJLoader2` and `OBJLoader2Parallel` has 
 * The `parse` methods of `OBJLoader2Parser` accepts `ArrayBuffer` or `String` as input. Text processing is approx. 15-20 pecent slower.
 * In case `OBJLoader2Parallel` the of Parser `OBJLoader2Parser` is executed inside a worker.
 * `OBJLoader2Parser` features indexed rendering including vertex reduction.
-* Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.js#L99)**).
+* Indexed rendering is available if switched on via `setUseIndices` (see `useIndices` in example **[OBJLoader2 usage options](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.ts#L63)**).
 * Face N-Gons are supported.
 * Multi-Materials are created when needed.
 * Flat smoothing defined by "s 0" or "s off" is supported and Multi-Material is created when one object/group defines both smoothing groups equal and not equal to zero.

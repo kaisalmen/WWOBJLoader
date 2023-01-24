@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.1.0 (upcoming)
+
+- Converted all code to TypeScript
+- Align vertex colors to linear (three.js) [#70](https://github.com/kaisalmen/WWOBJLoader/issues/70)
+
 ## 5.0.0
 
 - Clean-up and uncluttering
