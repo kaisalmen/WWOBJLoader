@@ -3,8 +3,7 @@ import {
 	WorkerTaskMessage,
 	DataPayloadHandler,
 	DataPayload,
-	WorkerTaskMessageType,
-	AssociatedArrayType
+	WorkerTaskMessageType
 } from 'wtd-core';
 import {
 	OBJLoader2Parser
@@ -106,8 +105,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 		const wtm = WorkerTaskMessage.unpack(message, false);
 		const dataPayload = wtm.payloads[0];
 
-		DataPayloadHandler.applyProperties(this.localData.parser as unknown as AssociatedArrayType,
-			dataPayload.params as unknown as AssociatedArrayType, false);
+		DataPayloadHandler.applyProperties(this.localData.parser, dataPayload.params!, false);
 		const modelData = dataPayload.buffers?.get('modelData');
 		if (modelData) {
 			this.localData.buffer = modelData;

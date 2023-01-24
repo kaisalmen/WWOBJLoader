@@ -4,12 +4,12 @@ import { ResourceDescriptor } from './ResourceDescriptor.js';
 
 export type CallbackCompleteType = ((description: string, extra?: Object3D) => void) | null;
 
-export type ParserType = AssociatedArrayType & {
+export type ParserType = AssociatedArrayType<unknown> & {
 	parse: (data: ArrayBufferLike | string) => Object3D;
 }
 
 export type LinkType = {
-	link: (data: AssociatedArrayType, nextTask: AssociatedArrayType) => Object3D | undefined;
+	link: (data: AssociatedArrayType<unknown>, nextTask: AssociatedArrayType<unknown>) => Object3D | undefined;
 }
 
 class AssetPipelineLoader {
@@ -143,7 +143,7 @@ class AssetTask {
 	private assetLoader = {
 		loader: {
 			instance: undefined as ParserType | undefined,
-			config: {} as AssociatedArrayType
+			config: {} as AssociatedArrayType<unknown>
 		},
 		linker: undefined as LinkType | undefined
 	};
@@ -186,7 +186,7 @@ class AssetTask {
 		this.assetLoader.linker = linker;
 	}
 
-	setLoader(loader: Loader, loaderConfig?: AssociatedArrayType) {
+	setLoader(loader: Loader, loaderConfig?: AssociatedArrayType<string | object>) {
 		const parser = loader as unknown as ParserType;
 		if (typeof parser.parse === 'function') {
 			this.assetLoader.loader.instance = parser
@@ -222,7 +222,7 @@ class AssetTask {
 			const resultBefore = this.relations.before?.processResult;
 			const nextTask = this.relations.after?.assetLoader.loader.instance;
 			if (resultBefore) {
-				this.processResult = this.assetLoader.linker.link(resultBefore as unknown as AssociatedArrayType, nextTask!);
+				this.processResult = this.assetLoader.linker.link(resultBefore as unknown as AssociatedArrayType<unknown>, nextTask!);
 			}
 		} else if (this.assetLoader.loader.instance) {
 			if (this.resourceDescriptor?.isNeedStringOutput()) {

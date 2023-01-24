@@ -37,14 +37,14 @@
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "~5.48.2",
-    "@types/node": "~16.18.1",
+    "@types/node": "~16.18.11",
     "editorconfig": "~1.0.1",
     "eslint": "~8.32.0",
     "shelljs": "~0.8.5",
     "shx": "~0.3.4",
     "typescript": "~4.9.4",
     "vite": "~4.0.4",
-    "vitest": "~0.27.2"
+    "vitest": "~0.28.1"
   },
   "volta": {
     "node": "16.19.0",
