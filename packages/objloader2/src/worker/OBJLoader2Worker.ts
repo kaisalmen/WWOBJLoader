@@ -2,7 +2,8 @@ import {
 	WorkerTaskDirectorDefaultWorker,
 	WorkerTaskMessage,
 	DataPayloadHandler,
-	DataPayload
+	DataPayload,
+	WorkerTaskMessageType
 } from 'wtd-core';
 import {
 	OBJLoader2Parser
@@ -10,27 +11,28 @@ import {
 
 class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
-	_localData = {
-		id: Number,
-		/** @type {OBJLoader2Parser} */
+	private localData = {
+		id: 0,
 		parser: new OBJLoader2Parser(),
-		buffer: undefined,
-		materials: undefined
+		buffer: undefined as undefined | ArrayBufferLike,
+		materialNames: undefined as undefined | Set<string>
 	};
 
 	constructor() {
 		super();
 
-		this._localData.parser._onAssetAvailable = preparedMesh => {
+		this.localData.parser._onAssetAvailable = preparedMesh => {
 			const intermediateMessage = new WorkerTaskMessage({
 				cmd: 'intermediate',
-				id: this._localData.id,
-				progress: preparedMesh.materialMetaInfo.progress
+				id: this.localData.id,
+				progress: preparedMesh.progress
 			});
 
 			const dataPayload = new DataPayload();
+			if (!dataPayload.params) {
+				dataPayload.params = {};
+			}
 			dataPayload.params.preparedMesh = preparedMesh;
-
 			if (preparedMesh.vertexFA !== null) {
 				dataPayload.buffers.set('vertexFA', preparedMesh.vertexFA);
 			}
@@ -52,26 +54,26 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 			self.postMessage(intermediateMessage, transferables);
 		};
 
-		this._localData.parser._onLoad = () => {
+		this.localData.parser._onLoad = () => {
 			const execMessage = new WorkerTaskMessage({
 				cmd: 'execComplete',
-				id: this._localData.id
+				id: this.localData.id
 			});
 			// no packing required as no Transferables here
 			self.postMessage(execMessage);
 		};
 
-		this._localData.parser._onProgress = text => {
-			if (this._localData.parser.logging.debug) {
+		this.localData.parser._onProgress = text => {
+			if (this.localData.parser.isDebugLoggingEnabled()) {
 				console.debug('WorkerRunner: progress: ' + text);
 			}
 		};
 	}
 
-	init(message) {
-		const wtm = this._processMessage(message);
+	init(message: WorkerTaskMessageType) {
+		const wtm = this.processMessage(message);
 
-		if (this._localData.parser.logging.debug) {
+		if (this.localData.parser.isDebugLoggingEnabled()) {
 			console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
 		}
 
@@ -79,47 +81,51 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 		self.postMessage(initComplete);
 	}
 
-	execute(message) {
-		if (this._localData.parser.usedBefore) {
-			this._localData.parser._init();
+	execute(message: WorkerTaskMessageType) {
+		if (this.localData.parser.isUsedBefore()) {
+			this.localData.parser = new OBJLoader2Parser();
 		}
-		this._processMessage(message);
+		this.processMessage(message);
 
-		if (this._localData.parser.logging.debug) {
+		if (this.localData.parser.isDebugLoggingEnabled()) {
 			console.log(`OBJLoader2Worker#execute: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
 		}
 
-		if (this._localData.buffer) {
-			this._localData.parser._execute(this._localData.buffer);
+		if (this.localData.buffer) {
+			this.localData.parser.execute(this.localData.buffer);
 		}
 		else {
 			self.postMessage(new Error('No ArrayBuffer was provided for parsing.'));
 		}
 	}
 
-	_processMessage(message) {
-		this._localData.id = message.id;
+	private processMessage(message: WorkerTaskMessageType) {
+		this.localData.id = message.id ?? this.localData.id;
 
 		const wtm = WorkerTaskMessage.unpack(message, false);
 		const dataPayload = wtm.payloads[0];
 
-		DataPayloadHandler.applyProperties(this._localData.parser, dataPayload.params, false);
+		DataPayloadHandler.applyProperties(this.localData.parser, dataPayload.params!, false);
 		const modelData = dataPayload.buffers?.get('modelData');
 		if (modelData) {
-			this._localData.buffer = modelData;
+			this.localData.buffer = modelData;
 		}
 
-		if (dataPayload.params.materialNames) {
-			this._localData.materials = dataPayload.params.materialNames;
+		if (dataPayload.params) {
+			if (dataPayload.params.materialNames) {
+				this.localData.materialNames = dataPayload.params.materialNames as Set<string>;
+			}
 		}
-		if (this._localData.materials) {
-			this._localData.parser.materialNames = this._localData.materials;
+
+		if (this.localData.materialNames) {
+			this.localData.parser.setMaterialNames(this.localData.materialNames);
 		}
 
 		return wtm;
 	}
-
 }
 
 const worker = new OBJLoader2Worker();
-self.onmessage = message => worker.comRouting(message);
+self.onmessage = (message: MessageEvent<any>) => {
+	worker.comRouting(message);
+};

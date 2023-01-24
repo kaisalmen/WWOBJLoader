@@ -1,21 +1,15 @@
 import {
 	Object3D,
-	Mesh,
-	LineSegments,
-	Points,
-	MeshStandardMaterial
+	LoadingManager
 } from 'three';
 import {
 	WorkerTask,
 	WorkerTaskMessage,
 	DataPayload,
+	WorkerTaskMessageType,
 } from 'wtd-core';
-import {
-	MaterialUtils,
-	MeshPayload,
-	MaterialsPayload
-} from 'wtd-three-ext';
-import { OBJLoader2 } from './OBJLoader2';
+import { CallbackOnLoadType, CallbackOnMeshAlterType, FileLoaderOnErrorType, FileLoaderOnProgressType, OBJLoader2 } from './OBJLoader2.js';
+import { PreparedMeshType } from './OBJLoader2Parser.js';
 
 /**
  * Creates a new OBJLoader2Parallel. Use it to load OBJ data from files or to parse OBJ data from arraybuffer.
@@ -33,15 +27,17 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	static DEFAULT_PROD_STANDARD_WORKER_PATH = './worker/OBJLoader2WorkerClassic.js';
 	static TASK_NAME = 'OBJLoader2Worker';
 
+	private moduleWorker = true;
+	private workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
+	private terminateWorkerOnLoad = false;
+	private workerTask: WorkerTask | undefined;
+
 	/**
 	 *
 	 * @param {LoadingManager} [manager]
 	 */
-	constructor(manager) {
+	constructor(manager?: LoadingManager) {
 		super(manager);
-		this.moduleWorker = true;
-		/** @type {URL} */
-		this.workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
 	}
 
 	/**
@@ -52,14 +48,9 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 * @param {URL} workerUrl Provide complete worker URL otherwise relative path to this module may not be correct
 	 * @return {OBJLoader2Parallel}
 	 */
-	setWorkerUrl(moduleWorker, workerUrl) {
+	setWorkerUrl(moduleWorker: boolean, workerUrl: URL) {
 		this.moduleWorker = moduleWorker === true;
-		if (workerUrl === undefined || workerUrl === null || !(workerUrl instanceof URL)) {
-			throw 'The provided URL for the worker is not valid. Aborting...';
-		}
-		else {
-			this.workerUrl = workerUrl;
-		}
+		this.workerUrl = workerUrl;
 		return this;
 	}
 
@@ -77,7 +68,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 * @param {boolean} terminateWorkerOnLoad True or false.
 	 * @return {OBJLoader2Parallel}
 	 */
-	setTerminateWorkerOnLoad(terminateWorkerOnLoad) {
+	setTerminateWorkerOnLoad(terminateWorkerOnLoad: boolean) {
 		this.terminateWorkerOnLoad = terminateWorkerOnLoad === true;
 		return this;
 	}
@@ -85,56 +76,61 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	/**
 	 * See {@link OBJLoader2.load}
 	 */
-	load(content, onLoad, onProgress, onError, onMeshAlter) {
+	load(url: string, onLoad: CallbackOnLoadType, onProgress?: FileLoaderOnProgressType,
+		onError?: FileLoaderOnErrorType, onMeshAlter?: CallbackOnMeshAlterType) {
 		const scope = this;
-		function interceptOnLoad(object3d) {
+		function interceptOnLoad(object3d: Object3D) {
 			if (object3d.name === 'OBJLoader2ParallelDummy') {
-				if (scope.parser.logging.enabled && scope.parser.logging.debug) {
+				if (scope.parser.isDebugLoggingEnabled()) {
 					console.debug('Received dummy answer from OBJLoader2Parallel#parse');
 				}
 			}
 			else {
-				onLoad(object3d);
+				if (onLoad != null) {
+					onLoad(object3d);
+				} else {
+					throw new Error('"onLoad" callback was not provided. Aborting...');
+				}
 			}
 		}
-		OBJLoader2.prototype.load.call(this, content, interceptOnLoad, onProgress, onError, onMeshAlter);
+		OBJLoader2.prototype.load.call(this, url, interceptOnLoad, onProgress, onError, onMeshAlter);
 	}
 
 	/**
 	 * See {@link OBJLoader2.parse}
 	 * The callback onLoad needs to be set to be able to receive the content if used in parallel mode.
 	 */
-	parse(objToParse) {
-		if (this.logging.enabled) {
+	parse(objToParse: ArrayBuffer) {
+		if (this.parser.isLoggingEnabled()) {
 			console.info('Using OBJLoader2Parallel version: ' + OBJLoader2Parallel.OBJLOADER2_PARALLEL_VERSION);
 		}
 
-		this._printCallbackConfig();
-		this._initWorkerParse(objToParse);
+		this.printCallbackConfig();
+		this.initWorkerParse(objToParse);
 		let dummy = new Object3D();
 		dummy.name = 'OBJLoader2ParallelDummy';
 		return dummy;
 	}
 
-	async _initWorkerParse(objToParse) {
-		this._initWorkerTask();
+	private async initWorkerParse(objToParse: ArrayBuffer) {
+		this.initWorkerTask();
 
-		await this._initWorker()
+		await this.initWorker()
 			.then(() => {
-				if (this.logging.debug) {
+				if (this.parser.isDebugLoggingEnabled()) {
 					console.log('OBJLoader2Parallel init was performed');
 				}
-				this._executeWorker(objToParse);
+				this.executeWorker(objToParse);
 
-			}).catch(e => console.error(e));
+			}).catch((e: Error) => console.error(e));
 	}
 
-	_initWorkerTask() {
+	private initWorkerTask() {
 		this.workerTask = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
 			module: this.moduleWorker,
 			blob: false,
 			url: this.workerUrl
-		}, this.logging.debug);
+		}, this.parser.isDebugLoggingEnabled());
 	}
 
 
@@ -144,23 +140,23 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 * @return {Promise<void>}
 	 * @private
 	 */
-	_initWorker() {
+	private initWorker() {
 		const initMessage = new WorkerTaskMessage({
 			cmd: 'init'
 		});
 		const dataPayload = new DataPayload();
 		dataPayload.params = {
 			logging: {
-				enabled: this.logging.enabled,
-				debug: this.logging.debug
+				enabled: this.parser.isLoggingEnabled(),
+				debug: this.parser.isDebugLoggingEnabled()
 			}
 		};
 
 		initMessage.addPayload(dataPayload);
-		return this.workerTask.initWorker(initMessage);
+		return this.workerTask!.initWorker(initMessage);
 	}
 
-	async _executeWorker(objToParse) {
+	private async executeWorker(objToParse: ArrayBuffer) {
 		const execMessage = new WorkerTaskMessage({
 			cmd: 'execute',
 			id: Math.floor(Math.random() * Math.floor(65536))
@@ -173,8 +169,8 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 			materialPerSmoothingGroup: this.materialPerSmoothingGroup,
 			useOAsMesh: this.useOAsMesh,
 			logging: {
-				enabled: this.logging.enabled,
-				debug: this.logging.debug
+				enabled: this.parser.isLoggingEnabled(),
+				debug: this.parser.isDebugLoggingEnabled()
 			}
 		};
 		dataPayload.buffers.set('modelData', objToParse);
@@ -183,16 +179,16 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 		execMessage.addPayload(dataPayload);
 		const transferables = execMessage.pack(false);
 
-		await this.workerTask.executeWorker({
+		await this.workerTask!.executeWorker({
 			message: execMessage,
 			taskTypeName: OBJLoader2Parallel.TASK_NAME,
 			onIntermediate: (message) => {
-				this._onWorkerMessage(message);
+				this.onWorkerMessage(message);
 			},
 			onComplete: (message) => {
-				this._onWorkerMessage(message);
+				this.onWorkerMessage(message);
 				if (this.terminateWorkerOnLoad) {
-					this.workerTask.dispose();
+					this.workerTask!.dispose();
 				}
 			},
 			transferables: transferables
@@ -200,7 +196,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 			.then(() => {
 				console.log('Worker execution completed successfully.');
 			})
-			.catch(e => console.error(e));
+			.catch((e: Error) => console.error(e));
 	}
 
 	/**
@@ -208,27 +204,28 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 	 * @param {Mesh} mesh
 	 * @param {object} materialMetaInfo
 	 */
-	_onWorkerMessage(message) {
+	private onWorkerMessage(message: WorkerTaskMessageType) {
 		const wtm = WorkerTaskMessage.unpack(message, false);
 		if (wtm.cmd === 'intermediate') {
-			if (wtm.payloads.length === 1) {
-				const dataPayload = wtm.payloads[0];
-				const preparedMesh = dataPayload.params.preparedMesh;
-				const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.logging.enabled && this.logging.debug);
+
+			const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] : undefined;
+			if (dataPayload && dataPayload.params) {
+				const preparedMesh = dataPayload.params.preparedMesh as PreparedMeshType;
+				const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.parser.isDebugLoggingEnabled());
 				if (mesh) {
 					this._onMeshAlter(mesh, preparedMesh.materialMetaInfo);
 					this.baseObject3d.add(mesh);
 				}
 			}
 			else {
-				console.error('Received intermediate message without a payload');
+				console.error('Received intermediate message without a proper payload');
 			}
 		}
 		else if (wtm.cmd === 'execComplete') {
 			this._onLoad();
 		}
 		else {
-			console.error(`Received unknown command: ${cmd}`);
+			console.error(`Received unknown command: ${wtm.cmd}`);
 		}
 	}
 }

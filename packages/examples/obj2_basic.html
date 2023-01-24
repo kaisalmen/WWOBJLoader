@@ -15,10 +15,11 @@
 		</div>
 
 		<script type="module">
-			import { OBJLoader2BasicExample } from './src/examples/OBJLoader2BasicExample.js';
+			import { OBJLoader2BasicExample } from './src/examples/OBJLoader2BasicExample.ts';
+			import { executeExample } from './src/examples/ExampleCommons.ts';
 
 			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'));
-			OBJLoader2BasicExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

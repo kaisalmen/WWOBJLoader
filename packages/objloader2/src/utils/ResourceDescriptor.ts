@@ -4,16 +4,21 @@
  */
 class ResourceDescriptor {
 
+	private url;
+	private path = './';
+	private filename: string;
+	private extension: string | undefined;
+	private buffer: ArrayBufferLike | undefined;
+	private needStringOutput = false;
+
 	/**
 	 * Creates a new instance of {@link ResourceDescriptor}.
 	 *
 	 * @param {string} url URL as text
 	 */
-	constructor(url) {
+	constructor(url: string) {
 		this.url = new URL(url, window.location.href);
-		this.path = './';
 		this.filename = url;
-		this.extension = null;
 
 		let urlParts = this.url.href.split('/');
 		if (urlParts.length > 2) {
@@ -22,17 +27,10 @@ class ResourceDescriptor {
 			if (urlPartsPath !== undefined) this.path = urlPartsPath;
 		}
 		let filenameParts = this.filename.split('.');
-		if (filenameParts.length > 1) this.extension = filenameParts[filenameParts.length - 1];
-
-		/** @type {ArrayBuffer} */
-		this.buffer = null;
-		this.needStringOutput = false;
+		if (filenameParts.length > 1) {
+			this.extension = filenameParts[filenameParts.length - 1];
+		}
 	}
-
-	/**
-	 * Returns the URL.
-	 * @return {URL}
-	 */
 	getUrl() {
 		return this.url;
 	}
@@ -45,47 +43,33 @@ class ResourceDescriptor {
 		return this.path;
 	}
 
-	/**
-	 * Returns the filename.
-	 * @return {string}
-	 */
 	getFilename() {
 		return this.filename;
 	}
 
 	/**
 	 * Returns the file extension if it was found
-	 * @return {null|string}
+	 * @return {undefined|string}
 	 */
 	getExtension() {
 		return this.extension;
 	}
 
-	/**
-	 * Allows to set if the buffer should be converted to string which is possible via {@link getBufferAsString}.
-	 *
-	 * @param {boolean} needStringOutput
-	   * @return {ResourceDescriptor}
-	 */
-	setNeedStringOutput(needStringOutput) {
+	setNeedStringOutput(needStringOutput: boolean) {
 		this.needStringOutput = needStringOutput;
 		return this;
 	}
 
-	/**
-	 * Tells if buffer should be returned as string.
-	 * @return {boolean}
-	 */
 	isNeedStringOutput() {
 		return this.needStringOutput;
 	}
 
 	/**
 	 * Set the buffer after loading.
-	 * @param {ArrayBuffer} buffer
+	 * @param {ArrayBufferLike} buffer
 	 * @return {ResourceDescriptor}
 	 */
-	setBuffer(buffer) {
+	setBuffer(buffer: ArrayBufferLike) {
 		if (!(buffer instanceof ArrayBuffer ||
 			buffer instanceof Int8Array ||
 			buffer instanceof Uint8Array ||
@@ -103,11 +87,6 @@ class ResourceDescriptor {
 		return this;
 	}
 
-	/**
-	 * Returns the buffer.
-	 *
-	 * @return {ArrayBuffer}
-	 */
 	getBuffer() {
 		return this.buffer;
 	}
@@ -118,7 +97,7 @@ class ResourceDescriptor {
 	 * @return {string}
 	 */
 	getBufferAsString() {
-		return new TextDecoder("utf-8").decode(this.buffer);
+		return this.buffer ? new TextDecoder("utf-8").decode(this.buffer) : '';
 	}
 
 }

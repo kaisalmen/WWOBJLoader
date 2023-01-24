@@ -18,10 +18,11 @@
 		</div>
 
 		<script type="module">
-			import { OBJLoader2OptionsExample } from './src/examples/OBJLoader2OptionsExample.js';
+			import { OBJLoader2OptionsExample } from './src/examples/OBJLoader2OptionsExample.ts';
+			import { executeExample } from './src/examples/ExampleCommons.ts';
 
 			const exampleApp = new OBJLoader2OptionsExample(document.getElementById('example'));
-			OBJLoader2OptionsExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

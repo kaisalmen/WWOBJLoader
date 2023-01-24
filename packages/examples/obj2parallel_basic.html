@@ -15,10 +15,11 @@
 		</div>
 
 		<script type="module">
-			import { OBJLoader2ParalleleBasicExample } from './src/examples/OBJLoader2ParalleleBasicExample.js'
+			import { OBJLoader2ParalleleBasicExample } from './src/examples/OBJLoader2ParallelsBasicExample.ts'
+			import { executeExample } from './src/examples/ExampleCommons.ts';
 
 			const exampleApp = new OBJLoader2ParalleleBasicExample(document.getElementById('example'));
-			OBJLoader2ParalleleBasicExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

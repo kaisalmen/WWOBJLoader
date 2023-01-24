@@ -1,0 +1,7 @@
+{
+  "files": [],
+  "references": [
+      { "path": "packages/objloader2/tsconfig.json" },
+      { "path": "packages/examples/tsconfig.json" }
+  ]
+}
