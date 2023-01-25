@@ -37,10 +37,6 @@ import {
 	MtlObjBridge
 } from "./MtlObjBridge.js";
 
-import type {
-	MaterialCreatorPartialType
-} from "./MtlObjBridge.js";
-
 import {
 	ResourceDescriptor
 } from './utils/ResourceDescriptor.js';
@@ -87,7 +83,6 @@ export type {
 	FileLoaderOnErrorType,
 	FileLoaderOnLoadType,
 	FileLoaderOnProgressType,
-	MaterialCreatorPartialType,
 	CallbackCompleteType,
 	ParserType,
 	LinkType

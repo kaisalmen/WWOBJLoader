@@ -4,7 +4,7 @@
   "type": "module",
   "private": "true",
   "scripts": {
-    "clean": "npx shx rm -fr ./dist ./libs",
+    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./libs",
     "lint": "npx eslint src",
     "copy:prepare": "npx shx mkdir -p ./libs/worker",
     "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@react-three/fiber": "~8.10.0",
-    "wwobjloader2": "5.1.0-next.2",
+    "wwobjloader2": "5.1.0-next.3",
     "wtd-core": "2.2.0-next.3",
     "wtd-three-ext": "2.2.0-next.3",
     "lil-gui": "~0.17.0",

@@ -186,7 +186,7 @@ class AssetTask {
 		this.assetLoader.linker = linker;
 	}
 
-	setLoader(loader: Loader, loaderConfig?: AssociatedArrayType<string | object>) {
+	setLoader(loader: Loader, loaderConfig?: AssociatedArrayType<string | object | boolean>) {
 		const parser = loader as unknown as ParserType;
 		if (typeof parser.parse === 'function') {
 			this.assetLoader.loader.instance = parser

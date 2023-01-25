@@ -365,7 +365,7 @@ export class OBJLoader2Stage implements ExampleDefinition {
 	private handleFileSelect(event: Event, pathTexture: string) {
 		let fileObj = null;
 		let fileMtl = null;
-		let files = (event.target as unknown as AssociatedArrayType).files as File[];
+		let files = (event.target as unknown as AssociatedArrayType<unknown>).files as File[];
 
 		for (let i = 0, file; file = files[i]; i++) {
 			if (file.name.indexOf('\.obj') > 0 && fileObj === null) {

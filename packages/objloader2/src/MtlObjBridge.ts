@@ -1,17 +1,13 @@
 import { Material } from 'three';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { AssociatedArrayType } from 'wtd-core';
 import { LinkType } from './utils/AssetPipelineLoader.js';
-
-export type MaterialCreatorPartialType = AssociatedArrayType<unknown> & {
-	materials: { [key: string]: Material };
-	preload(): void;
-}
 
 class MtlObjBridge implements LinkType {
 
 	link(processResult: AssociatedArrayType<unknown>, assetLoader: AssociatedArrayType<unknown>) {
 		if (typeof assetLoader.setMaterials === 'function') {
-			assetLoader.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(processResult as MaterialCreatorPartialType));
+			assetLoader.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(processResult as unknown as MTLLoader.MaterialCreator));
 		}
 		return undefined;
 	}
@@ -21,7 +17,7 @@ class MtlObjBridge implements LinkType {
 	 *
 	 * @param materialCreator instance of MTLLoader
 	 */
-	static addMaterialsFromMtlLoader(materialCreator: MaterialCreatorPartialType) {
+	static addMaterialsFromMtlLoader(materialCreator: MTLLoader.MaterialCreator) {
 		materialCreator.preload();
 		return materialCreator.materials;
 	}
