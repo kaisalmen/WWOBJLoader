@@ -4,8 +4,9 @@
   "type": "module",
   "private": "true",
   "scripts": {
-    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./libs",
-    "lint": "npx eslint src",
+    "clean": "npx shx rm -rf ./dist ./libs && npx tsc --build --clean",
+    "lint": "npx eslint src --ext .ts",
+    "lint:fix": "npx eslint src --ext .ts --fix",
     "copy:prepare": "npx shx mkdir -p ./libs/worker",
     "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
     "copy:three:trackball": "npx shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
@@ -24,17 +25,17 @@
     "npm": "8.19.3"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.10.0",
-    "wwobjloader2": "5.1.0-next.3",
-    "wtd-core": "2.2.0-next.3",
-    "wtd-three-ext": "2.2.0-next.3",
+    "@react-three/fiber": "~8.10.1",
+    "wwobjloader2": "6.0.0",
+    "wtd-core": "2.2.0",
+    "wtd-three-ext": "2.2.0",
     "lil-gui": "~0.17.0",
     "http-server": "~14.1.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0"
   },
   "devDependencies": {
-    "@types/react": "~18.0.26",
+    "@types/react": "~18.0.27",
     "@types/react-dom": "~18.0.10"
   }
 }

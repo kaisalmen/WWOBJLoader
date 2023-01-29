@@ -1,6 +1,8 @@
 {
-    "recommendations": [
-        "editorconfig.editorconfig",
-        "dbaeumer.vscode-eslint"
-    ]
+  "recommendations": [
+      "editorconfig.editorconfig",
+      "dbaeumer.vscode-eslint",
+      "davidanson.vscode-markdownlint",
+      "zixuanchen.vitest-explorer"
+  ]
 }

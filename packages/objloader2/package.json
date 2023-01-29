@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "5.1.0-next.3",
+  "version": "6.0.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -62,9 +62,10 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "npx shx rm -rf tsconfig.tsbuildinfo ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs ",
+    "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs && npx tsc --build --clean",
     "doc": "npx jsdoc -c jsdoc.json",
-    "lint": "npx eslint src",
+    "lint": "npx eslint src --ext .ts",
+    "lint:fix": "npx eslint src --ext .ts --fix",
     "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
     "build:worker": "npx vite -c vite.config.worker.ts build",
     "build:lib": "npx vite build",
@@ -79,8 +80,8 @@
   },
   "dependencies": {
     "three": "~0.148.0",
-    "wtd-core": "2.2.0-next.3",
-    "wtd-three-ext": "2.2.0-next.3"
+    "wtd-core": "2.2.0",
+    "wtd-three-ext": "2.2.0"
   },
   "peerDependencies": {
     "three": ">= 0.137.5 < 1"

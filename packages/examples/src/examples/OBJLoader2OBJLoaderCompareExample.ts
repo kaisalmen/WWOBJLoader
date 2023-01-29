@@ -7,59 +7,58 @@ import { Object3D, Vector3 } from 'three';
 
 export class OBJLoader2OBJLoaderCompareExample implements ExampleDefinition {
 
-	private setup: ThreeDefaultSetup;
+    private setup: ThreeDefaultSetup;
 
-	constructor(elementToBindTo: HTMLElement | null) {
-		const cameraDefaults = {
-			posCamera: new Vector3(0.0, 175.0, 500.0),
-			posCameraTarget: new Vector3(0, 0, 0),
-			near: 0.1,
-			far: 10000,
-			fov: 45
-		};
-		this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
-	}
+    constructor(elementToBindTo: HTMLElement | null) {
+        const cameraDefaults = {
+            posCamera: new Vector3(0.0, 175.0, 500.0),
+            posCameraTarget: new Vector3(0, 0, 0),
+            near: 0.1,
+            far: 10000,
+            fov: 45
+        };
+        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
+    }
 
-	getSetup() {
-		return this.setup;
-	}
+    getSetup() {
+        return this.setup;
+    }
 
-	render() {
-		renderDefault(this.setup);
-	}
+    render() {
+        renderDefault(this.setup);
+    }
 
-	run() {
-		const modelName = 'verificationCubes';
-		reportProgress({ detail: { text: 'Loading: ' + modelName } });
+    run() {
+        const modelName = 'verificationCubes';
+        reportProgress({ detail: { text: 'Loading: ' + modelName } });
 
-		const objLoader = new OBJLoader();
+        const objLoader = new OBJLoader();
 
-		const objLoader2 = new OBJLoader2();
-		objLoader2.setModelName(modelName);
-		objLoader2.setLogging(true, false);
-		objLoader2.setUseOAsMesh(true);
+        const objLoader2 = new OBJLoader2();
+        objLoader2.setModelName(modelName);
+        objLoader2.setLogging(true, false);
+        objLoader2.setUseOAsMesh(true);
 
-		const scope = this;
-		const callbackOnLoad = (object3d: Object3D) => {
-			scope.setup.scene.add(object3d);
-			console.log('Loading complete: ' + modelName);
-			reportProgress({ detail: { text: 'Loading of [' + modelName + '] was successfully completed.' } });
+        const callbackOnLoad = (object3d: Object3D) => {
+            this.setup.scene.add(object3d);
+            console.log('Loading complete: ' + modelName);
+            reportProgress({ detail: { text: 'Loading of [' + modelName + '] was successfully completed.' } });
 
-		};
+        };
 
-		const onLoadMtl = (mtlParseResult: MTLLoader.MaterialCreator) => {
-			objLoader.setMaterials(mtlParseResult);
-			objLoader.load('./models/obj/main/verify/verify.obj', function(object) {
-				object.position.y = -100;
-				scope.setup.scene.add(object);
-			});
+        const onLoadMtl = (mtlParseResult: MTLLoader.MaterialCreator) => {
+            objLoader.setMaterials(mtlParseResult);
+            objLoader.load('./models/obj/main/verify/verify.obj', (object) => {
+                object.position.y = -100;
+                this.setup.scene.add(object);
+            });
 
-			objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-			objLoader2.load('./models/obj/main/verify/verify.obj', callbackOnLoad);
-		};
+            objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
+            objLoader2.load('./models/obj/main/verify/verify.obj', callbackOnLoad);
+        };
 
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('./models/obj/main/verify/verify.mtl', onLoadMtl);
-	}
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load('./models/obj/main/verify/verify.mtl', onLoadMtl);
+    }
 
 }
