@@ -19,3 +19,7 @@ jobs:
       run: |
         npm ci
         npm run build
+    - name: Lint
+      shell: bash
+      run: |
+        npm run lint
