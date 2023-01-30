@@ -2,12 +2,19 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
+[![WWOBJLoader](https://github.com/kaisalmen/WWOBJLoader/actions/workflows/actions.yml/badge.svg)](https://github.com/kaisalmen/WWOBJLoader/actions/workflows/actions.yml)
+[![NPM Version](https://img.shields.io/npm/v/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
+[![NPM Download](https://img.shields.io/npm/dt/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
 
 **OBJLoader2** is a loader for the **OBJ** file format. It is an alternative to [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/jsm/loaders/OBJLoader.js) included in [three.js](https://threejs.org). The loader and its parser can be used on Main via **OBJLoader2** or in parallel inside a web worker via **OBJLoader2Parallel**.
 
+## Project History
+
 New versions of **OBJLoader2** and **OBJLoader2Parallel** are from now on again released as npm modules independent of three.js. The first stable version that was released independent again is 4.0.0. Versions 3.x.y were never released as independent npm and only in combination with three.ts itself.
 
-## Changelog
+Between release of version 5.0.0 and 6.0.0 all code has been transformed to TypeScript.
+
+### Changelog
 
 Interested in recent changes? Check the [CHANGELOG](https://github.com/kaisalmen/WWOBJLoader/blob/main/CHANGELOG.md).
 
@@ -37,6 +44,7 @@ If you want to get started see take a look at the following examples. They get m
 * OBJLoader2 / OBJLoader parser capability comparison: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_obj_compare.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.ts)]
 * OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.tsx)]
 * OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.tsx)]
+* AssetPipelineLoader basic example: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/assetpipeline.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/AssetPipelineLoaderExample.ts)]
 
 ### Main Branch
 

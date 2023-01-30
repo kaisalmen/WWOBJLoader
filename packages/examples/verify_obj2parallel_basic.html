@@ -18,17 +18,18 @@
 			{
 				"imports": {
 					"three": "./libs/three.module.js",
-					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
+					"three/examples/jsm/controls/TrackballControls.js": "./libs/TrackballControls.js",
 					"wwobjloader2": "./libs/objLoader2.js"
 				}
 			}
 		</script>
 
 		<script type="module">
-			import { OBJLoader2ParalleleBasicExample } from './src/examples/OBJLoader2ParalleleBasicExample.js'
+            import { OBJLoader2ParalleleBasicExample } from './dist/examples/OBJLoader2ParallelsBasicExample.js'
+			import { executeExample } from './dist/examples/ExampleCommons.js';
 
 			const exampleApp = new OBJLoader2ParalleleBasicExample(document.getElementById('example'));
-			OBJLoader2ParalleleBasicExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

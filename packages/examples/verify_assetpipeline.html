@@ -18,8 +18,8 @@
 			{
 				"imports": {
 					"three": "./libs/three.module.js",
-					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
-					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"three/examples/jsm/controls/TrackballControls.js": "./libs/TrackballControls.js",
+					"three/examples/jsm/loaders/MTLLoader.js": "./libs/MTLLoader.js",
 					"wtd-core": "./libs/wtd-core/DataPayload.js",
 					"wwobjloader2": "./libs/objLoader2.js"
 				}
@@ -27,10 +27,11 @@
 		</script>
 
 		<script type="module">
-			import { AssetPipelineLoaderExample } from './src/examples/AssetPipelineLoaderExample.js';
+			import { AssetPipelineLoaderExample } from './dist/examples/AssetPipelineLoaderExample.js';
+			import { executeExample } from './dist/examples/ExampleCommons.js';
 
 			const exampleApp = new AssetPipelineLoaderExample(document.getElementById('example'));
-			AssetPipelineLoaderExample.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>

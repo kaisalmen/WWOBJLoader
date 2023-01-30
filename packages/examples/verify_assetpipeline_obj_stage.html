@@ -35,8 +35,8 @@
 			{
 				"imports": {
 					"three": "./libs/three.module.js",
-					"three/examples/jsm/controls/TrackballControls": "./libs/TrackballControls.js",
-					"three/examples/jsm/loaders/MTLLoader": "./libs/MTLLoader.js",
+					"three/examples/jsm/controls/TrackballControls.js": "./libs/TrackballControls.js",
+					"three/examples/jsm/loaders/MTLLoader.js": "./libs/MTLLoader.js",
 					"lil-gui": "./libs/lil-gui.esm.js",
 					"wtd-core": "./libs/wtd-core/DataPayload.js",
 					"wwobjloader2": "./libs/objLoader2.js"
@@ -45,10 +45,11 @@
 		</script>
 
 		<script type="module">
-			import { OBJLoader2Stage } from './src/examples/OBJLoader2Stage.js';
+			import { OBJLoader2Stage } from './dist/examples/OBJLoader2Stage.js';
+			import { executeExample } from './dist/examples/ExampleCommons.js';
 
 			const exampleApp = new OBJLoader2Stage(document.getElementById('example'));
-			OBJLoader2Stage.executeExample(exampleApp);
+			executeExample(exampleApp);
 		</script>
 	</body>
 </html>
