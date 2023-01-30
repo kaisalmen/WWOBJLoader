@@ -63,7 +63,7 @@
   ],
   "scripts": {
     "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs && npx tsc --build --clean",
-    "doc": "npx jsdoc -c jsdoc.json",
+    "doc": "npx shx rm -fr docs && npx typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
     "lint": "npx eslint src --ext .ts",
     "lint:fix": "npx eslint src --ext .ts --fix",
     "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
@@ -87,8 +87,7 @@
     "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
-    "@types/three": "~0.148.0",
-    "jsdoc": "~4.0.0"
+    "@types/three": "~0.148.0"
   },
   "repository": {
     "type": "git",

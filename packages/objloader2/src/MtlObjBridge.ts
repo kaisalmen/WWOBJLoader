@@ -1,6 +1,6 @@
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { AssociatedArrayType } from 'wtd-core';
-import { LinkType } from './utils/AssetPipelineLoader.js';
+import { LinkType } from './AssetPipelineLoader.js';
 
 class MtlObjBridge implements LinkType {
 

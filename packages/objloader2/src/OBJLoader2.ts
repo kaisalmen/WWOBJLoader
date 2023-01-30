@@ -46,7 +46,7 @@ export type FileLoaderOnErrorType = (event: ErrorEvent) => void;
  */
 export class OBJLoader2 extends Loader {
 
-    static OBJLOADER2_VERSION = '5.1.0';
+    static OBJLOADER2_VERSION = '6.0.0';
 
     protected parser = new OBJLoader2Parser();
     protected baseObject3d = new Object3D();
@@ -289,7 +289,7 @@ export class OBJLoader2 extends Loader {
      *
      * @param {string}  url A string containing the path/URL of the file to be loaded.
      * @param {FileLoaderOnProgressType} [onProgress] A function to be called while the loading is in progress. The argument will be the XMLHttpRequest instance, which contains total and Integer bytes.
-     * @param {CallbackOnMeshAlterType} [onMeshAlter] Called after every single mesh is made available by the parser} url
+     * @param {CallbackOnMeshAlterType} [onMeshAlter] Called after every single mesh is made available by the parser url
      * @returns Promise
      */
     loadAsync(url: string, onProgress?: FileLoaderOnProgressType, onMeshAlter?: CallbackOnMeshAlterType) {

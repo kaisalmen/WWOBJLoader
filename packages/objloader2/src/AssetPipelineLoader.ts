@@ -1,6 +1,6 @@
 import { FileLoader, Loader, Object3D } from 'three';
 import { AssociatedArrayType, DataPayloadHandler } from 'wtd-core';
-import { ResourceDescriptor } from './ResourceDescriptor.js';
+import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
 
 export type CallbackCompleteType = ((description: string, extra?: Object3D) => void) | null;
 

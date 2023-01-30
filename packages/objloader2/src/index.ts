@@ -45,13 +45,13 @@ import type {
     CallbackCompleteType,
     ParserType,
     LinkType
-} from './utils/AssetPipelineLoader.js';
+} from './AssetPipelineLoader.js';
 
 import {
     AssetPipelineLoader,
     AssetPipeline,
     AssetTask
-} from './utils/AssetPipelineLoader.js';
+} from './AssetPipelineLoader.js';
 
 export {
     OBJLoader2,

@@ -5,6 +5,7 @@
 - Converted all code to TypeScript
 - Align vertex colors to linear (three.js) [#70](https://github.com/kaisalmen/WWOBJLoader/issues/70)
 - Re-added `AssetPipelineLoader`, `AssetPipeline`, `AssetTask` and `ResourceDescriptor` to the package
+- Updated dependencies
 
 ## 5.0.0
 
