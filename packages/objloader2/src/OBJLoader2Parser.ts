@@ -396,40 +396,37 @@ export class OBJLoader2Parser {
             case 'f':
                 bufferLength = bufferPointer - 1;
 
-                // "f vertex ..."
                 if (slashesCount === 0) {
+                    // "f vertex ..."
                     this.checkFaceType(0);
-                    for (i = 2, length = bufferLength; i < length; i++) {
-                        this.buildFace(buffer[1]);
+                    for (i = bufferLength - 1; i > 1; i--) {
+                        this.buildFace(buffer[bufferLength]);
+                        this.buildFace(buffer[i - 1]);
                         this.buildFace(buffer[i]);
-                        this.buildFace(buffer[i + 1]);
                     }
+                } else if (bufferLength === slashesCount * 2) {
                     // "f vertex/uv ..."
-                }
-                else if (bufferLength === slashesCount * 2) {
                     this.checkFaceType(1);
-                    for (i = 3, length = bufferLength - 2; i < length; i += 2) {
-                        this.buildFace(buffer[1], buffer[2]);
-                        this.buildFace(buffer[i], buffer[i + 1]);
-                        this.buildFace(buffer[i + 2], buffer[i + 3]);
+                    for (i = bufferLength - 2; i > 2; i -= 2) {
+                        this.buildFace(buffer[bufferLength - 1], buffer[bufferLength]);
+                        this.buildFace(buffer[i - 3], buffer[i - 2]);
+                        this.buildFace(buffer[i - 1], buffer[i]);
                     }
+                } else if (bufferLength * 2 === slashesCount * 3) {
                     // "f vertex/uv/normal ..."
-                }
-                else if (bufferLength * 2 === slashesCount * 3) {
                     this.checkFaceType(2);
-                    for (i = 4, length = bufferLength - 3; i < length; i += 3) {
-                        this.buildFace(buffer[1], buffer[2], buffer[3]);
-                        this.buildFace(buffer[i], buffer[i + 1], buffer[i + 2]);
-                        this.buildFace(buffer[i + 3], buffer[i + 4], buffer[i + 5]);
+                    for (i = bufferLength - 3; i > 3; i -= 3) {
+                        this.buildFace(buffer[bufferLength - 2], buffer[bufferLength - 1], buffer[bufferLength]);
+                        this.buildFace(buffer[i - 5], buffer[i - 4], buffer[i - 3]);
+                        this.buildFace(buffer[i - 2], buffer[i - 1], buffer[i]);
                     }
+                } else {
                     // "f vertex//normal ..."
-                }
-                else {
                     this.checkFaceType(3);
-                    for (i = 3, length = bufferLength - 2; i < length; i += 2) {
-                        this.buildFace(buffer[1], undefined, buffer[2]);
-                        this.buildFace(buffer[i], undefined, buffer[i + 1]);
-                        this.buildFace(buffer[i + 2], undefined, buffer[i + 3]);
+                    for (i = bufferLength - 2; i > 2; i -= 2) {
+                        this.buildFace(buffer[bufferLength - 1], undefined, buffer[bufferLength]);
+                        this.buildFace(buffer[i - 3], undefined, buffer[i - 2]);
+                        this.buildFace(buffer[i - 1], undefined, buffer[i]);
                     }
                 }
                 break;
@@ -575,7 +572,9 @@ export class OBJLoader2Parser {
         };
 
         if (this.useIndices) {
-            if (this.disregardNormals) faceIndexN = undefined;
+            if (this.disregardNormals) {
+                faceIndexN = undefined;
+            }
             const mappingName = faceIndexV + (faceIndexU ? '_' + faceIndexU : '_n') + (faceIndexN ? '_' + faceIndexN : '_n');
             let indicesPointer = subGroupInUse.indexMappings.get(mappingName);
             if (indicesPointer === undefined || indicesPointer === null) {
