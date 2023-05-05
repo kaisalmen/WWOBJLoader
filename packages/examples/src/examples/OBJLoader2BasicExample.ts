@@ -45,10 +45,12 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
             objLoader2.setLogging(true, true);
             objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
             objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
+            // objLoader2.load('./models/obj/convex_concave.obj', callbackOnLoad);
         };
 
         const mtlLoader = new MTLLoader();
         mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
+        // mtlLoader.load('./models/obj/convex_concave.mtl', onLoadMtl);
     }
 
 }
