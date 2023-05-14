@@ -1,4 +1,4 @@
-import { Object3D, Vector3 } from 'three';
+import { Object3D, Vector3, Mesh, MeshStandardMaterial, DoubleSide } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
 import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, ThreeDefaultSetup } from './ExampleCommons.js';
@@ -32,6 +32,9 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
 
         const objLoader2 = new OBJLoader2();
         const callbackOnLoad = (object3d: Object3D) => {
+            const mesh = object3d as Mesh;
+            mesh.material = new MeshStandardMaterial();
+            mesh.material.side = DoubleSide;
             this.setup.scene.add(object3d);
             reportProgress({
                 detail: {
@@ -44,11 +47,13 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
             objLoader2.setModelName(modelName);
             objLoader2.setLogging(true, true);
             objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-            objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
+            // objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
+            objLoader2.load('./models/obj/tritest2.obj', callbackOnLoad);
         };
 
         const mtlLoader = new MTLLoader();
-        mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
+        //mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
+        mtlLoader.load('./models/obj/tritest.mtl', onLoadMtl);
     }
 
 }
