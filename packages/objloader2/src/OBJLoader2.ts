@@ -248,7 +248,12 @@ export class OBJLoader2 extends Loader {
         if (!url) {
             onError(new ErrorEvent('An invalid url was provided. Unable to continue!'));
         }
-        const urlFull = new URL(url, window.location.href).href;
+        let urlFull = '';
+        try {
+            urlFull = new URL(url).href;
+        } catch (error) {
+            urlFull = new URL(url, window.location.href).href;
+        }
         let filename = urlFull;
         const urlParts = urlFull.split('/');
         if (urlParts.length > 2) {
