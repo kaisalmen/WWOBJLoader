@@ -62,17 +62,17 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs && npx tsc --build --clean",
-    "doc": "npx shx rm -fr docs && npx typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
-    "lint": "npx eslint src --ext .ts",
-    "lint:fix": "npx eslint src --ext .ts --fix",
-    "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
-    "build:worker": "npx vite -c vite.config.worker.ts build",
-    "build:lib": "npx vite build",
-    "compile": "npx tsc",
-    "watch": "npx tsc -w",
+    "clean": "shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs && tsc --build --clean",
+    "doc": "shx rm -fr docs && typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "build:worker:copy": "shx mkdir -p ./lib/worker && shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
+    "build:worker": "vite -c vite.config.worker.ts build",
+    "build:lib": "vite build",
+    "compile": "tsc",
+    "watch": "tsc -w",
     "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
-    "serve": "npx tsc && npx vite preview"
+    "serve": "tsc && vite preview"
   },
   "volta": {
     "node": "18.17.0",
