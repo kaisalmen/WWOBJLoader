@@ -1,4 +1,5 @@
 import { FileLoader, Loader, Object3D } from 'three';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { AssociatedArrayType, DataPayloadHandler } from 'wtd-core';
 import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
 
@@ -184,7 +185,7 @@ class AssetTask {
         this.assetLoader.linker = linker;
     }
 
-    setLoader(loader: Loader, loaderConfig?: AssociatedArrayType<string | object | boolean>) {
+    setLoader(loader: Loader<Object3D, string> | Loader<MTLLoader.MaterialCreator>, loaderConfig?: AssociatedArrayType<string | object | boolean>) {
         const parser = loader as unknown as ParserType;
         if (typeof parser.parse === 'function') {
             this.assetLoader.loader.instance = parser;

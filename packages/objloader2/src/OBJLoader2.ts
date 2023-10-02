@@ -22,21 +22,21 @@ import {
     PreparedMeshType
 } from './OBJLoader2Parser.js';
 
-export type CallbackOnLoadType = ((object3D: Object3D) => void) | null;
-export type CallbackOnProgressMessageType = ((progressMessage: string) => void) | null;
-export type CallbackOnErrorMessageType = ((error: Error) => void) | null;
-export type CallbackOnMeshAlterType = ((mesh: Mesh | LineSegments | Points, object3D: Object3D) => void) | null;
+export type CallbackOnLoadType = ((data: Object3D) => void);
+export type CallbackOnProgressMessageType = ((progressMessage: string) => void);
+export type CallbackOnErrorMessageType = ((error: Error) => void);
+export type CallbackOnMeshAlterType = ((mesh: Mesh | LineSegments | Points, data: Object3D) => void);
 
 export type CallbacksType = {
-    onLoad: CallbackOnLoadType;
-    onError: CallbackOnErrorMessageType;
-    onProgress: CallbackOnProgressMessageType;
-    onMeshAlter: CallbackOnMeshAlterType;
+    onLoad?: CallbackOnLoadType;
+    onError?: CallbackOnErrorMessageType;
+    onProgress?: CallbackOnProgressMessageType;
+    onMeshAlter?: CallbackOnMeshAlterType;
 }
 
 export type FileLoaderOnLoadType = (response: string | ArrayBuffer) => void;
 export type FileLoaderOnProgressType = (request: ProgressEvent) => void;
-export type FileLoaderOnErrorType = (event: ErrorEvent) => void;
+export type FileLoaderOnErrorType = (event: ErrorEvent | unknown) => void;
 
 /**
  * Creates a new OBJLoader2. Use it to load OBJ data from files or to parse OBJ data from arraybuffer or text.
@@ -44,7 +44,7 @@ export type FileLoaderOnErrorType = (event: ErrorEvent) => void;
  * @param {LoadingManager} [manager] The loadingManager for the loader to use. Default is {@link LoadingManager}
  * @constructor
  */
-export class OBJLoader2 extends Loader {
+export class OBJLoader2 extends Loader<Object3D, string> {
 
     static OBJLOADER2_VERSION = '6.0.0';
 
@@ -66,10 +66,10 @@ export class OBJLoader2 extends Loader {
     constructor(manager?: LoadingManager) {
         super(manager);
         this.callbacks = {
-            onLoad: null,
-            onError: null,
-            onProgress: null,
-            onMeshAlter: null
+            onLoad: undefined,
+            onError: undefined,
+            onProgress: undefined,
+            onMeshAlter: undefined
         };
     }
 
@@ -237,9 +237,9 @@ export class OBJLoader2 extends Loader {
         }
 
         if (!onError || !(onError instanceof Function)) {
-            onError = (errorEvent: ErrorEvent) => {
-                if (errorEvent.currentTarget) {
-                    const errorMessage = 'Error occurred while downloading!\nurl: ' + errorEvent.currentTarget;
+            onError = (errorEvent: ErrorEvent | unknown) => {
+                if (Object.hasOwn(errorEvent as ErrorEvent, 'currentTarget')) {
+                    const errorMessage = 'Error occurred while downloading!\nurl: ' + (errorEvent as ErrorEvent).currentTarget;
                     this._onError(new Error(errorMessage));
                 }
             };
@@ -297,8 +297,8 @@ export class OBJLoader2 extends Loader {
      * @param {CallbackOnMeshAlterType} [onMeshAlter] Called after every single mesh is made available by the parser url
      * @returns Promise
      */
-    loadAsync(url: string, onProgress?: FileLoaderOnProgressType, onMeshAlter?: CallbackOnMeshAlterType) {
-        return new Promise((resolve, reject) => {
+    loadAsync(url: string, onProgress?: FileLoaderOnProgressType, onMeshAlter?: CallbackOnMeshAlterType): Promise<Object3D> {
+        return new Promise<Object3D>((resolve, reject) => {
             this.load(url, resolve, onProgress, reject, onMeshAlter);
         });
     }
@@ -365,16 +365,16 @@ export class OBJLoader2 extends Loader {
         if (this.parser.isLoggingEnabled()) {
             let printedConfig = 'OBJLoader2 callback configuration:';
             if (this.callbacks.onProgress !== null) {
-                printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress.name;
+                printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress?.name ?? 'undefined';
             }
             if (this.callbacks.onError !== null) {
-                printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError.name;
+                printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError?.name ?? 'undefined';
             }
             if (this.callbacks.onMeshAlter !== null) {
-                printedConfig += '\n\tcallbacks.onMeshAlter: ' + this.callbacks.onMeshAlter.name;
+                printedConfig += '\n\tcallbacks.onMeshAlter: ' + this.callbacks.onMeshAlter?.name ?? 'undefined';
             }
             if (this.callbacks.onLoad !== null) {
-                printedConfig += '\n\tcallbacks.onLoad: ' + this.callbacks.onLoad.name;
+                printedConfig += '\n\tcallbacks.onLoad: ' + this.callbacks.onLoad?.name ?? 'undefined';
             }
             console.info(printedConfig);
         }
@@ -456,7 +456,7 @@ export class OBJLoader2 extends Loader {
     }
 
     _onProgress(text: string) {
-        if (this.callbacks.onProgress !== null) {
+        if (this.callbacks.onProgress) {
             this.callbacks.onProgress(text);
         }
         else {
@@ -465,7 +465,7 @@ export class OBJLoader2 extends Loader {
     }
 
     _onError(error: Error) {
-        if (this.callbacks.onError !== null) {
+        if (this.callbacks.onError) {
             this.callbacks.onError(error);
         }
         else {
@@ -475,13 +475,13 @@ export class OBJLoader2 extends Loader {
     }
 
     _onMeshAlter(mesh: Mesh | LineSegments | Points, _materialMetaInfo?: MaterialMetaInfoType) {
-        if (this.callbacks.onMeshAlter !== null) {
+        if (this.callbacks.onMeshAlter) {
             this.callbacks.onMeshAlter(mesh, this.baseObject3d);
         }
     }
 
     _onLoad() {
-        if (this.callbacks.onLoad !== null) {
+        if (this.callbacks.onLoad) {
             this.callbacks.onLoad(this.baseObject3d);
         }
     }
