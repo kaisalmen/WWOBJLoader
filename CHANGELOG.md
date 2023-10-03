@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.1
+
+- Avoid window reference if absolute url is provided [#77](https://github.com/kaisalmen/WWOBJLoader/pull/77)
+- Added [Offscreen canvas example](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic_offscreen.html)
+- Updated dependencies and aligned code with type definitions of three.js release 156.
+
 ## 6.0.0
 
 - Converted all code to TypeScript

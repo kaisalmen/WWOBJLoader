@@ -42,14 +42,8 @@ export class OBJLoader2BasicExampleOffscreen {
                 taskTypeName: execMessage.name,
                 message: execMessage,
                 transferables: [offscreen],
-                // decouple result evaluation ...
                 onComplete: (m: WorkerTaskMessageType) => {
-                    const wtm = WorkerTaskMessage.unpack(m, false);
-                    console.log(wtm);
-                    if (wtm.payloads.length === 1) {
-                        console.log(wtm.payloads[0]);
-                    }
-                    console.log('Received final command: ' + wtm.cmd);
+                    console.log('Received final command: ' + m.cmd);
                 }
             });
             console.log(`enqueueWorkerExecutionPlan finished: ${resultExec}`);
