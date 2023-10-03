@@ -1,5 +1,5 @@
 import { AmbientLight, DirectionalLight, GridHelper, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls.js';
 
 export type CameraDefaults = {
     posCamera: THREE.Vector3;
@@ -7,6 +7,13 @@ export type CameraDefaults = {
     near: number;
     far: number;
     fov: number;
+};
+
+export type SetupDefaults = {
+    useTrackBall?: boolean;
+    width?: number;
+    height?: number;
+    pixelRatio?: number;
 };
 
 export type ExampleDefinition = {
@@ -21,15 +28,22 @@ export type ProgressEventType = {
     }
 }
 
-export function reportProgress(event: ProgressEventType) {
+export const reportProgress = (event: ProgressEventType) => {
     console.log(`Progress: ${event.detail.text}`);
-    document.getElementById('feedback')!.innerHTML = event.detail.text;
-}
+    if (!isWorker()) {
+        document.getElementById('feedback')!.innerHTML = event.detail.text;
+    }
+};
 
-export function executeExample(app: ExampleDefinition) {
-    window.addEventListener('resize', () => resizeDisplayGL(app.getSetup()), false);
+export const isWorker = () => {
+    return typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
+};
 
+export const executeExample = (app: ExampleDefinition) => {
     console.log('Starting initialisation phase...');
+    if (!isWorker()) {
+        window.addEventListener('resize', () => resizeDisplayGL(app.getSetup()), false);
+    }
     resizeDisplayGL(app.getSetup());
 
     const requestRender = () => {
@@ -39,7 +53,7 @@ export function executeExample(app: ExampleDefinition) {
     requestRender();
 
     app.run();
-}
+};
 
 export type ThreeDefaultSetup = {
     renderer: THREE.WebGLRenderer;
@@ -48,10 +62,11 @@ export type ThreeDefaultSetup = {
     camera: THREE.PerspectiveCamera;
     cameraTarget: THREE.Vector3;
     cameraDefaults: CameraDefaults;
-    controls?: TrackballControls;
+    controls?: ArcballControls;
+    setupDefaults?: SetupDefaults;
 }
 
-export function createThreeDefaultSetup(elementToBindTo: HTMLElement | null, cameraDefaults: CameraDefaults): ThreeDefaultSetup {
+export const createThreeDefaultSetup = (elementToBindTo: HTMLElement | null, cameraDefaults: CameraDefaults, setupDefaults?: SetupDefaults): ThreeDefaultSetup => {
     if (elementToBindTo === null) {
         throw Error('Bad element HTML given as canvas.');
     }
@@ -64,15 +79,28 @@ export function createThreeDefaultSetup(elementToBindTo: HTMLElement | null, cam
     });
     setup.renderer.setClearColor(0x050505);
 
+    let useTrackBall = true;
+    if (setupDefaults) {
+        setup.setupDefaults = setupDefaults;
+        if (setupDefaults.pixelRatio) {
+            setup.renderer.setPixelRatio(setupDefaults.pixelRatio);
+        }
+        if (setupDefaults.width && setupDefaults.height) {
+            setup.renderer.setSize(setupDefaults.width, setupDefaults.height, false);
+        }
+        useTrackBall = setupDefaults?.useTrackBall === true;
+    }
     setup.scene = new Scene();
 
     setup.cameraDefaults = cameraDefaults;
     setup.cameraTarget = setup.cameraDefaults.posCameraTarget;
-    setup.camera = new PerspectiveCamera(setup.cameraDefaults.fov, recalcAspectRatio(setup.canvas),
+    setup.camera = new PerspectiveCamera(setup.cameraDefaults.fov, recalcAspectRatio(setup.canvas, setup.setupDefaults),
         setup.cameraDefaults.near, setup.cameraDefaults.far);
     resetCamera(setup);
 
-    setup.controls = new TrackballControls(setup.camera, setup.renderer.domElement);
+    if (useTrackBall) {
+        setup.controls = new ArcballControls(setup.camera, setup.renderer.domElement);
+    }
 
     const ambientLight = new AmbientLight(0x404040);
     const directionalLight1 = new DirectionalLight(0xC0C090);
@@ -90,34 +118,42 @@ export function createThreeDefaultSetup(elementToBindTo: HTMLElement | null, cam
     setup.scene.add(helper);
 
     return setup;
-}
+};
 
-export function recalcAspectRatio(htmlElement: HTMLElement) {
-    return (htmlElement.offsetHeight === 0) ? 1 : htmlElement.offsetWidth / htmlElement.offsetHeight;
-}
+export const recalcAspectRatio = (htmlElement: HTMLElement, setupDefaults?: SetupDefaults) => {
+    if (setupDefaults?.width && setupDefaults?.height) {
+        return (setupDefaults.height === 0) ? 1 : setupDefaults.width / setupDefaults.height;
+    } else {
+        return (htmlElement.offsetHeight === 0) ? 1 : htmlElement.offsetWidth / htmlElement.offsetHeight;
+    }
+};
 
-export function resetCamera(setup: ThreeDefaultSetup) {
+export const resetCamera = (setup: ThreeDefaultSetup) => {
     setup.camera.position.copy(setup.cameraDefaults.posCamera);
     setup.cameraTarget.copy(setup.cameraDefaults.posCameraTarget);
     updateCamera(setup);
-}
+};
 
-export function updateCamera(setup: ThreeDefaultSetup) {
-    setup.camera.aspect = recalcAspectRatio(setup.canvas);
+export const updateCamera = (setup: ThreeDefaultSetup) => {
+    setup.camera.aspect = recalcAspectRatio(setup.canvas, setup.setupDefaults);
     setup.camera.lookAt(setup.cameraTarget);
     setup.camera.updateProjectionMatrix();
-}
+};
 
-export function resizeDisplayGL(setup: ThreeDefaultSetup) {
-    setup.controls!.handleResize();
-    setup.renderer.setSize(setup.canvas.offsetWidth, setup.canvas.offsetHeight, false);
+export const resizeDisplayGL = (setup: ThreeDefaultSetup) => {
+    setup.controls?.update();
+    if (setup.setupDefaults?.width && setup.setupDefaults?.height) {
+        setup.renderer.setSize(setup.setupDefaults.width, setup.setupDefaults.height, false);
+    } else {
+        setup.renderer.setSize(setup.canvas.offsetWidth, setup.canvas.offsetHeight, false);
+    }
     updateCamera(setup);
-}
+};
 
-export function renderDefault(setup: ThreeDefaultSetup) {
+export const renderDefault = (setup: ThreeDefaultSetup) => {
     if (!setup.renderer.autoClear) {
         setup.renderer.clear();
     }
     setup.controls?.update();
     setup.renderer.render(setup.scene, setup.camera);
-}
+};

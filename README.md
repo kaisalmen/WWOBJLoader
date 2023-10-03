@@ -38,7 +38,8 @@ In any environment the server is reachable on port 8085.
 
 If you want to get started see take a look at the following examples. They get more advanced from top to bottom:
 
-* OBJLoader2 basic usage: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExample.ts)]
+* OBJLoader2 basic: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExample.ts)]
+* OBJLoader2 basic (Offscreen Canvas): [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_basic_offscreen.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2BasicExampleOffscreen.ts)]
 * OBJLoader2Parallel basic: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2parallel_basic.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2ParallelsBasicExample.ts)]
 * OBJLoader2 usage options: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_options.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OptionsExample.ts)]
 * OBJLoader2 / OBJLoader parser capability comparison: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_obj_compare.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/OBJLoader2OBJLoaderCompareExample.ts)]

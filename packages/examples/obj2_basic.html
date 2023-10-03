@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>OBJLoader2 basic usage</title>
+		<title>OBJLoader2 basic</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 		<link type="text/css" rel="stylesheet" href="main.css" />
@@ -10,7 +10,7 @@
 	<body>
 		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
 		<div id="info">
-			OBJLoader2 basic usage
+			OBJLoader2 basic
 			<div id="feedback" style="color: darkorange"></div>
 		</div>
 
@@ -18,7 +18,9 @@
 			import { OBJLoader2BasicExample } from './src/examples/OBJLoader2BasicExample.ts';
 			import { executeExample } from './src/examples/ExampleCommons.ts';
 
-			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'));
+			const modelUrl = new URL('./models/obj/main/female02/female02.obj', window.location.href).href;
+			const materialUrl = new URL('./models/obj/main/female02/female02.mtl', window.location.href).href;
+			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'), undefined, modelUrl, materialUrl);
 			executeExample(exampleApp);
 		</script>
 	</body>

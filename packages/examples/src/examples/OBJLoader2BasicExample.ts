@@ -1,13 +1,15 @@
 import { Object3D, Vector3 } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
-import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, ThreeDefaultSetup } from './ExampleCommons.js';
+import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, SetupDefaults, ThreeDefaultSetup } from './ExampleCommons.js';
 
 export class OBJLoader2BasicExample implements ExampleDefinition {
 
     private setup: ThreeDefaultSetup;
+    private modelUrl: string;
+    private materialUrl?: string;
 
-    constructor(elementToBindTo: HTMLElement | null) {
+    constructor(elementToBindTo: HTMLElement | null, setupDefaults: SetupDefaults, modelUrl: string, materialUrl?: string) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 500.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -15,7 +17,9 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
             far: 10000,
             fov: 45
         };
-        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
+        this.modelUrl = modelUrl;
+        this.materialUrl = materialUrl;
+        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults, setupDefaults);
     }
 
     getSetup() {
@@ -40,15 +44,20 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
             });
         };
 
-        const onLoadMtl = (mtlParseResult: MTLLoader.MaterialCreator) => {
+        if (this.materialUrl) {
+            const onLoadMtl = (mtlParseResult: MTLLoader.MaterialCreator) => {
+                objLoader2.setModelName(modelName);
+                objLoader2.setLogging(true, true);
+                objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
+                objLoader2.load(this.modelUrl, callbackOnLoad);
+            };
+            const mtlLoader = new MTLLoader();
+            mtlLoader.load(this.materialUrl, onLoadMtl);
+        } else {
             objLoader2.setModelName(modelName);
-            objLoader2.setLogging(true, true);
-            objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-            objLoader2.load('./models/obj/main/female02/female02.obj', callbackOnLoad);
-        };
-
-        const mtlLoader = new MTLLoader();
-        mtlLoader.load('./models/obj/main/female02/female02.mtl', onLoadMtl);
+            objLoader2.setLogging(true, false);
+            objLoader2.load(this.modelUrl, callbackOnLoad);
+        }
     }
 
 }

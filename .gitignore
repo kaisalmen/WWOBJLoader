@@ -4,6 +4,7 @@ docs
 lib
 node_modules
 
+/packages/examples/src/worker/generated
 /packages/examples/libs
 /packages/examples/models/draco
 /packages/examples/models/gltf

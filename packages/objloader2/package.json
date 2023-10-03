@@ -54,7 +54,7 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs",
+    "clean": "shx rm -rf *.tsbuildinfo ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs",
     "doc": "shx rm -fr docs && typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
     "build:worker:copy": "shx mkdir -p ./lib/worker && shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
     "build:worker": "vite -c vite.config.worker.ts build",

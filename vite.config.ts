@@ -12,7 +12,7 @@ export default defineConfig(({ command }) => {
             rollupOptions: {
                 external: [
                     'three',
-                    'three/examples/jsm/controls/TrackballControls',
+                    'three/examples/jsm/controls/ArcballControls',
                     'three/examples/jsm/helpers/VertexNormalsHelper',
                     'three/examples/jsm/loaders/MTLLoader'
                 ],

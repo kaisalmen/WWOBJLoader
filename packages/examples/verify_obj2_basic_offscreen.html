@@ -20,19 +20,17 @@
 					"three": "./libs/three.module.js",
 					"three/examples/jsm/controls/ArcballControls.js": "./libs/ArcballControls.js",
 					"three/examples/jsm/loaders/MTLLoader.js": "./libs/MTLLoader.js",
+					"wtd-core": "./libs/wtd-core/index.js",
 					"wwobjloader2": "./libs/objLoader2.js"
 				}
 			}
 		</script>
 
 		<script type="module">
-			import { OBJLoader2BasicExample } from './dist/examples/OBJLoader2BasicExample.js';
-			import { executeExample } from './dist/examples/ExampleCommons.js';
+			import { OBJLoader2BasicExampleOffscreen } from './dist/examples/OBJLoader2BasicExampleOffscreen.js';
 
-			const modelUrl = new URL('./models/obj/main/female02/female02.obj', window.location.href).href;
-			const materialUrl = new URL('./models/obj/main/female02/female02.mtl', window.location.href).href;
-			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'), undefined, modelUrl, materialUrl);
-			executeExample(exampleApp);
+			const exampleApp = new OBJLoader2BasicExampleOffscreen(document.getElementById('example'));
+			exampleApp.executeExample();
 		</script>
 	</body>
 </html>

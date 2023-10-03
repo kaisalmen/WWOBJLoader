@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>OBJLoader2 basic (Offscreen Canvas)</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+		<link type="text/css" rel="stylesheet" href="main.css" />
+	</head>
+
+	<body>
+		<canvas id="example" style="width: 100%; height: 100vh;"></canvas>
+		<div id="info">
+			OBJLoader2 basic (Offscreen Canvas)
+			<div id="feedback" style="color: darkorange"></div>
+		</div>
+
+		<script type="module">
+			import { OBJLoader2BasicExampleOffscreen } from './src/examples/OBJLoader2BasicExampleOffscreen.ts';
+
+			const exampleApp = new OBJLoader2BasicExampleOffscreen(document.getElementById('example'));
+			exampleApp.executeExample();
+		</script>
+	</body>
+</html>
