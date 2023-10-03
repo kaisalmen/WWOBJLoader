@@ -3,9 +3,11 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "declarationDir": "dist",
-    "jsx": "react"
+    "declarationDir": "dist"
   },
+  "references": [
+    { "path": "../objloader2/tsconfig.json" }
+  ],
   "include": [
     "src/**/*"
   ]

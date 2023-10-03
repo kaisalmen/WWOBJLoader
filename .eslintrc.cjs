@@ -4,7 +4,7 @@ module.exports = {
     env: {
         node: true,
         browser: true,
-        es2020: true
+        es2022: true
     },
     extends: [
         'eslint:recommended',
@@ -13,7 +13,7 @@ module.exports = {
     overrides: [
     ],
     parserOptions: {
-        ecmaVersion: 2020,
+        ecmaVersion: 2022,
         sourceType: 'module'
     },
     plugins: [
@@ -64,7 +64,6 @@ module.exports = {
         '@typescript-eslint/no-misused-new': 'error',               // no constructors for interfaces or new for classes
         '@typescript-eslint/no-namespace': 'off',                   // disallow the use of custom TypeScript modules and namespaces
         '@typescript-eslint/no-non-null-assertion': 'off',          // allow ! operator
-        '@typescript-eslint/no-parameter-properties': 'error',      // no property definitions in class constructors
         '@typescript-eslint/no-unused-vars': ['error', {            // disallow Unused Variables
             'argsIgnorePattern': '^_'
         }],

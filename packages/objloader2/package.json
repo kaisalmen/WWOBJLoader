@@ -1,6 +1,6 @@
 {
   "name": "wwobjloader2",
-  "version": "6.0.0",
+  "version": "6.0.1-next.2",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -8,26 +8,18 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "module": "./dist/index.js",
-      "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./worker": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
-      "module": "./dist/worker/OBJLoader2Worker.js",
-      "import": "./dist/worker/OBJLoader2Worker.js",
       "default": "./dist/worker/OBJLoader2Worker.js"
     },
     "./bundle": {
       "types": "./dist/index.d.ts",
-      "module": "./lib/objloader2.js",
-      "import": "./lib/objloader2.js",
       "default": "./lib/objloader2.js"
     },
     "./bundle/worker/module": {
       "types": "./dist/worker/OBJLoader2Worker.d.ts",
-      "module": "./lib/worker/OBJLoader2WorkerModule.js",
-      "import": "./lib/worker/OBJLoader2WorkerModule.js",
       "default": "./lib/worker/OBJLoader2WorkerModule.js"
     },
     "./bundle/worker/classic": {
@@ -62,24 +54,22 @@
     "README.md"
   ],
   "scripts": {
-    "clean": "npx shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs && npx tsc --build --clean",
-    "doc": "npx shx rm -fr docs && npx typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
-    "lint": "npx eslint src --ext .ts",
-    "lint:fix": "npx eslint src --ext .ts --fix",
-    "build:worker:copy": "npx shx mkdir -p ./lib/worker && npx shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && npx shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
-    "build:worker": "npx vite -c vite.config.worker.ts build",
-    "build:lib": "npx vite build",
-    "compile": "npx tsc",
-    "watch": "npx tsc -w",
+    "clean": "shx rm -rf ./dist ./lib ./src/worker/OBJLoader2WorkerClassic.js ./src/worker/OBJLoader2WorkerModule.js ./docs",
+    "doc": "shx rm -fr docs && typedoc --plugin typedoc-plugin-markdown --out docs src/index.ts",
+    "build:worker:copy": "shx mkdir -p ./lib/worker && shx cp ./src/worker/OBJLoader2WorkerModule.js ./lib/worker/ && shx cp ./src/worker/OBJLoader2WorkerClassic.js ./lib/worker/",
+    "build:worker": "vite -c vite.config.worker.ts build",
+    "build:lib": "vite build",
+    "compile": "tsc",
+    "watch": "tsc -w",
     "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
-    "serve": "npx tsc && npx vite preview"
+    "serve": "tsc && vite preview"
   },
   "volta": {
-    "node": "16.19.0",
-    "npm": "8.19.3"
+    "node": "18.18.0",
+    "npm": "9.8.1"
   },
   "dependencies": {
-    "three": "~0.148.0",
+    "three": "~0.156.0",
     "wtd-core": "2.2.0",
     "wtd-three-ext": "2.2.0"
   },
@@ -87,7 +77,7 @@
     "three": ">= 0.137.5 < 1"
   },
   "devDependencies": {
-    "@types/three": "~0.148.0"
+    "@types/three": "~0.156.0"
   },
   "repository": {
     "type": "git",

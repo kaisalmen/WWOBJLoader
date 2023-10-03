@@ -4,39 +4,37 @@
   "type": "module",
   "private": "true",
   "scripts": {
-    "clean": "npx shx rm -rf ./dist ./libs && npx tsc --build --clean",
-    "compile": "npx tsc",
-    "lint": "npx eslint src --ext .ts",
-    "lint:fix": "npx eslint src --ext .ts --fix",
-    "copy:prepare": "npx shx mkdir -p ./libs/worker",
-    "copy:three": "npx shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
-    "copy:three:trackball": "npx shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
-    "copy:three:mtlloader": "npx shx cp -f ../../node_modules/three/examples/jsm/loaders/MTLLoader.js ./libs/MTLLoader.js",
-    "copy:three:vertexnormalshelper": "npx shx cp -f ../../node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ./libs/VertexNormalsHelper.js",
-    "copy:lil-gui": "npx shx cp -f ../../node_modules/lil-gui/dist/lil-gui.esm.js ./libs/lil-gui.esm.js",
-    "copy:wtd-core": "npx shx mkdir -p ./libs/wtd-core && npx shx cp -f ../../node_modules/wtd-core/dist/* ./libs/wtd-core",
-    "copy:objloader2": "npx shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
-    "copy:objloader2:worker": "npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && npx shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
+    "clean": "shx rm -rf ./dist ./libs",
+    "compile": "tsc",
+    "copy:prepare": "shx mkdir -p ./libs/worker",
+    "copy:three": "shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
+    "copy:three:trackball": "shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
+    "copy:three:mtlloader": "shx cp -f ../../node_modules/three/examples/jsm/loaders/MTLLoader.js ./libs/MTLLoader.js",
+    "copy:three:vertexnormalshelper": "shx cp -f ../../node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ./libs/VertexNormalsHelper.js",
+    "copy:lil-gui": "shx cp -f ../../node_modules/lil-gui/dist/lil-gui.esm.js ./libs/lil-gui.esm.js",
+    "copy:wtd-core": "shx mkdir -p ./libs/wtd-core && shx cp -f ../../node_modules/wtd-core/dist/* ./libs/wtd-core",
+    "copy:objloader2": "shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
+    "copy:objloader2:worker": "shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
     "build": "npm run clean && npm run compile && npm run copy:prepare && npm run copy:three && npm run copy:three:trackball && npm run copy:three:mtlloader && npm run copy:three:vertexnormalshelper && npm run copy:lil-gui && npm run copy:wtd-core && npm run copy:objloader2 && npm run copy:objloader2:worker",
-    "serve": "npx tsc && npx vite preview",
+    "serve": "tsc && vite preview",
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
-    "node": "16.19.0",
-    "npm": "8.19.3"
+    "node": "18.18.0",
+    "npm": "9.8.1"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.10.1",
-    "wwobjloader2": "6.0.0",
+    "@react-three/fiber": "~8.14.3",
+    "wwobjloader2": "6.0.1-next.2",
     "wtd-core": "2.2.0",
     "wtd-three-ext": "2.2.0",
-    "lil-gui": "~0.17.0",
+    "lil-gui": "~0.18.2",
     "http-server": "~14.1.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0"
   },
   "devDependencies": {
-    "@types/react": "~18.0.27",
-    "@types/react-dom": "~18.0.10"
+    "@types/react": "~18.2.23",
+    "@types/react-dom": "~18.2.8"
   }
 }
