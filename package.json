@@ -46,7 +46,7 @@
     "typedoc": "~0.25.1",
     "typedoc-plugin-markdown": "~3.16.0",
     "typescript": "~5.2.2",
-    "vite": "~4.4.9",
+    "vite": "~4.4.10",
     "vitest": "~0.34.6"
   },
   "volta": {

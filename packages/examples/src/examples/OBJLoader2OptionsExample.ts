@@ -29,7 +29,7 @@ export class OBJLoader2OptionsExample implements ExampleDefinition {
     private debugLogging = false;
     private loadCount = 6;
 
-    constructor(elementToBindTo: HTMLElement | null) {
+    constructor(canvas: HTMLCanvasElement | null) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 500.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -37,7 +37,11 @@ export class OBJLoader2OptionsExample implements ExampleDefinition {
             far: 10000,
             fov: 45
         };
-        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
+        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, {
+            width: canvas?.offsetWidth ?? 0,
+            height: canvas?.offsetHeight ?? 0,
+            pixelRatio: window.devicePixelRatio
+        });
 
         const geometry = new BoxGeometry(10, 10, 10);
         const material = new MeshNormalMaterial();
@@ -232,18 +236,19 @@ export class OBJLoader2OptionsExample implements ExampleDefinition {
             .setDisregardNormals(this.disregardNormals)
             .setLogging(this.regularLogging, this.debugLogging);
 
-        await objLoader2.loadAsync('./models/obj/main/cerberus/Cerberus.obj')
-            .then((object3d: unknown) => {
-                local.add(object3d as Object3D);
-                reportProgress({
-                    detail: {
-                        text: `Loading of [${local.name}] was successfully completed.`
-                    }
-                });
-                this.finalize();
-            })
-            .catch((e) => console.error(e));
-        console.log('Awaited Cerberus.obj loading!');
+        try {
+            const object3d = await objLoader2.loadAsync('./models/obj/main/cerberus/Cerberus.obj');
+            local.add(object3d as Object3D);
+            reportProgress({
+                detail: {
+                    text: `Loading of [${local.name}] was successfully completed.`
+                }
+            });
+            this.finalize();
+            console.log('Awaited Cerberus.obj loading!');
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     useLoadParallelMeshAlter() {

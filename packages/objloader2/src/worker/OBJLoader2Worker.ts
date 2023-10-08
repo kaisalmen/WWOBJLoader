@@ -1,5 +1,5 @@
 import {
-    WorkerTaskDirectorDefaultWorker,
+    WorkerTaskDefaultWorker,
     WorkerTaskMessage,
     DataPayloadHandler,
     DataPayload,
@@ -9,7 +9,7 @@ import {
     OBJLoader2Parser
 } from '../OBJLoader2Parser.js';
 
-class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
+class OBJLoader2Worker extends WorkerTaskDefaultWorker {
 
     private localData = {
         id: 0,
@@ -23,7 +23,6 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
         this.localData.parser._onAssetAvailable = preparedMesh => {
             const intermediateMessage = new WorkerTaskMessage({
-                cmd: 'intermediate',
                 id: this.localData.id,
                 progress: preparedMesh.progress
             });
@@ -48,6 +47,7 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
             if (preparedMesh.indexUA !== null) {
                 dataPayload.buffers.set('indexUA', preparedMesh.indexUA);
             }
+            intermediateMessage.cmd = 'intermediate';
             intermediateMessage.addPayload(dataPayload);
 
             const transferables = intermediateMessage.pack(false);
@@ -56,9 +56,9 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
 
         this.localData.parser._onLoad = () => {
             const execMessage = new WorkerTaskMessage({
-                cmd: 'execComplete',
                 id: this.localData.id
             });
+            execMessage.cmd = 'execComplete';
             // no packing required as no Transferables here
             self.postMessage(execMessage);
         };

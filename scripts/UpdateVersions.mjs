@@ -2,11 +2,11 @@ import shell from 'shelljs';
 
 const versionPattern = '.*[0-9]\\.[0-9]\\.[0-9].*';
 
-const version_wtd_core_real = '2.2.0'
-const version_wtd_core_dev = '../../../wtd/packages/wtd-core'
+const version_wtd_core_real = '2.3.0-next.1';
+const version_wtd_core_dev = '../../../wtd/packages/wtd-core';
 
-const version_wtd_three_ext_real = '2.2.0'
-const version_wtd_three_ext_dev = '../../../wtd/packages/wtd-three-ext'
+const version_wtd_three_ext_real = '2.3.0-next.1';
+const version_wtd_three_ext_dev = '../../../wtd/packages/wtd-three-ext';
 
 const what = process.argv[2];
 

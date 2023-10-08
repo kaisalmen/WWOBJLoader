@@ -93,7 +93,7 @@ class AssetPipeline {
      * @param {Object3D} baseObject3d
      * @return {AssetPipeline}
      */
-    runPipeline(baseObject3d: Object3D) {
+    async runPipeline(baseObject3d: Object3D) {
         const onComplete = this.onComplete ? this.onComplete : (x: string) => {
             console.log('Done loading: ' + x);
         };
@@ -110,11 +110,6 @@ class AssetPipeline {
             return await Promise.all(loadPromises);
         };
 
-        loadResources(this.assetTasks)
-            .then(x => processAssets(x))
-            .then(x => onComplete(this.name!, x))
-            .catch(x => console.error(x));
-
         const processAssets = (loadResults: ResourceDescriptor[]) => {
             console.log('Count of loaded resources: ' + loadResults.length);
             let assetTask;
@@ -130,7 +125,13 @@ class AssetPipeline {
             return baseObject3d;
         };
 
-        return this;
+        try {
+            const resourceDescriptor = await loadResources(this.assetTasks);
+            const object3d = processAssets(resourceDescriptor);
+            onComplete(this.name!, object3d);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
 }

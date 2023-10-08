@@ -1,5 +1,9 @@
 # Changelog
 
+## 6.0.2
+
+- Upgrade to versions `2.3.0` of `wtd-core` and `wtd-three-ext`
+
 ## 6.0.1
 
 - Avoid window reference if absolute url is provided [#77](https://github.com/kaisalmen/WWOBJLoader/pull/77)
@@ -17,7 +21,7 @@
 
 - Clean-up and uncluttering
   - Remove all code related to worker online assembly and minification workarounds
-- Upgrade to versions `2.1.0` of `three-wtm` into `wtd-core`
+- Upgrade to versions `2.1.0` of `wtd-core` and `wtd-three-ext`
   - `OBJLoader2Parallel` is no longer using `WorkerTaskDirector`, but only using the generic `WorkerTask`
 - Transformed repository to npm workspaces
 - Switched to vite for development and bundle creation [#63](https://github.com/kaisalmen/WWOBJLoader/issues/63)

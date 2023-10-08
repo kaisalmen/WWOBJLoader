@@ -25,17 +25,18 @@
     "npm": "9.8.1"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.14.3",
-    "wwobjloader2": "~6.0.1",
-    "wtd-core": "2.2.0",
-    "wtd-three-ext": "2.2.0",
+    "@react-three/fiber": "8.14.3",
+    "wwobjloader2": "~6.0.2-next.0",
     "lil-gui": "~0.18.2",
     "http-server": "~14.1.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0"
   },
   "devDependencies": {
-    "@types/react": "~18.2.23",
-    "@types/react-dom": "~18.2.8"
+    "@types/react": "~18.2.25",
+    "@types/react-dom": "~18.2.11"
+  },
+  "peerDependencies": {
+    "three": "~0.156.0"
   }
 }

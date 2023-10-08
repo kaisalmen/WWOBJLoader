@@ -30,7 +30,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     private moduleWorker = true;
     private workerUrl = OBJLoader2Parallel.getModuleWorkerDefaultUrl();
     private terminateWorkerOnLoad = false;
-    private workerTask: WorkerTask | undefined;
+    private workerTask?: WorkerTask;
 
     /**
      *
@@ -139,9 +139,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @private
      */
     private initWorker() {
-        const initMessage = new WorkerTaskMessage({
-            cmd: 'init'
-        });
+        const initMessage = new WorkerTaskMessage({});
         const dataPayload = new DataPayload();
         dataPayload.params = {
             logging: {
@@ -156,7 +154,6 @@ export class OBJLoader2Parallel extends OBJLoader2 {
 
     private async executeWorker(objToParse: ArrayBuffer) {
         const execMessage = new WorkerTaskMessage({
-            cmd: 'execute',
             id: Math.floor(Math.random() * Math.floor(65536))
         });
         const dataPayload = new DataPayload();
@@ -177,24 +174,24 @@ export class OBJLoader2Parallel extends OBJLoader2 {
         execMessage.addPayload(dataPayload);
         const transferables = execMessage.pack(false);
 
-        await this.workerTask!.executeWorker({
-            message: execMessage,
-            taskTypeName: OBJLoader2Parallel.TASK_NAME,
-            onIntermediate: (message) => {
-                this.onWorkerMessage(message);
-            },
-            onComplete: (message) => {
-                this.onWorkerMessage(message);
-                if (this.terminateWorkerOnLoad) {
-                    this.workerTask!.dispose();
-                }
-            },
-            transferables: transferables
-        })
-            .then(() => {
-                console.log('Worker execution completed successfully.');
-            })
-            .catch((e: Error) => console.error(e));
+        try {
+            await this.workerTask?.executeWorker({
+                message: execMessage,
+                onIntermediate: (message) => {
+                    this.onWorkerMessage(message);
+                },
+                onComplete: (message) => {
+                    this.onWorkerMessage(message);
+                    if (this.terminateWorkerOnLoad) {
+                        this.workerTask!.dispose();
+                    }
+                },
+                transferables: transferables
+            });
+            console.log('Worker execution completed successfully.');
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     /**

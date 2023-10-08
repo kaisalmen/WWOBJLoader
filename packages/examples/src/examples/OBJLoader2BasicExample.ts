@@ -1,7 +1,7 @@
 import { Object3D, Vector3 } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader2, MtlObjBridge } from 'wwobjloader2';
-import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, SetupDefaults, ThreeDefaultSetup } from './ExampleCommons.js';
+import { CanvasDimensions, createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, ThreeDefaultSetup } from './ExampleCommons.js';
 
 export class OBJLoader2BasicExample implements ExampleDefinition {
 
@@ -9,7 +9,7 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
     private modelUrl: string;
     private materialUrl?: string;
 
-    constructor(elementToBindTo: HTMLElement | null, setupDefaults: SetupDefaults, modelUrl: string, materialUrl?: string) {
+    constructor(canvas: HTMLCanvasElement | null, canvasDimensions: CanvasDimensions, modelUrl: string, materialUrl?: string) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 500.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -19,7 +19,7 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
         };
         this.modelUrl = modelUrl;
         this.materialUrl = materialUrl;
-        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults, setupDefaults);
+        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, canvasDimensions);
     }
 
     getSetup() {
