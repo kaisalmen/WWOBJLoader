@@ -1,8 +1,9 @@
 # Changelog
 
-## 6.0.2
+## 6.1.0 - 2023-10-21
 
-- Upgrade to versions `2.3.0` of `wtd-core` and `wtd-three-ext`
+- Upgrade to versions `2.3.0` of `wtd-core` and `wtd-three-ext`.
+- `OBJLoader2Worker` can be re-executed. This was a regression, but also the code has been re-worked.
 
 ## 6.0.1
 
