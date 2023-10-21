@@ -1,30 +1,35 @@
 import {
-    WorkerTaskDirectorDefaultWorker,
+    WorkerTaskDefaultWorker,
     WorkerTaskMessage,
     DataPayloadHandler,
     DataPayload,
-    WorkerTaskMessageType
+    WorkerTaskMessageType,
+    AssociatedArrayType
 } from 'wtd-core';
 import {
     OBJLoader2Parser
 } from '../OBJLoader2Parser.js';
 
-class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
+type LocalData = {
+    debugLogging: boolean;
+    params: AssociatedArrayType<unknown | string | object>;
+    buffer?: ArrayBufferLike;
+    materialNames: Set<string>;
+}
 
-    private localData = {
-        id: 0,
-        parser: new OBJLoader2Parser(),
-        buffer: undefined as undefined | ArrayBufferLike,
-        materialNames: undefined as undefined | Set<string>
+class OBJLoader2Worker extends WorkerTaskDefaultWorker {
+
+    private localData: LocalData = {
+        params: {},
+        debugLogging: false,
+        materialNames: new Set<string>()
     };
 
-    constructor() {
-        super();
-
-        this.localData.parser._onAssetAvailable = preparedMesh => {
+    initParser(id: number) {
+        const parser = new OBJLoader2Parser();
+        parser._onAssetAvailable = preparedMesh => {
             const intermediateMessage = new WorkerTaskMessage({
-                cmd: 'intermediate',
-                id: this.localData.id,
+                id,
                 progress: preparedMesh.progress
             });
 
@@ -48,32 +53,33 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
             if (preparedMesh.indexUA !== null) {
                 dataPayload.buffers.set('indexUA', preparedMesh.indexUA);
             }
+            intermediateMessage.cmd = 'intermediate';
             intermediateMessage.addPayload(dataPayload);
 
             const transferables = intermediateMessage.pack(false);
             self.postMessage(intermediateMessage, transferables);
         };
 
-        this.localData.parser._onLoad = () => {
-            const execMessage = new WorkerTaskMessage({
-                cmd: 'execComplete',
-                id: this.localData.id
-            });
+        parser._onLoad = () => {
+            const execMessage = new WorkerTaskMessage({ id });
+            execMessage.cmd = 'execComplete';
             // no packing required as no Transferables here
             self.postMessage(execMessage);
         };
 
-        this.localData.parser._onProgress = text => {
-            if (this.localData.parser.isDebugLoggingEnabled()) {
+        parser._onProgress = text => {
+            if (parser?.isDebugLoggingEnabled()) {
                 console.debug('WorkerRunner: progress: ' + text);
             }
         };
+
+        return parser;
     }
 
     init(message: WorkerTaskMessageType) {
         const wtm = this.processMessage(message);
 
-        if (this.localData.parser.isDebugLoggingEnabled()) {
+        if (this.localData.debugLogging) {
             console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
@@ -82,17 +88,22 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
     }
 
     execute(message: WorkerTaskMessageType) {
-        if (this.localData.parser.isUsedBefore()) {
-            this.localData.parser = new OBJLoader2Parser();
-        }
         this.processMessage(message);
 
-        if (this.localData.parser.isDebugLoggingEnabled()) {
+        const parser = this.initParser(message.id ?? 0);
+
+        // apply previously stored parameters (init or execute)
+        DataPayloadHandler.applyProperties(parser, this.localData.params, false);
+        if (this.localData.materialNames) {
+            parser?.setMaterialNames(this.localData.materialNames);
+        }
+
+        if (parser.isDebugLoggingEnabled()) {
             console.log(`OBJLoader2Worker#execute: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
         if (this.localData.buffer) {
-            this.localData.parser.execute(this.localData.buffer);
+            parser.execute(this.localData.buffer);
         }
         else {
             self.postMessage(new Error('No ArrayBuffer was provided for parsing.'));
@@ -100,12 +111,10 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
     }
 
     private processMessage(message: WorkerTaskMessageType) {
-        this.localData.id = message.id ?? this.localData.id;
-
         const wtm = WorkerTaskMessage.unpack(message, false);
         const dataPayload = wtm.payloads[0];
 
-        DataPayloadHandler.applyProperties(this.localData.parser, dataPayload.params!, false);
+        DataPayloadHandler.applyProperties(this.localData.params, dataPayload.params!, true);
         const modelData = dataPayload.buffers?.get('modelData');
         if (modelData) {
             this.localData.buffer = modelData;
@@ -117,10 +126,11 @@ class OBJLoader2Worker extends WorkerTaskDirectorDefaultWorker {
             }
         }
 
-        if (this.localData.materialNames) {
-            this.localData.parser.setMaterialNames(this.localData.materialNames);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const logging = this.localData.params?.logging as any ?? {};
+        if (Object.hasOwn(logging, 'enabled') && Object.hasOwn(logging, 'debug')) {
+            this.localData.debugLogging = logging.enabled === true && logging.debug === true;
         }
-
         return wtm;
     }
 }

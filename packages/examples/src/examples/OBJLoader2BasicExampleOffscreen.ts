@@ -23,6 +23,20 @@ export class OBJLoader2BasicExampleOffscreen {
             const canvas = document.getElementById('example') as HTMLCanvasElement;
             const offscreen = canvas.transferControlToOffscreen();
 
+            const resize = () => {
+                const intermediateMessage = new WorkerTaskMessage();
+                const dataPayload = new DataPayload();
+                dataPayload.params = {
+                    $type: 'resize',
+                    width: canvas.offsetWidth,
+                    height: canvas.offsetHeight,
+                    pixelRatio: window.devicePixelRatio
+                };
+                intermediateMessage.addPayload(dataPayload);
+                workerTask.sentMessage(intermediateMessage);
+            };
+            window.addEventListener('resize', () => resize(), false);
+
             const initMessage = new WorkerTaskMessage({ name: taskName });
             const resultInit = await workerTask.initWorker(initMessage);
             console.log(`initTaskType then: ${resultInit}`);
@@ -39,7 +53,6 @@ export class OBJLoader2BasicExampleOffscreen {
             };
             execMessage.addPayload(dataPayload);
             const resultExec = await workerTask.executeWorker({
-                taskTypeName: execMessage.name,
                 message: execMessage,
                 transferables: [offscreen],
                 onComplete: (m: WorkerTaskMessageType) => {

@@ -28,29 +28,31 @@
     "dev": "vite",
     "dev:debug": "vite --debug --force",
     "verify": "npm run verify --workspace packages/examples",
-    "prerelease": "npm run build && npm run doc && shx cp -f README.md packages/objloader2/README.md",
+    "release:prepare": "npm run reset:repo && npm ci && npm run build && npm run doc && shx cp -f README.md packages/objloader2/README.md",
     "test": "vitest",
     "update:versions:dev": "node ./scripts/UpdateVersions.mjs dev",
     "update:versions:real": "node ./scripts/UpdateVersions.mjs real",
-    "update:reinstall": "node ./scripts/UpdateVersions.mjs reinstall"
+    "update:reinstall": "node ./scripts/UpdateVersions.mjs reinstall",
+    "reset:repo:dry": "git clean -f -d -x --dry-run --exclude=packages/examples/models --exclude=archive",
+    "reset:repo": "git clean -f -d -x --exclude=packages/examples/models --exclude=archive"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "~6.7.3",
-    "@types/node": "~18.18.0",
+    "@typescript-eslint/eslint-plugin": "~6.8.0",
+    "@types/node": "~18.18.6",
     "editorconfig": "~2.0.0",
-    "eslint": "~8.50.0",
+    "eslint": "~8.52.0",
     "shelljs": "~0.8.5",
     "shx": "~0.3.4",
-    "typedoc": "~0.25.1",
+    "typedoc": "~0.25.2",
     "typedoc-plugin-markdown": "~3.16.0",
     "typescript": "~5.2.2",
-    "vite": "~4.4.9",
+    "vite": "~4.5.0",
     "vitest": "~0.34.6"
   },
   "volta": {
-    "node": "18.18.0",
+    "node": "18.18.2",
     "npm": "9.8.1"
   },
   "workspaces": [

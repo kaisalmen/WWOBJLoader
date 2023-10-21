@@ -20,7 +20,12 @@
 
 			const modelUrl = new URL('./models/obj/main/female02/female02.obj', window.location.href).href;
 			const materialUrl = new URL('./models/obj/main/female02/female02.mtl', window.location.href).href;
-			const exampleApp = new OBJLoader2BasicExample(document.getElementById('example'), undefined, modelUrl, materialUrl);
+			const canvas = document.getElementById('example');
+			const exampleApp = new OBJLoader2BasicExample(canvas,  {
+				width: canvas?.offsetWidth ?? 0,
+				height: canvas?.offsetHeight ?? 0,
+				pixelRatio: window.devicePixelRatio
+			}, modelUrl, materialUrl);
 			executeExample(exampleApp);
 		</script>
 	</body>

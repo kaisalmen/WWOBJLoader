@@ -43,7 +43,7 @@ export class OBJLoader2Stage implements ExampleDefinition {
         objsZomaxSink: undefined
     };
 
-    constructor(elementToBindTo: HTMLElement | null) {
+    constructor(canvas: HTMLCanvasElement | null) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 750.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -51,7 +51,11 @@ export class OBJLoader2Stage implements ExampleDefinition {
             far: 10000,
             fov: 45
         };
-        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
+        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, {
+            width: canvas?.offsetWidth ?? 0,
+            height: canvas?.offsetHeight ?? 0,
+            pixelRatio: window.devicePixelRatio
+        });
         const geometry = new BoxGeometry(10, 10, 10);
         const material = new MeshNormalMaterial();
         this.cube = new Mesh(geometry, material);

@@ -21,21 +21,20 @@
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
-    "node": "18.18.0",
+    "node": "18.18.2",
     "npm": "9.8.1"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.14.3",
-    "wwobjloader2": "~6.0.1",
-    "wtd-core": "2.2.0",
-    "wtd-three-ext": "2.2.0",
+    "@react-three/fiber": "~8.15.1",
+    "wwobjloader2": "~6.1.0",
     "lil-gui": "~0.18.2",
-    "http-server": "~14.1.1",
     "react": "~18.2.0",
-    "react-dom": "~18.2.0"
+    "react-dom": "~18.2.0",
+    "three": "~0.157.0"
   },
   "devDependencies": {
-    "@types/react": "~18.2.23",
-    "@types/react-dom": "~18.2.8"
+    "@types/react": "~18.2.31",
+    "@types/react-dom": "~18.2.14",
+    "http-server": "~14.1.1"
   }
 }

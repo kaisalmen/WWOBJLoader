@@ -6,7 +6,7 @@ export class OBJLoader2ParalleleBasicExample implements ExampleDefinition {
 
     private setup: ThreeDefaultSetup;
 
-    constructor(elementToBindTo: HTMLElement | null) {
+    constructor(canvas: HTMLCanvasElement | null) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 500.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -14,7 +14,11 @@ export class OBJLoader2ParalleleBasicExample implements ExampleDefinition {
             far: 10000,
             fov: 45
         };
-        this.setup = createThreeDefaultSetup(elementToBindTo, cameraDefaults);
+        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, {
+            width: canvas?.offsetWidth ?? 0,
+            height: canvas?.offsetHeight ?? 0,
+            pixelRatio: window.devicePixelRatio
+        });
     }
 
     getSetup() {

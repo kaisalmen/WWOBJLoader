@@ -9,11 +9,10 @@ export type CameraDefaults = {
     fov: number;
 };
 
-export type SetupDefaults = {
-    useTrackBall?: boolean;
-    width?: number;
-    height?: number;
-    pixelRatio?: number;
+export type CanvasDimensions = {
+    width: number;
+    height: number;
+    pixelRatio: number;
 };
 
 export type ExampleDefinition = {
@@ -57,48 +56,41 @@ export const executeExample = (app: ExampleDefinition) => {
 
 export type ThreeDefaultSetup = {
     renderer: THREE.WebGLRenderer;
-    canvas: HTMLElement;
+    canvas: HTMLCanvasElement;
+    canvasDimensions: CanvasDimensions;
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     cameraTarget: THREE.Vector3;
     cameraDefaults: CameraDefaults;
     controls?: ArcballControls;
-    setupDefaults?: SetupDefaults;
 }
 
-export const createThreeDefaultSetup = (elementToBindTo: HTMLElement | null, cameraDefaults: CameraDefaults, setupDefaults?: SetupDefaults): ThreeDefaultSetup => {
-    if (elementToBindTo === null) {
+export const createThreeDefaultSetup = (canvas: HTMLCanvasElement | null, cameraDefaults: CameraDefaults,
+    canvasDimensions: CanvasDimensions): ThreeDefaultSetup => {
+    if (canvas === null) {
         throw Error('Bad element HTML given as canvas.');
     }
 
     const setup = {} as ThreeDefaultSetup;
-    setup.canvas = elementToBindTo;
+    setup.canvas = canvas;
     setup.renderer = new WebGLRenderer({
         canvas: setup.canvas,
         antialias: true
     });
     setup.renderer.setClearColor(0x050505);
 
-    let useTrackBall = true;
-    if (setupDefaults) {
-        setup.setupDefaults = setupDefaults;
-        if (setupDefaults.pixelRatio) {
-            setup.renderer.setPixelRatio(setupDefaults.pixelRatio);
-        }
-        if (setupDefaults.width && setupDefaults.height) {
-            setup.renderer.setSize(setupDefaults.width, setupDefaults.height, false);
-        }
-        useTrackBall = setupDefaults?.useTrackBall === true;
-    }
+    setup.canvasDimensions = canvasDimensions;
+    setup.renderer.setPixelRatio(canvasDimensions.pixelRatio);
+    setup.renderer.setSize(canvasDimensions.width, canvasDimensions.height, false);
     setup.scene = new Scene();
 
     setup.cameraDefaults = cameraDefaults;
     setup.cameraTarget = setup.cameraDefaults.posCameraTarget;
-    setup.camera = new PerspectiveCamera(setup.cameraDefaults.fov, recalcAspectRatio(setup.canvas, setup.setupDefaults),
+    setup.camera = new PerspectiveCamera(setup.cameraDefaults.fov, recalcAspectRatio(setup.canvasDimensions),
         setup.cameraDefaults.near, setup.cameraDefaults.far);
     resetCamera(setup);
 
-    if (useTrackBall) {
+    if (!isWorker()) {
         setup.controls = new ArcballControls(setup.camera, setup.renderer.domElement);
     }
 
@@ -120,12 +112,8 @@ export const createThreeDefaultSetup = (elementToBindTo: HTMLElement | null, cam
     return setup;
 };
 
-export const recalcAspectRatio = (htmlElement: HTMLElement, setupDefaults?: SetupDefaults) => {
-    if (setupDefaults?.width && setupDefaults?.height) {
-        return (setupDefaults.height === 0) ? 1 : setupDefaults.width / setupDefaults.height;
-    } else {
-        return (htmlElement.offsetHeight === 0) ? 1 : htmlElement.offsetWidth / htmlElement.offsetHeight;
-    }
+export const recalcAspectRatio = (canvasDimensions: CanvasDimensions) => {
+    return (canvasDimensions.height === 0) ? 1 : canvasDimensions.width / canvasDimensions.height;
 };
 
 export const resetCamera = (setup: ThreeDefaultSetup) => {
@@ -135,18 +123,14 @@ export const resetCamera = (setup: ThreeDefaultSetup) => {
 };
 
 export const updateCamera = (setup: ThreeDefaultSetup) => {
-    setup.camera.aspect = recalcAspectRatio(setup.canvas, setup.setupDefaults);
+    setup.camera.aspect = recalcAspectRatio(setup.canvasDimensions);
     setup.camera.lookAt(setup.cameraTarget);
     setup.camera.updateProjectionMatrix();
 };
 
 export const resizeDisplayGL = (setup: ThreeDefaultSetup) => {
     setup.controls?.update();
-    if (setup.setupDefaults?.width && setup.setupDefaults?.height) {
-        setup.renderer.setSize(setup.setupDefaults.width, setup.setupDefaults.height, false);
-    } else {
-        setup.renderer.setSize(setup.canvas.offsetWidth, setup.canvas.offsetHeight, false);
-    }
+    setup.renderer.setSize(setup.canvasDimensions.width, setup.canvasDimensions.height, false);
     updateCamera(setup);
 };
 
