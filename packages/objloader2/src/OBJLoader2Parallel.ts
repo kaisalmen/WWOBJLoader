@@ -3,10 +3,12 @@ import {
     LoadingManager
 } from 'three';
 import {
+    DataPayload,
     WorkerTask,
     WorkerTaskMessage,
-    DataPayload,
     WorkerTaskMessageType,
+    pack,
+    unpack,
 } from 'wtd-core';
 import { CallbackOnLoadType, CallbackOnMeshAlterType, FileLoaderOnErrorType, FileLoaderOnProgressType, OBJLoader2 } from './OBJLoader2.js';
 import { PreparedMeshType } from './OBJLoader2Parser.js';
@@ -141,7 +143,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     private initWorker() {
         const initMessage = new WorkerTaskMessage({});
         const dataPayload = new DataPayload();
-        dataPayload.params = {
+        dataPayload.message.params = {
             logging: {
                 enabled: this.parser.isLoggingEnabled(),
                 debug: this.parser.isDebugLoggingEnabled()
@@ -157,7 +159,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
             id: Math.floor(Math.random() * Math.floor(65536))
         });
         const dataPayload = new DataPayload();
-        dataPayload.params = {
+        dataPayload.message.params = {
             modelName: this.modelName,
             useIndices: this.useIndices,
             disregardNormals: this.disregardNormals,
@@ -168,11 +170,11 @@ export class OBJLoader2Parallel extends OBJLoader2 {
                 debug: this.parser.isDebugLoggingEnabled()
             }
         };
-        dataPayload.buffers.set('modelData', objToParse);
-        dataPayload.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
+        dataPayload.message.buffers?.set('modelData', objToParse);
+        dataPayload.message.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
 
         execMessage.addPayload(dataPayload);
-        const transferables = execMessage.pack(false);
+        const transferables = pack(execMessage.payloads, false);
 
         try {
             await this.workerTask?.executeWorker({
@@ -200,12 +202,12 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @param {object} materialMetaInfo
      */
     private onWorkerMessage(message: WorkerTaskMessageType) {
-        const wtm = WorkerTaskMessage.unpack(message, false);
+        const wtm = unpack(message, false);
         if (wtm.cmd === 'intermediate') {
 
-            const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] : undefined;
-            if (dataPayload && dataPayload.params) {
-                const preparedMesh = dataPayload.params.preparedMesh as PreparedMeshType;
+            const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] as DataPayload : undefined;
+            if (dataPayload && dataPayload.message.params) {
+                const preparedMesh = dataPayload.message.params.preparedMesh as PreparedMeshType;
                 const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.parser.isDebugLoggingEnabled());
                 if (mesh) {
                     this._onMeshAlter(mesh, preparedMesh.materialMetaInfo);

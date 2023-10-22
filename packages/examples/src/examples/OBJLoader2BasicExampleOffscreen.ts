@@ -26,7 +26,7 @@ export class OBJLoader2BasicExampleOffscreen {
             const resize = () => {
                 const intermediateMessage = new WorkerTaskMessage();
                 const dataPayload = new DataPayload();
-                dataPayload.params = {
+                dataPayload.message.params = {
                     $type: 'resize',
                     width: canvas.offsetWidth,
                     height: canvas.offsetHeight,
@@ -44,7 +44,7 @@ export class OBJLoader2BasicExampleOffscreen {
             // once the init Promise returns enqueue the execution
             const execMessage = new WorkerTaskMessage({ name: taskName });
             const dataPayload = new DataPayload();
-            dataPayload.params = {
+            dataPayload.message.params = {
                 drawingSurface: offscreen,
                 width: canvas.clientWidth,
                 height: canvas.clientHeight,

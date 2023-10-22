@@ -1,10 +1,13 @@
 import {
     WorkerTaskDefaultWorker,
     WorkerTaskMessage,
-    DataPayloadHandler,
     DataPayload,
     WorkerTaskMessageType,
-    AssociatedArrayType
+    AssociatedArrayType,
+    pack,
+    createFromExisting,
+    applyProperties,
+    unpack
 } from 'wtd-core';
 import {
     OBJLoader2Parser
@@ -34,29 +37,29 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
             });
 
             const dataPayload = new DataPayload();
-            if (!dataPayload.params) {
-                dataPayload.params = {};
+            if (!dataPayload.message.params) {
+                dataPayload.message.params = {};
             }
-            dataPayload.params.preparedMesh = preparedMesh;
+            dataPayload.message.params.preparedMesh = preparedMesh;
             if (preparedMesh.vertexFA !== null) {
-                dataPayload.buffers.set('vertexFA', preparedMesh.vertexFA);
+                dataPayload.message.buffers?.set('vertexFA', preparedMesh.vertexFA);
             }
             if (preparedMesh.normalFA !== null) {
-                dataPayload.buffers.set('normalFA', preparedMesh.normalFA);
+                dataPayload.message.buffers?.set('normalFA', preparedMesh.normalFA);
             }
             if (preparedMesh.uvFA !== null) {
-                dataPayload.buffers.set('uvFA', preparedMesh.uvFA);
+                dataPayload.message.buffers?.set('uvFA', preparedMesh.uvFA);
             }
             if (preparedMesh.colorFA !== null) {
-                dataPayload.buffers.set('colorFA', preparedMesh.colorFA);
+                dataPayload.message.buffers?.set('colorFA', preparedMesh.colorFA);
             }
             if (preparedMesh.indexUA !== null) {
-                dataPayload.buffers.set('indexUA', preparedMesh.indexUA);
+                dataPayload.message.buffers?.set('indexUA', preparedMesh.indexUA);
             }
             intermediateMessage.cmd = 'intermediate';
             intermediateMessage.addPayload(dataPayload);
 
-            const transferables = intermediateMessage.pack(false);
+            const transferables = pack(intermediateMessage.payloads, false);
             self.postMessage(intermediateMessage, transferables);
         };
 
@@ -83,7 +86,7 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
             console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
-        const initComplete = WorkerTaskMessage.createFromExisting(wtm, 'initComplete');
+        const initComplete = createFromExisting(wtm, 'initComplete');
         self.postMessage(initComplete);
     }
 
@@ -93,7 +96,7 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
         const parser = this.initParser(message.id ?? 0);
 
         // apply previously stored parameters (init or execute)
-        DataPayloadHandler.applyProperties(parser, this.localData.params, false);
+        applyProperties(parser, this.localData.params, false);
         if (this.localData.materialNames) {
             parser?.setMaterialNames(this.localData.materialNames);
         }
@@ -111,18 +114,18 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
     }
 
     private processMessage(message: WorkerTaskMessageType) {
-        const wtm = WorkerTaskMessage.unpack(message, false);
-        const dataPayload = wtm.payloads[0];
+        const wtm = unpack(message, false);
+        const dataPayload = wtm.payloads[0] as DataPayload;
 
-        DataPayloadHandler.applyProperties(this.localData.params, dataPayload.params!, true);
-        const modelData = dataPayload.buffers?.get('modelData');
+        applyProperties(this.localData.params, dataPayload.message.params, true);
+        const modelData = dataPayload.message.buffers?.get('modelData');
         if (modelData) {
             this.localData.buffer = modelData;
         }
 
-        if (dataPayload.params) {
-            if (dataPayload.params.materialNames) {
-                this.localData.materialNames = dataPayload.params.materialNames as Set<string>;
+        if (dataPayload.message.params) {
+            if (dataPayload.message.params.materialNames) {
+                this.localData.materialNames = dataPayload.message.params.materialNames as Set<string>;
             }
         }
 
