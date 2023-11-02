@@ -5,6 +5,7 @@ import {
 import {
     DataPayload,
     WorkerTask,
+    WorkerTaskCommandResponse,
     WorkerTaskMessage,
     WorkerTaskMessageType,
     pack,
@@ -179,7 +180,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
         try {
             await this.workerTask?.executeWorker({
                 message: execMessage,
-                onIntermediate: (message) => {
+                onIntermediateConfirm: (message) => {
                     this.onWorkerMessage(message);
                 },
                 onComplete: (message) => {
@@ -203,7 +204,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      */
     private onWorkerMessage(message: WorkerTaskMessageType) {
         const wtm = unpack(message, false);
-        if (wtm.cmd === 'intermediate') {
+        if (wtm.cmd === WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM) {
 
             const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] as DataPayload : undefined;
             if (dataPayload && dataPayload.message.params) {

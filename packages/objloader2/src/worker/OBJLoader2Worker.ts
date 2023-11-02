@@ -7,7 +7,8 @@ import {
     pack,
     createFromExisting,
     applyProperties,
-    unpack
+    unpack,
+    WorkerTaskCommandResponse
 } from 'wtd-core';
 import {
     OBJLoader2Parser
@@ -56,7 +57,7 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
             if (preparedMesh.indexUA !== null) {
                 dataPayload.message.buffers?.set('indexUA', preparedMesh.indexUA);
             }
-            intermediateMessage.cmd = 'intermediate';
+            intermediateMessage.cmd = WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM;
             intermediateMessage.addPayload(dataPayload);
 
             const transferables = pack(intermediateMessage.payloads, false);
