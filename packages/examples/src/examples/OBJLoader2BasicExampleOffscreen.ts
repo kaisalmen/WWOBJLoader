@@ -38,7 +38,7 @@ export class OBJLoader2BasicExampleOffscreen {
             window.addEventListener('resize', () => resize(), false);
 
             const initMessage = new WorkerTaskMessage({ name: taskName });
-            const resultInit = await workerTask.initWorker(initMessage);
+            const resultInit = await workerTask.initWorker({ message: initMessage });
             console.log(`initTaskType then: ${resultInit}`);
 
             // once the init Promise returns enqueue the execution

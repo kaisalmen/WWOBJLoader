@@ -1,14 +1,15 @@
 import {
-    WorkerTaskDefaultWorker,
-    WorkerTaskMessage,
-    DataPayload,
-    WorkerTaskMessageType,
-    AssociatedArrayType,
-    pack,
-    createFromExisting,
     applyProperties,
+    comRouting,
+    createFromExisting,
+    pack,
     unpack,
-    WorkerTaskCommandResponse
+    AssociatedArrayType,
+    DataPayload,
+    WorkerTaskCommandResponse,
+    WorkerTaskMessage,
+    WorkerTaskMessageType,
+    WorkerTaskWorker
 } from 'wtd-core';
 import {
     OBJLoader2Parser
@@ -21,7 +22,7 @@ type LocalData = {
     materialNames: Set<string>;
 }
 
-class OBJLoader2Worker extends WorkerTaskDefaultWorker {
+class OBJLoader2Worker implements WorkerTaskWorker {
 
     private localData: LocalData = {
         params: {},
@@ -66,7 +67,7 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
 
         parser._onLoad = () => {
             const execMessage = new WorkerTaskMessage({ id });
-            execMessage.cmd = 'execComplete';
+            execMessage.cmd = WorkerTaskCommandResponse.EXECUTE_COMPLETE;
             // no packing required as no Transferables here
             self.postMessage(execMessage);
         };
@@ -87,7 +88,7 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
             console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
-        const initComplete = createFromExisting(wtm, 'initComplete');
+        const initComplete = createFromExisting(wtm, WorkerTaskCommandResponse.INIT_COMPLETE);
         self.postMessage(initComplete);
     }
 
@@ -140,7 +141,4 @@ class OBJLoader2Worker extends WorkerTaskDefaultWorker {
 }
 
 const worker = new OBJLoader2Worker();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-self.onmessage = (message: MessageEvent<any>) => {
-    worker.comRouting(message);
-};
+self.onmessage = message => comRouting(worker, message);

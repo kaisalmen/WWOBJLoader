@@ -1,23 +1,23 @@
 import {
-    DataPayload,
-    WorkerTaskDefaultWorker,
-    WorkerTaskMessageType,
+    pack,
+    comRouting,
     createFromExisting,
-    pack
+    DataPayload,
+    WorkerTaskCommandResponse,
+    WorkerTaskWorker,
+    WorkerTaskMessageType
 } from 'wtd-core';
 import { OBJLoader2BasicExample } from '../examples/OBJLoader2BasicExample.js';
 import { executeExample, resizeDisplayGL } from '../examples/ExampleCommons.js';
 
-declare const self: DedicatedWorkerGlobalScope;
-
-export class HelloWorlThreedWorker extends WorkerTaskDefaultWorker {
+export class HelloWorlThreedWorker implements WorkerTaskWorker {
 
     private objLoader2BasicExample?: OBJLoader2BasicExample;
 
     init(message: WorkerTaskMessageType) {
         console.log(`HelloWorldWorker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
 
-        const initComplete = createFromExisting(message, 'initComplete');
+        const initComplete = createFromExisting(message, WorkerTaskCommandResponse.INIT_COMPLETE);
         self.postMessage(initComplete);
     }
 
@@ -33,7 +33,7 @@ export class HelloWorlThreedWorker extends WorkerTaskDefaultWorker {
             resizeDisplayGL(this.objLoader2BasicExample.getSetup());
         }
         if (dataPayload.message.params?.$type === 'terminate') {
-            const execComplete = createFromExisting(message, 'execComplete');
+            const execComplete = createFromExisting(message, WorkerTaskCommandResponse.EXECUTE_COMPLETE);
             const transferables = pack(execComplete.payloads, false);
             self.postMessage(execComplete, transferables);
         }
@@ -56,4 +56,4 @@ export class HelloWorlThreedWorker extends WorkerTaskDefaultWorker {
 }
 
 const worker = new HelloWorlThreedWorker();
-self.onmessage = message => worker.comRouting(message);
+self.onmessage = message => comRouting(worker, message);

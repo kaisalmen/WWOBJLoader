@@ -152,7 +152,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
         };
 
         initMessage.addPayload(dataPayload);
-        return this.workerTask!.initWorker(initMessage);
+        return this.workerTask!.initWorker({ message: initMessage });
     }
 
     private async executeWorker(objToParse: ArrayBuffer) {
@@ -219,7 +219,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
                 console.error('Received intermediate message without a proper payload');
             }
         }
-        else if (wtm.cmd === 'execComplete') {
+        else if (wtm.cmd === WorkerTaskCommandResponse.EXECUTE_COMPLETE) {
             this._onLoad();
         }
         else {
