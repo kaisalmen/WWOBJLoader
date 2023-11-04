@@ -7,9 +7,7 @@ import {
     WorkerTask,
     WorkerTaskCommandResponse,
     WorkerTaskMessage,
-    WorkerTaskMessageType,
-    pack,
-    unpack,
+    WorkerTaskMessageType
 } from 'wtd-core';
 import { CallbackOnLoadType, CallbackOnMeshAlterType, FileLoaderOnErrorType, FileLoaderOnProgressType, OBJLoader2 } from './OBJLoader2.js';
 import { PreparedMeshType } from './OBJLoader2Parser.js';
@@ -175,7 +173,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
         dataPayload.message.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
 
         execMessage.addPayload(dataPayload);
-        const transferables = pack(execMessage.payloads, false);
+        const transferables = WorkerTaskMessage.pack(execMessage.payloads, false);
 
         try {
             await this.workerTask?.executeWorker({
@@ -203,7 +201,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @param {object} materialMetaInfo
      */
     private onWorkerMessage(message: WorkerTaskMessageType) {
-        const wtm = unpack(message, false);
+        const wtm = WorkerTaskMessage.unpack(message, false);
         if (wtm.cmd === WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM) {
 
             const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] as DataPayload : undefined;

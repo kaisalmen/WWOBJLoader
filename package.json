@@ -28,7 +28,7 @@
     "dev": "vite",
     "dev:debug": "vite --debug --force",
     "verify": "npm run verify --workspace packages/examples",
-    "release:prepare": "npm run reset:repo && npm ci && npm run build && npm run doc && shx cp -f README.md packages/objloader2/README.md",
+    "release:prepare": "npm run reset:repo && npm ci && npm run lint && npm run build && npm run doc && shx cp -f README.md packages/objloader2/README.md",
     "test": "vitest",
     "update:versions:dev": "node ./scripts/UpdateVersions.mjs dev",
     "update:versions:real": "node ./scripts/UpdateVersions.mjs real",

@@ -1,9 +1,6 @@
 import {
     applyProperties,
     comRouting,
-    createFromExisting,
-    pack,
-    unpack,
     AssociatedArrayType,
     DataPayload,
     WorkerTaskCommandResponse,
@@ -61,7 +58,7 @@ class OBJLoader2Worker implements WorkerTaskWorker {
             intermediateMessage.cmd = WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM;
             intermediateMessage.addPayload(dataPayload);
 
-            const transferables = pack(intermediateMessage.payloads, false);
+            const transferables = WorkerTaskMessage.pack(intermediateMessage.payloads, false);
             self.postMessage(intermediateMessage, transferables);
         };
 
@@ -88,7 +85,7 @@ class OBJLoader2Worker implements WorkerTaskWorker {
             console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
-        const initComplete = createFromExisting(wtm, WorkerTaskCommandResponse.INIT_COMPLETE);
+        const initComplete = WorkerTaskMessage.createFromExisting(wtm, WorkerTaskCommandResponse.INIT_COMPLETE);
         self.postMessage(initComplete);
     }
 
@@ -116,7 +113,7 @@ class OBJLoader2Worker implements WorkerTaskWorker {
     }
 
     private processMessage(message: WorkerTaskMessageType) {
-        const wtm = unpack(message, false);
+        const wtm = WorkerTaskMessage.unpack(message, false);
         const dataPayload = wtm.payloads[0] as DataPayload;
 
         applyProperties(this.localData.params, dataPayload.message.params, true);

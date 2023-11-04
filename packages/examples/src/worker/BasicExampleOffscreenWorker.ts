@@ -1,11 +1,10 @@
 import {
-    pack,
     comRouting,
-    createFromExisting,
     DataPayload,
     WorkerTaskCommandResponse,
-    WorkerTaskWorker,
-    WorkerTaskMessageType
+    WorkerTaskMessage,
+    WorkerTaskMessageType,
+    WorkerTaskWorker
 } from 'wtd-core';
 import { OBJLoader2BasicExample } from '../examples/OBJLoader2BasicExample.js';
 import { executeExample, resizeDisplayGL } from '../examples/ExampleCommons.js';
@@ -17,7 +16,7 @@ export class HelloWorlThreedWorker implements WorkerTaskWorker {
     init(message: WorkerTaskMessageType) {
         console.log(`HelloWorldWorker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
 
-        const initComplete = createFromExisting(message, WorkerTaskCommandResponse.INIT_COMPLETE);
+        const initComplete = WorkerTaskMessage.createFromExisting(message, WorkerTaskCommandResponse.INIT_COMPLETE);
         self.postMessage(initComplete);
     }
 
@@ -33,8 +32,8 @@ export class HelloWorlThreedWorker implements WorkerTaskWorker {
             resizeDisplayGL(this.objLoader2BasicExample.getSetup());
         }
         if (dataPayload.message.params?.$type === 'terminate') {
-            const execComplete = createFromExisting(message, WorkerTaskCommandResponse.EXECUTE_COMPLETE);
-            const transferables = pack(execComplete.payloads, false);
+            const execComplete = WorkerTaskMessage.createFromExisting(message, WorkerTaskCommandResponse.EXECUTE_COMPLETE);
+            const transferables = WorkerTaskMessage.pack(execComplete.payloads, false);
             self.postMessage(execComplete, transferables);
         }
     }
