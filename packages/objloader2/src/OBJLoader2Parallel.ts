@@ -6,8 +6,7 @@ import {
     DataPayload,
     WorkerTask,
     WorkerTaskCommandResponse,
-    WorkerTaskMessage,
-    WorkerTaskMessageType
+    WorkerTaskMessage
 } from 'wtd-core';
 import { CallbackOnLoadType, CallbackOnMeshAlterType, FileLoaderOnErrorType, FileLoaderOnProgressType, OBJLoader2 } from './OBJLoader2.js';
 import { PreparedMeshType } from './OBJLoader2Parser.js';
@@ -113,24 +112,27 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     private async initWorkerParse(objToParse: ArrayBuffer) {
-        this.initWorkerTask();
+        this.workerTask = new WorkerTask({
+            taskName: OBJLoader2Parallel.TASK_NAME,
+            workerId: 1,
+            workerConfig: {
+                $type: 'WorkerConfigParams',
+                workerType: this.moduleWorker ? 'module' : 'classic',
+                blob: false,
+                url: this.workerUrl
+            },
+            verbose: this.parser.isDebugLoggingEnabled()
+        });
 
-        await this.initWorker()
-            .then(() => {
-                if (this.parser.isDebugLoggingEnabled()) {
-                    console.log('OBJLoader2Parallel init was performed');
-                }
-                this.executeWorker(objToParse);
-
-            }).catch((e: Error) => console.error(e));
-    }
-
-    private initWorkerTask() {
-        this.workerTask = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
-            module: this.moduleWorker,
-            blob: false,
-            url: this.workerUrl
-        }, this.parser.isDebugLoggingEnabled());
+        try {
+            await this.initWorker();
+            if (this.parser.isDebugLoggingEnabled()) {
+                console.log('OBJLoader2Parallel init was performed');
+            }
+            this.executeWorker(objToParse);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     /**
@@ -140,7 +142,6 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @private
      */
     private initWorker() {
-        const initMessage = new WorkerTaskMessage({});
         const dataPayload = new DataPayload();
         dataPayload.message.params = {
             logging: {
@@ -149,14 +150,12 @@ export class OBJLoader2Parallel extends OBJLoader2 {
             }
         };
 
-        initMessage.addPayload(dataPayload);
-        return this.workerTask!.initWorker({ message: initMessage });
+        this.workerTask!.createWorker();
+        return this.workerTask!.initWorker({ message: WorkerTaskMessage.fromPayload(dataPayload) });
     }
 
     private async executeWorker(objToParse: ArrayBuffer) {
-        const execMessage = new WorkerTaskMessage({
-            id: Math.floor(Math.random() * Math.floor(65536))
-        });
+        const execMessage = WorkerTaskMessage.createEmpty();
         const dataPayload = new DataPayload();
         dataPayload.message.params = {
             modelName: this.modelName,
@@ -200,7 +199,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @param {Mesh} mesh
      * @param {object} materialMetaInfo
      */
-    private onWorkerMessage(message: WorkerTaskMessageType) {
+    private onWorkerMessage(message: WorkerTaskMessage) {
         const wtm = WorkerTaskMessage.unpack(message, false);
         if (wtm.cmd === WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM) {
 

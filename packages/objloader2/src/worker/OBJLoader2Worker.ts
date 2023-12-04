@@ -5,7 +5,6 @@ import {
     DataPayload,
     WorkerTaskCommandResponse,
     WorkerTaskMessage,
-    WorkerTaskMessageType,
     WorkerTaskWorker
 } from 'wtd-core';
 import {
@@ -27,14 +26,9 @@ class OBJLoader2Worker implements WorkerTaskWorker {
         materialNames: new Set<string>()
     };
 
-    initParser(id: number) {
+    initParser(wtm: WorkerTaskMessage) {
         const parser = new OBJLoader2Parser();
         parser._onAssetAvailable = preparedMesh => {
-            const intermediateMessage = new WorkerTaskMessage({
-                id,
-                progress: preparedMesh.progress
-            });
-
             const dataPayload = new DataPayload();
             if (!dataPayload.message.params) {
                 dataPayload.message.params = {};
@@ -55,16 +49,21 @@ class OBJLoader2Worker implements WorkerTaskWorker {
             if (preparedMesh.indexUA !== null) {
                 dataPayload.message.buffers?.set('indexUA', preparedMesh.indexUA);
             }
-            intermediateMessage.cmd = WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM;
+
+            const intermediateMessage = WorkerTaskMessage.createFromExisting(wtm, {
+                overrideCmd: WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM,
+            });
             intermediateMessage.addPayload(dataPayload);
+            intermediateMessage.progress = preparedMesh.progress;
 
             const transferables = WorkerTaskMessage.pack(intermediateMessage.payloads, false);
             self.postMessage(intermediateMessage, transferables);
         };
 
         parser._onLoad = () => {
-            const execMessage = new WorkerTaskMessage({ id });
-            execMessage.cmd = WorkerTaskCommandResponse.EXECUTE_COMPLETE;
+            const execMessage = WorkerTaskMessage.createFromExisting(wtm, {
+                overrideCmd: WorkerTaskCommandResponse.EXECUTE_COMPLETE
+            });
             // no packing required as no Transferables here
             self.postMessage(execMessage);
         };
@@ -78,21 +77,23 @@ class OBJLoader2Worker implements WorkerTaskWorker {
         return parser;
     }
 
-    init(message: WorkerTaskMessageType) {
+    init(message: WorkerTaskMessage) {
         const wtm = this.processMessage(message);
 
         if (this.localData.debugLogging) {
-            console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+            console.log(`OBJLoader2Worker#init: name: ${message.name} id: ${message.uuid} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
-        const initComplete = WorkerTaskMessage.createFromExisting(wtm, WorkerTaskCommandResponse.INIT_COMPLETE);
+        const initComplete = WorkerTaskMessage.createFromExisting(wtm, {
+            overrideCmd: WorkerTaskCommandResponse.INIT_COMPLETE
+        });
         self.postMessage(initComplete);
     }
 
-    execute(message: WorkerTaskMessageType) {
+    execute(message: WorkerTaskMessage) {
         this.processMessage(message);
 
-        const parser = this.initParser(message.id ?? 0);
+        const parser = this.initParser(message);
 
         // apply previously stored parameters (init or execute)
         applyProperties(parser, this.localData.params, false);
@@ -101,7 +102,7 @@ class OBJLoader2Worker implements WorkerTaskWorker {
         }
 
         if (parser.isDebugLoggingEnabled()) {
-            console.log(`OBJLoader2Worker#execute: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+            console.log(`OBJLoader2Worker#execute: name: ${message.name} id: ${message.uuid} cmd: ${message.cmd} workerId: ${message.workerId}`);
         }
 
         if (this.localData.buffer) {
@@ -112,7 +113,7 @@ class OBJLoader2Worker implements WorkerTaskWorker {
         }
     }
 
-    private processMessage(message: WorkerTaskMessageType) {
+    private processMessage(message: WorkerTaskMessage) {
         const wtm = WorkerTaskMessage.unpack(message, false);
         const dataPayload = wtm.payloads[0] as DataPayload;
 

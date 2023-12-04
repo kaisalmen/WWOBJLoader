@@ -8,15 +8,15 @@
     "compile": "tsc",
     "copy:prepare": "shx mkdir -p ./libs/worker",
     "copy:three": "shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
-    "copy:three:trackball": "shx cp -f ../../node_modules/three/examples/jsm/controls/ArcballControls.js ./libs/ArcballControls.js",
+    "copy:three:trackball": "shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
     "copy:three:mtlloader": "shx cp -f ../../node_modules/three/examples/jsm/loaders/MTLLoader.js ./libs/MTLLoader.js",
     "copy:three:vertexnormalshelper": "shx cp -f ../../node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ./libs/VertexNormalsHelper.js",
     "copy:lil-gui": "shx cp -f ../../node_modules/lil-gui/dist/lil-gui.esm.js ./libs/lil-gui.esm.js",
-    "copy:wtd-core": "shx mkdir -p ./libs/wtd-core && shx cp -f ../../node_modules/wtd-core/dist/* ./libs/wtd-core",
+    "copy:wtd-core": "shx mkdir -p ./libs/wtd-core/offscreen && shx cp -f ../../node_modules/wtd-core/dist/*.js ./libs/wtd-core && shx cp -f ../../node_modules/wtd-core/dist/offscreen/*.js ./libs/wtd-core/offscreen",
     "copy:objloader2": "shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
     "copy:objloader2:worker": "shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
     "build:worker:BasicExampleOffscreenWorker": "npx shx rm -f ./src/worker/generated/BasicExampleOffscreenWorker*.js && npx vite -c build/vite.config.BasicExampleOffscreenWorker.ts build",
-    "build": "npm run clean && npm run compile && npm run copy:prepare && npm run copy:three && npm run copy:three:trackball && npm run copy:three:mtlloader && npm run copy:three:vertexnormalshelper && npm run copy:lil-gui && npm run copy:wtd-core && npm run copy:objloader2 && npm run copy:objloader2:worker && npm run build:worker:BasicExampleOffscreenWorker",
+    "build": "npm run clean && npm run compile && npm run copy:prepare && npm run build:worker:BasicExampleOffscreenWorker && npm run copy:three && npm run copy:three:trackball && npm run copy:three:mtlloader && npm run copy:three:vertexnormalshelper && npm run copy:lil-gui && npm run copy:wtd-core && npm run copy:objloader2 && npm run copy:objloader2:worker",
     "serve": "tsc && vite preview",
     "verify": "http-server --port 20001 ./"
   },
@@ -25,17 +25,18 @@
     "npm": "9.8.1"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.15.9",
-    "wwobjloader2": "~6.2.0-next.4",
-    "lil-gui": "~0.19.0",
+    "@react-three/fiber": "~8.15.12",
+    "wtd-core": "~3.0.0-next.5",
+    "wwobjloader2": "~6.2.0-next.5",
+    "lil-gui": "~0.19.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0",
-    "three": "~0.158.0"
+    "three": "~0.159.0"
   },
   "devDependencies": {
-    "@types/react": "~18.2.34",
-    "@types/react-dom": "~18.2.14",
-    "@types/three": "~0.158.1",
+    "@types/react": "~18.2.42",
+    "@types/react-dom": "~18.2.17",
+    "@types/three": "~0.159.0",
     "http-server": "~14.1.1"
   }
 }

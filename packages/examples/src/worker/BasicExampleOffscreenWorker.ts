@@ -1,58 +1,78 @@
 import {
     comRouting,
     DataPayload,
-    WorkerTaskCommandResponse,
+    getOffscreenCanvas,
+    OffscreenPayload,
+    OffscreenWorker,
+    OffscreenWorkerCommandResponse,
     WorkerTaskMessage,
-    WorkerTaskMessageType,
     WorkerTaskWorker
 } from 'wtd-core';
 import { OBJLoader2BasicExample } from '../examples/OBJLoader2BasicExample.js';
-import { executeExample, resizeDisplayGL } from '../examples/ExampleCommons.js';
+import { executeExample, resizeDisplayGL, setCanvasDimensions } from '../examples/ExampleCommons.js';
+import { ElementProxyReceiver, proxyStart } from 'wtd-three-ext';
 
-export class HelloWorlThreedWorker implements WorkerTaskWorker {
+export class HelloWorlThreeWorker implements WorkerTaskWorker, OffscreenWorker {
 
     private objLoader2BasicExample?: OBJLoader2BasicExample;
+    private offScreenCanvas?: OffscreenCanvas;
+    private eventProxy?: ElementProxyReceiver;
 
-    init(message: WorkerTaskMessageType) {
-        console.log(`HelloWorldWorker#init: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+    proxyStart(message: WorkerTaskMessage) {
+        console.log(`Received start command: ${message.cmd}`);
+        this.eventProxy = new ElementProxyReceiver();
+        proxyStart(this.eventProxy);
 
-        const initComplete = WorkerTaskMessage.createFromExisting(message, WorkerTaskCommandResponse.INIT_COMPLETE);
-        self.postMessage(initComplete);
+        const proxyStartComplete = WorkerTaskMessage.createFromExisting(message, {
+            overrideCmd: OffscreenWorkerCommandResponse.PROXY_START_COMPLETE
+        });
+        self.postMessage(proxyStartComplete);
     }
 
-    intermediate(message: WorkerTaskMessageType): void {
-        console.log(`HelloWorldWorker#intermediateMessage: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+    proxyEvent(message: WorkerTaskMessage) {
+        const payload = message.payloads?.[0];
+        const offscreenPayload = (payload as OffscreenPayload);
+        const event = offscreenPayload.message.event;
+        if (event) {
+            this.eventProxy?.handleEvent(event);
+        }
+    }
 
-        const dataPayload = message.payloads[0] as DataPayload;
-        if (dataPayload.message.params?.$type === 'resize' && this.objLoader2BasicExample) {
-            const canvasDimensions = this.objLoader2BasicExample.getSetup().canvasDimensions;
-            canvasDimensions.width = dataPayload.message.params?.width as number;
-            canvasDimensions.height = dataPayload.message.params?.height as number;
-            canvasDimensions.pixelRatio = dataPayload.message.params?.pixelRatio as number;
+    resize(message: WorkerTaskMessage) {
+        const offscreenPayload = message.payloads?.[0] as OffscreenPayload;
+
+        if (this.objLoader2BasicExample) {
+            this.objLoader2BasicExample.getSetup().canvasDimensions = setCanvasDimensions(offscreenPayload);
             resizeDisplayGL(this.objLoader2BasicExample.getSetup());
         }
-        if (dataPayload.message.params?.$type === 'terminate') {
-            const execComplete = WorkerTaskMessage.createFromExisting(message, WorkerTaskCommandResponse.EXECUTE_COMPLETE);
-            const transferables = WorkerTaskMessage.pack(execComplete.payloads, false);
-            self.postMessage(execComplete, transferables);
-        }
     }
 
-    execute(message: WorkerTaskMessageType) {
-        console.log(`HelloWorldWorker#execute: name: ${message.name} id: ${message.id} cmd: ${message.cmd} workerId: ${message.workerId}`);
+    initOffscreenCanvas(message: WorkerTaskMessage): void {
+        const offscreenPayload = message.payloads?.[0] as OffscreenPayload;
+        this.offScreenCanvas = getOffscreenCanvas(offscreenPayload);
+
+        this.eventProxy!.merge(this.offScreenCanvas!);
+
+        const canvasDimensions = setCanvasDimensions(offscreenPayload);
+        this.objLoader2BasicExample = new OBJLoader2BasicExample(this.eventProxy! as unknown as HTMLCanvasElement,
+            canvasDimensions, true);
+
+        const initOffscreenCanvasComplete = WorkerTaskMessage.createFromExisting(message, {
+            overrideCmd: OffscreenWorkerCommandResponse.INIT_OFFSCREEN_CANVAS_COMPLETE
+        });
+        self.postMessage(initOffscreenCanvasComplete);
+    }
+
+    execute(message: WorkerTaskMessage) {
+        console.log(`HelloWorldWorker#execute: name: ${message.name} id: ${message.uuid} cmd: ${message.cmd} workerId: ${message.workerId}`);
 
         const dataPayload = message.payloads[0] as DataPayload;
-        const canvasDimensions = {
-            width: dataPayload.message.params?.width as number,
-            height: dataPayload.message.params?.height as number,
-            pixelRatio: dataPayload.message.params?.pixelRatio as number
-        };
-        this.objLoader2BasicExample = new OBJLoader2BasicExample(dataPayload.message.params?.drawingSurface as HTMLCanvasElement,
-            canvasDimensions, dataPayload.message.params?.modelUrl as string);
-        executeExample(this.objLoader2BasicExample);
+        this.objLoader2BasicExample!.setUrls(dataPayload.message.params?.modelUrl as string);
+
+        executeExample(this.objLoader2BasicExample!);
     }
 
 }
 
-const worker = new HelloWorlThreedWorker();
+const worker = new HelloWorlThreeWorker();
 self.onmessage = message => comRouting(worker, message);
