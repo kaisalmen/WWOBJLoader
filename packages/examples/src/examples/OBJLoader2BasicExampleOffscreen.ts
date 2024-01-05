@@ -33,7 +33,7 @@ export class OBJLoader2BasicExampleOffscreen {
             const canvas = document.getElementById('example') as HTMLCanvasElement;
 
             // only create worker, but do not init
-            workerTask.createWorker();
+            workerTask.connectWorker();
 
             // delegate events from main to offscreen
             const handlingInstructions = buildDefaultEventHandlingInstructions();
@@ -44,6 +44,7 @@ export class OBJLoader2BasicExampleOffscreen {
             await initOffscreenCanvas(workerTask, canvas);
 
             // once the init Promise returns enqueue the execution
+            // TODO: make this a raw payload
             const dataPayload = new DataPayload();
             dataPayload.message.params = {
                 modelUrl: new URL('./models/obj/main/female02/female02_vertex_colors.obj', window.location.href).href

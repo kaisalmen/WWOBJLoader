@@ -150,7 +150,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
             }
         };
 
-        this.workerTask!.createWorker();
+        this.workerTask!.connectWorker();
         return this.workerTask!.initWorker({ message: WorkerTaskMessage.fromPayload(dataPayload) });
     }
 
