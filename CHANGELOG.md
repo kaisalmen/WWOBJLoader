@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.2.0 - 2024-01-05
+
+- Switch to `wtd-core@3.0.0` and `wtd-three-ext@3.0.0`
+  - Adjust code to the changes
+  - Example OBJLoader2 basic (Offscreen Canvas) now relies on utility functions supplied by `wtd-core` and `wtd-three-ext`
+
 ## 6.1.0 - 2023-10-21
 
 - Upgrade to versions `2.3.0` of `wtd-core` and `wtd-three-ext`.

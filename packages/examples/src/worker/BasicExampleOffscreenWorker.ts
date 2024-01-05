@@ -1,10 +1,10 @@
 import {
     comRouting,
-    DataPayload,
     getOffscreenCanvas,
     OffscreenPayload,
     OffscreenWorker,
     OffscreenWorkerCommandResponse,
+    RawPayload,
     WorkerTaskMessage,
     WorkerTaskWorker
 } from 'wtd-core';
@@ -66,8 +66,8 @@ export class HelloWorlThreeWorker implements WorkerTaskWorker, OffscreenWorker {
     execute(message: WorkerTaskMessage) {
         console.log(`HelloWorldWorker#execute: name: ${message.name} id: ${message.uuid} cmd: ${message.cmd} workerId: ${message.workerId}`);
 
-        const dataPayload = message.payloads[0] as DataPayload;
-        this.objLoader2BasicExample!.setUrls(dataPayload.message.params?.modelUrl as string);
+        const rawPayload = message.payloads[0] as RawPayload;
+        this.objLoader2BasicExample!.setUrls(rawPayload.message.raw.modelUrl as string);
 
         executeExample(this.objLoader2BasicExample!);
     }

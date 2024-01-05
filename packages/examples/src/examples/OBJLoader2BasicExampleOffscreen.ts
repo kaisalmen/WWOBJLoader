@@ -1,5 +1,5 @@
 import {
-    DataPayload,
+    RawPayload,
     WorkerTask,
     WorkerTaskMessage,
     buildDefaultEventHandlingInstructions,
@@ -44,13 +44,12 @@ export class OBJLoader2BasicExampleOffscreen {
             await initOffscreenCanvas(workerTask, canvas);
 
             // once the init Promise returns enqueue the execution
-            // TODO: make this a raw payload
-            const dataPayload = new DataPayload();
-            dataPayload.message.params = {
+            const rawPayload = new RawPayload();
+            rawPayload.message.raw = {
                 modelUrl: new URL('./models/obj/main/female02/female02_vertex_colors.obj', window.location.href).href
             };
             await workerTask.executeWorker({
-                message: WorkerTaskMessage.fromPayload(dataPayload),
+                message: WorkerTaskMessage.fromPayload(rawPayload),
             });
             console.log('enqueueWorkerExecutionPlan finished successfully.');
         } catch (e: unknown) {
