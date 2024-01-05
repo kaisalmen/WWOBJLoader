@@ -2,7 +2,10 @@ import {
     DataPayload,
     WorkerTask,
     WorkerTaskMessage,
-    WorkerTaskMessageType
+    buildDefaultEventHandlingInstructions,
+    initOffscreenCanvas,
+    registerCanvas,
+    registerResizeHandler
 } from 'wtd-core';
 
 export class OBJLoader2BasicExampleOffscreen {
@@ -13,53 +16,43 @@ export class OBJLoader2BasicExampleOffscreen {
         // register the module worker
         const dev = import.meta.env?.DEV === true;
         const url = new URL(dev ? '../worker/BasicExampleOffscreenWorker.ts' : '../worker/generated/BasicExampleOffscreenWorker-es.js', import.meta.url);
-        const workerTask = new WorkerTask(taskName, 1, {
-            module: true,
-            blob: false,
-            url
-        }, true);
+        const worker = new Worker(url.href, {
+            type: 'module'
+        });
+        const workerTask = new WorkerTask({
+            taskName,
+            workerId: 1,
+            workerConfig: {
+                $type: 'WorkerConfigDirect',
+                worker
+            },
+            verbose: true
+        });
 
         try {
             const canvas = document.getElementById('example') as HTMLCanvasElement;
-            const offscreen = canvas.transferControlToOffscreen();
 
-            const resize = () => {
-                const intermediateMessage = new WorkerTaskMessage();
-                const dataPayload = new DataPayload();
-                dataPayload.params = {
-                    $type: 'resize',
-                    width: canvas.offsetWidth,
-                    height: canvas.offsetHeight,
-                    pixelRatio: window.devicePixelRatio
-                };
-                intermediateMessage.addPayload(dataPayload);
-                workerTask.sentMessage(intermediateMessage);
-            };
-            window.addEventListener('resize', () => resize(), false);
+            // only create worker, but do not init
+            workerTask.connectWorker();
 
-            const initMessage = new WorkerTaskMessage({ name: taskName });
-            const resultInit = await workerTask.initWorker(initMessage);
-            console.log(`initTaskType then: ${resultInit}`);
+            // delegate events from main to offscreen
+            const handlingInstructions = buildDefaultEventHandlingInstructions();
+            await registerCanvas(workerTask, canvas, handlingInstructions);
+            registerResizeHandler(workerTask, canvas);
+
+            // provide the canvas to the worker
+            await initOffscreenCanvas(workerTask, canvas);
 
             // once the init Promise returns enqueue the execution
-            const execMessage = new WorkerTaskMessage({ name: taskName });
+            // TODO: make this a raw payload
             const dataPayload = new DataPayload();
-            dataPayload.params = {
-                drawingSurface: offscreen,
-                width: canvas.clientWidth,
-                height: canvas.clientHeight,
-                pixelRatio: window.devicePixelRatio,
+            dataPayload.message.params = {
                 modelUrl: new URL('./models/obj/main/female02/female02_vertex_colors.obj', window.location.href).href
             };
-            execMessage.addPayload(dataPayload);
-            const resultExec = await workerTask.executeWorker({
-                message: execMessage,
-                transferables: [offscreen],
-                onComplete: (m: WorkerTaskMessageType) => {
-                    console.log('Received final command: ' + m.cmd);
-                }
+            await workerTask.executeWorker({
+                message: WorkerTaskMessage.fromPayload(dataPayload),
             });
-            console.log(`enqueueWorkerExecutionPlan finished: ${resultExec}`);
+            console.log('enqueueWorkerExecutionPlan finished successfully.');
         } catch (e: unknown) {
             console.error(e);
         }

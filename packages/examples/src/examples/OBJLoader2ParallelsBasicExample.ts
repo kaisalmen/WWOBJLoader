@@ -34,7 +34,6 @@ export class OBJLoader2ParalleleBasicExample implements ExampleDefinition {
         reportProgress({ detail: { text: 'Loading: ' + modelName } });
 
         const objLoader2Parallel = new OBJLoader2Parallel()
-            .setWorkerUrl(false, new URL('./libs/worker/OBJLoader2WorkerClassic.js', window.location.href))
             .setModelName(modelName)
             .setLogging(true, true)
             .setUseIndices(true);

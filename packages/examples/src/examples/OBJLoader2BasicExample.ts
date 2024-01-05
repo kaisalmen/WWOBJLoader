@@ -6,10 +6,10 @@ import { CanvasDimensions, createThreeDefaultSetup, ExampleDefinition, renderDef
 export class OBJLoader2BasicExample implements ExampleDefinition {
 
     private setup: ThreeDefaultSetup;
-    private modelUrl: string;
+    private modelUrl?: string;
     private materialUrl?: string;
 
-    constructor(canvas: HTMLCanvasElement | null, canvasDimensions: CanvasDimensions, modelUrl: string, materialUrl?: string) {
+    constructor(canvas: HTMLCanvasElement | null, canvasDimensions: CanvasDimensions, forceControls: boolean) {
         const cameraDefaults = {
             posCamera: new Vector3(0.0, 175.0, 500.0),
             posCameraTarget: new Vector3(0, 0, 0),
@@ -17,9 +17,12 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
             far: 10000,
             fov: 45
         };
+        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, canvasDimensions, forceControls);
+    }
+
+    setUrls(modelUrl: string, materialUrl?: string) {
         this.modelUrl = modelUrl;
         this.materialUrl = materialUrl;
-        this.setup = createThreeDefaultSetup(canvas, cameraDefaults, canvasDimensions);
     }
 
     getSetup() {
@@ -49,7 +52,7 @@ export class OBJLoader2BasicExample implements ExampleDefinition {
                 objLoader2.setModelName(modelName);
                 objLoader2.setLogging(true, true);
                 objLoader2.setMaterials(MtlObjBridge.addMaterialsFromMtlLoader(mtlParseResult));
-                objLoader2.load(this.modelUrl, callbackOnLoad);
+                objLoader2.load(this.modelUrl!, callbackOnLoad);
             };
             const mtlLoader = new MTLLoader();
             mtlLoader.load(this.materialUrl, onLoadMtl);

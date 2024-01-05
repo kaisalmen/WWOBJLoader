@@ -1,5 +1,6 @@
 import { AmbientLight, DirectionalLight, GridHelper, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
-import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls.js';
+import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
+import { OffscreenPayload } from 'wtd-core';
 
 export type CameraDefaults = {
     posCamera: THREE.Vector3;
@@ -62,11 +63,11 @@ export type ThreeDefaultSetup = {
     camera: THREE.PerspectiveCamera;
     cameraTarget: THREE.Vector3;
     cameraDefaults: CameraDefaults;
-    controls?: ArcballControls;
+    controls?: TrackballControls;
 }
 
 export const createThreeDefaultSetup = (canvas: HTMLCanvasElement | null, cameraDefaults: CameraDefaults,
-    canvasDimensions: CanvasDimensions): ThreeDefaultSetup => {
+    canvasDimensions: CanvasDimensions, forceControls?: boolean): ThreeDefaultSetup => {
     if (canvas === null) {
         throw Error('Bad element HTML given as canvas.');
     }
@@ -90,8 +91,8 @@ export const createThreeDefaultSetup = (canvas: HTMLCanvasElement | null, camera
         setup.cameraDefaults.near, setup.cameraDefaults.far);
     resetCamera(setup);
 
-    if (!isWorker()) {
-        setup.controls = new ArcballControls(setup.camera, setup.renderer.domElement);
+    if (!isWorker() || forceControls) {
+        setup.controls = new TrackballControls(setup.camera, setup.renderer.domElement);
     }
 
     const ambientLight = new AmbientLight(0x404040);
@@ -110,6 +111,16 @@ export const createThreeDefaultSetup = (canvas: HTMLCanvasElement | null, camera
     setup.scene.add(helper);
 
     return setup;
+};
+
+export const setCanvasDimensions = (offscreenPayload: OffscreenPayload) => {
+    const data = offscreenPayload.message;
+    const canvasDimensions = {
+        width: data.width ?? 0,
+        height: data.height ?? 0,
+        pixelRatio: data.pixelRatio ?? 0
+    };
+    return canvasDimensions;
 };
 
 export const recalcAspectRatio = (canvasDimensions: CanvasDimensions) => {

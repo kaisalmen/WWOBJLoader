@@ -1,6 +1,6 @@
 import { FileLoader, Loader, Object3D } from 'three';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
-import { AssociatedArrayType, DataPayloadHandler } from 'wtd-core';
+import { AssociatedArrayType, applyProperties } from 'wtd-core';
 import { ResourceDescriptor } from './utils/ResourceDescriptor.js';
 
 export type CallbackCompleteType = ((description: string, extra?: Object3D) => void) | null;
@@ -199,7 +199,7 @@ class AssetTask {
 
     init() {
         console.log(this.name + ': Performing init');
-        DataPayloadHandler.applyProperties(this.assetLoader.loader.instance, this.assetLoader.loader.config, false);
+        applyProperties(this.assetLoader.loader.instance, this.assetLoader.loader.config, false);
     }
 
     async loadResource() {

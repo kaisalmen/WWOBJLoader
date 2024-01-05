@@ -226,7 +226,7 @@ export class OBJLoader2 extends Loader<Object3D, string> {
      * @param {FileLoaderOnErrorType} [onError] A function to be called if an error occurs during loading. The function receives the error as an argument.
      * @param {OnMeshAlterType} [onMeshAlter] Called after every single mesh is made available by the parser
      */
-    load(url: string, onLoad: CallbackOnLoadType, onProgress?: FileLoaderOnProgressType, onError?: FileLoaderOnErrorType, onMeshAlter?: CallbackOnMeshAlterType) {
+    load(url: string | undefined, onLoad: CallbackOnLoadType, onProgress?: FileLoaderOnProgressType, onError?: FileLoaderOnErrorType, onMeshAlter?: CallbackOnMeshAlterType) {
         if (!(onLoad instanceof Function)) {
             const badOnLoadError = new Error('onLoad is not a function! Aborting...');
             this._onError(badOnLoadError);
@@ -245,14 +245,14 @@ export class OBJLoader2 extends Loader<Object3D, string> {
             };
         }
 
-        if (!url) {
+        if (url === undefined) {
             onError(new ErrorEvent('An invalid url was provided. Unable to continue!'));
         }
         let urlFull = '';
         try {
-            urlFull = new URL(url).href;
+            urlFull = new URL(url!).href;
         } catch (error) {
-            urlFull = new URL(url, window.location.href).href;
+            urlFull = new URL(url!, window.location.href).href;
         }
         let filename = urlFull;
         const urlParts = urlFull.split('/');
@@ -365,16 +365,16 @@ export class OBJLoader2 extends Loader<Object3D, string> {
         if (this.parser.isLoggingEnabled()) {
             let printedConfig = 'OBJLoader2 callback configuration:';
             if (this.callbacks.onProgress !== null) {
-                printedConfig += '\n\tcallbacks.onProgress: ' + this.callbacks.onProgress?.name ?? 'undefined';
+                printedConfig += `\n\tcallbacks.onProgress: ${this.callbacks.onProgress?.name ?? undefined}`;
             }
             if (this.callbacks.onError !== null) {
-                printedConfig += '\n\tcallbacks.onError: ' + this.callbacks.onError?.name ?? 'undefined';
+                printedConfig += `\n\tcallbacks.onError: ${this.callbacks.onError?.name ?? undefined}`;
             }
             if (this.callbacks.onMeshAlter !== null) {
-                printedConfig += '\n\tcallbacks.onMeshAlter: ' + this.callbacks.onMeshAlter?.name ?? 'undefined';
+                printedConfig += `\n\tcallbacks.onMeshAlter: ${this.callbacks.onMeshAlter?.name ?? undefined}`;
             }
             if (this.callbacks.onLoad !== null) {
-                printedConfig += '\n\tcallbacks.onLoad: ' + this.callbacks.onLoad?.name ?? 'undefined';
+                printedConfig += `\n\tcallbacks.onLoad: ${this.callbacks.onLoad?.name ?? undefined}`;
             }
             console.info(printedConfig);
         }

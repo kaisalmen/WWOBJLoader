@@ -3,10 +3,10 @@ import {
     LoadingManager
 } from 'three';
 import {
-    WorkerTask,
-    WorkerTaskMessage,
     DataPayload,
-    WorkerTaskMessageType,
+    WorkerTask,
+    WorkerTaskCommandResponse,
+    WorkerTaskMessage
 } from 'wtd-core';
 import { CallbackOnLoadType, CallbackOnMeshAlterType, FileLoaderOnErrorType, FileLoaderOnProgressType, OBJLoader2 } from './OBJLoader2.js';
 import { PreparedMeshType } from './OBJLoader2Parser.js';
@@ -112,24 +112,27 @@ export class OBJLoader2Parallel extends OBJLoader2 {
     }
 
     private async initWorkerParse(objToParse: ArrayBuffer) {
-        this.initWorkerTask();
+        this.workerTask = new WorkerTask({
+            taskName: OBJLoader2Parallel.TASK_NAME,
+            workerId: 1,
+            workerConfig: {
+                $type: 'WorkerConfigParams',
+                workerType: this.moduleWorker ? 'module' : 'classic',
+                blob: false,
+                url: this.workerUrl
+            },
+            verbose: this.parser.isDebugLoggingEnabled()
+        });
 
-        await this.initWorker()
-            .then(() => {
-                if (this.parser.isDebugLoggingEnabled()) {
-                    console.log('OBJLoader2Parallel init was performed');
-                }
-                this.executeWorker(objToParse);
-
-            }).catch((e: Error) => console.error(e));
-    }
-
-    private initWorkerTask() {
-        this.workerTask = new WorkerTask(OBJLoader2Parallel.TASK_NAME, 1, {
-            module: this.moduleWorker,
-            blob: false,
-            url: this.workerUrl
-        }, this.parser.isDebugLoggingEnabled());
+        try {
+            await this.initWorker();
+            if (this.parser.isDebugLoggingEnabled()) {
+                console.log('OBJLoader2Parallel init was performed');
+            }
+            this.executeWorker(objToParse);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
     /**
@@ -139,25 +142,22 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @private
      */
     private initWorker() {
-        const initMessage = new WorkerTaskMessage({});
         const dataPayload = new DataPayload();
-        dataPayload.params = {
+        dataPayload.message.params = {
             logging: {
                 enabled: this.parser.isLoggingEnabled(),
                 debug: this.parser.isDebugLoggingEnabled()
             }
         };
 
-        initMessage.addPayload(dataPayload);
-        return this.workerTask!.initWorker(initMessage);
+        this.workerTask!.connectWorker();
+        return this.workerTask!.initWorker({ message: WorkerTaskMessage.fromPayload(dataPayload) });
     }
 
     private async executeWorker(objToParse: ArrayBuffer) {
-        const execMessage = new WorkerTaskMessage({
-            id: Math.floor(Math.random() * Math.floor(65536))
-        });
+        const execMessage = WorkerTaskMessage.createEmpty();
         const dataPayload = new DataPayload();
-        dataPayload.params = {
+        dataPayload.message.params = {
             modelName: this.modelName,
             useIndices: this.useIndices,
             disregardNormals: this.disregardNormals,
@@ -168,16 +168,16 @@ export class OBJLoader2Parallel extends OBJLoader2 {
                 debug: this.parser.isDebugLoggingEnabled()
             }
         };
-        dataPayload.buffers.set('modelData', objToParse);
-        dataPayload.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
+        dataPayload.message.buffers?.set('modelData', objToParse);
+        dataPayload.message.params.materialNames = new Set(Array.from(this.materialStore.getMaterials().keys()));
 
         execMessage.addPayload(dataPayload);
-        const transferables = execMessage.pack(false);
+        const transferables = WorkerTaskMessage.pack(execMessage.payloads, false);
 
         try {
             await this.workerTask?.executeWorker({
                 message: execMessage,
-                onIntermediate: (message) => {
+                onIntermediateConfirm: (message) => {
                     this.onWorkerMessage(message);
                 },
                 onComplete: (message) => {
@@ -199,13 +199,13 @@ export class OBJLoader2Parallel extends OBJLoader2 {
      * @param {Mesh} mesh
      * @param {object} materialMetaInfo
      */
-    private onWorkerMessage(message: WorkerTaskMessageType) {
+    private onWorkerMessage(message: WorkerTaskMessage) {
         const wtm = WorkerTaskMessage.unpack(message, false);
-        if (wtm.cmd === 'intermediate') {
+        if (wtm.cmd === WorkerTaskCommandResponse.INTERMEDIATE_CONFIRM) {
 
-            const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] : undefined;
-            if (dataPayload && dataPayload.params) {
-                const preparedMesh = dataPayload.params.preparedMesh as PreparedMeshType;
+            const dataPayload = (wtm.payloads.length === 1) ? wtm.payloads[0] as DataPayload : undefined;
+            if (dataPayload && dataPayload.message.params) {
+                const preparedMesh = dataPayload.message.params.preparedMesh as PreparedMeshType;
                 const mesh = OBJLoader2.buildThreeMesh(preparedMesh, this.materialStore.getMaterials(), this.parser.isDebugLoggingEnabled());
                 if (mesh) {
                     this._onMeshAlter(mesh, preparedMesh.materialMetaInfo);
@@ -216,7 +216,7 @@ export class OBJLoader2Parallel extends OBJLoader2 {
                 console.error('Received intermediate message without a proper payload');
             }
         }
-        else if (wtm.cmd === 'execComplete') {
+        else if (wtm.cmd === WorkerTaskCommandResponse.EXECUTE_COMPLETE) {
             this._onLoad();
         }
         else {
