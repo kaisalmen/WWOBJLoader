@@ -1,6 +1,22 @@
 import shell from 'shelljs';
 
+shell.mkdir('-p', './production/models/obj/main/cerberus');
+shell.cp('-f', './models/obj/main/cerberus/*', './production/models/obj/main/cerberus/');
+
 shell.mkdir('-p', './production/worker/generated');
 shell.cp('-f', './src/worker/generated/*.js', './production/worker/generated');
-shell.cp('-f', './models/obj/main/female02/*.jpg', './production/assets');
-shell.cp('-f', './models/obj/main/male02/*.jpg', './production/assets');
+
+shell.mkdir('-p', './production/models/obj/main/female02');
+shell.cp('-f', './models/obj/main/female02/*', './production/models/obj/main/female02/');
+
+shell.mkdir('-p', './production/models/obj/main/male02');
+shell.cp('-f', './models/obj/main/male02/*', './production/models/obj/main/male02/');
+
+shell.mkdir('-p', './production/models/obj/main/ninja');
+shell.cp('-f', './models/obj/main/ninja/*', './production/models/obj/main/ninja/');
+
+shell.mkdir('-p', './production/models/obj/main/verify');
+shell.cp('-f', './models/obj/main/verify/*', './production/models/obj/main/verify/');
+
+shell.mkdir('-p', './production/models/obj/main/walt');
+shell.cp('-f', './models/obj/main/walt/*', './production/models/obj/main/walt/');

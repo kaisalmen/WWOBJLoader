@@ -1,10 +1,10 @@
 # OBJLoader2 & OBJLoader2Parallel for three.js
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kaisalmen/WWOBJLoader/blob/dev/LICENSE)
-[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 [![WWOBJLoader](https://github.com/kaisalmen/WWOBJLoader/actions/workflows/actions.yml/badge.svg)](https://github.com/kaisalmen/WWOBJLoader/actions/workflows/actions.yml)
+[![Github Pages](https://img.shields.io/badge/GitHub-Pages-blue?logo=github)](https://kaisalmen.github.io/WWOBJLoader)
 [![NPM Version](https://img.shields.io/npm/v/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
-[![NPM Download](https://img.shields.io/npm/dt/wwobjloader2.svg)](https://www.npmjs.com/package/wwobjloader2)
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/kaisalmen/WWOBJLoader)
 
 **OBJLoader2** is a loader for the **OBJ** file format. It is an alternative to [OBJLoader](https://github.com/mrdoob/three.js/blob/dev/examples/jsm/loaders/OBJLoader.js) included in [three.js](https://threejs.org). The loader and its parser can be used on Main via **OBJLoader2** or in parallel inside a web worker via **OBJLoader2Parallel**.
 
@@ -46,6 +46,8 @@ If you want to get started see take a look at the following examples. They get m
 * OBJLoader2 in react with a .jpg texture: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExample.tsx)]
 * OBJLoader2 in react with a .mtl material: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/obj2_react-mtl.html)] [[tsx](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/ReactExampleMtl.tsx)]
 * AssetPipelineLoader basic example: [[html](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/assetpipeline.html)] [[ts](https://github.com/kaisalmen/WWOBJLoader/blob/main/packages/examples/src/examples/AssetPipelineLoaderExample.ts)]
+
+Try out all examples here: <https://kaisalmen.github.io/WWOBJLoader>
 
 ### Main Branch
 
