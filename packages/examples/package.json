@@ -6,18 +6,14 @@
   "scripts": {
     "clean": "shx rm -rf *.tsbuildinfo ./dist ./libs",
     "compile": "tsc",
-    "copy:prepare": "shx mkdir -p ./libs/worker",
-    "copy:three": "shx cp -f ../../node_modules/three/build/three.module.js ./libs/three.module.js",
-    "copy:three:trackball": "shx cp -f ../../node_modules/three/examples/jsm/controls/TrackballControls.js ./libs/TrackballControls.js",
-    "copy:three:mtlloader": "shx cp -f ../../node_modules/three/examples/jsm/loaders/MTLLoader.js ./libs/MTLLoader.js",
-    "copy:three:vertexnormalshelper": "shx cp -f ../../node_modules/three/examples/jsm/helpers/VertexNormalsHelper.js ./libs/VertexNormalsHelper.js",
-    "copy:lil-gui": "shx cp -f ../../node_modules/lil-gui/dist/lil-gui.esm.js ./libs/lil-gui.esm.js",
-    "copy:wtd-core": "shx mkdir -p ./libs/wtd-core/offscreen && shx cp -f ../../node_modules/wtd-core/dist/*.js ./libs/wtd-core && shx cp -f ../../node_modules/wtd-core/dist/offscreen/*.js ./libs/wtd-core/offscreen",
-    "copy:objloader2": "shx cp -f ../objloader2/lib/objloader2.js ./libs/objloader2.js",
-    "copy:objloader2:worker": "shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerModule.js ./libs/worker/OBJLoader2WorkerModule.js && shx cp -f ../objloader2/lib/worker/OBJLoader2WorkerClassic.js ./libs/worker/OBJLoader2WorkerClassic.js",
-    "build:worker:BasicExampleOffscreenWorker": "npx shx rm -f ./src/worker/generated/BasicExampleOffscreenWorker*.js && npx vite -c build/vite.config.BasicExampleOffscreenWorker.ts build",
-    "build": "npm run clean && npm run compile && npm run copy:prepare && npm run build:worker:BasicExampleOffscreenWorker && npm run copy:three && npm run copy:three:trackball && npm run copy:three:mtlloader && npm run copy:three:vertexnormalshelper && npm run copy:lil-gui && npm run copy:wtd-core && npm run copy:objloader2 && npm run copy:objloader2:worker",
-    "serve": "tsc && vite preview",
+    "build:worker": "vite-node ./scripts/buildWorker.mts",
+    "build": "npm run clean && npm run compile && npm run build:worker && npm run script:copy:assets",
+    "clean:production": "shx rm -fr production",
+    "build:production": "npm run build && npm run build:production:vite",
+    "build:production:vite": "npm run clean:production && vite --config vite.config.production.ts build && npm run script:copy:assets:production",
+    "script:copy:assets": "vite-node ./scripts/copyAssets.mts",
+    "script:copy:assets:production": "vite-node ./scripts/copyAssets.mts",
+    "serve": "http-server --port 20001 ./production",
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
@@ -34,7 +30,7 @@
     "three": "~0.160.0"
   },
   "devDependencies": {
-    "@types/react": "~18.2.46",
+    "@types/react": "~18.2.47",
     "@types/react-dom": "~18.2.18",
     "@types/three": "~0.160.0",
     "http-server": "~14.1.1"

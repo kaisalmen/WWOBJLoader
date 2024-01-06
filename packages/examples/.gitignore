@@ -1,0 +1,8 @@
+src/worker/generated
+libs
+models/draco
+models/gltf
+models/obj/bugs
+models/obj/extra
+models/obj/misc
+production

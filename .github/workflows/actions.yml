@@ -1,22 +1,81 @@
 name: Build
 
-on: push
+on:
+    push:
+      branches:
+        - "**"
+      tags-ignore:
+        - "v*.*.*"
+    workflow_dispatch:
+      inputs:
+        ghp:
+          description: 'Deploy to GitHub Page'
+          required: true
+          type: boolean
+          default: false
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     name: objloader2
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
     steps:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
-    - name: Build
-      shell: bash
+        node-version: '20'
+    - name: Check Environment
+      env:
+        DEPLOY_GHP: ${{ false || github.event.inputs.ghp == 'true' || github.ref_name == 'main' }}
+      run: |
+        echo "DEPLOY_GHP=${DEPLOY_GHP}" >> $GITHUB_ENV
+    - name: Install
       run: |
         npm ci
+    - name: Lint
+      run: |
         npm run lint
+    - name: Build
+      run: |
         npm run build
+    - name: Test
+      run: |
+        npm run test
+    - name: Build Production
+      run: |
+        npm --prefix packages/examples run build:production
+    - name: Setup Pages
+      if: ${{ env.DEPLOY_GHP == 'true' }}
+      id: pages
+      uses: actions/configure-pages@v4
+    - name: Upload artifact
+      if: ${{ env.DEPLOY_GHP == 'true' }}
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./packages/examples/production/
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Environment
+        env:
+          DEPLOY_GHP: ${{ false || github.event.inputs.ghp == 'true' || github.ref_name == 'main' }}
+        run: |
+          echo "DEPLOY_GHP=${DEPLOY_GHP}" >> $GITHUB_ENV
+      - name: Deploy to GitHub Pages
+        if: ${{ env.DEPLOY_GHP == 'true' }}
+        id: deployment
+        uses: actions/deploy-pages@v4

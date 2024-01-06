@@ -61,8 +61,7 @@
     "build:lib": "vite build",
     "compile": "tsc",
     "watch": "tsc -w",
-    "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker",
-    "serve": "tsc && vite preview"
+    "build": "npm run clean && npm run compile && npm run build:lib && npm run build:worker"
   },
   "volta": {
     "node": "20.10.0",

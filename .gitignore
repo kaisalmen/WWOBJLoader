@@ -3,15 +3,6 @@ dist
 docs
 lib
 node_modules
-
-/packages/examples/src/worker/generated
-/packages/examples/libs
-/packages/examples/models/draco
-/packages/examples/models/gltf
-/packages/examples/models/obj/bugs
-/packages/examples/models/obj/extra
-/packages/examples/models/obj/misc
-
 tsconfig.tsbuildinfo
 *.tgz
 .env

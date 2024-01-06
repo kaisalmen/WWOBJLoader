@@ -30,17 +30,18 @@
     "verify": "npm run verify --workspace packages/examples",
     "release:prepare": "npm run reset:repo && npm ci && npm run lint && npm run build && npm run doc && shx cp -f README.md packages/objloader2/README.md",
     "test": "vitest",
-    "update:versions:dev": "node ./scripts/UpdateVersions.mjs dev",
-    "update:versions:real": "node ./scripts/UpdateVersions.mjs real",
-    "update:reinstall": "node ./scripts/UpdateVersions.mjs reinstall",
+    "update:versions:dev": "vite-node ./scripts/updateVersions.mts dev",
+    "update:versions:real": "vite-node ./scripts/updateVersions.mts real",
+    "update:reinstall": "vite-node ./scripts/updateVersions.mts reinstall",
     "reset:repo:dry": "git clean -f -d -x --dry-run --exclude=packages/examples/models --exclude=archive",
     "reset:repo": "git clean -f -d -x --exclude=packages/examples/models --exclude=archive"
   },
   "keywords": [],
   "homepage": "https://github.com/kaisalmen/WWOBJLoader#README",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "~6.17.0",
+    "@typescript-eslint/eslint-plugin": "~6.18.0",
     "@types/node": "~20.10.6",
+    "@types/shelljs": "~0.8.15",
     "editorconfig": "~2.0.0",
     "eslint": "~8.56.0",
     "shelljs": "~0.8.5",
@@ -48,7 +49,8 @@
     "typedoc": "~0.25.6",
     "typedoc-plugin-markdown": "~3.17.1",
     "typescript": "~5.3.3",
-    "vite": "~5.0.11"
+    "vite": "~5.0.11",
+    "vite-node": "~1.1.3"
   },
   "volta": {
     "node": "20.10.0",
