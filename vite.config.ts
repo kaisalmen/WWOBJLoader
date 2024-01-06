@@ -33,6 +33,9 @@ export default defineConfig(({ command }) => {
         server: {
             port: 8085,
             host: '0.0.0.0'
+        },
+        test: {
+            passWithNoTests: true
         }
     };
 });
