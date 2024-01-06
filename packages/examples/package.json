@@ -12,7 +12,7 @@
     "build:production": "npm run build && npm run build:production:vite",
     "build:production:vite": "npm run clean:production && vite --config vite.config.production.ts build && npm run script:copy:assets:production",
     "script:copy:assets": "vite-node ./scripts/copyAssets.mts",
-    "script:copy:assets:production": "vite-node ./scripts/copyAssets.mts",
+    "script:copy:assets:production": "vite-node ./scripts/copyAssetsProduction.mts",
     "serve": "http-server --port 20001 ./production",
     "verify": "http-server --port 20001 ./"
   },
