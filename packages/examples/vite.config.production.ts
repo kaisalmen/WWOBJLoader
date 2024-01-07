@@ -14,6 +14,7 @@ export default defineConfig(({ command }) => {
                     obj2parallel_basic: path.resolve(__dirname, 'obj2parallel_basic.html'),
                     obj2_options: path.resolve(__dirname, 'obj2_options.html'),
                     obj2_obj_compare: path.resolve(__dirname, 'obj2_obj_compare.html'),
+                    assetpipeline: path.resolve(__dirname, 'assetpipeline.html'),
                     obj2_react: path.resolve(__dirname, 'obj2_react.html'),
                     obj2_react_mtl: path.resolve(__dirname, 'obj2_react_mtl.html')
                 },
