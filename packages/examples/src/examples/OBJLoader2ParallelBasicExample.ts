@@ -2,7 +2,7 @@ import { Object3D, Vector3 } from 'three';
 import { OBJLoader2Parallel } from 'wwobjloader2';
 import { createThreeDefaultSetup, ExampleDefinition, renderDefault, reportProgress, ThreeDefaultSetup } from './ExampleCommons.js';
 
-export class OBJLoader2ParalleleBasicExample implements ExampleDefinition {
+export class OBJLoader2ParallelBasicExample implements ExampleDefinition {
 
     private setup: ThreeDefaultSetup;
 

@@ -3,9 +3,6 @@ import shell from 'shelljs';
 shell.mkdir('-p', './production/models/obj/main/cerberus');
 shell.cp('-f', './models/obj/main/cerberus/*', './production/models/obj/main/cerberus/');
 
-shell.mkdir('-p', './production/worker/generated');
-shell.cp('-f', './src/worker/generated/*.js', './production/worker/generated');
-
 shell.mkdir('-p', './production/models/obj/main/female02');
 shell.cp('-f', './models/obj/main/female02/*', './production/models/obj/main/female02/');
 
@@ -20,3 +17,7 @@ shell.cp('-f', './models/obj/main/verify/*', './production/models/obj/main/verif
 
 shell.mkdir('-p', './production/models/obj/main/walt');
 shell.cp('-f', './models/obj/main/walt/*', './production/models/obj/main/walt/');
+
+shell.mkdir('-p', './production/assets/worker');
+shell.cp('-f', './src/worker/generated/*.js', './production/assets/worker');
+shell.cp('-f', '../objloader2/lib/worker/OBJLoader2Worker*.js', './production/assets/worker');

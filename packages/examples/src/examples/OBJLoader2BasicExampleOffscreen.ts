@@ -15,7 +15,7 @@ export class OBJLoader2BasicExampleOffscreen {
 
         // register the module worker
         const dev = import.meta.env?.DEV === true;
-        const url = new URL(dev ? '../worker/BasicExampleOffscreenWorker.ts' : '../worker/generated/BasicExampleOffscreenWorker-es.js', import.meta.url);
+        const url = new URL(dev ? '../worker/BasicExampleOffscreenWorker.ts' : './worker/BasicExampleOffscreenWorker-es.js', import.meta.url);
         const worker = new Worker(url.href, {
             type: 'module'
         });
