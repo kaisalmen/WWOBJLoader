@@ -17,11 +17,11 @@
     "verify": "http-server --port 20001 ./"
   },
   "volta": {
-    "node": "20.10.0",
-    "npm": "10.2.3"
+    "node": "20.12.2",
+    "npm": "10.5.0"
   },
   "dependencies": {
-    "@react-three/fiber": "~8.15.13",
+    "@react-three/fiber": "~8.16.2",
     "wtd-core": "~3.0.0",
     "wwobjloader2": "~6.2.1",
     "lil-gui": "~0.19.1",

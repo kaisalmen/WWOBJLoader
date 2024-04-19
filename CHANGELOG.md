@@ -1,8 +1,9 @@
 # Changelog
 
 ## 6.2.1 - 2024-04-19
+
 - Update three.js from v0.160.0 to v0.163.0
-- Update other dependencies
+- Update all devDependencies with exception of eslint
 
 ## 6.2.1 - 2024-01-05
 

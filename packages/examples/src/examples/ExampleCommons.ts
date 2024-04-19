@@ -1,10 +1,10 @@
-import { AmbientLight, DirectionalLight, GridHelper, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { AmbientLight, DirectionalLight, GridHelper, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls.js';
 import { OffscreenPayload } from 'wtd-core';
 
 export type CameraDefaults = {
-    posCamera: THREE.Vector3;
-    posCameraTarget: THREE.Vector3;
+    posCamera: Vector3;
+    posCameraTarget: Vector3;
     near: number;
     far: number;
     fov: number;
@@ -56,12 +56,12 @@ export const executeExample = (app: ExampleDefinition) => {
 };
 
 export type ThreeDefaultSetup = {
-    renderer: THREE.WebGLRenderer;
+    renderer: WebGLRenderer;
     canvas: HTMLCanvasElement;
     canvasDimensions: CanvasDimensions;
-    scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
-    cameraTarget: THREE.Vector3;
+    scene: Scene;
+    camera: PerspectiveCamera;
+    cameraTarget: Vector3;
     cameraDefaults: CameraDefaults;
     controls?: TrackballControls;
 }
