@@ -1,6 +1,10 @@
 # Changelog
 
-## 6.2.0 - 2024-01-05
+## 6.2.1 - 2024-04-19
+- Update three.js from v0.160.0 to v0.163.0
+- Update other dependencies
+
+## 6.2.1 - 2024-01-05
 
 - Switch to `wtd-core@3.0.0` and `wtd-three-ext@3.0.0`
   - Adjust code to the changes

@@ -23,16 +23,16 @@
   "dependencies": {
     "@react-three/fiber": "~8.15.13",
     "wtd-core": "~3.0.0",
-    "wwobjloader2": "~6.2.0",
+    "wwobjloader2": "~6.2.1",
     "lil-gui": "~0.19.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0",
-    "three": "~0.160.0"
+    "three": "~0.163.0"
   },
   "devDependencies": {
     "@types/react": "~18.2.47",
     "@types/react-dom": "~18.2.18",
-    "@types/three": "~0.160.0",
+    "@types/three": "~0.163.0",
     "http-server": "~14.1.1"
   }
 }
