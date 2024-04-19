@@ -23,7 +23,7 @@
   "dependencies": {
     "@react-three/fiber": "~8.15.13",
     "wtd-core": "~3.0.0",
-    "wwobjloader2": "~6.2.0",
+    "wwobjloader2": "~6.2.1",
     "lil-gui": "~0.19.1",
     "react": "~18.2.0",
     "react-dom": "~18.2.0",
